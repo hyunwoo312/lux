@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Test / coverage
+coverage/
+
+# TS build info
+*.tsbuildinfo
+
+# Local preview screenshots
+*-preview.png
+.theme-*.png
+
+# Local-only project docs
+CLAUDE.md
+docs/
