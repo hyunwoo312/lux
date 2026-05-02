@@ -1,9 +1,6 @@
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
-// Owned shadcn primitive (PROJECT_RULES §5). Deviation from upstream: the surface uses
-// our `glass` utility instead of `bg-card border shadow-sm`, since the glass treatment
-// is the project's standard surface. The API stays upstream-compatible.
 function Card({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
@@ -15,7 +12,9 @@ function Card({ className, ...props }: ComponentProps<"div">) {
 }
 
 function CardHeader({ className, ...props }: ComponentProps<"div">) {
-  return <div data-slot="card-header" className={cn("flex flex-col gap-1.5", className)} {...props} />;
+  return (
+    <div data-slot="card-header" className={cn("flex flex-col gap-1.5", className)} {...props} />
+  );
 }
 
 function CardTitle({ className, ...props }: ComponentProps<"div">) {

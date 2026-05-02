@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "A customizable new tab dashboard with widgets and much more.",
   "minimum_chrome_version": "120",
+  "permissions": ["storage"],
   "chrome_url_overrides": {
     "newtab": "index.html"
   },

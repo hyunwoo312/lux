@@ -19,8 +19,6 @@ export default defineConfig({
         background: resolve(__dirname, "src/background.ts"),
       },
       output: {
-        // The MV3 service worker must live at a stable, unhashed path the
-        // manifest can reference. Everything else gets normal hashed names.
         entryFileNames: (chunk) =>
           chunk.name === "background" ? "background.js" : "assets/[name]-[hash].js",
       },

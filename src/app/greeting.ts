@@ -41,7 +41,6 @@ const subtitlePools: Record<GreetingPeriod, string[]> = {
   ],
 };
 
-// Extra subtitles surfaced only on a given weekday (0 = Sunday).
 const contextualSubtitles: Partial<Record<GreetingPeriod, Record<number, string[]>>> = {
   morning: { 1: ["Ease into the week with one clear move."] },
   afternoon: { 5: ["One clean finish makes Friday feel better."] },
@@ -73,9 +72,14 @@ export function getGreetingCopy(
   previousSubtitle?: string | null,
 ): GreetingCopy {
   const period = getGreetingPeriod(date);
-  const candidates = [...subtitlePools[period], ...(contextualSubtitles[period]?.[date.getDay()] ?? [])];
+  const candidates = [
+    ...subtitlePools[period],
+    ...(contextualSubtitles[period]?.[date.getDay()] ?? []),
+  ];
   const available =
-    candidates.length > 1 ? candidates.filter((subtitle) => subtitle !== previousSubtitle) : candidates;
+    candidates.length > 1
+      ? candidates.filter((subtitle) => subtitle !== previousSubtitle)
+      : candidates;
   const index = Math.floor(random() * available.length) % available.length;
 
   return {

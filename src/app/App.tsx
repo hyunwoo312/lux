@@ -1,17 +1,15 @@
 import { Wallpaper } from "@/app/Wallpaper";
 import { Header } from "@/app/Header";
+import { WidgetGrid } from "@/widgets/WidgetGrid";
 
 export function App() {
   return (
     <div className="relative min-h-dvh">
       <Wallpaper />
-      <div className="
-        mx-auto flex min-h-dvh w-full max-w-[var(--content-max)] flex-col gap-12 px-6 py-8
-        sm:px-10
-      ">
+      <div className="mx-auto flex min-h-dvh w-[var(--content-width)] flex-col gap-12 py-8">
         <Header />
-        <main className="flex flex-1 items-center justify-center">
-          <p className="text-muted-foreground/50 text-sm">Your widgets will appear here.</p>
+        <main>
+          <WidgetGrid />
         </main>
       </div>
     </div>

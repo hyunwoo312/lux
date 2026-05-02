@@ -1,6 +1,5 @@
 import { vi } from "vitest";
 
-// In-memory stand-in for the Chrome extension APIs used under jsdom.
 function createChromeMock() {
   const store = new Map<string, unknown>();
 

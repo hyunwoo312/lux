@@ -20,6 +20,7 @@ export default tseslint.config(
       "react-refresh": reactRefresh,
     },
     rules: {
+      "no-empty": ["error", { allowEmptyCatch: true }],
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
