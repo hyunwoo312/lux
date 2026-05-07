@@ -40,6 +40,8 @@
   --input: oklch(0 0 0 / 0.14);
   --ring: oklch(0.55 0.2 292);
   --grid-line: oklch(0 0 0 / 0.13);
+  --scrollbar-thumb: oklch(0 0 0 / 0.18);
+  --scrollbar-thumb-hover: oklch(0 0 0 / 0.32);
 
   --glass-bg: oklch(1 0 0 / 0.72);
   --glass-bg-strong: oklch(1 0 0 / 0.85);
@@ -87,6 +89,8 @@
   --input: oklch(1 0 0 / 0.14);
   --ring: oklch(0.66 0.18 292);
   --grid-line: oklch(1 0 0 / 0.12);
+  --scrollbar-thumb: oklch(1 0 0 / 0.16);
+  --scrollbar-thumb-hover: oklch(1 0 0 / 0.3);
 
   --glass-bg: oklch(1 0 0 / 0.06);
   --glass-bg-strong: oklch(1 0 0 / 0.1);
@@ -159,6 +163,36 @@
     background-color: oklch(0.66 0.18 292 / 0.35);
   }
 
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    background-clip: padding-box;
+    border: 3px solid transparent;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+  }
+
+  ::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -177,6 +211,17 @@
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
+}
+
+@utility glass-solid {
+  background-color: var(--card);
+  background-image: linear-gradient(
+    155deg,
+    color-mix(in oklab, var(--primary) 20%, var(--card)) 0%,
+    var(--card) 62%
+  );
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 @utility wallpaper {
@@ -200,6 +245,33 @@
   box-shadow:
     inset calc(-1 * var(--grid-line-width)) 0 0 0 var(--grid-line),
     inset 0 calc(-1 * var(--grid-line-width)) 0 0 var(--grid-line);
+}
+
+@keyframes task-reveal {
+  from {
+    background-position: 100% center;
+  }
+  to {
+    background-position: 0% center;
+  }
+}
+
+@utility task-reveal {
+  background-image: linear-gradient(
+    100deg,
+    var(--foreground) 0%,
+    var(--foreground) 45%,
+    var(--primary) 50%,
+    var(--foreground) 55%,
+    var(--foreground) 100%
+  );
+  background-size: 300% 100%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: task-reveal 0.7s ease-out both;
 }
 
 @keyframes theme-wipe {

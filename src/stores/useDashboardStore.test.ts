@@ -1,43 +1,72 @@
 import { useDashboardStore } from "@/stores/useDashboardStore";
+import { collides } from "@/widgets/core/layout-engine";
+
+const store = () => useDashboardStore.getState();
 
 describe("useDashboardStore", () => {
   beforeEach(() => {
-    useDashboardStore.setState({ widgets: [], layout: [], editing: false });
+    useDashboardStore.setState({
+      widgets: [],
+      layout: [],
+      savedLayouts: {},
+      columns: 12,
+      editing: false,
+    });
   });
 
   it("adds a widget with a matching layout item", () => {
-    useDashboardStore.getState().addWidget("clock");
+    store().addWidget("clock");
 
-    const { widgets, layout } = useDashboardStore.getState();
+    const { widgets, layout } = store();
     expect(widgets).toHaveLength(1);
     expect(widgets[0]?.type).toBe("clock");
     expect(layout).toHaveLength(1);
     expect(layout[0]?.i).toBe(widgets[0]?.id);
   });
 
+  it("ignores a second instance of the same widget type", () => {
+    store().addWidget("clock");
+    store().addWidget("clock");
+
+    expect(store().widgets).toHaveLength(1);
+    expect(store().layout).toHaveLength(1);
+  });
+
+  it("places different widget types without overlapping", () => {
+    store().addWidget("clock");
+    store().addWidget("tasks");
+
+    const { layout } = store();
+    expect(layout).toHaveLength(2);
+    const [first, second] = layout;
+    expect(first && second && collides(first, second)).toBe(false);
+  });
+
   it("removes a widget and its layout item", () => {
-    useDashboardStore.getState().addWidget("clock");
-    const id = useDashboardStore.getState().widgets[0]!.id;
+    store().addWidget("clock");
+    const id = store().widgets[0]!.id;
 
-    useDashboardStore.getState().removeWidget(id);
+    store().removeWidget(id);
 
-    const { widgets, layout } = useDashboardStore.getState();
+    const { widgets, layout } = store();
     expect(widgets).toHaveLength(0);
     expect(layout).toHaveLength(0);
   });
 
-  it("stacks added widgets so they do not overlap", () => {
-    useDashboardStore.getState().addWidget("clock");
-    useDashboardStore.getState().addWidget("clock");
+  it("restores the previous position when a widget is re-added", () => {
+    store().addWidget("clock");
+    const id = store().widgets[0]!.id;
+    store().setLayout([{ i: id, x: 4, y: 6, w: 3, h: 3 }]);
+    store().removeWidget(id);
 
-    const { layout } = useDashboardStore.getState();
-    expect(layout).toHaveLength(2);
-    expect(layout[1]!.y).toBeGreaterThanOrEqual(layout[0]!.y + layout[0]!.h);
+    store().addWidget("clock");
+
+    expect(store().layout.find((item) => item.i === id)).toMatchObject({ x: 4, y: 6 });
   });
 
   it("toggles edit mode", () => {
-    expect(useDashboardStore.getState().editing).toBe(false);
-    useDashboardStore.getState().toggleEditing();
-    expect(useDashboardStore.getState().editing).toBe(true);
+    expect(store().editing).toBe(false);
+    store().toggleEditing();
+    expect(store().editing).toBe(true);
   });
 });

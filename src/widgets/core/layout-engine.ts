@@ -2,6 +2,8 @@ import type { LayoutItem } from "react-grid-layout";
 
 export type DragVector = { dx: number; dy: number };
 
+export const PLACEMENT_VECTOR: DragVector = { dx: 0, dy: 1 };
+
 type Box = Pick<LayoutItem, "i" | "x" | "y" | "w" | "h">;
 type Position = Pick<LayoutItem, "x" | "y">;
 

@@ -10,6 +10,7 @@ import {
   resolveLocalDisplacement,
   type DragVector,
 } from "@/widgets/core/layout-engine";
+import { useWidgetDragStore } from "@/widgets/core/useWidgetDragStore";
 import { WidgetHost } from "@/widgets/core/WidgetHost";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 
@@ -25,6 +26,9 @@ export function WidgetGrid() {
   const layout = useDashboardStore((s) => s.layout);
   const editing = useDashboardStore((s) => s.editing);
   const setLayout = useDashboardStore((s) => s.setLayout);
+  const setColumns = useDashboardStore((s) => s.setColumns);
+  const setGeometry = useWidgetDragStore((s) => s.setGeometry);
+  const dragging = useWidgetDragStore((s) => s.type !== null);
   const { width, mounted, containerRef } = useContainerWidth();
 
   const [previewRows, setPreviewRows] = useState<number | null>(null);
@@ -71,6 +75,27 @@ export function WidgetGrid() {
 
   const cols = gridColumns(width);
   const gw = gridWidth(cols);
+
+  useEffect(() => {
+    setColumns(cols);
+  }, [cols, setColumns]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !mounted) return;
+    const publish = () => {
+      const rect = el.getBoundingClientRect();
+      const centerOffset = Math.max(0, (rect.width - gw) / 2);
+      setGeometry({ left: rect.left + centerOffset, top: rect.top, cols });
+    };
+    publish();
+    window.addEventListener("resize", publish);
+    if (dragging) window.addEventListener("scroll", publish, true);
+    return () => {
+      window.removeEventListener("resize", publish);
+      window.removeEventListener("scroll", publish, true);
+    };
+  }, [containerRef, mounted, gw, cols, setGeometry, dragging]);
 
   const compactor = useMemo<Compactor>(
     () => ({

@@ -1,7 +1,9 @@
 import type { ComponentType } from "react";
 import type { LucideIcon } from "lucide-react";
+import type { AccentPreset } from "@/widgets/core/accent";
 
-export type WidgetType = "clock";
+export const WIDGET_TYPES = ["clock", "tasks"] as const;
+export type WidgetType = (typeof WIDGET_TYPES)[number];
 
 export type WidgetInstance = {
   id: string;
@@ -14,4 +16,7 @@ export type WidgetPlugin = {
   icon: LucideIcon;
   defaultLayout: { w: number; h: number; minW: number; minH: number; maxW: number; maxH: number };
   component: ComponentType;
+  configComponent?: ComponentType;
+  statusComponent?: ComponentType;
+  accent?: AccentPreset;
 };
