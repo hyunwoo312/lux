@@ -24,6 +24,16 @@ function createChromeMock() {
         clear: vi.fn(async () => store.clear()),
       },
     },
+    bookmarks: {
+      getTree: vi.fn(async () => []),
+      search: vi.fn(async () => []),
+    },
+    history: {
+      search: vi.fn(async () => []),
+    },
+    sessions: {
+      getRecentlyClosed: vi.fn(async () => []),
+    },
   };
 }
 

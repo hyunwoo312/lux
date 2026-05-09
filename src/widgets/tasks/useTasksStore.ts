@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { z } from "zod";
-import { chromeStorageAdapter } from "@/lib/storage";
+import { createGatedChromeStorage } from "@/lib/storage";
 import type { CompletedPosition, Task } from "@/widgets/tasks/types";
 
 type TasksState = {
@@ -28,6 +28,8 @@ const persistedSchema = z.object({
   autoSort: z.boolean(),
   completedPosition: z.enum(["top", "bottom"]),
 });
+
+const gatedStorage = createGatedChromeStorage();
 
 export const useTasksStore = create<TasksState>()(
   persist(
@@ -68,8 +70,9 @@ export const useTasksStore = create<TasksState>()(
     }),
     {
       name: "widget:tasks",
-      storage: createJSONStorage(() => chromeStorageAdapter),
+      storage: createJSONStorage(() => gatedStorage),
       version: 1,
+      onRehydrateStorage: () => () => gatedStorage.open(),
       partialize: (state) => ({
         tasks: state.tasks,
         autoSort: state.autoSort,

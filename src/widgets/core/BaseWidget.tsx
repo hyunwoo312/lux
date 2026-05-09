@@ -17,6 +17,7 @@ type BaseWidgetProps = {
   background?: WidgetBackground;
   accent?: AccentPreset;
   headline?: ReactNode;
+  headerAction?: ReactNode;
   config?: ReactNode;
   onRemove: () => void;
   children: ReactNode;
@@ -37,6 +38,8 @@ const spin = {
 } as const;
 
 const swapTransition: Transition = { duration: 0.18, ease: "easeOut" };
+const HEADER_LABEL =
+  "text-muted-foreground block truncate text-xs font-medium tracking-wide uppercase";
 
 export function BaseWidget({
   title,
@@ -45,6 +48,7 @@ export function BaseWidget({
   background = "glass",
   accent = "default",
   headline,
+  headerAction,
   config,
   onRemove,
   children,
@@ -86,9 +90,9 @@ export function BaseWidget({
       )}
     >
       <div className="flex items-center justify-between gap-2 px-4 py-2">
-        <div className="relative min-w-0 flex-1">
+        <div className="@container relative min-w-0 flex-1">
           <AnimatePresence mode="wait" initial={false} custom={showConfig}>
-            <motion.span
+            <motion.div
               key={showConfig ? "config" : "main"}
               custom={showConfig}
               variants={viewVariants}
@@ -96,12 +100,14 @@ export function BaseWidget({
               animate="animate"
               exit="exit"
               transition={swapTransition}
-              className="
-                text-muted-foreground block truncate text-xs font-medium tracking-wide uppercase
-              "
+              className="min-w-0"
             >
-              {showConfig ? "Settings" : (headline ?? title)}
-            </motion.span>
+              {showConfig ? (
+                <span className={HEADER_LABEL}>Settings</span>
+              ) : (
+                (headline ?? <span className={HEADER_LABEL}>{title}</span>)
+              )}
+            </motion.div>
           </AnimatePresence>
         </div>
         <div className="pointer-events-auto flex shrink-0 items-center gap-1">
@@ -111,12 +117,17 @@ export function BaseWidget({
                 key="size"
                 {...pop}
                 className="
-                  bg-background/90 text-foreground ring-border rounded-md px-1.5 py-0.5 text-xs
-                  font-semibold tabular-nums shadow-sm ring-1
+                  bg-foreground text-background rounded-md px-1.5 py-0.5 text-xs font-semibold
+                  tabular-nums shadow-md
                 "
               >
                 {size.w} × {size.h}
               </motion.span>
+            )}
+            {!editing && !showConfig && headerAction && (
+              <motion.div key="action" {...pop}>
+                {headerAction}
+              </motion.div>
             )}
             {!editing && config && (
               <motion.div key="config-toggle" {...pop}>

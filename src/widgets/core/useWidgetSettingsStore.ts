@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { z } from "zod";
-import { chromeStorageAdapter } from "@/lib/storage";
+import { createGatedChromeStorage } from "@/lib/storage";
 import type { WidgetType } from "@/widgets/core/types";
 
 export type WidgetBackground = "glass" | "solid";
@@ -19,6 +19,8 @@ const persistedSchema = z.object({
   settings: z.record(z.string(), z.object({ background: z.enum(["glass", "solid"]).optional() })),
 });
 
+const gatedStorage = createGatedChromeStorage();
+
 export const useWidgetSettingsStore = create<WidgetSettingsState>()(
   persist(
     (set) => ({
@@ -30,8 +32,9 @@ export const useWidgetSettingsStore = create<WidgetSettingsState>()(
     }),
     {
       name: "widget-settings",
-      storage: createJSONStorage(() => chromeStorageAdapter),
+      storage: createJSONStorage(() => gatedStorage),
       version: 1,
+      onRehydrateStorage: () => () => gatedStorage.open(),
       partialize: (state) => ({ settings: state.settings }),
       merge: (persisted, current) => {
         const parsed = persistedSchema.safeParse(persisted);

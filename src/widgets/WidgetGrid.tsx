@@ -32,6 +32,7 @@ export function WidgetGrid() {
   const { width, mounted, containerRef } = useContainerWidth();
 
   const [previewRows, setPreviewRows] = useState<number | null>(null);
+  const [liveSize, setLiveSize] = useState<{ id: string; w: number; h: number } | null>(null);
   const [availableRows, setAvailableRows] = useState(MIN_ROWS);
   const activeWidgetId = useRef<string | null>(null);
   const dragDirection = useRef<DragVector>({ dx: 1, dy: 0 });
@@ -131,6 +132,7 @@ export function WidgetGrid() {
 
   const handleMove: EventCallback = (next, oldItem, newItem, _placeholder, _event, element) => {
     track(oldItem, newItem);
+    if (newItem) setLiveSize({ id: newItem.i, w: newItem.w, h: newItem.h });
     if (element) draggingElement.current = element;
     const resolved = resolveLocalDisplacement(
       next,
@@ -144,19 +146,18 @@ export function WidgetGrid() {
   const handleStop: EventCallback = (next, oldItem, newItem) => {
     track(oldItem, newItem);
     setPreviewRows(null);
+    setLiveSize(null);
     draggingElement.current = null;
     if (scrollFrame.current !== null) {
       cancelAnimationFrame(scrollFrame.current);
       scrollFrame.current = null;
     }
-    const resolved = resolveLocalDisplacement(
-      next,
-      cols,
-      activeWidgetId.current,
-      dragDirection.current,
-    );
+    const draggedId = activeWidgetId.current;
+    const vector = dragDirection.current;
+    const displaced = resolveLocalDisplacement(next, cols, draggedId, vector);
+    const cleaned = resolveLayoutCollisions(displaced, cols, draggedId, vector);
     activeWidgetId.current = null;
-    setLayout(resolved);
+    setLayout(cleaned);
   };
 
   const displayLayout = useMemo(
@@ -206,13 +207,15 @@ export function WidgetGrid() {
             >
               {widgets.map((widget) => {
                 const item = displayLayout.find((entry) => entry.i === widget.id);
+                const size =
+                  liveSize?.id === widget.id
+                    ? { w: liveSize.w, h: liveSize.h }
+                    : item
+                      ? { w: item.w, h: item.h }
+                      : undefined;
                 return (
                   <div key={widget.id}>
-                    <WidgetHost
-                      instance={widget}
-                      editing={editing}
-                      size={item ? { w: item.w, h: item.h } : undefined}
-                    />
+                    <WidgetHost instance={widget} editing={editing} size={size} />
                   </div>
                 );
               })}

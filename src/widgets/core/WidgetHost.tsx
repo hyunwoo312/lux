@@ -23,6 +23,7 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
   const Widget = plugin.component;
   const ConfigComponent = plugin.configComponent;
   const StatusComponent = plugin.statusComponent;
+  const HeaderActionComponent = plugin.headerActionComponent;
 
   return (
     <BaseWidget
@@ -32,6 +33,7 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
       background={background}
       accent={accent}
       headline={StatusComponent ? <StatusComponent /> : undefined}
+      headerAction={HeaderActionComponent ? <HeaderActionComponent /> : undefined}
       config={
         <WidgetConfig>
           <CommonWidgetConfig type={instance.type} />
@@ -40,7 +42,7 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
       }
       onRemove={() => removeWidget(instance.id)}
     >
-      <Widget />
+      <Widget editing={editing} />
     </BaseWidget>
   );
 }

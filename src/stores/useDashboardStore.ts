@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { z } from "zod";
 import type { Layout, LayoutItem } from "react-grid-layout";
-import { chromeStorageAdapter } from "@/lib/storage";
+import { createGatedChromeStorage } from "@/lib/storage";
 import { findNearestOpenPosition, PLACEMENT_VECTOR } from "@/widgets/core/layout-engine";
 import type { WidgetInstance, WidgetPlugin, WidgetType } from "@/widgets/core/types";
 import { WIDGET_TYPES } from "@/widgets/core/types";
@@ -68,6 +68,8 @@ function placeLayoutItem(
   return { ...base, x: spot.x, y: spot.y };
 }
 
+const gatedStorage = createGatedChromeStorage();
+
 export const useDashboardStore = create<DashboardState>()(
   persist(
     (set) => ({
@@ -113,8 +115,9 @@ export const useDashboardStore = create<DashboardState>()(
     }),
     {
       name: "dashboard",
-      storage: createJSONStorage(() => chromeStorageAdapter),
+      storage: createJSONStorage(() => gatedStorage),
       version: 1,
+      onRehydrateStorage: () => () => gatedStorage.open(),
       partialize: (state) => ({
         widgets: state.widgets,
         layout: state.layout,

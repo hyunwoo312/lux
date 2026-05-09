@@ -1,0 +1,27 @@
+import { hostnameOf, monogram, normalizeUrl } from "@/widgets/quick-access/lib/url";
+
+describe("normalizeUrl", () => {
+  it("prepends https when no protocol is present", () => {
+    expect(normalizeUrl("github.com")).toBe("https://github.com/");
+  });
+
+  it("keeps an existing protocol", () => {
+    expect(normalizeUrl("http://example.com/path")).toBe("http://example.com/path");
+  });
+
+  it("returns null for blank input", () => {
+    expect(normalizeUrl("   ")).toBeNull();
+  });
+});
+
+describe("hostnameOf", () => {
+  it("strips the www prefix", () => {
+    expect(hostnameOf("https://www.google.com/")).toBe("google.com");
+  });
+});
+
+describe("monogram", () => {
+  it("returns the uppercased first letter of the host", () => {
+    expect(monogram("https://github.com/")).toBe("G");
+  });
+});

@@ -49,3 +49,17 @@ export const chromeStorageAdapter: StateStorage = {
   setItem: (name, value) => write(name, value),
   removeItem: (name) => remove(name),
 };
+
+export type GatedStorage = StateStorage & { open: () => void };
+
+export function createGatedChromeStorage(): GatedStorage {
+  let hydrated = false;
+  return {
+    getItem: chromeStorageAdapter.getItem,
+    setItem: (name, value) => (hydrated ? write(name, value) : Promise.resolve()),
+    removeItem: (name) => (hydrated ? remove(name) : Promise.resolve()),
+    open: () => {
+      hydrated = true;
+    },
+  };
+}
