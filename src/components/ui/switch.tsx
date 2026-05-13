@@ -23,7 +23,7 @@ function Switch({ className, ...props }: ComponentProps<typeof SwitchPrimitive.R
     >
       <SwitchPrimitive.Thumb
         className="
-          bg-background pointer-events-none block size-4 rounded-full shadow-sm ring-0
+          pointer-events-none block size-4 rounded-full bg-white shadow-sm ring-0
           transition-transform
           data-[state=checked]:translate-x-4
           data-[state=unchecked]:translate-x-0

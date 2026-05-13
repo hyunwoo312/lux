@@ -2,7 +2,7 @@ import type { ComponentType } from "react";
 import type { LucideIcon } from "lucide-react";
 import type { AccentPreset } from "@/widgets/core/accent";
 
-export const WIDGET_TYPES = ["clock", "tasks", "quickAccess"] as const;
+export const WIDGET_TYPES = ["clock", "tasks", "quickAccess", "image"] as const;
 export type WidgetType = (typeof WIDGET_TYPES)[number];
 
 export type WidgetInstance = {
@@ -23,5 +23,8 @@ export type WidgetPlugin = {
   configComponent?: ComponentType;
   statusComponent?: ComponentType;
   headerActionComponent?: ComponentType;
+  backdropComponent?: ComponentType;
   accent?: AccentPreset;
+  bleed?: boolean;
+  useBare?: () => boolean;
 };

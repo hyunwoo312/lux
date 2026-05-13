@@ -4,7 +4,6 @@ import type { Transition, Variants } from "motion/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, Settings, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { ACCENT_PRESETS, type AccentPreset } from "@/widgets/core/accent";
@@ -16,6 +15,10 @@ type BaseWidgetProps = {
   size?: { w: number; h: number };
   background?: WidgetBackground;
   accent?: AccentPreset;
+  bleed?: boolean;
+  bare?: boolean;
+  highlighted?: boolean;
+  backdrop?: ReactNode;
   headline?: ReactNode;
   headerAction?: ReactNode;
   config?: ReactNode;
@@ -47,6 +50,10 @@ export function BaseWidget({
   size,
   background = "glass",
   accent = "default",
+  bleed = false,
+  bare = false,
+  highlighted = false,
+  backdrop,
   headline,
   headerAction,
   config,
@@ -60,11 +67,17 @@ export function BaseWidget({
     if (editing) setShowConfig(false);
   }, [editing]);
 
+  const hasBackdrop = Boolean(backdrop);
+  const chromeHidden = bare && !editing && !showConfig;
+  const omitSurface = chromeHidden || (hasBackdrop && showConfig);
+
   const preset = ACCENT_PRESETS[accent];
   const accentStyle = {
     "--primary": preset.primary,
     "--primary-foreground": preset.primaryForeground,
     "--ring": preset.primary,
+    "--widget-gradient": preset.gradient ?? preset.primary,
+    "--widget-gradient-strength": preset.gradientStrength ?? "20%",
   } as CSSProperties;
 
   const offset = reduced ? 0 : 12;
@@ -81,15 +94,32 @@ export function BaseWidget({
   });
 
   return (
-    <Card
+    <div
       style={accentStyle}
       className={cn(
-        "h-full gap-0 overflow-hidden p-0",
-        background === "solid" && "glass-solid",
+        `
+          text-card-foreground relative flex h-full flex-col overflow-hidden rounded-xl
+          transition-shadow
+        `,
+        !omitSurface && (background === "solid" ? "glass-solid" : "glass"),
+        highlighted && "ring-primary/70 shadow-[0_0_22px_-2px_var(--primary)] ring-2",
         editing && `pointer-events-none select-none`,
       )}
     >
-      <div className="flex items-center justify-between gap-2 px-4 py-2">
+      {backdrop && (
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-0 z-0",
+            showConfig && "scale-[1.02] opacity-80 blur-sm",
+          )}
+        >
+          {backdrop}
+        </div>
+      )}
+      {hasBackdrop && showConfig && (
+        <div className="bg-background/70 pointer-events-none absolute inset-0 z-[5]" aria-hidden />
+      )}
+      <div className="relative z-10 flex items-center justify-between gap-2 px-4 py-2">
         <div className="@container relative min-w-0 flex-1">
           <AnimatePresence mode="wait" initial={false} custom={showConfig}>
             <motion.div
@@ -176,7 +206,7 @@ export function BaseWidget({
           </AnimatePresence>
         </div>
       </div>
-      <div className="relative min-h-0 flex-1 overflow-hidden">
+      <div className="relative z-10 min-h-0 flex-1 overflow-hidden">
         <AnimatePresence mode="wait" initial={false} custom={showConfig}>
           <motion.div
             key={showConfig ? "config" : "main"}
@@ -186,12 +216,19 @@ export function BaseWidget({
             animate="animate"
             exit="exit"
             transition={swapTransition}
-            className="h-full overflow-auto px-4 pb-3"
+            className={cn(
+              "h-full",
+              showConfig
+                ? "overflow-x-hidden overflow-y-auto px-4 pb-3"
+                : bleed
+                  ? "overflow-hidden"
+                  : "overflow-auto px-4 pb-3",
+            )}
           >
             {showConfig ? config : children}
           </motion.div>
         </AnimatePresence>
       </div>
-    </Card>
+    </div>
   );
 }

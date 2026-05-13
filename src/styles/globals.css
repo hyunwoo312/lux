@@ -18,7 +18,7 @@
 
   --card: oklch(0.98 0.01 290);
   --card-foreground: var(--foreground);
-  --popover: oklch(0.98 0.008 290);
+  --popover: oklch(0.985 0.003 290);
   --popover-foreground: var(--foreground);
 
   --primary: oklch(0.55 0.2 292);
@@ -67,7 +67,7 @@
 
   --card: oklch(0.21 0.03 285);
   --card-foreground: var(--foreground);
-  --popover: oklch(0.19 0.03 285);
+  --popover: oklch(0.2 0.004 285);
   --popover-foreground: var(--foreground);
 
   --primary: oklch(0.66 0.18 292);
@@ -137,6 +137,8 @@
 
   --font-sans: var(--font-body);
   --font-display: var(--font-heading);
+
+  --text-2xs: 0.6875rem;
 }
 
 @layer base {
@@ -157,6 +159,19 @@
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  input,
+  textarea,
+  [contenteditable="true"] {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  img {
+    -webkit-user-drag: none;
   }
 
   ::selection {
@@ -217,7 +232,12 @@
   background-color: var(--card);
   background-image: linear-gradient(
     155deg,
-    color-mix(in oklab, var(--primary) 20%, var(--card)) 0%,
+    color-mix(
+        in oklab,
+        var(--widget-gradient, var(--primary)) var(--widget-gradient-strength, 20%),
+        var(--card)
+      )
+      0%,
     var(--card) 62%
   );
   backdrop-filter: none;

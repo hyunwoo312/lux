@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { isOverGrid, resolveDrop } from "@/widgets/core/drag";
 import type { WidgetPlugin } from "@/widgets/core/types";
 import { useWidgetDragStore } from "@/widgets/core/useWidgetDragStore";
+import { useWidgetHighlightStore } from "@/widgets/core/useWidgetHighlightStore";
 import { widgetPlugins } from "@/widgets/registry";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 
@@ -37,9 +38,15 @@ export function WidgetPalette() {
   const [open, setOpen] = useState(false);
   const widgets = useDashboardStore((s) => s.widgets);
   const addWidget = useDashboardStore((s) => s.addWidget);
+  const setHighlighted = useWidgetHighlightStore((s) => s.setHighlighted);
   const reduced = useReducedMotion();
   const lastDragEnd = useRef(0);
   const activeTypes = new Set(widgets.map((widget) => widget.type));
+
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (!next) setHighlighted(null);
+  };
 
   const panelVariants = useMemo<Variants>(
     () => ({
@@ -69,6 +76,7 @@ export function WidgetPalette() {
 
   const handleAdd = (plugin: WidgetPlugin) => {
     addWidget(plugin.type);
+    setHighlighted(null);
     setOpen(false);
   };
 
@@ -119,7 +127,7 @@ export function WidgetPalette() {
   };
 
   return (
-    <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+    <PopoverPrimitive.Root open={open} onOpenChange={handleOpenChange}>
       <Tooltip content="Add widget" disabled={open}>
         <PopoverPrimitive.Trigger asChild>
           <Button
@@ -148,7 +156,8 @@ export function WidgetPalette() {
                 animate="visible"
                 exit="exit"
                 className="
-                  glass text-popover-foreground w-60 origin-top-right rounded-xl p-1.5 outline-none
+                  bg-popover/92 text-popover-foreground border-border w-60 origin-top-right
+                  rounded-xl border p-1.5 shadow-xl backdrop-blur-xl outline-none
                 "
               >
                 <p
@@ -171,6 +180,8 @@ export function WidgetPalette() {
                         onPointerDown={
                           onDashboard ? undefined : (event) => handlePointerDown(event, plugin)
                         }
+                        onMouseEnter={onDashboard ? () => setHighlighted(plugin.type) : undefined}
+                        onMouseLeave={onDashboard ? () => setHighlighted(null) : undefined}
                         onClick={() => handleClick(plugin, onDashboard)}
                         className={cn(
                           `

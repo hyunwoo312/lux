@@ -12,6 +12,7 @@ import {
 } from "@/widgets/core/layout-engine";
 import { useWidgetDragStore } from "@/widgets/core/useWidgetDragStore";
 import { WidgetHost } from "@/widgets/core/WidgetHost";
+import { getWidgetPlugin } from "@/widgets/registry";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 
 const MIN_ROWS = 8;
@@ -160,9 +161,27 @@ export function WidgetGrid() {
     setLayout(cleaned);
   };
 
+  const constrainedLayout = useMemo(() => {
+    const typeById = new Map(widgets.map((widget) => [widget.id, widget.type]));
+    return layout.map((item) => {
+      const type = typeById.get(item.i);
+      const plugin = type ? getWidgetPlugin(type) : undefined;
+      if (!plugin) return item;
+      const { minW, minH, maxW, maxH } = plugin.defaultLayout;
+      return {
+        ...item,
+        minW,
+        minH,
+        maxW,
+        maxH,
+        w: Math.min(maxW, Math.max(minW, item.w)),
+        h: Math.min(maxH, Math.max(minH, item.h)),
+      };
+    });
+  }, [layout, widgets]);
   const displayLayout = useMemo(
-    () => resolveLayoutCollisions(layout, cols, null, DEFAULT_VECTOR),
-    [layout, cols],
+    () => resolveLayoutCollisions(constrainedLayout, cols, null, DEFAULT_VECTOR),
+    [constrainedLayout, cols],
   );
   const rows = Math.max(availableRows, previewRows ?? getLayoutBottom(displayLayout));
   const workspaceHeight = rows * UNIT;

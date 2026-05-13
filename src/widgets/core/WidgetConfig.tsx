@@ -1,18 +1,24 @@
 import type { ReactNode } from "react";
 import { useId } from "react";
 import { motion } from "motion/react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 
 export function WidgetConfig({ children }: { children: ReactNode }) {
-  return <div className="flex flex-col gap-5">{children}</div>;
+  return <div className="@container flex flex-col gap-5">{children}</div>;
 }
 
 export function WidgetConfigGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-3">
-      <span className="
-        text-muted-foreground/70 text-[0.65rem] font-semibold tracking-wider uppercase
-      ">
+      <span className="text-muted-foreground/70 text-2xs font-semibold tracking-wider uppercase">
         {label}
       </span>
       <div className="flex flex-col gap-3.5">{children}</div>
@@ -41,9 +47,12 @@ function ConfigText({ title, description }: { title: string; description?: strin
 export function WidgetConfigItem({ title, description, control, children }: ConfigItemProps) {
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-4">
+      <div className="
+        @3xs:flex-row @3xs:items-center @3xs:justify-between @3xs:gap-4
+        flex flex-col gap-2
+      ">
         <ConfigText title={title} description={description} />
-        {control && <div className="shrink-0">{control}</div>}
+        {control && <div className="@3xs:shrink-0">{control}</div>}
       </div>
       {children}
     </div>
@@ -62,23 +71,59 @@ export function WidgetConfigSubItem({
     <div
       className={cn(
         `
-          border-border/70 ml-1 flex items-center justify-between gap-4 border-l pl-3
-          transition-opacity
+          border-border/70
+          @3xs:flex-row @3xs:items-center @3xs:justify-between @3xs:gap-4
+          ml-1 flex flex-col gap-2 border-l pl-3 transition-opacity
         `,
         disabled && "pointer-events-none opacity-40",
       )}
     >
       <ConfigText title={title} description={description} />
-      {control && <div className="shrink-0">{control}</div>}
+      {control && <div className="@3xs:shrink-0">{control}</div>}
     </div>
   );
 }
 
-type SegmentedOption<T extends string> = { value: T; label: string };
+type ConfigOption<T extends string> = { value: T; label: string };
+
+type SelectControlProps<T extends string> = {
+  value: T;
+  options: ConfigOption<T>[];
+  onChange: (value: T) => void;
+  disabled?: boolean;
+  label: string;
+};
+
+export function ConfigSelect<T extends string>({
+  value,
+  options,
+  onChange,
+  disabled = false,
+  label,
+}: SelectControlProps<T>) {
+  const handleChange = (next: string) => {
+    const match = options.find((option) => option.value === next);
+    if (match) onChange(match.value);
+  };
+  return (
+    <Select value={value} onValueChange={handleChange} disabled={disabled}>
+      <SelectTrigger aria-label={label} className="@3xs:w-36 w-full">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
 
 type SegmentedProps<T extends string> = {
   value: T;
-  options: SegmentedOption<T>[];
+  options: ConfigOption<T>[];
   onChange: (value: T) => void;
   disabled?: boolean;
   label: string;
@@ -92,25 +137,27 @@ export function ConfigSegmented<T extends string>({
   label,
 }: SegmentedProps<T>) {
   const layoutId = useId();
+  const handleChange = (next: string) => {
+    const match = options.find((option) => option.value === next);
+    if (match) onChange(match.value);
+  };
   return (
-    <div
-      role="radiogroup"
+    <ToggleGroup
+      type="single"
+      value={value}
+      onValueChange={handleChange}
+      disabled={disabled}
       aria-label={label}
-      className="bg-foreground/[0.06] inline-flex gap-0.5 rounded-md p-0.5"
+      className="bg-foreground/[0.06] max-w-full flex-wrap gap-0.5 rounded-md p-0.5"
     >
       {options.map((option) => {
         const active = option.value === value;
         return (
-          <button
+          <ToggleGroupItem
             key={option.value}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            tabIndex={disabled ? -1 : 0}
-            disabled={disabled}
-            onClick={() => onChange(option.value)}
+            value={option.value}
             className={cn(
-              "relative cursor-pointer rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+              "relative rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
               active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -122,10 +169,10 @@ export function ConfigSegmented<T extends string>({
               />
             )}
             <span className="relative z-10">{option.label}</span>
-          </button>
+          </ToggleGroupItem>
         );
       })}
-    </div>
+    </ToggleGroup>
   );
 }
 
