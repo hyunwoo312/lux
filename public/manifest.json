@@ -4,7 +4,13 @@
   "version": "1.0.0",
   "description": "A customizable new tab dashboard with widgets and much more.",
   "minimum_chrome_version": "120",
-  "permissions": ["storage", "favicon", "bookmarks", "history", "sessions"],
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsTMIfCEkokck3mGWz0jgJZM9gXpsQYKYwK+5lKP50f1A7RdDvOj6AJWEHjcMEa0NBOrXphbya3OpIcmT0XJRWbacDHX/y7AG3LFRe2EktVyYu6iypH4LvgAsxdATgGVkcZh55V7nS2pvCXX7dgg2wkxg7vp0Z0QRBN/WZslqiGTWsqSNZ15Dy0ALVHSMKKhqHHemv+FYJfSoVdukym3VvRk01r+QU0aykKLULCd1PwuqG/U52SsSb59EWRsnLM3c7YD4HEqZg+f4DgX53j7pBAztkwX/8uRn1BCMl0XlwsafUSnP7ddHq4Kuiu3AwGAf6oG4z31P1i2dqBx0QLbj/wIDAQAB",
+  "permissions": ["storage", "favicon", "bookmarks", "history", "sessions", "identity"],
+  "host_permissions": [
+    "https://www.googleapis.com/*",
+    "https://graph.microsoft.com/*",
+    "https://login.microsoftonline.com/*"
+  ],
   "chrome_url_overrides": {
     "newtab": "index.html"
   },

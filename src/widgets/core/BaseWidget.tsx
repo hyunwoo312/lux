@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Transition, Variants } from "motion/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, Settings, X } from "lucide-react";
@@ -8,6 +8,7 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { ACCENT_PRESETS, type AccentPreset } from "@/widgets/core/accent";
 import type { WidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
+import { WidgetChromeContext } from "@/widgets/core/useWidgetChrome";
 
 type BaseWidgetProps = {
   title: string;
@@ -62,6 +63,7 @@ export function BaseWidget({
 }: BaseWidgetProps) {
   const reduced = useReducedMotion();
   const [showConfig, setShowConfig] = useState(false);
+  const chrome = useMemo(() => ({ openConfig: () => setShowConfig(true) }), []);
 
   useEffect(() => {
     if (editing) setShowConfig(false);
@@ -94,6 +96,7 @@ export function BaseWidget({
   });
 
   return (
+    <WidgetChromeContext.Provider value={chrome}>
     <div
       style={accentStyle}
       className={cn(
@@ -230,5 +233,6 @@ export function BaseWidget({
         </AnimatePresence>
       </div>
     </div>
+    </WidgetChromeContext.Provider>
   );
 }

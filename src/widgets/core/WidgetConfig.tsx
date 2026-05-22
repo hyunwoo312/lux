@@ -12,7 +12,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 
 export function WidgetConfig({ children }: { children: ReactNode }) {
-  return <div className="@container flex flex-col gap-5">{children}</div>;
+  return <div className="flex flex-col gap-5">{children}</div>;
 }
 
 export function WidgetConfigGroup({ label, children }: { label: string; children: ReactNode }) {
@@ -35,7 +35,7 @@ type ConfigItemProps = {
 
 function ConfigText({ title, description }: { title: string; description?: string }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1">
+    <div className="flex min-w-0 grow basis-24 flex-col gap-1">
       <span className="text-sm leading-none font-medium">{title}</span>
       {description && (
         <span className="text-muted-foreground text-xs leading-snug">{description}</span>
@@ -47,12 +47,9 @@ function ConfigText({ title, description }: { title: string; description?: strin
 export function WidgetConfigItem({ title, description, control, children }: ConfigItemProps) {
   return (
     <div className="flex flex-col gap-3">
-      <div className="
-        @3xs:flex-row @3xs:items-center @3xs:justify-between @3xs:gap-4
-        flex flex-col gap-2
-      ">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <ConfigText title={title} description={description} />
-        {control && <div className="@3xs:shrink-0">{control}</div>}
+        {control && <div className="min-w-0">{control}</div>}
       </div>
       {children}
     </div>
@@ -71,15 +68,14 @@ export function WidgetConfigSubItem({
     <div
       className={cn(
         `
-          border-border/70
-          @3xs:flex-row @3xs:items-center @3xs:justify-between @3xs:gap-4
-          ml-1 flex flex-col gap-2 border-l pl-3 transition-opacity
+          border-border/70 ml-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-l
+          pl-3 transition-opacity
         `,
         disabled && "pointer-events-none opacity-40",
       )}
     >
       <ConfigText title={title} description={description} />
-      {control && <div className="@3xs:shrink-0">{control}</div>}
+      {control && <div className="min-w-0">{control}</div>}
     </div>
   );
 }
@@ -107,7 +103,7 @@ export function ConfigSelect<T extends string>({
   };
   return (
     <Select value={value} onValueChange={handleChange} disabled={disabled}>
-      <SelectTrigger aria-label={label} className="@3xs:w-36 w-full">
+      <SelectTrigger aria-label={label} className="w-36 max-w-full">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

@@ -24,9 +24,10 @@ type TooltipBodyProps = {
   content: ReactNode;
   side?: Side;
   align?: Align;
+  solid?: boolean;
 };
 
-function TooltipBody({ content, side, align }: TooltipBodyProps) {
+function TooltipBody({ content, side, align, solid }: TooltipBodyProps) {
   return (
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Content
@@ -34,10 +35,12 @@ function TooltipBody({ content, side, align }: TooltipBodyProps) {
         align={align}
         sideOffset={8}
         collisionPadding={12}
-        className={cn(`
-          glass text-popover-foreground z-[100] rounded-md px-2.5 py-1.5 text-2xs font-medium
-          tracking-wide whitespace-nowrap uppercase
-        `)}
+        className={cn(
+          "text-popover-foreground z-[100] rounded-md px-2.5 py-1.5 text-2xs font-medium",
+          solid
+            ? "bg-popover border-border max-w-[14rem] border"
+            : "glass tracking-wide whitespace-nowrap uppercase",
+        )}
       >
         {content}
       </TooltipPrimitive.Content>
@@ -52,6 +55,7 @@ type TooltipProps = {
   sticky?: boolean;
   side?: Side;
   align?: Align;
+  solid?: boolean;
 };
 
 const SHOW_DELAY = 200;
@@ -109,6 +113,7 @@ function Tooltip({
   sticky = false,
   side = "bottom",
   align = "center",
+  solid = false,
 }: TooltipProps) {
   if (disabled || !content) return <>{children}</>;
 
@@ -123,7 +128,7 @@ function Tooltip({
   return (
     <TooltipPrimitive.Root>
       <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
-      <TooltipBody content={content} side={side} align={align} />
+      <TooltipBody content={content} side={side} align={align} solid={solid} />
     </TooltipPrimitive.Root>
   );
 }

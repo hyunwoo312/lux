@@ -5,6 +5,7 @@ export type AccentPreset =
   | "cyan"
   | "emerald"
   | "rose"
+  | "orange"
   | "yellow";
 
 type AccentDefinition = {
@@ -40,6 +41,12 @@ export const ACCENT_PRESETS: Record<AccentPreset, AccentDefinition> = {
   rose: {
     primary: "oklch(0.6 0.2 12)",
     primaryForeground: "oklch(0.99 0.01 12)",
+  },
+  orange: {
+    primary: "oklch(0.7 0.18 47)",
+    primaryForeground: "oklch(0.99 0.01 60)",
+    gradient: "oklch(0.72 0.19 50)",
+    gradientStrength: "34%",
   },
   yellow: {
     primary: "oklch(0.88 0.14 98)",
