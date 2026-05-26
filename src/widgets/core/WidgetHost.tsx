@@ -43,6 +43,7 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
       bare={bare}
       highlighted={highlighted}
       backdrop={BackdropComponent ? <BackdropComponent /> : undefined}
+      decorativeBackdrop={plugin.decorativeBackdrop}
       headline={StatusComponent ? <StatusComponent /> : undefined}
       headerAction={HeaderActionComponent ? <HeaderActionComponent /> : undefined}
       config={

@@ -1,6 +1,7 @@
 import type { ComponentProps } from "react";
 import googleCalendarIcon from "@/assets/service-icons/google-calendar.svg";
 import outlookIcon from "@/assets/service-icons/outlook.svg";
+import spotifyIcon from "@/assets/service-icons/spotify.svg";
 
 type ServiceIconProps = Omit<ComponentProps<"img">, "src" | "alt">;
 
@@ -14,3 +15,4 @@ function createServiceIcon(src: string, label: string) {
 
 export const GoogleCalendarServiceIcon = createServiceIcon(googleCalendarIcon, "GoogleCalendar");
 export const OutlookServiceIcon = createServiceIcon(outlookIcon, "Outlook");
+export const SpotifyServiceIcon = createServiceIcon(spotifyIcon, "Spotify");

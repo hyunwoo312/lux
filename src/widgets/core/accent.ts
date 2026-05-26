@@ -1,9 +1,12 @@
+import type { CSSProperties } from "react";
+
 export type AccentPreset =
   | "default"
   | "violet"
   | "indigo"
   | "cyan"
   | "emerald"
+  | "green"
   | "rose"
   | "orange"
   | "yellow";
@@ -38,6 +41,12 @@ export const ACCENT_PRESETS: Record<AccentPreset, AccentDefinition> = {
     primary: "oklch(0.62 0.14 162)",
     primaryForeground: "oklch(0.99 0.01 162)",
   },
+  green: {
+    primary: "oklch(0.74 0.2 148)",
+    primaryForeground: "oklch(0.22 0.05 150)",
+    gradient: "oklch(0.76 0.21 146)",
+    gradientStrength: "34%",
+  },
   rose: {
     primary: "oklch(0.6 0.2 12)",
     primaryForeground: "oklch(0.99 0.01 12)",
@@ -55,3 +64,14 @@ export const ACCENT_PRESETS: Record<AccentPreset, AccentDefinition> = {
     gradientStrength: "36%",
   },
 };
+
+export function getAccentVars(accent: AccentPreset): CSSProperties {
+  const preset = ACCENT_PRESETS[accent];
+  return {
+    "--primary": preset.primary,
+    "--primary-foreground": preset.primaryForeground,
+    "--ring": preset.primary,
+    "--widget-gradient": preset.gradient ?? preset.primary,
+    "--widget-gradient-strength": preset.gradientStrength ?? "20%",
+  } as CSSProperties;
+}

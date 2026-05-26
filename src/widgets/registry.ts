@@ -4,6 +4,7 @@ import { tasksPlugin } from "@/widgets/tasks";
 import { quickAccessPlugin } from "@/widgets/quick-access";
 import { imagePlugin } from "@/widgets/image";
 import { calendarPlugin } from "@/widgets/calendar";
+import { spotifyPlugin } from "@/widgets/spotify";
 
 const plugins: Record<WidgetType, WidgetPlugin> = {
   clock: clockPlugin,
@@ -11,6 +12,7 @@ const plugins: Record<WidgetType, WidgetPlugin> = {
   quickAccess: quickAccessPlugin,
   image: imagePlugin,
   calendar: calendarPlugin,
+  spotify: spotifyPlugin,
 };
 
 export const widgetPlugins: WidgetPlugin[] = [
@@ -19,6 +21,7 @@ export const widgetPlugins: WidgetPlugin[] = [
   quickAccessPlugin,
   imagePlugin,
   calendarPlugin,
+  spotifyPlugin,
 ];
 
 export function getWidgetPlugin(type: WidgetType): WidgetPlugin | undefined {

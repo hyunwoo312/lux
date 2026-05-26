@@ -7,8 +7,13 @@ import {
   parseAuthCodeCallback,
   parseImplicitTokenCallback,
 } from "@/integrations/oauth";
+import {
+  IntegrationReconnectRequiredError,
+  IntegrationTemporaryAuthError,
+} from "@/integrations/errors";
 import { googleProvider } from "@/integrations/providers/google";
 import { microsoftProvider } from "@/integrations/providers/microsoft";
+import { spotifyProvider } from "@/integrations/providers/spotify";
 import { deleteAccount, getAccountByProvider, writeAccount } from "@/integrations/token-store";
 import type {
   IntegrationAccount,
@@ -22,6 +27,7 @@ const TOKEN_REFRESH_BUFFER_MS = 300_000;
 const providers: Record<IntegrationProviderId, IntegrationProvider> = {
   google: googleProvider,
   microsoft: microsoftProvider,
+  spotify: spotifyProvider,
 };
 
 function getProvider(providerId: IntegrationProviderId): IntegrationProvider {
@@ -172,10 +178,18 @@ async function getProviderAccessToken(providerId: IntegrationProviderId): Promis
     });
 
     return token.accessToken;
-  } catch {
+  } catch (error) {
+    if (error instanceof IntegrationTemporaryAuthError) {
+      await writeAccount({ ...account, status: "connected", lastError: error.message });
+      throw error;
+    }
+    if (error instanceof IntegrationReconnectRequiredError) {
+      await markNeedsReconnect(account, error.message);
+      throw error;
+    }
     const message = `${provider.label} needs to be reconnected`;
     await markNeedsReconnect(account, message);
-    throw new Error(message);
+    throw new Error(message, { cause: error });
   }
 }
 

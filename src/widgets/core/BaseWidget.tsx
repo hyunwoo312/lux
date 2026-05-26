@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import type { Transition, Variants } from "motion/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -6,7 +6,7 @@ import { Check, Settings, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { ACCENT_PRESETS, type AccentPreset } from "@/widgets/core/accent";
+import { getAccentVars, type AccentPreset } from "@/widgets/core/accent";
 import type { WidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
 import { WidgetChromeContext } from "@/widgets/core/useWidgetChrome";
 
@@ -20,6 +20,7 @@ type BaseWidgetProps = {
   bare?: boolean;
   highlighted?: boolean;
   backdrop?: ReactNode;
+  decorativeBackdrop?: boolean;
   headline?: ReactNode;
   headerAction?: ReactNode;
   config?: ReactNode;
@@ -55,6 +56,7 @@ export function BaseWidget({
   bare = false,
   highlighted = false,
   backdrop,
+  decorativeBackdrop = false,
   headline,
   headerAction,
   config,
@@ -70,17 +72,11 @@ export function BaseWidget({
   }, [editing]);
 
   const hasBackdrop = Boolean(backdrop);
+  const contentBackdrop = hasBackdrop && !decorativeBackdrop;
   const chromeHidden = bare && !editing && !showConfig;
-  const omitSurface = chromeHidden || (hasBackdrop && showConfig);
+  const omitSurface = chromeHidden || (contentBackdrop && showConfig);
 
-  const preset = ACCENT_PRESETS[accent];
-  const accentStyle = {
-    "--primary": preset.primary,
-    "--primary-foreground": preset.primaryForeground,
-    "--ring": preset.primary,
-    "--widget-gradient": preset.gradient ?? preset.primary,
-    "--widget-gradient-strength": preset.gradientStrength ?? "20%",
-  } as CSSProperties;
+  const accentStyle = getAccentVars(accent);
 
   const offset = reduced ? 0 : 12;
   const viewVariants: Variants = {
@@ -119,7 +115,7 @@ export function BaseWidget({
           {backdrop}
         </div>
       )}
-      {hasBackdrop && showConfig && (
+      {contentBackdrop && showConfig && (
         <div className="bg-background/70 pointer-events-none absolute inset-0 z-[5]" aria-hidden />
       )}
       <div className="relative z-10 flex items-center justify-between gap-2 px-4 py-2">

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { motion, useReducedMotion } from "motion/react";
+import { cn } from "@/lib/utils";
 import { isOverGrid, resolveDrop } from "@/widgets/core/drag";
 import { useWidgetDragStore, type DropMorph } from "@/widgets/core/useWidgetDragStore";
 import { getWidgetPlugin } from "@/widgets/registry";
@@ -32,6 +33,7 @@ function DropMorphGhost({ morph, onDone }: { morph: DropMorph; onDone: () => voi
       className="
         glass text-muted-foreground pointer-events-none flex items-center justify-center rounded-xl
         shadow-lg
+        [&_img]:size-7
         [&_svg]:size-7
       "
     >
@@ -91,10 +93,12 @@ export function WidgetDragOverlay() {
         "
       >
         <span
-          className="
-            bg-foreground/5 text-foreground/80 flex size-8 items-center justify-center rounded-md
-            [&_svg]:size-4
-          "
+          className={cn(
+            "flex size-8 items-center justify-center rounded-md",
+            plugin.brandIcon
+              ? "[&_img]:size-7 [&_svg]:size-7"
+              : "bg-foreground/5 text-foreground/80 [&_img]:size-4 [&_svg]:size-4",
+          )}
         >
           <Icon />
         </span>

@@ -194,11 +194,12 @@ export function WidgetPalette() {
                         )}
                       >
                         <span
-                          className="
-                            bg-foreground/5 text-foreground/80 flex size-8 items-center
-                            justify-center rounded-md
-                            [&_svg]:size-4
-                          "
+                          className={cn(
+                            "flex size-8 items-center justify-center rounded-md",
+                            plugin.brandIcon
+                              ? "[&_img]:size-7 [&_svg]:size-7"
+                              : `bg-foreground/5 text-foreground/80 [&_img]:size-4 [&_svg]:size-4`,
+                          )}
                         >
                           <Icon />
                         </span>
