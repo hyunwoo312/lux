@@ -1,24 +1,34 @@
 import { useEffect, useState } from "react";
-import { fetchBookmarks, fetchHistory, fetchRecentlyClosed } from "@/widgets/quick-access/browser";
-import type { BrowserItem, QuickAccessTab } from "@/widgets/quick-access/types";
+import {
+  fetchBookmarks,
+  fetchHistory,
+  fetchRecentlyClosed,
+  fetchTopSites,
+} from "@/widgets/quick-access/browser";
+import type { BrowserItem, BrowserSource } from "@/widgets/quick-access/types";
 
 type BrowserState =
   | { status: "loading" }
   | { status: "error" }
   | { status: "ready"; items: BrowserItem[] };
 
-const FETCHERS: Record<Exclude<QuickAccessTab, "home">, () => Promise<BrowserItem[]>> = {
+const FETCHERS: Record<BrowserSource, () => Promise<BrowserItem[]>> = {
   bookmarks: fetchBookmarks,
   recentlyClosed: fetchRecentlyClosed,
   history: fetchHistory,
+  topSites: fetchTopSites,
 };
 
 const REFRESH_MS = 60_000;
 
-export function useBrowserItems(tab: Exclude<QuickAccessTab, "home">): BrowserState {
+export function useBrowserItems(tab: BrowserSource, enabled = true): BrowserState {
   const [state, setState] = useState<BrowserState>({ status: "loading" });
 
   useEffect(() => {
+    if (!enabled) {
+      setState({ status: "ready", items: [] });
+      return;
+    }
     let active = true;
     let fetching = false;
     let lastRefresh = 0;
@@ -58,7 +68,7 @@ export function useBrowserItems(tab: Exclude<QuickAccessTab, "home">): BrowserSt
       window.removeEventListener("focus", refreshWhenVisible);
       document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
-  }, [tab]);
+  }, [tab, enabled]);
 
   return state;
 }

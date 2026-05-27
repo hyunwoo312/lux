@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Bookmark, History, Pin, Undo2 } from "lucide-react";
+import { Bookmark, History, House, Undo2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { QuickAccessTab } from "@/widgets/quick-access/types";
 import { useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
 
 const TABS: { value: QuickAccessTab; label: string; icon: LucideIcon }[] = [
-  { value: "home", label: "Pinned", icon: Pin },
+  { value: "home", label: "Home", icon: House },
   { value: "bookmarks", label: "Bookmarks", icon: Bookmark },
   { value: "recentlyClosed", label: "Recent", icon: Undo2 },
   { value: "history", label: "History", icon: History },

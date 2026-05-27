@@ -21,6 +21,7 @@ type QuickAccessState = {
   activeTab: QuickAccessTab;
   openBehavior: OpenBehavior;
   view: QuickAccessView;
+  showTopSites: boolean;
   addLink: (title: string, url: string) => void;
   editLink: (id: string, title: string, url: string) => void;
   removeLink: (id: string) => void;
@@ -29,6 +30,7 @@ type QuickAccessState = {
   setActiveTab: (tab: QuickAccessTab) => void;
   setOpenBehavior: (openBehavior: OpenBehavior) => void;
   setView: (view: QuickAccessView) => void;
+  setShowTopSites: (showTopSites: boolean) => void;
 };
 
 const linkSchema = z.object({ id: z.string(), title: z.string(), url: z.string() });
@@ -38,6 +40,7 @@ const persistedSchema = z.object({
   activeTab: z.enum(["home", "bookmarks", "recentlyClosed", "history"]),
   openBehavior: z.enum(["currentTab", "newTab"]),
   view: z.enum(["grid", "list"]),
+  showTopSites: z.boolean().default(true),
 });
 
 const gatedStorage = createGatedChromeStorage();
@@ -49,6 +52,7 @@ export const useQuickAccessStore = create<QuickAccessState>()(
       activeTab: "home",
       openBehavior: "currentTab",
       view: "grid",
+      showTopSites: true,
       addLink: (title, url) =>
         set((state) => {
           const normalized = normalizeUrl(url);
@@ -93,6 +97,7 @@ export const useQuickAccessStore = create<QuickAccessState>()(
       setActiveTab: (activeTab) => set({ activeTab }),
       setOpenBehavior: (openBehavior) => set({ openBehavior }),
       setView: (view) => set({ view }),
+      setShowTopSites: (showTopSites) => set({ showTopSites }),
     }),
     {
       name: "widget:quick-access",
@@ -104,6 +109,7 @@ export const useQuickAccessStore = create<QuickAccessState>()(
         activeTab: state.activeTab,
         openBehavior: state.openBehavior,
         view: state.view,
+        showTopSites: state.showTopSites,
       }),
       merge: (persisted, current) => {
         const parsed = persistedSchema.safeParse(persisted);

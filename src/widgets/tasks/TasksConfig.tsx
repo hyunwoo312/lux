@@ -16,8 +16,10 @@ const COMPLETED_OPTIONS: { value: CompletedPosition; label: string }[] = [
 export function TasksConfig() {
   const autoSort = useTasksStore((s) => s.autoSort);
   const completedPosition = useTasksStore((s) => s.completedPosition);
+  const removeOnCompletion = useTasksStore((s) => s.removeOnCompletion);
   const setAutoSort = useTasksStore((s) => s.setAutoSort);
   const setCompletedPosition = useTasksStore((s) => s.setCompletedPosition);
+  const setRemoveOnCompletion = useTasksStore((s) => s.setRemoveOnCompletion);
 
   return (
     <WidgetConfigGroup label="Tasks">
@@ -47,6 +49,17 @@ export function TasksConfig() {
           }
         />
       </WidgetConfigItem>
+      <WidgetConfigItem
+        title="Remove on completion"
+        description="Delete a task shortly after it is checked"
+        control={
+          <Switch
+            checked={removeOnCompletion}
+            onCheckedChange={(checked) => setRemoveOnCompletion(checked === true)}
+            aria-label="Remove tasks on completion"
+          />
+        }
+      />
     </WidgetConfigGroup>
   );
 }

@@ -1,4 +1,9 @@
-import { flattenBookmarks, historyToItem, sessionToItem } from "@/widgets/quick-access/browser";
+import {
+  flattenBookmarks,
+  historyToItem,
+  searchHistory,
+  sessionToItem,
+} from "@/widgets/quick-access/browser";
 
 describe("flattenBookmarks", () => {
   it("collects nested url nodes and skips folders", () => {
@@ -47,5 +52,21 @@ describe("historyToItem", () => {
       title: "https://x.com/",
       url: "https://x.com/",
     });
+  });
+});
+
+describe("searchHistory", () => {
+  it("dedupes by url, drops non-http entries, and caps the limit", async () => {
+    const chromeRef = (globalThis as unknown as { chrome: typeof chrome }).chrome;
+    chromeRef.history.search = (async () => [
+      { id: "1", url: "https://a.com/", title: "A" },
+      { id: "2", url: "https://a.com/", title: "A again" },
+      { id: "3", url: "chrome://flags", title: "Flags" },
+      { id: "4", url: "https://b.com/", title: "B" },
+    ]) as typeof chrome.history.search;
+
+    const items = await searchHistory("a", 2);
+
+    expect(items.map((item) => item.url)).toEqual(["https://a.com/", "https://b.com/"]);
   });
 });

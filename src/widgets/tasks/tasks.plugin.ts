@@ -2,6 +2,7 @@ import { ListTodo } from "lucide-react";
 import type { WidgetPlugin } from "@/widgets/core/types";
 import { TasksConfig } from "@/widgets/tasks/TasksConfig";
 import { TasksWidget } from "@/widgets/tasks/TasksWidget";
+import { ClearCompletedButton } from "@/widgets/tasks/components/ClearCompletedButton";
 import { TasksStatus } from "@/widgets/tasks/components/TasksStatus";
 
 export const tasksPlugin: WidgetPlugin = {
@@ -12,5 +13,6 @@ export const tasksPlugin: WidgetPlugin = {
   component: TasksWidget,
   configComponent: TasksConfig,
   statusComponent: TasksStatus,
+  headerActionComponent: ClearCompletedButton,
   accent: "indigo",
 };

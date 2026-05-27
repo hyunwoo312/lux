@@ -5,6 +5,7 @@ export type QuickLink = {
 };
 
 export type QuickAccessTab = "home" | "bookmarks" | "recentlyClosed" | "history";
+export type BrowserSource = Exclude<QuickAccessTab, "home"> | "topSites";
 export type OpenBehavior = "currentTab" | "newTab";
 export type QuickAccessView = "grid" | "list";
 

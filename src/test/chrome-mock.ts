@@ -34,6 +34,9 @@ function createChromeMock() {
     sessions: {
       getRecentlyClosed: vi.fn(async () => []),
     },
+    topSites: {
+      get: vi.fn(async () => []),
+    },
   };
 }
 
