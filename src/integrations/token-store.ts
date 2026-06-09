@@ -12,6 +12,13 @@ const STORAGE_KEY = "integrations";
 
 const EMPTY_STORAGE: IntegrationStorageState = { version: 1, accounts: {} };
 
+const listeners = new Set<() => void>();
+
+export function subscribeAccounts(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
 function toSummary(account: IntegrationAccount): IntegrationAccountSummary {
   return {
     id: account.id,
@@ -33,6 +40,7 @@ async function readStorage(): Promise<IntegrationStorageState> {
 
 async function writeStorage(state: IntegrationStorageState): Promise<void> {
   await write(STORAGE_KEY, integrationStorageSchema.parse(state));
+  for (const listener of listeners) listener();
 }
 
 export async function readAccountSummaries(): Promise<IntegrationAccountSummary[]> {

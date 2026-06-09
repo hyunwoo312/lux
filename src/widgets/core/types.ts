@@ -4,7 +4,6 @@ import type { AccentPreset } from "@/widgets/core/accent";
 export type WidgetIcon = ComponentType<{ className?: string }>;
 
 export const WIDGET_TYPES = [
-  "clock",
   "tasks",
   "quickAccess",
   "image",

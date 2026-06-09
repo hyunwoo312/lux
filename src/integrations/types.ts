@@ -14,7 +14,6 @@ export const integrationTokenSchema = z.object({
   tokenType: z.string().min(1).default("Bearer"),
   scopes: z.array(z.string().min(1)),
 });
-export type IntegrationToken = z.infer<typeof integrationTokenSchema>;
 
 export const integrationAccountSchema = z.object({
   id: z.string().min(1),
@@ -51,6 +50,7 @@ export type ImplicitAuthUrlParams = {
   redirectUri: string;
   state: string;
   scopes: string[];
+  prompt?: string;
 };
 
 export type PkceAuthUrlParams = ImplicitAuthUrlParams & {
@@ -81,7 +81,8 @@ export type IntegrationProvider = {
   id: IntegrationProviderId;
   label: string;
   scopes: string[];
-  clientIdEnvKey: string;
+  clientIdEnvKey?: string;
+  loadClientId?: () => Promise<string | undefined>;
   buildAuthUrl?: (params: ImplicitAuthUrlParams) => string;
   buildPkceAuthUrl?: (params: PkceAuthUrlParams) => string;
   exchangeCode?: (params: ExchangeCodeParams) => Promise<IntegrationTokenResponse>;

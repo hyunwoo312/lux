@@ -3,7 +3,7 @@ import {
   getRandomIndexExcluding,
   getSignature,
   selectNewtabIndex,
-} from "@/widgets/image/lib/rotation";
+} from "@/lib/media-rotation";
 
 describe("getNextSequentialIndex", () => {
   it("advances and wraps", () => {

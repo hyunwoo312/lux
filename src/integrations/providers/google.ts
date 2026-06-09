@@ -18,7 +18,7 @@ export const googleProvider: IntegrationProvider = {
     "https://www.googleapis.com/auth/userinfo.email",
   ],
   clientIdEnvKey: "VITE_GOOGLE_CLIENT_ID",
-  buildAuthUrl: ({ clientId, redirectUri, state, scopes }) => {
+  buildAuthUrl: ({ clientId, redirectUri, state, scopes, prompt }) => {
     const url = new URL(AUTHORIZATION_ENDPOINT);
     url.searchParams.set("response_type", "token");
     url.searchParams.set("client_id", clientId);
@@ -26,7 +26,7 @@ export const googleProvider: IntegrationProvider = {
     url.searchParams.set("scope", scopes.join(" "));
     url.searchParams.set("state", state);
     url.searchParams.set("include_granted_scopes", "true");
-    url.searchParams.set("prompt", "consent");
+    url.searchParams.set("prompt", prompt ?? "consent");
     return url.toString();
   },
   fetchProfile: async (accessToken) => {

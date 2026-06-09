@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
+import { CalendarOff, CalendarPlus } from "lucide-react";
+import { useSettingsStore } from "@/settings";
 import { CalendarConnectPrompt } from "@/widgets/calendar/components/CalendarConnectPrompt";
 import { CalendarGrid } from "@/widgets/calendar/CalendarGrid";
 import { CalendarListView } from "@/widgets/calendar/CalendarListView";
@@ -26,10 +28,15 @@ export function CalendarWidget() {
   const microsoftCalendars = useCalendarStore((s) => s.microsoft.calendars);
   const googleError = useCalendarStore((s) => s.google.lastError);
   const microsoftError = useCalendarStore((s) => s.microsoft.lastError);
+  const enabledCalendarCount = useCalendarStore(
+    (s) => s.google.enabledCalendarIds.length + s.microsoft.enabledCalendarIds.length,
+  );
 
   const { openConfig } = useWidgetChrome();
-  const connected = Boolean(google.account || microsoft.account);
-  useCalendarAutoSync(connected);
+  const hasAccount = Boolean(google.account || microsoft.account);
+  const connected =
+    google.account?.status === "connected" || microsoft.account?.status === "connected";
+  useCalendarAutoSync();
 
   const visibleEvents = useMemo(
     () => (enabled ? dedupeCalendarEvents(events, primarySource) : []),
@@ -46,20 +53,29 @@ export function CalendarWidget() {
   if (loaded && !connected) {
     return (
       <CalendarConnectPrompt
-        loaded={loaded}
-        error={google.error ?? microsoft.error ?? null}
-        options={[
-          {
-            label: "Google Calendar",
-            busy: google.busy === "connecting",
-            onConnect: google.connect,
-          },
-          {
-            label: "Outlook Calendar",
-            busy: microsoft.busy === "connecting",
-            onConnect: microsoft.connect,
-          },
-        ]}
+        icon={CalendarPlus}
+        message={
+          hasAccount
+            ? "Reconnect your calendar to see your schedule."
+            : "Connect a calendar to see your schedule."
+        }
+        actionLabel="Manage in Settings"
+        onAction={() => useSettingsStore.getState().openSettings("accounts")}
+      />
+    );
+  }
+
+  if (loaded && connected && status === "idle" && (!enabled || enabledCalendarCount === 0)) {
+    return (
+      <CalendarConnectPrompt
+        icon={CalendarOff}
+        message={
+          enabled
+            ? "No calendars selected for this widget."
+            : "Events are turned off for this widget."
+        }
+        actionLabel="Open widget settings"
+        onAction={openConfig}
       />
     );
   }
@@ -104,7 +120,7 @@ export function CalendarWidget() {
           <div
             className="
               bg-destructive/10 text-destructive border-destructive/20 absolute inset-x-2 bottom-2
-              z-20 flex items-center gap-2 rounded-md border px-2.5 py-1.5 backdrop-blur-sm
+              z-20 flex items-center gap-2 rounded-md border px-2.5 py-1.5
             "
           >
             <span className="min-w-0 flex-1 truncate text-2xs">{syncError}</span>

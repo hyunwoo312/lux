@@ -1,7 +1,7 @@
 import type { ChangeEvent } from "react";
 import { useRef } from "react";
 import { Upload } from "lucide-react";
-import { IMAGE_MIME_TYPES } from "@/widgets/image/types";
+import { ACCEPTED_IMAGE_TYPES } from "@/lib/asset-store";
 
 type ImageUploadButtonProps = {
   title: string;
@@ -52,7 +52,7 @@ export function ImageUploadButton({
       <input
         ref={inputRef}
         type="file"
-        accept={IMAGE_MIME_TYPES.join(",")}
+        accept={ACCEPTED_IMAGE_TYPES.join(",")}
         multiple={multiple}
         disabled={disabled}
         onChange={onChange}

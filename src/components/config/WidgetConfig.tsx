@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { useId } from "react";
 import { motion } from "motion/react";
 import {
@@ -9,16 +9,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 export function WidgetConfig({ children }: { children: ReactNode }) {
-  return <div className="flex flex-col gap-5">{children}</div>;
+  return (
+    <div className="flex flex-col gap-5 [&>section:first-of-type>:first-child]:hidden">
+      {children}
+    </div>
+  );
 }
 
 export function WidgetConfigGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-3">
-      <span className="text-muted-foreground/70 text-2xs font-semibold tracking-wider uppercase">
+      <Separator className="mb-1.5" />
+      <span className="text-muted-foreground text-2xs font-semibold tracking-wider uppercase">
         {label}
       </span>
       <div className="flex flex-col gap-3.5">{children}</div>
@@ -49,7 +55,7 @@ export function WidgetConfigItem({ title, description, control, children }: Conf
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <ConfigText title={title} description={description} />
-        {control && <div className="min-w-0">{control}</div>}
+        {control && <div className="shrink-0">{control}</div>}
       </div>
       {children}
     </div>
@@ -75,12 +81,16 @@ export function WidgetConfigSubItem({
       )}
     >
       <ConfigText title={title} description={description} />
-      {control && <div className="min-w-0">{control}</div>}
+      {control && <div className="shrink-0">{control}</div>}
     </div>
   );
 }
 
-type ConfigOption<T extends string> = { value: T; label: string };
+type ConfigOption<T extends string> = {
+  value: T;
+  label: string;
+  icon?: ComponentType<{ className?: string }>;
+};
 
 type SelectControlProps<T extends string> = {
   value: T;
@@ -165,6 +175,58 @@ export function ConfigSegmented<T extends string>({
               />
             )}
             <span className="relative z-10">{option.label}</span>
+          </ToggleGroupItem>
+        );
+      })}
+    </ToggleGroup>
+  );
+}
+
+type MultiToggleProps<T extends string> = {
+  values: T[];
+  options: ConfigOption<T>[];
+  onChange: (values: T[]) => void;
+  disabled?: boolean;
+  label: string;
+};
+
+export function ConfigMultiToggle<T extends string>({
+  values,
+  options,
+  onChange,
+  disabled = false,
+  label,
+}: MultiToggleProps<T>) {
+  return (
+    <ToggleGroup
+      type="multiple"
+      value={values}
+      onValueChange={(next) => onChange(next as T[])}
+      disabled={disabled}
+      aria-label={label}
+      className="flex flex-wrap gap-1"
+    >
+      {options.map((option) => {
+        const active = values.includes(option.value);
+        const Icon = option.icon;
+        return (
+          <ToggleGroupItem
+            key={option.value}
+            value={option.value}
+            className={cn(
+              `
+                inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium
+                transition-colors
+                [&_img]:size-4
+                [&_svg]:size-4
+              `,
+              active
+                ? "border-primary/40 bg-primary/10 text-foreground"
+                : "border-border text-muted-foreground hover:bg-accent/60",
+            )}
+          >
+            {Icon && <Icon className="shrink-0 object-contain" />}
+            {option.label}
           </ToggleGroupItem>
         );
       })}

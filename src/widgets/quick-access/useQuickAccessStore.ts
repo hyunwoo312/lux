@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { hostnameOf, normalizeUrl } from "@/widgets/quick-access/lib/url";
@@ -101,7 +101,7 @@ export const useQuickAccessStore = create<QuickAccessState>()(
     }),
     {
       name: "widget:quick-access",
-      storage: createJSONStorage(() => gatedStorage),
+      storage: gatedStorage,
       version: 1,
       onRehydrateStorage: () => () => gatedStorage.open(),
       partialize: (state) => ({

@@ -105,6 +105,9 @@ export function BaseWidget({
         editing && `pointer-events-none select-none`,
       )}
     >
+      {!omitSurface && (
+        <div aria-hidden className="widget-bloom pointer-events-none absolute inset-0 z-0" />
+      )}
       {backdrop && (
         <div
           className={cn(

@@ -3,7 +3,7 @@ import {
   connectIntegration,
   disconnectIntegration,
 } from "@/integrations/integration-client";
-import { readAccountSummaries } from "@/integrations/token-store";
+import { readAccountSummaries, subscribeAccounts } from "@/integrations/token-store";
 import type { IntegrationAccountSummary, IntegrationProviderId } from "@/integrations/types";
 
 type IntegrationStoreState = {
@@ -30,3 +30,9 @@ export const useIntegrationStore = create<IntegrationStoreState>()((set, get) =>
     await get().load();
   },
 }));
+
+subscribeAccounts(() => {
+  if (useIntegrationStore.getState().loaded) {
+    void useIntegrationStore.getState().load();
+  }
+});

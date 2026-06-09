@@ -21,7 +21,7 @@ function SelectTrigger({
       data-slot="select-trigger"
       className={cn(
         `
-          border-input bg-background/40 ring-offset-background
+          border-input bg-background/60 ring-offset-background
           focus-visible:border-ring focus-visible:ring-ring/30
           data-[placeholder]:text-muted-foreground
           flex h-8 w-full items-center justify-between gap-2 rounded-md border px-2.5 py-1 text-xs

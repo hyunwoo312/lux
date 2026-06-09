@@ -1,0 +1,18 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="star"><path d="M267.57 62.03 Q311.63 200.37 449.97 244.43 Q496.00 256.00 449.97 267.57 Q311.63 311.63 267.57 449.97 Q256.00 496.00 244.43 449.97 Q200.37 311.63 62.03 267.57 Q16.00 256.00 62.03 244.43 Q200.37 200.37 244.43 62.03 Q256.00 16.00 267.57 62.03 Z"/></clipPath>
+    <radialGradient id="up" cx="256" cy="16" r="281" gradientUnits="userSpaceOnUse"><stop stop-color="#C8A1FB" stop-opacity="0.72"/><stop offset="0.42" stop-color="#C8A1FB" stop-opacity="0.72"/><stop offset="1" stop-color="#C8A1FB" stop-opacity="0"/></radialGradient>
+    <radialGradient id="right" cx="496" cy="256" r="281" gradientUnits="userSpaceOnUse"><stop stop-color="#FFE46E" stop-opacity="1.0"/><stop offset="0.42" stop-color="#FFE46E" stop-opacity="1.00"/><stop offset="1" stop-color="#FFE46E" stop-opacity="0"/></radialGradient>
+    <radialGradient id="down" cx="256" cy="496" r="281" gradientUnits="userSpaceOnUse"><stop stop-color="#FBB6CB" stop-opacity="0.72"/><stop offset="0.42" stop-color="#FBB6CB" stop-opacity="0.72"/><stop offset="1" stop-color="#FBB6CB" stop-opacity="0"/></radialGradient>
+    <radialGradient id="left" cx="16" cy="256" r="281" gradientUnits="userSpaceOnUse"><stop stop-color="#A861FD" stop-opacity="1.0"/><stop offset="0.42" stop-color="#A861FD" stop-opacity="1.00"/><stop offset="1" stop-color="#A861FD" stop-opacity="0"/></radialGradient>
+    <radialGradient id="bloom" cx="256" cy="254" r="104" gradientUnits="userSpaceOnUse"><stop stop-color="#FFFAF6" stop-opacity="0.96"/><stop offset="0.5" stop-color="#FFF7F2" stop-opacity="0.5"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>
+  </defs>
+  <g clip-path="url(#star)">
+    <rect width="512" height="512" fill="#FDF3EE"/>
+    <rect width="512" height="512" fill="url(#up)"/>
+    <rect width="512" height="512" fill="url(#right)"/>
+    <rect width="512" height="512" fill="url(#down)"/>
+    <rect width="512" height="512" fill="url(#left)"/>
+    <rect width="512" height="512" fill="url(#bloom)"/>
+  </g>
+</svg>

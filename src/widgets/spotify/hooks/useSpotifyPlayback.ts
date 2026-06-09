@@ -19,6 +19,7 @@ import {
   type SpotifyPlaybackDevice,
   type SpotifyPlaybackState,
 } from "@/widgets/spotify/types";
+import { useSpotifyStore } from "@/widgets/spotify/useSpotifyStore";
 
 const RESTART_THRESHOLD_MS = 3_000;
 const PLAYING_POLL_MS = 10_000;
@@ -40,6 +41,8 @@ export function useSpotifyPlayback(connected: boolean) {
   const isVolumeEditingRef = useRef(false);
   const refreshRequestIdRef = useRef(0);
   const rateLimitedUntilRef = useRef(0);
+
+  const refreshNonce = useSpotifyStore((s) => s.refreshNonce);
 
   const refreshPlayback = useCallback(async () => {
     if (Date.now() < rateLimitedUntilRef.current) return;
@@ -87,6 +90,14 @@ export function useSpotifyPlayback(connected: boolean) {
     const timeoutId = window.setTimeout(() => void refreshPlayback(), 0);
     return () => window.clearTimeout(timeoutId);
   }, [connected, refreshPlayback]);
+
+  useEffect(() => {
+    if (!connected || refreshNonce === 0) return;
+    const timers = [400, 1400].map((delay) =>
+      window.setTimeout(() => void refreshPlayback(), delay),
+    );
+    return () => timers.forEach((id) => window.clearTimeout(id));
+  }, [refreshNonce, connected, refreshPlayback]);
 
   const pollIntervalMs = playback?.isPlaying ? PLAYING_POLL_MS : IDLE_POLL_MS;
   useEffect(() => {

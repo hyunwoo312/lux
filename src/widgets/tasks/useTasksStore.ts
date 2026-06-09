@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
 import type { CompletedPosition, Task } from "@/widgets/tasks/types";
@@ -89,7 +89,7 @@ export const useTasksStore = create<TasksState>()(
     }),
     {
       name: "widget:tasks",
-      storage: createJSONStorage(() => gatedStorage),
+      storage: gatedStorage,
       version: 1,
       onRehydrateStorage: () => () => gatedStorage.open(),
       partialize: (state) => ({

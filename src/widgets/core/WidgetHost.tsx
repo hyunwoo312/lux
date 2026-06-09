@@ -1,6 +1,6 @@
 import { BaseWidget } from "@/widgets/core/BaseWidget";
 import { CommonWidgetConfig } from "@/widgets/core/CommonWidgetConfig";
-import { WidgetConfig } from "@/widgets/core/WidgetConfig";
+import { WidgetConfig } from "@/components/config/WidgetConfig";
 import type { WidgetInstance } from "@/widgets/core/types";
 import { useWidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
 import { useWidgetHighlightStore } from "@/widgets/core/useWidgetHighlightStore";

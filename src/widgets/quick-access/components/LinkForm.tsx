@@ -2,6 +2,7 @@ import type { FormEvent, KeyboardEvent } from "react";
 import { useState } from "react";
 import { Pin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Favicon } from "@/widgets/quick-access/components/Favicon";
@@ -15,12 +16,6 @@ type LinkFormProps = {
   onSubmit: (title: string, url: string) => void;
   onCancel: () => void;
 };
-
-const inputClass = `
-  border-border/70 bg-background/40 placeholder:text-muted-foreground/50 focus-visible:border-ring
-  focus-visible:ring-ring/25 w-full rounded-md border px-2.5 py-1.5 text-sm outline-none
-  focus-visible:ring-2
-`;
 
 const keyOf = (url: string) => normalizeUrl(url) ?? url;
 
@@ -95,7 +90,7 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
         }}
       >
         <PopoverAnchor asChild>
-          <input
+          <Input
             value={url}
             onChange={(event) => {
               setUrl(event.target.value);
@@ -108,7 +103,6 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
             placeholder="example.com"
             aria-label="Link URL"
             autoFocus
-            className={inputClass}
           />
         </PopoverAnchor>
         <PopoverContent
@@ -158,12 +152,11 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
           </ul>
         </PopoverContent>
       </Popover>
-      <input
+      <Input
         value={title}
         onChange={(event) => setTitle(event.target.value)}
         placeholder="Title (optional)"
         aria-label="Link title"
-        className={inputClass}
       />
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" size="sm" onClick={onCancel}>

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { persist } from "zustand/middleware";
 import { z } from "zod";
 import type { Layout, LayoutItem } from "react-grid-layout";
 import { createGatedChromeStorage } from "@/lib/storage";
@@ -115,7 +115,7 @@ export const useDashboardStore = create<DashboardState>()(
     }),
     {
       name: "dashboard",
-      storage: createJSONStorage(() => gatedStorage),
+      storage: gatedStorage,
       version: 1,
       onRehydrateStorage: () => () => gatedStorage.open(),
       partialize: (state) => ({

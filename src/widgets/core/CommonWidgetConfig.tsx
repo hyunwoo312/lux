@@ -1,5 +1,5 @@
 import type { WidgetType } from "@/widgets/core/types";
-import { ConfigSegmented, WidgetConfigGroup, WidgetConfigItem } from "@/widgets/core/WidgetConfig";
+import { ConfigSegmented, WidgetConfigGroup, WidgetConfigItem } from "@/components/config/WidgetConfig";
 import {
   useWidgetBackground,
   useWidgetSettingsStore,

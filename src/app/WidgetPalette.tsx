@@ -1,5 +1,5 @@
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import type { Variants } from "motion/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -13,6 +13,7 @@ import { useWidgetDragStore } from "@/widgets/core/useWidgetDragStore";
 import { useWidgetHighlightStore } from "@/widgets/core/useWidgetHighlightStore";
 import { widgetPlugins } from "@/widgets/registry";
 import { useDashboardStore } from "@/stores/useDashboardStore";
+import { useWidgetPaletteStore } from "@/app/useWidgetPaletteStore";
 
 const DRAG_THRESHOLD = 6;
 const CLICK_SUPPRESS_MS = 300;
@@ -35,7 +36,8 @@ function commitDrop(plugin: WidgetPlugin, px: number, py: number, ghostW: number
 }
 
 export function WidgetPalette() {
-  const [open, setOpen] = useState(false);
+  const open = useWidgetPaletteStore((s) => s.open);
+  const setOpen = useWidgetPaletteStore((s) => s.setOpen);
   const widgets = useDashboardStore((s) => s.widgets);
   const addWidget = useDashboardStore((s) => s.addWidget);
   const setHighlighted = useWidgetHighlightStore((s) => s.setHighlighted);
@@ -131,6 +133,7 @@ export function WidgetPalette() {
       <Tooltip content="Add widget" disabled={open}>
         <PopoverPrimitive.Trigger asChild>
           <Button
+            data-tour="add-widget"
             variant="ghost"
             size="icon"
             className="size-10 [&_svg]:size-5"
@@ -156,8 +159,8 @@ export function WidgetPalette() {
                 animate="visible"
                 exit="exit"
                 className="
-                  bg-popover/92 text-popover-foreground border-border w-60 origin-top-right
-                  rounded-xl border p-1.5 shadow-xl backdrop-blur-xl outline-none
+                  glass-thick text-popover-foreground border-border w-60 origin-top-right rounded-xl
+                  border p-1.5 shadow-xl outline-none
                 "
               >
                 <p
@@ -195,10 +198,8 @@ export function WidgetPalette() {
                       >
                         <span
                           className={cn(
-                            "flex size-8 items-center justify-center rounded-md",
-                            plugin.brandIcon
-                              ? "[&_img]:size-7 [&_svg]:size-7"
-                              : `bg-foreground/5 text-foreground/80 [&_img]:size-4 [&_svg]:size-4`,
+                            `flex size-8 items-center justify-center [&_img]:size-6 [&_svg]:size-6`,
+                            !plugin.brandIcon && "text-foreground/80",
                           )}
                         >
                           <Icon />

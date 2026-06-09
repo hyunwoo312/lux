@@ -110,7 +110,7 @@ export function TasksWidget() {
             placeholder="Add a task…"
             aria-label="Add a task"
             className="
-              border-border/70 bg-background/40
+              border-border/70 bg-background/60
               placeholder:text-muted-foreground/50
               relative w-full rounded-lg border px-3 py-2 text-sm outline-none
             "

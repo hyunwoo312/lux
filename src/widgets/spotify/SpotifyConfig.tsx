@@ -1,6 +1,8 @@
-import { Button } from "@/components/ui/button";
+import { Settings2 } from "lucide-react";
+import { IconActionButton } from "@/components/IconActionButton";
 import { Switch } from "@/components/ui/switch";
-import { ConfigSegmented, WidgetConfigGroup, WidgetConfigItem } from "@/widgets/core/WidgetConfig";
+import { useSettingsStore } from "@/settings";
+import { ConfigSegmented, WidgetConfigGroup, WidgetConfigItem } from "@/components/config/WidgetConfig";
 import { useSpotifyConnection } from "@/widgets/spotify/hooks/useSpotifyConnection";
 import { useSpotifyStore } from "@/widgets/spotify/useSpotifyStore";
 import type { SpotifyTimeDisplayMode } from "@/widgets/spotify/types";
@@ -11,59 +13,33 @@ const TIME_DISPLAY_OPTIONS: { value: SpotifyTimeDisplayMode; label: string }[] =
 ];
 
 export function SpotifyConfig() {
-  const { account, busy, error, connect, disconnect } = useSpotifyConnection();
+  const { account } = useSpotifyConnection();
   const timeDisplayMode = useSpotifyStore((s) => s.timeDisplayMode);
   const setTimeDisplayMode = useSpotifyStore((s) => s.setTimeDisplayMode);
   const ambient = useSpotifyStore((s) => s.ambient);
   const setAmbient = useSpotifyStore((s) => s.setAmbient);
 
-  const connected = Boolean(account);
-  const needsReconnect = account?.status === "needsReconnect";
-  const description = needsReconnect
-    ? "Reconnect to resume playback."
-    : (account?.email ?? account?.displayName ?? "Connect to control playback.");
+  const accountDescription = account
+    ? account.status === "needsReconnect"
+      ? "Reconnect to resume playback."
+      : (account.email ?? account.displayName ?? "Connected")
+    : "Not connected.";
 
   return (
     <>
       <WidgetConfigGroup label="Account">
         <WidgetConfigItem
           title="Spotify"
-          description={description}
+          description={accountDescription}
           control={
-            connected ? undefined : (
-              <Button size="sm" onClick={connect} disabled={busy === "connecting"}>
-                {busy === "connecting" ? "Connecting…" : "Connect"}
-              </Button>
-            )
+            <IconActionButton
+              icon={Settings2}
+              label="Manage account"
+              tooltip="Manage account"
+              onClick={() => useSettingsStore.getState().openSettings("accounts")}
+            />
           }
-        >
-          {connected && (
-            <div className="flex flex-col gap-3">
-              {needsReconnect ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="self-start"
-                  onClick={connect}
-                  disabled={busy === "connecting"}
-                >
-                  {busy === "connecting" ? "Reconnecting…" : "Reconnect"}
-                </Button>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="self-start"
-                  onClick={disconnect}
-                  disabled={busy === "disconnecting"}
-                >
-                  {busy === "disconnecting" ? "Disconnecting…" : "Disconnect"}
-                </Button>
-              )}
-              {error && <p className="text-destructive text-2xs">{error}</p>}
-            </div>
-          )}
-        </WidgetConfigItem>
+        />
       </WidgetConfigGroup>
 
       <WidgetConfigGroup label="Display">

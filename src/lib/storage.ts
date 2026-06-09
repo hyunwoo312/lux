@@ -1,5 +1,5 @@
 import type { ZodType } from "zod";
-import type { StateStorage } from "zustand/middleware";
+import type { PersistStorage, StorageValue } from "zustand/middleware";
 
 const NAMESPACE = "lux";
 const namespaced = (name: string) => `${NAMESPACE}:${name}`;
@@ -35,29 +35,32 @@ export async function remove(name: string): Promise<void> {
   }
 }
 
-export const chromeStorageAdapter: StateStorage = {
-  getItem: async (name) => {
-    const key = namespaced(name);
-    try {
-      const stored = await chrome.storage.local.get(key);
-      return (stored[key] as string | undefined) ?? null;
-    } catch (error) {
-      console.warn(`Failed to read "${name}" from storage`, error);
-      return null;
-    }
-  },
-  setItem: (name, value) => write(name, value),
-  removeItem: (name) => remove(name),
-};
+type GatedStorage<S> = PersistStorage<S> & { open: () => void };
 
-export type GatedStorage = StateStorage & { open: () => void };
-
-export function createGatedChromeStorage(): GatedStorage {
+export function createGatedChromeStorage<S>(): GatedStorage<S> {
   let hydrated = false;
   return {
-    getItem: chromeStorageAdapter.getItem,
-    setItem: (name, value) => (hydrated ? write(name, value) : Promise.resolve()),
-    removeItem: (name) => (hydrated ? remove(name) : Promise.resolve()),
+    getItem: async (name) => {
+      const key = namespaced(name);
+      try {
+        const stored = await chrome.storage.local.get(key);
+        const raw = stored[key];
+        if (raw === undefined) return null;
+        if (typeof raw === "string") {
+          return JSON.parse(raw) as StorageValue<S>;
+        }
+        return raw as StorageValue<S>;
+      } catch (error) {
+        console.warn(`Failed to read "${name}" from storage`, error);
+        return null;
+      }
+    },
+    setItem: async (name, value) => {
+      if (hydrated) await write(name, value);
+    },
+    removeItem: async (name) => {
+      if (hydrated) await remove(name);
+    },
     open: () => {
       hydrated = true;
     },

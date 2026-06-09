@@ -1,4 +1,4 @@
-import { formatFileSize, getImageTypeLabel, getMetadataLabel } from "@/widgets/image/lib/format";
+import { formatFileSize, getImageTypeLabel, getMetadataLabel } from "@/lib/media-format";
 
 describe("getImageTypeLabel", () => {
   it("returns the uppercased subtype, normalizing jpeg to jpg", () => {

@@ -4,7 +4,7 @@ import {
   WidgetConfigGroup,
   WidgetConfigItem,
   WidgetConfigSubItem,
-} from "@/widgets/core/WidgetConfig";
+} from "@/components/config/WidgetConfig";
 import type { CompletedPosition } from "@/widgets/tasks/types";
 import { useTasksStore } from "@/widgets/tasks/useTasksStore";
 

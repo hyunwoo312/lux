@@ -15,7 +15,6 @@ type AccentDefinition = {
   primary: string;
   primaryForeground: string;
   gradient?: string;
-  gradientStrength?: string;
 };
 
 export const ACCENT_PRESETS: Record<AccentPreset, AccentDefinition> = {
@@ -35,7 +34,6 @@ export const ACCENT_PRESETS: Record<AccentPreset, AccentDefinition> = {
     primary: "oklch(0.62 0.12 218)",
     primaryForeground: "oklch(0.99 0.01 218)",
     gradient: "oklch(0.64 0.16 220)",
-    gradientStrength: "36%",
   },
   emerald: {
     primary: "oklch(0.62 0.14 162)",
@@ -45,7 +43,6 @@ export const ACCENT_PRESETS: Record<AccentPreset, AccentDefinition> = {
     primary: "oklch(0.74 0.2 148)",
     primaryForeground: "oklch(0.22 0.05 150)",
     gradient: "oklch(0.76 0.21 146)",
-    gradientStrength: "34%",
   },
   rose: {
     primary: "oklch(0.6 0.2 12)",
@@ -55,13 +52,11 @@ export const ACCENT_PRESETS: Record<AccentPreset, AccentDefinition> = {
     primary: "oklch(0.7 0.18 47)",
     primaryForeground: "oklch(0.99 0.01 60)",
     gradient: "oklch(0.72 0.19 50)",
-    gradientStrength: "34%",
   },
   yellow: {
     primary: "oklch(0.88 0.14 98)",
     primaryForeground: "oklch(0.34 0.06 90)",
     gradient: "oklch(0.8 0.15 90)",
-    gradientStrength: "36%",
   },
 };
 
@@ -72,6 +67,5 @@ export function getAccentVars(accent: AccentPreset): CSSProperties {
     "--primary-foreground": preset.primaryForeground,
     "--ring": preset.primary,
     "--widget-gradient": preset.gradient ?? preset.primary,
-    "--widget-gradient-strength": preset.gradientStrength ?? "20%",
   } as CSSProperties;
 }

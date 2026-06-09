@@ -7,18 +7,24 @@ import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from "@d
 import { CSS } from "@dnd-kit/utilities";
 import { ImageIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAssetUrl } from "@/widgets/image/hooks/useAssetUrl";
-import { getMetadataLabel } from "@/widgets/image/lib/format";
-import type { ImageItem } from "@/widgets/image/types";
+import { useAssetObjectUrl, type AssetStore, type MediaImageItem } from "@/lib/asset-store";
+import { getMetadataLabel } from "@/lib/media-format";
 
 type MultiImageItemsProps = {
-  items: ImageItem[];
+  items: MediaImageItem[];
+  assetStore: AssetStore;
   disabled: boolean;
-  onRemove: (item: ImageItem) => void;
-  onReorder: (items: ImageItem[]) => void;
+  onRemove: (item: MediaImageItem) => void;
+  onReorder: (items: MediaImageItem[]) => void;
 };
 
-export function MultiImageItems({ items, disabled, onRemove, onReorder }: MultiImageItemsProps) {
+export function MultiImageItems({
+  items,
+  assetStore,
+  disabled,
+  onRemove,
+  onReorder,
+}: MultiImageItemsProps) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -38,6 +44,7 @@ export function MultiImageItems({ items, disabled, onRemove, onReorder }: MultiI
             <SortableImage
               key={item.assetId}
               item={item}
+              assetStore={assetStore}
               disabled={disabled}
               onRemove={() => onRemove(item)}
             />
@@ -49,16 +56,17 @@ export function MultiImageItems({ items, disabled, onRemove, onReorder }: MultiI
 }
 
 type SortableImageProps = {
-  item: ImageItem;
+  item: MediaImageItem;
+  assetStore: AssetStore;
   disabled: boolean;
   onRemove: () => void;
 };
 
-function SortableImage({ item, disabled, onRemove }: SortableImageProps) {
+function SortableImage({ item, assetStore, disabled, onRemove }: SortableImageProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.assetId,
   });
-  const url = useAssetUrl(item.assetId);
+  const url = useAssetObjectUrl(assetStore, item.assetId);
   const meta = getMetadataLabel(item.mimeType, item.size);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
 
@@ -110,10 +118,10 @@ function SortableImage({ item, disabled, onRemove }: SortableImageProps) {
             onRemove();
           }}
           className="
-            bg-card/80 text-foreground/80
+            bg-card text-foreground/80
             hover:text-destructive
             absolute top-1 right-1 grid size-5 cursor-pointer place-items-center rounded-md
-            backdrop-blur-sm transition-colors
+            transition-colors
             disabled:pointer-events-none disabled:opacity-50
             [&_svg]:size-3.5
           "

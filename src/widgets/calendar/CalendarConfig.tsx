@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Settings2 } from "lucide-react";
 import { useIntegrationStore } from "@/integrations";
-import { Button } from "@/components/ui/button";
+import { useSettingsStore } from "@/settings";
+import { IconActionButton } from "@/components/IconActionButton";
 import { Switch } from "@/components/ui/switch";
-import { Tooltip } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
 import {
   ConfigSelect,
   WidgetConfigGroup,
   WidgetConfigItem,
   WidgetConfigSubItem,
-} from "@/widgets/core/WidgetConfig";
+} from "@/components/config/WidgetConfig";
 import { useCalendarConnection } from "@/widgets/calendar/hooks/useCalendarConnection";
 import {
   getCalendarSyncCooldownMessage,
@@ -52,8 +51,7 @@ function CalendarProviderConfig({
   providerId: CalendarProviderId;
   label: string;
 }) {
-  const { account, busy, error: connectionError, connect, disconnect } =
-    useCalendarConnection(providerId);
+  const { account } = useCalendarConnection(providerId);
   const settings = useCalendarStore((s) => s[providerId]);
   const sync = useCalendarStore((s) => s.sync);
   const setCalendarSelection = useCalendarStore((s) => s.setCalendarSelection);
@@ -62,7 +60,8 @@ function CalendarProviderConfig({
   const [now, setNow] = useState(() => Date.now());
   const connected = Boolean(account);
   const needsReconnect = account?.status === "needsReconnect";
-  const coolingDown = connected && isCalendarSyncCoolingDown(settings.lastSyncedAt, now);
+  const coolingDown =
+    connected && !needsReconnect && isCalendarSyncCoolingDown(settings.lastSyncedAt, now);
 
   useEffect(() => {
     if (!coolingDown) return;
@@ -70,18 +69,39 @@ function CalendarProviderConfig({
     return () => window.clearInterval(id);
   }, [coolingDown]);
 
-  const syncDisabled = isSyncing || busy !== null || coolingDown;
+  const manageButton = (
+    <IconActionButton
+      icon={Settings2}
+      label="Manage account"
+      tooltip="Manage account"
+      onClick={() => useSettingsStore.getState().openSettings("accounts")}
+    />
+  );
+
+  const description = needsReconnect
+    ? "Reconnect to resume syncing."
+    : connected
+      ? (account?.email ?? account?.displayName ?? "Connected")
+      : "Connect to sync your events.";
+
+  if (!connected || needsReconnect) {
+    return (
+      <WidgetConfigGroup label={label}>
+        <WidgetConfigItem title={label} description={description} control={manageButton} />
+      </WidgetConfigGroup>
+    );
+  }
+
+  const syncDisabled = isSyncing || coolingDown;
   const syncTooltip = coolingDown
     ? getCalendarSyncCooldownMessage(settings.lastSyncedAt, now)
     : "Sync now";
   const lastSyncedLabel = formatLastSynced(settings.lastSyncedAt);
-  const providerNote = connected
-    ? getProviderNote(settings.calendars.length, settings.enabledCalendarIds.length)
-    : null;
-  const error = connectionError ?? settings.lastError ?? null;
-  const description = needsReconnect
-    ? "Reconnect to resume syncing."
-    : (account?.email ?? account?.displayName ?? "Connect to sync your events.");
+  const providerNote = getProviderNote(
+    settings.calendars.length,
+    settings.enabledCalendarIds.length,
+  );
+  const error = settings.lastError ?? null;
 
   const handleCalendarToggle = (calendarId: string, checked: boolean) => {
     setCalendarSelection(providerId, calendarId, checked);
@@ -90,91 +110,54 @@ function CalendarProviderConfig({
 
   return (
     <WidgetConfigGroup label={label}>
-      <WidgetConfigItem
-        title={label}
-        description={description}
-        control={
-          connected ? undefined : (
-            <Button size="sm" onClick={connect} disabled={busy === "connecting"}>
-              {busy === "connecting" ? "Connecting…" : "Connect"}
-            </Button>
-          )
-        }
-      >
-        {connected && (
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              {needsReconnect ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={connect}
-                  disabled={busy === "connecting"}
-                >
-                  {busy === "connecting" ? "Reconnecting…" : "Reconnect"}
-                </Button>
-              ) : (
-                <>
-                  <Tooltip content={syncTooltip}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => void sync({ providerId })}
-                      disabled={syncDisabled}
-                      aria-label={`Sync ${label}`}
-                    >
-                      <RefreshCw className={cn(isSyncing && "animate-spin")} />
-                      Sync
-                    </Button>
-                  </Tooltip>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={disconnect}
-                    disabled={busy === "disconnecting"}
-                  >
-                    {busy === "disconnecting" ? "Disconnecting…" : "Disconnect"}
-                  </Button>
-                </>
-              )}
-              {lastSyncedLabel && (
-                <span className="text-muted-foreground/70 text-2xs ml-auto">{lastSyncedLabel}</span>
-              )}
-            </div>
-
-            {error && <p className="text-destructive text-2xs">{error}</p>}
-
-            {settings.calendars.length > 0 && (
-              <div className="flex flex-col gap-3">
-                {settings.calendars.map((calendar) => (
-                  <WidgetConfigSubItem
-                    key={calendar.id}
-                    title={calendar.summary}
-                    description={
-                      settings.failedCalendarIds.includes(calendar.id)
-                        ? "Sync failed"
-                        : calendar.primary
-                          ? "Primary calendar"
-                          : undefined
-                    }
-                    disabled={isSyncing}
-                    control={
-                      <Switch
-                        checked={settings.enabledCalendarIds.includes(calendar.id)}
-                        onCheckedChange={(checked) =>
-                          handleCalendarToggle(calendar.id, checked === true)
-                        }
-                        aria-label={`Show ${calendar.summary}`}
-                      />
-                    }
-                  />
-                ))}
-              </div>
+      <WidgetConfigItem title={label} description={description} control={manageButton}>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <IconActionButton
+              icon={RefreshCw}
+              label={`Sync ${label}`}
+              tooltip={syncTooltip}
+              onClick={() => void sync({ providerId })}
+              disabled={syncDisabled}
+              spinning={isSyncing}
+            />
+            {lastSyncedLabel && (
+              <span className="text-muted-foreground/70 text-2xs ml-auto">{lastSyncedLabel}</span>
             )}
-
-            {providerNote && <p className="text-muted-foreground/70 text-2xs">{providerNote}</p>}
           </div>
-        )}
+
+          {error && <p className="text-destructive text-2xs">{error}</p>}
+
+          {settings.calendars.length > 0 && (
+            <div className="flex flex-col gap-3">
+              {settings.calendars.map((calendar) => (
+                <WidgetConfigSubItem
+                  key={calendar.id}
+                  title={calendar.summary}
+                  description={
+                    settings.failedCalendarIds.includes(calendar.id)
+                      ? "Sync failed"
+                      : calendar.primary
+                        ? "Primary calendar"
+                        : undefined
+                  }
+                  disabled={isSyncing}
+                  control={
+                    <Switch
+                      checked={settings.enabledCalendarIds.includes(calendar.id)}
+                      onCheckedChange={(checked) =>
+                        handleCalendarToggle(calendar.id, checked === true)
+                      }
+                      aria-label={`Show ${calendar.summary}`}
+                    />
+                  }
+                />
+              ))}
+            </div>
+          )}
+
+          {providerNote && <p className="text-muted-foreground/70 text-2xs">{providerNote}</p>}
+        </div>
       </WidgetConfigItem>
     </WidgetConfigGroup>
   );

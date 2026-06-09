@@ -145,7 +145,7 @@ export function ImageWidget({ editing }: WidgetContentProps) {
             className="
               border-border bg-background/95 text-foreground pointer-events-none absolute bottom-3
               left-1/2 z-10 max-w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-md border px-2.5
-              py-1.5 text-center text-xs shadow-md backdrop-blur
+              py-1.5 text-center text-xs shadow-md
             "
           >
             {error}

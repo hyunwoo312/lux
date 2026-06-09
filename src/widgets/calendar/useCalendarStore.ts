@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { useIntegrationStore } from "@/integrations";
@@ -300,8 +300,6 @@ export const useCalendarStore = create<CalendarState>()(
             status: syncing.length > 0 ? "syncing" : hasError ? "error" : "idle",
           };
         });
-
-        await useIntegrationStore.getState().load();
       },
       setCalendarSelection: (providerId, calendarId, selected) =>
         set((state) => {
@@ -369,7 +367,7 @@ export const useCalendarStore = create<CalendarState>()(
     }),
     {
       name: "widget:calendar",
-      storage: createJSONStorage(() => gatedStorage),
+      storage: gatedStorage,
       version: 1,
       onRehydrateStorage: () => () => gatedStorage.open(),
       partialize: (state) => ({

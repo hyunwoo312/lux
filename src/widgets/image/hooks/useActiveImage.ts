@@ -5,9 +5,11 @@ import {
   readNewtabQueue,
   selectNewtabIndex,
   writeNewtabQueue,
-} from "@/widgets/image/lib/rotation";
+} from "@/lib/media-rotation";
 import type { ImageItem } from "@/widgets/image/types";
 import { useImageStore } from "@/widgets/image/useImageStore";
+
+const IMAGE_NEWTAB_QUEUE_KEY = "lux.image.newtab-queue";
 
 type ActiveImage = {
   activeItem: ImageItem | null;
@@ -45,9 +47,9 @@ export function useActiveImage(): ActiveImage {
     if (newtabEnabled && length > 0) {
       const selection = selectNewtabIndex(
         displayItems.map((item) => item.assetId),
-        readNewtabQueue(),
+        readNewtabQueue(IMAGE_NEWTAB_QUEUE_KEY),
       );
-      writeNewtabQueue(selection.next);
+      writeNewtabQueue(IMAGE_NEWTAB_QUEUE_KEY, selection.next);
       setCurrentIndex(selection.index);
     }
   }, [signature, newtabEnabled, length, displayItems, setCurrentIndex]);

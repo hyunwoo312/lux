@@ -1,7 +1,12 @@
 import { useMemo } from "react";
+import { PermissionPrompt } from "@/components/PermissionPrompt";
+import { usePermissionGranted } from "@/hooks/usePermission";
+import { isPermissionsManageable } from "@/lib/permissions";
+import { useSettingsStore } from "@/settings";
 import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
 import { openUrl } from "@/widgets/quick-access/browser";
 import { useBrowserItems } from "@/widgets/quick-access/hooks/useBrowserItems";
+import { keyOf } from "@/widgets/quick-access/lib/url";
 import type { QuickAccessTab } from "@/widgets/quick-access/types";
 import { useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
 
@@ -13,19 +18,52 @@ function Message({ children }: { children: string }) {
   );
 }
 
+type BrowserTabKey = Exclude<QuickAccessTab, "home">;
+
+const TAB_GATE: Record<
+  BrowserTabKey,
+  { permission: chrome.runtime.ManifestPermission; message: string }
+> = {
+  bookmarks: {
+    permission: "bookmarks",
+    message: "Turn on the Bookmarks permission to browse your bookmarks here.",
+  },
+  recentlyClosed: {
+    permission: "sessions",
+    message: "Turn on the Recently closed tabs permission to list them here.",
+  },
+  history: {
+    permission: "history",
+    message: "Turn on the Browsing history permission to see recent sites here.",
+  },
+};
+
 type BrowserTabProps = {
-  tab: Exclude<QuickAccessTab, "home">;
+  tab: BrowserTabKey;
   editing: boolean;
 };
 
 export function BrowserTab({ tab, editing }: BrowserTabProps) {
-  const state = useBrowserItems(tab);
+  const gate = TAB_GATE[tab];
+  const granted = usePermissionGranted(gate.permission);
+  const blocked = isPermissionsManageable() && !granted;
+  const state = useBrowserItems(tab, !blocked);
   const openBehavior = useQuickAccessStore((s) => s.openBehavior);
   const view = useQuickAccessStore((s) => s.view);
   const links = useQuickAccessStore((s) => s.links);
   const togglePin = useQuickAccessStore((s) => s.togglePin);
-  const pinnedUrls = useMemo(() => new Set(links.map((link) => link.url)), [links]);
+  const pinnedUrls = useMemo(() => new Set(links.map((link) => keyOf(link.url))), [links]);
   const open = (url: string) => openUrl(url, openBehavior);
+
+  if (blocked) {
+    return (
+      <PermissionPrompt
+        permission={gate.permission}
+        message={gate.message}
+        onOpenSettings={() => useSettingsStore.getState().openPermissions(gate.permission)}
+      />
+    );
+  }
 
   return (
     <div className="h-full overflow-x-hidden overflow-y-auto">

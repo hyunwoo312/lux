@@ -1,5 +1,7 @@
 import { useEffect, type ReactNode } from "react";
+import { useSettingsStore } from "@/settings";
 import { useElementSize } from "@/hooks/useElementSize";
+import { SpotifyDeviceMenu } from "@/widgets/spotify/components/SpotifyDeviceMenu";
 import { SpotifyEmptyState } from "@/widgets/spotify/components/SpotifyEmptyState";
 import { SpotifyPlayer } from "@/widgets/spotify/components/SpotifyPlayer";
 import { useSpotifyConnection } from "@/widgets/spotify/hooks/useSpotifyConnection";
@@ -43,7 +45,8 @@ function getErrorCopy(error: string): ErrorCopy {
 
 export function SpotifyWidget() {
   const [ref, size] = useElementSize<HTMLDivElement>();
-  const { account, loaded, busy, error: connectionError, connect } = useSpotifyConnection();
+  const { account, loaded } = useSpotifyConnection();
+  const openAccounts = () => useSettingsStore.getState().openSettings("accounts");
   const connected = account?.status === "connected";
   const controller = useSpotifyPlayback(Boolean(connected));
   const timeDisplayMode = useSpotifyStore((s) => s.timeDisplayMode);
@@ -55,7 +58,6 @@ export function SpotifyWidget() {
   }, [track?.id, track?.artworkUrl, setNowPlaying]);
 
   const view = getViewMode(size);
-  const connecting = busy === "connecting";
 
   let content: ReactNode;
   if (!loaded) {
@@ -64,24 +66,16 @@ export function SpotifyWidget() {
     content = (
       <SpotifyEmptyState
         title="Connect Spotify"
-        message={connectionError ?? "Connect Spotify to see and control playback."}
-        action={{
-          label: connecting ? "Connecting…" : "Connect Spotify",
-          onClick: () => void connect(),
-          disabled: connecting,
-        }}
+        message="Connect Spotify to see and control playback."
+        action={{ label: "Connect Spotify", onClick: openAccounts }}
       />
     );
   } else if (!connected) {
     content = (
       <SpotifyEmptyState
         title="Reconnect Spotify"
-        message={connectionError ?? account.lastError ?? "Spotify needs a fresh connection."}
-        action={{
-          label: connecting ? "Reconnecting…" : "Reconnect",
-          onClick: () => void connect(),
-          disabled: connecting,
-        }}
+        message={account.lastError ?? "Spotify needs a fresh connection."}
+        action={{ label: "Reconnect", onClick: openAccounts }}
       />
     );
   } else if (controller.isLoading) {
@@ -94,11 +88,7 @@ export function SpotifyWidget() {
         message={copy.message}
         action={
           copy.reconnect
-            ? {
-                label: connecting ? "Reconnecting…" : "Reconnect",
-                onClick: () => void connect(),
-                disabled: connecting,
-              }
+            ? { label: "Reconnect", onClick: openAccounts }
             : {
                 label: controller.pendingActions.has("refresh") ? "Refreshing…" : "Retry",
                 onClick: () => void controller.refresh(),
@@ -120,12 +110,21 @@ export function SpotifyWidget() {
     content = (
       <SpotifyEmptyState
         title="Nothing playing"
-        message="Start Spotify on any device and this widget will follow along."
+        message="Pick a device to play on, or start Spotify anywhere and this widget will follow along."
         action={{
           label: controller.pendingActions.has("refresh") ? "Refreshing…" : "Refresh",
           onClick: () => void controller.refresh(),
           disabled: controller.pendingActions.has("refresh"),
         }}
+        extra={
+          <SpotifyDeviceMenu
+            devices={controller.deviceOptions}
+            activeId=""
+            disabled={false}
+            onSelect={controller.transferDevice}
+            onOpen={() => void controller.loadDevices()}
+          />
+        }
       />
     );
   }

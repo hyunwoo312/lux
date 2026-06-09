@@ -13,11 +13,12 @@ import {
 import { useWidgetDragStore } from "@/widgets/core/useWidgetDragStore";
 import { WidgetHost } from "@/widgets/core/WidgetHost";
 import { getWidgetPlugin } from "@/widgets/registry";
+import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 
 const MIN_ROWS = 8;
 const EDIT_ROW_BUFFER = 1;
-const BOTTOM_GUTTER = 50;
+const BOTTOM_GUTTER = 16;
 const SCROLL_ZONE = 100;
 const SCROLL_MAX_SPEED = 20;
 const DEFAULT_VECTOR: DragVector = { dx: 1, dy: 0 };
@@ -26,6 +27,7 @@ export function WidgetGrid() {
   const widgets = useDashboardStore((s) => s.widgets);
   const layout = useDashboardStore((s) => s.layout);
   const editing = useDashboardStore((s) => s.editing);
+  const showGridLines = useAppSettingsStore((s) => s.showGridLines);
   const setLayout = useDashboardStore((s) => s.setLayout);
   const setColumns = useDashboardStore((s) => s.setColumns);
   const setGeometry = useWidgetDragStore((s) => s.setGeometry);
@@ -185,6 +187,7 @@ export function WidgetGrid() {
   );
   const rows = Math.max(availableRows, previewRows ?? getLayoutBottom(displayLayout));
   const workspaceHeight = rows * UNIT;
+  const showGrid = editing || showGridLines;
 
   return (
     <div ref={containerRef}>
@@ -219,10 +222,10 @@ export function WidgetGrid() {
               style={
                 {
                   minHeight: workspaceHeight,
-                  ...(editing ? { "--cell": `${UNIT}px` } : {}),
+                  ...(showGrid ? { "--cell": `${UNIT}px` } : {}),
                 } as CSSProperties
               }
-              className={cn(editing && "grid-lines")}
+              className={cn(showGrid && "grid-lines")}
             >
               {widgets.map((widget) => {
                 const item = displayLayout.find((entry) => entry.i === widget.id);

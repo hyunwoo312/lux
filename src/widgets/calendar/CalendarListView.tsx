@@ -62,7 +62,9 @@ export function CalendarListView({ events, colors, enabled, status }: CalendarLi
     <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto pr-0.5">
       {multiDayEvents.length > 0 && (
         <section className="flex flex-col gap-1.5">
-          <h4 className="text-primary/80 text-2xs pl-1 font-bold tracking-wider uppercase">Multi-day</h4>
+          <h4 className="text-muted-foreground text-2xs pl-1 font-bold tracking-wider uppercase">
+            Multi-day
+          </h4>
           {multiDayEvents.map((event, index) => (
             <CalendarEventItem
               key={event.id}

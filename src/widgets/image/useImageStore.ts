@@ -1,8 +1,10 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { getNextSequentialIndex, getRandomIndexExcluding } from "@/widgets/image/lib/rotation";
+import { missingAssetIds } from "@/lib/asset-store";
+import { getNextSequentialIndex, getRandomIndexExcluding } from "@/lib/media-rotation";
+import { imageAssetStore } from "@/widgets/image/media";
 import {
   IMAGE_BRIGHTNESS_MODES,
   IMAGE_FIT_MODES,
@@ -44,6 +46,7 @@ type ImageState = {
   setHideFrame: (hideFrame: boolean) => void;
   setCurrentIndex: (index: number) => void;
   advanceImage: () => void;
+  sanitizeAssets: () => Promise<void>;
 };
 
 const itemSchema = z.object({
@@ -81,7 +84,7 @@ const gatedStorage = createGatedChromeStorage();
 
 export const useImageStore = create<ImageState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       mode: "single",
       single: null,
       items: [],
@@ -117,12 +120,24 @@ export const useImageStore = create<ImageState>()(
               : getNextSequentialIndex(current, length);
           return { currentIndex: next };
         }),
+      sanitizeAssets: async () => {
+        const { single, items } = get();
+        const missing = await missingAssetIds(imageAssetStore, [single, ...items]);
+        if (!missing.size) return;
+        set((state) => ({
+          single: state.single && missing.has(state.single.assetId) ? null : state.single,
+          items: state.items.filter((item) => !missing.has(item.assetId)),
+        }));
+      },
     }),
     {
       name: "widget:image",
-      storage: createJSONStorage(() => gatedStorage),
+      storage: gatedStorage,
       version: 1,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => (state) => {
+        gatedStorage.open();
+        void state?.sanitizeAssets();
+      },
       partialize: (state) => ({
         mode: state.mode,
         single: state.single,

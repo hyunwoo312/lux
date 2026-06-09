@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
 import type { WidgetType } from "@/widgets/core/types";
@@ -32,7 +32,7 @@ export const useWidgetSettingsStore = create<WidgetSettingsState>()(
     }),
     {
       name: "widget-settings",
-      storage: createJSONStorage(() => gatedStorage),
+      storage: gatedStorage,
       version: 1,
       onRehydrateStorage: () => () => gatedStorage.open(),
       partialize: (state) => ({ settings: state.settings }),

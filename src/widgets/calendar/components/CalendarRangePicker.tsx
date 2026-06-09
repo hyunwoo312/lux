@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ACCENT_PRESETS } from "@/widgets/core/accent";
-import { ConfigSegmented } from "@/widgets/core/WidgetConfig";
+import { ConfigSegmented } from "@/components/config/WidgetConfig";
 import {
   addDays,
   getDateKey,

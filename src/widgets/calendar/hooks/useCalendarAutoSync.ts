@@ -4,11 +4,18 @@ import { useCalendarStore } from "@/widgets/calendar/useCalendarStore";
 
 const PROVIDERS = ["google", "microsoft"] as const;
 
-export function useCalendarAutoSync(connected: boolean) {
+export function useCalendarAutoSync() {
   const refreshIntervalHours = useCalendarStore((s) => s.refreshIntervalHours);
+  const connectedKey = useIntegrationStore((s) =>
+    PROVIDERS.filter((providerId) =>
+      s.accounts.some(
+        (account) => account.providerId === providerId && account.status === "connected",
+      ),
+    ).join(","),
+  );
 
   useEffect(() => {
-    if (!connected) return;
+    if (!connectedKey) return;
     const intervalMs = refreshIntervalHours * 60 * 60 * 1000;
 
     const maybeSync = () => {
@@ -37,5 +44,5 @@ export function useCalendarAutoSync(connected: boolean) {
       document.removeEventListener("visibilitychange", maybeSync);
       window.removeEventListener("focus", maybeSync);
     };
-  }, [connected, refreshIntervalHours]);
+  }, [connectedKey, refreshIntervalHours]);
 }

@@ -10,21 +10,28 @@ import {
 import type { Transition } from "motion/react";
 import { motion } from "motion/react";
 import { Plus } from "lucide-react";
+import { PermissionPrompt } from "@/components/PermissionPrompt";
+import { usePermissionGranted } from "@/hooks/usePermission";
+import { isPermissionsManageable } from "@/lib/permissions";
+import { useSettingsStore } from "@/settings";
 import { cn } from "@/lib/utils";
 import { openUrl } from "@/widgets/quick-access/browser";
 import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
 import { LinkForm } from "@/widgets/quick-access/components/LinkForm";
 import { SortablePin } from "@/widgets/quick-access/components/SortablePin";
 import { useBrowserItems } from "@/widgets/quick-access/hooks/useBrowserItems";
-import { normalizeUrl } from "@/widgets/quick-access/lib/url";
+import {
+  QA_GRID_CONTAINER,
+  QA_LIST_CONTAINER,
+  qaItemGeometry,
+} from "@/widgets/quick-access/lib/itemStyles";
+import { keyOf } from "@/widgets/quick-access/lib/url";
 import type { BrowserItem, QuickLink } from "@/widgets/quick-access/types";
 import { useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
 
 type FormState = { mode: "add" } | { mode: "edit"; link: QuickLink };
 
 const MORPH: Transition = { duration: 0.32, ease: [0.4, 0, 0.2, 1] };
-
-const keyOf = (url: string) => normalizeUrl(url) ?? url;
 
 function SectionHeader({ children }: { children: string }) {
   return (
@@ -45,7 +52,9 @@ export function HomeTab({ editing }: { editing: boolean }) {
   const setLinks = useQuickAccessStore((s) => s.setLinks);
   const togglePin = useQuickAccessStore((s) => s.togglePin);
 
-  const topSitesState = useBrowserItems("topSites", showTopSites);
+  const topSitesGranted = usePermissionGranted("topSites");
+  const topSitesBlocked = showTopSites && isPermissionsManageable() && !topSitesGranted;
+  const topSitesState = useBrowserItems("topSites", showTopSites && !topSitesBlocked);
   const [form, setForm] = useState<FormState | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
   const open = (url: string) => openUrl(url, openBehavior);
@@ -58,9 +67,7 @@ export function HomeTab({ editing }: { editing: boolean }) {
 
   const hasTopSites = showTopSites && topSites.length > 0;
   const isGrid = view === "grid";
-  const listClass = isGrid
-    ? "grid grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))] gap-1"
-    : "flex flex-col gap-0.5";
+  const listClass = isGrid ? QA_GRID_CONTAINER : QA_LIST_CONTAINER;
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -92,7 +99,7 @@ export function HomeTab({ editing }: { editing: boolean }) {
             strategy={isGrid ? rectSortingStrategy : verticalListSortingStrategy}
           >
             <div className="flex flex-col gap-1.5">
-              {hasTopSites && <SectionHeader>Pinned</SectionHeader>}
+              {(hasTopSites || topSitesBlocked) && <SectionHeader>Pinned</SectionHeader>}
               <ul className={listClass}>
                 {links.map((link) => (
                   <SortablePin
@@ -118,12 +125,11 @@ export function HomeTab({ editing }: { editing: boolean }) {
                         `
                           text-muted-foreground/60
                           hover:text-foreground hover:border-foreground/40
-                          border-border/60 flex w-full cursor-pointer items-center border
-                          border-dashed transition-colors
+                          border-border/60 w-full cursor-pointer border border-dashed
+                          transition-colors
                         `,
-                        isGrid
-                          ? "flex-col gap-1.5 rounded-lg p-2"
-                          : "gap-2.5 rounded-md px-2 py-1.5 [&_svg]:size-4",
+                        qaItemGeometry(view),
+                        !isGrid && "[&_svg]:size-4",
                       )}
                     >
                       {isGrid ? (
@@ -147,6 +153,18 @@ export function HomeTab({ editing }: { editing: boolean }) {
           </SortableContext>
         </DndContext>
 
+        {topSitesBlocked && (
+          <section className="mt-3 flex flex-col gap-1.5">
+            <SectionHeader>Top sites</SectionHeader>
+            <PermissionPrompt
+              permission="topSites"
+              variant="inline"
+              message="Turn on the Top sites permission to show your most-visited sites."
+              onOpenSettings={() => useSettingsStore.getState().openPermissions("topSites")}
+            />
+          </section>
+        )}
+
         {hasTopSites && (
           <section className="mt-3 flex flex-col gap-1.5">
             <SectionHeader>Top sites</SectionHeader>
@@ -167,7 +185,8 @@ export function HomeTab({ editing }: { editing: boolean }) {
           layoutId="qa-add"
           transition={MORPH}
           className="
-            glass absolute inset-x-2 top-1/2 z-10 -translate-y-1/2 rounded-xl p-3 shadow-lg
+            bg-popover border-border/60 absolute inset-x-2 top-1/2 z-10 -translate-y-1/2 rounded-xl
+            border p-3 shadow-lg
           "
         >
           <LinkForm

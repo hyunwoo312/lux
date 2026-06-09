@@ -1,18 +1,18 @@
 import { Switch } from "@/components/ui/switch";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { cn } from "@/lib/utils";
 import {
+  ConfigMultiToggle,
   ConfigSegmented,
   ConfigSelect,
   WidgetConfigGroup,
   WidgetConfigItem,
   WidgetConfigSubItem,
-} from "@/widgets/core/WidgetConfig";
-import { ClearImagesButton } from "@/widgets/image/components/ClearImagesButton";
-import { ImageUploadButton } from "@/widgets/image/components/ImageUploadButton";
-import { MultiImageItems } from "@/widgets/image/components/MultiImageItems";
+} from "@/components/config/WidgetConfig";
+import { ClearImagesButton } from "@/components/media/ClearImagesButton";
+import { ImageUploadButton } from "@/components/media/ImageUploadButton";
+import { MultiImageItems } from "@/components/media/MultiImageItems";
 import { useImageUploads } from "@/widgets/image/hooks/useImageUploads";
-import { getMetadataLabel } from "@/widgets/image/lib/format";
+import { imageAssetStore } from "@/widgets/image/media";
+import { getMetadataLabel } from "@/lib/media-format";
 import {
   MAX_MULTI_IMAGES,
   type ImageBrightness,
@@ -55,44 +55,6 @@ const BRIGHTNESS_OPTIONS: { value: ImageBrightness; label: string }[] = [
   { value: "dark", label: "Dark" },
 ];
 
-function RotationTriggers({
-  values,
-  onChange,
-}: {
-  values: RotationTrigger[];
-  onChange: (next: RotationTrigger[]) => void;
-}) {
-  return (
-    <ToggleGroup
-      type="multiple"
-      value={values}
-      onValueChange={(next) => {
-        if (next.length > 0) onChange(next as RotationTrigger[]);
-      }}
-      aria-label="Rotation triggers"
-      className="bg-foreground/[0.06] flex w-full gap-0.5 rounded-md p-0.5"
-    >
-      {ROTATION_OPTIONS.map((option) => {
-        const active = values.includes(option.value);
-        return (
-          <ToggleGroupItem
-            key={option.value}
-            value={option.value}
-            className={cn(
-              "flex-1 rounded-sm px-2 py-1 text-xs font-medium transition-colors",
-              active
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {option.label}
-          </ToggleGroupItem>
-        );
-      })}
-    </ToggleGroup>
-  );
-}
-
 export function ImageConfig() {
   const mode = useImageStore((s) => s.mode);
   const single = useImageStore((s) => s.single);
@@ -127,6 +89,7 @@ export function ImageConfig() {
     ...(rotateOnClick ? (["onclick"] as const) : []),
   ];
   const applyTriggers = (next: RotationTrigger[]) => {
+    if (next.length === 0) return;
     setRotateOnNewtab(next.includes("newtab"));
     setRotateTimed(next.includes("timed"));
     setRotateOnClick(next.includes("onclick"));
@@ -173,6 +136,7 @@ export function ImageConfig() {
         {isMulti && items.length > 0 && (
           <MultiImageItems
             items={items}
+            assetStore={imageAssetStore}
             disabled={saving}
             onRemove={removeItem}
             onReorder={setItems}
@@ -184,7 +148,12 @@ export function ImageConfig() {
       {isMulti && (
         <WidgetConfigGroup label="Rotation">
           <WidgetConfigItem title="Change image" description="Pick at least one trigger">
-            <RotationTriggers values={triggerValues} onChange={applyTriggers} />
+            <ConfigMultiToggle
+              label="Rotation triggers"
+              values={triggerValues}
+              options={ROTATION_OPTIONS}
+              onChange={applyTriggers}
+            />
             <WidgetConfigSubItem
               title="Interval"
               description="How often it rotates"

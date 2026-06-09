@@ -15,25 +15,25 @@ describe("useDashboardStore", () => {
   });
 
   it("adds a widget with a matching layout item", () => {
-    store().addWidget("clock");
+    store().addWidget("quickAccess");
 
     const { widgets, layout } = store();
     expect(widgets).toHaveLength(1);
-    expect(widgets[0]?.type).toBe("clock");
+    expect(widgets[0]?.type).toBe("quickAccess");
     expect(layout).toHaveLength(1);
     expect(layout[0]?.i).toBe(widgets[0]?.id);
   });
 
   it("ignores a second instance of the same widget type", () => {
-    store().addWidget("clock");
-    store().addWidget("clock");
+    store().addWidget("quickAccess");
+    store().addWidget("quickAccess");
 
     expect(store().widgets).toHaveLength(1);
     expect(store().layout).toHaveLength(1);
   });
 
   it("places different widget types without overlapping", () => {
-    store().addWidget("clock");
+    store().addWidget("quickAccess");
     store().addWidget("tasks");
 
     const { layout } = store();
@@ -43,7 +43,7 @@ describe("useDashboardStore", () => {
   });
 
   it("removes a widget and its layout item", () => {
-    store().addWidget("clock");
+    store().addWidget("quickAccess");
     const id = store().widgets[0]!.id;
 
     store().removeWidget(id);
@@ -54,12 +54,12 @@ describe("useDashboardStore", () => {
   });
 
   it("restores the previous position when a widget is re-added", () => {
-    store().addWidget("clock");
+    store().addWidget("quickAccess");
     const id = store().widgets[0]!.id;
     store().setLayout([{ i: id, x: 4, y: 6, w: 3, h: 3 }]);
     store().removeWidget(id);
 
-    store().addWidget("clock");
+    store().addWidget("quickAccess");
 
     expect(store().layout.find((item) => item.i === id)).toMatchObject({ x: 4, y: 6 });
   });

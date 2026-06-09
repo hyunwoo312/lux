@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { SPOTIFY_TIME_DISPLAY_MODES, type SpotifyTimeDisplayMode } from "@/widgets/spotify/types";
@@ -9,9 +9,11 @@ type SpotifyState = {
   ambient: boolean;
   nowPlayingTrackId: string | null;
   nowPlayingArtworkUrl: string | null;
+  refreshNonce: number;
   setTimeDisplayMode: (mode: SpotifyTimeDisplayMode) => void;
   setAmbient: (ambient: boolean) => void;
   setNowPlaying: (trackId: string | null, artworkUrl: string | null) => void;
+  requestRefresh: () => void;
 };
 
 const persistedSchema = z.object({
@@ -28,6 +30,7 @@ export const useSpotifyStore = create<SpotifyState>()(
       ambient: true,
       nowPlayingTrackId: null,
       nowPlayingArtworkUrl: null,
+      refreshNonce: 0,
       setTimeDisplayMode: (timeDisplayMode) => set({ timeDisplayMode }),
       setAmbient: (ambient) => set({ ambient }),
       setNowPlaying: (nowPlayingTrackId, nowPlayingArtworkUrl) =>
@@ -37,10 +40,11 @@ export const useSpotifyStore = create<SpotifyState>()(
             ? state
             : { nowPlayingTrackId, nowPlayingArtworkUrl },
         ),
+      requestRefresh: () => set((state) => ({ refreshNonce: state.refreshNonce + 1 })),
     }),
     {
       name: "widget:spotify",
-      storage: createJSONStorage(() => gatedStorage),
+      storage: gatedStorage,
       version: 1,
       onRehydrateStorage: () => () => gatedStorage.open(),
       partialize: (state) => ({ timeDisplayMode: state.timeDisplayMode, ambient: state.ambient }),

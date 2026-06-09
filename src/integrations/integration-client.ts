@@ -34,15 +34,23 @@ function getProvider(providerId: IntegrationProviderId): IntegrationProvider {
   return providers[providerId];
 }
 
-function getClientId(provider: IntegrationProvider): string {
-  const env = import.meta.env as Record<string, string | undefined>;
-  const clientId = env[provider.clientIdEnvKey];
+async function resolveClientId(provider: IntegrationProvider): Promise<string> {
+  if (provider.loadClientId) {
+    const clientId = (await provider.loadClientId())?.trim();
+    if (!clientId) {
+      throw new Error(`Add your ${provider.label} client ID in Settings → Accounts`);
+    }
+    return clientId;
+  }
 
-  if (!clientId?.trim()) {
+  const env = import.meta.env as Record<string, string | undefined>;
+  const clientId = provider.clientIdEnvKey ? env[provider.clientIdEnvKey]?.trim() : undefined;
+
+  if (!clientId) {
     throw new Error(`Add a ${provider.label} client ID to connect`);
   }
 
-  return clientId.trim();
+  return clientId;
 }
 
 function getExpiresAt(expiresInSeconds: number): number {
@@ -53,11 +61,18 @@ function getRedirectUriForProvider(providerId: IntegrationProviderId): string {
   return getRedirectUri(`${providerId}/oauth`);
 }
 
+export function getIntegrationRedirectUri(providerId: IntegrationProviderId): string | null {
+  if (typeof chrome === "undefined" || !chrome.identity?.getRedirectURL) {
+    return null;
+  }
+  return getRedirectUriForProvider(providerId);
+}
+
 async function requestToken(
   provider: IntegrationProvider,
   interactive: boolean,
 ): Promise<IntegrationTokenResponse> {
-  const clientId = getClientId(provider);
+  const clientId = await resolveClientId(provider);
   const redirectUri = getRedirectUriForProvider(provider.id);
   const state = createOAuthState();
 
@@ -85,7 +100,13 @@ async function requestToken(
     throw new Error(`${provider.label} is not configured for sign-in`);
   }
 
-  const authUrl = provider.buildAuthUrl({ clientId, redirectUri, state, scopes: provider.scopes });
+  const authUrl = provider.buildAuthUrl({
+    clientId,
+    redirectUri,
+    state,
+    scopes: provider.scopes,
+    prompt: interactive ? "consent" : "none",
+  });
   const callbackUrl = await launchWebAuthFlow(authUrl, interactive);
   const token = parseImplicitTokenCallback(callbackUrl);
 
@@ -143,7 +164,12 @@ async function markNeedsReconnect(account: IntegrationAccount, message: string):
   await writeAccount({ ...account, status: "needsReconnect", lastError: message, token: undefined });
 }
 
-async function getProviderAccessToken(providerId: IntegrationProviderId): Promise<string> {
+const refreshingTokens = new Map<IntegrationProviderId, Promise<string>>();
+
+async function getProviderAccessToken(
+  providerId: IntegrationProviderId,
+  forceRefresh = false,
+): Promise<string> {
   const provider = getProvider(providerId);
   const account = await getAccountByProvider(providerId);
 
@@ -151,15 +177,29 @@ async function getProviderAccessToken(providerId: IntegrationProviderId): Promis
     throw new Error(`${provider.label} is not connected`);
   }
 
-  if (account.token.expiresAt - Date.now() > TOKEN_REFRESH_BUFFER_MS) {
+  if (!forceRefresh && account.token.expiresAt - Date.now() > TOKEN_REFRESH_BUFFER_MS) {
     return account.token.accessToken;
   }
 
+  const inFlight = refreshingTokens.get(providerId);
+  if (inFlight) return inFlight;
+
+  const refresh = refreshProviderToken(provider, account).finally(() => {
+    refreshingTokens.delete(providerId);
+  });
+  refreshingTokens.set(providerId, refresh);
+  return refresh;
+}
+
+async function refreshProviderToken(
+  provider: IntegrationProvider,
+  account: IntegrationAccount,
+): Promise<string> {
   try {
     const token =
-      provider.refreshToken && account.token.refreshToken
+      provider.refreshToken && account.token?.refreshToken
         ? await provider.refreshToken({
-            clientId: getClientId(provider),
+            clientId: await resolveClientId(provider),
             refreshToken: account.token.refreshToken,
           })
         : await requestToken(provider, false);
@@ -170,7 +210,7 @@ async function getProviderAccessToken(providerId: IntegrationProviderId): Promis
       lastSyncedAt: new Date().toISOString(),
       token: {
         accessToken: token.accessToken,
-        refreshToken: token.refreshToken ?? account.token.refreshToken,
+        refreshToken: token.refreshToken ?? account.token?.refreshToken,
         expiresAt: getExpiresAt(token.expiresIn),
         tokenType: token.tokenType,
         scopes: token.scopes,
@@ -193,13 +233,37 @@ async function getProviderAccessToken(providerId: IntegrationProviderId): Promis
   }
 }
 
+async function markProviderNeedsReconnect(providerId: IntegrationProviderId): Promise<void> {
+  const account = await getAccountByProvider(providerId);
+  if (account && account.status === "connected") {
+    await markNeedsReconnect(account, `${getProvider(providerId).label} needs to be reconnected`);
+  }
+}
+
+function authorize(init: RequestInit, accessToken: string): RequestInit {
+  const headers = new Headers(init.headers);
+  headers.set("Authorization", `Bearer ${accessToken}`);
+  return { ...init, headers };
+}
+
 export async function integrationFetch(
   providerId: IntegrationProviderId,
   input: RequestInfo | URL,
   init: RequestInit = {},
 ): Promise<Response> {
   const accessToken = await getProviderAccessToken(providerId);
-  const headers = new Headers(init.headers);
-  headers.set("Authorization", `Bearer ${accessToken}`);
-  return fetch(input, { ...init, headers });
+  const response = await fetch(input, authorize(init, accessToken));
+
+  if (response.status !== 401) {
+    return response;
+  }
+
+  const refreshedToken = await getProviderAccessToken(providerId, true);
+  const retried = await fetch(input, authorize(init, refreshedToken));
+
+  if (retried.status === 401) {
+    await markProviderNeedsReconnect(providerId);
+  }
+
+  return retried;
 }
