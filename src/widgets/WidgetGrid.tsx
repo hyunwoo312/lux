@@ -1,14 +1,14 @@
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GridLayout, useContainerWidth } from "react-grid-layout";
-import type { Compactor, EventCallback, LayoutItem } from "react-grid-layout";
+import type { Compactor, EventCallback } from "react-grid-layout";
 import { cn } from "@/lib/utils";
 import { CELL, GAP, gridColumns, gridWidth, PAD, UNIT } from "@/widgets/core/grid";
 import {
+  clampLayout,
   getLayoutBottom,
   resolveLayoutCollisions,
   resolveLocalDisplacement,
-  type DragVector,
 } from "@/widgets/core/layout-engine";
 import { useWidgetDragStore } from "@/widgets/core/useWidgetDragStore";
 import { WidgetHost } from "@/widgets/core/WidgetHost";
@@ -19,9 +19,8 @@ import { useDashboardStore } from "@/stores/useDashboardStore";
 const MIN_ROWS = 8;
 const EDIT_ROW_BUFFER = 1;
 const BOTTOM_GUTTER = 16;
-const SCROLL_ZONE = 100;
-const SCROLL_MAX_SPEED = 20;
-const DEFAULT_VECTOR: DragVector = { dx: 1, dy: 0 };
+const EDGE_ZONE = 60;
+const EDGE_MAX_SPEED = 18;
 
 export function WidgetGrid() {
   const widgets = useDashboardStore((s) => s.widgets);
@@ -38,8 +37,7 @@ export function WidgetGrid() {
   const [liveSize, setLiveSize] = useState<{ id: string; w: number; h: number } | null>(null);
   const [availableRows, setAvailableRows] = useState(MIN_ROWS);
   const activeWidgetId = useRef<string | null>(null);
-  const dragDirection = useRef<DragVector>({ dx: 1, dy: 0 });
-  const draggingElement = useRef<HTMLElement | null>(null);
+  const pointerY = useRef<number | null>(null);
   const scrollFrame = useRef<number | null>(null);
 
   const autoScroll = useCallback(() => {
@@ -47,12 +45,15 @@ export function WidgetGrid() {
       scrollFrame.current = null;
       return;
     }
-    const el = draggingElement.current;
-    if (el) {
-      const depth = el.getBoundingClientRect().bottom - (window.innerHeight - SCROLL_ZONE);
-      if (depth > 0) {
-        const intensity = Math.min(1, depth / SCROLL_ZONE);
-        window.scrollBy({ top: SCROLL_MAX_SPEED * intensity * intensity });
+    const y = pointerY.current;
+    if (y !== null) {
+      const fromBottom = window.innerHeight - y;
+      if (fromBottom < EDGE_ZONE) {
+        const intensity = Math.min(1, (EDGE_ZONE - fromBottom) / EDGE_ZONE);
+        window.scrollBy({ top: EDGE_MAX_SPEED * intensity * intensity });
+      } else if (y < EDGE_ZONE && window.scrollY > 0) {
+        const intensity = Math.min(1, (EDGE_ZONE - y) / EDGE_ZONE);
+        window.scrollBy({ top: -EDGE_MAX_SPEED * intensity * intensity });
       }
     }
     scrollFrame.current = requestAnimationFrame(autoScroll);
@@ -106,59 +107,35 @@ export function WidgetGrid() {
       type: null,
       allowOverlap: true,
       preventCollision: false,
-      compact: (input, columns) =>
-        resolveLocalDisplacement(input, columns, activeWidgetId.current, dragDirection.current),
+      compact: (input, columns) => clampLayout(input, columns),
     }),
     [],
   );
 
-  const track = (oldItem: LayoutItem | null, newItem: LayoutItem | null) => {
+  const handleStart: EventCallback = (_layout, _oldItem, newItem, _placeholder, event) => {
     if (!newItem) return;
     activeWidgetId.current = newItem.i;
-    if (oldItem) dragDirection.current = { dx: newItem.x - oldItem.x, dy: newItem.y - oldItem.y };
-  };
-
-  const handleStart: EventCallback = (
-    _layout,
-    _oldItem,
-    newItem,
-    _placeholder,
-    _event,
-    element,
-  ) => {
-    if (!newItem) return;
-    activeWidgetId.current = newItem.i;
-    dragDirection.current = { dx: 1, dy: 0 };
-    draggingElement.current = element ?? null;
+    pointerY.current = event instanceof MouseEvent ? event.clientY : null;
     if (scrollFrame.current === null) scrollFrame.current = requestAnimationFrame(autoScroll);
   };
 
-  const handleMove: EventCallback = (next, oldItem, newItem, _placeholder, _event, element) => {
-    track(oldItem, newItem);
+  const handleMove: EventCallback = (next, _oldItem, newItem, _placeholder, event) => {
     if (newItem) setLiveSize({ id: newItem.i, w: newItem.w, h: newItem.h });
-    if (element) draggingElement.current = element;
-    const resolved = resolveLocalDisplacement(
-      next,
-      cols,
-      activeWidgetId.current,
-      dragDirection.current,
-    );
-    setPreviewRows(getLayoutBottom(resolved) + EDIT_ROW_BUFFER);
+    if (event instanceof MouseEvent) pointerY.current = event.clientY;
+    setPreviewRows(getLayoutBottom(next) + EDIT_ROW_BUFFER);
   };
 
-  const handleStop: EventCallback = (next, oldItem, newItem) => {
-    track(oldItem, newItem);
+  const handleStop: EventCallback = (next) => {
     setPreviewRows(null);
     setLiveSize(null);
-    draggingElement.current = null;
+    pointerY.current = null;
     if (scrollFrame.current !== null) {
       cancelAnimationFrame(scrollFrame.current);
       scrollFrame.current = null;
     }
     const draggedId = activeWidgetId.current;
-    const vector = dragDirection.current;
-    const displaced = resolveLocalDisplacement(next, cols, draggedId, vector);
-    const cleaned = resolveLayoutCollisions(displaced, cols, draggedId, vector);
+    const displaced = resolveLocalDisplacement(next, cols, draggedId);
+    const cleaned = resolveLayoutCollisions(displaced, cols, draggedId);
     activeWidgetId.current = null;
     setLayout(cleaned);
   };
@@ -182,7 +159,7 @@ export function WidgetGrid() {
     });
   }, [layout, widgets]);
   const displayLayout = useMemo(
-    () => resolveLayoutCollisions(constrainedLayout, cols, null, DEFAULT_VECTOR),
+    () => resolveLayoutCollisions(constrainedLayout, cols, null),
     [constrainedLayout, cols],
   );
   const rows = Math.max(availableRows, previewRows ?? getLayoutBottom(displayLayout));

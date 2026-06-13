@@ -317,6 +317,18 @@
   }
 }
 
+.react-grid-item.cssTransforms:not(.react-draggable-dragging):not(.resizing) {
+  transition-property: transform, width, height;
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-grid-item.cssTransforms:not(.react-draggable-dragging):not(.resizing) {
+    transition: none;
+  }
+}
+
 .react-grid-item.react-grid-placeholder {
   background: var(--primary);
   border-radius: var(--radius);

@@ -1,6 +1,6 @@
 import type { Layout } from "react-grid-layout";
 import { GAP, PAD, UNIT } from "@/widgets/core/grid";
-import { findNearestOpenPosition, PLACEMENT_VECTOR } from "@/widgets/core/layout-engine";
+import { findNearestOpenPosition } from "@/widgets/core/layout-engine";
 import type { WidgetPlugin } from "@/widgets/core/types";
 import type { DragGeometry, DragRect } from "@/widgets/core/useWidgetDragStore";
 
@@ -51,11 +51,6 @@ export function resolveDrop(
   const w = saved?.w ?? plugin.defaultLayout.w;
   const h = saved?.h ?? plugin.defaultLayout.h;
   const { col, row } = pointerToCell(x, y, geometry, w, h);
-  const open = findNearestOpenPosition(
-    { i: plugin.type, x: col, y: row, w, h },
-    layout,
-    geometry.cols,
-    PLACEMENT_VECTOR,
-  );
+  const open = findNearestOpenPosition({ i: plugin.type, x: col, y: row, w, h }, layout, geometry.cols);
   return { spot: { x: open.x, y: open.y }, rect: cellRect(open.x, open.y, w, h, geometry) };
 }

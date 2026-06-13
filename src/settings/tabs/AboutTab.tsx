@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import {
   Code2,
   Download,
+  ExternalLink,
   EyeOff,
+  Globe,
   HardDrive,
   KeyRound,
   Network,
@@ -22,6 +24,8 @@ const DESCRIPTION =
 const REPO_URL = "https://github.com/hyunwoo312/lux";
 const GITHUB_API = "https://api.github.com/repos/hyunwoo312/lux";
 const AUTHOR_URL = "https://hyunwk.me/";
+const SITE_URL = "https://lux.hyunwk.me";
+const PRIVACY_URL = `${SITE_URL}/privacy`;
 const CWS_URL = "https://chromewebstore.google.com/";
 const KOFI_URL = "https://ko-fi.com/hyunwk";
 
@@ -123,6 +127,20 @@ export function AboutTab() {
             v{version}
           </a>
           <a
+            href={SITE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="
+              text-foreground
+              hover:bg-accent
+              inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium
+              transition-colors
+            "
+          >
+            <Globe className="size-4" />
+            Website
+          </a>
+          <a
             href={CWS_URL}
             target="_blank"
             rel="noopener noreferrer"
@@ -157,6 +175,20 @@ export function AboutTab() {
         <SettingsSection
           title="Privacy"
           description="Everything runs on your device — and the code is yours to check."
+          action={
+            <a
+              href={PRIVACY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="
+                text-primary inline-flex items-center gap-1 text-xs font-medium
+                hover:underline
+              "
+            >
+              Privacy policy
+              <ExternalLink className="size-3" />
+            </a>
+          }
         >
           <TrustRow
             icon={HardDrive}

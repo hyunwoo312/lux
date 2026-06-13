@@ -16,23 +16,73 @@ describe("layout-engine", () => {
 
   it("finds an open position when the target cell is occupied", () => {
     const placed = [item("b", 0, 0, 2, 2)];
-    const position = findNearestOpenPosition(item("a", 0, 0, 2, 2), placed, 6, { dx: 1, dy: 0 });
+    const position = findNearestOpenPosition(item("a", 0, 0, 2, 2), placed, 6);
     expect(collides({ ...item("a", 0, 0, 2, 2), ...position }, placed[0]!)).toBe(false);
   });
 
-  it("displaces the overlapped neighbour while the priority item stays put", () => {
+  it("pushes a neighbour out of its less-covered side while the priority item stays put", () => {
     const layout = [item("a", 0, 0, 2, 2), item("b", 1, 0, 2, 2)];
-    const resolved = resolveLocalDisplacement(layout, 8, "a", { dx: 1, dy: 0 });
+    const resolved = resolveLocalDisplacement(layout, 8, "a");
 
     const a = resolved.find((entry) => entry.i === "a")!;
     const b = resolved.find((entry) => entry.i === "b")!;
     expect(a.x).toBe(0);
+    expect(b.x).toBe(2);
+    expect(b.y).toBe(0);
     expect(collides(a, b)).toBe(false);
   });
 
+  it("displaces toward the nearest empty space when the preferred side is blocked", () => {
+    const layout = [item("a", 1, 0, 2, 2), item("b", 0, 0, 2, 2), item("c", 3, 0, 2, 2)];
+    const resolved = resolveLocalDisplacement(layout, 5, "a");
+
+    const a = resolved.find((entry) => entry.i === "a")!;
+    const b = resolved.find((entry) => entry.i === "b")!;
+    expect(a.x).toBe(1);
+    expect(b.x).toBe(0);
+    expect(b.y).toBe(2);
+  });
+
+  it("pushes a neighbour downward when a grown widget overlaps it from above", () => {
+    const layout = [item("a", 0, 0, 2, 3), item("b", 0, 2, 2, 2)];
+    const resolved = resolveLocalDisplacement(layout, 8, "a");
+
+    const a = resolved.find((entry) => entry.i === "a")!;
+    const b = resolved.find((entry) => entry.i === "b")!;
+    expect(a.y).toBe(0);
+    expect(b.x).toBe(0);
+    expect(b.y).toBe(3);
+    expect(collides(a, b)).toBe(false);
+  });
+
+  it("stays collision-free when a wide drop covers two neighbours", () => {
+    const layout = [item("a", 0, 0, 4, 2), item("b", 0, 0, 2, 2), item("c", 2, 0, 2, 2)];
+    const resolved = resolveLocalDisplacement(layout, 8, "a");
+
+    const a = resolved.find((entry) => entry.i === "a")!;
+    const b = resolved.find((entry) => entry.i === "b")!;
+    const c = resolved.find((entry) => entry.i === "c")!;
+    expect(a.x).toBe(0);
+    expect(a.y).toBe(0);
+    expect(collides(a, b)).toBe(false);
+    expect(collides(a, c)).toBe(false);
+    expect(collides(b, c)).toBe(false);
+  });
+
   it("reflows items that no longer fit the column count", () => {
-    const resolved = resolveLayoutCollisions([item("a", 5, 0, 2, 2)], 4, null, { dx: 1, dy: 0 });
+    const resolved = resolveLayoutCollisions([item("a", 5, 0, 2, 2)], 4, null);
     const a = resolved.find((entry) => entry.i === "a")!;
     expect(a.x + a.w).toBeLessThanOrEqual(4);
+  });
+
+  it("keeps the priority item fixed and relocates an overlapping sibling", () => {
+    const layout = [item("a", 0, 0, 2, 2), item("b", 0, 0, 2, 2)];
+    const resolved = resolveLayoutCollisions(layout, 8, "a");
+
+    const a = resolved.find((entry) => entry.i === "a")!;
+    const b = resolved.find((entry) => entry.i === "b")!;
+    expect(a.x).toBe(0);
+    expect(a.y).toBe(0);
+    expect(collides(a, b)).toBe(false);
   });
 });
