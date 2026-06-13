@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
 import type { OpenBehavior } from "@/lib/open-url";
 import { invalidatePolledResource } from "@/widgets/core/usePolledResource";
+import { syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
 import { GITHUB_VIEWS, type ContributionsData, type GithubView } from "@/widgets/github/types";
 
 export const GITHUB_SYNC_COOLDOWN_MS = 10_000;
@@ -23,7 +24,7 @@ type GithubStoreState = {
   setOpenBehavior: (openBehavior: OpenBehavior) => void;
   setContributions: (contributions: ContributionsData) => void;
   setSyncing: (syncing: boolean) => void;
-  requestSync: (bypassCooldown?: boolean) => SyncResult;
+  requestSync: () => SyncResult;
 };
 
 const contributionDaySchema = z.object({
@@ -84,12 +85,9 @@ export const useGithubStore = create<GithubStoreState>()(
       setOpenBehavior: (openBehavior) => set({ openBehavior }),
       setContributions: (contributions) => set({ contributions }),
       setSyncing: (syncing) => set({ syncing }),
-      requestSync: (bypassCooldown = false) => {
-        const { lastSyncAt } = get();
-        const remainingMs = lastSyncAt
-          ? Math.max(0, GITHUB_SYNC_COOLDOWN_MS - (Date.now() - lastSyncAt))
-          : 0;
-        if (!bypassCooldown && remainingMs > 0) {
+      requestSync: () => {
+        const remainingMs = syncCooldownRemainingMs(get().lastSyncAt, GITHUB_SYNC_COOLDOWN_MS);
+        if (remainingMs > 0) {
           return { ok: false, remainingMs };
         }
         invalidatePolledResource("github:contributions");
