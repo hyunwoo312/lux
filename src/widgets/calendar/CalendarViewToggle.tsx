@@ -1,6 +1,5 @@
 import { CalendarDays, List } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Tooltip } from "@/components/ui/tooltip";
+import { ViewToggleButton } from "@/widgets/core/ViewToggleButton";
 import { useCalendarStore } from "@/widgets/calendar/useCalendarStore";
 
 export function CalendarViewToggle() {
@@ -9,16 +8,11 @@ export function CalendarViewToggle() {
   const isCalendar = view === "calendar";
 
   return (
-    <Tooltip content={isCalendar ? "List view" : "Calendar view"}>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="text-muted-foreground/60 hover:text-foreground size-7 rounded-sm [&_svg]:size-4"
-        aria-label={isCalendar ? "Switch to list view" : "Switch to calendar view"}
-        onClick={() => setView(isCalendar ? "list" : "calendar")}
-      >
-        {isCalendar ? <List /> : <CalendarDays />}
-      </Button>
-    </Tooltip>
+    <ViewToggleButton
+      targetKey={isCalendar ? "list" : "calendar"}
+      targetLabel={isCalendar ? "list view" : "calendar view"}
+      icon={isCalendar ? List : CalendarDays}
+      onToggle={() => setView(isCalendar ? "list" : "calendar")}
+    />
   );
 }

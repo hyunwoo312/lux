@@ -1,6 +1,15 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { Code2, Download, EyeOff, HardDrive, KeyRound, Star, type LucideIcon } from "lucide-react";
+import {
+  Code2,
+  Download,
+  EyeOff,
+  HardDrive,
+  KeyRound,
+  Network,
+  Star,
+  type LucideIcon,
+} from "lucide-react";
 import { motion, useAnimationControls, useReducedMotion, type Variants } from "motion/react";
 import { z } from "zod";
 import { IconRow } from "@/components/IconRow";
@@ -158,6 +167,11 @@ export function AboutTab() {
             icon={EyeOff}
             title="No tracking"
             description="No account, no analytics, no telemetry. Ever."
+          />
+          <TrustRow
+            icon={Network}
+            title="Sign-in relay"
+            description="Connecting accounts like GitHub briefly routes sign-in through a tiny Lux relay that stores nothing — everything else stays on your device."
           />
           <TrustRow
             icon={KeyRound}

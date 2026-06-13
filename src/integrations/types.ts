@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const INTEGRATION_PROVIDER_IDS = ["google", "microsoft", "spotify"] as const;
+export const INTEGRATION_PROVIDER_IDS = ["google", "microsoft", "spotify", "github"] as const;
 export type IntegrationProviderId = (typeof INTEGRATION_PROVIDER_IDS)[number];
 export const integrationProviderIdSchema = z.enum(INTEGRATION_PROVIDER_IDS);
 

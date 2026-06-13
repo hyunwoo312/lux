@@ -1,4 +1,5 @@
 import type { ComponentProps } from "react";
+import { cn } from "@/lib/utils";
 import githubIcon from "@/assets/service-icons/github.svg";
 import googleIcon from "@/assets/service-icons/google.svg";
 import googleCalendarIcon from "@/assets/service-icons/google-calendar.svg";
@@ -19,4 +20,24 @@ export const GoogleCalendarServiceIcon = createServiceIcon(googleCalendarIcon, "
 export const OutlookServiceIcon = createServiceIcon(outlookIcon, "Outlook");
 export const SpotifyServiceIcon = createServiceIcon(spotifyIcon, "Spotify");
 export const GoogleServiceIcon = createServiceIcon(googleIcon, "Google");
-export const GitHubServiceIcon = createServiceIcon(githubIcon, "GitHub");
+const GITHUB_MASK = {
+  maskImage: `url("${githubIcon}")`,
+  WebkitMaskImage: `url("${githubIcon}")`,
+  maskSize: "contain",
+  WebkitMaskSize: "contain",
+  maskRepeat: "no-repeat",
+  WebkitMaskRepeat: "no-repeat",
+  maskPosition: "center",
+  WebkitMaskPosition: "center",
+  transform: "scale(1.15)",
+} as const;
+
+export function GitHubServiceIcon({ className }: { className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={cn("bg-primary inline-block size-6 shrink-0", className)}
+      style={GITHUB_MASK}
+    />
+  );
+}

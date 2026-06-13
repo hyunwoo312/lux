@@ -1,12 +1,14 @@
 import type { ComponentType } from "react";
 import { useEffect, useState } from "react";
 import {
+  GitHubServiceIcon,
   GoogleServiceIcon,
   OutlookServiceIcon,
   SpotifyServiceIcon,
 } from "@/components/icons/service-icons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { formatRelativeTime } from "@/lib/relative-time";
 import { PermissionsSection } from "@/settings/components/PermissionsSection";
 import { SettingsSection } from "@/settings/components/SettingsSection";
 import { SpotifySetup } from "@/settings/components/SpotifySetup";
@@ -29,6 +31,7 @@ const PROVIDERS: ProviderMeta[] = [
   { id: "google", label: "Google", description: "Calendar", icon: GoogleServiceIcon },
   { id: "microsoft", label: "Outlook", description: "Calendar", icon: OutlookServiceIcon },
   { id: "spotify", label: "Spotify", description: "Playback", icon: SpotifyServiceIcon },
+  { id: "github", label: "GitHub", description: "Contributions & inbox", icon: GitHubServiceIcon },
 ];
 
 type Pending = "connecting" | "disconnecting";
@@ -98,7 +101,7 @@ export function AccountsTab() {
         const subline =
           status === "connected"
             ? account?.lastSyncedAt
-              ? `${identity} · synced ${formatRelative(account.lastSyncedAt)}`
+              ? `${identity} · synced ${formatRelativeTime(account.lastSyncedAt)}`
               : identity
             : status === "needsReconnect"
               ? "Reconnect to continue"
@@ -229,31 +232,28 @@ function AccountAvatar({
 }) {
   const [broken, setBroken] = useState(false);
   const showImage = connected && Boolean(avatarUrl) && !broken;
+
+  if (!showImage) {
+    return (
+      <span className="inline-flex size-9 shrink-0 items-center justify-center">
+        <Icon className="size-6 object-contain" />
+      </span>
+    );
+  }
+
   return (
-    <span className="relative inline-flex size-6 shrink-0 items-center justify-center">
-      <Icon className="size-6 object-contain" />
-      {showImage && (
-        <img
-          src={avatarUrl}
-          alt=""
-          aria-hidden
-          referrerPolicy="no-referrer"
-          onError={() => setBroken(true)}
-          className="
-            border-background absolute -right-2 -bottom-2 size-5 rounded-full border-2 object-cover
-          "
-        />
-      )}
+    <span className="relative inline-flex size-9 shrink-0">
+      <Icon className="absolute top-0 left-0 size-6 object-contain" />
+      <img
+        src={avatarUrl}
+        alt=""
+        aria-hidden
+        referrerPolicy="no-referrer"
+        onError={() => setBroken(true)}
+        className="
+          border-background absolute right-0 bottom-0 size-6 rounded-full border-2 object-cover
+        "
+      />
     </span>
   );
-}
-
-function formatRelative(iso: string): string {
-  const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.round(hours / 24);
-  return `${days}d ago`;
 }

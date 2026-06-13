@@ -15,7 +15,7 @@ import { usePermissionGranted } from "@/hooks/usePermission";
 import { isPermissionsManageable } from "@/lib/permissions";
 import { useSettingsStore } from "@/settings";
 import { cn } from "@/lib/utils";
-import { openUrl } from "@/widgets/quick-access/browser";
+import { openUrl } from "@/lib/open-url";
 import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
 import { LinkForm } from "@/widgets/quick-access/components/LinkForm";
 import { SortablePin } from "@/widgets/quick-access/components/SortablePin";

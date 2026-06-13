@@ -9,6 +9,7 @@ export const WIDGET_TYPES = [
   "image",
   "calendar",
   "spotify",
+  "github",
 ] as const;
 export type WidgetType = (typeof WIDGET_TYPES)[number];
 

@@ -1,4 +1,4 @@
-import type { BrowserItem, OpenBehavior } from "@/widgets/quick-access/types";
+import type { BrowserItem } from "@/widgets/quick-access/types";
 
 const RECENTLY_CLOSED_REQUEST = 25;
 const RECENTLY_CLOSED_LIMIT = 10;
@@ -76,12 +76,4 @@ export async function fetchTopSites(): Promise<BrowserItem[]> {
     .filter((site) => /^https?:\/\//.test(site.url))
     .map((site) => ({ id: `top-${site.url}`, title: site.title || site.url, url: site.url }))
     .slice(0, TOP_SITES_LIMIT);
-}
-
-export function openUrl(url: string, behavior: OpenBehavior): void {
-  if (behavior === "newTab") {
-    window.open(url, "_blank", "noopener,noreferrer");
-  } else {
-    window.location.href = url;
-  }
 }

@@ -11,6 +11,7 @@ import {
   IntegrationReconnectRequiredError,
   IntegrationTemporaryAuthError,
 } from "@/integrations/errors";
+import { githubProvider } from "@/integrations/providers/github";
 import { googleProvider } from "@/integrations/providers/google";
 import { microsoftProvider } from "@/integrations/providers/microsoft";
 import { spotifyProvider } from "@/integrations/providers/spotify";
@@ -28,6 +29,7 @@ const providers: Record<IntegrationProviderId, IntegrationProvider> = {
   google: googleProvider,
   microsoft: microsoftProvider,
   spotify: spotifyProvider,
+  github: githubProvider,
 };
 
 function getProvider(providerId: IntegrationProviderId): IntegrationProvider {

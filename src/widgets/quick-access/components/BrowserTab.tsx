@@ -4,7 +4,7 @@ import { usePermissionGranted } from "@/hooks/usePermission";
 import { isPermissionsManageable } from "@/lib/permissions";
 import { useSettingsStore } from "@/settings";
 import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
-import { openUrl } from "@/widgets/quick-access/browser";
+import { openUrl } from "@/lib/open-url";
 import { useBrowserItems } from "@/widgets/quick-access/hooks/useBrowserItems";
 import { keyOf } from "@/widgets/quick-access/lib/url";
 import type { QuickAccessTab } from "@/widgets/quick-access/types";

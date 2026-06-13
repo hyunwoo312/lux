@@ -4,6 +4,7 @@ import { quickAccessPlugin } from "@/widgets/quick-access";
 import { imagePlugin } from "@/widgets/image";
 import { calendarPlugin } from "@/widgets/calendar";
 import { spotifyPlugin } from "@/widgets/spotify";
+import { githubPlugin } from "@/widgets/github";
 
 const plugins: Record<WidgetType, WidgetPlugin> = {
   tasks: tasksPlugin,
@@ -11,6 +12,7 @@ const plugins: Record<WidgetType, WidgetPlugin> = {
   image: imagePlugin,
   calendar: calendarPlugin,
   spotify: spotifyPlugin,
+  github: githubPlugin,
 };
 
 export const widgetPlugins: WidgetPlugin[] = [
@@ -19,6 +21,7 @@ export const widgetPlugins: WidgetPlugin[] = [
   imagePlugin,
   calendarPlugin,
   spotifyPlugin,
+  githubPlugin,
 ];
 
 export function getWidgetPlugin(type: WidgetType): WidgetPlugin | undefined {
