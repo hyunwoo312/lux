@@ -27,10 +27,6 @@ coverage/
 # TS build info
 *.tsbuildinfo
 
-# Local preview screenshots
-*-preview.png
-.theme-*.png
-
 # Local-only project docs
 CLAUDE.md
 docs/

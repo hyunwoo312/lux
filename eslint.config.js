@@ -21,6 +21,7 @@ export default tseslint.config(
     },
     rules: {
       "no-empty": ["error", { allowEmptyCatch: true }],
+      "no-console": ["error", { allow: ["warn", "error"] }],
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
