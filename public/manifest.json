@@ -28,7 +28,9 @@
     "https://login.microsoftonline.com/*",
     "https://api.spotify.com/*",
     "https://accounts.spotify.com/*",
-    "https://api.github.com/*"
+    "https://api.github.com/*",
+    "https://api.open-meteo.com/*",
+    "https://geocoding-api.open-meteo.com/*"
   ],
   "chrome_url_overrides": {
     "newtab": "index.html"

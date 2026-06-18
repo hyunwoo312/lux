@@ -43,7 +43,7 @@ const spin = {
 } as const;
 
 const swapTransition: Transition = { duration: 0.18, ease: "easeOut" };
-const HEADER_LABEL =
+export const HEADER_LABEL =
   "text-muted-foreground block truncate text-xs font-medium tracking-wide uppercase";
 
 export function BaseWidget({
@@ -121,7 +121,7 @@ export function BaseWidget({
       {contentBackdrop && showConfig && (
         <div className="bg-background/70 pointer-events-none absolute inset-0 z-[5]" aria-hidden />
       )}
-      <div className="relative z-10 flex items-center justify-between gap-2 px-4 py-2">
+      <div className="relative z-20 flex items-center justify-between gap-2 px-4 py-2">
         <div className="@container relative min-w-0 flex-1">
           <AnimatePresence mode="wait" initial={false} custom={showConfig}>
             <motion.div

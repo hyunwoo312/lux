@@ -13,7 +13,8 @@
 </div>
 
 <p align="center">
-  <img src="assets/preview.png" alt="The Lux new tab dashboard preview image" width="100%" />
+  <img src="assets/preview-default.png" alt="Lux new tab dashboard — default look" width="49%" />
+  <img src="assets/preview-custom.png" alt="Lux new tab dashboard — custom wallpaper and layout" width="49%" />
 </p>
 
 ## What it is

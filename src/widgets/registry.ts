@@ -5,6 +5,7 @@ import { imagePlugin } from "@/widgets/image";
 import { calendarPlugin } from "@/widgets/calendar";
 import { spotifyPlugin } from "@/widgets/spotify";
 import { githubPlugin } from "@/widgets/github";
+import { weatherPlugin } from "@/widgets/weather";
 
 const plugins: Record<WidgetType, WidgetPlugin> = {
   tasks: tasksPlugin,
@@ -13,6 +14,7 @@ const plugins: Record<WidgetType, WidgetPlugin> = {
   calendar: calendarPlugin,
   spotify: spotifyPlugin,
   github: githubPlugin,
+  weather: weatherPlugin,
 };
 
 export const widgetPlugins: WidgetPlugin[] = [
@@ -22,6 +24,7 @@ export const widgetPlugins: WidgetPlugin[] = [
   calendarPlugin,
   spotifyPlugin,
   githubPlugin,
+  weatherPlugin,
 ];
 
 export function getWidgetPlugin(type: WidgetType): WidgetPlugin | undefined {

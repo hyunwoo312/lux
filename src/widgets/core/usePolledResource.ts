@@ -18,28 +18,87 @@ type Options<T> = {
   refreshKey?: string | number;
   isEmpty?: (data: T) => boolean;
   cacheKey?: string;
+  persist?: boolean;
+  parsePersisted?: (raw: unknown) => T | null;
 };
 
 function defaultIsEmpty(data: unknown): boolean {
   return data == null || (Array.isArray(data) && data.length === 0);
 }
 
-const resourceCache = new Map<string, { data: unknown; at: number }>();
+type CacheEntry<T> = { data: T; at: number };
+
+const resourceCache = new Map<string, CacheEntry<unknown>>();
+const STORAGE_PREFIX = "lux:polled:";
+
+function readPersisted<T>(
+  cacheKey: string,
+  parse?: (raw: unknown) => T | null,
+): CacheEntry<T> | undefined {
+  try {
+    const raw = localStorage.getItem(STORAGE_PREFIX + cacheKey);
+    if (!raw) return undefined;
+    const entry = JSON.parse(raw) as { data: unknown; at: unknown };
+    if (typeof entry?.at !== "number") return undefined;
+    const data = parse ? parse(entry.data) : (entry.data as T);
+    if (data == null) return undefined;
+    return { data, at: entry.at };
+  } catch {
+    return undefined;
+  }
+}
+
+function writePersisted<T>(cacheKey: string, entry: CacheEntry<T>): void {
+  try {
+    localStorage.setItem(STORAGE_PREFIX + cacheKey, JSON.stringify(entry));
+  } catch {
+    return;
+  }
+}
 
 export function invalidatePolledResource(cacheKey: string): void {
   resourceCache.delete(cacheKey);
+  try {
+    localStorage.removeItem(STORAGE_PREFIX + cacheKey);
+  } catch {
+    return;
+  }
 }
 
 export function usePolledResource<T>(
-  fetcher: () => Promise<T>,
+  fetcher: (signal: AbortSignal) => Promise<T>,
   options: Options<T> = {},
 ): PolledResource<T> {
-  const { enabled = true, intervalMs, refreshKey, isEmpty = defaultIsEmpty, cacheKey } = options;
+  const {
+    enabled = true,
+    intervalMs,
+    refreshKey,
+    isEmpty = defaultIsEmpty,
+    cacheKey,
+    persist = false,
+    parsePersisted,
+  } = options;
   const staleMs = intervalMs ?? 60_000;
 
-  const initialCache = cacheKey ? resourceCache.get(cacheKey) : undefined;
+  const seededRef = useRef(false);
+  const seedRef = useRef<CacheEntry<T> | undefined>(undefined);
+  if (!seededRef.current) {
+    seededRef.current = true;
+    if (cacheKey) {
+      let entry = resourceCache.get(cacheKey) as CacheEntry<T> | undefined;
+      if (!entry && persist) {
+        const stored = readPersisted<T>(cacheKey, parsePersisted);
+        if (stored) {
+          entry = stored;
+          resourceCache.set(cacheKey, stored);
+        }
+      }
+      seedRef.current = entry;
+    }
+  }
+  const initialCache = seedRef.current;
 
-  const [data, setData] = useState<T | undefined>(initialCache?.data as T | undefined);
+  const [data, setData] = useState<T | undefined>(initialCache?.data);
   const [error, setError] = useState<Error | undefined>(undefined);
   const [hasLoaded, setHasLoaded] = useState(initialCache !== undefined);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -48,25 +107,32 @@ export function usePolledResource<T>(
   fetcherRef.current = fetcher;
   const cacheKeyRef = useRef(cacheKey);
   cacheKeyRef.current = cacheKey;
+  const persistRef = useRef(persist);
+  persistRef.current = persist;
   const hasLoadedRef = useRef(initialCache !== undefined);
   const generationRef = useRef(0);
   const inFlightRef = useRef(false);
   const mountedRef = useRef(true);
+  const abortRef = useRef<AbortController | null>(null);
 
   const run = useCallback(async (background: boolean) => {
     if (background && inFlightRef.current) return;
     inFlightRef.current = true;
+    const controller = new AbortController();
+    abortRef.current = controller;
     const generation = generationRef.current;
     if (background) setIsRefreshing(true);
     try {
-      const result = await fetcherRef.current();
+      const result = await fetcherRef.current(controller.signal);
       if (!mountedRef.current || generation !== generationRef.current) return;
       setData(result);
       setError(undefined);
       setHasLoaded(true);
       hasLoadedRef.current = true;
       if (cacheKeyRef.current) {
-        resourceCache.set(cacheKeyRef.current, { data: result, at: Date.now() });
+        const entry: CacheEntry<T> = { data: result, at: Date.now() };
+        resourceCache.set(cacheKeyRef.current, entry);
+        if (persistRef.current) writePersisted(cacheKeyRef.current, entry);
       }
     } catch (caught) {
       if (!mountedRef.current || generation !== generationRef.current) return;
@@ -84,12 +150,13 @@ export function usePolledResource<T>(
     if (!enabled) return;
 
     generationRef.current += 1;
-    const cached = cacheKey ? resourceCache.get(cacheKey) : undefined;
-    if (cached !== undefined && Date.now() - cached.at < staleMs) {
+    const cached = cacheKey ? (resourceCache.get(cacheKey) as CacheEntry<T> | undefined) : undefined;
+    if (cached !== undefined) {
       hasLoadedRef.current = true;
       setHasLoaded(true);
-      setData(cached.data as T);
+      setData(cached.data);
       setError(undefined);
+      if (Date.now() - cached.at >= staleMs) void run(true);
     } else {
       hasLoadedRef.current = false;
       setHasLoaded(false);
@@ -109,6 +176,7 @@ export function usePolledResource<T>(
 
     return () => {
       mountedRef.current = false;
+      abortRef.current?.abort();
       if (intervalId !== undefined) window.clearInterval(intervalId);
       window.removeEventListener("focus", refreshWhenVisible);
       document.removeEventListener("visibilitychange", refreshWhenVisible);

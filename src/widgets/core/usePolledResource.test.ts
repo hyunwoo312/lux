@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { usePolledResource } from "@/widgets/core/usePolledResource";
 
 afterEach(() => {
@@ -109,5 +109,60 @@ describe("usePolledResource", () => {
     expect(second.result.current.state).toEqual({ status: "success", data: [1, 2] });
     await act(async () => {});
     expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("usePolledResource persistence", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("persists a successful result to localStorage", async () => {
+    const fetcher = vi.fn().mockResolvedValue({ value: 1 });
+    const { result } = renderHook(() =>
+      usePolledResource(fetcher, { cacheKey: "persist-write", persist: true }),
+    );
+
+    await waitFor(() => expect(result.current.state.status).toBe("success"));
+    expect(localStorage.getItem("lux:polled:persist-write")).toContain('"value":1');
+  });
+
+  it("seeds instantly from a fresh persisted entry without fetching", () => {
+    localStorage.setItem(
+      "lux:polled:persist-seed",
+      JSON.stringify({ data: { value: 2 }, at: Date.now() }),
+    );
+    const fetcher = vi.fn().mockResolvedValue({ value: 99 });
+
+    const { result } = renderHook(() =>
+      usePolledResource(fetcher, { cacheKey: "persist-seed", persist: true, intervalMs: 10_000 }),
+    );
+
+    expect(result.current.state).toEqual({ status: "success", data: { value: 2 } });
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("ignores a persisted entry rejected by the validator", async () => {
+    localStorage.setItem(
+      "lux:polled:persist-invalid",
+      JSON.stringify({ data: { bad: true }, at: Date.now() }),
+    );
+    const fetcher = vi.fn().mockResolvedValue({ value: 3 });
+
+    const { result } = renderHook(() =>
+      usePolledResource(fetcher, {
+        cacheKey: "persist-invalid",
+        persist: true,
+        parsePersisted: (raw) =>
+          typeof raw === "object" && raw !== null && "value" in raw
+            ? (raw as { value: number })
+            : null,
+      }),
+    );
+
+    expect(result.current.state.status).toBe("loading");
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ status: "success", data: { value: 3 } }),
+    );
   });
 });
