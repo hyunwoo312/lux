@@ -7,6 +7,7 @@ import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from "@d
 import { CSS } from "@dnd-kit/utilities";
 import { ImageIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { GRID_MODIFIERS } from "@/lib/dnd";
 import { useAssetObjectUrl, type AssetStore, type MediaImageItem } from "@/lib/asset-store";
 import { getMetadataLabel } from "@/lib/media-format";
 
@@ -37,7 +38,12 @@ export function MultiImageItems({
   };
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      modifiers={GRID_MODIFIERS}
+      onDragEnd={handleDragEnd}
+    >
       <SortableContext items={items.map((item) => item.assetId)} strategy={rectSortingStrategy}>
         <ul className="grid grid-cols-[repeat(auto-fill,minmax(5rem,1fr))] gap-1.5">
           {items.map((item) => (

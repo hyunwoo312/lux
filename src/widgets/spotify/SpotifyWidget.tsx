@@ -110,7 +110,7 @@ export function SpotifyWidget() {
     content = (
       <SpotifyEmptyState
         title="Nothing playing"
-        message="Pick a device to play on, or start Spotify anywhere and this widget will follow along."
+        message="Pick a device, or start Spotify anywhere to begin."
         action={{
           label: controller.pendingActions.has("refresh") ? "Refreshing…" : "Refresh",
           onClick: () => void controller.refresh(),

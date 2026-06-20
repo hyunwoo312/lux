@@ -5,6 +5,7 @@ import type { DragEndEvent } from "@dnd-kit/core";
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { BorderTrail } from "@/components/ui/border-trail";
+import { VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
 import { orderTasks } from "@/widgets/tasks/lib/order";
 import { useTasksStore } from "@/widgets/tasks/useTasksStore";
 import { DraftTaskRow, TaskRow } from "@/widgets/tasks/components/TaskRow";
@@ -123,7 +124,12 @@ export function TasksWidget() {
           No tasks yet
         </div>
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          modifiers={VERTICAL_LIST_MODIFIERS}
+          onDragEnd={handleDragEnd}
+        >
           <SortableContext
             items={ordered.map((task) => task.id)}
             strategy={verticalListSortingStrategy}

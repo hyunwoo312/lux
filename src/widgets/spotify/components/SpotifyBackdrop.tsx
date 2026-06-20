@@ -20,10 +20,12 @@ export function SpotifyBackdrop() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: reduced ? 0 : 0.6, ease: "easeInOut" }}
-          className="absolute inset-0 size-full scale-110 object-cover blur-2xl"
+          className="
+            absolute inset-0 size-full scale-110 object-cover blur-xl saturate-[1.75] brightness-110
+          "
         />
       </AnimatePresence>
-      <div className="bg-background/68 absolute inset-0" aria-hidden />
+      <div className="bg-background/46 absolute inset-0" aria-hidden />
     </>
   );
 }

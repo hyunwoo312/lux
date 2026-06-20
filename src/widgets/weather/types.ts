@@ -1,3 +1,7 @@
+import type { AccentPreset } from "@/widgets/core/accent";
+
+export const WEATHER_ACCENT: AccentPreset = "cyan";
+
 export type WeatherUnits = "metric" | "imperial";
 
 export type WeatherLocation = {

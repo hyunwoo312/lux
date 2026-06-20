@@ -14,5 +14,5 @@ export const quickAccessPlugin: WidgetPlugin = {
   configComponent: QuickAccessConfig,
   statusComponent: QuickAccessTabs,
   headerActionComponent: QuickAccessLayoutToggle,
-  accent: "cyan",
+  accent: "rose",
 };

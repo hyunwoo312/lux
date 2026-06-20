@@ -15,6 +15,7 @@ import { usePermissionGranted } from "@/hooks/usePermission";
 import { isPermissionsManageable } from "@/lib/permissions";
 import { useSettingsStore } from "@/settings";
 import { cn } from "@/lib/utils";
+import { GRID_MODIFIERS, VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
 import { openUrl } from "@/lib/open-url";
 import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
 import { LinkForm } from "@/widgets/quick-access/components/LinkForm";
@@ -93,7 +94,12 @@ export function HomeTab({ editing }: { editing: boolean }) {
         transition={{ duration: 0.25, ease: "easeOut" }}
         className={cn("h-full overflow-x-hidden overflow-y-auto", form && "pointer-events-none")}
       >
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          modifiers={isGrid ? GRID_MODIFIERS : VERTICAL_LIST_MODIFIERS}
+          onDragEnd={handleDragEnd}
+        >
           <SortableContext
             items={links.map((link) => link.id)}
             strategy={isGrid ? rectSortingStrategy : verticalListSortingStrategy}

@@ -3,6 +3,7 @@ import type {
   SpotifyPlaybackDevice,
   SpotifyPlaybackState,
   SpotifyRepeatMode,
+  SpotifySearchResult,
 } from "@/widgets/spotify/types";
 
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
@@ -33,6 +34,38 @@ type SpotifyPlaybackPayload = {
 };
 
 type SpotifyDevicesPayload = { devices?: SpotifyDevicePayload[] };
+
+type SpotifyArtistRef = { name?: string };
+
+type SpotifySearchTrackItem = {
+  id?: string;
+  uri?: string;
+  name?: string;
+  artists?: SpotifyArtistRef[];
+  album?: { images?: SpotifyImage[] };
+};
+
+type SpotifySearchAlbumItem = {
+  id?: string;
+  uri?: string;
+  name?: string;
+  artists?: SpotifyArtistRef[];
+  images?: SpotifyImage[];
+};
+
+type SpotifySearchPlaylistItem = {
+  id?: string;
+  uri?: string;
+  name?: string;
+  owner?: { display_name?: string };
+  images?: SpotifyImage[];
+};
+
+type SpotifySearchPayload = {
+  tracks?: { items?: Array<SpotifySearchTrackItem | null> };
+  albums?: { items?: Array<SpotifySearchAlbumItem | null> };
+  playlists?: { items?: Array<SpotifySearchPlaylistItem | null> };
+};
 
 export class SpotifyRateLimitError extends Error {
   retryAfterMs: number;
@@ -69,6 +102,88 @@ function selectArtworkUrl(images: SpotifyImage[] = []): string | undefined {
   return [...images]
     .filter((image) => image.url)
     .sort((first, second) => (second.width ?? 0) - (first.width ?? 0))[0]?.url;
+}
+
+function joinArtistNames(artists: SpotifyArtistRef[] = []): string {
+  return (
+    artists
+      .map((artist) => artist.name)
+      .filter((name): name is string => Boolean(name))
+      .join(", ") || "Unknown artist"
+  );
+}
+
+function mapSearchTrack(item: SpotifySearchTrackItem | null): SpotifySearchResult | null {
+  if (!item?.id || !item.uri || !item.name) return null;
+  return {
+    id: item.id,
+    uri: item.uri,
+    kind: "track",
+    title: item.name,
+    subtitle: joinArtistNames(item.artists),
+    artworkUrl: selectArtworkUrl(item.album?.images),
+  };
+}
+
+function mapSearchAlbum(item: SpotifySearchAlbumItem | null): SpotifySearchResult | null {
+  if (!item?.id || !item.uri || !item.name) return null;
+  return {
+    id: item.id,
+    uri: item.uri,
+    kind: "album",
+    title: item.name,
+    subtitle: joinArtistNames(item.artists),
+    artworkUrl: selectArtworkUrl(item.images),
+  };
+}
+
+function mapSearchPlaylist(item: SpotifySearchPlaylistItem | null): SpotifySearchResult | null {
+  if (!item?.id || !item.uri || !item.name) return null;
+  return {
+    id: item.id,
+    uri: item.uri,
+    kind: "playlist",
+    title: item.name,
+    subtitle: item.owner?.display_name || "Playlist",
+    artworkUrl: selectArtworkUrl(item.images),
+  };
+}
+
+const SEARCH_RESULT_CAPS: Record<SpotifySearchResult["kind"], number> = {
+  track: 4,
+  album: 3,
+  playlist: 3,
+};
+
+function takeResults<T>(
+  items: Array<T | null>,
+  mapper: (item: T | null) => SpotifySearchResult | null,
+  cap: number,
+): SpotifySearchResult[] {
+  return items
+    .map(mapper)
+    .filter((result): result is SpotifySearchResult => result !== null)
+    .slice(0, cap);
+}
+
+async function flagLikedTracks(
+  tracks: SpotifySearchResult[],
+  signal?: AbortSignal,
+): Promise<SpotifySearchResult[]> {
+  if (tracks.length === 0) return tracks;
+  let liked: Set<string>;
+  try {
+    liked = await getSpotifySavedTrackFlags(
+      tracks.map((track) => track.id),
+      signal,
+    );
+  } catch {
+    return tracks;
+  }
+  const flagged = tracks.map((track) =>
+    liked.has(track.id) ? { ...track, liked: true } : track,
+  );
+  return [...flagged.filter((track) => track.liked), ...flagged.filter((track) => !track.liked)];
 }
 
 function mapDevicePayload(device: SpotifyDevicePayload | null | undefined): SpotifyPlaybackDevice {
@@ -135,6 +250,94 @@ export async function getSpotifyDevices(): Promise<SpotifyPlaybackDevice[]> {
 
   const payload = (await response.json()) as SpotifyDevicesPayload;
   return (payload.devices ?? []).map(mapDevicePayload).filter((device) => device.id);
+}
+
+const SPOTIFY_SEARCH_TYPES = "track,album,playlist";
+const SPOTIFY_SEARCH_LIMIT = 5;
+
+export async function searchSpotify(
+  query: string,
+  signal?: AbortSignal,
+): Promise<SpotifySearchResult[]> {
+  const params = new URLSearchParams({
+    q: query,
+    type: SPOTIFY_SEARCH_TYPES,
+    limit: String(SPOTIFY_SEARCH_LIMIT),
+  });
+  const response = await integrationFetch(
+    "spotify",
+    `${SPOTIFY_API_BASE_URL}/search?${params.toString()}`,
+    { signal },
+  );
+  if (!response.ok) {
+    throw spotifyError(response);
+  }
+  const payload = (await response.json()) as SpotifySearchPayload;
+  const tracks = await flagLikedTracks(
+    takeResults(payload.tracks?.items ?? [], mapSearchTrack, SEARCH_RESULT_CAPS.track),
+    signal,
+  );
+  const albums = takeResults(payload.albums?.items ?? [], mapSearchAlbum, SEARCH_RESULT_CAPS.album);
+  const playlists = takeResults(
+    payload.playlists?.items ?? [],
+    mapSearchPlaylist,
+    SEARCH_RESULT_CAPS.playlist,
+  );
+  return [...tracks, ...albums, ...playlists];
+}
+
+export async function getSpotifySavedTrackFlags(
+  ids: string[],
+  signal?: AbortSignal,
+): Promise<Set<string>> {
+  if (ids.length === 0) return new Set();
+  const params = new URLSearchParams({ ids: ids.join(",") });
+  const response = await integrationFetch(
+    "spotify",
+    `${SPOTIFY_API_BASE_URL}/me/tracks/contains?${params.toString()}`,
+    { signal },
+  );
+  if (!response.ok) {
+    throw spotifyError(response);
+  }
+  const flags = (await response.json()) as unknown;
+  if (!Array.isArray(flags)) return new Set();
+  const liked = new Set<string>();
+  flags.forEach((isLiked, index) => {
+    const id = ids[index];
+    if (isLiked === true && id) liked.add(id);
+  });
+  return liked;
+}
+
+export async function getMySpotifyPlaylists(signal?: AbortSignal): Promise<SpotifySearchResult[]> {
+  const params = new URLSearchParams({ limit: "50" });
+  const response = await integrationFetch(
+    "spotify",
+    `${SPOTIFY_API_BASE_URL}/me/playlists?${params.toString()}`,
+    { signal },
+  );
+  if (!response.ok) {
+    throw spotifyError(response);
+  }
+  const payload = (await response.json()) as { items?: Array<SpotifySearchPlaylistItem | null> };
+  return (payload.items ?? [])
+    .map(mapSearchPlaylist)
+    .filter((result): result is SpotifySearchResult => result !== null)
+    .map((result) => ({ ...result, mine: true }));
+}
+
+export async function startSpotifyPlayback(
+  result: SpotifySearchResult,
+  deviceId?: string,
+): Promise<void> {
+  const body = result.kind === "track" ? { uris: [result.uri] } : { context_uri: result.uri };
+  const query = deviceId ? `?device_id=${encodeURIComponent(deviceId)}` : "";
+  await sendSpotifyCommand(`/me/player/play${query}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 }
 
 export async function pauseSpotifyPlayback(): Promise<void> {

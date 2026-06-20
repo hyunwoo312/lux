@@ -34,6 +34,19 @@ export type SpotifyPlaybackState = {
   track: SpotifyPlaybackTrack;
 };
 
+export type SpotifySearchKind = "track" | "album" | "playlist";
+
+export type SpotifySearchResult = {
+  id: string;
+  uri: string;
+  kind: SpotifySearchKind;
+  title: string;
+  subtitle: string;
+  artworkUrl?: string;
+  liked?: boolean;
+  mine?: boolean;
+};
+
 export type SpotifyResponsiveView = "compact" | "details" | "expanded";
 
 export type SpotifyPendingAction =

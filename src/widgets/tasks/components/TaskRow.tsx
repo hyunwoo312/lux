@@ -128,6 +128,7 @@ export function TaskRow({ task, sortable, revealing = false, onToggle, onEdit, o
         onPointerDown={stopDrag}
         onCheckedChange={onToggle}
         aria-label={task.done ? `Mark ${task.title} as not done` : `Mark ${task.title} as done`}
+        className="relative before:absolute before:-inset-1.5 before:content-['']"
       />
       <div
         className={cn(

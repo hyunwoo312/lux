@@ -30,7 +30,7 @@ type ProviderMeta = {
 const PROVIDERS: ProviderMeta[] = [
   { id: "google", label: "Google", description: "Calendar", icon: GoogleServiceIcon },
   { id: "microsoft", label: "Outlook", description: "Calendar", icon: OutlookServiceIcon },
-  { id: "spotify", label: "Spotify", description: "Playback", icon: SpotifyServiceIcon },
+  { id: "spotify", label: "Spotify", description: "Playback & search", icon: SpotifyServiceIcon },
   { id: "github", label: "GitHub", description: "Contributions & inbox", icon: GitHubServiceIcon },
 ];
 

@@ -4,7 +4,12 @@ import type { IntegrationProvider } from "@/integrations/types";
 
 const PROFILE_ENDPOINT = "https://api.spotify.com/v1/me";
 
-const SCOPES = ["user-read-playback-state", "user-modify-playback-state"];
+const SCOPES = [
+  "user-read-playback-state",
+  "user-modify-playback-state",
+  "user-library-read",
+  "playlist-read-private",
+];
 
 type SpotifyProfile = {
   id: string;

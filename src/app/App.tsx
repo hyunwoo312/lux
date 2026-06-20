@@ -6,9 +6,11 @@ import { SettingsDialog } from "@/settings";
 import { Tour, Welcome } from "@/onboarding";
 import { WidgetGrid } from "@/widgets/WidgetGrid";
 import { useGlobalShortcuts } from "@/app/useGlobalShortcuts";
+import { useDisableContextMenu } from "@/app/useDisableContextMenu";
 
 export function App() {
   useGlobalShortcuts();
+  useDisableContextMenu();
 
   return (
     <TooltipProvider>

@@ -1,8 +1,27 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useIntegrationStore } from "@/integrations";
 import { SpotifyStatus } from "@/widgets/spotify/SpotifyStatus";
-import { useSpotifyStore } from "@/widgets/spotify/useSpotifyStore";
+import type { IntegrationAccountStatus } from "@/integrations/types";
+
+function setAccount(status: IntegrationAccountStatus | null) {
+  useIntegrationStore.setState({
+    accounts: status
+      ? [
+          {
+            id: "spotify-1",
+            providerId: "spotify",
+            providerAccountId: "1",
+            displayName: "Ada",
+            status,
+            connectedAt: "2026-06-20T00:00:00.000Z",
+          },
+        ]
+      : [],
+    loaded: true,
+  });
+}
 
 function renderStatus() {
   return render(
@@ -13,20 +32,20 @@ function renderStatus() {
 }
 
 beforeEach(() => {
-  useSpotifyStore.setState({ nowPlayingTrackId: null, nowPlayingArtworkUrl: null });
+  setAccount(null);
 });
 
 describe("SpotifyStatus", () => {
-  it("links to the current track on Spotify when one is playing", () => {
-    useSpotifyStore.setState({ nowPlayingTrackId: "abc123" });
+  it("renders the search control when the account is connected", () => {
+    setAccount("connected");
     renderStatus();
-    const link = screen.getByRole("link", { name: "Open current track in Spotify" });
-    expect(link).toHaveAttribute("href", "https://open.spotify.com/track/abc123");
+    expect(screen.getByRole("button", { name: "Search Spotify" })).toBeInTheDocument();
   });
 
-  it("shows a non-interactive marker when nothing is playing", () => {
+  it("shows a non-interactive marker when the account is not connected", () => {
+    setAccount("needsReconnect");
     renderStatus();
-    expect(screen.queryByRole("link")).toBeNull();
-    expect(screen.getByLabelText("No track playing")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Search Spotify" })).toBeNull();
+    expect(screen.getByLabelText("Spotify not connected")).toBeInTheDocument();
   });
 });

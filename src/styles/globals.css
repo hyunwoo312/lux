@@ -244,7 +244,7 @@
 
 @utility widget-bloom {
   background-image: radial-gradient(
-    60% 55% at 88% 12%,
+    circle 12rem at 88% 12%,
     color-mix(in oklab, var(--widget-gradient) 35%, transparent) 0%,
     transparent 72%
   );

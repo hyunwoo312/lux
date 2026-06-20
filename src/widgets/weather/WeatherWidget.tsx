@@ -5,6 +5,7 @@ import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from 
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
+import { VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
 import { WeatherCard } from "@/widgets/weather/components/WeatherCard";
 import { WEATHER_EASE } from "@/widgets/weather/lib/motion";
 import { useWeatherStore } from "@/widgets/weather/useWeatherStore";
@@ -109,6 +110,7 @@ export function WeatherWidget() {
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
+                modifiers={VERTICAL_LIST_MODIFIERS}
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext

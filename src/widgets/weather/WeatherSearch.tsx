@@ -1,15 +1,14 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, ChevronLeft, MapPin } from "lucide-react";
 import { ExpandingSearch } from "@/components/ExpandingSearch";
 import { cn } from "@/lib/utils";
+import { getAccentVars } from "@/widgets/core/accent";
 import { searchPlaces } from "@/widgets/weather/lib/open-meteo";
 import { MAX_LOCATIONS, useWeatherStore } from "@/widgets/weather/useWeatherStore";
-import { makeLocationId, type GeocodeResult } from "@/widgets/weather/types";
+import { makeLocationId, WEATHER_ACCENT, type GeocodeResult } from "@/widgets/weather/types";
 
 export function WeatherSearch() {
-  const reduced = useReducedMotion();
   const baseId = useId();
   const locations = useWeatherStore((s) => s.locations);
   const selectedId = useWeatherStore((s) => s.selectedId);
@@ -139,73 +138,65 @@ export function WeatherSearch() {
       listboxId={hasOptions ? listboxId : undefined}
       activeDescendantId={hasOptions ? optionId(active) : undefined}
     >
-      <AnimatePresence>
-        {showResults && (
-          <motion.div
-            key="results"
-            initial={reduced ? { opacity: 0 } : { opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduced ? { opacity: 0 } : { opacity: 0, y: -4 }}
-            transition={{ duration: reduced ? 0 : 0.15, ease: "easeOut" }}
-            className="
-              border-input bg-popover absolute top-full left-0 z-30 mt-1 w-full overflow-hidden
-              rounded-sm border shadow-md
-            "
-          >
-            <div className="max-h-56 overflow-y-auto p-1">
-              {atCap ? (
-                <p className="text-muted-foreground px-2 py-2 text-xs">
-                  Remove a city to add another (max {MAX_LOCATIONS}).
-                </p>
-              ) : error ? (
-                <p className="text-muted-foreground px-2 py-2 text-xs">{error}</p>
-              ) : searching && results.length === 0 ? (
-                <p className="text-muted-foreground px-2 py-2 text-xs">Searching…</p>
-              ) : results.length === 0 ? (
-                <p className="text-muted-foreground px-2 py-2 text-xs">No matching places.</p>
-              ) : (
-                <ul role="listbox" id={listboxId} aria-label="Search results" className="
-                  flex flex-col gap-0.5
-                ">
-                  {results.map((result, index) => {
-                    const added = isAdded(result);
-                    return (
-                      <li key={result.id}>
-                        <button
-                          type="button"
-                          id={optionId(index)}
-                          role="option"
-                          aria-selected={index === active && !added}
-                          disabled={added}
-                          onMouseMove={() => setActive(index)}
-                          onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => pick(result)}
-                          className={cn(
-                            `
-                              flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left
-                              text-sm transition-colors
-                            `,
-                            index === active && !added
-                              ? "bg-accent text-primary"
-                              : "hover:bg-accent/60 hover:text-primary",
-                            added && "opacity-60",
-                          )}
-                        >
-                          <MapPin className="text-muted-foreground size-4 shrink-0" aria-hidden />
-                          <span className="min-w-0 flex-1 truncate">{result.label}</span>
-                          {added && (
-                            <Check className="text-muted-foreground size-4 shrink-0" aria-hidden />
-                          )}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div
+        style={getAccentVars(WEATHER_ACCENT)}
+        className="border-input bg-popover w-full overflow-hidden rounded-sm border shadow-md"
+      >
+        <div className="max-h-56 overflow-y-auto p-1">
+          {atCap ? (
+            <p className="text-muted-foreground px-2 py-2 text-xs">
+              Remove a city to add another (max {MAX_LOCATIONS}).
+            </p>
+          ) : error ? (
+            <p className="text-muted-foreground px-2 py-2 text-xs">{error}</p>
+          ) : searching && results.length === 0 ? (
+            <p className="text-muted-foreground px-2 py-2 text-xs">Searching…</p>
+          ) : results.length === 0 ? (
+            <p className="text-muted-foreground px-2 py-2 text-xs">No matching places.</p>
+          ) : (
+            <ul
+              role="listbox"
+              id={listboxId}
+              aria-label="Search results"
+              className="flex flex-col gap-0.5"
+            >
+              {results.map((result, index) => {
+                const added = isAdded(result);
+                return (
+                  <li key={result.id}>
+                    <button
+                      type="button"
+                      id={optionId(index)}
+                      role="option"
+                      aria-selected={index === active && !added}
+                      disabled={added}
+                      onMouseMove={() => setActive(index)}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => pick(result)}
+                      className={cn(
+                        `
+                          flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm
+                          transition-colors
+                        `,
+                        index === active && !added
+                          ? "bg-accent text-primary"
+                          : "hover:bg-accent/60 hover:text-primary",
+                        added && "opacity-60",
+                      )}
+                    >
+                      <MapPin className="text-muted-foreground size-4 shrink-0" aria-hidden />
+                      <span className="min-w-0 flex-1 truncate">{result.label}</span>
+                      {added && (
+                        <Check className="text-muted-foreground size-4 shrink-0" aria-hidden />
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </div>
     </ExpandingSearch>
   );
 }

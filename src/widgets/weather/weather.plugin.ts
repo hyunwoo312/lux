@@ -3,6 +3,7 @@ import type { WidgetPlugin } from "@/widgets/core/types";
 import { WeatherWidget } from "@/widgets/weather/WeatherWidget";
 import { WeatherConfig } from "@/widgets/weather/WeatherConfig";
 import { WeatherSearch } from "@/widgets/weather/WeatherSearch";
+import { WEATHER_ACCENT } from "@/widgets/weather/types";
 
 export const weatherPlugin: WidgetPlugin = {
   type: "weather",
@@ -12,5 +13,5 @@ export const weatherPlugin: WidgetPlugin = {
   component: WeatherWidget,
   configComponent: WeatherConfig,
   statusComponent: WeatherSearch,
-  accent: "cyan",
+  accent: WEATHER_ACCENT,
 };
