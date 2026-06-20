@@ -4,86 +4,64 @@ import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
-import { getGreetingCopy } from "@/app/greeting";
 import { WidgetPalette } from "@/app/WidgetPalette";
-import { getLocal, setLocal } from "@/lib/local-store";
 import { useSettingsStore } from "@/settings";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 
-const GREETING_SUBTITLE_KEY = "lux.greeting.lastSubtitle";
-
 export function Header() {
-  const [greeting] = useState(() =>
-    getGreetingCopy(new Date(), Math.random, getLocal(GREETING_SUBTITLE_KEY)),
-  );
   const editing = useDashboardStore((s) => s.editing);
   const toggleEditing = useDashboardStore((s) => s.toggleEditing);
   const openSettings = useSettingsStore((s) => s.openSettings);
 
-  useEffect(() => {
-    setLocal(GREETING_SUBTITLE_KEY, greeting.subtitle);
-  }, [greeting.subtitle]);
-
   return (
-    <header className="flex items-end justify-between gap-4">
-      <div className="glass min-w-0 max-w-xl rounded-xl px-5 py-3.5">
-        <h1
-          className="
-            font-display text-[clamp(2rem,4.5vw,3.5rem)] leading-none font-medium tracking-tight
-          "
-        >
-          {greeting.title}
-        </h1>
-        <p
-          className="text-foreground/70 mt-2 text-xs font-semibold tracking-[0.15em] uppercase"
-        >
-          {greeting.subtitle}
-        </p>
+    <header className="grid grid-cols-3 items-center gap-4">
+      <div
+        data-tour="toolbar"
+        className="glass col-start-2 flex items-center gap-1 justify-self-center rounded-lg p-1"
+      >
+        <ThemeToggle />
+        <WidgetPalette />
+        <Tooltip content={editing ? "Done" : "Edit mode"} sticky>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn("size-10 [&_svg]:size-5", editing && "bg-accent text-foreground")}
+            aria-label={editing ? "Done editing layout" : "Edit layout"}
+            onClick={toggleEditing}
+          >
+            <span className="relative grid size-5 place-items-center">
+              <Pencil
+                className={cn(
+                  "absolute transition-all duration-300 ease-out",
+                  editing ? "scale-0 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100",
+                )}
+              />
+              <Check
+                className={cn(
+                  "absolute transition-all duration-300 ease-out",
+                  editing ? "scale-100 rotate-0 opacity-100" : "scale-0 -rotate-90 opacity-0",
+                )}
+              />
+            </span>
+          </Button>
+        </Tooltip>
+        <Tooltip content="Settings">
+          <Button
+            data-tour="settings"
+            variant="ghost"
+            size="icon"
+            className="size-10 [&_svg]:size-5"
+            aria-label="Settings"
+            onClick={() => openSettings()}
+          >
+            <Settings />
+          </Button>
+        </Tooltip>
       </div>
-      <div className="flex shrink-0 flex-col items-end gap-2">
-        <HeaderClock className="glass inline-flex items-center rounded-md px-2 py-0.5" />
-        <div data-tour="toolbar" className="glass flex items-center gap-1 rounded-lg p-1">
-          <ThemeToggle />
-          <WidgetPalette />
-          <Tooltip content={editing ? "Done" : "Edit mode"} sticky>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn("size-10 [&_svg]:size-5", editing && "bg-accent text-foreground")}
-              aria-label={editing ? "Done editing layout" : "Edit layout"}
-              onClick={toggleEditing}
-            >
-              <span className="relative grid size-5 place-items-center">
-                <Pencil
-                  className={cn(
-                    "absolute transition-all duration-300 ease-out",
-                    editing ? "scale-0 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100",
-                  )}
-                />
-                <Check
-                  className={cn(
-                    "absolute transition-all duration-300 ease-out",
-                    editing ? "scale-100 rotate-0 opacity-100" : "scale-0 -rotate-90 opacity-0",
-                  )}
-                />
-              </span>
-            </Button>
-          </Tooltip>
-          <Tooltip content="Settings">
-            <Button
-              data-tour="settings"
-              variant="ghost"
-              size="icon"
-              className="size-10 [&_svg]:size-5"
-              aria-label="Settings"
-              onClick={() => openSettings()}
-            >
-              <Settings />
-            </Button>
-          </Tooltip>
-        </div>
-      </div>
+      <HeaderClock className="
+        glass col-start-3 inline-flex items-center justify-self-end self-stretch rounded-md px-3
+      " />
     </header>
   );
 }
@@ -111,7 +89,7 @@ function HeaderClock({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "text-foreground text-lg font-semibold tracking-wide tabular-nums",
+        "text-foreground text-2xl font-semibold tracking-wide tabular-nums",
         className,
       )}
     >

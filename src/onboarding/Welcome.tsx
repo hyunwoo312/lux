@@ -58,7 +58,7 @@ export function Welcome() {
 
             <motion.div variants={item} className="flex flex-col gap-3">
               <Row icon={LayoutGrid} title="Make it yours">
-                Use the top-right toolbar to add widgets and edit your layout.
+                Use the toolbar up top to add widgets and edit your layout.
               </Row>
               <Row icon={Palette} title="Light or dark" control={<ThemeToggle />}>
                 Switch the whole look — go ahead, try it now
