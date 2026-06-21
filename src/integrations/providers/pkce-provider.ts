@@ -3,6 +3,7 @@ import {
   IntegrationTemporaryAuthError,
   isReconnectRequiredStatus,
 } from "@/integrations/errors";
+import { buildPkceAuthorizeUrl, parseScopes } from "@/integrations/providers/pkce";
 import type {
   IntegrationProfile,
   IntegrationProvider,
@@ -31,10 +32,6 @@ type PkceProviderConfig = {
   fetchProfile: (accessToken: string) => Promise<IntegrationProfile>;
 };
 
-function parseScopes(scope: string | undefined, fallback: string[]): string[] {
-  return scope?.trim() ? scope.split(" ") : fallback;
-}
-
 export function createPkceProvider(config: PkceProviderConfig): IntegrationProvider {
   const toTokenResponse = (payload: PkceTokenPayload): IntegrationTokenResponse => ({
     accessToken: payload.access_token,
@@ -50,20 +47,11 @@ export function createPkceProvider(config: PkceProviderConfig): IntegrationProvi
     scopes: config.scopes,
     clientIdEnvKey: config.clientIdEnvKey,
     loadClientId: config.loadClientId,
-    buildPkceAuthUrl: ({ clientId, redirectUri, state, codeChallenge, scopes }) => {
-      const url = new URL(config.authorizationEndpoint);
-      url.searchParams.set("response_type", "code");
-      url.searchParams.set("client_id", clientId);
-      url.searchParams.set("redirect_uri", redirectUri);
-      url.searchParams.set("scope", scopes.join(" "));
-      url.searchParams.set("state", state);
-      url.searchParams.set("code_challenge", codeChallenge);
-      url.searchParams.set("code_challenge_method", "S256");
-      for (const [key, value] of Object.entries(config.authParams ?? {})) {
-        url.searchParams.set(key, value);
-      }
-      return url.toString();
-    },
+    buildPkceAuthUrl: (params) =>
+      buildPkceAuthorizeUrl(
+        { authorizationEndpoint: config.authorizationEndpoint, authParams: config.authParams },
+        params,
+      ),
     exchangeCode: async ({ clientId, code, redirectUri, codeVerifier }) => {
       const response = await fetch(config.tokenEndpoint, {
         method: "POST",

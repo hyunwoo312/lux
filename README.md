@@ -47,8 +47,8 @@ Calendar (Google & Outlook), Spotify, and GitHub.
 
 Lux is local-first: your dashboard data lives in `chrome.storage.local` and never leaves your
 browser. No Lux account, no telemetry. The only Lux-operated backend is a minimal, stateless
-OAuth sign-in relay used solely to complete sign-in for providers that require it — it stores
-nothing. Full policy: <https://lux.hyunwk.me>.
+OAuth token relay used solely to complete sign-in and refresh access tokens for providers
+that require it — it stores nothing. Full policy: <https://lux.hyunwk.me>.
 
 ## Contributing
 

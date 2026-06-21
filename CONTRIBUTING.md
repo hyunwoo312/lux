@@ -19,7 +19,7 @@ That said, two things are very welcome:
 If you find something security-sensitive, **please don't put it in a public issue.** Email me at
 **hyunwoojames@gmail.com** with the details and steps to reproduce, and I'll look into it. For
 context: Lux is local-first — your dashboard data and account tokens live in
-`chrome.storage.local`, and the only backend is a stateless sign-in relay that stores nothing —
+`chrome.storage.local`, and the only backend is a stateless token relay that stores nothing —
 but I still want to hear about anything that looks off.
 
 ## Running it yourself

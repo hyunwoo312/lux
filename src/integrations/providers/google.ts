@@ -1,6 +1,6 @@
+import { createRelayProvider } from "@/integrations/providers/relay-provider";
 import type { IntegrationProvider } from "@/integrations/types";
 
-const AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
 const USERINFO_ENDPOINT = "https://www.googleapis.com/oauth2/v2/userinfo";
 
 type GoogleUserInfo = {
@@ -10,7 +10,7 @@ type GoogleUserInfo = {
   picture?: string;
 };
 
-export const googleProvider: IntegrationProvider = {
+export const googleProvider: IntegrationProvider = createRelayProvider({
   id: "google",
   label: "Google Calendar",
   scopes: [
@@ -18,17 +18,9 @@ export const googleProvider: IntegrationProvider = {
     "https://www.googleapis.com/auth/userinfo.email",
   ],
   clientIdEnvKey: "VITE_GOOGLE_CLIENT_ID",
-  buildAuthUrl: ({ clientId, redirectUri, state, scopes, prompt }) => {
-    const url = new URL(AUTHORIZATION_ENDPOINT);
-    url.searchParams.set("response_type", "token");
-    url.searchParams.set("client_id", clientId);
-    url.searchParams.set("redirect_uri", redirectUri);
-    url.searchParams.set("scope", scopes.join(" "));
-    url.searchParams.set("state", state);
-    url.searchParams.set("include_granted_scopes", "true");
-    url.searchParams.set("prompt", prompt ?? "consent");
-    return url.toString();
-  },
+  authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
+  authParams: { access_type: "offline", prompt: "consent", include_granted_scopes: "true" },
+  supportsRefresh: true,
   fetchProfile: async (accessToken) => {
     const response = await fetch(USERINFO_ENDPOINT, {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -47,4 +39,4 @@ export const googleProvider: IntegrationProvider = {
       avatarUrl: payload.picture,
     };
   },
-};
+});

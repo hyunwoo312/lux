@@ -5,6 +5,7 @@ const params = {
   clientId: "client-123",
   redirectUri: "https://ext.chromiumapp.org/github/oauth",
   state: "state-xyz",
+  codeChallenge: "challenge",
   scopes: githubProvider.scopes,
 };
 
@@ -13,20 +14,24 @@ afterEach(() => {
 });
 
 describe("githubProvider.buildPkceAuthUrl", () => {
-  it("builds a GitHub authorize url without a PKCE challenge", () => {
-    const url = new URL(githubProvider.buildPkceAuthUrl!({ ...params, codeChallenge: "ignored" }));
+  it("builds a GitHub authorize url with a PKCE challenge", () => {
+    const url = new URL(githubProvider.buildPkceAuthUrl!({ ...params }));
     expect(url.origin + url.pathname).toBe("https://github.com/login/oauth/authorize");
     expect(url.searchParams.get("client_id")).toBe("client-123");
     expect(url.searchParams.get("redirect_uri")).toBe(params.redirectUri);
     expect(url.searchParams.get("state")).toBe("state-xyz");
     expect(url.searchParams.get("scope")).toBe("read:user notifications repo");
-    expect(url.searchParams.has("code_challenge")).toBe(false);
-    expect(url.searchParams.has("code_challenge_method")).toBe(false);
+    expect(url.searchParams.get("code_challenge")).toBe("challenge");
+    expect(url.searchParams.get("code_challenge_method")).toBe("S256");
+  });
+
+  it("does not support refresh (GitHub tokens do not expire)", () => {
+    expect(githubProvider.refreshToken).toBeUndefined();
   });
 });
 
 describe("githubProvider.exchangeCode", () => {
-  it("posts the code to the Lux sign-in relay and maps the token", async () => {
+  it("posts the PKCE code to the Lux token relay and maps the token", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({ access_token: "tok", scope: "read:user,notifications,repo", token_type: "bearer" }),
@@ -37,7 +42,7 @@ describe("githubProvider.exchangeCode", () => {
       clientId: "client-123",
       code: "code-1",
       redirectUri: params.redirectUri,
-      codeVerifier: "unused",
+      codeVerifier: "verifier-1",
     });
 
     expect(token.accessToken).toBe("tok");
@@ -48,7 +53,12 @@ describe("githubProvider.exchangeCode", () => {
       "https://lux.hyunwk.me/github/token",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ code: "code-1", redirectUri: params.redirectUri }),
+        body: JSON.stringify({
+          grant_type: "authorization_code",
+          code: "code-1",
+          redirect_uri: params.redirectUri,
+          code_verifier: "verifier-1",
+        }),
       }),
     );
   });
@@ -60,7 +70,7 @@ describe("githubProvider.exchangeCode", () => {
         clientId: "client-123",
         code: "code-1",
         redirectUri: params.redirectUri,
-        codeVerifier: "unused",
+        codeVerifier: "verifier-1",
       }),
     ).rejects.toThrow();
   });
