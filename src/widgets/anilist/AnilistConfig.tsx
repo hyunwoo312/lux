@@ -8,38 +8,40 @@ import {
 import { useIntegrationStore } from "@/integrations";
 import { useSettingsStore } from "@/settings";
 import type { OpenBehavior } from "@/lib/open-url";
-import { useGithubStore } from "@/widgets/github/useGithubStore";
+import { useAnilistStore } from "@/widgets/anilist/useAnilistStore";
+import type { TitleLanguage } from "@/widgets/anilist/types";
 
 const OPEN_OPTIONS: { value: OpenBehavior; label: string }[] = [
   { value: "currentTab", label: "This tab" },
   { value: "newTab", label: "New tab" },
 ];
 
-const PRIVACY_OPTIONS: { value: "all" | "public"; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "public", label: "Public only" },
+const TITLE_OPTIONS: { value: TitleLanguage; label: string }[] = [
+  { value: "english", label: "English" },
+  { value: "romaji", label: "Romaji" },
+  { value: "native", label: "Native" },
 ];
 
-export function GithubConfig() {
+export function AnilistConfig() {
   const account = useIntegrationStore(
-    (s) => s.accounts.find((entry) => entry.providerId === "github") ?? null,
+    (s) => s.accounts.find((entry) => entry.providerId === "anilist") ?? null,
   );
-  const showPrivate = useGithubStore((s) => s.showPrivate);
-  const setShowPrivate = useGithubStore((s) => s.setShowPrivate);
-  const openBehavior = useGithubStore((s) => s.openBehavior);
-  const setOpenBehavior = useGithubStore((s) => s.setOpenBehavior);
+  const titleLanguage = useAnilistStore((s) => s.titleLanguage);
+  const setTitleLanguage = useAnilistStore((s) => s.setTitleLanguage);
+  const openBehavior = useAnilistStore((s) => s.openBehavior);
+  const setOpenBehavior = useAnilistStore((s) => s.setOpenBehavior);
 
   const accountDescription = account
     ? account.status === "needsReconnect"
       ? "Reconnect to resume syncing."
-      : (account.email ?? account.displayName ?? "Connected")
-    : "Not connected.";
+      : (account.displayName ?? "Connected")
+    : "Not connected — showing trending.";
 
   return (
     <>
       <WidgetConfigGroup label="Account">
         <WidgetConfigItem
-          title="GitHub"
+          title="AniList"
           description={accountDescription}
           control={
             <IconActionButton
@@ -52,7 +54,7 @@ export function GithubConfig() {
         />
       </WidgetConfigGroup>
 
-      <WidgetConfigGroup label="GitHub">
+      <WidgetConfigGroup label="AniList">
         <WidgetConfigItem
           title="Open in"
           description="Where links open"
@@ -66,14 +68,14 @@ export function GithubConfig() {
           }
         />
         <WidgetConfigItem
-          title="Repositories"
-          description="Include items from private repositories"
+          title="Title language"
+          description="How media titles are shown"
           control={
             <ConfigSegmented
-              label="Repository visibility"
-              value={showPrivate ? "all" : "public"}
-              options={PRIVACY_OPTIONS}
-              onChange={(value) => setShowPrivate(value === "all")}
+              label="Title language"
+              value={titleLanguage}
+              options={TITLE_OPTIONS}
+              onChange={setTitleLanguage}
             />
           }
         />

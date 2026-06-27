@@ -310,3 +310,38 @@ export async function fetchInbox(): Promise<InboxData> {
   ]);
   return { notifications, pullRequests };
 }
+
+const inboxNotificationSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  reason: z.string(),
+  repo: z.string(),
+  isPrivate: z.boolean(),
+  updatedAt: z.string(),
+  url: z.string(),
+});
+
+const inboxPullRequestSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  url: z.string(),
+  number: z.number(),
+  repo: z.string(),
+  isPrivate: z.boolean(),
+  isDraft: z.boolean(),
+  author: z.string(),
+  updatedAt: z.string(),
+  kind: z.enum(["reviewRequested", "mine"]),
+  ci: z.enum(["success", "failure", "pending", "none"]),
+  review: z.enum(["approved", "changesRequested", "reviewRequired", "none"]),
+});
+
+const inboxDataSchema = z.object({
+  notifications: z.array(inboxNotificationSchema),
+  pullRequests: z.array(inboxPullRequestSchema),
+});
+
+export function parseCachedInbox(raw: unknown): InboxData | null {
+  const result = inboxDataSchema.safeParse(raw);
+  return result.success ? result.data : null;
+}

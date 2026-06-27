@@ -1,5 +1,6 @@
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
+import anilistIcon from "@/assets/service-icons/anilist.svg";
 import githubIcon from "@/assets/service-icons/github.svg";
 import googleIcon from "@/assets/service-icons/google.svg";
 import googleCalendarIcon from "@/assets/service-icons/google-calendar.svg";
@@ -20,6 +21,7 @@ export const GoogleCalendarServiceIcon = createServiceIcon(googleCalendarIcon, "
 export const OutlookServiceIcon = createServiceIcon(outlookIcon, "Outlook");
 export const SpotifyServiceIcon = createServiceIcon(spotifyIcon, "Spotify");
 export const GoogleServiceIcon = createServiceIcon(googleIcon, "Google");
+export const AnilistServiceIcon = createServiceIcon(anilistIcon, "Anilist");
 const GITHUB_MASK = {
   maskImage: `url("${githubIcon}")`,
   WebkitMaskImage: `url("${githubIcon}")`,

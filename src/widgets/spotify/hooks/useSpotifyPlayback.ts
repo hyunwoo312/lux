@@ -20,6 +20,7 @@ import {
   type SpotifyPlaybackState,
 } from "@/widgets/spotify/types";
 import { useSpotifyStore } from "@/widgets/spotify/useSpotifyStore";
+import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 
 const RESTART_THRESHOLD_MS = 3_000;
 const PLAYING_POLL_MS = 10_000;
@@ -41,6 +42,7 @@ export function useSpotifyPlayback(connected: boolean) {
   const isVolumeEditingRef = useRef(false);
   const refreshRequestIdRef = useRef(0);
   const rateLimitedUntilRef = useRef(0);
+  const lastPolledAtRef = useRef(0);
 
   const refreshNonce = useSpotifyStore((s) => s.refreshNonce);
 
@@ -62,6 +64,7 @@ export function useSpotifyPlayback(connected: boolean) {
       const syncedNow = Date.now();
       setPlaybackSyncedAt(syncedNow);
       setNowMs(syncedNow);
+      lastPolledAtRef.current = syncedNow;
     } catch (caught) {
       if (requestId !== refreshRequestIdRef.current) return;
       if (caught instanceof SpotifyRateLimitError) {
@@ -102,17 +105,13 @@ export function useSpotifyPlayback(connected: boolean) {
   const pollIntervalMs = playback?.isPlaying ? PLAYING_POLL_MS : IDLE_POLL_MS;
   useEffect(() => {
     if (!connected) return;
-    const refreshIfVisible = () => {
-      if (document.visibilityState === "visible") void refreshPlayback();
-    };
-    const intervalId = window.setInterval(refreshIfVisible, pollIntervalMs);
-    document.addEventListener("visibilitychange", refreshIfVisible);
-    window.addEventListener("focus", refreshIfVisible);
-    return () => {
-      window.clearInterval(intervalId);
-      document.removeEventListener("visibilitychange", refreshIfVisible);
-      window.removeEventListener("focus", refreshIfVisible);
-    };
+    return refreshScheduler.register({
+      id: "spotify:playback",
+      staleMs: pollIntervalMs,
+      pollIntervalMs,
+      getLastRefreshedAt: () => lastPolledAtRef.current,
+      refresh: () => void refreshPlayback(),
+    });
   }, [connected, pollIntervalMs, refreshPlayback]);
 
   useEffect(() => {

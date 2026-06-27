@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import { useEffect, useState } from "react";
 import {
+  AnilistServiceIcon,
   GitHubServiceIcon,
   GoogleServiceIcon,
   OutlookServiceIcon,
@@ -32,6 +33,7 @@ const PROVIDERS: ProviderMeta[] = [
   { id: "microsoft", label: "Outlook", description: "Calendar", icon: OutlookServiceIcon },
   { id: "spotify", label: "Spotify", description: "Playback & search", icon: SpotifyServiceIcon },
   { id: "github", label: "GitHub", description: "Contributions & inbox", icon: GitHubServiceIcon },
+  { id: "anilist", label: "AniList", description: "Anime & manga library", icon: AnilistServiceIcon },
 ];
 
 type Pending = "connecting" | "disconnecting";

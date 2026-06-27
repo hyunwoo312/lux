@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export function GithubPlaceholder({ children }: { children: ReactNode }) {
+export function AnilistPlaceholder({ children }: { children: ReactNode }) {
   return (
     <div
       className="

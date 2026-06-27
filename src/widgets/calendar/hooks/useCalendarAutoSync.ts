@@ -1,8 +1,29 @@
 import { useEffect } from "react";
 import { useIntegrationStore } from "@/integrations";
+import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 import { useCalendarStore } from "@/widgets/calendar/useCalendarStore";
 
 const PROVIDERS = ["google", "microsoft"] as const;
+const CHECK_INTERVAL_MS = 5 * 60 * 1000;
+
+function connectedProviders(): readonly (typeof PROVIDERS)[number][] {
+  const accounts = useIntegrationStore.getState().accounts;
+  return PROVIDERS.filter((providerId) =>
+    accounts.some((account) => account.providerId === providerId && account.status === "connected"),
+  );
+}
+
+function oldestSyncedAt(): number {
+  const state = useCalendarStore.getState();
+  const connected = connectedProviders();
+  if (connected.length === 0) return Date.now();
+  let oldest = Number.POSITIVE_INFINITY;
+  for (const providerId of connected) {
+    const lastSyncedAt = state[providerId].lastSyncedAt;
+    oldest = Math.min(oldest, lastSyncedAt === undefined ? 0 : new Date(lastSyncedAt).getTime());
+  }
+  return oldest;
+}
 
 export function useCalendarAutoSync() {
   const refreshIntervalHours = useCalendarStore((s) => s.refreshIntervalHours);
@@ -16,33 +37,19 @@ export function useCalendarAutoSync() {
 
   useEffect(() => {
     if (!connectedKey) return;
-    const intervalMs = refreshIntervalHours * 60 * 60 * 1000;
+    const staleMs = refreshIntervalHours * 60 * 60 * 1000;
+    const refresh = () => void useCalendarStore.getState().sync();
 
-    const maybeSync = () => {
-      if (document.visibilityState !== "visible") return;
-      const state = useCalendarStore.getState();
-      const accounts = useIntegrationStore.getState().accounts;
-      const isConnected = (providerId: (typeof PROVIDERS)[number]) =>
-        accounts.some(
-          (account) => account.providerId === providerId && account.status === "connected",
-        );
+    if (document.visibilityState === "visible" && Date.now() - oldestSyncedAt() >= staleMs) {
+      refresh();
+    }
 
-      const stale = PROVIDERS.some((providerId) => {
-        if (!isConnected(providerId)) return false;
-        const lastSyncedAt = state[providerId].lastSyncedAt;
-        return lastSyncedAt === undefined || Date.now() - new Date(lastSyncedAt).getTime() >= intervalMs;
-      });
-      if (stale) void state.sync();
-    };
-
-    maybeSync();
-    const id = window.setInterval(maybeSync, 5 * 60 * 1000);
-    document.addEventListener("visibilitychange", maybeSync);
-    window.addEventListener("focus", maybeSync);
-    return () => {
-      window.clearInterval(id);
-      document.removeEventListener("visibilitychange", maybeSync);
-      window.removeEventListener("focus", maybeSync);
-    };
+    return refreshScheduler.register({
+      id: "calendar:autosync",
+      staleMs,
+      pollIntervalMs: CHECK_INTERVAL_MS,
+      getLastRefreshedAt: oldestSyncedAt,
+      refresh,
+    });
   }, [connectedKey, refreshIntervalHours]);
 }

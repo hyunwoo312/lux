@@ -30,7 +30,15 @@
     "https://accounts.spotify.com/*",
     "https://api.github.com/*",
     "https://api.open-meteo.com/*",
-    "https://geocoding-api.open-meteo.com/*"
+    "https://geocoding-api.open-meteo.com/*",
+    "https://graphql.anilist.co/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://lux.hyunwk.me/anilist/callback*"],
+      "js": ["anilist-callback.js"],
+      "run_at": "document_start"
+    }
   ],
   "chrome_url_overrides": {
     "newtab": "index.html"

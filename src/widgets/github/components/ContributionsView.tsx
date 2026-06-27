@@ -12,7 +12,7 @@ import { useGithubStore } from "@/widgets/github/useGithubStore";
 import { useGithubSync } from "@/widgets/github/useGithubSync";
 import type { ContributionDay, ContributionsData } from "@/widgets/github/types";
 
-const REFRESH_MS = 5 * 60 * 1000;
+const REFRESH_MS = 30 * 60 * 1000;
 const CELL = 11;
 const GAP = 3;
 const COLUMN = CELL + GAP;
@@ -29,7 +29,20 @@ const LEVEL_CLASS = [
   "bg-primary",
 ];
 
-const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 const MONTHS_FULL = [
   "January",
   "February",
@@ -135,7 +148,12 @@ function Stats({ data }: { data: ContributionsData }) {
         <span className="text-muted-foreground text-2xs">contributions in the last year</span>
       </div>
       <div className="flex items-center gap-3">
-        <Stat label="Current" value={data.currentStreak} accent icon={<Flame className="size-3" />} />
+        <Stat
+          label="Current"
+          value={data.currentStreak}
+          accent
+          icon={<Flame className="size-3" />}
+        />
         <Stat label="Longest" value={data.longestStreak} />
       </div>
     </div>
@@ -262,10 +280,12 @@ const HeatmapGrid = memo(function HeatmapGrid({
             {shown.map((week, index) => (
               <div key={week[0]?.date ?? index} className="relative" style={{ width: CELL }}>
                 {months[index] && (
-                  <span className="
-                    text-muted-foreground absolute top-0 left-0 text-[9px] leading-none
-                    whitespace-nowrap
-                  ">
+                  <span
+                    className="
+                      text-muted-foreground absolute top-0 left-0 text-[9px] leading-none
+                      whitespace-nowrap
+                    "
+                  >
                     {months[index]}
                   </span>
                 )}

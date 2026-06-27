@@ -11,6 +11,7 @@ import {
   IntegrationReconnectRequiredError,
   IntegrationTemporaryAuthError,
 } from "@/integrations/errors";
+import { anilistProvider } from "@/integrations/providers/anilist";
 import { githubProvider } from "@/integrations/providers/github";
 import { googleProvider } from "@/integrations/providers/google";
 import { microsoftProvider } from "@/integrations/providers/microsoft";
@@ -30,6 +31,7 @@ const providers: Record<IntegrationProviderId, IntegrationProvider> = {
   microsoft: microsoftProvider,
   spotify: spotifyProvider,
   github: githubProvider,
+  anilist: anilistProvider,
 };
 
 function getProvider(providerId: IntegrationProviderId): IntegrationProvider {
@@ -75,8 +77,13 @@ async function requestToken(
   interactive: boolean,
 ): Promise<IntegrationTokenResponse> {
   const clientId = await resolveClientId(provider);
-  const redirectUri = getRedirectUriForProvider(provider.id);
   const state = createOAuthState();
+
+  if (provider.acquireToken) {
+    return provider.acquireToken({ clientId, state, interactive });
+  }
+
+  const redirectUri = getRedirectUriForProvider(provider.id);
 
   if (provider.buildPkceAuthUrl && provider.exchangeCode) {
     const codeVerifier = createCodeVerifier();

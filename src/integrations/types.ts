@@ -1,6 +1,12 @@
 import { z } from "zod";
 
-export const INTEGRATION_PROVIDER_IDS = ["google", "microsoft", "spotify", "github"] as const;
+export const INTEGRATION_PROVIDER_IDS = [
+  "google",
+  "microsoft",
+  "spotify",
+  "github",
+  "anilist",
+] as const;
 export type IntegrationProviderId = (typeof INTEGRATION_PROVIDER_IDS)[number];
 export const integrationProviderIdSchema = z.enum(INTEGRATION_PROVIDER_IDS);
 
@@ -77,12 +83,19 @@ export type RefreshTokenParams = {
   refreshToken: string;
 };
 
+export type AcquireTokenParams = {
+  clientId: string;
+  state: string;
+  interactive: boolean;
+};
+
 export type IntegrationProvider = {
   id: IntegrationProviderId;
   label: string;
   scopes: string[];
   clientIdEnvKey?: string;
   loadClientId?: () => Promise<string | undefined>;
+  acquireToken?: (params: AcquireTokenParams) => Promise<IntegrationTokenResponse>;
   buildAuthUrl?: (params: ImplicitAuthUrlParams) => string;
   buildPkceAuthUrl?: (params: PkceAuthUrlParams) => string;
   exchangeCode?: (params: ExchangeCodeParams) => Promise<IntegrationTokenResponse>;

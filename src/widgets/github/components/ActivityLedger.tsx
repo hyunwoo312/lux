@@ -21,9 +21,11 @@ export function ActivityLedger({ activity, totals, login, newTab }: ActivityLedg
   return (
     <div className="flex h-full flex-col gap-1.5">
       {totals && (
-        <div className="
-          text-muted-foreground text-2xs flex flex-wrap items-center gap-x-3 gap-y-0.5 px-1
-        ">
+        <div
+          className="
+            text-muted-foreground text-2xs flex flex-wrap items-center gap-x-3 gap-y-0.5 px-1
+          "
+        >
           {TYPE_TOTALS.map(({ key, icon: Icon, label }) =>
             totals[key] > 0 ? (
               <span key={key} className="inline-flex items-center gap-1 tabular-nums" title={label}>
@@ -66,9 +68,9 @@ function RepoRow({
     >
       <div className="flex items-center gap-2">
         <span className="text-foreground min-w-0 flex-1 truncate text-xs">{repo.repo}</span>
-        <span className="
-          text-muted-foreground text-2xs flex shrink-0 items-center gap-1.5 tabular-nums
-        ">
+        <span
+          className="text-muted-foreground text-2xs flex shrink-0 items-center gap-1.5 tabular-nums"
+        >
           <Mix icon={GitCommitHorizontal} value={repo.commits} />
           <Mix icon={GitPullRequest} value={repo.prs} />
           <Mix icon={CircleDot} value={repo.issues} />

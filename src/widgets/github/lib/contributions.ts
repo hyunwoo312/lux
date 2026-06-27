@@ -36,10 +36,7 @@ export function computeStreaks(days: ContributionDay[]): {
   return { current, longest };
 }
 
-export function buildContributions(
-  weeks: ContributionDay[][],
-  total: number,
-): ContributionsData {
+export function buildContributions(weeks: ContributionDay[][], total: number): ContributionsData {
   const days = weeks.flat();
   const { current, longest } = computeStreaks(days);
   return { weeks, total, currentStreak: current, longestStreak: longest };

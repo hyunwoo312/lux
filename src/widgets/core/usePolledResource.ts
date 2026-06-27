@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { refreshScheduler } from "@/widgets/core/refreshScheduler";
+
+let nextInstanceId = 0;
 
 export type PolledResourceState<T> =
   | { status: "loading" }
@@ -78,7 +81,7 @@ export function usePolledResource<T>(
     persist = false,
     parsePersisted,
   } = options;
-  const staleMs = intervalMs ?? 60_000;
+  const staleMs = intervalMs ?? 180_000;
 
   const seededRef = useRef(false);
   const seedRef = useRef<CacheEntry<T> | undefined>(undefined);
@@ -110,6 +113,9 @@ export function usePolledResource<T>(
   const persistRef = useRef(persist);
   persistRef.current = persist;
   const hasLoadedRef = useRef(initialCache !== undefined);
+  const lastRefreshedAtRef = useRef(initialCache?.at ?? 0);
+  const instanceIdRef = useRef("");
+  if (!instanceIdRef.current) instanceIdRef.current = `polled#${(nextInstanceId += 1)}`;
   const generationRef = useRef(0);
   const inFlightRef = useRef(false);
   const mountedRef = useRef(true);
@@ -129,6 +135,7 @@ export function usePolledResource<T>(
       setError(undefined);
       setHasLoaded(true);
       hasLoadedRef.current = true;
+      lastRefreshedAtRef.current = Date.now();
       if (cacheKeyRef.current) {
         const entry: CacheEntry<T> = { data: result, at: Date.now() };
         resourceCache.set(cacheKeyRef.current, entry);
@@ -150,7 +157,9 @@ export function usePolledResource<T>(
     if (!enabled) return;
 
     generationRef.current += 1;
-    const cached = cacheKey ? (resourceCache.get(cacheKey) as CacheEntry<T> | undefined) : undefined;
+    const cached = cacheKey
+      ? (resourceCache.get(cacheKey) as CacheEntry<T> | undefined)
+      : undefined;
     if (cached !== undefined) {
       hasLoadedRef.current = true;
       setHasLoaded(true);
@@ -164,22 +173,18 @@ export function usePolledResource<T>(
       void run(false);
     }
 
-    const refreshWhenVisible = () => {
-      if (document.visibilityState !== "visible") return;
-      void run(true);
-    };
-
-    const intervalId =
-      intervalMs && intervalMs > 0 ? window.setInterval(refreshWhenVisible, intervalMs) : undefined;
-    window.addEventListener("focus", refreshWhenVisible);
-    document.addEventListener("visibilitychange", refreshWhenVisible);
+    const unregister = refreshScheduler.register({
+      id: instanceIdRef.current,
+      staleMs,
+      pollIntervalMs: intervalMs && intervalMs > 0 ? intervalMs : undefined,
+      getLastRefreshedAt: () => lastRefreshedAtRef.current,
+      refresh: () => void run(true),
+    });
 
     return () => {
       mountedRef.current = false;
       abortRef.current?.abort();
-      if (intervalId !== undefined) window.clearInterval(intervalId);
-      window.removeEventListener("focus", refreshWhenVisible);
-      document.removeEventListener("visibilitychange", refreshWhenVisible);
+      unregister();
     };
   }, [enabled, intervalMs, refreshKey, cacheKey, staleMs, run]);
 

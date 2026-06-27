@@ -98,6 +98,7 @@ type SelectControlProps<T extends string> = {
   onChange: (value: T) => void;
   disabled?: boolean;
   label: string;
+  triggerClassName?: string;
 };
 
 export function ConfigSelect<T extends string>({
@@ -106,6 +107,7 @@ export function ConfigSelect<T extends string>({
   onChange,
   disabled = false,
   label,
+  triggerClassName,
 }: SelectControlProps<T>) {
   const handleChange = (next: string) => {
     const match = options.find((option) => option.value === next);
@@ -113,7 +115,13 @@ export function ConfigSelect<T extends string>({
   };
   return (
     <Select value={value} onValueChange={handleChange} disabled={disabled}>
-      <SelectTrigger aria-label={label} className="w-36 max-w-full">
+      <SelectTrigger
+        aria-label={label}
+        className={cn(
+          "w-36 max-w-full min-w-0 [&>[data-slot=select-value]]:truncate",
+          triggerClassName,
+        )}
+      >
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

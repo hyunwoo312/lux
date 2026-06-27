@@ -11,6 +11,7 @@ export const WIDGET_TYPES = [
   "spotify",
   "github",
   "weather",
+  "anilist",
 ] as const;
 export type WidgetType = (typeof WIDGET_TYPES)[number];
 

@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { Tooltip } from "@/components/ui/tooltip";
 import { usePolledResource } from "@/widgets/core/usePolledResource";
-import { fetchInbox } from "@/widgets/github/lib/github-api";
+import { fetchInbox, parseCachedInbox } from "@/widgets/github/lib/github-api";
 import { GithubPlaceholder } from "@/widgets/github/components/GithubPlaceholder";
 import { useGithubStore } from "@/widgets/github/useGithubStore";
 import { useGithubSync } from "@/widgets/github/useGithubSync";
@@ -33,7 +33,7 @@ import type {
   PullRequestReview,
 } from "@/widgets/github/types";
 
-const REFRESH_MS = 60 * 1000;
+const REFRESH_MS = 3 * 60 * 1000;
 
 const CI_CLASS: Record<PullRequestCi, string> = {
   success: "bg-emerald-500",
@@ -79,11 +79,14 @@ export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPriv
     enabled,
     intervalMs: REFRESH_MS,
     cacheKey: "github:inbox",
+    persist: true,
+    parsePersisted: parseCachedInbox,
   });
   useGithubSync(refresh, isRefreshing);
 
   if (state.status === "loading") return <GithubPlaceholder>Loading inbox…</GithubPlaceholder>;
-  if (state.status === "error") return <GithubPlaceholder>Couldn’t load your inbox.</GithubPlaceholder>;
+  if (state.status === "error")
+    return <GithubPlaceholder>Couldn’t load your inbox.</GithubPlaceholder>;
   if (state.status === "empty")
     return <GithubPlaceholder>Inbox zero — nothing waiting.</GithubPlaceholder>;
 
@@ -142,13 +145,23 @@ function InboxList({
   );
 }
 
-function Section({ title, count, children }: { title: string; count: number; children: ReactNode }) {
+function Section({
+  title,
+  count,
+  children,
+}: {
+  title: string;
+  count: number;
+  children: ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-0.5">
-      <h3 className="
-        text-muted-foreground text-2xs flex items-center gap-1.5 px-2 font-semibold tracking-wide
-        uppercase
-      ">
+      <h3
+        className="
+          text-muted-foreground text-2xs flex items-center gap-1.5 px-2 font-semibold tracking-wide
+          uppercase
+        "
+      >
         <span>{title}</span>
         <span className="text-muted-foreground/50 tabular-nums">{count}</span>
       </h3>
