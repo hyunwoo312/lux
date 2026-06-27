@@ -11,6 +11,7 @@ describe("useDashboardStore", () => {
       savedLayouts: {},
       columns: 12,
       editing: false,
+      lastAddedId: null,
     });
   });
 
@@ -68,5 +69,13 @@ describe("useDashboardStore", () => {
     expect(store().editing).toBe(false);
     store().toggleEditing();
     expect(store().editing).toBe(true);
+  });
+
+  it("records the last added widget id, then clears it", () => {
+    store().addWidget("note");
+    expect(store().lastAddedId).toBe("note");
+
+    store().clearLastAdded();
+    expect(store().lastAddedId).toBeNull();
   });
 });

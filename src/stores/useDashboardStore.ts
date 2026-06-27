@@ -18,11 +18,13 @@ type DashboardState = {
   savedLayouts: SavedLayouts;
   columns: number;
   editing: boolean;
+  lastAddedId: string | null;
   addWidget: (type: WidgetType, position?: { x: number; y: number }) => void;
   removeWidget: (id: string) => void;
   setLayout: (layout: Layout) => void;
   setColumns: (columns: number) => void;
   toggleEditing: () => void;
+  clearLastAdded: () => void;
 };
 
 const widgetTypeSchema = z.enum(WIDGET_TYPES);
@@ -78,6 +80,7 @@ export const useDashboardStore = create<DashboardState>()(
       savedLayouts: {},
       columns: DEFAULT_COLUMNS,
       editing: false,
+      lastAddedId: null,
       addWidget: (type, position) =>
         set((state) => {
           if (state.widgets.some((widget) => widget.type === type)) return state;
@@ -95,6 +98,7 @@ export const useDashboardStore = create<DashboardState>()(
             widgets: [...state.widgets, { id, type }],
             layout: [...state.layout, item],
             savedLayouts,
+            lastAddedId: id,
           };
         }),
       removeWidget: (id) =>
@@ -112,6 +116,7 @@ export const useDashboardStore = create<DashboardState>()(
       setLayout: (layout) => set({ layout }),
       setColumns: (columns) => set({ columns }),
       toggleEditing: () => set((state) => ({ editing: !state.editing })),
+      clearLastAdded: () => set({ lastAddedId: null }),
     }),
     {
       name: "dashboard",

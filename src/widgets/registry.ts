@@ -7,6 +7,7 @@ import { spotifyPlugin } from "@/widgets/spotify";
 import { githubPlugin } from "@/widgets/github";
 import { weatherPlugin } from "@/widgets/weather";
 import { anilistPlugin } from "@/widgets/anilist";
+import { notePlugin } from "@/widgets/note";
 
 const plugins: Record<WidgetType, WidgetPlugin> = {
   tasks: tasksPlugin,
@@ -17,6 +18,7 @@ const plugins: Record<WidgetType, WidgetPlugin> = {
   github: githubPlugin,
   weather: weatherPlugin,
   anilist: anilistPlugin,
+  note: notePlugin,
 };
 
 export const widgetPlugins: WidgetPlugin[] = [
@@ -28,6 +30,7 @@ export const widgetPlugins: WidgetPlugin[] = [
   githubPlugin,
   weatherPlugin,
   anilistPlugin,
+  notePlugin,
 ];
 
 export function getWidgetPlugin(type: WidgetType): WidgetPlugin | undefined {
