@@ -41,7 +41,7 @@ browser.
 ### Widgets
 
 _A full rundown of each widget is coming soon._ Lux currently ships: Tasks, Quick Access, Image,
-Calendar (Google & Outlook), Spotify, and GitHub.
+Note, Weather, Calendar (Google & Outlook), Spotify, GitHub, and AniList.
 
 ## Privacy
 

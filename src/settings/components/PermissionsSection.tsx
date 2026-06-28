@@ -69,7 +69,7 @@ const PERMISSIONS: PermissionItem[] = [
   {
     id: "identity",
     name: "Account sign-in",
-    description: "Connects Google, Outlook, and Spotify with OAuth.",
+    description: "Connects Google, Outlook, Spotify, and GitHub with OAuth.",
     usedBy: "Accounts",
     icon: KeyRound,
     required: true,

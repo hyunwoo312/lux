@@ -7,7 +7,7 @@ import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover"
 import { cn } from "@/lib/utils";
 import { Favicon } from "@/widgets/quick-access/components/Favicon";
 import { useHistorySuggestions } from "@/widgets/quick-access/hooks/useHistorySuggestions";
-import { hostnameOf, normalizeUrl } from "@/widgets/quick-access/lib/url";
+import { hostnameOf, keyOf } from "@/widgets/quick-access/lib/url";
 import type { QuickLink } from "@/widgets/quick-access/types";
 
 type LinkFormProps = {
@@ -16,8 +16,6 @@ type LinkFormProps = {
   onSubmit: (title: string, url: string) => void;
   onCancel: () => void;
 };
-
-const keyOf = (url: string) => normalizeUrl(url) ?? url;
 
 export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormProps) {
   const [url, setUrl] = useState(initial?.url ?? "");

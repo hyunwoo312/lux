@@ -1,3 +1,4 @@
+import { HEADER_LABEL } from "@/widgets/core/BaseWidget";
 import { useImageStore } from "@/widgets/image/useImageStore";
 
 export function ImageStatus() {
@@ -8,11 +9,5 @@ export function ImageStatus() {
 
   if (hasImage) return null;
 
-  return (
-    <span className="
-      text-muted-foreground block truncate text-xs font-medium tracking-wide uppercase
-    ">
-      Image
-    </span>
-  );
+  return <span className={HEADER_LABEL}>Image</span>;
 }

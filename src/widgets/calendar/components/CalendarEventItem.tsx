@@ -2,6 +2,8 @@ import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { GoogleCalendarServiceIcon, OutlookServiceIcon } from "@/components/icons/service-icons";
 import { Tooltip } from "@/components/ui/tooltip";
+import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
+import { EASE_OUT_QUINT } from "@/lib/motion";
 import { formatEventRelativeTime, formatEventTime, getEventTitle } from "@/widgets/calendar/lib/agenda";
 import type { CalendarProviderId, DisplayCalendarEvent } from "@/widgets/calendar/types";
 
@@ -49,6 +51,7 @@ export function CalendarEventItem({
   reduced,
   layoutId,
 }: CalendarEventItemProps) {
+  const clock24h = useAppSettingsStore((s) => s.clock24h);
   const title = getEventTitle(event);
   const relative = emphasized ? formatEventRelativeTime(event, now) : null;
   const openLinks = event.links.filter((link): link is OpenLink => Boolean(link.sourceUrl));
@@ -65,7 +68,7 @@ export function CalendarEventItem({
       transition={{
         duration: reduced ? 0 : 0.16,
         delay: reduced ? 0 : Math.min(index, 8) * 0.025,
-        layout: { duration: reduced ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] },
+        layout: { duration: reduced ? 0 : 0.32, ease: EASE_OUT_QUINT },
       }}
       className={cn(
         "group relative flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors",
@@ -74,7 +77,7 @@ export function CalendarEventItem({
     >
       <span aria-hidden className="size-2 flex-none rounded-full" style={{ backgroundColor: color }} />
       <span className="text-muted-foreground w-12 flex-none text-2xs font-semibold tabular-nums">
-        {timeLabel ?? formatEventTime(event)}
+        {timeLabel ?? formatEventTime(event, !clock24h)}
       </span>
       <span className={cn("flex min-w-0 flex-1 flex-col transition-[padding] duration-200", padClass)}>
         <span className="text-foreground truncate text-sm font-medium">{title}</span>

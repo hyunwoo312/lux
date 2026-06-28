@@ -159,8 +159,8 @@ export function WidgetPalette() {
                 animate="visible"
                 exit="exit"
                 className="
-                  glass-thick text-popover-foreground border-border w-60 origin-top-right rounded-xl
-                  border p-1.5 shadow-xl outline-none
+                  glass-panel text-popover-foreground w-60 origin-top-right rounded-xl
+                  bg-[var(--glass-bg-thick)] p-1.5 outline-none
                 "
               >
                 <p

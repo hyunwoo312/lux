@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
+import { WIDGET_HEADER_ACTION } from "@/widgets/core/BaseWidget";
 import type { WidgetIcon } from "@/widgets/core/types";
 
 type ViewToggleButtonProps = {
@@ -24,7 +25,7 @@ export function ViewToggleButton({
       <Button
         variant="ghost"
         size="icon"
-        className="text-muted-foreground/60 hover:text-foreground size-7 rounded-sm [&_svg]:size-4"
+        className={WIDGET_HEADER_ACTION}
         aria-label={label}
         onClick={onToggle}
       >

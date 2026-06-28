@@ -101,6 +101,9 @@ export function createRelayProvider(config: RelayProviderConfig): IntegrationPro
       }
 
       const payload = (await response.json()) as RelayTokenPayload;
+      if (payload.error || !payload.access_token) {
+        throw new IntegrationTemporaryAuthError(`${config.label} is temporarily unavailable`);
+      }
       return { ...toTokenResponse(payload), refreshToken: payload.refresh_token ?? refreshToken };
     };
   }

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { IconRow } from "@/components/IconRow";
+import { EASE_OUT_EXPO } from "@/lib/motion";
 import { useOnboardingStore } from "@/onboarding/useOnboardingStore";
 
 const container: Variants = {
@@ -13,7 +14,7 @@ const container: Variants = {
 };
 const item: Variants = {
   hidden: { opacity: 0, y: 8 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: EASE_OUT_EXPO } },
 };
 
 export function Welcome() {

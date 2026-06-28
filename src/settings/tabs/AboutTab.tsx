@@ -15,6 +15,7 @@ import {
 import { motion, useAnimationControls, useReducedMotion, type Variants } from "motion/react";
 import { z } from "zod";
 import { IconRow } from "@/components/IconRow";
+import { EASE_OUT_EXPO } from "@/lib/motion";
 import { SettingsSection } from "@/settings/components/SettingsSection";
 import { useSettingsStore } from "@/settings/useSettingsStore";
 
@@ -49,7 +50,7 @@ const container: Variants = {
 };
 const item: Variants = {
   hidden: { opacity: 0, y: 8 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: EASE_OUT_EXPO } },
 };
 
 export function AboutTab() {

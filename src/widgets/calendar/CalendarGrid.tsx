@@ -18,6 +18,7 @@ import {
 } from "@/widgets/calendar/lib/dates";
 import { computeMonthLayout } from "@/widgets/calendar/lib/month-layout";
 import { SLIDE_SPRING } from "@/widgets/calendar/lib/motion";
+import { EASE_OUT_QUINT } from "@/lib/motion";
 import { useCalendarStore } from "@/widgets/calendar/useCalendarStore";
 import type { DisplayCalendarEvent } from "@/widgets/calendar/types";
 
@@ -83,7 +84,7 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
   }, [mode, selectedDay, selectedKey, layout, events, todayKey]);
   const dayEvents = selectedKey ? (eventsByDate.get(selectedKey) ?? []) : [];
 
-  const transition = { duration: reduced ? 0 : 0.5, ease: [0.22, 1, 0.36, 1] } as const;
+  const transition = { duration: reduced ? 0 : 0.5, ease: EASE_OUT_QUINT } as const;
   const verticalSlide: Variants = {
     enter: (dir: number) => ({ y: reduced ? "0%" : `${dir * 100}%`, opacity: reduced ? 0 : 1 }),
     center: { y: "0%", opacity: 1 },

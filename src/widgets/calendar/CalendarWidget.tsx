@@ -11,8 +11,7 @@ import { useCalendarConnection } from "@/widgets/calendar/hooks/useCalendarConne
 import { dedupeCalendarEvents } from "@/widgets/calendar/lib/agenda";
 import { buildCalendarColorMap } from "@/widgets/calendar/lib/colors";
 import { useCalendarStore } from "@/widgets/calendar/useCalendarStore";
-
-const PANE_EASE = [0.22, 1, 0.36, 1] as const;
+import { EASE_OUT_QUINT } from "@/lib/motion";
 
 export function CalendarWidget() {
   const reduced = useReducedMotion();
@@ -81,7 +80,7 @@ export function CalendarWidget() {
   }
 
   const slide = !reduced && mode === "month";
-  const transition = { duration: reduced ? 0 : 0.3, ease: PANE_EASE };
+  const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT_QUINT };
 
   return (
     <LayoutGroup>

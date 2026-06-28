@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { EASE_OUT_EXPO } from "@/lib/motion";
 import { AboutTab } from "@/settings/tabs/AboutTab";
 import { AccountsTab } from "@/settings/tabs/AccountsTab";
 import { GeneralTab } from "@/settings/tabs/GeneralTab";
@@ -92,7 +93,7 @@ export function SettingsDialog() {
   );
 
   const transition = useMemo<Transition>(
-    () => ({ duration: reduced ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }),
+    () => ({ duration: reduced ? 0 : 0.3, ease: EASE_OUT_EXPO }),
     [reduced],
   );
 

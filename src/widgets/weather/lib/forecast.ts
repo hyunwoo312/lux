@@ -52,9 +52,10 @@ export function formatTemperature(value: number): string {
   return `${Math.round(value)}°`;
 }
 
-export function formatHour(iso: string): string {
+export function formatHour(iso: string, hour12: boolean): string {
   const hour = Number(iso.slice(11, 13));
   if (Number.isNaN(hour)) return "";
+  if (!hour12) return String(hour).padStart(2, "0");
   const period = hour < 12 ? "AM" : "PM";
   const display = hour % 12 === 0 ? 12 : hour % 12;
   return `${display} ${period}`;
@@ -65,10 +66,11 @@ export function formatWeekday(date: string): string {
   return WEEKDAYS[day] ?? "";
 }
 
-export function formatClock(iso: string): string {
+export function formatClock(iso: string, hour12: boolean): string {
   const hour = Number(iso.slice(11, 13));
   const minute = iso.slice(14, 16);
   if (Number.isNaN(hour) || minute.length !== 2) return "";
+  if (!hour12) return `${String(hour).padStart(2, "0")}:${minute}`;
   const period = hour < 12 ? "AM" : "PM";
   const display = hour % 12 === 0 ? 12 : hour % 12;
   return `${display}:${minute} ${period}`;

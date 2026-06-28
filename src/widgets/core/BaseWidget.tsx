@@ -6,6 +6,7 @@ import { Check, Settings, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { POP } from "@/lib/motion";
 import { getAccentVars, type AccentPreset } from "@/widgets/core/accent";
 import type { WidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
 import { WidgetChromeContext } from "@/widgets/core/useWidgetChrome";
@@ -28,13 +29,6 @@ type BaseWidgetProps = {
   children: ReactNode;
 };
 
-const pop = {
-  initial: { opacity: 0, scale: 0.7 },
-  animate: { opacity: 1, scale: 1 },
-  exit: { opacity: 0, scale: 0.7 },
-  transition: { duration: 0.18, ease: "easeOut" },
-} as const;
-
 const spin = {
   initial: { opacity: 0, scale: 0.5, rotate: -90 },
   animate: { opacity: 1, scale: 1, rotate: 0 },
@@ -45,6 +39,9 @@ const spin = {
 const swapTransition: Transition = { duration: 0.18, ease: "easeOut" };
 export const HEADER_LABEL =
   "text-muted-foreground block truncate text-xs font-medium tracking-wide uppercase";
+
+export const WIDGET_HEADER_ACTION =
+  "text-muted-foreground/60 hover:text-foreground size-7 rounded-sm [&_svg]:size-4";
 
 export function BaseWidget({
   title,
@@ -147,7 +144,7 @@ export function BaseWidget({
             {editing && size && (
               <motion.span
                 key="size"
-                {...pop}
+                {...POP}
                 className="
                   bg-foreground text-background rounded-md px-1.5 py-0.5 text-xs font-semibold
                   tabular-nums shadow-md
@@ -157,22 +154,17 @@ export function BaseWidget({
               </motion.span>
             )}
             {!editing && !showConfig && headerAction && (
-              <motion.div key="action" {...pop}>
+              <motion.div key="action" {...POP}>
                 {headerAction}
               </motion.div>
             )}
             {!editing && config && (
-              <motion.div key="config-toggle" {...pop}>
+              <motion.div key="config-toggle" {...POP}>
                 <Tooltip content={showConfig ? "Done" : "Settings"} sticky>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="
-                      text-muted-foreground/60
-                      hover:text-foreground
-                      size-7 rounded-sm
-                      [&_svg]:size-4
-                    "
+                    className={WIDGET_HEADER_ACTION}
                     aria-label={showConfig ? `Close ${title} settings` : `${title} settings`}
                     aria-pressed={showConfig}
                     onClick={() => setShowConfig((value) => !value)}

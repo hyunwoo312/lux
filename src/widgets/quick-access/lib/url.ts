@@ -1,9 +1,13 @@
+const EXECUTABLE_SCHEMES = new Set(["javascript:", "data:", "vbscript:"]);
+
 export function normalizeUrl(input: string): string | null {
   const trimmed = input.trim();
   if (!trimmed) return null;
   const withProtocol = /^[a-z]+:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
   try {
-    return new URL(withProtocol).toString();
+    const parsed = new URL(withProtocol);
+    if (EXECUTABLE_SCHEMES.has(parsed.protocol)) return null;
+    return parsed.toString();
   } catch {
     return null;
   }

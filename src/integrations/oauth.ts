@@ -39,34 +39,6 @@ export function parseAuthCodeCallback(url: string): { code: string; state: strin
   return { code, state };
 }
 
-export type ImplicitTokenCallback = {
-  accessToken: string;
-  expiresIn: number;
-  state: string;
-  tokenType: string;
-};
-
-export function parseImplicitTokenCallback(url: string): ImplicitTokenCallback {
-  const parsed = new URL(url);
-  const params = new URLSearchParams(parsed.hash.replace(/^#/, ""));
-  const error = params.get("error") ?? parsed.searchParams.get("error");
-
-  if (error) {
-    throw new Error(`OAuth authorization failed: ${error}`);
-  }
-
-  const accessToken = params.get("access_token");
-  const expiresIn = Number(params.get("expires_in"));
-  const state = params.get("state");
-  const tokenType = params.get("token_type") ?? "Bearer";
-
-  if (!accessToken || !state || !Number.isFinite(expiresIn)) {
-    throw new Error("OAuth callback is missing access token, expiry, or state");
-  }
-
-  return { accessToken, expiresIn, state, tokenType };
-}
-
 export function getRedirectUri(path: string): string {
   if (typeof chrome === "undefined" || !chrome.identity?.getRedirectURL) {
     throw new Error("Browser identity API is unavailable");

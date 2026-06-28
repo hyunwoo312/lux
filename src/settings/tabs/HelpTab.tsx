@@ -36,7 +36,7 @@ export function HelpTab() {
           <Key>+</Key>, edit your layout with the pencil, and open settings with the gear.
         </HelpItem>
         <HelpItem icon={Plug} title="Connect your accounts">
-          Calendar, Spotify, and Tasks need a one-time sign-in.{" "}
+          Calendar, Spotify, GitHub, and AniList need a one-time sign-in.{" "}
           <LinkButton onClick={() => setTab("accounts")}>
             Open Accounts &amp; Permissions
           </LinkButton>

@@ -7,7 +7,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
 import { WeatherCard } from "@/widgets/weather/components/WeatherCard";
-import { WEATHER_EASE } from "@/widgets/weather/lib/motion";
+import { EASE_OUT_QUINT } from "@/lib/motion";
 import { useWeatherStore } from "@/widgets/weather/useWeatherStore";
 import type { WeatherLocation, WeatherUnits } from "@/widgets/weather/types";
 
@@ -62,7 +62,7 @@ export function WeatherWidget() {
   const selected = selectedId ? (locations.find((entry) => entry.id === selectedId) ?? null) : null;
   const detail = locations.length === 1 ? (locations[0] ?? null) : selected;
 
-  const transition = { duration: reduced ? 0 : 0.3, ease: WEATHER_EASE };
+  const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT_QUINT };
   const offset = reduced ? 0 : "4%";
 
   const handleDragEnd = (event: DragEndEvent) => {

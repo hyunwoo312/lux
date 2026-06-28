@@ -12,6 +12,11 @@ describe("normalizeUrl", () => {
   it("returns null for blank input", () => {
     expect(normalizeUrl("   ")).toBeNull();
   });
+
+  it("rejects executable schemes", () => {
+    expect(normalizeUrl("javascript://%0aalert(1)")).toBeNull();
+    expect(normalizeUrl("vbscript://x")).toBeNull();
+  });
 });
 
 describe("hostnameOf", () => {

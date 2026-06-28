@@ -7,8 +7,7 @@ import { ActivityView } from "@/widgets/anilist/components/ActivityView";
 import { InboxView } from "@/widgets/anilist/components/InboxView";
 import { DiscoverView } from "@/widgets/anilist/components/DiscoverView";
 import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
-
-const PANE_EASE = [0.22, 1, 0.36, 1] as const;
+import { EASE_OUT_QUINT } from "@/lib/motion";
 
 export function AnilistWidget() {
   const reduced = useReducedMotion();
@@ -30,7 +29,7 @@ export function AnilistWidget() {
   if (!connected) return <DiscoverView />;
 
   const userId = Number(account.providerAccountId);
-  const transition = { duration: reduced ? 0 : 0.3, ease: PANE_EASE };
+  const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT_QUINT };
 
   return (
     <div className="relative h-full min-h-0">

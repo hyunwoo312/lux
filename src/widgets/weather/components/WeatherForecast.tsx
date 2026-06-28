@@ -1,3 +1,4 @@
+import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { formatHour, formatTemperature, formatWeekday } from "@/widgets/weather/lib/forecast";
 import { WeatherIcon } from "@/widgets/weather/components/WeatherIcon";
 import type { WeatherData } from "@/widgets/weather/types";
@@ -13,6 +14,7 @@ type WeatherForecastProps = {
 };
 
 export function WeatherForecast({ data, showHourly, showDaily }: WeatherForecastProps) {
+  const clock24h = useAppSettingsStore((s) => s.clock24h);
   const { current, hourly, daily } = data;
   const start = hourly.findIndex((hour) => hour.time > current.time);
   const hours = start === -1 ? [] : hourly.slice(start, start + HOURLY_COUNT);
@@ -24,7 +26,9 @@ export function WeatherForecast({ data, showHourly, showDaily }: WeatherForecast
         <div className="border-border/50 grid grid-cols-6 gap-1 border-t pt-2">
           {hours.map((hour) => (
             <div key={hour.time} className="flex flex-col items-center gap-1">
-              <span className="text-muted-foreground text-2xs">{formatHour(hour.time)}</span>
+              <span className="text-muted-foreground text-2xs">
+                {formatHour(hour.time, !clock24h)}
+              </span>
               <WeatherIcon
                 code={hour.weatherCode}
                 isDay={hour.isDay}

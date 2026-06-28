@@ -8,7 +8,7 @@ export function isOverGrid(x: number, y: number, geometry: DragGeometry): boolea
   return x >= geometry.left && x <= geometry.left + geometry.cols * UNIT && y >= geometry.top;
 }
 
-export function pointerToCell(
+function pointerToCell(
   x: number,
   y: number,
   geometry: DragGeometry,
@@ -25,7 +25,7 @@ export function pointerToCell(
   };
 }
 
-export function cellRect(
+function cellRect(
   col: number,
   row: number,
   w: number,

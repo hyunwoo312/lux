@@ -168,12 +168,12 @@ export function getAgendaGroups<T extends CalendarEvent>(
   return groups;
 }
 
-export function formatEventTime(event: CalendarEvent): string {
+export function formatEventTime(event: CalendarEvent, hour12: boolean): string {
   if (event.isAllDay) return "All day";
   return new Intl.DateTimeFormat(undefined, {
     hour: "2-digit",
     minute: "2-digit",
-    hour12: false,
+    hour12,
   }).format(new Date(event.startsAt));
 }
 

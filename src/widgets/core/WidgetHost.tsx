@@ -1,4 +1,5 @@
 import { BaseWidget } from "@/widgets/core/BaseWidget";
+import { WidgetErrorBoundary } from "@/widgets/core/WidgetErrorBoundary";
 import { CommonWidgetConfig } from "@/widgets/core/CommonWidgetConfig";
 import { WidgetConfig } from "@/components/config/WidgetConfig";
 import type { WidgetInstance } from "@/widgets/core/types";
@@ -54,7 +55,9 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
       }
       onRemove={() => removeWidget(instance.id)}
     >
-      <Widget editing={editing} />
+      <WidgetErrorBoundary>
+        <Widget editing={editing} />
+      </WidgetErrorBoundary>
     </BaseWidget>
   );
 }

@@ -17,6 +17,7 @@ import { useSettingsStore } from "@/settings";
 import { cn } from "@/lib/utils";
 import { GRID_MODIFIERS, VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
 import { openUrl } from "@/lib/open-url";
+import { EASE_IN_OUT } from "@/lib/motion";
 import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
 import { LinkForm } from "@/widgets/quick-access/components/LinkForm";
 import { SortablePin } from "@/widgets/quick-access/components/SortablePin";
@@ -32,7 +33,7 @@ import { useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore"
 
 type FormState = { mode: "add" } | { mode: "edit"; link: QuickLink };
 
-const MORPH: Transition = { duration: 0.32, ease: [0.4, 0, 0.2, 1] };
+const MORPH: Transition = { duration: 0.32, ease: EASE_IN_OUT };
 
 function SectionHeader({ children }: { children: string }) {
   return (

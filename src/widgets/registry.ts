@@ -21,17 +21,7 @@ const plugins: Record<WidgetType, WidgetPlugin> = {
   note: notePlugin,
 };
 
-export const widgetPlugins: WidgetPlugin[] = [
-  tasksPlugin,
-  quickAccessPlugin,
-  imagePlugin,
-  calendarPlugin,
-  spotifyPlugin,
-  githubPlugin,
-  weatherPlugin,
-  anilistPlugin,
-  notePlugin,
-];
+export const widgetPlugins: WidgetPlugin[] = Object.values(plugins);
 
 export function getWidgetPlugin(type: WidgetType): WidgetPlugin | undefined {
   return plugins[type];

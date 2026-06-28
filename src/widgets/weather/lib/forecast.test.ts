@@ -62,9 +62,15 @@ describe("formatters", () => {
   });
 
   it("formats hours in 12-hour time", () => {
-    expect(formatHour("2026-06-25T00:00")).toBe("12 AM");
-    expect(formatHour("2026-06-25T13:00")).toBe("1 PM");
-    expect(formatHour("2026-06-25T12:00")).toBe("12 PM");
+    expect(formatHour("2026-06-25T00:00", true)).toBe("12 AM");
+    expect(formatHour("2026-06-25T13:00", true)).toBe("1 PM");
+    expect(formatHour("2026-06-25T12:00", true)).toBe("12 PM");
+  });
+
+  it("formats hours in 24-hour time", () => {
+    expect(formatHour("2026-06-25T00:00", false)).toBe("00");
+    expect(formatHour("2026-06-25T13:00", false)).toBe("13");
+    expect(formatHour("2026-06-25T09:00", false)).toBe("09");
   });
 
   it("formats weekdays independent of the runner timezone", () => {
@@ -73,9 +79,15 @@ describe("formatters", () => {
   });
 
   it("formats clock times with minutes in 12-hour time", () => {
-    expect(formatClock("2026-06-25T06:04")).toBe("6:04 AM");
-    expect(formatClock("2026-06-25T00:30")).toBe("12:30 AM");
-    expect(formatClock("2026-06-25T20:09")).toBe("8:09 PM");
+    expect(formatClock("2026-06-25T06:04", true)).toBe("6:04 AM");
+    expect(formatClock("2026-06-25T00:30", true)).toBe("12:30 AM");
+    expect(formatClock("2026-06-25T20:09", true)).toBe("8:09 PM");
+  });
+
+  it("formats clock times with minutes in 24-hour time", () => {
+    expect(formatClock("2026-06-25T06:04", false)).toBe("06:04");
+    expect(formatClock("2026-06-25T00:30", false)).toBe("00:30");
+    expect(formatClock("2026-06-25T20:09", false)).toBe("20:09");
   });
 
   it("maps wind bearings to the nearest compass point", () => {

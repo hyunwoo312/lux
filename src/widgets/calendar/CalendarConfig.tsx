@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { RefreshCw, Settings2 } from "lucide-react";
 import { useIntegrationStore } from "@/integrations";
 import { useSettingsStore } from "@/settings";
+import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { IconActionButton } from "@/components/IconActionButton";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -28,13 +29,14 @@ const SOURCE_OPTIONS: { value: CalendarProviderId; label: string }[] = [
   { value: "microsoft", label: "Outlook" },
 ];
 
-function formatLastSynced(value: string | undefined): string | null {
+function formatLastSynced(value: string | undefined, hour12: boolean): string | null {
   if (!value) return null;
   return `Last synced ${new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    hour12,
   }).format(new Date(value))}`;
 }
 
@@ -52,6 +54,7 @@ function CalendarProviderConfig({
   label: string;
 }) {
   const { account } = useCalendarConnection(providerId);
+  const clock24h = useAppSettingsStore((s) => s.clock24h);
   const settings = useCalendarStore((s) => s[providerId]);
   const sync = useCalendarStore((s) => s.sync);
   const setCalendarSelection = useCalendarStore((s) => s.setCalendarSelection);
@@ -96,7 +99,7 @@ function CalendarProviderConfig({
   const syncTooltip = coolingDown
     ? getCalendarSyncCooldownMessage(settings.lastSyncedAt, now)
     : "Sync now";
-  const lastSyncedLabel = formatLastSynced(settings.lastSyncedAt);
+  const lastSyncedLabel = formatLastSynced(settings.lastSyncedAt, !clock24h);
   const providerNote = getProviderNote(
     settings.calendars.length,
     settings.enabledCalendarIds.length,

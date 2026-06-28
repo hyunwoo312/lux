@@ -5,7 +5,6 @@ import {
   getRedirectUri,
   launchWebAuthFlow,
   parseAuthCodeCallback,
-  parseImplicitTokenCallback,
 } from "@/integrations/oauth";
 import {
   IntegrationReconnectRequiredError,
@@ -105,30 +104,7 @@ async function requestToken(
     return provider.exchangeCode({ clientId, code: callback.code, redirectUri, codeVerifier });
   }
 
-  if (!provider.buildAuthUrl) {
-    throw new Error(`${provider.label} is not configured for sign-in`);
-  }
-
-  const authUrl = provider.buildAuthUrl({
-    clientId,
-    redirectUri,
-    state,
-    scopes: provider.scopes,
-    prompt: interactive ? "consent" : "none",
-  });
-  const callbackUrl = await launchWebAuthFlow(authUrl, interactive);
-  const token = parseImplicitTokenCallback(callbackUrl);
-
-  if (token.state !== state) {
-    throw new Error("OAuth callback state did not match the active request");
-  }
-
-  return {
-    accessToken: token.accessToken,
-    expiresIn: token.expiresIn,
-    scopes: provider.scopes,
-    tokenType: token.tokenType,
-  };
+  throw new Error(`${provider.label} is not configured for sign-in`);
 }
 
 export async function connectIntegration(

@@ -8,10 +8,6 @@ function Dialog(props: ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
 
-function DialogTrigger(props: ComponentProps<typeof DialogPrimitive.Trigger>) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
-}
-
 const DialogOverlay = forwardRef<HTMLDivElement, ComponentProps<typeof DialogPrimitive.Overlay>>(
   function DialogOverlay({ className, ...props }, ref) {
     return (
@@ -106,4 +102,4 @@ function DialogDescription({
   );
 }
 
-export { Dialog, DialogTrigger, DialogContent, DialogOverlay, DialogTitle, DialogDescription };
+export { Dialog, DialogContent, DialogTitle, DialogDescription };

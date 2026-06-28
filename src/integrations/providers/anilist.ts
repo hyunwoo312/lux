@@ -25,10 +25,11 @@ type AnilistCallbackMessage = {
   error?: string;
 };
 
-function buildAuthorizeUrl(clientId: string): string {
+function buildAuthorizeUrl(clientId: string, state: string): string {
   const url = new URL(AUTHORIZE_ENDPOINT);
   url.searchParams.set("client_id", clientId);
   url.searchParams.set("response_type", "token");
+  url.searchParams.set("state", state);
   return url.toString();
 }
 
@@ -65,8 +66,8 @@ function acquireToken({
     function onMessage(message: unknown, sender: chrome.runtime.MessageSender) {
       const data = message as AnilistCallbackMessage;
       if (data?.type !== "anilist-oauth") return;
-      if (sender.tab?.id !== undefined && tabId !== undefined && sender.tab.id !== tabId) return;
-      if (data.state && data.state !== state) return;
+      if (sender.tab?.id === undefined || sender.tab.id !== tabId) return;
+      if (!data.state || data.state !== state) return;
 
       const accessToken = data.accessToken;
       if (data.error || !accessToken) {
@@ -92,7 +93,7 @@ function acquireToken({
     chrome.runtime.onMessage.addListener(onMessage);
     chrome.tabs.onRemoved.addListener(onRemoved);
     chrome.tabs
-      .create({ url: buildAuthorizeUrl(clientId) })
+      .create({ url: buildAuthorizeUrl(clientId, state) })
       .then((tab) => {
         tabId = tab.id;
       })

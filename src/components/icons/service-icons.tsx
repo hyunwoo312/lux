@@ -9,19 +9,30 @@ import spotifyIcon from "@/assets/service-icons/spotify.svg";
 
 type ServiceIconProps = Omit<ComponentProps<"img">, "src" | "alt">;
 
-function createServiceIcon(src: string, label: string) {
-  function ServiceIcon(props: ServiceIconProps) {
-    return <img src={src} alt="" aria-hidden draggable={false} {...props} />;
-  }
-  ServiceIcon.displayName = `${label}ServiceIcon`;
-  return ServiceIcon;
+function ServiceImg({ src, ...props }: ServiceIconProps & { src: string }) {
+  return <img src={src} alt="" aria-hidden draggable={false} {...props} />;
 }
 
-export const GoogleCalendarServiceIcon = createServiceIcon(googleCalendarIcon, "GoogleCalendar");
-export const OutlookServiceIcon = createServiceIcon(outlookIcon, "Outlook");
-export const SpotifyServiceIcon = createServiceIcon(spotifyIcon, "Spotify");
-export const GoogleServiceIcon = createServiceIcon(googleIcon, "Google");
-export const AnilistServiceIcon = createServiceIcon(anilistIcon, "Anilist");
+export function GoogleCalendarServiceIcon(props: ServiceIconProps) {
+  return <ServiceImg src={googleCalendarIcon} {...props} />;
+}
+
+export function OutlookServiceIcon(props: ServiceIconProps) {
+  return <ServiceImg src={outlookIcon} {...props} />;
+}
+
+export function SpotifyServiceIcon(props: ServiceIconProps) {
+  return <ServiceImg src={spotifyIcon} {...props} />;
+}
+
+export function GoogleServiceIcon(props: ServiceIconProps) {
+  return <ServiceImg src={googleIcon} {...props} />;
+}
+
+export function AnilistServiceIcon(props: ServiceIconProps) {
+  return <ServiceImg src={anilistIcon} {...props} />;
+}
+
 const GITHUB_MASK = {
   maskImage: `url("${githubIcon}")`,
   WebkitMaskImage: `url("${githubIcon}")`,

@@ -6,6 +6,7 @@ import {
   windCardinal,
 } from "@/widgets/weather/lib/forecast";
 import { wmoInfo } from "@/widgets/weather/lib/wmo";
+import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { WeatherIcon } from "@/widgets/weather/components/WeatherIcon";
 import type { WeatherData } from "@/widgets/weather/types";
 
@@ -15,6 +16,7 @@ type WeatherCurrentProps = {
 };
 
 export function WeatherCurrent({ data, name }: WeatherCurrentProps) {
+  const clock24h = useAppSettingsStore((s) => s.clock24h);
   const { current, today, hourly, sunrise, sunset, uvIndex, unitLabels } = data;
   const condition = wmoInfo(current.weatherCode, current.isDay);
   const imminent = findImminentPrecip(hourly, current.time);
@@ -75,13 +77,13 @@ export function WeatherCurrent({ data, name }: WeatherCurrentProps) {
           {sunrise && (
             <span className="inline-flex items-center gap-1">
               <Sunrise className="size-3.5 shrink-0" aria-hidden />
-              {formatClock(sunrise)}
+              {formatClock(sunrise, !clock24h)}
             </span>
           )}
           {sunset && (
             <span className="inline-flex items-center gap-1">
               <Sunset className="size-3.5 shrink-0" aria-hidden />
-              {formatClock(sunset)}
+              {formatClock(sunset, !clock24h)}
             </span>
           )}
       </div>

@@ -230,11 +230,6 @@
   box-shadow: var(--glass-shadow);
 }
 
-@utility glass-thick {
-  background-color: var(--glass-bg-thick);
-  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
-}
-
 @utility glass-solid {
   background-color: var(--card);
   backdrop-filter: none;
@@ -323,12 +318,6 @@
   transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .react-grid-item.cssTransforms:not(.react-draggable-dragging):not(.resizing) {
-    transition: none;
-  }
-}
-
 .react-grid-item.react-grid-placeholder {
   background: var(--primary);
   border-radius: var(--radius);
@@ -399,4 +388,34 @@
 
 .dialog-content[data-state="closed"] {
   animation: dialog-content-out 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes popover-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+.overlay-pop[data-state="open"] {
+  animation: popover-in 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.overlay-pop[data-state="closed"] {
+  animation: popover-out 110ms ease;
 }

@@ -29,11 +29,8 @@ function PopoverContent({
         collisionPadding={12}
         className={cn(
           `
-            bg-popover text-popover-foreground border-border
-            data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95
-            data-[state=closed]:animate-out data-[state=closed]:fade-out-0
-            data-[state=closed]:zoom-out-95
-            z-50 rounded-lg border shadow-lg outline-none
+            bg-popover text-popover-foreground border-border overlay-pop z-50 rounded-lg border
+            shadow-lg outline-none origin-[var(--radix-popover-content-transform-origin)]
           `,
           className,
         )}

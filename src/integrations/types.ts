@@ -51,15 +51,11 @@ export type IntegrationProfile = {
   avatarUrl?: string;
 };
 
-export type ImplicitAuthUrlParams = {
+export type PkceAuthUrlParams = {
   clientId: string;
   redirectUri: string;
   state: string;
   scopes: string[];
-  prompt?: string;
-};
-
-export type PkceAuthUrlParams = ImplicitAuthUrlParams & {
   codeChallenge: string;
 };
 
@@ -96,7 +92,6 @@ export type IntegrationProvider = {
   clientIdEnvKey?: string;
   loadClientId?: () => Promise<string | undefined>;
   acquireToken?: (params: AcquireTokenParams) => Promise<IntegrationTokenResponse>;
-  buildAuthUrl?: (params: ImplicitAuthUrlParams) => string;
   buildPkceAuthUrl?: (params: PkceAuthUrlParams) => string;
   exchangeCode?: (params: ExchangeCodeParams) => Promise<IntegrationTokenResponse>;
   refreshToken?: (params: RefreshTokenParams) => Promise<IntegrationTokenResponse>;

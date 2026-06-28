@@ -3,12 +3,12 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, Copy, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { EASE_OUT_QUINT } from "@/lib/motion";
 
 const SPOTIFY_DASHBOARD_URL = "https://developer.spotify.com/dashboard";
 const SPOTIFY_POLICY_URL =
   "https://developer.spotify.com/blog/2025-04-15-updating-the-criteria-for-web-api-extended-access";
 const FEEDBACK_MS = 1600;
-const EASE = [0.22, 1, 0.36, 1] as const;
 const LINK_CLASS = "text-emerald-700 underline underline-offset-2 dark:text-emerald-300";
 
 const STEPS: ReactNode[] = [
@@ -57,7 +57,7 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
   const isSaved = trimmed === (clientId ?? "");
   const formatInvalid = trimmed.length > 0 && !/^[0-9a-f]{32}$/i.test(trimmed);
   const canSave = trimmed.length > 0 && !isSaved && !formatInvalid && status === "idle";
-  const transition = reduced ? { duration: 0 } : { duration: 0.32, ease: EASE };
+  const transition = reduced ? { duration: 0 } : { duration: 0.32, ease: EASE_OUT_QUINT };
 
   async function handleSave() {
     if (!canSave) return;
@@ -252,7 +252,7 @@ function SetupTriangle({
   transition,
 }: {
   open: boolean;
-  transition: { duration: number; ease?: typeof EASE };
+  transition: { duration: number; ease?: typeof EASE_OUT_QUINT };
 }) {
   return (
     <motion.svg
@@ -282,7 +282,7 @@ function SaveButton({
   showSaved: boolean;
   onSave: () => void;
   reduced: boolean | null;
-  transition: { duration: number; ease?: typeof EASE };
+  transition: { duration: number; ease?: typeof EASE_OUT_QUINT };
 }) {
   const bare = status !== "idle";
   const content: ReactNode =

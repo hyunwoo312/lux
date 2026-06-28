@@ -36,12 +36,10 @@ export default defineConfig({
     rollupOptions: {
       input: {
         newtab: resolve(__dirname, "index.html"),
-        background: resolve(__dirname, "src/background.ts"),
         anilistCallback: resolve(__dirname, "src/anilist-callback.ts"),
       },
       output: {
         entryFileNames: (chunk) => {
-          if (chunk.name === "background") return "background.js";
           if (chunk.name === "anilistCallback") return "anilist-callback.js";
           return "assets/[name]-[hash].js";
         },

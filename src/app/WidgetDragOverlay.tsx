@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { EASE_IN_OUT } from "@/lib/motion";
 import { isOverGrid, resolveDrop } from "@/widgets/core/drag";
 import { useWidgetDragStore, type DropMorph } from "@/widgets/core/useWidgetDragStore";
 import { getWidgetPlugin } from "@/widgets/registry";
@@ -27,7 +28,7 @@ function DropMorphGhost({ morph, onDone }: { morph: DropMorph; onDone: () => voi
         height: morph.to.h,
         opacity: 0,
       }}
-      transition={{ duration: reduced ? 0 : 0.3, ease: [0.4, 0, 0.2, 1] }}
+      transition={{ duration: reduced ? 0 : 0.3, ease: EASE_IN_OUT }}
       onAnimationComplete={onDone}
       style={{ position: "fixed", zIndex: 60 }}
       className="
