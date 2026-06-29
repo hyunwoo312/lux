@@ -32,7 +32,7 @@ export const CHANGE_TYPE_LABEL: Record<ChangeType, string> = {
 export const RELEASES: readonly Release[] = [
   {
     version: "1.0.1",
-    date: "2026-06-28",
+    date: "2026-06-29",
     changes: [
       {
         type: "added",
