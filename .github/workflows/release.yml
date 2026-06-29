@@ -20,7 +20,9 @@ jobs:
       - run: npm run build
       - name: Package extension
         run: cd dist && zip -r "../lux-${GITHUB_REF_NAME}.zip" . && cd ..
+      - name: Generate release notes
+        run: node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/gen-changelog.ts --release-body "${GITHUB_REF_NAME}" > release-notes.md
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${GITHUB_REF_NAME}" "lux-${GITHUB_REF_NAME}.zip" --generate-notes
+        run: gh release create "${GITHUB_REF_NAME}" "lux-${GITHUB_REF_NAME}.zip" --notes-file release-notes.md

@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, Pencil, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
+import { LuxMark } from "@/components/LuxMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
+import { ChangelogDialog, consumeChangelogAutoShow, useHasUnseenRelease } from "@/changelog";
 import { WidgetPalette } from "@/app/WidgetPalette";
 import { useSettingsStore } from "@/settings";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
@@ -13,6 +16,18 @@ export function Header() {
   const editing = useDashboardStore((s) => s.editing);
   const toggleEditing = useDashboardStore((s) => s.toggleEditing);
   const openSettings = useSettingsStore((s) => s.openSettings);
+  const hasUnseenRelease = useHasUnseenRelease();
+  const [changelogOpen, setChangelogOpen] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void consumeChangelogAutoShow().then((show) => {
+      if (active && show) setChangelogOpen(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <header className="grid grid-cols-3 items-center gap-4">
@@ -58,7 +73,24 @@ export function Header() {
             <Settings />
           </Button>
         </Tooltip>
+        <Separator orientation="vertical" className="mx-1 h-6" />
+        <Tooltip content="What's new">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative size-10 [&_svg]:size-5"
+            aria-label={hasUnseenRelease ? "What's new — update available" : "What's new"}
+            onClick={() => setChangelogOpen(true)}
+          >
+            <LuxMark className="size-5" />
+            {hasUnseenRelease && (
+              <span aria-hidden className="bg-primary absolute top-2 right-2 size-1.5 rounded-full" />
+            )}
+          </Button>
+        </Tooltip>
       </div>
+
+      <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
       <HeaderClock className="
         glass col-start-3 inline-flex items-center justify-self-end self-stretch rounded-md px-3
       " />

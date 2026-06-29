@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
-import { CircleHelp, Keyboard, ShieldCheck, SlidersHorizontal, Sparkles } from "lucide-react";
+import { CircleHelp, Keyboard, ShieldCheck, SlidersHorizontal } from "lucide-react";
+import { LuxMark } from "@/components/LuxMark";
 
 export const SETTINGS_TABS = ["general", "accounts", "shortcuts", "help", "about"] as const;
 
@@ -35,6 +36,6 @@ export const SETTINGS_TAB_META: Record<SettingsTab, SettingsTabMeta> = {
   about: {
     label: "About",
     description: "Version, links, and how Lux handles your data",
-    icon: Sparkles,
+    icon: LuxMark,
   },
 };

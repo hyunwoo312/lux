@@ -37,10 +37,12 @@ export default defineConfig({
       input: {
         newtab: resolve(__dirname, "index.html"),
         anilistCallback: resolve(__dirname, "src/anilist-callback.ts"),
+        background: resolve(__dirname, "src/background.ts"),
       },
       output: {
         entryFileNames: (chunk) => {
           if (chunk.name === "anilistCallback") return "anilist-callback.js";
+          if (chunk.name === "background") return "background.js";
           return "assets/[name]-[hash].js";
         },
       },
