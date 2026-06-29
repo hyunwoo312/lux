@@ -304,11 +304,19 @@ async function fetchPullRequests(): Promise<InboxPullRequest[]> {
 }
 
 export async function fetchInbox(): Promise<InboxData> {
-  const [notifications, pullRequests] = await Promise.all([
+  const [notifications, pullRequests] = await Promise.allSettled([
     fetchNotifications(),
     fetchPullRequests(),
   ]);
-  return { notifications, pullRequests };
+
+  if (notifications.status === "rejected" && pullRequests.status === "rejected") {
+    throw notifications.reason;
+  }
+
+  return {
+    notifications: notifications.status === "fulfilled" ? notifications.value : [],
+    pullRequests: pullRequests.status === "fulfilled" ? pullRequests.value : [],
+  };
 }
 
 const inboxNotificationSchema = z.object({

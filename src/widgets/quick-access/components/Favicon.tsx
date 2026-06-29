@@ -16,7 +16,8 @@ export function Favicon({ url, size, className }: FaviconProps) {
   const src = faviconUrl(url, size);
 
   useEffect(() => {
-    if (ref.current?.complete) setLoaded(true);
+    setFailed(false);
+    setLoaded(ref.current?.complete ?? false);
   }, [src]);
 
   if (failed || !src) {

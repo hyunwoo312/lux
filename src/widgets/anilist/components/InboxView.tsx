@@ -55,6 +55,7 @@ export function InboxView({ enabled, newTab }: { enabled: boolean; newTab: boole
 
   const [unreadOverride, setUnreadOverride] = useState<number | null>(null);
   const [marking, setMarking] = useState(false);
+  const liveUnread = unread.state.status === "success" ? unread.state.data : 0;
 
   const items = state.status === "success" ? state.items : [];
   const newest = items[0] ? toSeconds(items[0].createdAt) : undefined;
@@ -78,6 +79,10 @@ export function InboxView({ enabled, newTab }: { enabled: boolean; newTab: boole
     );
   }, [unreadRefresh]);
 
+  useEffect(() => {
+    if (unreadOverride !== null && liveUnread === 0) setUnreadOverride(null);
+  }, [unreadOverride, liveUnread]);
+
   if (state.status === "loading") return <AnilistPlaceholder>Loading inbox…</AnilistPlaceholder>;
   if (state.status === "error")
     return <AnilistPlaceholder>Couldn’t load your inbox.</AnilistPlaceholder>;
@@ -85,7 +90,6 @@ export function InboxView({ enabled, newTab }: { enabled: boolean; newTab: boole
     return <AnilistPlaceholder>Inbox zero — nothing waiting.</AnilistPlaceholder>;
 
   const seen = seenRef.current;
-  const liveUnread = unread.state.status === "success" ? unread.state.data : 0;
   const unreadCount = unreadOverride ?? liveUnread;
 
   return (

@@ -41,7 +41,11 @@ export function SortablePin({ link, view, onOpen, onEdit, onRemove }: SortablePi
       {...listeners}
       onClick={() => onOpen(link.url)}
       onKeyDown={handleKeyDown}
-      className={cn("group relative outline-none", qaTileClass(view), isDragging && "opacity-50")}
+      className={cn(
+        "group focus-visible:ring-ring relative outline-none focus-visible:ring-2",
+        qaTileClass(view),
+        isDragging && "opacity-50",
+      )}
     >
       <QuickItem
         url={link.url}

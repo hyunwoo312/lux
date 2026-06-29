@@ -24,6 +24,7 @@ import type {
 } from "@/integrations/types";
 
 const TOKEN_REFRESH_BUFFER_MS = 300_000;
+const REQUEST_TIMEOUT_MS = 10_000;
 
 const providers: Record<IntegrationProviderId, IntegrationProvider> = {
   google: googleProvider,
@@ -225,10 +226,15 @@ async function markProviderNeedsReconnect(providerId: IntegrationProviderId): Pr
   }
 }
 
+function withTimeout(signal?: AbortSignal | null): AbortSignal {
+  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+  return signal ? AbortSignal.any([signal, timeout]) : timeout;
+}
+
 function authorize(init: RequestInit, accessToken: string): RequestInit {
   const headers = new Headers(init.headers);
   headers.set("Authorization", `Bearer ${accessToken}`);
-  return { ...init, headers };
+  return { ...init, headers, signal: withTimeout(init.signal) };
 }
 
 export async function integrationFetch(
