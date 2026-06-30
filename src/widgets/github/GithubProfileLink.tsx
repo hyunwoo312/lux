@@ -1,10 +1,10 @@
 import { GitHubServiceIcon } from "@/components/icons/service-icons";
 import { Tooltip } from "@/components/ui/tooltip";
-import { useGithubStore } from "@/widgets/github/useGithubStore";
+import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
 
 export function GithubProfileLink() {
   const login = useGithubStore((s) => s.contributions?.login);
-  const newTab = useGithubStore((s) => s.openBehavior === "newTab");
+  const newTab = useGithub((d) => d.openBehavior === "newTab");
 
   if (!login) {
     return <GitHubServiceIcon className="size-4" />;

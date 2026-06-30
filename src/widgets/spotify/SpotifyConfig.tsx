@@ -4,7 +4,8 @@ import { Switch } from "@/components/ui/switch";
 import { useSettingsStore } from "@/settings";
 import { ConfigSegmented, WidgetConfigGroup, WidgetConfigItem } from "@/components/config/WidgetConfig";
 import { useSpotifyConnection } from "@/widgets/spotify/hooks/useSpotifyConnection";
-import { useSpotifyStore } from "@/widgets/spotify/useSpotifyStore";
+import { useSpotify, useSpotifyStore } from "@/widgets/spotify/useSpotifyStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import type { SpotifyTimeDisplayMode } from "@/widgets/spotify/types";
 
 const TIME_DISPLAY_OPTIONS: { value: SpotifyTimeDisplayMode; label: string }[] = [
@@ -14,9 +15,10 @@ const TIME_DISPLAY_OPTIONS: { value: SpotifyTimeDisplayMode; label: string }[] =
 
 export function SpotifyConfig() {
   const { account } = useSpotifyConnection();
-  const timeDisplayMode = useSpotifyStore((s) => s.timeDisplayMode);
+  const instanceId = useWidgetInstanceId();
+  const timeDisplayMode = useSpotify((d) => d.timeDisplayMode);
   const setTimeDisplayMode = useSpotifyStore((s) => s.setTimeDisplayMode);
-  const ambient = useSpotifyStore((s) => s.ambient);
+  const ambient = useSpotify((d) => d.ambient);
   const setAmbient = useSpotifyStore((s) => s.setAmbient);
 
   const accountDescription = account
@@ -51,7 +53,7 @@ export function SpotifyConfig() {
               label="Right time"
               value={timeDisplayMode}
               options={TIME_DISPLAY_OPTIONS}
-              onChange={setTimeDisplayMode}
+              onChange={(value) => setTimeDisplayMode(instanceId, value)}
             />
           }
         />
@@ -61,7 +63,7 @@ export function SpotifyConfig() {
           control={
             <Switch
               checked={ambient}
-              onCheckedChange={(checked) => setAmbient(checked === true)}
+              onCheckedChange={(checked) => setAmbient(instanceId, checked === true)}
               aria-label="Ambient album artwork"
             />
           }

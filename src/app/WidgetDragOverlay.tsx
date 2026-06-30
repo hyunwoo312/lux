@@ -53,7 +53,6 @@ export function WidgetDragOverlay() {
   const dropMorph = useWidgetDragStore((s) => s.dropMorph);
   const endMorph = useWidgetDragStore((s) => s.endMorph);
   const layout = useDashboardStore((s) => s.layout);
-  const savedLayouts = useDashboardStore((s) => s.savedLayouts);
 
   if (dropMorph) {
     return createPortal(<DropMorphGhost morph={dropMorph} onDone={endMorph} />, document.body);
@@ -66,7 +65,7 @@ export function WidgetDragOverlay() {
 
   let placeholder: ReactNode = null;
   if (geometry && isOverGrid(pointerX, pointerY, geometry)) {
-    const { rect } = resolveDrop(plugin, savedLayouts[type], layout, pointerX, pointerY, geometry);
+    const { rect } = resolveDrop(plugin, layout, pointerX, pointerY, geometry);
     placeholder = (
       <div
         style={{ position: "fixed", left: rect.x, top: rect.y, width: rect.w, height: rect.h, zIndex: 50 }}

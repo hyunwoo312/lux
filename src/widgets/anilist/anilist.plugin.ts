@@ -15,5 +15,4 @@ export const anilistPlugin: WidgetPlugin = {
   configComponent: AnilistConfig,
   statusComponent: AnilistTabs,
   headerActionComponent: AnilistHeaderActions,
-  accent: "cyan",
-};
+  accent: "cyan",};

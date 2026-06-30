@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { getDateKey } from "@/widgets/calendar/lib/dates";
 import type { MonthDayCell as MonthDay } from "@/widgets/calendar/lib/month-layout";
-import { useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 const headingFormatter = new Intl.DateTimeFormat(undefined, {
   weekday: "long",
@@ -16,8 +17,9 @@ type MonthDayCellProps = {
 };
 
 export function MonthDayCell({ day, children }: MonthDayCellProps) {
-  const mode = useCalendarStore((s) => s.mode);
-  const selectedDay = useCalendarStore((s) => s.selectedDay);
+  const instanceId = useWidgetInstanceId();
+  const mode = useCalendar((d) => d.mode);
+  const selectedDay = useCalendar((d) => d.selectedDay);
   const focusDay = useCalendarStore((s) => s.focusDay);
   const selectDay = useCalendarStore((s) => s.selectDay);
 
@@ -30,7 +32,7 @@ export function MonthDayCell({ day, children }: MonthDayCellProps) {
       role="gridcell"
       aria-label={headingFormatter.format(day.date)}
       aria-selected={isSelected || undefined}
-      onClick={() => (mode === "week" ? selectDay(day.date) : focusDay(day.date))}
+      onClick={() => (mode === "week" ? selectDay(instanceId, day.date) : focusDay(instanceId, day.date))}
       className={cn(
         "focus-visible:bg-foreground/[0.05]",
         "relative flex min-w-0 flex-col overflow-hidden rounded-md text-left outline-none",

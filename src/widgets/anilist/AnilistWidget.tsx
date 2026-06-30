@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useIntegrationStore } from "@/integrations";
-import { useAnilistStore } from "@/widgets/anilist/useAnilistStore";
+import { useAnilist } from "@/widgets/anilist/useAnilistStore";
 import { CurrentView } from "@/widgets/anilist/components/CurrentView";
 import { ActivityView } from "@/widgets/anilist/components/ActivityView";
 import { InboxView } from "@/widgets/anilist/components/InboxView";
@@ -16,8 +16,8 @@ export function AnilistWidget() {
   );
   const loaded = useIntegrationStore((s) => s.loaded);
   const load = useIntegrationStore((s) => s.load);
-  const activeTab = useAnilistStore((s) => s.activeTab);
-  const newTab = useAnilistStore((s) => s.openBehavior === "newTab");
+  const activeTab = useAnilist((d) => d.activeTab);
+  const newTab = useAnilist((d) => d.openBehavior === "newTab");
 
   useEffect(() => {
     if (!loaded) void load();

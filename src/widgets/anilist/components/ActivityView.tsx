@@ -13,14 +13,14 @@ import { FeedThumb } from "@/widgets/anilist/components/FeedThumb";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
-import { useAnilistStore } from "@/widgets/anilist/useAnilistStore";
+import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { ANILIST_MAX_ITEMS, type AnilistActivity } from "@/widgets/anilist/types";
 
 const REFRESH_MS = 3 * 60 * 1000;
 
 export function ActivityView({ enabled, newTab }: { enabled: boolean; newTab: boolean }) {
   const setLastSeen = useAnilistStore((s) => s.setLastSeenActivity);
-  const lang = useAnilistStore((s) => s.titleLanguage);
+  const lang = useAnilist((d) => d.titleLanguage);
   const seenRef = useRef(useAnilistStore.getState().lastSeenActivityAt ?? 0);
   const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh } = usePagedResource(
     (page, signal) => fetchActivityPage(page, lang, signal),

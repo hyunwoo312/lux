@@ -29,7 +29,8 @@ import {
 } from "@/widgets/quick-access/lib/itemStyles";
 import { keyOf } from "@/widgets/quick-access/lib/url";
 import type { BrowserItem, QuickLink } from "@/widgets/quick-access/types";
-import { useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
+import { useQuickAccess, useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 type FormState = { mode: "add" } | { mode: "edit"; link: QuickLink };
 
@@ -44,10 +45,11 @@ function SectionHeader({ children }: { children: string }) {
 }
 
 export function HomeTab({ editing }: { editing: boolean }) {
-  const links = useQuickAccessStore((s) => s.links);
-  const view = useQuickAccessStore((s) => s.view);
-  const openBehavior = useQuickAccessStore((s) => s.openBehavior);
-  const showTopSites = useQuickAccessStore((s) => s.showTopSites);
+  const instanceId = useWidgetInstanceId();
+  const links = useQuickAccess((d) => d.links);
+  const view = useQuickAccess((d) => d.view);
+  const openBehavior = useQuickAccess((d) => d.openBehavior);
+  const showTopSites = useQuickAccess((d) => d.showTopSites);
   const addLink = useQuickAccessStore((s) => s.addLink);
   const editLink = useQuickAccessStore((s) => s.editLink);
   const removeLink = useQuickAccessStore((s) => s.removeLink);
@@ -77,16 +79,16 @@ export function HomeTab({ editing }: { editing: boolean }) {
     const oldIndex = links.findIndex((link) => link.id === active.id);
     const newIndex = links.findIndex((link) => link.id === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
-    setLinks(arrayMove(links, oldIndex, newIndex));
+    setLinks(instanceId, arrayMove(links, oldIndex, newIndex));
   };
 
   const submit = (title: string, url: string) => {
-    if (form?.mode === "edit") editLink(form.link.id, title, url);
-    else addLink(title, url);
+    if (form?.mode === "edit") editLink(instanceId, form.link.id, title, url);
+    else addLink(instanceId, title, url);
     setForm(null);
   };
 
-  const onTogglePin = (item: BrowserItem) => togglePin(item.title, item.url);
+  const onTogglePin = (item: BrowserItem) => togglePin(instanceId, item.title, item.url);
 
   return (
     <div className="relative h-full overflow-hidden">
@@ -115,7 +117,7 @@ export function HomeTab({ editing }: { editing: boolean }) {
                     view={view}
                     onOpen={open}
                     onEdit={() => setForm({ mode: "edit", link })}
-                    onRemove={() => removeLink(link.id)}
+                    onRemove={() => removeLink(instanceId, link.id)}
                   />
                 ))}
                 {!form && (

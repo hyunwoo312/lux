@@ -3,14 +3,47 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIntegrationStore } from "@/integrations";
 import { CalendarWidget } from "@/widgets/calendar/CalendarWidget";
-import { useCalendarStore } from "@/widgets/calendar/useCalendarStore";
-import type { CalendarEvent, CalendarView } from "@/widgets/calendar/types";
+import { useCalendarStore, type CalendarData } from "@/widgets/calendar/useCalendarStore";
+import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
+import type { CalendarEvent } from "@/widgets/calendar/types";
+
+const ID = "calendar-1";
+
+function baseData(over: Partial<CalendarData> = {}): CalendarData {
+  const now = new Date();
+  return {
+    events: [],
+    lookaheadDays: 7,
+    enabled: true,
+    view: "calendar",
+    google: { calendars: [], enabledCalendarIds: [], failedCalendarIds: [] },
+    microsoft: { calendars: [], enabledCalendarIds: [], failedCalendarIds: [] },
+    primarySource: "google",
+    refreshIntervalHours: 6,
+    status: "idle",
+    syncing: [],
+    visibleMonth: new Date(now.getFullYear(), now.getMonth(), 1),
+    mode: "month",
+    selectedDay: null,
+    focusRowIndex: 0,
+    listAnchor: now,
+    ...over,
+  };
+}
+
+function patch(over: Partial<CalendarData>) {
+  useCalendarStore.setState((state) => ({
+    byInstance: { ...state.byInstance, [ID]: { ...(state.byInstance[ID] ?? baseData()), ...over } },
+  }));
+}
 
 function renderWidget() {
   return render(
-    <TooltipProvider>
-      <CalendarWidget />
-    </TooltipProvider>,
+    <WidgetInstanceContext.Provider value={ID}>
+      <TooltipProvider>
+        <CalendarWidget />
+      </TooltipProvider>
+    </WidgetInstanceContext.Provider>,
   );
 }
 
@@ -28,10 +61,6 @@ function connectAccount() {
     ],
     loaded: true,
   });
-}
-
-function setView(view: CalendarView) {
-  useCalendarStore.setState({ view });
 }
 
 function timedEvent(): CalendarEvent {
@@ -69,14 +98,7 @@ function multiDayEvent(): CalendarEvent {
 
 beforeEach(() => {
   useIntegrationStore.setState({ accounts: [], loaded: true });
-  useCalendarStore.setState({
-    events: [],
-    lookaheadDays: 7,
-    enabled: true,
-    view: "calendar",
-    google: { calendars: [], enabledCalendarIds: [], failedCalendarIds: [] },
-    status: "idle",
-  });
+  useCalendarStore.setState({ byInstance: { [ID]: baseData() } });
 });
 
 describe("CalendarWidget", () => {
@@ -87,7 +109,7 @@ describe("CalendarWidget", () => {
 
   it("renders the month grid weekday header in calendar view", () => {
     connectAccount();
-    useCalendarStore.setState({ events: [timedEvent()] });
+    patch({ events: [timedEvent()] });
     renderWidget();
     expect(screen.getAllByText("W").length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: "Manage in Settings" })).not.toBeInTheDocument();
@@ -95,8 +117,7 @@ describe("CalendarWidget", () => {
 
   it("renders event titles and separates multi-day events in list view", () => {
     connectAccount();
-    setView("list");
-    useCalendarStore.setState({ events: [timedEvent(), multiDayEvent()] });
+    patch({ view: "list", events: [timedEvent(), multiDayEvent()] });
 
     renderWidget();
 
@@ -107,8 +128,7 @@ describe("CalendarWidget", () => {
 
   it("opens the source event in a new tab from list view", () => {
     connectAccount();
-    setView("list");
-    useCalendarStore.setState({ events: [timedEvent()] });
+    patch({ view: "list", events: [timedEvent()] });
     const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
 
     renderWidget();

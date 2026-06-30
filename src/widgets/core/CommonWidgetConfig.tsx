@@ -1,18 +1,19 @@
-import type { WidgetType } from "@/widgets/core/types";
 import { ConfigSegmented, WidgetConfigGroup, WidgetConfigItem } from "@/components/config/WidgetConfig";
 import {
   useWidgetBackground,
   useWidgetSettingsStore,
   type WidgetBackground,
 } from "@/widgets/core/useWidgetSettingsStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 const BACKGROUND_OPTIONS: { value: WidgetBackground; label: string }[] = [
   { value: "glass", label: "Glass" },
   { value: "solid", label: "Solid" },
 ];
 
-export function CommonWidgetConfig({ type }: { type: WidgetType }) {
-  const background = useWidgetBackground(type);
+export function CommonWidgetConfig() {
+  const id = useWidgetInstanceId();
+  const background = useWidgetBackground(id);
   const setBackground = useWidgetSettingsStore((s) => s.setBackground);
 
   return (
@@ -25,7 +26,7 @@ export function CommonWidgetConfig({ type }: { type: WidgetType }) {
             label="Widget background"
             value={background}
             options={BACKGROUND_OPTIONS}
-            onChange={(value) => setBackground(type, value)}
+            onChange={(value) => setBackground(id, value)}
           />
         }
       />

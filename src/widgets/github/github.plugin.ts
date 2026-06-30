@@ -15,5 +15,4 @@ export const githubPlugin: WidgetPlugin = {
   configComponent: GithubConfig,
   statusComponent: GithubProfileLink,
   headerActionComponent: GithubHeaderActions,
-  accent: "violet",
-};
+  accent: "violet",};

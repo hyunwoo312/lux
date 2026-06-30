@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 
-let nextInstanceId = 0;
+let nextAutoKey = 0;
+const DEFAULT_STALE_MS = 180_000;
+const STORAGE_PREFIX = "lux:paged:";
 
 export type PagedFetcher<T> = (
   page: number,
@@ -33,10 +35,54 @@ type Options<T> = {
   parsePersisted?: (raw: unknown) => T[] | null;
 };
 
+type Snapshot<T> = {
+  items: T[];
+  page: number;
+  hasNextPage: boolean;
+  error: Error | undefined;
+  hasLoaded: boolean;
+  isRefreshing: boolean;
+  isLoadingMore: boolean;
+  at: number;
+};
+
+function emptySnapshot<T>(): Snapshot<T> {
+  return {
+    items: [],
+    page: 0,
+    hasNextPage: false,
+    error: undefined,
+    hasLoaded: false,
+    isRefreshing: false,
+    isLoadingMore: false,
+    at: 0,
+  };
+}
+
+function seedSnapshot<T>(
+  enabled: boolean,
+  cacheKey: string | undefined,
+  persist: boolean,
+  parsePersisted?: (raw: unknown) => T[] | null,
+): Snapshot<T> {
+  const seed = enabled && cacheKey ? seededEntry<T>(cacheKey, persist, parsePersisted) : undefined;
+  return seed
+    ? {
+        items: seed.items,
+        page: seed.page,
+        hasNextPage: seed.hasNextPage,
+        error: undefined,
+        hasLoaded: true,
+        isRefreshing: false,
+        isLoadingMore: false,
+        at: seed.at,
+      }
+    : emptySnapshot<T>();
+}
+
 type CacheEntry<T> = { items: T[]; page: number; hasNextPage: boolean; at: number };
 
-const resourceCache = new Map<string, CacheEntry<unknown>>();
-const STORAGE_PREFIX = "lux:paged:";
+const dataCache = new Map<string, CacheEntry<unknown>>();
 
 function readPersisted<T>(
   cacheKey: string,
@@ -74,13 +120,28 @@ function writePersisted<T>(cacheKey: string, entry: CacheEntry<T>): void {
   }
 }
 
-export function invalidatePagedResource(cacheKey: string): void {
-  resourceCache.delete(cacheKey);
+function removePersisted(cacheKey: string): void {
   try {
     localStorage.removeItem(STORAGE_PREFIX + cacheKey);
   } catch {
     return;
   }
+}
+
+function seededEntry<T>(
+  cacheKey: string,
+  persist: boolean,
+  parsePersisted?: (raw: unknown) => T[] | null,
+): CacheEntry<T> | undefined {
+  let entry = dataCache.get(cacheKey) as CacheEntry<T> | undefined;
+  if (!entry && persist) {
+    const stored = readPersisted<T>(cacheKey, parsePersisted);
+    if (stored) {
+      entry = stored;
+      dataCache.set(cacheKey, stored);
+    }
+  }
+  return entry;
 }
 
 function dedupe<T>(items: T[], getKey: (item: T) => string | number): T[] {
@@ -95,6 +156,182 @@ function dedupe<T>(items: T[], getKey: (item: T) => string | number): T[] {
   return out;
 }
 
+type ResourceConfig<T> = {
+  key: string;
+  cacheKey?: string;
+  staleMs: number;
+  intervalMs?: number;
+  maxItems: number;
+  persist: boolean;
+  parsePersisted?: (raw: unknown) => T[] | null;
+  getKey: (item: T) => string | number;
+};
+
+type Mode = "initial" | "refresh" | "more";
+
+const liveResources = new Map<string, SharedResource<unknown>>();
+
+class SharedResource<T> {
+  private snapshot: Snapshot<T>;
+  private readonly listeners = new Set<(snapshot: Snapshot<T>) => void>();
+  private fetcher: PagedFetcher<T>;
+  private subscribers = 0;
+  private generation = 0;
+  private inFlight: Promise<void> | null = null;
+  private abort: AbortController | null = null;
+  private unregister: (() => void) | null = null;
+
+  constructor(
+    private readonly config: ResourceConfig<T>,
+    fetcher: PagedFetcher<T>,
+  ) {
+    this.fetcher = fetcher;
+    const seed = config.cacheKey
+      ? seededEntry<T>(config.cacheKey, config.persist, config.parsePersisted)
+      : undefined;
+    this.snapshot = seed
+      ? {
+          items: seed.items,
+          page: seed.page,
+          hasNextPage: seed.hasNextPage,
+          error: undefined,
+          hasLoaded: true,
+          isRefreshing: false,
+          isLoadingMore: false,
+          at: seed.at,
+        }
+      : emptySnapshot<T>();
+  }
+
+  getSnapshot(): Snapshot<T> {
+    return this.snapshot;
+  }
+
+  setFetcher(fetcher: PagedFetcher<T>): void {
+    this.fetcher = fetcher;
+  }
+
+  subscribe(listener: (snapshot: Snapshot<T>) => void): () => void {
+    this.listeners.add(listener);
+    this.subscribers += 1;
+    if (this.subscribers === 1) this.start();
+    return () => {
+      this.listeners.delete(listener);
+      this.subscribers -= 1;
+      if (this.subscribers === 0) this.stop();
+    };
+  }
+
+  refresh(): void {
+    void this.run("refresh");
+  }
+
+  loadMore(): void {
+    if (!this.snapshot.hasNextPage) return;
+    void this.run("more");
+  }
+
+  markStale(): void {
+    this.patch({ at: 0 });
+  }
+
+  private patch(part: Partial<Snapshot<T>>): void {
+    this.snapshot = { ...this.snapshot, ...part };
+    for (const listener of this.listeners) listener(this.snapshot);
+  }
+
+  private start(): void {
+    if (!this.snapshot.hasLoaded) void this.run("initial");
+    else if (Date.now() - this.snapshot.at >= this.config.staleMs) void this.run("refresh");
+
+    this.unregister = refreshScheduler.register({
+      id: `paged:${this.config.key}`,
+      staleMs: this.config.staleMs,
+      pollIntervalMs:
+        this.config.intervalMs && this.config.intervalMs > 0 ? this.config.intervalMs : undefined,
+      getLastRefreshedAt: () => this.snapshot.at,
+      refresh: () => void this.run("refresh"),
+    });
+  }
+
+  private stop(): void {
+    this.generation += 1;
+    this.abort?.abort();
+    this.abort = null;
+    this.unregister?.();
+    this.unregister = null;
+    this.inFlight = null;
+    liveResources.delete(this.config.key);
+  }
+
+  private run(mode: Mode): Promise<void> {
+    if (this.inFlight) return this.inFlight;
+    const generation = (this.generation += 1);
+    const nextPage = mode === "more" ? this.snapshot.page + 1 : 1;
+    const controller = new AbortController();
+    this.abort = controller;
+    if (mode === "refresh") this.patch({ isRefreshing: true });
+    if (mode === "more") this.patch({ isLoadingMore: true });
+
+    const promise = (async () => {
+      try {
+        const result = await this.fetcher(nextPage, controller.signal);
+        if (generation !== this.generation) return;
+        const merged =
+          mode === "more"
+            ? dedupe([...this.snapshot.items, ...result.items], this.config.getKey)
+            : result.items;
+        const items = merged.slice(0, this.config.maxItems);
+        const at = Date.now();
+        if (this.config.cacheKey) {
+          const entry: CacheEntry<T> = { items, page: nextPage, hasNextPage: result.hasNextPage, at };
+          dataCache.set(this.config.cacheKey, entry);
+          if (this.config.persist) writePersisted(this.config.cacheKey, entry);
+        }
+        this.patch({
+          items,
+          page: nextPage,
+          hasNextPage: result.hasNextPage,
+          error: undefined,
+          hasLoaded: true,
+          isRefreshing: false,
+          isLoadingMore: false,
+          at,
+        });
+      } catch (caught) {
+        if (generation !== this.generation) return;
+        const error = caught instanceof Error ? caught : new Error("Request failed");
+        this.patch(
+          this.snapshot.hasLoaded
+            ? { isRefreshing: false, isLoadingMore: false }
+            : { error, isRefreshing: false, isLoadingMore: false },
+        );
+      } finally {
+        this.inFlight = null;
+      }
+    })();
+    this.inFlight = promise;
+    return promise;
+  }
+}
+
+function acquireResource<T>(config: ResourceConfig<T>, fetcher: PagedFetcher<T>): SharedResource<T> {
+  let resource = liveResources.get(config.key) as SharedResource<T> | undefined;
+  if (!resource) {
+    resource = new SharedResource<T>(config, fetcher);
+    liveResources.set(config.key, resource as SharedResource<unknown>);
+  } else {
+    resource.setFetcher(fetcher);
+  }
+  return resource;
+}
+
+export function invalidatePagedResource(cacheKey: string): void {
+  dataCache.delete(cacheKey);
+  removePersisted(cacheKey);
+  (liveResources.get(cacheKey) as SharedResource<unknown> | undefined)?.markStale();
+}
+
 export function usePagedResource<T>(
   fetcher: PagedFetcher<T>,
   {
@@ -107,164 +344,88 @@ export function usePagedResource<T>(
     parsePersisted,
   }: Options<T>,
 ): PagedResource<T> {
-  const staleMs = intervalMs ?? 180_000;
+  const staleMs = intervalMs ?? DEFAULT_STALE_MS;
 
-  const seededRef = useRef(false);
-  const seedRef = useRef<CacheEntry<T> | undefined>(undefined);
-  if (!seededRef.current) {
-    seededRef.current = true;
-    if (cacheKey) {
-      let entry = resourceCache.get(cacheKey) as CacheEntry<T> | undefined;
-      if (!entry && persist) {
-        const stored = readPersisted<T>(cacheKey, parsePersisted);
-        if (stored) {
-          entry = stored;
-          resourceCache.set(cacheKey, stored);
-        }
-      }
-      seedRef.current = entry;
-    }
-  }
-  const seed = seedRef.current;
-
-  const [items, setItems] = useState<T[]>(seed?.items ?? []);
-  const [page, setPage] = useState(seed?.page ?? 0);
-  const [hasNextPage, setHasNextPage] = useState(seed?.hasNextPage ?? false);
-  const [error, setError] = useState<Error | undefined>(undefined);
-  const [hasLoaded, setHasLoaded] = useState(seed !== undefined);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const autoKeyRef = useRef("");
+  if (!autoKeyRef.current) autoKeyRef.current = `paged#${(nextAutoKey += 1)}`;
+  const key = cacheKey ?? autoKeyRef.current;
 
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
   const getKeyRef = useRef(getKey);
   getKeyRef.current = getKey;
-  const cacheKeyRef = useRef(cacheKey);
-  cacheKeyRef.current = cacheKey;
+  const maxItemsRef = useRef(maxItems);
+  maxItemsRef.current = maxItems;
   const persistRef = useRef(persist);
   persistRef.current = persist;
-  const stateRef = useRef({ items, page });
-  stateRef.current = { items, page };
-  const hasLoadedRef = useRef(seed !== undefined);
-  const lastRefreshedAtRef = useRef(seed?.at ?? 0);
-  const instanceIdRef = useRef("");
-  if (!instanceIdRef.current) instanceIdRef.current = `paged#${(nextInstanceId += 1)}`;
-  const generationRef = useRef(0);
-  const inFlightRef = useRef(false);
-  const mountedRef = useRef(true);
-  const abortRef = useRef<AbortController | null>(null);
+  const parsePersistedRef = useRef(parsePersisted);
+  parsePersistedRef.current = parsePersisted;
 
-  const run = useCallback(
-    async (mode: "initial" | "refresh" | "more") => {
-      if (inFlightRef.current) return;
-      const nextPage = mode === "more" ? stateRef.current.page + 1 : 1;
-      inFlightRef.current = true;
-      abortRef.current?.abort();
-      const controller = new AbortController();
-      abortRef.current = controller;
-      const generation = generationRef.current;
-      if (mode === "refresh") setIsRefreshing(true);
-      if (mode === "more") setIsLoadingMore(true);
-      try {
-        const result = await fetcherRef.current(nextPage, controller.signal);
-        if (!mountedRef.current || generation !== generationRef.current) return;
-        const merged =
-          mode === "more"
-            ? dedupe([...stateRef.current.items, ...result.items], getKeyRef.current)
-            : result.items;
-        const capped = merged.slice(0, maxItems);
-        setItems(capped);
-        setPage(nextPage);
-        setHasNextPage(result.hasNextPage);
-        setError(undefined);
-        setHasLoaded(true);
-        hasLoadedRef.current = true;
-        lastRefreshedAtRef.current = Date.now();
-        if (cacheKeyRef.current) {
-          const entry: CacheEntry<T> = {
-            items: capped,
-            page: nextPage,
-            hasNextPage: result.hasNextPage,
-            at: Date.now(),
-          };
-          resourceCache.set(cacheKeyRef.current, entry);
-          if (persistRef.current) writePersisted(cacheKeyRef.current, entry);
-        }
-      } catch (caught) {
-        if (!mountedRef.current || generation !== generationRef.current) return;
-        if (!hasLoadedRef.current) {
-          setError(caught instanceof Error ? caught : new Error("Request failed"));
-        }
-      } finally {
-        inFlightRef.current = false;
-        if (mountedRef.current) {
-          setIsRefreshing(false);
-          setIsLoadingMore(false);
-        }
-      }
-    },
-    [maxItems],
+  const [snapshot, setSnapshot] = useState<Snapshot<T>>(() =>
+    seedSnapshot<T>(enabled, cacheKey, persist, parsePersisted),
   );
 
+  const keyRef = useRef(key);
+  if (keyRef.current !== key) {
+    keyRef.current = key;
+    setSnapshot(seedSnapshot<T>(enabled, cacheKey, persistRef.current, parsePersistedRef.current));
+  }
+
+  const resourceRef = useRef<SharedResource<T> | null>(null);
+
   useEffect(() => {
-    mountedRef.current = true;
-    if (!enabled) return;
-    generationRef.current += 1;
-    const cached = cacheKey
-      ? (resourceCache.get(cacheKey) as CacheEntry<T> | undefined)
-      : undefined;
-    if (cached) {
-      hasLoadedRef.current = true;
-      setHasLoaded(true);
-      setItems(cached.items);
-      setPage(cached.page);
-      setHasNextPage(cached.hasNextPage);
-      setError(undefined);
-      if (Date.now() - cached.at >= staleMs) void run("refresh");
-    } else {
-      hasLoadedRef.current = false;
-      setHasLoaded(false);
-      setError(undefined);
-      setItems([]);
-      setPage(0);
-      setHasNextPage(false);
-      void run("initial");
+    if (!enabled) {
+      resourceRef.current = null;
+      return;
     }
-
-    const unregister = refreshScheduler.register({
-      id: instanceIdRef.current,
-      staleMs,
-      pollIntervalMs: intervalMs && intervalMs > 0 ? intervalMs : undefined,
-      getLastRefreshedAt: () => lastRefreshedAtRef.current,
-      refresh: () => void run("refresh"),
-    });
-
+    const resource = acquireResource<T>(
+      {
+        key,
+        cacheKey,
+        staleMs,
+        intervalMs,
+        maxItems: maxItemsRef.current,
+        persist: persistRef.current,
+        parsePersisted: parsePersistedRef.current,
+        getKey: getKeyRef.current,
+      },
+      (page, signal) => fetcherRef.current(page, signal),
+    );
+    resourceRef.current = resource;
+    setSnapshot(resource.getSnapshot());
+    const unsubscribe = resource.subscribe(setSnapshot);
     return () => {
-      mountedRef.current = false;
-      abortRef.current?.abort();
-      unregister();
+      resourceRef.current = null;
+      unsubscribe();
     };
-  }, [enabled, intervalMs, cacheKey, staleMs, run]);
+  }, [key, cacheKey, enabled, staleMs, intervalMs]);
 
-  const hasMore = hasNextPage && items.length < maxItems;
+  const hasMore = snapshot.hasNextPage && snapshot.items.length < maxItems;
 
   const loadMore = useCallback(() => {
     if (!hasMore) return;
-    void run("more");
-  }, [hasMore, run]);
+    resourceRef.current?.loadMore();
+  }, [hasMore]);
 
   const refresh = useCallback(() => {
-    void run("refresh");
-  }, [run]);
+    resourceRef.current?.refresh();
+  }, []);
 
   let state: PagedResourceState<T>;
-  if (!hasLoaded) {
-    state = error ? { status: "error", error } : { status: "loading" };
-  } else if (items.length === 0) {
+  if (!snapshot.hasLoaded) {
+    state = snapshot.error ? { status: "error", error: snapshot.error } : { status: "loading" };
+  } else if (snapshot.items.length === 0) {
     state = { status: "empty" };
   } else {
-    state = { status: "success", items };
+    state = { status: "success", items: snapshot.items };
   }
 
-  return { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh };
+  return {
+    state,
+    hasMore,
+    isLoadingMore: snapshot.isLoadingMore,
+    isRefreshing: snapshot.isRefreshing,
+    loadMore,
+    refresh,
+  };
 }

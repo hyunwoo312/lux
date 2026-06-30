@@ -1,8 +1,8 @@
 import { HEADER_LABEL } from "@/widgets/core/BaseWidget";
-import { useTasksStore } from "@/widgets/tasks/useTasksStore";
+import { useTasks } from "@/widgets/tasks/useTasksStore";
 
 export function TasksStatus() {
-  const tasks = useTasksStore((s) => s.tasks);
+  const tasks = useTasks((d) => d.tasks);
   if (tasks.length === 0) return <span className={HEADER_LABEL}>Tasks</span>;
 
   const done = tasks.filter((task) => task.done).length;

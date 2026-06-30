@@ -42,14 +42,13 @@ function cellRect(
 
 export function resolveDrop(
   plugin: WidgetPlugin,
-  saved: { w: number; h: number } | undefined,
   layout: Layout,
   x: number,
   y: number,
   geometry: DragGeometry,
 ): { spot: { x: number; y: number }; rect: DragRect } {
-  const w = saved?.w ?? plugin.defaultLayout.w;
-  const h = saved?.h ?? plugin.defaultLayout.h;
+  const w = plugin.defaultLayout.w;
+  const h = plugin.defaultLayout.h;
   const { col, row } = pointerToCell(x, y, geometry, w, h);
   const open = findNearestOpenPosition({ i: plugin.type, x: col, y: row, w, h }, layout, geometry.cols);
   return { spot: { x: open.x, y: open.y }, rect: cellRect(open.x, open.y, w, h, geometry) };

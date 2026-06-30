@@ -17,5 +17,5 @@ export const imagePlugin: WidgetPlugin = {
   backdropComponent: ImageBackdrop,
   accent: "yellow",
   bleed: true,
-  useBare: () => useImageStore((s) => s.hideFrame),
+  useBare: (instanceId) => useImageStore((s) => s.byInstance[instanceId]?.hideFrame ?? false),
 };

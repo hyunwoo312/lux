@@ -1,5 +1,6 @@
 import { ConfigSegmented, WidgetConfigGroup, WidgetConfigItem } from "@/components/config/WidgetConfig";
-import { useWeatherStore } from "@/widgets/weather/useWeatherStore";
+import { useWeather, useWeatherStore } from "@/widgets/weather/useWeatherStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import type { WeatherUnits } from "@/widgets/weather/types";
 
 const UNIT_OPTIONS: { value: WeatherUnits; label: string }[] = [
@@ -8,7 +9,8 @@ const UNIT_OPTIONS: { value: WeatherUnits; label: string }[] = [
 ];
 
 export function WeatherConfig() {
-  const units = useWeatherStore((s) => s.units);
+  const instanceId = useWidgetInstanceId();
+  const units = useWeather((d) => d.units);
   const setUnits = useWeatherStore((s) => s.setUnits);
 
   return (
@@ -22,7 +24,7 @@ export function WeatherConfig() {
               label="Units"
               value={units}
               options={UNIT_OPTIONS}
-              onChange={setUnits}
+              onChange={(value) => setUnits(instanceId, value)}
             />
           }
         />

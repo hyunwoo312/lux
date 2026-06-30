@@ -5,7 +5,7 @@ import { usePolledResource, type PolledResourceState } from "@/widgets/core/useP
 import { fetchDiscover, parseCachedDiscover } from "@/widgets/anilist/lib/anilist-api";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
-import { useAnilistStore } from "@/widgets/anilist/useAnilistStore";
+import { useAnilist } from "@/widgets/anilist/useAnilistStore";
 import type { DiscoverMedia } from "@/widgets/anilist/types";
 
 const REFRESH_MS = 30 * 60 * 1000;
@@ -14,8 +14,8 @@ export function DiscoverView() {
   const account = useIntegrationStore(
     (s) => s.accounts.find((entry) => entry.providerId === "anilist") ?? null,
   );
-  const newTab = useAnilistStore((s) => s.openBehavior === "newTab");
-  const lang = useAnilistStore((s) => s.titleLanguage);
+  const newTab = useAnilist((d) => d.openBehavior === "newTab");
+  const lang = useAnilist((d) => d.titleLanguage);
   const { state } = usePolledResource((signal) => fetchDiscover(lang, signal), {
     enabled: true,
     intervalMs: REFRESH_MS,

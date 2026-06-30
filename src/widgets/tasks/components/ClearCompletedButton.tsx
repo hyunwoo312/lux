@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { POP } from "@/lib/motion";
 import { WIDGET_HEADER_ACTION } from "@/widgets/core/BaseWidget";
-import { useTasksStore } from "@/widgets/tasks/useTasksStore";
+import { useTasks, useTasksStore } from "@/widgets/tasks/useTasksStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 export function ClearCompletedButton() {
-  const hasCompleted = useTasksStore((s) => s.tasks.some((task) => task.done));
+  const instanceId = useWidgetInstanceId();
+  const hasCompleted = useTasks((d) => d.tasks.some((task) => task.done));
   const clearCompleted = useTasksStore((s) => s.clearCompleted);
 
   return (
@@ -20,7 +22,7 @@ export function ClearCompletedButton() {
               size="icon"
               className={WIDGET_HEADER_ACTION}
               aria-label="Clear completed tasks"
-              onClick={clearCompleted}
+              onClick={() => clearCompleted(instanceId)}
             >
               <Eraser />
             </Button>

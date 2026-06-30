@@ -6,7 +6,8 @@ import {
   WidgetConfigSubItem,
 } from "@/components/config/WidgetConfig";
 import type { CompletedPosition } from "@/widgets/tasks/types";
-import { useTasksStore } from "@/widgets/tasks/useTasksStore";
+import { useTasks, useTasksStore } from "@/widgets/tasks/useTasksStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 const COMPLETED_OPTIONS: { value: CompletedPosition; label: string }[] = [
   { value: "top", label: "Top" },
@@ -14,9 +15,10 @@ const COMPLETED_OPTIONS: { value: CompletedPosition; label: string }[] = [
 ];
 
 export function TasksConfig() {
-  const autoSort = useTasksStore((s) => s.autoSort);
-  const completedPosition = useTasksStore((s) => s.completedPosition);
-  const removeOnCompletion = useTasksStore((s) => s.removeOnCompletion);
+  const instanceId = useWidgetInstanceId();
+  const autoSort = useTasks((d) => d.autoSort);
+  const completedPosition = useTasks((d) => d.completedPosition);
+  const removeOnCompletion = useTasks((d) => d.removeOnCompletion);
   const setAutoSort = useTasksStore((s) => s.setAutoSort);
   const setCompletedPosition = useTasksStore((s) => s.setCompletedPosition);
   const setRemoveOnCompletion = useTasksStore((s) => s.setRemoveOnCompletion);
@@ -29,7 +31,7 @@ export function TasksConfig() {
         control={
           <Switch
             checked={autoSort}
-            onCheckedChange={(checked) => setAutoSort(checked === true)}
+            onCheckedChange={(checked) => setAutoSort(instanceId, checked === true)}
             aria-label="Auto-sort tasks"
           />
         }
@@ -43,7 +45,7 @@ export function TasksConfig() {
               label="Completed task position"
               value={completedPosition}
               options={COMPLETED_OPTIONS}
-              onChange={setCompletedPosition}
+              onChange={(value) => setCompletedPosition(instanceId, value)}
               disabled={!autoSort}
             />
           }
@@ -55,7 +57,7 @@ export function TasksConfig() {
         control={
           <Switch
             checked={removeOnCompletion}
-            onCheckedChange={(checked) => setRemoveOnCompletion(checked === true)}
+            onCheckedChange={(checked) => setRemoveOnCompletion(instanceId, checked === true)}
             aria-label="Remove tasks on completion"
           />
         }

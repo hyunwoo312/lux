@@ -8,7 +8,8 @@ import {
 import { useIntegrationStore } from "@/integrations";
 import { useSettingsStore } from "@/settings";
 import type { OpenBehavior } from "@/lib/open-url";
-import { useAnilistStore } from "@/widgets/anilist/useAnilistStore";
+import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import type { TitleLanguage } from "@/widgets/anilist/types";
 
 const OPEN_OPTIONS: { value: OpenBehavior; label: string }[] = [
@@ -26,9 +27,10 @@ export function AnilistConfig() {
   const account = useIntegrationStore(
     (s) => s.accounts.find((entry) => entry.providerId === "anilist") ?? null,
   );
-  const titleLanguage = useAnilistStore((s) => s.titleLanguage);
+  const instanceId = useWidgetInstanceId();
+  const titleLanguage = useAnilist((d) => d.titleLanguage);
   const setTitleLanguage = useAnilistStore((s) => s.setTitleLanguage);
-  const openBehavior = useAnilistStore((s) => s.openBehavior);
+  const openBehavior = useAnilist((d) => d.openBehavior);
   const setOpenBehavior = useAnilistStore((s) => s.setOpenBehavior);
 
   const accountDescription = account
@@ -63,7 +65,7 @@ export function AnilistConfig() {
               label="Open links in"
               value={openBehavior}
               options={OPEN_OPTIONS}
-              onChange={setOpenBehavior}
+              onChange={(value) => setOpenBehavior(instanceId, value)}
             />
           }
         />
@@ -75,7 +77,7 @@ export function AnilistConfig() {
               label="Title language"
               value={titleLanguage}
               options={TITLE_OPTIONS}
-              onChange={setTitleLanguage}
+              onChange={(value) => setTitleLanguage(instanceId, value)}
             />
           }
         />

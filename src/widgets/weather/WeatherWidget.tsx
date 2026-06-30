@@ -8,13 +8,15 @@ import { cn } from "@/lib/utils";
 import { VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
 import { WeatherCard } from "@/widgets/weather/components/WeatherCard";
 import { EASE_OUT_QUINT } from "@/lib/motion";
-import { useWeatherStore } from "@/widgets/weather/useWeatherStore";
+import { useWeather, useWeatherStore } from "@/widgets/weather/useWeatherStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import type { WeatherLocation, WeatherUnits } from "@/widgets/weather/types";
 
 const ROW_TRANSITION = { duration: 0.2, ease: "easeOut" } as const;
 
 function SortableCityRow({ location, units }: { location: WeatherLocation; units: WeatherUnits }) {
   const reduced = useReducedMotion();
+  const instanceId = useWidgetInstanceId();
   const selectCity = useWeatherStore((s) => s.selectCity);
   const removeLocation = useWeatherStore((s) => s.removeLocation);
   const { setNodeRef, listeners, transform, transition, isDragging } = useSortable({
@@ -42,8 +44,8 @@ function SortableCityRow({ location, units }: { location: WeatherLocation; units
         location={location}
         units={units}
         mode="compact"
-        onSelect={() => selectCity(location.id)}
-        onRemove={() => removeLocation(location.id)}
+        onSelect={() => selectCity(instanceId, location.id)}
+        onRemove={() => removeLocation(instanceId, location.id)}
       />
     </motion.li>
   );
@@ -51,9 +53,10 @@ function SortableCityRow({ location, units }: { location: WeatherLocation; units
 
 export function WeatherWidget() {
   const reduced = useReducedMotion();
-  const locations = useWeatherStore((s) => s.locations);
-  const units = useWeatherStore((s) => s.units);
-  const selectedId = useWeatherStore((s) => s.selectedId);
+  const instanceId = useWidgetInstanceId();
+  const locations = useWeather((d) => d.locations);
+  const units = useWeather((d) => d.units);
+  const selectedId = useWeather((d) => d.selectedId);
   const removeLocation = useWeatherStore((s) => s.removeLocation);
   const reorderLocations = useWeatherStore((s) => s.reorderLocations);
 
@@ -68,7 +71,7 @@ export function WeatherWidget() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      reorderLocations(String(active.id), String(over.id));
+      reorderLocations(instanceId, String(active.id), String(over.id));
     }
   };
 
@@ -95,7 +98,7 @@ export function WeatherWidget() {
                 location={detail}
                 units={units}
                 mode="detailed"
-                onRemove={() => removeLocation(detail.id)}
+                onRemove={() => removeLocation(instanceId, detail.id)}
               />
             </motion.div>
           ) : (

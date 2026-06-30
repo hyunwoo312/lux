@@ -14,5 +14,4 @@ export const tasksPlugin: WidgetPlugin = {
   configComponent: TasksConfig,
   statusComponent: TasksStatus,
   headerActionComponent: ClearCompletedButton,
-  accent: "indigo",
-};
+  accent: "indigo",};

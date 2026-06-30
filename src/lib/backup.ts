@@ -2,6 +2,7 @@ const CHROME_PREFIX = "lux:";
 const LOCAL_PREFIX = "lux.";
 const EXCLUDED = new Set(["lux:integrations", "lux:integration-config"]);
 const MARKER = "lux-settings-backup";
+const BACKUP_VERSION = 2;
 
 type Backup = {
   marker: string;
@@ -38,7 +39,7 @@ export async function exportSettings(): Promise<void> {
     if (value !== null) local[key] = value;
   }
 
-  const backup: Backup = { marker: MARKER, version: 1, chromeLocal, local };
+  const backup: Backup = { marker: MARKER, version: BACKUP_VERSION, chromeLocal, local };
   const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
@@ -52,6 +53,9 @@ export async function importSettings(file: File): Promise<void> {
   const parsed = JSON.parse(await file.text()) as Partial<Backup>;
   if (parsed.marker !== MARKER || !parsed.chromeLocal || !parsed.local) {
     throw new Error("Not a valid Lux settings file.");
+  }
+  if (typeof parsed.version === "number" && parsed.version > BACKUP_VERSION) {
+    throw new Error("This backup was created by a newer version of Lux. Update Lux, then try again.");
   }
 
   const chromeEntries: Record<string, unknown> = {};

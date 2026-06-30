@@ -2,22 +2,37 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
+import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
+import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
+import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import type { CompletedPosition, Task } from "@/widgets/tasks/types";
 
-type TasksState = {
+type TaskData = {
   tasks: Task[];
   autoSort: boolean;
   completedPosition: CompletedPosition;
   removeOnCompletion: boolean;
-  addTask: (title: string, id: string) => void;
-  toggleTask: (id: string) => void;
-  editTask: (id: string, title: string) => void;
-  removeTask: (id: string) => void;
-  clearCompleted: () => void;
-  reorderTasks: (activeId: string, overId: string) => void;
-  setAutoSort: (autoSort: boolean) => void;
-  setCompletedPosition: (completedPosition: CompletedPosition) => void;
-  setRemoveOnCompletion: (removeOnCompletion: boolean) => void;
+};
+
+type TasksState = {
+  byInstance: Record<string, TaskData>;
+  addTask: (instanceId: string, title: string, id: string) => void;
+  toggleTask: (instanceId: string, id: string) => void;
+  editTask: (instanceId: string, id: string, title: string) => void;
+  removeTask: (instanceId: string, id: string) => void;
+  clearCompleted: (instanceId: string) => void;
+  reorderTasks: (instanceId: string, activeId: string, overId: string) => void;
+  setAutoSort: (instanceId: string, autoSort: boolean) => void;
+  setCompletedPosition: (instanceId: string, completedPosition: CompletedPosition) => void;
+  setRemoveOnCompletion: (instanceId: string, removeOnCompletion: boolean) => void;
+  removeInstance: (instanceId: string) => void;
+};
+
+const DEFAULT_TASKS: TaskData = {
+  tasks: [],
+  autoSort: false,
+  completedPosition: "bottom",
+  removeOnCompletion: false,
 };
 
 const taskSchema = z.object({
@@ -27,82 +42,115 @@ const taskSchema = z.object({
   createdAt: z.number(),
 });
 
-const persistedSchema = z.object({
+const dataSchema = z.object({
   tasks: z.array(taskSchema),
   autoSort: z.boolean(),
   completedPosition: z.enum(["top", "bottom"]),
   removeOnCompletion: z.boolean().default(false),
 });
 
+const persistedSchema = z.object({
+  byInstance: z.record(z.string(), dataSchema),
+});
+
 const gatedStorage = createGatedChromeStorage();
+
+function update(
+  state: TasksState,
+  instanceId: string,
+  fn: (data: TaskData) => TaskData,
+): Pick<TasksState, "byInstance"> {
+  return { byInstance: patchInstance(state.byInstance, instanceId, DEFAULT_TASKS, fn) };
+}
 
 export const useTasksStore = create<TasksState>()(
   persist(
     (set) => ({
-      tasks: [],
-      autoSort: false,
-      completedPosition: "bottom",
-      removeOnCompletion: false,
-      addTask: (title, id) =>
+      byInstance: {},
+      addTask: (instanceId, title, id) =>
         set((state) => {
           const trimmed = title.trim();
           if (!trimmed) return state;
-          const task: Task = {
-            id,
-            title: trimmed,
-            done: false,
-            createdAt: Date.now(),
-          };
-          return { tasks: [...state.tasks, task] };
+          const task: Task = { id, title: trimmed, done: false, createdAt: Date.now() };
+          return update(state, instanceId, (data) => ({ ...data, tasks: [...data.tasks, task] }));
         }),
-      toggleTask: (id) =>
-        set((state) => ({
-          tasks: state.tasks.map((task) => (task.id === id ? { ...task, done: !task.done } : task)),
-        })),
-      editTask: (id, title) =>
-        set((state) => {
-          const trimmed = title.trim();
-          if (!trimmed) return state;
-          return {
-            tasks: state.tasks.map((task) =>
-              task.id === id ? { ...task, title: trimmed } : task,
+      toggleTask: (instanceId, id) =>
+        set((state) =>
+          update(state, instanceId, (data) => ({
+            ...data,
+            tasks: data.tasks.map((task) =>
+              task.id === id ? { ...task, done: !task.done } : task,
             ),
-          };
-        }),
-      removeTask: (id) =>
-        set((state) => ({ tasks: state.tasks.filter((task) => task.id !== id) })),
-      clearCompleted: () => set((state) => ({ tasks: state.tasks.filter((task) => !task.done) })),
-      reorderTasks: (activeId, overId) =>
+          })),
+        ),
+      editTask: (instanceId, id, title) =>
         set((state) => {
-          const from = state.tasks.findIndex((task) => task.id === activeId);
-          const to = state.tasks.findIndex((task) => task.id === overId);
+          const trimmed = title.trim();
+          if (!trimmed) return state;
+          return update(state, instanceId, (data) => ({
+            ...data,
+            tasks: data.tasks.map((task) => (task.id === id ? { ...task, title: trimmed } : task)),
+          }));
+        }),
+      removeTask: (instanceId, id) =>
+        set((state) =>
+          update(state, instanceId, (data) => ({
+            ...data,
+            tasks: data.tasks.filter((task) => task.id !== id),
+          })),
+        ),
+      clearCompleted: (instanceId) =>
+        set((state) =>
+          update(state, instanceId, (data) => ({
+            ...data,
+            tasks: data.tasks.filter((task) => !task.done),
+          })),
+        ),
+      reorderTasks: (instanceId, activeId, overId) =>
+        set((state) => {
+          const data = state.byInstance[instanceId] ?? DEFAULT_TASKS;
+          const from = data.tasks.findIndex((task) => task.id === activeId);
+          const to = data.tasks.findIndex((task) => task.id === overId);
           if (from === -1 || to === -1 || from === to) return state;
-          const tasks = [...state.tasks];
+          const tasks = [...data.tasks];
           const [moved] = tasks.splice(from, 1);
           if (!moved) return state;
           tasks.splice(to, 0, moved);
-          return { tasks };
+          return update(state, instanceId, (current) => ({ ...current, tasks }));
         }),
-      setAutoSort: (autoSort) => set({ autoSort }),
-      setCompletedPosition: (completedPosition) => set({ completedPosition }),
-      setRemoveOnCompletion: (removeOnCompletion) => set({ removeOnCompletion }),
+      setAutoSort: (instanceId, autoSort) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, autoSort }))),
+      setCompletedPosition: (instanceId, completedPosition) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, completedPosition }))),
+      setRemoveOnCompletion: (instanceId, removeOnCompletion) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, removeOnCompletion }))),
+      removeInstance: (instanceId) =>
+        set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
     }),
     {
       name: "widget:tasks",
       storage: gatedStorage,
-      version: 1,
+      version: 2,
       onRehydrateStorage: () => () => gatedStorage.open(),
-      partialize: (state) => ({
-        tasks: state.tasks,
-        autoSort: state.autoSort,
-        completedPosition: state.completedPosition,
-        removeOnCompletion: state.removeOnCompletion,
-      }),
+      partialize: (state) => ({ byInstance: state.byInstance }),
+      migrate: (persisted, version) => {
+        if (version >= 2) return persisted;
+        const legacy = dataSchema.safeParse(persisted);
+        return { byInstance: legacy.success ? { tasks: legacy.data } : {} };
+      },
       merge: (persisted, current) => {
         const parsed = persistedSchema.safeParse(persisted);
         if (!parsed.success) return current;
-        return { ...current, ...parsed.data };
+        return { ...current, byInstance: parsed.data.byInstance };
       },
     },
   ),
 );
+
+registerInstanceCleanup((instanceId) => useTasksStore.getState().removeInstance(instanceId));
+
+export const useTasks = createInstanceSelector(useTasksStore, DEFAULT_TASKS);
+
+export function getTaskData(instanceId: string): TaskData {
+  return useTasksStore.getState().byInstance[instanceId] ?? DEFAULT_TASKS;
+}

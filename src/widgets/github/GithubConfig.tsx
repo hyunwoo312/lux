@@ -8,7 +8,8 @@ import {
 import { useIntegrationStore } from "@/integrations";
 import { useSettingsStore } from "@/settings";
 import type { OpenBehavior } from "@/lib/open-url";
-import { useGithubStore } from "@/widgets/github/useGithubStore";
+import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 const OPEN_OPTIONS: { value: OpenBehavior; label: string }[] = [
   { value: "currentTab", label: "This tab" },
@@ -24,9 +25,10 @@ export function GithubConfig() {
   const account = useIntegrationStore(
     (s) => s.accounts.find((entry) => entry.providerId === "github") ?? null,
   );
-  const showPrivate = useGithubStore((s) => s.showPrivate);
+  const instanceId = useWidgetInstanceId();
+  const showPrivate = useGithub((d) => d.showPrivate);
   const setShowPrivate = useGithubStore((s) => s.setShowPrivate);
-  const openBehavior = useGithubStore((s) => s.openBehavior);
+  const openBehavior = useGithub((d) => d.openBehavior);
   const setOpenBehavior = useGithubStore((s) => s.setOpenBehavior);
 
   const accountDescription = account
@@ -61,7 +63,7 @@ export function GithubConfig() {
               label="Open links in"
               value={openBehavior}
               options={OPEN_OPTIONS}
-              onChange={setOpenBehavior}
+              onChange={(value) => setOpenBehavior(instanceId, value)}
             />
           }
         />
@@ -73,7 +75,7 @@ export function GithubConfig() {
               label="Repository visibility"
               value={showPrivate ? "all" : "public"}
               options={PRIVACY_OPTIONS}
-              onChange={(value) => setShowPrivate(value === "all")}
+              onChange={(value) => setShowPrivate(instanceId, value === "all")}
             />
           }
         />

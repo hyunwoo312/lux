@@ -2,7 +2,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
-import type { WidgetType } from "@/widgets/core/types";
+import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
+import { dropInstance } from "@/widgets/core/byInstance";
 
 export type WidgetBackground = "glass" | "solid";
 
@@ -11,8 +12,9 @@ type WidgetSettings = {
 };
 
 type WidgetSettingsState = {
-  settings: Partial<Record<WidgetType, WidgetSettings>>;
-  setBackground: (type: WidgetType, background: WidgetBackground) => void;
+  settings: Record<string, WidgetSettings>;
+  setBackground: (id: string, background: WidgetBackground) => void;
+  removeInstance: (id: string) => void;
 };
 
 const persistedSchema = z.object({
@@ -25,10 +27,11 @@ export const useWidgetSettingsStore = create<WidgetSettingsState>()(
   persist(
     (set) => ({
       settings: {},
-      setBackground: (type, background) =>
+      setBackground: (id, background) =>
         set((state) => ({
-          settings: { ...state.settings, [type]: { ...state.settings[type], background } },
+          settings: { ...state.settings, [id]: { ...state.settings[id], background } },
         })),
+      removeInstance: (id) => set((state) => ({ settings: dropInstance(state.settings, id) })),
     }),
     {
       name: "widget-settings",
@@ -45,6 +48,8 @@ export const useWidgetSettingsStore = create<WidgetSettingsState>()(
   ),
 );
 
-export function useWidgetBackground(type: WidgetType): WidgetBackground {
-  return useWidgetSettingsStore((s) => s.settings[type]?.background ?? "glass");
+registerInstanceCleanup((id) => useWidgetSettingsStore.getState().removeInstance(id));
+
+export function useWidgetBackground(id: string): WidgetBackground {
+  return useWidgetSettingsStore((s) => s.settings[id]?.background ?? "glass");
 }

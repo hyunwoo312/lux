@@ -8,7 +8,8 @@ import { getDateKey } from "@/widgets/calendar/lib/dates";
 import { SLIDE_SPRING } from "@/widgets/calendar/lib/motion";
 import type { EventSegment, MonthWeek as MonthWeekData } from "@/widgets/calendar/lib/month-layout";
 import type { CalendarEvent } from "@/widgets/calendar/types";
-import { useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 export const DAY_NUMBER_HEIGHT = 22;
 export const EVENT_ROW_HEIGHT = 18;
@@ -135,11 +136,13 @@ export function MonthWeek({
   cellWidth,
 }: MonthWeekProps) {
   const reduced = useReducedMotion();
-  const mode = useCalendarStore((s) => s.mode);
-  const selectedDay = useCalendarStore((s) => s.selectedDay);
+  const instanceId = useWidgetInstanceId();
+  const mode = useCalendar((d) => d.mode);
+  const selectedDay = useCalendar((d) => d.selectedDay);
   const focusDay = useCalendarStore((s) => s.focusDay);
   const selectDay = useCalendarStore((s) => s.selectDay);
-  const activateDay = (date: Date) => (mode === "week" ? selectDay(date) : focusDay(date));
+  const activateDay = (date: Date) =>
+    mode === "week" ? selectDay(instanceId, date) : focusDay(instanceId, date);
   const selectedCol =
     mode === "week" && selectedDay
       ? week.days.findIndex((day) => day.dateKey === getDateKey(selectedDay))

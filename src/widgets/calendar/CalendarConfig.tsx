@@ -16,7 +16,12 @@ import {
   getCalendarSyncCooldownMessage,
   isCalendarSyncCoolingDown,
 } from "@/widgets/calendar/lib/cooldown";
-import { REFRESH_INTERVAL_OPTIONS, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import {
+  REFRESH_INTERVAL_OPTIONS,
+  useCalendar,
+  useCalendarStore,
+} from "@/widgets/calendar/useCalendarStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import type { CalendarProviderId } from "@/widgets/calendar/types";
 
 const REFRESH_OPTIONS = REFRESH_INTERVAL_OPTIONS.map((hours) => ({
@@ -53,12 +58,13 @@ function CalendarProviderConfig({
   providerId: CalendarProviderId;
   label: string;
 }) {
+  const instanceId = useWidgetInstanceId();
   const { account } = useCalendarConnection(providerId);
   const clock24h = useAppSettingsStore((s) => s.clock24h);
-  const settings = useCalendarStore((s) => s[providerId]);
+  const settings = useCalendar((d) => d[providerId]);
   const sync = useCalendarStore((s) => s.sync);
   const setCalendarSelection = useCalendarStore((s) => s.setCalendarSelection);
-  const isSyncing = useCalendarStore((s) => s.syncing.includes(providerId));
+  const isSyncing = useCalendar((d) => d.syncing.includes(providerId));
 
   const [now, setNow] = useState(() => Date.now());
   const connected = Boolean(account);
@@ -107,8 +113,8 @@ function CalendarProviderConfig({
   const error = settings.lastError ?? null;
 
   const handleCalendarToggle = (calendarId: string, checked: boolean) => {
-    setCalendarSelection(providerId, calendarId, checked);
-    void sync({ bypassCooldown: true, providerId });
+    setCalendarSelection(instanceId, providerId, calendarId, checked);
+    void sync(instanceId, { bypassCooldown: true, providerId });
   };
 
   return (
@@ -120,7 +126,7 @@ function CalendarProviderConfig({
               icon={RefreshCw}
               label={`Sync ${label}`}
               tooltip={syncTooltip}
-              onClick={() => void sync({ providerId })}
+              onClick={() => void sync(instanceId, { providerId })}
               disabled={syncDisabled}
               spinning={isSyncing}
             />
@@ -167,11 +173,12 @@ function CalendarProviderConfig({
 }
 
 export function CalendarConfig() {
-  const enabled = useCalendarStore((s) => s.enabled);
+  const instanceId = useWidgetInstanceId();
+  const enabled = useCalendar((d) => d.enabled);
   const setEnabled = useCalendarStore((s) => s.setEnabled);
-  const refreshIntervalHours = useCalendarStore((s) => s.refreshIntervalHours);
+  const refreshIntervalHours = useCalendar((d) => d.refreshIntervalHours);
   const setRefreshIntervalHours = useCalendarStore((s) => s.setRefreshIntervalHours);
-  const primarySource = useCalendarStore((s) => s.primarySource);
+  const primarySource = useCalendar((d) => d.primarySource);
   const setPrimarySource = useCalendarStore((s) => s.setPrimarySource);
   const accounts = useIntegrationStore((s) => s.accounts);
 
@@ -188,7 +195,7 @@ export function CalendarConfig() {
           control={
             <Switch
               checked={enabled}
-              onCheckedChange={(checked) => setEnabled(checked === true)}
+              onCheckedChange={(checked) => setEnabled(instanceId, checked === true)}
               aria-label="Show calendar events"
             />
           }
@@ -201,7 +208,7 @@ export function CalendarConfig() {
               label="Auto-refresh interval"
               value={String(refreshIntervalHours)}
               options={REFRESH_OPTIONS}
-              onChange={(value) => setRefreshIntervalHours(Number(value))}
+              onChange={(value) => setRefreshIntervalHours(instanceId, Number(value))}
             />
           }
         />
@@ -214,7 +221,7 @@ export function CalendarConfig() {
                 label="Primary calendar source"
                 value={primarySource}
                 options={SOURCE_OPTIONS}
-                onChange={setPrimarySource}
+                onChange={(value) => setPrimarySource(instanceId, value)}
               />
             }
           />

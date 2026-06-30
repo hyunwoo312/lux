@@ -1,10 +1,10 @@
 import { HEADER_LABEL } from "@/widgets/core/BaseWidget";
-import { useImageStore } from "@/widgets/image/useImageStore";
+import { useImage } from "@/widgets/image/useImageStore";
 
 export function ImageStatus() {
-  const mode = useImageStore((s) => s.mode);
-  const single = useImageStore((s) => s.single);
-  const items = useImageStore((s) => s.items);
+  const mode = useImage((c) => c.mode);
+  const single = useImage((c) => c.single);
+  const items = useImage((c) => c.items);
   const hasImage = mode === "multi" ? items.length > 0 : Boolean(single);
 
   if (hasImage) return null;

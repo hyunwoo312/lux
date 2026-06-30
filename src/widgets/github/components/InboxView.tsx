@@ -23,7 +23,7 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { usePolledResource } from "@/widgets/core/usePolledResource";
 import { fetchInbox, parseCachedInbox } from "@/widgets/github/lib/github-api";
 import { GithubPlaceholder } from "@/widgets/github/components/GithubPlaceholder";
-import { useGithubStore } from "@/widgets/github/useGithubStore";
+import { useGithub } from "@/widgets/github/useGithubStore";
 import { useGithubSync } from "@/widgets/github/useGithubSync";
 import type {
   InboxData,
@@ -74,7 +74,7 @@ function notificationIcon(reason: string): LucideIcon {
 }
 
 export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPrivate: boolean }) {
-  const newTab = useGithubStore((s) => s.openBehavior === "newTab");
+  const newTab = useGithub((d) => d.openBehavior === "newTab");
   const { state, isRefreshing, refresh } = usePolledResource(fetchInbox, {
     enabled,
     intervalMs: REFRESH_MS,

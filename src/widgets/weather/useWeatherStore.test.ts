@@ -3,76 +3,140 @@ import { MAX_LOCATIONS, useWeatherStore } from "@/widgets/weather/useWeatherStor
 import { makeLocationId, type WeatherLocation } from "@/widgets/weather/types";
 
 const store = () => useWeatherStore.getState();
+const ID = "weather-1";
+const data = (instanceId: string) => store().byInstance[instanceId];
 
 function city(id: string): WeatherLocation {
   return { id, name: id, latitude: 1, longitude: 2 };
 }
 
 beforeEach(() => {
-  useWeatherStore.setState({ locations: [], units: "metric", selectedId: null });
+  useWeatherStore.setState({
+    byInstance: { [ID]: { locations: [], units: "metric", selectedId: null, searchOpen: false } },
+  });
 });
 
 describe("useWeatherStore", () => {
   it("adds a location", () => {
-    store().addLocation(city("a"));
-    expect(store().locations.map((entry) => entry.id)).toEqual(["a"]);
+    store().addLocation(ID, city("a"));
+    expect(data(ID)?.locations.map((entry) => entry.id)).toEqual(["a"]);
   });
 
   it("ignores a duplicate id", () => {
-    store().addLocation(city("a"));
-    store().addLocation(city("a"));
-    expect(store().locations).toHaveLength(1);
+    store().addLocation(ID, city("a"));
+    store().addLocation(ID, city("a"));
+    expect(data(ID)?.locations).toHaveLength(1);
   });
 
   it(`caps locations at ${MAX_LOCATIONS}`, () => {
     for (let index = 0; index < MAX_LOCATIONS + 2; index += 1) {
-      store().addLocation(city(`c${index}`));
+      store().addLocation(ID, city(`c${index}`));
     }
-    expect(store().locations).toHaveLength(MAX_LOCATIONS);
+    expect(data(ID)?.locations).toHaveLength(MAX_LOCATIONS);
   });
 
   it("removes a location", () => {
-    store().addLocation(city("a"));
-    store().addLocation(city("b"));
-    store().removeLocation("a");
-    expect(store().locations.map((entry) => entry.id)).toEqual(["b"]);
+    store().addLocation(ID, city("a"));
+    store().addLocation(ID, city("b"));
+    store().removeLocation(ID, "a");
+    expect(data(ID)?.locations.map((entry) => entry.id)).toEqual(["b"]);
   });
 
   it("clears the selection when the selected city is removed", () => {
-    store().addLocation(city("a"));
-    store().selectCity("a");
-    store().removeLocation("a");
-    expect(store().selectedId).toBeNull();
+    store().addLocation(ID, city("a"));
+    store().selectCity(ID, "a");
+    store().removeLocation(ID, "a");
+    expect(data(ID)?.selectedId).toBeNull();
   });
 
   it("keeps the selection when another city is removed", () => {
-    store().addLocation(city("a"));
-    store().addLocation(city("b"));
-    store().selectCity("a");
-    store().removeLocation("b");
-    expect(store().selectedId).toBe("a");
+    store().addLocation(ID, city("a"));
+    store().addLocation(ID, city("b"));
+    store().selectCity(ID, "a");
+    store().removeLocation(ID, "b");
+    expect(data(ID)?.selectedId).toBe("a");
   });
 
   it("reorders a location to another position", () => {
-    store().addLocation(city("a"));
-    store().addLocation(city("b"));
-    store().addLocation(city("c"));
-    store().reorderLocations("a", "c");
-    expect(store().locations.map((entry) => entry.id)).toEqual(["b", "c", "a"]);
+    store().addLocation(ID, city("a"));
+    store().addLocation(ID, city("b"));
+    store().addLocation(ID, city("c"));
+    store().reorderLocations(ID, "a", "c");
+    expect(data(ID)?.locations.map((entry) => entry.id)).toEqual(["b", "c", "a"]);
   });
 
   it("ignores a reorder onto itself", () => {
-    store().addLocation(city("a"));
-    store().addLocation(city("b"));
-    store().reorderLocations("a", "a");
-    expect(store().locations.map((entry) => entry.id)).toEqual(["a", "b"]);
+    store().addLocation(ID, city("a"));
+    store().addLocation(ID, city("b"));
+    store().reorderLocations(ID, "a", "a");
+    expect(data(ID)?.locations.map((entry) => entry.id)).toEqual(["a", "b"]);
   });
 
   it("selects and clears the active city", () => {
-    store().selectCity("a");
-    expect(store().selectedId).toBe("a");
-    store().clearSelection();
-    expect(store().selectedId).toBeNull();
+    store().selectCity(ID, "a");
+    expect(data(ID)?.selectedId).toBe("a");
+    store().clearSelection(ID);
+    expect(data(ID)?.selectedId).toBeNull();
+  });
+
+  it("keeps instances independent", () => {
+    useWeatherStore.setState({
+      byInstance: {
+        a: { locations: [], units: "metric", selectedId: null, searchOpen: false },
+        b: { locations: [], units: "metric", selectedId: null, searchOpen: false },
+      },
+    });
+    store().addLocation("a", city("x"));
+    store().addLocation("b", city("y"));
+    expect(data("a")?.locations.map((entry) => entry.id)).toEqual(["x"]);
+    expect(data("b")?.locations.map((entry) => entry.id)).toEqual(["y"]);
+  });
+
+  describe("migrate", () => {
+    const migrate = useWeatherStore.persist.getOptions().migrate;
+
+    it("migrates legacy singleton data under the weather instance key", () => {
+      const legacy = {
+        location: { name: "London", latitude: 51.5074, longitude: -0.1278 },
+        units: "metric",
+      };
+
+      expect(migrate?.(legacy, 1)).toEqual({
+        byInstance: {
+          weather: {
+            locations: [
+              {
+                id: makeLocationId(51.5074, -0.1278),
+                name: "London",
+                latitude: 51.5074,
+                longitude: -0.1278,
+              },
+            ],
+            units: "metric",
+          },
+        },
+      });
+    });
+
+    it("drops unrecognized legacy data", () => {
+      expect(migrate?.({ location: "nope" }, 1)).toEqual({
+        byInstance: { weather: { locations: [], units: "imperial" } },
+      });
+    });
+
+    it("wraps a v2 singleton config under the weather instance key", () => {
+      const config = {
+        locations: [{ id: ID, name: "London", latitude: 51.5074, longitude: -0.1278 }],
+        units: "metric",
+      };
+
+      expect(migrate?.(config, 2)).toEqual({ byInstance: { weather: config } });
+    });
+
+    it("passes current-version data through unchanged", () => {
+      const persisted = { byInstance: { [ID]: { locations: [], units: "imperial" } } };
+      expect(migrate?.(persisted, 3)).toBe(persisted);
+    });
   });
 });
 

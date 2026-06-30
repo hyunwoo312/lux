@@ -1,7 +1,8 @@
 import { Switch } from "@/components/ui/switch";
 import { ConfigSegmented, WidgetConfigGroup, WidgetConfigItem } from "@/components/config/WidgetConfig";
 import type { OpenBehavior } from "@/widgets/quick-access/types";
-import { useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
+import { useQuickAccess, useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 const OPEN_OPTIONS: { value: OpenBehavior; label: string }[] = [
   { value: "currentTab", label: "This tab" },
@@ -9,8 +10,9 @@ const OPEN_OPTIONS: { value: OpenBehavior; label: string }[] = [
 ];
 
 export function QuickAccessConfig() {
-  const openBehavior = useQuickAccessStore((s) => s.openBehavior);
-  const showTopSites = useQuickAccessStore((s) => s.showTopSites);
+  const instanceId = useWidgetInstanceId();
+  const openBehavior = useQuickAccess((d) => d.openBehavior);
+  const showTopSites = useQuickAccess((d) => d.showTopSites);
   const setOpenBehavior = useQuickAccessStore((s) => s.setOpenBehavior);
   const setShowTopSites = useQuickAccessStore((s) => s.setShowTopSites);
 
@@ -24,7 +26,7 @@ export function QuickAccessConfig() {
             label="Open links in"
             value={openBehavior}
             options={OPEN_OPTIONS}
-            onChange={setOpenBehavior}
+            onChange={(value) => setOpenBehavior(instanceId, value)}
           />
         }
       />
@@ -34,7 +36,7 @@ export function QuickAccessConfig() {
         control={
           <Switch
             checked={showTopSites}
-            onCheckedChange={(checked) => setShowTopSites(checked === true)}
+            onCheckedChange={(checked) => setShowTopSites(instanceId, checked === true)}
             aria-label="Show top sites"
           />
         }

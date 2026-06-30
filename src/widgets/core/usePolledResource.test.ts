@@ -110,6 +110,22 @@ describe("usePolledResource", () => {
     await act(async () => {});
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
+
+  it("shares one fetch and live state across hooks with the same cacheKey", async () => {
+    const fetcher = vi.fn().mockResolvedValueOnce([1]).mockResolvedValue([1, 2]);
+    const cacheKey = "test:cache:shared";
+    const a = renderHook(() => usePolledResource(fetcher, { cacheKey }));
+    const b = renderHook(() => usePolledResource(fetcher, { cacheKey }));
+
+    await waitFor(() => expect(a.result.current.state.status).toBe("success"));
+    await waitFor(() => expect(b.result.current.state.status).toBe("success"));
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    act(() => a.result.current.refresh());
+    await waitFor(() => expect(b.result.current.state).toEqual({ status: "success", data: [1, 2] }));
+    expect(a.result.current.state).toEqual({ status: "success", data: [1, 2] });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe("usePolledResource persistence", () => {

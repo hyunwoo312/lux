@@ -1,9 +1,11 @@
 import { Inbox, LayoutGrid } from "lucide-react";
 import { ViewToggleButton } from "@/widgets/core/ViewToggleButton";
-import { useGithubStore } from "@/widgets/github/useGithubStore";
+import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 export function GithubViewToggle() {
-  const view = useGithubStore((s) => s.view);
+  const instanceId = useWidgetInstanceId();
+  const view = useGithub((d) => d.view);
   const setView = useGithubStore((s) => s.setView);
   const isContributions = view === "contributions";
 
@@ -12,7 +14,7 @@ export function GithubViewToggle() {
       targetKey={isContributions ? "inbox" : "contributions"}
       targetLabel={isContributions ? "inbox" : "contributions"}
       icon={isContributions ? Inbox : LayoutGrid}
-      onToggle={() => setView(isContributions ? "inbox" : "contributions")}
+      onToggle={() => setView(instanceId, isContributions ? "inbox" : "contributions")}
     />
   );
 }

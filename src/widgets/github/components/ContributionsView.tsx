@@ -8,7 +8,7 @@ import { usePolledResource } from "@/widgets/core/usePolledResource";
 import { fetchContributions } from "@/widgets/github/lib/github-api";
 import { ActivityLedger } from "@/widgets/github/components/ActivityLedger";
 import { GithubPlaceholder } from "@/widgets/github/components/GithubPlaceholder";
-import { useGithubStore } from "@/widgets/github/useGithubStore";
+import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
 import { useGithubSync } from "@/widgets/github/useGithubSync";
 import type { ContributionDay, ContributionsData } from "@/widgets/github/types";
 
@@ -71,8 +71,8 @@ export function ContributionsView({ enabled }: { enabled: boolean }) {
   const [ref, size] = useElementSize<HTMLDivElement>();
   const persisted = useGithubStore((s) => s.contributions);
   const setContributions = useGithubStore((s) => s.setContributions);
-  const showPrivate = useGithubStore((s) => s.showPrivate);
-  const newTab = useGithubStore((s) => s.openBehavior === "newTab");
+  const showPrivate = useGithub((d) => d.showPrivate);
+  const newTab = useGithub((d) => d.openBehavior === "newTab");
   const { state, isRefreshing, refresh } = usePolledResource(fetchContributions, {
     enabled,
     intervalMs: REFRESH_MS,

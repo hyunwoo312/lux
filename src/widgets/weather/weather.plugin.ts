@@ -13,5 +13,4 @@ export const weatherPlugin: WidgetPlugin = {
   component: WeatherWidget,
   configComponent: WeatherConfig,
   statusComponent: WeatherSearch,
-  accent: WEATHER_ACCENT,
-};
+  accent: WEATHER_ACCENT,};

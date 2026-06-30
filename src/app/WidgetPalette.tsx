@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { isOverGrid, resolveDrop } from "@/widgets/core/drag";
+import { getAccentVars } from "@/widgets/core/accent";
 import type { WidgetPlugin } from "@/widgets/core/types";
 import { useWidgetDragStore } from "@/widgets/core/useWidgetDragStore";
 import { useWidgetHighlightStore } from "@/widgets/core/useWidgetHighlightStore";
@@ -25,8 +26,8 @@ function commitDrop(plugin: WidgetPlugin, px: number, py: number, ghostW: number
     drag.cancel();
     return;
   }
-  const { layout, savedLayouts, addWidget } = useDashboardStore.getState();
-  const { spot, rect } = resolveDrop(plugin, savedLayouts[plugin.type], layout, px, py, geometry);
+  const { layout, addWidget } = useDashboardStore.getState();
+  const { spot, rect } = resolveDrop(plugin, layout, px, py, geometry);
   addWidget(plugin.type, spot);
   drag.drop({
     type: plugin.type,
@@ -123,9 +124,9 @@ export function WidgetPalette() {
     window.addEventListener("pointercancel", onCancel);
   };
 
-  const handleClick = (plugin: WidgetPlugin, onDashboard: boolean) => {
+  const handleClick = (plugin: WidgetPlugin) => {
     if (performance.now() - lastDragEnd.current < CLICK_SUPPRESS_MS) return;
-    if (!onDashboard) handleAdd(plugin);
+    handleAdd(plugin);
   };
 
   return (
@@ -172,29 +173,26 @@ export function WidgetPalette() {
                 </p>
                 <div className="flex flex-col gap-0.5">
                   {widgetPlugins.map((plugin) => {
-                    const onDashboard = activeTypes.has(plugin.type);
+                    const hasInstances = activeTypes.has(plugin.type);
                     const Icon = plugin.icon;
                     return (
                       <motion.button
                         key={plugin.type}
                         variants={itemVariants}
                         type="button"
-                        aria-disabled={onDashboard}
-                        onPointerDown={
-                          onDashboard ? undefined : (event) => handlePointerDown(event, plugin)
-                        }
-                        onMouseEnter={onDashboard ? () => setHighlighted(plugin.type) : undefined}
-                        onMouseLeave={onDashboard ? () => setHighlighted(null) : undefined}
-                        onClick={() => handleClick(plugin, onDashboard)}
-                        className={cn(
-                          `
-                            flex touch-none items-center gap-3 rounded-md px-2 py-2 text-left
-                            text-sm transition-colors outline-none
-                          `,
-                          onDashboard
-                            ? "cursor-not-allowed opacity-50"
-                            : "hover:bg-accent focus-visible:bg-accent cursor-grab",
-                        )}
+                        style={getAccentVars(plugin.accent ?? "default")}
+                        onPointerDown={(event) => handlePointerDown(event, plugin)}
+                        onMouseEnter={hasInstances ? () => setHighlighted(plugin.type) : undefined}
+                        onMouseLeave={hasInstances ? () => setHighlighted(null) : undefined}
+                        onClick={() => handleClick(plugin)}
+                        className={cn(`
+                          hover:bg-accent
+                          focus-visible:bg-accent
+                          hover:border-primary/60
+                          flex cursor-grab touch-none items-center gap-3 rounded-md border
+                          border-transparent px-2 py-2 text-left text-sm transition-colors
+                          outline-none
+                        `)}
                       >
                         <span
                           className={cn(
@@ -206,9 +204,6 @@ export function WidgetPalette() {
                         </span>
                         <span className="flex min-w-0 flex-1 flex-col">
                           <span className="font-medium">{plugin.name}</span>
-                          {onDashboard && (
-                            <span className="text-muted-foreground text-xs">On dashboard</span>
-                          )}
                         </span>
                       </motion.button>
                     );

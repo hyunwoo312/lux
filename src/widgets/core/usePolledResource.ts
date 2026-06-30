@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 
-let nextInstanceId = 0;
+let nextAutoKey = 0;
+const DEFAULT_STALE_MS = 180_000;
+const STORAGE_PREFIX = "lux:polled:";
 
 export type PolledResourceState<T> =
   | { status: "loading" }
@@ -29,10 +31,25 @@ function defaultIsEmpty(data: unknown): boolean {
   return data == null || (Array.isArray(data) && data.length === 0);
 }
 
+type Snapshot<T> = {
+  data: T | undefined;
+  error: Error | undefined;
+  hasLoaded: boolean;
+  isRefreshing: boolean;
+  at: number;
+};
+
+const LOADING: Snapshot<never> = {
+  data: undefined,
+  error: undefined,
+  hasLoaded: false,
+  isRefreshing: false,
+  at: 0,
+};
+
 type CacheEntry<T> = { data: T; at: number };
 
-const resourceCache = new Map<string, CacheEntry<unknown>>();
-const STORAGE_PREFIX = "lux:polled:";
+const dataCache = new Map<string, CacheEntry<unknown>>();
 
 function readPersisted<T>(
   cacheKey: string,
@@ -59,13 +76,169 @@ function writePersisted<T>(cacheKey: string, entry: CacheEntry<T>): void {
   }
 }
 
-export function invalidatePolledResource(cacheKey: string): void {
-  resourceCache.delete(cacheKey);
+function removePersisted(cacheKey: string): void {
   try {
     localStorage.removeItem(STORAGE_PREFIX + cacheKey);
   } catch {
     return;
   }
+}
+
+function seededEntry<T>(
+  cacheKey: string,
+  persist: boolean,
+  parsePersisted?: (raw: unknown) => T | null,
+): CacheEntry<T> | undefined {
+  let entry = dataCache.get(cacheKey) as CacheEntry<T> | undefined;
+  if (!entry && persist) {
+    const stored = readPersisted<T>(cacheKey, parsePersisted);
+    if (stored) {
+      entry = stored;
+      dataCache.set(cacheKey, stored);
+    }
+  }
+  return entry;
+}
+
+type ResourceConfig<T> = {
+  key: string;
+  cacheKey?: string;
+  staleMs: number;
+  intervalMs?: number;
+  persist: boolean;
+  parsePersisted?: (raw: unknown) => T | null;
+};
+
+const liveResources = new Map<string, SharedResource<unknown>>();
+
+class SharedResource<T> {
+  private snapshot: Snapshot<T>;
+  private readonly listeners = new Set<(snapshot: Snapshot<T>) => void>();
+  private fetcher: (signal: AbortSignal) => Promise<T>;
+  private subscribers = 0;
+  private generation = 0;
+  private inFlight: Promise<void> | null = null;
+  private abort: AbortController | null = null;
+  private unregister: (() => void) | null = null;
+
+  constructor(
+    private readonly config: ResourceConfig<T>,
+    fetcher: (signal: AbortSignal) => Promise<T>,
+  ) {
+    this.fetcher = fetcher;
+    const seed = config.cacheKey
+      ? seededEntry<T>(config.cacheKey, config.persist, config.parsePersisted)
+      : undefined;
+    this.snapshot = seed
+      ? { data: seed.data, error: undefined, hasLoaded: true, isRefreshing: false, at: seed.at }
+      : { ...LOADING };
+  }
+
+  getSnapshot(): Snapshot<T> {
+    return this.snapshot;
+  }
+
+  setFetcher(fetcher: (signal: AbortSignal) => Promise<T>): void {
+    this.fetcher = fetcher;
+  }
+
+  subscribe(listener: (snapshot: Snapshot<T>) => void): () => void {
+    this.listeners.add(listener);
+    this.subscribers += 1;
+    if (this.subscribers === 1) this.start();
+    return () => {
+      this.listeners.delete(listener);
+      this.subscribers -= 1;
+      if (this.subscribers === 0) this.stop();
+    };
+  }
+
+  refresh(): void {
+    void this.run(true);
+  }
+
+  markStale(): void {
+    this.patch({ at: 0 });
+  }
+
+  private patch(part: Partial<Snapshot<T>>): void {
+    this.snapshot = { ...this.snapshot, ...part };
+    for (const listener of this.listeners) listener(this.snapshot);
+  }
+
+  private start(): void {
+    if (!this.snapshot.hasLoaded) void this.run(false);
+    else if (Date.now() - this.snapshot.at >= this.config.staleMs) void this.run(true);
+
+    this.unregister = refreshScheduler.register({
+      id: `polled:${this.config.key}`,
+      staleMs: this.config.staleMs,
+      pollIntervalMs:
+        this.config.intervalMs && this.config.intervalMs > 0 ? this.config.intervalMs : undefined,
+      getLastRefreshedAt: () => this.snapshot.at,
+      refresh: () => void this.run(true),
+    });
+  }
+
+  private stop(): void {
+    this.generation += 1;
+    this.abort?.abort();
+    this.abort = null;
+    this.unregister?.();
+    this.unregister = null;
+    this.inFlight = null;
+    liveResources.delete(this.config.key);
+  }
+
+  private run(background: boolean): Promise<void> {
+    if (this.inFlight) return this.inFlight;
+    const generation = (this.generation += 1);
+    const controller = new AbortController();
+    this.abort = controller;
+    if (background) this.patch({ isRefreshing: true });
+
+    const promise = (async () => {
+      try {
+        const data = await this.fetcher(controller.signal);
+        if (generation !== this.generation) return;
+        const at = Date.now();
+        if (this.config.cacheKey) {
+          const entry: CacheEntry<T> = { data, at };
+          dataCache.set(this.config.cacheKey, entry);
+          if (this.config.persist) writePersisted(this.config.cacheKey, entry);
+        }
+        this.patch({ data, error: undefined, hasLoaded: true, isRefreshing: false, at });
+      } catch (caught) {
+        if (generation !== this.generation) return;
+        const error = caught instanceof Error ? caught : new Error("Request failed");
+        this.patch(this.snapshot.hasLoaded ? { isRefreshing: false } : { error, isRefreshing: false });
+      } finally {
+        this.inFlight = null;
+      }
+    })();
+    this.inFlight = promise;
+    return promise;
+  }
+}
+
+function acquireResource<T>(
+  config: ResourceConfig<T>,
+  fetcher: (signal: AbortSignal) => Promise<T>,
+): SharedResource<T> {
+  let resource = liveResources.get(config.key) as SharedResource<T> | undefined;
+  if (!resource) {
+    resource = new SharedResource<T>(config, fetcher);
+    liveResources.set(config.key, resource as SharedResource<unknown>);
+  } else {
+    resource.setFetcher(fetcher);
+  }
+  return resource;
+}
+
+export function invalidatePolledResource(cacheKey: string): void {
+  dataCache.delete(cacheKey);
+  removePersisted(cacheKey);
+  (liveResources.get(cacheKey) as SharedResource<unknown> | undefined)?.markStale();
 }
 
 export function usePolledResource<T>(
@@ -81,125 +254,65 @@ export function usePolledResource<T>(
     persist = false,
     parsePersisted,
   } = options;
-  const staleMs = intervalMs ?? 180_000;
+  const staleMs = intervalMs ?? DEFAULT_STALE_MS;
 
-  const seededRef = useRef(false);
-  const seedRef = useRef<CacheEntry<T> | undefined>(undefined);
-  if (!seededRef.current) {
-    seededRef.current = true;
-    if (cacheKey) {
-      let entry = resourceCache.get(cacheKey) as CacheEntry<T> | undefined;
-      if (!entry && persist) {
-        const stored = readPersisted<T>(cacheKey, parsePersisted);
-        if (stored) {
-          entry = stored;
-          resourceCache.set(cacheKey, stored);
-        }
-      }
-      seedRef.current = entry;
-    }
-  }
-  const initialCache = seedRef.current;
-
-  const [data, setData] = useState<T | undefined>(initialCache?.data);
-  const [error, setError] = useState<Error | undefined>(undefined);
-  const [hasLoaded, setHasLoaded] = useState(initialCache !== undefined);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const autoKeyRef = useRef("");
+  if (!autoKeyRef.current) autoKeyRef.current = `polled#${(nextAutoKey += 1)}`;
+  const key = cacheKey ?? autoKeyRef.current;
 
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
-  const cacheKeyRef = useRef(cacheKey);
-  cacheKeyRef.current = cacheKey;
   const persistRef = useRef(persist);
   persistRef.current = persist;
-  const hasLoadedRef = useRef(initialCache !== undefined);
-  const lastRefreshedAtRef = useRef(initialCache?.at ?? 0);
-  const instanceIdRef = useRef("");
-  if (!instanceIdRef.current) instanceIdRef.current = `polled#${(nextInstanceId += 1)}`;
-  const generationRef = useRef(0);
-  const inFlightRef = useRef(false);
-  const mountedRef = useRef(true);
-  const abortRef = useRef<AbortController | null>(null);
+  const parsePersistedRef = useRef(parsePersisted);
+  parsePersistedRef.current = parsePersisted;
 
-  const run = useCallback(async (background: boolean) => {
-    if (background && inFlightRef.current) return;
-    inFlightRef.current = true;
-    const controller = new AbortController();
-    abortRef.current = controller;
-    const generation = generationRef.current;
-    if (background) setIsRefreshing(true);
-    try {
-      const result = await fetcherRef.current(controller.signal);
-      if (!mountedRef.current || generation !== generationRef.current) return;
-      setData(result);
-      setError(undefined);
-      setHasLoaded(true);
-      hasLoadedRef.current = true;
-      lastRefreshedAtRef.current = Date.now();
-      if (cacheKeyRef.current) {
-        const entry: CacheEntry<T> = { data: result, at: Date.now() };
-        resourceCache.set(cacheKeyRef.current, entry);
-        if (persistRef.current) writePersisted(cacheKeyRef.current, entry);
-      }
-    } catch (caught) {
-      if (!mountedRef.current || generation !== generationRef.current) return;
-      if (!hasLoadedRef.current) {
-        setError(caught instanceof Error ? caught : new Error("Request failed"));
-      }
-    } finally {
-      inFlightRef.current = false;
-      if (mountedRef.current && background) setIsRefreshing(false);
-    }
-  }, []);
+  const [snapshot, setSnapshot] = useState<Snapshot<T>>(() => {
+    const seed = enabled && cacheKey ? seededEntry<T>(cacheKey, persist, parsePersisted) : undefined;
+    return seed
+      ? { data: seed.data, error: undefined, hasLoaded: true, isRefreshing: false, at: seed.at }
+      : { ...LOADING };
+  });
+
+  const resourceRef = useRef<SharedResource<T> | null>(null);
 
   useEffect(() => {
-    mountedRef.current = true;
-    if (!enabled) return;
-
-    generationRef.current += 1;
-    const cached = cacheKey
-      ? (resourceCache.get(cacheKey) as CacheEntry<T> | undefined)
-      : undefined;
-    if (cached !== undefined) {
-      hasLoadedRef.current = true;
-      setHasLoaded(true);
-      setData(cached.data);
-      setError(undefined);
-      if (Date.now() - cached.at >= staleMs) void run(true);
-    } else {
-      hasLoadedRef.current = false;
-      setHasLoaded(false);
-      setError(undefined);
-      void run(false);
+    if (!enabled) {
+      resourceRef.current = null;
+      return;
     }
-
-    const unregister = refreshScheduler.register({
-      id: instanceIdRef.current,
-      staleMs,
-      pollIntervalMs: intervalMs && intervalMs > 0 ? intervalMs : undefined,
-      getLastRefreshedAt: () => lastRefreshedAtRef.current,
-      refresh: () => void run(true),
-    });
-
+    const resource = acquireResource<T>(
+      {
+        key,
+        cacheKey,
+        staleMs,
+        intervalMs,
+        persist: persistRef.current,
+        parsePersisted: parsePersistedRef.current,
+      },
+      (signal) => fetcherRef.current(signal),
+    );
+    resourceRef.current = resource;
+    setSnapshot(resource.getSnapshot());
+    const unsubscribe = resource.subscribe(setSnapshot);
     return () => {
-      mountedRef.current = false;
-      abortRef.current?.abort();
-      unregister();
+      resourceRef.current = null;
+      unsubscribe();
     };
-  }, [enabled, intervalMs, refreshKey, cacheKey, staleMs, run]);
+  }, [key, cacheKey, enabled, staleMs, intervalMs, refreshKey]);
 
   const refresh = useCallback(() => {
-    void run(true);
-  }, [run]);
+    resourceRef.current?.refresh();
+  }, []);
 
   let state: PolledResourceState<T>;
-  if (!hasLoaded) {
-    state = error ? { status: "error", error } : { status: "loading" };
-  } else if (data === undefined || isEmpty(data)) {
+  if (!snapshot.hasLoaded) {
+    state = snapshot.error ? { status: "error", error: snapshot.error } : { status: "loading" };
+  } else if (snapshot.data === undefined || isEmpty(snapshot.data)) {
     state = { status: "empty" };
   } else {
-    state = { status: "success", data };
+    state = { status: "success", data: snapshot.data };
   }
 
-  return { state, isRefreshing, refresh };
+  return { state, isRefreshing: snapshot.isRefreshing, refresh };
 }

@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { useSettingsStore } from "@/settings";
 import { useElementSize } from "@/hooks/useElementSize";
 import { SpotifyDeviceMenu } from "@/widgets/spotify/components/SpotifyDeviceMenu";
@@ -6,7 +6,7 @@ import { SpotifyEmptyState } from "@/widgets/spotify/components/SpotifyEmptyStat
 import { SpotifyPlayer } from "@/widgets/spotify/components/SpotifyPlayer";
 import { useSpotifyConnection } from "@/widgets/spotify/hooks/useSpotifyConnection";
 import { useSpotifyPlayback } from "@/widgets/spotify/hooks/useSpotifyPlayback";
-import { useSpotifyStore } from "@/widgets/spotify/useSpotifyStore";
+import { useSpotify } from "@/widgets/spotify/useSpotifyStore";
 import type { ElementSize } from "@/hooks/useElementSize";
 import type { SpotifyResponsiveView } from "@/widgets/spotify/types";
 
@@ -49,13 +49,7 @@ export function SpotifyWidget() {
   const openAccounts = () => useSettingsStore.getState().openSettings("accounts");
   const connected = account?.status === "connected";
   const controller = useSpotifyPlayback(Boolean(connected));
-  const timeDisplayMode = useSpotifyStore((s) => s.timeDisplayMode);
-  const setNowPlaying = useSpotifyStore((s) => s.setNowPlaying);
-
-  const track = controller.playback?.track;
-  useEffect(() => {
-    setNowPlaying(track?.id ?? null, track?.artworkUrl ?? null);
-  }, [track?.id, track?.artworkUrl, setNowPlaying]);
+  const timeDisplayMode = useSpotify((d) => d.timeDisplayMode);
 
   const view = getViewMode(size);
 

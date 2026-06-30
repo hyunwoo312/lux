@@ -2,7 +2,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useActiveImage } from "@/widgets/image/hooks/useActiveImage";
 import { type ImageBrightness, type ImageFit } from "@/widgets/image/types";
-import { useImageStore } from "@/widgets/image/useImageStore";
+import { useImage } from "@/widgets/image/useImageStore";
 
 const FIT_CLASS: Record<ImageFit, string> = {
   cover: "object-cover",
@@ -18,8 +18,8 @@ const BRIGHTNESS_OVERLAY: Record<ImageBrightness, string | null> = {
 };
 
 export function ImageBackdrop() {
-  const fit = useImageStore((s) => s.fit);
-  const brightness = useImageStore((s) => s.brightness);
+  const fit = useImage((c) => c.fit);
+  const brightness = useImage((c) => c.brightness);
   const { activeItem, imageUrl, loadError } = useActiveImage();
   const reduced = useReducedMotion();
 

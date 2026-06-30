@@ -12,7 +12,8 @@ import {
   getMonthOffset,
   startOfDay,
 } from "@/widgets/calendar/lib/dates";
-import { useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 const monthTitleFormatter = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" });
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"] as const;
@@ -104,8 +105,9 @@ type CalendarRangePickerProps = {
 };
 
 export function CalendarRangePicker({ onSelect }: CalendarRangePickerProps) {
-  const listAnchor = useCalendarStore((s) => s.listAnchor);
-  const lookaheadDays = useCalendarStore((s) => s.lookaheadDays);
+  const instanceId = useWidgetInstanceId();
+  const listAnchor = useCalendar((d) => d.listAnchor);
+  const lookaheadDays = useCalendar((d) => d.lookaheadDays);
   const setListAnchor = useCalendarStore((s) => s.setListAnchor);
   const setLookaheadDays = useCalendarStore((s) => s.setLookaheadDays);
   const [viewMonth, setViewMonth] = useState(
@@ -117,7 +119,7 @@ export function CalendarRangePicker({ onSelect }: CalendarRangePickerProps) {
   const nextMonth = getMonthOffset(viewMonth, 1);
 
   const handleSelect = (date: Date) => {
-    setListAnchor(date);
+    setListAnchor(instanceId, date);
     onSelect();
   };
 
@@ -128,7 +130,7 @@ export function CalendarRangePicker({ onSelect }: CalendarRangePickerProps) {
           label="Date range"
           value={lookaheadValue(lookaheadDays)}
           options={LOOKAHEAD_OPTIONS}
-          onChange={(value) => setLookaheadDays(Number(value))}
+          onChange={(value) => setLookaheadDays(instanceId, Number(value))}
         />
       </div>
       <div className="flex gap-4">

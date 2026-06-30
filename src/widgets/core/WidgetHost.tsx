@@ -5,6 +5,7 @@ import { WidgetConfig } from "@/components/config/WidgetConfig";
 import type { WidgetInstance } from "@/widgets/core/types";
 import { useWidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
 import { useWidgetHighlightStore } from "@/widgets/core/useWidgetHighlightStore";
+import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import { getWidgetPlugin } from "@/widgets/registry";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 
@@ -19,10 +20,10 @@ const useNoBare = () => false;
 export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
   const plugin = getWidgetPlugin(instance.type);
   const removeWidget = useDashboardStore((s) => s.removeWidget);
-  const background = useWidgetBackground(instance.type);
+  const background = useWidgetBackground(instance.id);
   const highlighted = useWidgetHighlightStore((s) => s.highlighted === instance.type);
   const useBare = plugin?.useBare ?? useNoBare;
-  const bare = useBare();
+  const bare = useBare(instance.id);
   if (!plugin) return null;
 
   const accent = plugin.accent ?? "default";
@@ -34,30 +35,32 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
   const BackdropComponent = plugin.backdropComponent;
 
   return (
-    <BaseWidget
-      title={plugin.name}
-      editing={editing}
-      size={size}
-      background={background}
-      accent={accent}
-      bleed={plugin.bleed}
-      bare={bare}
-      highlighted={highlighted}
-      backdrop={BackdropComponent ? <BackdropComponent /> : undefined}
-      decorativeBackdrop={plugin.decorativeBackdrop}
-      headline={StatusComponent ? <StatusComponent /> : undefined}
-      headerAction={HeaderActionComponent ? <HeaderActionComponent /> : undefined}
-      config={
-        <WidgetConfig>
-          <CommonWidgetConfig type={instance.type} />
-          {ConfigComponent && <ConfigComponent />}
-        </WidgetConfig>
-      }
-      onRemove={() => removeWidget(instance.id)}
-    >
-      <WidgetErrorBoundary>
-        <Widget editing={editing} />
-      </WidgetErrorBoundary>
-    </BaseWidget>
+    <WidgetInstanceContext.Provider value={instance.id}>
+      <BaseWidget
+        title={plugin.name}
+        editing={editing}
+        size={size}
+        background={background}
+        accent={accent}
+        bleed={plugin.bleed}
+        bare={bare}
+        highlighted={highlighted}
+        backdrop={BackdropComponent ? <BackdropComponent /> : undefined}
+        decorativeBackdrop={plugin.decorativeBackdrop}
+        headline={StatusComponent ? <StatusComponent /> : undefined}
+        headerAction={HeaderActionComponent ? <HeaderActionComponent /> : undefined}
+        config={
+          <WidgetConfig>
+            <CommonWidgetConfig />
+            {ConfigComponent && <ConfigComponent />}
+          </WidgetConfig>
+        }
+        onRemove={() => removeWidget(instance.id)}
+      >
+        <WidgetErrorBoundary>
+          <Widget editing={editing} />
+        </WidgetErrorBoundary>
+      </BaseWidget>
+    </WidgetInstanceContext.Provider>
   );
 }

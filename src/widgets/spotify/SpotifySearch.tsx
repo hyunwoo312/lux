@@ -15,7 +15,7 @@ import {
   type SpotifyPlaybackDevice,
   type SpotifySearchResult,
 } from "@/widgets/spotify/types";
-import { useSpotifyStore } from "@/widgets/spotify/useSpotifyStore";
+import { requestSpotifyPlaybackRefresh } from "@/widgets/spotify/hooks/useSpotifyPlayback";
 
 const MAX_RESULTS = 10;
 const OWNED_PLAYLIST_CAP = 3;
@@ -37,7 +37,6 @@ const SECTIONS: Array<{
 
 export function SpotifySearch() {
   const baseId = useId();
-  const requestRefresh = useSpotifyStore((s) => s.requestRefresh);
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -116,7 +115,7 @@ export function SpotifySearch() {
     if (!target) return;
     startSpotifyPlayback(result, target.id)
       .then(() => {
-        requestRefresh();
+        requestSpotifyPlaybackRefresh();
         setQuery("");
         setResults([]);
         setOpen(false);

@@ -1,10 +1,10 @@
 import type { WidgetContentProps } from "@/widgets/core/types";
 import { BrowserTab } from "@/widgets/quick-access/components/BrowserTab";
 import { HomeTab } from "@/widgets/quick-access/components/HomeTab";
-import { useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
+import { useQuickAccess } from "@/widgets/quick-access/useQuickAccessStore";
 
 export function QuickAccessWidget({ editing }: WidgetContentProps) {
-  const activeTab = useQuickAccessStore((s) => s.activeTab);
+  const activeTab = useQuickAccess((d) => d.activeTab);
 
   return (
     <div className="h-full">

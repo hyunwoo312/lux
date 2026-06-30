@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
+import { create } from "zustand";
 import {
   getSpotifyDevices,
   getSpotifyPlaybackState,
@@ -19,295 +20,406 @@ import {
   type SpotifyPlaybackDevice,
   type SpotifyPlaybackState,
 } from "@/widgets/spotify/types";
-import { useSpotifyStore } from "@/widgets/spotify/useSpotifyStore";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 
 const RESTART_THRESHOLD_MS = 3_000;
 const PLAYING_POLL_MS = 10_000;
 const IDLE_POLL_MS = 20_000;
 const FOLLOW_UP_REFRESH_DELAYS_MS = [350, 1100, 2600, 5200];
+const REQUEST_REFRESH_DELAYS_MS = [400, 1400];
 
-export function useSpotifyPlayback(connected: boolean) {
-  const [playback, setPlayback] = useState<SpotifyPlaybackState | null>(null);
-  const [devices, setDevices] = useState<SpotifyPlaybackDevice[]>([]);
-  const [pendingActions, setPendingActions] = useState<Set<SpotifyPendingAction>>(() => new Set());
-  const [volumeDraft, setVolumeDraft] = useState<number | null>(null);
-  const [progressDraftMs, setProgressDraftMs] = useState<number | null>(null);
-  const [playbackSyncedAt, setPlaybackSyncedAt] = useState(() => Date.now());
-  const [nowMs, setNowMs] = useState(() => Date.now());
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+type PlaybackStoreState = {
+  playback: SpotifyPlaybackState | null;
+  devices: SpotifyPlaybackDevice[];
+  pendingActions: Set<SpotifyPendingAction>;
+  volumeDraft: number | null;
+  progressDraftMs: number | null;
+  playbackSyncedAt: number;
+  nowMs: number;
+  error: string | null;
+  isLoading: boolean;
+};
 
-  const pendingActionsRef = useRef<Set<SpotifyPendingAction>>(new Set());
-  const isVolumeEditingRef = useRef(false);
-  const refreshRequestIdRef = useRef(0);
-  const rateLimitedUntilRef = useRef(0);
-  const lastPolledAtRef = useRef(0);
+function initialState(): PlaybackStoreState {
+  return {
+    playback: null,
+    devices: [],
+    pendingActions: new Set(),
+    volumeDraft: null,
+    progressDraftMs: null,
+    playbackSyncedAt: Date.now(),
+    nowMs: Date.now(),
+    error: null,
+    isLoading: true,
+  };
+}
 
-  const refreshNonce = useSpotifyStore((s) => s.refreshNonce);
+export const useSpotifyPlaybackStore = create<PlaybackStoreState>(() => initialState());
 
-  const refreshPlayback = useCallback(async () => {
-    if (Date.now() < rateLimitedUntilRef.current) return;
-    const requestId = refreshRequestIdRef.current + 1;
-    refreshRequestIdRef.current = requestId;
+const set = useSpotifyPlaybackStore.setState;
+const get = useSpotifyPlaybackStore.getState;
 
-    try {
-      setError(null);
-      const nextPlayback = await getSpotifyPlaybackState();
+let refCount = 0;
+let connected = false;
+let polling = false;
+let isVolumeEditing = false;
+let refreshRequestId = 0;
+let rateLimitedUntil = 0;
+let lastPolledAt = 0;
+let currentPollMs = IDLE_POLL_MS;
+let unregisterScheduler: (() => void) | null = null;
+let tickIntervalId: ReturnType<typeof setInterval> | undefined;
+let trackEndTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
-      if (requestId !== refreshRequestIdRef.current) return;
+function setPendingAction(action: SpotifyPendingAction, isPending: boolean): void {
+  const next = new Set(get().pendingActions);
+  if (isPending) next.add(action);
+  else next.delete(action);
+  set({ pendingActions: next });
+}
 
-      setPlayback(nextPlayback);
-      if (!isVolumeEditingRef.current) {
-        setVolumeDraft(nextPlayback?.device.volumePercent ?? null);
-      }
-      const syncedNow = Date.now();
-      setPlaybackSyncedAt(syncedNow);
-      setNowMs(syncedNow);
-      lastPolledAtRef.current = syncedNow;
-    } catch (caught) {
-      if (requestId !== refreshRequestIdRef.current) return;
-      if (caught instanceof SpotifyRateLimitError) {
-        rateLimitedUntilRef.current = Date.now() + caught.retryAfterMs;
-      } else {
-        setError(caught instanceof Error ? caught.message : "Unable to load Spotify playback");
-      }
-    } finally {
-      if (requestId === refreshRequestIdRef.current) setIsLoading(false);
-    }
-  }, []);
+function markSyncedNow(): void {
+  const syncedNow = Date.now();
+  set({ playbackSyncedAt: syncedNow, nowMs: syncedNow });
+}
 
-  const loadDevices = useCallback(async () => {
-    if (Date.now() < rateLimitedUntilRef.current) return;
-    try {
-      setDevices(await getSpotifyDevices());
-    } catch (caught) {
-      if (caught instanceof SpotifyRateLimitError) {
-        rateLimitedUntilRef.current = Date.now() + caught.retryAfterMs;
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!connected) return;
-    const timeoutId = window.setTimeout(() => void refreshPlayback(), 0);
-    return () => window.clearTimeout(timeoutId);
-  }, [connected, refreshPlayback]);
-
-  useEffect(() => {
-    if (!connected || refreshNonce === 0) return;
-    const timers = [400, 1400].map((delay) =>
-      window.setTimeout(() => void refreshPlayback(), delay),
-    );
-    return () => timers.forEach((id) => window.clearTimeout(id));
-  }, [refreshNonce, connected, refreshPlayback]);
-
-  const pollIntervalMs = playback?.isPlaying ? PLAYING_POLL_MS : IDLE_POLL_MS;
-  useEffect(() => {
-    if (!connected) return;
-    return refreshScheduler.register({
-      id: "spotify:playback",
-      staleMs: pollIntervalMs,
-      pollIntervalMs,
-      getLastRefreshedAt: () => lastPolledAtRef.current,
-      refresh: () => void refreshPlayback(),
-    });
-  }, [connected, pollIntervalMs, refreshPlayback]);
-
-  useEffect(() => {
-    if (!playback?.isPlaying) return;
-    const intervalId = window.setInterval(() => {
-      if (document.visibilityState === "visible") setNowMs(Date.now());
-    }, 1000);
-    return () => window.clearInterval(intervalId);
-  }, [playback?.isPlaying]);
-
-  useEffect(() => {
-    if (!playback?.isPlaying) return;
+function reconcileTimers(): void {
+  const { playback, playbackSyncedAt } = get();
+  const desiredPollMs = playback?.isPlaying ? PLAYING_POLL_MS : IDLE_POLL_MS;
+  if (polling && desiredPollMs !== currentPollMs) {
+    currentPollMs = desiredPollMs;
+    registerScheduler();
+  }
+  if (trackEndTimeoutId) {
+    clearTimeout(trackEndTimeoutId);
+    trackEndTimeoutId = undefined;
+  }
+  if (polling && playback?.isPlaying) {
     const remaining = playback.track.durationMs - playback.progressMs;
     const untilEnd = remaining - (Date.now() - playbackSyncedAt) + 1000;
-    if (untilEnd <= 0 || untilEnd > 0x7fffffff) return;
-    const timeoutId = window.setTimeout(() => {
-      if (document.visibilityState === "visible") void refreshPlayback();
-    }, untilEnd);
-    return () => window.clearTimeout(timeoutId);
-  }, [
-    playback?.isPlaying,
-    playback?.track.id,
-    playback?.track.durationMs,
-    playback?.progressMs,
-    playbackSyncedAt,
-    refreshPlayback,
-  ]);
-
-  const setPendingAction = (action: SpotifyPendingAction, isPending: boolean) => {
-    const next = new Set(pendingActionsRef.current);
-    if (isPending) next.add(action);
-    else next.delete(action);
-    pendingActionsRef.current = next;
-    setPendingActions(next);
-  };
-
-  const scheduleFollowUpRefresh = () => {
-    FOLLOW_UP_REFRESH_DELAYS_MS.forEach((delayMs) => {
-      window.setTimeout(() => void refreshPlayback(), delayMs);
-    });
-  };
-
-  const runPlaybackAction = async (
-    action: () => Promise<void>,
-    afterAction?: () => void,
-    pendingAction?: SpotifyPendingAction,
-  ) => {
-    if (pendingAction && pendingActionsRef.current.has(pendingAction)) return;
-
-    try {
-      if (pendingAction) setPendingAction(pendingAction, true);
-      setError(null);
-      await action();
-      afterAction?.();
-      scheduleFollowUpRefresh();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to control Spotify playback");
-    } finally {
-      if (pendingAction) setPendingAction(pendingAction, false);
+    if (untilEnd > 0 && untilEnd <= 0x7fffffff) {
+      trackEndTimeoutId = setTimeout(() => {
+        if (document.visibilityState === "visible") void refreshPlayback();
+      }, untilEnd);
     }
-  };
+  }
+}
 
-  const getDisplayedProgressMs = (): number => {
-    if (!playback) return 0;
-    const elapsed = playback.isPlaying ? nowMs - playbackSyncedAt : 0;
-    return Math.min(playback.track.durationMs, Math.max(0, playback.progressMs + elapsed));
-  };
+async function refreshPlayback(): Promise<void> {
+  if (Date.now() < rateLimitedUntil) return;
+  const requestId = refreshRequestId + 1;
+  refreshRequestId = requestId;
 
-  const markSyncedNow = () => {
-    const syncedNow = Date.now();
-    setPlaybackSyncedAt(syncedNow);
-    setNowMs(syncedNow);
-  };
+  try {
+    set({ error: null });
+    const nextPlayback = await getSpotifyPlaybackState();
+    if (requestId !== refreshRequestId) return;
 
-  const togglePlayback = () => {
-    if (!playback) return;
+    set({ playback: nextPlayback });
+    if (!isVolumeEditing) set({ volumeDraft: nextPlayback?.device.volumePercent ?? null });
+    markSyncedNow();
+    lastPolledAt = Date.now();
+    reconcileTimers();
+  } catch (caught) {
+    if (requestId !== refreshRequestId) return;
+    if (caught instanceof SpotifyRateLimitError) {
+      rateLimitedUntil = Date.now() + caught.retryAfterMs;
+    } else {
+      set({ error: caught instanceof Error ? caught.message : "Unable to load Spotify playback" });
+    }
+  } finally {
+    if (requestId === refreshRequestId) set({ isLoading: false });
+  }
+}
+
+async function loadDevices(): Promise<void> {
+  if (Date.now() < rateLimitedUntil) return;
+  try {
+    set({ devices: await getSpotifyDevices() });
+  } catch (caught) {
+    if (caught instanceof SpotifyRateLimitError) {
+      rateLimitedUntil = Date.now() + caught.retryAfterMs;
+    }
+  }
+}
+
+function scheduleFollowUpRefresh(): void {
+  FOLLOW_UP_REFRESH_DELAYS_MS.forEach((delayMs) => {
+    setTimeout(() => void refreshPlayback(), delayMs);
+  });
+}
+
+async function runPlaybackAction(
+  action: () => Promise<void>,
+  afterAction?: () => void,
+  pendingAction?: SpotifyPendingAction,
+): Promise<void> {
+  if (pendingAction && get().pendingActions.has(pendingAction)) return;
+  try {
+    if (pendingAction) setPendingAction(pendingAction, true);
+    set({ error: null });
+    await action();
+    afterAction?.();
+    scheduleFollowUpRefresh();
+  } catch (caught) {
+    set({ error: caught instanceof Error ? caught.message : "Unable to control Spotify playback" });
+  } finally {
+    if (pendingAction) setPendingAction(pendingAction, false);
+  }
+}
+
+function displayedProgressMs(state: PlaybackStoreState): number {
+  if (state.progressDraftMs !== null) return state.progressDraftMs;
+  const { playback } = state;
+  if (!playback) return 0;
+  const elapsed = playback.isPlaying ? state.nowMs - state.playbackSyncedAt : 0;
+  return Math.min(playback.track.durationMs, Math.max(0, playback.progressMs + elapsed));
+}
+
+function getDisplayedProgressMs(): number {
+  const { playback, nowMs, playbackSyncedAt } = get();
+  if (!playback) return 0;
+  const elapsed = playback.isPlaying ? nowMs - playbackSyncedAt : 0;
+  return Math.min(playback.track.durationMs, Math.max(0, playback.progressMs + elapsed));
+}
+
+function togglePlayback(): void {
+  const { playback } = get();
+  if (!playback) return;
+  void runPlaybackAction(
+    playback.isPlaying ? pauseSpotifyPlayback : resumeSpotifyPlayback,
+    () => {
+      set((state) =>
+        state.playback ? { playback: { ...state.playback, isPlaying: !state.playback.isPlaying } } : state,
+      );
+      markSyncedNow();
+    },
+    "playback",
+  );
+}
+
+function previousTrack(): void {
+  if (getDisplayedProgressMs() > RESTART_THRESHOLD_MS) {
     void runPlaybackAction(
-      playback.isPlaying ? pauseSpotifyPlayback : resumeSpotifyPlayback,
+      () => seekSpotifyPlayback(0),
       () => {
-        setPlayback((current) => (current ? { ...current, isPlaying: !current.isPlaying } : current));
+        set((state) => (state.playback ? { playback: { ...state.playback, progressMs: 0 } } : state));
         markSyncedNow();
       },
-      "playback",
+      "previous",
     );
-  };
+    return;
+  }
+  void runPlaybackAction(skipSpotifyPrevious, undefined, "previous");
+}
 
-  const previousTrack = () => {
-    if (getDisplayedProgressMs() > RESTART_THRESHOLD_MS) {
-      void runPlaybackAction(
-        () => seekSpotifyPlayback(0),
-        () => {
-          setPlayback((current) => (current ? { ...current, progressMs: 0 } : current));
-          markSyncedNow();
-        },
-        "previous",
-      );
-      return;
+function nextTrack(): void {
+  void runPlaybackAction(skipSpotifyNext, undefined, "next");
+}
+
+function toggleShuffle(): void {
+  const { playback } = get();
+  if (!playback) return;
+  const nextShuffle = !playback.shuffle;
+  void runPlaybackAction(
+    () => setSpotifyShuffle(nextShuffle),
+    () => set((state) => (state.playback ? { playback: { ...state.playback, shuffle: nextShuffle } } : state)),
+    "shuffle",
+  );
+}
+
+function cycleRepeat(): void {
+  const { playback } = get();
+  if (!playback) return;
+  const currentIndex = SPOTIFY_REPEAT_MODES.indexOf(playback.repeatMode);
+  const nextRepeatMode =
+    SPOTIFY_REPEAT_MODES[(currentIndex + 1) % SPOTIFY_REPEAT_MODES.length] ?? "off";
+  void runPlaybackAction(
+    () => setSpotifyRepeatMode(nextRepeatMode),
+    () =>
+      set((state) =>
+        state.playback ? { playback: { ...state.playback, repeatMode: nextRepeatMode } } : state,
+      ),
+    "repeat",
+  );
+}
+
+function changeVolume(volumePercent: number): void {
+  const { playback } = get();
+  if (!playback) return;
+  const nextVolume = Math.min(100, Math.max(0, Math.round(volumePercent)));
+  isVolumeEditing = true;
+  set((state) => ({
+    volumeDraft: nextVolume,
+    playback: state.playback
+      ? { ...state.playback, device: { ...state.playback.device, volumePercent: nextVolume } }
+      : state.playback,
+  }));
+}
+
+function commitVolume(): void {
+  const { volumeDraft, playback } = get();
+  const nextVolume = volumeDraft ?? playback?.device.volumePercent;
+  if (typeof nextVolume !== "number") return;
+  isVolumeEditing = false;
+  set({ volumeDraft: null });
+  void runPlaybackAction(() => setSpotifyVolume(nextVolume), undefined, "volume");
+}
+
+function changeProgress(positionMs: number): void {
+  const { playback } = get();
+  if (!playback) return;
+  const nextProgress = Math.min(playback.track.durationMs, Math.max(0, Math.round(positionMs)));
+  set((state) => ({
+    progressDraftMs: nextProgress,
+    playback: state.playback ? { ...state.playback, progressMs: nextProgress } : state.playback,
+  }));
+  markSyncedNow();
+}
+
+function commitProgress(): void {
+  const { progressDraftMs } = get();
+  if (get().playback === null || progressDraftMs === null) return;
+  set({ progressDraftMs: null });
+  void runPlaybackAction(() => seekSpotifyPlayback(progressDraftMs), undefined, "seek");
+}
+
+function transferDevice(device: SpotifyPlaybackDevice): void {
+  void runPlaybackAction(
+    () => transferSpotifyPlayback(device.id),
+    () => {
+      set((state) => ({
+        playback: state.playback
+          ? {
+              ...state.playback,
+              device: {
+                ...device,
+                isActive: true,
+                volumePercent: device.volumePercent ?? state.playback.device.volumePercent,
+              },
+            }
+          : state.playback,
+        devices: state.devices.map((entry) => ({ ...entry, isActive: entry.id === device.id })),
+      }));
+      void refreshPlayback();
+    },
+    "device",
+  );
+}
+
+async function refresh(): Promise<void> {
+  if (get().pendingActions.has("refresh")) return;
+  try {
+    setPendingAction("refresh", true);
+    await refreshPlayback();
+  } finally {
+    setPendingAction("refresh", false);
+  }
+}
+
+export function requestSpotifyPlaybackRefresh(): void {
+  REQUEST_REFRESH_DELAYS_MS.forEach((delayMs) => {
+    setTimeout(() => void refreshPlayback(), delayMs);
+  });
+}
+
+function registerScheduler(): void {
+  unregisterScheduler?.();
+  unregisterScheduler = refreshScheduler.register({
+    id: "spotify:playback",
+    staleMs: currentPollMs,
+    pollIntervalMs: currentPollMs,
+    getLastRefreshedAt: () => lastPolledAt,
+    refresh: () => void refreshPlayback(),
+  });
+}
+
+function startPolling(): void {
+  if (polling) return;
+  polling = true;
+  currentPollMs = get().playback?.isPlaying ? PLAYING_POLL_MS : IDLE_POLL_MS;
+  registerScheduler();
+  tickIntervalId = setInterval(() => {
+    if (document.visibilityState === "visible" && get().playback?.isPlaying) {
+      set({ nowMs: Date.now() });
     }
-    void runPlaybackAction(skipSpotifyPrevious, undefined, "previous");
-  };
+  }, 1000);
+  void refreshPlayback();
+}
 
-  const nextTrack = () => {
-    void runPlaybackAction(skipSpotifyNext, undefined, "next");
-  };
+function stopPolling(): void {
+  if (!polling) return;
+  polling = false;
+  unregisterScheduler?.();
+  unregisterScheduler = null;
+  if (tickIntervalId) {
+    clearInterval(tickIntervalId);
+    tickIntervalId = undefined;
+  }
+  if (trackEndTimeoutId) {
+    clearTimeout(trackEndTimeoutId);
+    trackEndTimeoutId = undefined;
+  }
+}
 
-  const toggleShuffle = () => {
-    if (!playback) return;
-    const nextShuffle = !playback.shuffle;
-    void runPlaybackAction(
-      () => setSpotifyShuffle(nextShuffle),
-      () => setPlayback((current) => (current ? { ...current, shuffle: nextShuffle } : current)),
-      "shuffle",
-    );
-  };
+function syncEngine(): void {
+  if (refCount > 0 && connected) startPolling();
+  else stopPolling();
+}
 
-  const cycleRepeat = () => {
-    if (!playback) return;
-    const currentIndex = SPOTIFY_REPEAT_MODES.indexOf(playback.repeatMode);
-    const nextRepeatMode = SPOTIFY_REPEAT_MODES[(currentIndex + 1) % SPOTIFY_REPEAT_MODES.length] ?? "off";
-    void runPlaybackAction(
-      () => setSpotifyRepeatMode(nextRepeatMode),
-      () => setPlayback((current) => (current ? { ...current, repeatMode: nextRepeatMode } : current)),
-      "repeat",
-    );
-  };
+function acquireEngine(): void {
+  refCount += 1;
+  syncEngine();
+}
 
-  const changeVolume = (volumePercent: number) => {
-    if (!playback) return;
-    const nextVolume = Math.min(100, Math.max(0, Math.round(volumePercent)));
-    isVolumeEditingRef.current = true;
-    setVolumeDraft(nextVolume);
-    setPlayback((current) =>
-      current ? { ...current, device: { ...current.device, volumePercent: nextVolume } } : current,
-    );
-  };
+function releaseEngine(): void {
+  refCount = Math.max(0, refCount - 1);
+  syncEngine();
+}
 
-  const commitVolume = () => {
-    const nextVolume = volumeDraft ?? playback?.device.volumePercent;
-    if (typeof nextVolume !== "number") return;
-    isVolumeEditingRef.current = false;
-    setVolumeDraft(null);
-    void runPlaybackAction(() => setSpotifyVolume(nextVolume), undefined, "volume");
-  };
+function setConnected(next: boolean): void {
+  if (next === connected) return;
+  connected = next;
+  if (connected) set({ isLoading: true });
+  syncEngine();
+}
 
-  const changeProgress = (positionMs: number) => {
-    if (!playback) return;
-    const nextProgress = Math.min(playback.track.durationMs, Math.max(0, Math.round(positionMs)));
-    setProgressDraftMs(nextProgress);
-    setPlayback((current) => (current ? { ...current, progressMs: nextProgress } : current));
-    markSyncedNow();
-  };
+export type SpotifyPlaybackController = {
+  playback: SpotifyPlaybackState | null;
+  deviceOptions: SpotifyPlaybackDevice[];
+  pendingActions: Set<SpotifyPendingAction>;
+  error: string | null;
+  isLoading: boolean;
+  displayedProgressMs: number;
+  volumePercent: number;
+  restartThresholdMs: number;
+  togglePlayback: () => void;
+  previousTrack: () => void;
+  nextTrack: () => void;
+  toggleShuffle: () => void;
+  cycleRepeat: () => void;
+  changeVolume: (volumePercent: number) => void;
+  commitVolume: () => void;
+  changeProgress: (positionMs: number) => void;
+  commitProgress: () => void;
+  transferDevice: (device: SpotifyPlaybackDevice) => void;
+  loadDevices: () => Promise<void>;
+  refresh: () => Promise<void>;
+};
 
-  const commitProgress = () => {
-    if (!playback || progressDraftMs === null) return;
-    const nextProgress = progressDraftMs;
-    setProgressDraftMs(null);
-    void runPlaybackAction(() => seekSpotifyPlayback(nextProgress), undefined, "seek");
-  };
+export function useSpotifyPlayback(connectedArg: boolean): SpotifyPlaybackController {
+  useEffect(() => {
+    acquireEngine();
+    return () => releaseEngine();
+  }, []);
 
-  const transferDevice = (device: SpotifyPlaybackDevice) => {
-    void runPlaybackAction(
-      () => transferSpotifyPlayback(device.id),
-      () => {
-        setPlayback((current) =>
-          current
-            ? {
-                ...current,
-                device: {
-                  ...device,
-                  isActive: true,
-                  volumePercent: device.volumePercent ?? current.device.volumePercent,
-                },
-              }
-            : current,
-        );
-        setDevices((current) =>
-          current.map((entry) => ({ ...entry, isActive: entry.id === device.id })),
-        );
-        void refreshPlayback();
-      },
-      "device",
-    );
-  };
+  useEffect(() => {
+    setConnected(connectedArg);
+  }, [connectedArg]);
 
-  const refresh = async () => {
-    if (pendingActionsRef.current.has("refresh")) return;
-    try {
-      setPendingAction("refresh", true);
-      await refreshPlayback();
-    } finally {
-      setPendingAction("refresh", false);
-    }
-  };
+  const state = useSpotifyPlaybackStore();
+  const { playback, devices } = state;
 
-  const displayedProgressMs = progressDraftMs ?? getDisplayedProgressMs();
-  const volumePercent = volumeDraft ?? playback?.device.volumePercent ?? 100;
   const deviceOptions =
     playback && !devices.some((device) => device.id === playback.device.id)
       ? [playback.device, ...devices]
@@ -320,11 +432,11 @@ export function useSpotifyPlayback(connected: boolean) {
   return {
     playback,
     deviceOptions,
-    pendingActions,
-    error,
-    isLoading,
-    displayedProgressMs,
-    volumePercent,
+    pendingActions: state.pendingActions,
+    error: state.error,
+    isLoading: state.isLoading,
+    displayedProgressMs: displayedProgressMs(state),
+    volumePercent: state.volumeDraft ?? playback?.device.volumePercent ?? 100,
     restartThresholdMs: RESTART_THRESHOLD_MS,
     togglePlayback,
     previousTrack,
@@ -340,5 +452,3 @@ export function useSpotifyPlayback(connected: boolean) {
     refresh,
   };
 }
-
-export type SpotifyPlaybackController = ReturnType<typeof useSpotifyPlayback>;

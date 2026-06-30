@@ -14,7 +14,7 @@ import { FeedList } from "@/widgets/anilist/components/FeedList";
 import { FeedThumb } from "@/widgets/anilist/components/FeedThumb";
 import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
-import { useAnilistStore } from "@/widgets/anilist/useAnilistStore";
+import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { ANILIST_MAX_ITEMS, type AnilistNotification } from "@/widgets/anilist/types";
 
 const REFRESH_MS = 3 * 60 * 1000;
@@ -24,7 +24,7 @@ function toSeconds(createdAt: string): number {
 }
 
 export function InboxView({ enabled, newTab }: { enabled: boolean; newTab: boolean }) {
-  const lang = useAnilistStore((s) => s.titleLanguage);
+  const lang = useAnilist((d) => d.titleLanguage);
   const setLastSeen = useAnilistStore((s) => s.setLastSeenInbox);
   const seenRef = useRef(useAnilistStore.getState().lastSeenInboxAt ?? 0);
   const unread = usePolledResource(fetchUnreadCount, {

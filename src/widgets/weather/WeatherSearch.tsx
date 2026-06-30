@@ -5,16 +5,18 @@ import { ExpandingSearch } from "@/components/ExpandingSearch";
 import { cn } from "@/lib/utils";
 import { getAccentVars } from "@/widgets/core/accent";
 import { searchPlaces } from "@/widgets/weather/lib/open-meteo";
-import { MAX_LOCATIONS, useWeatherStore } from "@/widgets/weather/useWeatherStore";
+import { MAX_LOCATIONS, useWeather, useWeatherStore } from "@/widgets/weather/useWeatherStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { makeLocationId, WEATHER_ACCENT, type GeocodeResult } from "@/widgets/weather/types";
 
 export function WeatherSearch() {
   const baseId = useId();
-  const locations = useWeatherStore((s) => s.locations);
-  const selectedId = useWeatherStore((s) => s.selectedId);
+  const instanceId = useWidgetInstanceId();
+  const locations = useWeather((d) => d.locations);
+  const selectedId = useWeather((d) => d.selectedId);
   const addLocation = useWeatherStore((s) => s.addLocation);
   const clearSelection = useWeatherStore((s) => s.clearSelection);
-  const searchOpen = useWeatherStore((s) => s.searchOpen);
+  const searchOpen = useWeather((d) => d.searchOpen);
   const openSearch = useWeatherStore((s) => s.openSearch);
   const closeSearch = useWeatherStore((s) => s.closeSearch);
 
@@ -66,7 +68,7 @@ export function WeatherSearch() {
 
   const pick = (result: GeocodeResult) => {
     if (atCap || isAdded(result)) return;
-    addLocation({
+    addLocation(instanceId, {
       id: makeLocationId(result.latitude, result.longitude),
       name: result.name,
       latitude: result.latitude,
@@ -111,7 +113,7 @@ export function WeatherSearch() {
     return (
       <button
         type="button"
-        onClick={clearSelection}
+        onClick={() => clearSelection(instanceId)}
         className="
           text-muted-foreground
           hover:text-foreground
@@ -128,7 +130,7 @@ export function WeatherSearch() {
   return (
     <ExpandingSearch
       open={expanded}
-      onOpenChange={(next) => (next ? openSearch() : closeSearch())}
+      onOpenChange={(next) => (next ? openSearch(instanceId) : closeSearch(instanceId))}
       value={query}
       onValueChange={setQuery}
       onInputKeyDown={onInputKeyDown}

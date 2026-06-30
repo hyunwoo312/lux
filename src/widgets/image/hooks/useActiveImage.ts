@@ -7,7 +7,8 @@ import {
   writeNewtabQueue,
 } from "@/lib/media-rotation";
 import type { ImageItem } from "@/widgets/image/types";
-import { useImageStore } from "@/widgets/image/useImageStore";
+import { useImage, useImageIndex, useImageStore } from "@/widgets/image/useImageStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 const IMAGE_NEWTAB_QUEUE_KEY = "lux.image.newtab-queue";
 
@@ -18,13 +19,14 @@ type ActiveImage = {
 };
 
 export function useActiveImage(): ActiveImage {
-  const mode = useImageStore((s) => s.mode);
-  const single = useImageStore((s) => s.single);
-  const items = useImageStore((s) => s.items);
-  const rotateOnNewtab = useImageStore((s) => s.rotateOnNewtab);
-  const rotateTimed = useImageStore((s) => s.rotateTimed);
-  const intervalSeconds = useImageStore((s) => s.intervalSeconds);
-  const currentIndex = useImageStore((s) => s.currentIndex);
+  const instanceId = useWidgetInstanceId();
+  const mode = useImage((c) => c.mode);
+  const single = useImage((c) => c.single);
+  const items = useImage((c) => c.items);
+  const rotateOnNewtab = useImage((c) => c.rotateOnNewtab);
+  const rotateTimed = useImage((c) => c.rotateTimed);
+  const intervalSeconds = useImage((c) => c.intervalSeconds);
+  const currentIndex = useImageIndex();
   const setCurrentIndex = useImageStore((s) => s.setCurrentIndex);
   const advanceImage = useImageStore((s) => s.advanceImage);
 
@@ -40,6 +42,7 @@ export function useActiveImage(): ActiveImage {
   const newtabEnabled = mode === "multi" && rotateOnNewtab;
   const timedEnabled = mode === "multi" && rotateTimed;
 
+  const queueKey = `${IMAGE_NEWTAB_QUEUE_KEY}.${instanceId}`;
   const lastSignature = useRef<string | null>(null);
   useEffect(() => {
     if (lastSignature.current === signature) return;
@@ -47,18 +50,18 @@ export function useActiveImage(): ActiveImage {
     if (newtabEnabled && length > 0) {
       const selection = selectNewtabIndex(
         displayItems.map((item) => item.assetId),
-        readNewtabQueue(IMAGE_NEWTAB_QUEUE_KEY),
+        readNewtabQueue(queueKey),
       );
-      writeNewtabQueue(IMAGE_NEWTAB_QUEUE_KEY, selection.next);
-      setCurrentIndex(selection.index);
+      writeNewtabQueue(queueKey, selection.next);
+      setCurrentIndex(instanceId, selection.index);
     }
-  }, [signature, newtabEnabled, length, displayItems, setCurrentIndex]);
+  }, [signature, newtabEnabled, length, displayItems, setCurrentIndex, instanceId, queueKey]);
 
   useEffect(() => {
     if (!timedEnabled || length < 2) return;
-    const id = window.setInterval(() => advanceImage(), intervalSeconds * 1000);
+    const id = window.setInterval(() => advanceImage(instanceId), intervalSeconds * 1000);
     return () => window.clearInterval(id);
-  }, [timedEnabled, length, intervalSeconds, advanceImage]);
+  }, [timedEnabled, length, intervalSeconds, advanceImage, instanceId]);
 
   const boundedIndex = length > 0 ? ((currentIndex % length) + length) % length : 0;
   const activeItem = displayItems[boundedIndex] ?? null;

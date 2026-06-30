@@ -12,5 +12,4 @@ export const notePlugin: WidgetPlugin = {
   component: NoteWidget,
   configComponent: NoteConfig,
   statusComponent: NoteStatus,
-  accent: "yellow",
-};
+  accent: "yellow",};

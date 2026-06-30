@@ -1,9 +1,11 @@
 import { LayoutGrid, List } from "lucide-react";
 import { ViewToggleButton } from "@/widgets/core/ViewToggleButton";
-import { useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
+import { useQuickAccess, useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 export function QuickAccessLayoutToggle() {
-  const view = useQuickAccessStore((s) => s.view);
+  const instanceId = useWidgetInstanceId();
+  const view = useQuickAccess((d) => d.view);
   const setView = useQuickAccessStore((s) => s.setView);
   const isGrid = view === "grid";
 
@@ -12,7 +14,7 @@ export function QuickAccessLayoutToggle() {
       targetKey={isGrid ? "list" : "grid"}
       targetLabel={isGrid ? "list view" : "grid view"}
       icon={isGrid ? List : LayoutGrid}
-      onToggle={() => setView(isGrid ? "list" : "grid")}
+      onToggle={() => setView(instanceId, isGrid ? "list" : "grid")}
     />
   );
 }

@@ -4,18 +4,16 @@ import { z } from "zod";
 import type { Layout, LayoutItem } from "react-grid-layout";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { findNearestOpenPosition } from "@/widgets/core/layout-engine";
+import { pruneInstance } from "@/widgets/core/instanceCleanup";
 import type { WidgetInstance, WidgetPlugin, WidgetType } from "@/widgets/core/types";
 import { WIDGET_TYPES } from "@/widgets/core/types";
 import { getWidgetPlugin } from "@/widgets/registry";
 
 const DEFAULT_COLUMNS = 12;
 
-type SavedLayouts = Partial<Record<WidgetType, LayoutItem>>;
-
 type DashboardState = {
   widgets: WidgetInstance[];
   layout: Layout;
-  savedLayouts: SavedLayouts;
   columns: number;
   editing: boolean;
   lastAddedId: string | null;
@@ -44,7 +42,6 @@ const layoutItemSchema = z.object({
 const persistedSchema = z.object({
   widgets: z.array(z.object({ id: z.string(), type: widgetTypeSchema })),
   layout: z.array(layoutItemSchema),
-  savedLayouts: z.record(z.string(), layoutItemSchema).optional(),
 });
 
 function placeLayoutItem(
@@ -52,15 +49,15 @@ function placeLayoutItem(
   columns: number,
   id: string,
   plugin: WidgetPlugin,
-  override: { x: number; y: number; w?: number; h?: number } | undefined,
+  override: { x: number; y: number } | undefined,
 ): LayoutItem {
   const { w, h, minW, minH, maxW, maxH } = plugin.defaultLayout;
   const base: LayoutItem = {
     i: id,
     x: override?.x ?? 0,
     y: override?.y ?? 0,
-    w: override?.w ?? w,
-    h: override?.h ?? h,
+    w,
+    h,
     minW,
     minH,
     maxW,
@@ -70,6 +67,10 @@ function placeLayoutItem(
   return { ...base, x: spot.x, y: spot.y };
 }
 
+function createInstanceId(type: WidgetType): string {
+  return `${type}-${crypto.randomUUID()}`;
+}
+
 const gatedStorage = createGatedChromeStorage();
 
 export const useDashboardStore = create<DashboardState>()(
@@ -77,42 +78,28 @@ export const useDashboardStore = create<DashboardState>()(
     (set) => ({
       widgets: [],
       layout: [],
-      savedLayouts: {},
       columns: DEFAULT_COLUMNS,
       editing: false,
       lastAddedId: null,
       addWidget: (type, position) =>
         set((state) => {
-          if (state.widgets.some((widget) => widget.type === type)) return state;
           const plugin = getWidgetPlugin(type);
           if (!plugin) return state;
-          const id = type;
-          const saved = state.savedLayouts[type];
-          const override = position
-            ? { x: position.x, y: position.y, w: saved?.w, h: saved?.h }
-            : saved;
-          const item = placeLayoutItem(state.layout, state.columns, id, plugin, override);
-          const savedLayouts = { ...state.savedLayouts };
-          delete savedLayouts[type];
+          const id = createInstanceId(type);
+          const item = placeLayoutItem(state.layout, state.columns, id, plugin, position);
           return {
             widgets: [...state.widgets, { id, type }],
             layout: [...state.layout, item],
-            savedLayouts,
             lastAddedId: id,
           };
         }),
-      removeWidget: (id) =>
-        set((state) => {
-          const widget = state.widgets.find((entry) => entry.id === id);
-          const item = state.layout.find((entry) => entry.i === id);
-          const savedLayouts =
-            widget && item ? { ...state.savedLayouts, [widget.type]: item } : state.savedLayouts;
-          return {
-            widgets: state.widgets.filter((entry) => entry.id !== id),
-            layout: state.layout.filter((entry) => entry.i !== id),
-            savedLayouts,
-          };
-        }),
+      removeWidget: (id) => {
+        pruneInstance(id);
+        set((state) => ({
+          widgets: state.widgets.filter((entry) => entry.id !== id),
+          layout: state.layout.filter((entry) => entry.i !== id),
+        }));
+      },
       setLayout: (layout) => set({ layout }),
       setColumns: (columns) => set({ columns }),
       toggleEditing: () => set((state) => ({ editing: !state.editing })),
@@ -126,7 +113,6 @@ export const useDashboardStore = create<DashboardState>()(
       partialize: (state) => ({
         widgets: state.widgets,
         layout: state.layout,
-        savedLayouts: state.savedLayouts,
       }),
       merge: (persisted, current) => {
         const parsed = persistedSchema.safeParse(persisted);
@@ -135,7 +121,6 @@ export const useDashboardStore = create<DashboardState>()(
           ...current,
           widgets: parsed.data.widgets,
           layout: parsed.data.layout,
-          savedLayouts: parsed.data.savedLayouts ?? {},
         };
       },
     },

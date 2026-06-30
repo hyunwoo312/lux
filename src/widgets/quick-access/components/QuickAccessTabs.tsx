@@ -1,7 +1,8 @@
 import { Bookmark, History, House, Undo2 } from "lucide-react";
 import { WidgetTabs, type WidgetTab } from "@/widgets/core/WidgetTabs";
 import type { QuickAccessTab } from "@/widgets/quick-access/types";
-import { useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
+import { useQuickAccess, useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 const TABS: WidgetTab<QuickAccessTab>[] = [
   { value: "home", label: "Home", icon: House },
@@ -11,8 +12,11 @@ const TABS: WidgetTab<QuickAccessTab>[] = [
 ];
 
 export function QuickAccessTabs() {
-  const activeTab = useQuickAccessStore((s) => s.activeTab);
+  const instanceId = useWidgetInstanceId();
+  const activeTab = useQuickAccess((d) => d.activeTab);
   const setActiveTab = useQuickAccessStore((s) => s.setActiveTab);
 
-  return <WidgetTabs tabs={TABS} value={activeTab} onSelect={setActiveTab} />;
+  return (
+    <WidgetTabs tabs={TABS} value={activeTab} onSelect={(tab) => setActiveTab(instanceId, tab)} />
+  );
 }

@@ -39,5 +39,5 @@ export type WidgetPlugin = {
   decorativeBackdrop?: boolean;
   accent?: AccentPreset;
   bleed?: boolean;
-  useBare?: () => boolean;
+  useBare?: (instanceId: string) => boolean;
 };

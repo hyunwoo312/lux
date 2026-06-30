@@ -1,10 +1,11 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useSpotifyStore } from "@/widgets/spotify/useSpotifyStore";
+import { useSpotify } from "@/widgets/spotify/useSpotifyStore";
+import { useSpotifyPlaybackStore } from "@/widgets/spotify/hooks/useSpotifyPlayback";
 
 export function SpotifyBackdrop() {
   const reduced = useReducedMotion();
-  const ambient = useSpotifyStore((s) => s.ambient);
-  const artworkUrl = useSpotifyStore((s) => s.nowPlayingArtworkUrl);
+  const ambient = useSpotify((d) => d.ambient);
+  const artworkUrl = useSpotifyPlaybackStore((s) => s.playback?.track.artworkUrl ?? null);
 
   if (!ambient || !artworkUrl) return null;
 

@@ -1,9 +1,9 @@
 import { SpotifyServiceIcon } from "@/components/icons/service-icons";
 import { Tooltip } from "@/components/ui/tooltip";
-import { useSpotifyStore } from "@/widgets/spotify/useSpotifyStore";
+import { useSpotifyPlaybackStore } from "@/widgets/spotify/hooks/useSpotifyPlayback";
 
 export function SpotifyOpenLink() {
-  const trackId = useSpotifyStore((s) => s.nowPlayingTrackId);
+  const trackId = useSpotifyPlaybackStore((s) => s.playback?.track.id ?? null);
   if (!trackId) return null;
 
   return (

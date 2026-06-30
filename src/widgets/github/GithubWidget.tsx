@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { GitHubServiceIcon } from "@/components/icons/service-icons";
 import { useSettingsStore } from "@/settings";
 import { useIntegrationStore } from "@/integrations";
-import { useGithubStore } from "@/widgets/github/useGithubStore";
+import { useGithub } from "@/widgets/github/useGithubStore";
 import { ContributionsView } from "@/widgets/github/components/ContributionsView";
 import { InboxView } from "@/widgets/github/components/InboxView";
 import { GithubConnectPrompt } from "@/widgets/github/components/GithubConnectPrompt";
@@ -16,8 +16,8 @@ export function GithubWidget() {
   );
   const loaded = useIntegrationStore((s) => s.loaded);
   const load = useIntegrationStore((s) => s.load);
-  const view = useGithubStore((s) => s.view);
-  const showPrivate = useGithubStore((s) => s.showPrivate);
+  const view = useGithub((d) => d.view);
+  const showPrivate = useGithub((d) => d.showPrivate);
 
   useEffect(() => {
     if (!loaded) void load();

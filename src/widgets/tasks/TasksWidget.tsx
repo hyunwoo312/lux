@@ -7,16 +7,18 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { BorderTrail } from "@/components/ui/border-trail";
 import { VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
 import { orderTasks } from "@/widgets/tasks/lib/order";
-import { useTasksStore } from "@/widgets/tasks/useTasksStore";
+import { getTaskData, useTasks, useTasksStore } from "@/widgets/tasks/useTasksStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { DraftTaskRow, TaskRow } from "@/widgets/tasks/components/TaskRow";
 
 const REMOVE_DELAY_MS = 900;
 
 export function TasksWidget() {
-  const tasks = useTasksStore((s) => s.tasks);
-  const autoSort = useTasksStore((s) => s.autoSort);
-  const completedPosition = useTasksStore((s) => s.completedPosition);
-  const removeOnCompletion = useTasksStore((s) => s.removeOnCompletion);
+  const instanceId = useWidgetInstanceId();
+  const tasks = useTasks((d) => d.tasks);
+  const autoSort = useTasks((d) => d.autoSort);
+  const completedPosition = useTasks((d) => d.completedPosition);
+  const removeOnCompletion = useTasks((d) => d.removeOnCompletion);
   const addTask = useTasksStore((s) => s.addTask);
   const toggleTask = useTasksStore((s) => s.toggleTask);
   const editTask = useTasksStore((s) => s.editTask);
@@ -54,22 +56,22 @@ export function TasksWidget() {
     }
   };
 
-  const handleToggle = (id: string) => {
-    const before = useTasksStore.getState().tasks;
-    toggleTask(id);
-    const after = useTasksStore.getState().tasks;
-    const toggled = after.find((task) => task.id === id);
+  const handleToggle = (taskId: string) => {
+    const before = getTaskData(instanceId).tasks;
+    toggleTask(instanceId, taskId);
+    const after = getTaskData(instanceId).tasks;
+    const toggled = after.find((task) => task.id === taskId);
 
     if (removeOnCompletion && toggled?.done) {
-      cancelRemoval(id);
+      cancelRemoval(taskId);
       const timer = window.setTimeout(() => {
-        removalTimers.current.delete(id);
-        removeTask(id);
+        removalTimers.current.delete(taskId);
+        removeTask(instanceId, taskId);
       }, REMOVE_DELAY_MS);
-      removalTimers.current.set(id, timer);
+      removalTimers.current.set(taskId, timer);
       return;
     }
-    if (!toggled?.done) cancelRemoval(id);
+    if (!toggled?.done) cancelRemoval(taskId);
 
     const allDoneNow = after.length > 0 && after.every((task) => task.done);
     const allDoneBefore = before.length > 0 && before.every((task) => task.done);
@@ -82,7 +84,7 @@ export function TasksWidget() {
     event.preventDefault();
     if (!newTitle.trim()) return;
 
-    addTask(newTitle, draftId);
+    addTask(instanceId, newTitle, draftId);
     if (!reduced) setRevealingId(draftId);
     setNewTitle("");
     setDraftId(crypto.randomUUID());
@@ -94,7 +96,7 @@ export function TasksWidget() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      reorderTasks(String(active.id), String(over.id));
+      reorderTasks(instanceId, String(active.id), String(over.id));
     }
   };
 
@@ -147,8 +149,8 @@ export function TasksWidget() {
                     sortable={!autoSort}
                     revealing={task.id === revealingId}
                     onToggle={() => handleToggle(task.id)}
-                    onEdit={(title) => editTask(task.id, title)}
-                    onRemove={() => removeTask(task.id)}
+                    onEdit={(title) => editTask(instanceId, task.id, title)}
+                    onRemove={() => removeTask(instanceId, task.id)}
                   />
                 ))}
                 {hasDraft && <DraftTaskRow key={draftId} text={newTitle} />}

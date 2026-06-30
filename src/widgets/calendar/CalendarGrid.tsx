@@ -19,7 +19,7 @@ import {
 import { computeMonthLayout } from "@/widgets/calendar/lib/month-layout";
 import { SLIDE_SPRING } from "@/widgets/calendar/lib/motion";
 import { EASE_OUT_QUINT } from "@/lib/motion";
-import { useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import { useCalendar } from "@/widgets/calendar/useCalendarStore";
 import type { DisplayCalendarEvent } from "@/widgets/calendar/types";
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"] as const;
@@ -31,10 +31,10 @@ type CalendarGridProps = {
 
 export function CalendarGrid({ events, colors }: CalendarGridProps) {
   const reduced = useReducedMotion();
-  const mode = useCalendarStore((s) => s.mode);
-  const visibleMonth = useCalendarStore((s) => s.visibleMonth);
-  const selectedDay = useCalendarStore((s) => s.selectedDay);
-  const focusRowIndex = useCalendarStore((s) => s.focusRowIndex);
+  const mode = useCalendar((d) => d.mode);
+  const visibleMonth = useCalendar((d) => d.visibleMonth);
+  const selectedDay = useCalendar((d) => d.selectedDay);
+  const focusRowIndex = useCalendar((d) => d.focusRowIndex);
   const [hover, setHover] = useState<{ row: number; col: number } | null>(null);
   const hoverRectRef = useRef<DOMRect | null>(null);
 

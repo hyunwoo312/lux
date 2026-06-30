@@ -10,25 +10,25 @@ import { useCalendarAutoSync } from "@/widgets/calendar/hooks/useCalendarAutoSyn
 import { useCalendarConnection } from "@/widgets/calendar/hooks/useCalendarConnection";
 import { dedupeCalendarEvents } from "@/widgets/calendar/lib/agenda";
 import { buildCalendarColorMap } from "@/widgets/calendar/lib/colors";
-import { useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import { useCalendar } from "@/widgets/calendar/useCalendarStore";
 import { EASE_OUT_QUINT } from "@/lib/motion";
 
 export function CalendarWidget() {
   const reduced = useReducedMotion();
   const google = useCalendarConnection("google");
   const microsoft = useCalendarConnection("microsoft");
-  const events = useCalendarStore((s) => s.events);
-  const enabled = useCalendarStore((s) => s.enabled);
-  const view = useCalendarStore((s) => s.view);
-  const mode = useCalendarStore((s) => s.mode);
-  const status = useCalendarStore((s) => s.status);
-  const primarySource = useCalendarStore((s) => s.primarySource);
-  const googleCalendars = useCalendarStore((s) => s.google.calendars);
-  const microsoftCalendars = useCalendarStore((s) => s.microsoft.calendars);
-  const googleError = useCalendarStore((s) => s.google.lastError);
-  const microsoftError = useCalendarStore((s) => s.microsoft.lastError);
-  const enabledCalendarCount = useCalendarStore(
-    (s) => s.google.enabledCalendarIds.length + s.microsoft.enabledCalendarIds.length,
+  const events = useCalendar((d) => d.events);
+  const enabled = useCalendar((d) => d.enabled);
+  const view = useCalendar((d) => d.view);
+  const mode = useCalendar((d) => d.mode);
+  const status = useCalendar((d) => d.status);
+  const primarySource = useCalendar((d) => d.primarySource);
+  const googleCalendars = useCalendar((d) => d.google.calendars);
+  const microsoftCalendars = useCalendar((d) => d.microsoft.calendars);
+  const googleError = useCalendar((d) => d.google.lastError);
+  const microsoftError = useCalendar((d) => d.microsoft.lastError);
+  const enabledCalendarCount = useCalendar(
+    (d) => d.google.enabledCalendarIds.length + d.microsoft.enabledCalendarIds.length,
   );
 
   const { openConfig } = useWidgetChrome();

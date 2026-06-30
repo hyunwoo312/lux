@@ -1,14 +1,14 @@
 import { AnilistServiceIcon } from "@/components/icons/service-icons";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useIntegrationStore } from "@/integrations";
-import { useAnilistStore } from "@/widgets/anilist/useAnilistStore";
+import { useAnilist } from "@/widgets/anilist/useAnilistStore";
 
 export function AnilistProfileLink() {
   const name = useIntegrationStore((s) => {
     const account = s.accounts.find((entry) => entry.providerId === "anilist");
     return account?.status === "connected" ? account.displayName : undefined;
   });
-  const newTab = useAnilistStore((s) => s.openBehavior === "newTab");
+  const newTab = useAnilist((d) => d.openBehavior === "newTab");
 
   if (!name) return null;
 

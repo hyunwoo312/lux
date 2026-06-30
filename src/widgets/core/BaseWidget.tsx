@@ -62,11 +62,19 @@ export function BaseWidget({
 }: BaseWidgetProps) {
   const reduced = useReducedMotion();
   const [showConfig, setShowConfig] = useState(false);
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
   const chrome = useMemo(() => ({ openConfig: () => setShowConfig(true) }), []);
 
   useEffect(() => {
     if (editing) setShowConfig(false);
+    else setConfirmingRemove(false);
   }, [editing]);
+
+  useEffect(() => {
+    if (!confirmingRemove) return;
+    const timer = window.setTimeout(() => setConfirmingRemove(false), 3000);
+    return () => window.clearTimeout(timer);
+  }, [confirmingRemove]);
 
   const hasBackdrop = Boolean(backdrop);
   const contentBackdrop = hasBackdrop && !decorativeBackdrop;
@@ -186,15 +194,24 @@ export function BaseWidget({
             )}
             {editing && (
               <motion.div key="delete" {...spin}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 rounded-sm [&_svg]:size-4"
-                  aria-label={`Remove ${title}`}
-                  onClick={onRemove}
-                >
-                  <X />
-                </Button>
+                <Tooltip content={confirmingRemove ? "Click again to remove" : `Remove ${title}`}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "size-7 rounded-sm [&_svg]:size-4",
+                      confirmingRemove &&
+                        "text-destructive hover:text-destructive ring-destructive/60 ring-1",
+                    )}
+                    aria-label={confirmingRemove ? `Confirm remove ${title}` : `Remove ${title}`}
+                    onClick={() => {
+                      if (confirmingRemove) onRemove();
+                      else setConfirmingRemove(true);
+                    }}
+                  >
+                    <X />
+                  </Button>
+                </Tooltip>
               </motion.div>
             )}
           </AnimatePresence>

@@ -2,6 +2,9 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
+import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
+import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
+import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import type { OpenBehavior } from "@/lib/open-url";
 import { invalidatePolledResource } from "@/widgets/core/usePolledResource";
 import { invalidatePagedResource } from "@/widgets/core/usePagedResource";
@@ -21,39 +24,61 @@ export const ANILIST_SYNC_COOLDOWN_MS = 10_000;
 
 type SyncResult = { ok: boolean; remainingMs: number };
 
-type AnilistStoreState = {
+type AnilistData = {
   activeTab: AnilistTab;
   mediaFilter: MediaFilter;
   currentSort: CurrentSort;
   titleLanguage: TitleLanguage;
   openBehavior: OpenBehavior;
+};
+
+type AnilistStoreState = {
+  byInstance: Record<string, AnilistData>;
   lastSeenActivityAt?: number;
   lastSeenInboxAt?: number;
   syncNonce: number;
   syncing: boolean;
   lastSyncAt?: number;
-  setActiveTab: (activeTab: AnilistTab) => void;
-  setMediaFilter: (mediaFilter: MediaFilter) => void;
-  setCurrentSort: (currentSort: CurrentSort) => void;
-  setTitleLanguage: (titleLanguage: TitleLanguage) => void;
-  setOpenBehavior: (openBehavior: OpenBehavior) => void;
+  setActiveTab: (instanceId: string, activeTab: AnilistTab) => void;
+  setMediaFilter: (instanceId: string, mediaFilter: MediaFilter) => void;
+  setCurrentSort: (instanceId: string, currentSort: CurrentSort) => void;
+  setTitleLanguage: (instanceId: string, titleLanguage: TitleLanguage) => void;
+  setOpenBehavior: (instanceId: string, openBehavior: OpenBehavior) => void;
+  removeInstance: (instanceId: string) => void;
   setLastSeenActivity: (createdAt: number) => void;
   setLastSeenInbox: (createdAt: number) => void;
   setSyncing: (syncing: boolean) => void;
-  requestSync: () => SyncResult;
+  requestSync: (titleLanguage: TitleLanguage) => SyncResult;
 };
 
-const persistedSchema = z.object({
+const DEFAULT_DATA: AnilistData = {
+  activeTab: "activity",
+  mediaFilter: "both",
+  currentSort: "waiting",
+  titleLanguage: "english",
+  openBehavior: "currentTab",
+};
+
+const configSchema = z.object({
   activeTab: z.enum(ANILIST_TABS).default("activity"),
   mediaFilter: z.enum(MEDIA_FILTERS).default("both"),
   currentSort: z.enum(CURRENT_SORTS).default("waiting"),
   titleLanguage: z.enum(TITLE_LANGUAGES).default("english"),
   openBehavior: z.enum(["currentTab", "newTab"]).default("currentTab"),
+});
+
+const legacySchema = configSchema.extend({
   lastSeenActivityAt: z.number().optional(),
   lastSeenInboxAt: z.number().optional(),
 });
 
-function migratePersisted(persisted: unknown): unknown {
+const persistedSchema = z.object({
+  byInstance: z.record(z.string(), configSchema),
+  lastSeenActivityAt: z.number().optional(),
+  lastSeenInboxAt: z.number().optional(),
+});
+
+function migrateLegacyFields(persisted: unknown): unknown {
   if (!persisted || typeof persisted !== "object") return persisted;
   const raw = { ...(persisted as Record<string, unknown>) };
   if (raw.activeTab === undefined) {
@@ -72,24 +97,35 @@ function migratePersisted(persisted: unknown): unknown {
 
 const gatedStorage = createGatedChromeStorage();
 
+function update(
+  state: AnilistStoreState,
+  instanceId: string,
+  fn: (data: AnilistData) => AnilistData,
+): Pick<AnilistStoreState, "byInstance"> {
+  return { byInstance: patchInstance(state.byInstance, instanceId, DEFAULT_DATA, fn) };
+}
+
 export const useAnilistStore = create<AnilistStoreState>()(
   persist(
     (set, get) => ({
-      activeTab: "activity",
-      mediaFilter: "both",
-      currentSort: "waiting",
-      titleLanguage: "english",
-      openBehavior: "currentTab",
+      byInstance: {},
       lastSeenActivityAt: undefined,
       lastSeenInboxAt: undefined,
       syncNonce: 0,
       syncing: false,
       lastSyncAt: undefined,
-      setActiveTab: (activeTab) => set({ activeTab }),
-      setMediaFilter: (mediaFilter) => set({ mediaFilter }),
-      setCurrentSort: (currentSort) => set({ currentSort }),
-      setTitleLanguage: (titleLanguage) => set({ titleLanguage }),
-      setOpenBehavior: (openBehavior) => set({ openBehavior }),
+      setActiveTab: (instanceId, activeTab) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, activeTab }))),
+      setMediaFilter: (instanceId, mediaFilter) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, mediaFilter }))),
+      setCurrentSort: (instanceId, currentSort) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, currentSort }))),
+      setTitleLanguage: (instanceId, titleLanguage) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, titleLanguage }))),
+      setOpenBehavior: (instanceId, openBehavior) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, openBehavior }))),
+      removeInstance: (instanceId) =>
+        set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
       setLastSeenActivity: (createdAt) =>
         set((state) => ({
           lastSeenActivityAt: Math.max(state.lastSeenActivityAt ?? 0, createdAt),
@@ -99,16 +135,15 @@ export const useAnilistStore = create<AnilistStoreState>()(
           lastSeenInboxAt: Math.max(state.lastSeenInboxAt ?? 0, createdAt),
         })),
       setSyncing: (syncing) => set({ syncing }),
-      requestSync: () => {
+      requestSync: (titleLanguage) => {
         const remainingMs = syncCooldownRemainingMs(get().lastSyncAt, ANILIST_SYNC_COOLDOWN_MS);
         if (remainingMs > 0) {
           return { ok: false, remainingMs };
         }
-        const lang = get().titleLanguage;
-        invalidatePolledResource(`anilist:current:${lang}`);
+        invalidatePolledResource(`anilist:current:${titleLanguage}`);
         invalidatePolledResource("anilist:unread");
-        invalidatePagedResource(`anilist:activity:${lang}`);
-        invalidatePagedResource(`anilist:inbox:${lang}`);
+        invalidatePagedResource(`anilist:activity:${titleLanguage}`);
+        invalidatePagedResource(`anilist:inbox:${titleLanguage}`);
         set({ syncNonce: get().syncNonce + 1, lastSyncAt: Date.now() });
         return { ok: true, remainingMs: 0 };
       },
@@ -116,21 +151,44 @@ export const useAnilistStore = create<AnilistStoreState>()(
     {
       name: "widget:anilist",
       storage: gatedStorage,
-      version: 3,
+      version: 4,
       onRehydrateStorage: () => () => gatedStorage.open(),
       partialize: (state) => ({
-        activeTab: state.activeTab,
-        mediaFilter: state.mediaFilter,
-        currentSort: state.currentSort,
-        titleLanguage: state.titleLanguage,
-        openBehavior: state.openBehavior,
+        byInstance: state.byInstance,
         lastSeenActivityAt: state.lastSeenActivityAt,
         lastSeenInboxAt: state.lastSeenInboxAt,
       }),
+      migrate: (persisted, version) => {
+        if (version >= 4) return persisted;
+        const legacy = legacySchema.safeParse(migrateLegacyFields(persisted));
+        if (!legacy.success) return { byInstance: {} };
+        const { lastSeenActivityAt, lastSeenInboxAt, ...config } = legacy.data;
+        return { byInstance: { anilist: config }, lastSeenActivityAt, lastSeenInboxAt };
+      },
       merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(migratePersisted(persisted));
-        return parsed.success ? { ...current, ...parsed.data } : current;
+        const parsed = persistedSchema.safeParse(persisted);
+        if (!parsed.success) return current;
+        const byInstance: Record<string, AnilistData> = {};
+        for (const [id, data] of Object.entries(parsed.data.byInstance)) {
+          byInstance[id] = {
+            activeTab: data.activeTab,
+            mediaFilter: data.mediaFilter,
+            currentSort: data.currentSort,
+            titleLanguage: data.titleLanguage,
+            openBehavior: data.openBehavior,
+          };
+        }
+        return {
+          ...current,
+          byInstance,
+          lastSeenActivityAt: parsed.data.lastSeenActivityAt,
+          lastSeenInboxAt: parsed.data.lastSeenInboxAt,
+        };
       },
     },
   ),
 );
+
+registerInstanceCleanup((instanceId) => useAnilistStore.getState().removeInstance(instanceId));
+
+export const useAnilist = createInstanceSelector(useAnilistStore, DEFAULT_DATA);

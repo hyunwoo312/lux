@@ -20,7 +20,8 @@ import {
   type ImageMode,
   type ImageOrder,
 } from "@/widgets/image/types";
-import { useImageStore } from "@/widgets/image/useImageStore";
+import { useImage, useImageStore } from "@/widgets/image/useImageStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 type RotationTrigger = "newtab" | "timed" | "onclick";
 
@@ -56,17 +57,18 @@ const BRIGHTNESS_OPTIONS: { value: ImageBrightness; label: string }[] = [
 ];
 
 export function ImageConfig() {
-  const mode = useImageStore((s) => s.mode);
-  const single = useImageStore((s) => s.single);
-  const items = useImageStore((s) => s.items);
-  const rotateOnNewtab = useImageStore((s) => s.rotateOnNewtab);
-  const rotateTimed = useImageStore((s) => s.rotateTimed);
-  const rotateOnClick = useImageStore((s) => s.rotateOnClick);
-  const intervalSeconds = useImageStore((s) => s.intervalSeconds);
-  const order = useImageStore((s) => s.order);
-  const fit = useImageStore((s) => s.fit);
-  const brightness = useImageStore((s) => s.brightness);
-  const hideFrame = useImageStore((s) => s.hideFrame);
+  const instanceId = useWidgetInstanceId();
+  const mode = useImage((c) => c.mode);
+  const single = useImage((c) => c.single);
+  const items = useImage((c) => c.items);
+  const rotateOnNewtab = useImage((c) => c.rotateOnNewtab);
+  const rotateTimed = useImage((c) => c.rotateTimed);
+  const rotateOnClick = useImage((c) => c.rotateOnClick);
+  const intervalSeconds = useImage((c) => c.intervalSeconds);
+  const order = useImage((c) => c.order);
+  const fit = useImage((c) => c.fit);
+  const brightness = useImage((c) => c.brightness);
+  const hideFrame = useImage((c) => c.hideFrame);
   const setMode = useImageStore((s) => s.setMode);
   const setItems = useImageStore((s) => s.setItems);
   const setRotateOnNewtab = useImageStore((s) => s.setRotateOnNewtab);
@@ -90,9 +92,9 @@ export function ImageConfig() {
   ];
   const applyTriggers = (next: RotationTrigger[]) => {
     if (next.length === 0) return;
-    setRotateOnNewtab(next.includes("newtab"));
-    setRotateTimed(next.includes("timed"));
-    setRotateOnClick(next.includes("onclick"));
+    setRotateOnNewtab(instanceId, next.includes("newtab"));
+    setRotateTimed(instanceId, next.includes("timed"));
+    setRotateOnClick(instanceId, next.includes("onclick"));
   };
   const uploadTitle = isMulti ? "Add images" : single ? "Replace image" : "Upload image";
   const uploadDescription = isMulti
@@ -111,7 +113,7 @@ export function ImageConfig() {
               label="Image mode"
               value={mode}
               options={MODE_OPTIONS}
-              onChange={setMode}
+              onChange={(value) => setMode(instanceId, value)}
             />
           }
         />
@@ -139,7 +141,7 @@ export function ImageConfig() {
             assetStore={imageAssetStore}
             disabled={saving}
             onRemove={removeItem}
-            onReorder={setItems}
+            onReorder={(next) => setItems(instanceId, next)}
           />
         )}
         {error && <p className="text-destructive text-xs">{error}</p>}
@@ -163,7 +165,7 @@ export function ImageConfig() {
                   label="Rotation interval"
                   value={String(intervalSeconds)}
                   options={INTERVAL_OPTIONS}
-                  onChange={(value) => setIntervalSeconds(Number(value))}
+                  onChange={(value) => setIntervalSeconds(instanceId, Number(value))}
                   disabled={!rotateTimed}
                 />
               }
@@ -177,7 +179,7 @@ export function ImageConfig() {
                 label="Rotation order"
                 value={order}
                 options={ORDER_OPTIONS}
-                onChange={setOrder}
+                onChange={(value) => setOrder(instanceId, value)}
               />
             }
           />
@@ -189,7 +191,12 @@ export function ImageConfig() {
           title="Fit"
           description="How the image fills the widget"
           control={
-            <ConfigSelect label="Image fit" value={fit} options={FIT_OPTIONS} onChange={setFit} />
+            <ConfigSelect
+              label="Image fit"
+              value={fit}
+              options={FIT_OPTIONS}
+              onChange={(value) => setFit(instanceId, value)}
+            />
           }
         />
         <WidgetConfigItem
@@ -200,7 +207,7 @@ export function ImageConfig() {
               label="Image brightness"
               value={brightness}
               options={BRIGHTNESS_OPTIONS}
-              onChange={setBrightness}
+              onChange={(value) => setBrightness(instanceId, value)}
             />
           }
         />
@@ -210,7 +217,7 @@ export function ImageConfig() {
           control={
             <Switch
               checked={hideFrame}
-              onCheckedChange={(checked) => setHideFrame(checked === true)}
+              onCheckedChange={(checked) => setHideFrame(instanceId, checked === true)}
               aria-label="Hide image frame"
             />
           }

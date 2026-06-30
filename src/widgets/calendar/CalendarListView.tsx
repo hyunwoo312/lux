@@ -13,7 +13,7 @@ import {
   isMultiDayEvent,
 } from "@/widgets/calendar/lib/agenda";
 import { startOfDay } from "@/widgets/calendar/lib/dates";
-import { useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import { useCalendar } from "@/widgets/calendar/useCalendarStore";
 import type { CalendarSyncStatus, DisplayCalendarEvent } from "@/widgets/calendar/types";
 
 type CalendarListViewProps = {
@@ -25,8 +25,8 @@ type CalendarListViewProps = {
 
 export function CalendarListView({ events, colors, enabled, status }: CalendarListViewProps) {
   const reduced = useReducedMotion();
-  const lookaheadDays = useCalendarStore((s) => s.lookaheadDays);
-  const listAnchor = useCalendarStore((s) => s.listAnchor);
+  const lookaheadDays = useCalendar((d) => d.lookaheadDays);
+  const listAnchor = useCalendar((d) => d.listAnchor);
   const now = useNow();
   const today = useMemo(() => startOfDay(now), [now]);
   const rangeEvents = useMemo(

@@ -4,7 +4,8 @@ import {
   WidgetConfigItem,
 } from "@/components/config/WidgetConfig";
 import type { NoteFontSize } from "@/widgets/note/types";
-import { useNoteStore } from "@/widgets/note/useNoteStore";
+import { useNote, useNoteStore } from "@/widgets/note/useNoteStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 const FONT_SIZE_OPTIONS: { value: NoteFontSize; label: string }[] = [
   { value: "sm", label: "S" },
@@ -13,7 +14,8 @@ const FONT_SIZE_OPTIONS: { value: NoteFontSize; label: string }[] = [
 ];
 
 export function NoteConfig() {
-  const fontSize = useNoteStore((s) => s.fontSize);
+  const id = useWidgetInstanceId();
+  const { fontSize } = useNote(id);
   const setFontSize = useNoteStore((s) => s.setFontSize);
 
   return (
@@ -26,7 +28,7 @@ export function NoteConfig() {
             label="Note font size"
             value={fontSize}
             options={FONT_SIZE_OPTIONS}
-            onChange={setFontSize}
+            onChange={(value) => setFontSize(id, value)}
           />
         }
       />

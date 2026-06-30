@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { deleteImageAsset, saveImageAsset, validateImageFile } from "@/widgets/image/media";
 import { MAX_MULTI_IMAGES, type ImageItem } from "@/widgets/image/types";
-import { useImageStore } from "@/widgets/image/useImageStore";
+import { useImage, useImageStore } from "@/widgets/image/useImageStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 function toItem(metadata: {
   id: string;
@@ -18,9 +19,10 @@ function toItem(metadata: {
 }
 
 export function useImageUploads() {
-  const mode = useImageStore((s) => s.mode);
-  const single = useImageStore((s) => s.single);
-  const items = useImageStore((s) => s.items);
+  const instanceId = useWidgetInstanceId();
+  const mode = useImage((c) => c.mode);
+  const single = useImage((c) => c.single);
+  const items = useImage((c) => c.items);
   const setSingle = useImageStore((s) => s.setSingle);
   const setItems = useImageStore((s) => s.setItems);
 
@@ -39,7 +41,7 @@ export function useImageUploads() {
     const previousAssetId = single?.assetId ?? null;
     try {
       const saved = await saveImageAsset(file);
-      setSingle(toItem(saved));
+      setSingle(instanceId, toItem(saved));
       await deleteImageAsset(previousAssetId).catch(() => undefined);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Image could not be saved.");
@@ -75,7 +77,7 @@ export function useImageUploads() {
       for (const file of files) {
         saved.push(toItem(await saveImageAsset(file)));
       }
-      setItems([...items, ...saved]);
+      setItems(instanceId, [...items, ...saved]);
     } catch (saveError) {
       await Promise.all(saved.map((item) => deleteImageAsset(item.assetId).catch(() => undefined)));
       setError(saveError instanceof Error ? saveError.message : "Images could not be saved.");
@@ -96,7 +98,7 @@ export function useImageUploads() {
   async function removeItem(item: ImageItem) {
     setSaving(true);
     try {
-      setItems(items.filter((candidate) => candidate.assetId !== item.assetId));
+      setItems(instanceId, items.filter((candidate) => candidate.assetId !== item.assetId));
       await deleteImageAsset(item.assetId).catch(() => undefined);
     } finally {
       setSaving(false);
@@ -108,12 +110,12 @@ export function useImageUploads() {
     try {
       if (mode === "multi") {
         const assetIds = items.map((item) => item.assetId);
-        setItems([]);
+        setItems(instanceId, []);
         await Promise.all(assetIds.map((id) => deleteImageAsset(id).catch(() => undefined)));
         return;
       }
       const previousAssetId = single?.assetId ?? null;
-      setSingle(null);
+      setSingle(instanceId, null);
       await deleteImageAsset(previousAssetId).catch(() => undefined);
     } finally {
       setSaving(false);

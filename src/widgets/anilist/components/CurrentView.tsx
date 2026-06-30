@@ -15,7 +15,8 @@ import {
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
-import { useAnilistStore } from "@/widgets/anilist/useAnilistStore";
+import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import type {
   CurrentData,
   CurrentEntry,
@@ -47,7 +48,7 @@ type CurrentViewProps = {
 };
 
 export function CurrentView({ enabled, userId, newTab }: CurrentViewProps) {
-  const lang = useAnilistStore((s) => s.titleLanguage);
+  const lang = useAnilist((d) => d.titleLanguage);
   const { state, isRefreshing, refresh } = usePolledResource(
     (signal) => fetchCurrent(userId, lang, signal),
     {
@@ -81,9 +82,10 @@ function CurrentList({
   newTab: boolean;
   lang: TitleLanguage;
 }) {
-  const filter = useAnilistStore((s) => s.mediaFilter);
+  const instanceId = useWidgetInstanceId();
+  const filter = useAnilist((d) => d.mediaFilter);
   const setFilter = useAnilistStore((s) => s.setMediaFilter);
-  const sort = useAnilistStore((s) => s.currentSort);
+  const sort = useAnilist((d) => d.currentSort);
   const setSort = useAnilistStore((s) => s.setCurrentSort);
 
   const [progressOverrides, setProgressOverrides] = useState<Record<number, number>>({});
@@ -142,14 +144,14 @@ function CurrentList({
             label="Current filter"
             value={filter}
             options={FILTER_OPTIONS}
-            onChange={setFilter}
+            onChange={(value) => setFilter(instanceId, value)}
           />
         </div>
         <ConfigSelect
           label="Sort by"
           value={sort}
           options={SORT_OPTIONS}
-          onChange={setSort}
+          onChange={(value) => setSort(instanceId, value)}
           triggerClassName="w-auto"
         />
       </div>

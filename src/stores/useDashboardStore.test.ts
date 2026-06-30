@@ -8,7 +8,6 @@ describe("useDashboardStore", () => {
     useDashboardStore.setState({
       widgets: [],
       layout: [],
-      savedLayouts: {},
       columns: 12,
       editing: false,
       lastAddedId: null,
@@ -25,12 +24,14 @@ describe("useDashboardStore", () => {
     expect(layout[0]?.i).toBe(widgets[0]?.id);
   });
 
-  it("ignores a second instance of the same widget type", () => {
-    store().addWidget("quickAccess");
-    store().addWidget("quickAccess");
+  it("allows multiple instances of a multi-instance widget type", () => {
+    store().addWidget("note");
+    store().addWidget("note");
 
-    expect(store().widgets).toHaveLength(1);
-    expect(store().layout).toHaveLength(1);
+    const { widgets, layout } = store();
+    expect(widgets).toHaveLength(2);
+    expect(widgets[0]?.id).not.toBe(widgets[1]?.id);
+    expect(layout).toHaveLength(2);
   });
 
   it("places different widget types without overlapping", () => {
@@ -54,17 +55,6 @@ describe("useDashboardStore", () => {
     expect(layout).toHaveLength(0);
   });
 
-  it("restores the previous position when a widget is re-added", () => {
-    store().addWidget("quickAccess");
-    const id = store().widgets[0]!.id;
-    store().setLayout([{ i: id, x: 4, y: 6, w: 3, h: 3 }]);
-    store().removeWidget(id);
-
-    store().addWidget("quickAccess");
-
-    expect(store().layout.find((item) => item.i === id)).toMatchObject({ x: 4, y: 6 });
-  });
-
   it("toggles edit mode", () => {
     expect(store().editing).toBe(false);
     store().toggleEditing();
@@ -72,8 +62,8 @@ describe("useDashboardStore", () => {
   });
 
   it("records the last added widget id, then clears it", () => {
-    store().addWidget("note");
-    expect(store().lastAddedId).toBe("note");
+    store().addWidget("quickAccess");
+    expect(store().lastAddedId).toBe(store().widgets[0]?.id);
 
     store().clearLastAdded();
     expect(store().lastAddedId).toBeNull();

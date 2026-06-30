@@ -14,5 +14,4 @@ export const calendarPlugin: WidgetPlugin = {
   configComponent: CalendarConfig,
   statusComponent: CalendarStatus,
   headerActionComponent: CalendarHeaderActions,
-  accent: "orange",
-};
+  accent: "orange",};

@@ -6,17 +6,19 @@ import { cn } from "@/lib/utils";
 import type { WidgetContentProps } from "@/widgets/core/types";
 import { useImageUploads } from "@/widgets/image/hooks/useImageUploads";
 import { IMAGE_MIME_TYPES, MAX_MULTI_IMAGES } from "@/widgets/image/types";
-import { useImageStore } from "@/widgets/image/useImageStore";
+import { useImage, useImageStore } from "@/widgets/image/useImageStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 function getDroppedFiles(transfer: DataTransfer): File[] {
   return Array.from(transfer.files).filter((file) => file.type.startsWith("image/"));
 }
 
 export function ImageWidget({ editing }: WidgetContentProps) {
-  const mode = useImageStore((s) => s.mode);
-  const single = useImageStore((s) => s.single);
-  const items = useImageStore((s) => s.items);
-  const rotateOnClick = useImageStore((s) => s.rotateOnClick);
+  const instanceId = useWidgetInstanceId();
+  const mode = useImage((c) => c.mode);
+  const single = useImage((c) => c.single);
+  const items = useImage((c) => c.items);
+  const rotateOnClick = useImage((c) => c.rotateOnClick);
   const advanceImage = useImageStore((s) => s.advanceImage);
   const { saving, error, setError, handleFiles } = useImageUploads();
   const reduced = useReducedMotion();
@@ -43,7 +45,7 @@ export function ImageWidget({ editing }: WidgetContentProps) {
   const handleImageClick = () => {
     if (editing) return;
     if (clickAdvances) {
-      advanceImage();
+      advanceImage(instanceId);
       return;
     }
     if (atCapacity) {

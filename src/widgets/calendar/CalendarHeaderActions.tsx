@@ -11,7 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { CalendarViewToggle } from "@/widgets/calendar/CalendarViewToggle";
-import { useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 const NAV_BUTTON = "text-muted-foreground/60 hover:text-foreground size-6 rounded-sm [&_svg]:size-3.5";
 
@@ -61,9 +62,10 @@ function CollapsingNavButton({
 
 export function CalendarHeaderActions() {
   const reduced = useReducedMotion();
-  const view = useCalendarStore((s) => s.view);
-  const mode = useCalendarStore((s) => s.mode);
-  const selectedDay = useCalendarStore((s) => s.selectedDay);
+  const instanceId = useWidgetInstanceId();
+  const view = useCalendar((d) => d.view);
+  const mode = useCalendar((d) => d.mode);
+  const selectedDay = useCalendar((d) => d.selectedDay);
   const shiftMonth = useCalendarStore((s) => s.shiftMonth);
   const shiftWeek = useCalendarStore((s) => s.shiftWeek);
   const exitWeek = useCalendarStore((s) => s.exitWeek);
@@ -76,7 +78,12 @@ export function CalendarHeaderActions() {
     <div className="flex items-center gap-0.5">
       <AnimatePresence initial={false}>
         {inWeek && (
-          <CollapsingNavButton key="back" reduced={reduced} label="Back to month" onClick={exitWeek}>
+          <CollapsingNavButton
+            key="back"
+            reduced={reduced}
+            label="Back to month"
+            onClick={() => exitWeek(instanceId)}
+          >
             <ArrowLeft />
           </CollapsingNavButton>
         )}
@@ -85,7 +92,7 @@ export function CalendarHeaderActions() {
             key="prev-week"
             reduced={reduced}
             label="Previous week"
-            onClick={() => shiftWeek(-1)}
+            onClick={() => shiftWeek(instanceId, -1)}
           >
             <ChevronLeft />
           </CollapsingNavButton>
@@ -95,7 +102,7 @@ export function CalendarHeaderActions() {
             key="next-week"
             reduced={reduced}
             label="Next week"
-            onClick={() => shiftWeek(1)}
+            onClick={() => shiftWeek(instanceId, 1)}
           >
             <ChevronRight />
           </CollapsingNavButton>
@@ -105,7 +112,7 @@ export function CalendarHeaderActions() {
             key="prev-month"
             reduced={reduced}
             label="Previous month"
-            onClick={() => shiftMonth(-1)}
+            onClick={() => shiftMonth(instanceId, -1)}
           >
             <ChevronUp />
           </CollapsingNavButton>
@@ -115,13 +122,13 @@ export function CalendarHeaderActions() {
             key="next-month"
             reduced={reduced}
             label="Next month"
-            onClick={() => shiftMonth(1)}
+            onClick={() => shiftMonth(instanceId, 1)}
           >
             <ChevronDown />
           </CollapsingNavButton>
         )}
       </AnimatePresence>
-      <NavButton label="Go to today" onClick={goToToday}>
+      <NavButton label="Go to today" onClick={() => goToToday(instanceId)}>
         <CalendarClock />
       </NavButton>
       <span className="bg-border/50 mx-0.5 h-4 w-px shrink-0" aria-hidden />

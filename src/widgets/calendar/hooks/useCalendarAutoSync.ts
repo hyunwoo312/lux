@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { useIntegrationStore } from "@/integrations";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
-import { useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import { getCalendarData, useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 const PROVIDERS = ["google", "microsoft"] as const;
 const CHECK_INTERVAL_MS = 5 * 60 * 1000;
@@ -13,20 +14,21 @@ function connectedProviders(): readonly (typeof PROVIDERS)[number][] {
   );
 }
 
-function oldestSyncedAt(): number {
-  const state = useCalendarStore.getState();
+function oldestSyncedAt(instanceId: string): number {
+  const data = getCalendarData(instanceId);
   const connected = connectedProviders();
   if (connected.length === 0) return Date.now();
   let oldest = Number.POSITIVE_INFINITY;
   for (const providerId of connected) {
-    const lastSyncedAt = state[providerId].lastSyncedAt;
+    const lastSyncedAt = data[providerId].lastSyncedAt;
     oldest = Math.min(oldest, lastSyncedAt === undefined ? 0 : new Date(lastSyncedAt).getTime());
   }
   return oldest;
 }
 
 export function useCalendarAutoSync() {
-  const refreshIntervalHours = useCalendarStore((s) => s.refreshIntervalHours);
+  const instanceId = useWidgetInstanceId();
+  const refreshIntervalHours = useCalendar((d) => d.refreshIntervalHours);
   const connectedKey = useIntegrationStore((s) =>
     PROVIDERS.filter((providerId) =>
       s.accounts.some(
@@ -38,18 +40,21 @@ export function useCalendarAutoSync() {
   useEffect(() => {
     if (!connectedKey) return;
     const staleMs = refreshIntervalHours * 60 * 60 * 1000;
-    const refresh = () => void useCalendarStore.getState().sync();
+    const refresh = () => void useCalendarStore.getState().sync(instanceId);
 
-    if (document.visibilityState === "visible" && Date.now() - oldestSyncedAt() >= staleMs) {
+    if (
+      document.visibilityState === "visible" &&
+      Date.now() - oldestSyncedAt(instanceId) >= staleMs
+    ) {
       refresh();
     }
 
     return refreshScheduler.register({
-      id: "calendar:autosync",
+      id: `calendar:autosync:${instanceId}`,
       staleMs,
       pollIntervalMs: CHECK_INTERVAL_MS,
-      getLastRefreshedAt: oldestSyncedAt,
+      getLastRefreshedAt: () => oldestSyncedAt(instanceId),
       refresh,
     });
-  }, [connectedKey, refreshIntervalHours]);
+  }, [connectedKey, refreshIntervalHours, instanceId]);
 }

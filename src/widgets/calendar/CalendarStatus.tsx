@@ -5,7 +5,7 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { AnimatedHeaderText } from "@/widgets/calendar/components/AnimatedHeaderText";
 import { CalendarRangePicker } from "@/widgets/calendar/components/CalendarRangePicker";
 import { addDays } from "@/widgets/calendar/lib/dates";
-import { useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import { useCalendar } from "@/widgets/calendar/useCalendarStore";
 import { MAX_LOOKAHEAD_DAYS } from "@/widgets/calendar/types";
 
 const monthFormatter = new Intl.DateTimeFormat(undefined, { month: "short", year: "numeric" });
@@ -23,12 +23,12 @@ function formatRange(start: Date, end: Date): string {
 
 export function CalendarStatus() {
   const [open, setOpen] = useState(false);
-  const view = useCalendarStore((s) => s.view);
-  const mode = useCalendarStore((s) => s.mode);
-  const visibleMonth = useCalendarStore((s) => s.visibleMonth);
-  const selectedDay = useCalendarStore((s) => s.selectedDay);
-  const listAnchor = useCalendarStore((s) => s.listAnchor);
-  const lookaheadDays = useCalendarStore((s) => s.lookaheadDays);
+  const view = useCalendar((d) => d.view);
+  const mode = useCalendar((d) => d.mode);
+  const visibleMonth = useCalendar((d) => d.visibleMonth);
+  const selectedDay = useCalendar((d) => d.selectedDay);
+  const listAnchor = useCalendar((d) => d.listAnchor);
+  const lookaheadDays = useCalendar((d) => d.lookaheadDays);
 
   const isList = view === "list";
 

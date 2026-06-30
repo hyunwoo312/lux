@@ -8,7 +8,8 @@ import { openUrl } from "@/lib/open-url";
 import { useBrowserItems } from "@/widgets/quick-access/hooks/useBrowserItems";
 import { keyOf } from "@/widgets/quick-access/lib/url";
 import type { QuickAccessTab } from "@/widgets/quick-access/types";
-import { useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
+import { useQuickAccess, useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 function Message({ children }: { children: string }) {
   return (
@@ -48,9 +49,10 @@ export function BrowserTab({ tab, editing }: BrowserTabProps) {
   const granted = usePermissionGranted(gate.permission);
   const blocked = isPermissionsManageable() && !granted;
   const state = useBrowserItems(tab, !blocked);
-  const openBehavior = useQuickAccessStore((s) => s.openBehavior);
-  const view = useQuickAccessStore((s) => s.view);
-  const links = useQuickAccessStore((s) => s.links);
+  const instanceId = useWidgetInstanceId();
+  const openBehavior = useQuickAccess((d) => d.openBehavior);
+  const view = useQuickAccess((d) => d.view);
+  const links = useQuickAccess((d) => d.links);
   const togglePin = useQuickAccessStore((s) => s.togglePin);
   const pinnedUrls = useMemo(() => new Set(links.map((link) => keyOf(link.url))), [links]);
   const open = (url: string) => openUrl(url, openBehavior);
@@ -79,7 +81,7 @@ export function BrowserTab({ tab, editing }: BrowserTabProps) {
             animateLayout={!editing}
             pinnedUrls={pinnedUrls}
             onOpen={open}
-            onTogglePin={(item) => togglePin(item.title, item.url)}
+            onTogglePin={(item) => togglePin(instanceId, item.title, item.url)}
           />
         ))}
     </div>

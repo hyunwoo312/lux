@@ -2,7 +2,8 @@ import { Inbox, Newspaper, PlayCircle } from "lucide-react";
 import { AnilistServiceIcon } from "@/components/icons/service-icons";
 import { useIntegrationStore } from "@/integrations";
 import { WidgetTabs, type WidgetTab } from "@/widgets/core/WidgetTabs";
-import { useAnilistStore } from "@/widgets/anilist/useAnilistStore";
+import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import type { AnilistTab } from "@/widgets/anilist/types";
 
 const TABS: WidgetTab<AnilistTab>[] = [
@@ -15,10 +16,13 @@ export function AnilistTabs() {
   const connected = useIntegrationStore(
     (s) => s.accounts.find((entry) => entry.providerId === "anilist")?.status === "connected",
   );
-  const activeTab = useAnilistStore((s) => s.activeTab);
+  const instanceId = useWidgetInstanceId();
+  const activeTab = useAnilist((d) => d.activeTab);
   const setActiveTab = useAnilistStore((s) => s.setActiveTab);
 
   if (!connected) return <AnilistServiceIcon className="size-4" />;
 
-  return <WidgetTabs tabs={TABS} value={activeTab} onSelect={setActiveTab} />;
+  return (
+    <WidgetTabs tabs={TABS} value={activeTab} onSelect={(tab) => setActiveTab(instanceId, tab)} />
+  );
 }

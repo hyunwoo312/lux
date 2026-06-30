@@ -19,5 +19,4 @@ export const spotifyPlugin: WidgetPlugin = {
   headerActionComponent: SpotifyOpenLink,
   backdropComponent: SpotifyBackdrop,
   decorativeBackdrop: true,
-  accent: SPOTIFY_ACCENT,
-};
+  accent: SPOTIFY_ACCENT,};
