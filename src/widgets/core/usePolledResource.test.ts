@@ -1,10 +1,26 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { usePolledResource } from "@/widgets/core/usePolledResource";
+import { backoffDelayMs, usePolledResource } from "@/widgets/core/usePolledResource";
 
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
+});
+
+describe("backoffDelayMs", () => {
+  it("has no delay before any failure", () => {
+    expect(backoffDelayMs(0)).toBe(0);
+  });
+
+  it("doubles from the base with each consecutive failure", () => {
+    expect(backoffDelayMs(1)).toBe(60_000);
+    expect(backoffDelayMs(2)).toBe(120_000);
+    expect(backoffDelayMs(3)).toBe(240_000);
+  });
+
+  it("caps at the maximum", () => {
+    expect(backoffDelayMs(20)).toBe(30 * 60_000);
+  });
 });
 
 describe("usePolledResource", () => {
@@ -87,9 +103,12 @@ describe("usePolledResource", () => {
 
   it("refetches a fresh load when refreshKey changes", async () => {
     const fetcher = vi.fn().mockResolvedValueOnce(["a"]).mockResolvedValueOnce(["b"]);
-    const { result, rerender } = renderHook(({ key }) => usePolledResource(fetcher, { refreshKey: key }), {
-      initialProps: { key: "first" },
-    });
+    const { result, rerender } = renderHook(
+      ({ key }) => usePolledResource(fetcher, { refreshKey: key }),
+      {
+        initialProps: { key: "first" },
+      },
+    );
 
     await waitFor(() => expect(result.current.state).toEqual({ status: "success", data: ["a"] }));
     rerender({ key: "second" });
@@ -122,7 +141,9 @@ describe("usePolledResource", () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
 
     act(() => a.result.current.refresh());
-    await waitFor(() => expect(b.result.current.state).toEqual({ status: "success", data: [1, 2] }));
+    await waitFor(() =>
+      expect(b.result.current.state).toEqual({ status: "success", data: [1, 2] }),
+    );
     expect(a.result.current.state).toEqual({ status: "success", data: [1, 2] });
     expect(fetcher).toHaveBeenCalledTimes(2);
   });

@@ -1,55 +1,13 @@
-import type { CSSProperties } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { cn } from "@/lib/utils";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
+import { SortableRow } from "@/widgets/core/SortableRow";
 import { WeatherCard } from "@/widgets/weather/components/WeatherCard";
 import { EASE_OUT_QUINT } from "@/lib/motion";
 import { useWeather, useWeatherStore } from "@/widgets/weather/useWeatherStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import type { WeatherLocation, WeatherUnits } from "@/widgets/weather/types";
-
-const ROW_TRANSITION = { duration: 0.2, ease: "easeOut" } as const;
-
-function SortableCityRow({ location, units }: { location: WeatherLocation; units: WeatherUnits }) {
-  const reduced = useReducedMotion();
-  const instanceId = useWidgetInstanceId();
-  const selectCity = useWeatherStore((s) => s.selectCity);
-  const removeLocation = useWeatherStore((s) => s.removeLocation);
-  const { setNodeRef, listeners, transform, transition, isDragging } = useSortable({
-    id: location.id,
-  });
-
-  const style: CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 1 : undefined,
-  };
-
-  return (
-    <motion.li
-      ref={setNodeRef}
-      style={style}
-      {...listeners}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
-      transition={ROW_TRANSITION}
-      className={cn("touch-none", isDragging ? "cursor-grabbing opacity-60" : "cursor-grab")}
-    >
-      <WeatherCard
-        location={location}
-        units={units}
-        mode="compact"
-        onSelect={() => selectCity(instanceId, location.id)}
-        onRemove={() => removeLocation(instanceId, location.id)}
-      />
-    </motion.li>
-  );
-}
 
 export function WeatherWidget() {
   const reduced = useReducedMotion();
@@ -57,6 +15,7 @@ export function WeatherWidget() {
   const locations = useWeather((d) => d.locations);
   const units = useWeather((d) => d.units);
   const selectedId = useWeather((d) => d.selectedId);
+  const selectCity = useWeatherStore((s) => s.selectCity);
   const removeLocation = useWeatherStore((s) => s.removeLocation);
   const reorderLocations = useWeatherStore((s) => s.reorderLocations);
 
@@ -78,9 +37,11 @@ export function WeatherWidget() {
   return (
     <div className="relative h-full overflow-hidden">
       {locations.length === 0 ? (
-        <div className="
-          text-muted-foreground flex h-full items-center justify-center px-2 text-center text-sm
-        ">
+        <div
+          className="
+            text-muted-foreground flex h-full items-center justify-center px-2 text-center text-sm
+          "
+        >
           Search above to add a city.
         </div>
       ) : (
@@ -123,7 +84,15 @@ export function WeatherWidget() {
                   <ul className="flex flex-col gap-0.5">
                     <AnimatePresence initial={false} mode="popLayout">
                       {locations.map((location) => (
-                        <SortableCityRow key={location.id} location={location} units={units} />
+                        <SortableRow key={location.id} id={location.id}>
+                          <WeatherCard
+                            location={location}
+                            units={units}
+                            mode="compact"
+                            onSelect={() => selectCity(instanceId, location.id)}
+                            onRemove={() => removeLocation(instanceId, location.id)}
+                          />
+                        </SortableRow>
                       ))}
                     </AnimatePresence>
                   </ul>

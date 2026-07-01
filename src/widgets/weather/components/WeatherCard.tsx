@@ -43,8 +43,8 @@ function RemoveButton({
       className={cn(
         `
           text-muted-foreground/60
-          hover:text-foreground hover:bg-foreground/5
-          grid size-7 shrink-0 place-items-center rounded-md transition-colors
+          hover:text-destructive
+          grid size-7 shrink-0 place-items-center transition
           [&_svg]:size-4
         `,
         className,
@@ -157,15 +157,23 @@ export function WeatherCard({ location, units, mode, onSelect, onRemove }: Weath
   const data = state.status === "success" ? state.data : null;
 
   return (
-    <div className="
-      group
-      hover:bg-foreground/5
-      flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors
-    ">
+    <div
+      className="
+        group
+        hover:bg-foreground/5
+        relative flex items-center rounded-lg px-2 py-1.5 transition-colors
+      "
+    >
       <button
         type="button"
         onClick={onSelect}
-        className="flex min-w-0 flex-1 items-center gap-3 text-left outline-none"
+        className="
+          flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left outline-none
+          transition-[padding] duration-200
+          group-hover:pr-9
+          group-focus-within:pr-9
+          focus-visible:ring-foreground/30 focus-visible:ring-2 focus-visible:ring-inset
+        "
         aria-label={`Show ${location.name} forecast`}
       >
         <span className="grid size-7 shrink-0 place-items-center">
@@ -194,7 +202,11 @@ export function WeatherCard({ location, units, mode, onSelect, onRemove }: Weath
       <RemoveButton
         name={location.name}
         onRemove={onRemove}
-        className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+        className="
+          absolute top-1/2 right-1.5 -translate-y-1/2 translate-x-2 opacity-0 transition
+          group-hover:translate-x-0 group-hover:opacity-100
+          group-focus-within:translate-x-0 group-focus-within:opacity-100
+        "
       />
     </div>
   );

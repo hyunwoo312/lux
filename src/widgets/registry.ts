@@ -8,6 +8,7 @@ import { githubPlugin } from "@/widgets/github";
 import { weatherPlugin } from "@/widgets/weather";
 import { anilistPlugin } from "@/widgets/anilist";
 import { notePlugin } from "@/widgets/note";
+import { stocksPlugin } from "@/widgets/stocks";
 
 const plugins: Record<WidgetType, WidgetPlugin> = {
   tasks: tasksPlugin,
@@ -19,6 +20,7 @@ const plugins: Record<WidgetType, WidgetPlugin> = {
   weather: weatherPlugin,
   anilist: anilistPlugin,
   note: notePlugin,
+  stocks: stocksPlugin,
 };
 
 export const widgetPlugins: WidgetPlugin[] = Object.values(plugins);

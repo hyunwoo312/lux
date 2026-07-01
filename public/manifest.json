@@ -21,7 +21,9 @@
     "https://api.github.com/*",
     "https://api.open-meteo.com/*",
     "https://geocoding-api.open-meteo.com/*",
-    "https://graphql.anilist.co/*"
+    "https://graphql.anilist.co/*",
+    "https://query1.finance.yahoo.com/*",
+    "https://query2.finance.yahoo.com/*"
   ],
   "content_scripts": [
     {
