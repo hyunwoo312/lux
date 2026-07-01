@@ -39,10 +39,26 @@ const layoutItemSchema = z.object({
   maxH: z.number().optional(),
 });
 
+const widgetInstanceSchema = z.object({ id: z.string(), type: widgetTypeSchema });
+
 const persistedSchema = z.object({
-  widgets: z.array(z.object({ id: z.string(), type: widgetTypeSchema })),
+  widgets: z.array(z.unknown()),
   layout: z.array(layoutItemSchema),
 });
+
+export function reconcilePersisted(
+  persisted: unknown,
+): { widgets: WidgetInstance[]; layout: Layout } | null {
+  const parsed = persistedSchema.safeParse(persisted);
+  if (!parsed.success) return null;
+  const widgets = parsed.data.widgets
+    .map((widget) => widgetInstanceSchema.safeParse(widget))
+    .filter((result) => result.success)
+    .map((result) => result.data);
+  const ids = new Set(widgets.map((widget) => widget.id));
+  const layout = parsed.data.layout.filter((item) => ids.has(item.i));
+  return { widgets, layout };
+}
 
 function placeLayoutItem(
   layout: Layout,
@@ -115,13 +131,9 @@ export const useDashboardStore = create<DashboardState>()(
         layout: state.layout,
       }),
       merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(persisted);
-        if (!parsed.success) return current;
-        return {
-          ...current,
-          widgets: parsed.data.widgets,
-          layout: parsed.data.layout,
-        };
+        const reconciled = reconcilePersisted(persisted);
+        if (!reconciled) return current;
+        return { ...current, ...reconciled };
       },
     },
   ),

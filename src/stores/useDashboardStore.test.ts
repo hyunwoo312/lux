@@ -1,4 +1,4 @@
-import { useDashboardStore } from "@/stores/useDashboardStore";
+import { reconcilePersisted, useDashboardStore } from "@/stores/useDashboardStore";
 import { collides } from "@/widgets/core/layout-engine";
 
 const store = () => useDashboardStore.getState();
@@ -67,5 +67,27 @@ describe("useDashboardStore", () => {
 
     store().clearLastAdded();
     expect(store().lastAddedId).toBeNull();
+  });
+
+  describe("reconcilePersisted", () => {
+    it("drops widgets of an unknown type instead of resetting the dashboard", () => {
+      const result = reconcilePersisted({
+        widgets: [
+          { id: "note-1", type: "note" },
+          { id: "clock-1", type: "clock" },
+        ],
+        layout: [
+          { i: "note-1", x: 0, y: 0, w: 4, h: 4 },
+          { i: "clock-1", x: 4, y: 0, w: 4, h: 4 },
+        ],
+      });
+
+      expect(result?.widgets).toEqual([{ id: "note-1", type: "note" }]);
+      expect(result?.layout.map((item) => item.i)).toEqual(["note-1"]);
+    });
+
+    it("returns null when the persisted shape is not a dashboard", () => {
+      expect(reconcilePersisted({ widgets: "nope" })).toBeNull();
+    });
   });
 });
