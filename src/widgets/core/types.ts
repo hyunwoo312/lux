@@ -14,6 +14,7 @@ export const WIDGET_TYPES = [
   "anilist",
   "note",
   "stocks",
+  "news",
 ] as const;
 export type WidgetType = (typeof WIDGET_TYPES)[number];
 

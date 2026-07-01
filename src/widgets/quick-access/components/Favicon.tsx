@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { faviconUrl } from "@/widgets/quick-access/favicon";
+import { faviconUrl } from "@/lib/favicon";
 import { hashHue, monogram } from "@/widgets/quick-access/lib/url";
 
 type FaviconProps = {

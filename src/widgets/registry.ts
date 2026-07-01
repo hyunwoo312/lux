@@ -9,6 +9,7 @@ import { weatherPlugin } from "@/widgets/weather";
 import { anilistPlugin } from "@/widgets/anilist";
 import { notePlugin } from "@/widgets/note";
 import { stocksPlugin } from "@/widgets/stocks";
+import { newsPlugin } from "@/widgets/news";
 
 const plugins: Record<WidgetType, WidgetPlugin> = {
   tasks: tasksPlugin,
@@ -21,6 +22,7 @@ const plugins: Record<WidgetType, WidgetPlugin> = {
   anilist: anilistPlugin,
   note: notePlugin,
   stocks: stocksPlugin,
+  news: newsPlugin,
 };
 
 export const widgetPlugins: WidgetPlugin[] = Object.values(plugins);

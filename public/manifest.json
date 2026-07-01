@@ -23,7 +23,11 @@
     "https://geocoding-api.open-meteo.com/*",
     "https://graphql.anilist.co/*",
     "https://query1.finance.yahoo.com/*",
-    "https://query2.finance.yahoo.com/*"
+    "https://query2.finance.yahoo.com/*",
+    "https://news.google.com/*",
+    "https://rss.nytimes.com/*",
+    "https://feeds.bbci.co.uk/*",
+    "https://news.yahoo.com/*"
   ],
   "content_scripts": [
     {

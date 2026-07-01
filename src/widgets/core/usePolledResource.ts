@@ -21,6 +21,7 @@ export type PolledResourceState<T> =
 export type PolledResource<T> = {
   state: PolledResourceState<T>;
   isRefreshing: boolean;
+  lastSyncedAt: number;
   refresh: () => void;
 };
 
@@ -53,6 +54,18 @@ const LOADING: Snapshot<never> = {
   isRefreshing: false,
   at: 0,
 };
+
+function seedSnapshot<T>(
+  enabled: boolean,
+  cacheKey: string | undefined,
+  persist: boolean,
+  parsePersisted?: (raw: unknown) => T | null,
+): Snapshot<T> {
+  const seed = enabled && cacheKey ? seededEntry<T>(cacheKey, persist, parsePersisted) : undefined;
+  return seed
+    ? { data: seed.data, error: undefined, hasLoaded: true, isRefreshing: false, at: seed.at }
+    : { ...LOADING };
+}
 
 type CacheEntry<T> = { data: T; at: number };
 
@@ -326,13 +339,15 @@ export function usePolledResource<T>(
   const parsePersistedRef = useRef(parsePersisted);
   parsePersistedRef.current = parsePersisted;
 
-  const [snapshot, setSnapshot] = useState<Snapshot<T>>(() => {
-    const seed =
-      enabled && cacheKey ? seededEntry<T>(cacheKey, persist, parsePersisted) : undefined;
-    return seed
-      ? { data: seed.data, error: undefined, hasLoaded: true, isRefreshing: false, at: seed.at }
-      : { ...LOADING };
-  });
+  const [snapshot, setSnapshot] = useState<Snapshot<T>>(() =>
+    seedSnapshot<T>(enabled, cacheKey, persist, parsePersisted),
+  );
+
+  const keyRef = useRef(key);
+  if (keyRef.current !== key) {
+    keyRef.current = key;
+    setSnapshot(seedSnapshot<T>(enabled, cacheKey, persistRef.current, parsePersistedRef.current));
+  }
 
   const resourceRef = useRef<SharedResource<T> | null>(null);
 
@@ -374,5 +389,5 @@ export function usePolledResource<T>(
     state = { status: "success", data: snapshot.data };
   }
 
-  return { state, isRefreshing: snapshot.isRefreshing, refresh };
+  return { state, isRefreshing: snapshot.isRefreshing, lastSyncedAt: snapshot.at, refresh };
 }

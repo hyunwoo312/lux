@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { WidgetIcon } from "@/widgets/core/types";
 
-export type WidgetTab<T extends string> = { value: T; label: string; icon: LucideIcon };
+export type WidgetTab<T extends string> = { value: T; label: string; icon: WidgetIcon };
 
 type WidgetTabsProps<T extends string> = {
   tabs: WidgetTab<T>[];
