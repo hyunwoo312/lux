@@ -5,16 +5,13 @@ import {
   watchPolledResource,
 } from "@/widgets/core/usePolledResource";
 import { fetchQuote, parseCachedQuote } from "@/widgets/stocks/lib/yahoo-finance";
-import { marketState } from "@/widgets/stocks/lib/quote";
+import { marketState, quoteCacheKey } from "@/widgets/stocks/lib/quote";
 import { useStocks } from "@/widgets/stocks/useStocksStore";
+import { useStocksSync } from "@/widgets/stocks/hooks/useStocksSync";
 import type { Quote, StockRange } from "@/widgets/stocks/types";
 
 const OPEN_INTERVAL_MS = 60_000;
 const CLOSED_INTERVAL_MS = 10 * 60_000;
-
-export function quoteCacheKey(symbol: string, range: StockRange): string {
-  return `stocks:quote:${symbol}:${range}`;
-}
 
 export function useQuotesVersion(symbols: string[], range: StockRange, enabled: boolean): number {
   const subscribe = useCallback(
@@ -57,6 +54,8 @@ export function useQuote(symbol: string) {
     persist: true,
     parsePersisted: parseCachedQuote,
   });
+
+  useStocksSync(resource.refresh, resource.isRefreshing);
 
   const data = resource.state.status === "success" ? resource.state.data : null;
   lastData.current = data;

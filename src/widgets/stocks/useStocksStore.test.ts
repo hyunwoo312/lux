@@ -10,6 +10,9 @@ beforeEach(() => {
     byInstance: {
       [ID]: { symbols: [], range: "1d", showName: true, sort: "manual", selectedSymbol: null },
     },
+    syncNonce: {},
+    lastSyncAt: {},
+    syncing: {},
   });
 });
 
@@ -93,5 +96,31 @@ describe("useStocksStore", () => {
     store().selectSymbol(ID, "AAPL");
     store().removeSymbol(ID, "AAPL");
     expect(store().byInstance[ID]?.selectedSymbol).toBeNull();
+  });
+
+  describe("requestRefresh", () => {
+    beforeEach(() => {
+      store().addSymbol(ID, "AAPL");
+      store().addSymbol(ID, "MSFT");
+    });
+
+    it("bumps the sync nonce and records the sync time", () => {
+      store().requestRefresh(ID);
+      expect(store().syncNonce[ID]).toBe(1);
+      expect(typeof store().lastSyncAt[ID]).toBe("number");
+    });
+
+    it("is a no-op while cooling down", () => {
+      store().requestRefresh(ID);
+      store().requestRefresh(ID);
+      expect(store().syncNonce[ID]).toBe(1);
+    });
+
+    it("drops sync state on instance cleanup", () => {
+      store().requestRefresh(ID);
+      store().removeInstance(ID);
+      expect(store().syncNonce[ID]).toBeUndefined();
+      expect(store().lastSyncAt[ID]).toBeUndefined();
+    });
   });
 });

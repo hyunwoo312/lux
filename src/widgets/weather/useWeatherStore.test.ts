@@ -92,6 +92,31 @@ describe("useWeatherStore", () => {
     expect(data("b")?.locations.map((entry) => entry.id)).toEqual(["y"]);
   });
 
+  describe("requestRefresh", () => {
+    beforeEach(() => {
+      useWeatherStore.setState({
+        byInstance: {
+          [ID]: { locations: [city("a")], units: "metric", selectedId: null, searchOpen: false },
+        },
+        syncNonce: {},
+        lastSyncAt: {},
+        syncing: {},
+      });
+    });
+
+    it("bumps the nonce and records the sync time on first refresh", () => {
+      store().requestRefresh(ID);
+      expect(store().syncNonce[ID]).toBe(1);
+      expect(store().lastSyncAt[ID]).toBeGreaterThan(0);
+    });
+
+    it("is a no-op while cooling down", () => {
+      store().requestRefresh(ID);
+      store().requestRefresh(ID);
+      expect(store().syncNonce[ID]).toBe(1);
+    });
+  });
+
   describe("migrate", () => {
     const migrate = useWeatherStore.persist.getOptions().migrate;
 

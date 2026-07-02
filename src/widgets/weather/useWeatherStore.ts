@@ -5,9 +5,12 @@ import { createGatedChromeStorage } from "@/lib/storage";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
+import { invalidatePolledResource } from "@/widgets/core/usePolledResource";
+import { syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
 import { makeLocationId, type WeatherLocation, type WeatherUnits } from "@/widgets/weather/types";
 
 export const MAX_LOCATIONS = 10;
+export const WEATHER_SYNC_COOLDOWN_MS = 300_000;
 
 type WeatherData = {
   locations: WeatherLocation[];
@@ -18,6 +21,9 @@ type WeatherData = {
 
 type WeatherState = {
   byInstance: Record<string, WeatherData>;
+  syncNonce: Record<string, number>;
+  lastSyncAt: Record<string, number>;
+  syncing: Record<string, boolean>;
   addLocation: (instanceId: string, location: WeatherLocation) => void;
   removeLocation: (instanceId: string, id: string) => void;
   reorderLocations: (instanceId: string, activeId: string, overId: string) => void;
@@ -26,6 +32,8 @@ type WeatherState = {
   setUnits: (instanceId: string, units: WeatherUnits) => void;
   openSearch: (instanceId: string) => void;
   closeSearch: (instanceId: string) => void;
+  setSyncing: (instanceId: string, syncing: boolean) => void;
+  requestRefresh: (instanceId: string) => void;
   removeInstance: (instanceId: string) => void;
 };
 
@@ -92,8 +100,11 @@ function migrateLegacyToConfig(persisted: unknown): { locations: WeatherLocation
 
 export const useWeatherStore = create<WeatherState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       byInstance: {},
+      syncNonce: {},
+      lastSyncAt: {},
+      syncing: {},
       addLocation: (instanceId, location) =>
         set((state) => {
           const data = state.byInstance[instanceId] ?? DEFAULT_DATA;
@@ -134,8 +145,31 @@ export const useWeatherStore = create<WeatherState>()(
         set((state) => update(state, instanceId, (data) => ({ ...data, searchOpen: true }))),
       closeSearch: (instanceId) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, searchOpen: false }))),
+      setSyncing: (instanceId, syncing) =>
+        set((state) => ({ syncing: { ...state.syncing, [instanceId]: syncing } })),
+      requestRefresh: (instanceId) => {
+        if (syncCooldownRemainingMs(get().lastSyncAt[instanceId], WEATHER_SYNC_COOLDOWN_MS) > 0) {
+          return;
+        }
+        const inst = get().byInstance[instanceId];
+        if (!inst) return;
+        for (const location of inst.locations) {
+          invalidatePolledResource(
+            `weather:${location.latitude},${location.longitude},${inst.units}`,
+          );
+        }
+        set((state) => ({
+          syncNonce: { ...state.syncNonce, [instanceId]: (state.syncNonce[instanceId] ?? 0) + 1 },
+          lastSyncAt: { ...state.lastSyncAt, [instanceId]: Date.now() },
+        }));
+      },
       removeInstance: (instanceId) =>
-        set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
+        set((state) => ({
+          byInstance: dropInstance(state.byInstance, instanceId),
+          syncNonce: dropInstance(state.syncNonce, instanceId),
+          lastSyncAt: dropInstance(state.lastSyncAt, instanceId),
+          syncing: dropInstance(state.syncing, instanceId),
+        })),
     }),
     {
       name: "widget:weather",

@@ -1,5 +1,9 @@
 import type { Quote, StockRange } from "@/widgets/stocks/types";
 
+export function quoteCacheKey(symbol: string, range: StockRange): string {
+  return `stocks:quote:${symbol}:${range}`;
+}
+
 export function referencePrice(quote: Quote, range: StockRange): number {
   if (range === "1d") return quote.previousClose;
   return quote.series[0] ?? quote.previousClose;

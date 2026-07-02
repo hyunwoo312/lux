@@ -5,9 +5,13 @@ import { createGatedChromeStorage } from "@/lib/storage";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
+import { invalidatePolledResource } from "@/widgets/core/usePolledResource";
+import { syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
+import { quoteCacheKey } from "@/widgets/stocks/lib/quote";
 import { STOCK_RANGES, STOCK_SORTS, type StockRange, type StockSort } from "@/widgets/stocks/types";
 
 export const MAX_SYMBOLS = 20;
+export const STOCKS_SYNC_COOLDOWN_MS = 60_000;
 
 type StocksData = {
   symbols: string[];
@@ -19,6 +23,9 @@ type StocksData = {
 
 type StocksState = {
   byInstance: Record<string, StocksData>;
+  syncNonce: Record<string, number>;
+  lastSyncAt: Record<string, number>;
+  syncing: Record<string, boolean>;
   addSymbol: (instanceId: string, symbol: string) => void;
   removeSymbol: (instanceId: string, symbol: string) => void;
   reorderSymbols: (instanceId: string, activeSymbol: string, overSymbol: string) => void;
@@ -27,6 +34,8 @@ type StocksState = {
   setSort: (instanceId: string, sort: StockSort) => void;
   selectSymbol: (instanceId: string, symbol: string) => void;
   clearSelection: (instanceId: string) => void;
+  setSyncing: (instanceId: string, syncing: boolean) => void;
+  requestRefresh: (instanceId: string) => void;
   removeInstance: (instanceId: string) => void;
 };
 
@@ -61,8 +70,11 @@ function update(
 
 export const useStocksStore = create<StocksState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       byInstance: {},
+      syncNonce: {},
+      lastSyncAt: {},
+      syncing: {},
       addSymbol: (instanceId, symbol) =>
         set((state) => {
           const normalized = symbol.trim().toUpperCase();
@@ -105,8 +117,31 @@ export const useStocksStore = create<StocksState>()(
         set((state) => update(state, instanceId, (data) => ({ ...data, selectedSymbol: symbol }))),
       clearSelection: (instanceId) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, selectedSymbol: null }))),
+      setSyncing: (instanceId, syncing) =>
+        set((state) => ({ syncing: { ...state.syncing, [instanceId]: syncing } })),
+      requestRefresh: (instanceId) => {
+        const remainingMs = syncCooldownRemainingMs(
+          get().lastSyncAt[instanceId],
+          STOCKS_SYNC_COOLDOWN_MS,
+        );
+        if (remainingMs > 0) return;
+        const data = get().byInstance[instanceId];
+        if (!data) return;
+        for (const symbol of data.symbols) {
+          invalidatePolledResource(quoteCacheKey(symbol, data.range));
+        }
+        set((state) => ({
+          syncNonce: { ...state.syncNonce, [instanceId]: (state.syncNonce[instanceId] ?? 0) + 1 },
+          lastSyncAt: { ...state.lastSyncAt, [instanceId]: Date.now() },
+        }));
+      },
       removeInstance: (instanceId) =>
-        set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
+        set((state) => ({
+          byInstance: dropInstance(state.byInstance, instanceId),
+          syncNonce: dropInstance(state.syncNonce, instanceId),
+          lastSyncAt: dropInstance(state.lastSyncAt, instanceId),
+          syncing: dropInstance(state.syncing, instanceId),
+        })),
     }),
     {
       name: "widget:stocks",

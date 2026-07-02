@@ -3,6 +3,7 @@ import type { WidgetPlugin } from "@/widgets/core/types";
 import { WeatherWidget } from "@/widgets/weather/WeatherWidget";
 import { WeatherConfig } from "@/widgets/weather/WeatherConfig";
 import { WeatherSearch } from "@/widgets/weather/WeatherSearch";
+import { WeatherRefreshButton } from "@/widgets/weather/WeatherRefreshButton";
 import { WEATHER_ACCENT } from "@/widgets/weather/types";
 
 export const weatherPlugin: WidgetPlugin = {
@@ -13,4 +14,6 @@ export const weatherPlugin: WidgetPlugin = {
   component: WeatherWidget,
   configComponent: WeatherConfig,
   statusComponent: WeatherSearch,
-  accent: WEATHER_ACCENT,};
+  headerActionComponent: WeatherRefreshButton,
+  accent: WEATHER_ACCENT,
+};

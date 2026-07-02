@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useElementSize } from "@/hooks/useElementSize";
 import { usePolledResource, type PolledResourceState } from "@/widgets/core/usePolledResource";
+import { useWeatherSync } from "@/widgets/weather/hooks/useWeatherSync";
 import { forecastVisibility, formatTemperature } from "@/widgets/weather/lib/forecast";
 import { fetchWeather, parseCachedWeather } from "@/widgets/weather/lib/open-meteo";
 import { WeatherCurrent } from "@/widgets/weather/components/WeatherCurrent";
@@ -141,6 +142,7 @@ export function WeatherCard({ location, units, mode, onSelect, onRemove }: Weath
     persist: true,
     parsePersisted: parseCachedWeather,
   });
+  useWeatherSync(refresh, isRefreshing);
 
   if (mode === "detailed") {
     return (

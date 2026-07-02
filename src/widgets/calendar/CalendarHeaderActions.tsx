@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
+import { CalendarRefreshButton } from "@/widgets/calendar/CalendarRefreshButton";
 import { CalendarViewToggle } from "@/widgets/calendar/CalendarViewToggle";
 import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
@@ -131,6 +132,7 @@ export function CalendarHeaderActions() {
       <NavButton label="Go to today" onClick={() => goToToday(instanceId)}>
         <CalendarClock />
       </NavButton>
+      <CalendarRefreshButton />
       <span className="bg-border/50 mx-0.5 h-4 w-px shrink-0" aria-hidden />
       <CalendarViewToggle />
     </div>

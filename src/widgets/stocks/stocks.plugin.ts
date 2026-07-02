@@ -3,6 +3,7 @@ import type { WidgetPlugin } from "@/widgets/core/types";
 import { StocksWidget } from "@/widgets/stocks/StocksWidget";
 import { StocksConfig } from "@/widgets/stocks/StocksConfig";
 import { StocksSearch } from "@/widgets/stocks/StocksSearch";
+import { StocksRefreshButton } from "@/widgets/stocks/StocksRefreshButton";
 import { STOCKS_ACCENT } from "@/widgets/stocks/types";
 
 export const stocksPlugin: WidgetPlugin = {
@@ -13,5 +14,6 @@ export const stocksPlugin: WidgetPlugin = {
   component: StocksWidget,
   configComponent: StocksConfig,
   statusComponent: StocksSearch,
+  headerActionComponent: StocksRefreshButton,
   accent: STOCKS_ACCENT,
 };
