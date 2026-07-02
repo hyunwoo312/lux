@@ -10,7 +10,7 @@ import { useThemeStore } from "@/stores/useThemeStore";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useSettingsStore } from "@/settings/useSettingsStore";
-import { useWidgetPaletteStore } from "@/app/useWidgetPaletteStore";
+import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
 
 const HANDLERS: Record<ShortcutAction, () => void> = {
   openSettings: () => {

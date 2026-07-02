@@ -14,7 +14,7 @@ import { useWidgetDragStore } from "@/widgets/core/useWidgetDragStore";
 import { useWidgetHighlightStore } from "@/widgets/core/useWidgetHighlightStore";
 import { widgetPlugins } from "@/widgets/registry";
 import { useDashboardStore } from "@/stores/useDashboardStore";
-import { useWidgetPaletteStore } from "@/app/useWidgetPaletteStore";
+import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
 
 const DRAG_THRESHOLD = 6;
 const CLICK_SUPPRESS_MS = 300;
@@ -39,11 +39,15 @@ function commitDrop(plugin: WidgetPlugin, px: number, py: number, ghostW: number
 export function WidgetPalette() {
   const open = useWidgetPaletteStore((s) => s.open);
   const setOpen = useWidgetPaletteStore((s) => s.setOpen);
+  const previewType = useWidgetPaletteStore((s) => s.previewType);
+  const setPreviewType = useWidgetPaletteStore((s) => s.setPreviewType);
   const widgets = useDashboardStore((s) => s.widgets);
   const addWidget = useDashboardStore((s) => s.addWidget);
   const setHighlighted = useWidgetHighlightStore((s) => s.setHighlighted);
   const reduced = useReducedMotion();
   const lastDragEnd = useRef(0);
+  const openRef = useRef(open);
+  openRef.current = open;
   const activeTypes = new Set(widgets.map((widget) => widget.type));
 
   const handleOpenChange = (next: boolean) => {
@@ -129,6 +133,17 @@ export function WidgetPalette() {
     handleAdd(plugin);
   };
 
+  const previewPlugin = (plugin: WidgetPlugin) => {
+    if (!openRef.current) return;
+    setPreviewType(plugin.type);
+    if (activeTypes.has(plugin.type)) setHighlighted(plugin.type);
+  };
+
+  const clearPreviewPlugin = () => {
+    setPreviewType(null);
+    setHighlighted(null);
+  };
+
   return (
     <PopoverPrimitive.Root open={open} onOpenChange={handleOpenChange}>
       <Tooltip content="Add widget" disabled={open}>
@@ -153,7 +168,13 @@ export function WidgetPalette() {
       <AnimatePresence>
         {open && (
           <PopoverPrimitive.Portal forceMount>
-            <PopoverPrimitive.Content forceMount align="end" sideOffset={8} className="z-50">
+            <PopoverPrimitive.Content
+              forceMount
+              align="end"
+              sideOffset={8}
+              className="z-50"
+              onCloseAutoFocus={(event) => event.preventDefault()}
+            >
               <motion.div
                 variants={panelVariants}
                 initial="hidden"
@@ -164,16 +185,26 @@ export function WidgetPalette() {
                   bg-[var(--glass-bg-thick)] p-1.5 outline-none
                 "
               >
-                <p
-                  className="
-                    text-muted-foreground px-2 py-1.5 text-xs font-semibold tracking-wide uppercase
-                  "
+                <div className="px-2 pt-1 pb-1.5">
+                  <p
+                    className="text-muted-foreground text-xs font-semibold tracking-wide uppercase"
+                  >
+                    Widgets
+                  </p>
+                  <p className="text-muted-foreground/60 text-2xs mt-0.5">
+                    Click to add, or drag onto the grid.
+                  </p>
+                </div>
+                <div
+                  className="flex flex-col gap-0.5"
+                  onMouseLeave={clearPreviewPlugin}
+                  onBlur={(event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                      clearPreviewPlugin();
+                    }
+                  }}
                 >
-                  Widgets
-                </p>
-                <div className="flex flex-col gap-0.5">
                   {widgetPlugins.map((plugin) => {
-                    const hasInstances = activeTypes.has(plugin.type);
                     const Icon = plugin.icon;
                     return (
                       <motion.button
@@ -182,27 +213,38 @@ export function WidgetPalette() {
                         type="button"
                         style={getAccentVars(plugin.accent ?? "default")}
                         onPointerDown={(event) => handlePointerDown(event, plugin)}
-                        onMouseEnter={hasInstances ? () => setHighlighted(plugin.type) : undefined}
-                        onMouseLeave={hasInstances ? () => setHighlighted(null) : undefined}
+                        onMouseEnter={() => previewPlugin(plugin)}
+                        onFocus={() => previewPlugin(plugin)}
                         onClick={() => handleClick(plugin)}
-                        className={cn(`
-                          hover:bg-accent
-                          focus-visible:bg-accent
-                          hover:border-primary/60
-                          flex cursor-grab touch-none items-center gap-3 rounded-md border
-                          border-transparent px-2 py-2 text-left text-sm transition-colors
-                          outline-none
-                        `)}
+                        className="
+                          relative flex cursor-grab touch-none items-center gap-3 rounded-md px-2
+                          py-2 text-left text-sm outline-none
+                        "
                       >
+                        {previewType === plugin.type && (
+                          <motion.span
+                            layoutId="palette-hover"
+                            aria-hidden
+                            transition={{ type: "spring", stiffness: 520, damping: 42 }}
+                            className="
+                              border-primary/60 bg-primary/10 pointer-events-none absolute inset-0
+                              rounded-md border
+                            "
+                          />
+                        )}
                         <span
                           className={cn(
-                            `flex size-8 items-center justify-center [&_img]:size-6 [&_svg]:size-6`,
+                            `
+                              relative flex size-8 items-center justify-center
+                              [&_img]:size-6
+                              [&_svg]:size-6
+                            `,
                             !plugin.brandIcon && "text-foreground/80",
                           )}
                         >
                           <Icon />
                         </span>
-                        <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="relative flex min-w-0 flex-1 flex-col">
                           <span className="font-medium">{plugin.name}</span>
                         </span>
                       </motion.button>

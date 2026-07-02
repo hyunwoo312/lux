@@ -1,11 +1,13 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, Ref } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useReducedMotion } from "motion/react";
 import { GridLayout, useContainerWidth } from "react-grid-layout";
 import type { Compactor, EventCallback } from "react-grid-layout";
 import { cn } from "@/lib/utils";
 import { CELL, GAP, gridColumns, gridWidth, PAD, UNIT } from "@/widgets/core/grid";
 import {
   clampLayout,
+  findFirstOpenPosition,
   getLayoutBottom,
   resolveLayoutCollisions,
   resolveLocalDisplacement,
@@ -15,12 +17,23 @@ import { WidgetHost } from "@/widgets/core/WidgetHost";
 import { getWidgetPlugin } from "@/widgets/registry";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useDashboardStore } from "@/stores/useDashboardStore";
+import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
 
 const MIN_ROWS = 8;
 const EDIT_ROW_BUFFER = 1;
 const BOTTOM_GUTTER = 16;
 const EDGE_ZONE = 60;
 const EDGE_MAX_SPEED = 18;
+
+function getScrollParent(node: HTMLElement | null): HTMLElement | null {
+  let el = node?.parentElement ?? null;
+  while (el) {
+    const overflowY = getComputedStyle(el).overflowY;
+    if (overflowY === "auto" || overflowY === "scroll") return el;
+    el = el.parentElement;
+  }
+  return null;
+}
 
 export function WidgetGrid() {
   const widgets = useDashboardStore((s) => s.widgets);
@@ -31,6 +44,9 @@ export function WidgetGrid() {
   const setColumns = useDashboardStore((s) => s.setColumns);
   const setGeometry = useWidgetDragStore((s) => s.setGeometry);
   const dragging = useWidgetDragStore((s) => s.type !== null);
+  const previewType = useWidgetPaletteStore((s) => s.previewType);
+  const reduced = useReducedMotion();
+  const previewRef = useRef<HTMLDivElement>(null);
   const { width, mounted, containerRef } = useContainerWidth();
 
   const [previewRows, setPreviewRows] = useState<number | null>(null);
@@ -46,18 +62,21 @@ export function WidgetGrid() {
       return;
     }
     const y = pointerY.current;
-    if (y !== null) {
-      const fromBottom = window.innerHeight - y;
+    const scroller = getScrollParent(containerRef.current);
+    if (y !== null && scroller) {
+      const rect = scroller.getBoundingClientRect();
+      const fromBottom = rect.bottom - y;
+      const fromTop = y - rect.top;
       if (fromBottom < EDGE_ZONE) {
         const intensity = Math.min(1, (EDGE_ZONE - fromBottom) / EDGE_ZONE);
-        window.scrollBy({ top: EDGE_MAX_SPEED * intensity * intensity });
-      } else if (y < EDGE_ZONE && window.scrollY > 0) {
-        const intensity = Math.min(1, (EDGE_ZONE - y) / EDGE_ZONE);
-        window.scrollBy({ top: -EDGE_MAX_SPEED * intensity * intensity });
+        scroller.scrollBy({ top: EDGE_MAX_SPEED * intensity * intensity });
+      } else if (fromTop < EDGE_ZONE && scroller.scrollTop > 0) {
+        const intensity = Math.min(1, (EDGE_ZONE - fromTop) / EDGE_ZONE);
+        scroller.scrollBy({ top: -EDGE_MAX_SPEED * intensity * intensity });
       }
     }
     scrollFrame.current = requestAnimationFrame(autoScroll);
-  }, []);
+  }, [containerRef]);
 
   useEffect(
     () => () => {
@@ -70,7 +89,10 @@ export function WidgetGrid() {
     const el = containerRef.current;
     if (!el) return;
     const measure = () => {
-      const available = window.innerHeight - el.getBoundingClientRect().top - BOTTOM_GUTTER;
+      const scroller = getScrollParent(el);
+      const available = scroller
+        ? scroller.clientHeight - BOTTOM_GUTTER
+        : window.innerHeight - el.getBoundingClientRect().top - BOTTOM_GUTTER;
       setAvailableRows(Math.max(MIN_ROWS, Math.floor(available / UNIT)));
     };
     measure();
@@ -162,9 +184,24 @@ export function WidgetGrid() {
     () => resolveLayoutCollisions(constrainedLayout, cols, null),
     [constrainedLayout, cols],
   );
-  const rows = Math.max(availableRows, previewRows ?? getLayoutBottom(displayLayout));
+  const previewPlacement = useMemo(() => {
+    if (!previewType) return null;
+    const plugin = getWidgetPlugin(previewType);
+    if (!plugin) return null;
+    const { w, h } = plugin.defaultLayout;
+    const spot = findFirstOpenPosition({ i: "__preview__", x: 0, y: 0, w, h }, displayLayout, cols);
+    return { x: spot.x, y: spot.y, w, h };
+  }, [previewType, displayLayout, cols]);
+  const previewBottom = previewPlacement ? previewPlacement.y + previewPlacement.h : 0;
+  const rows = Math.max(availableRows, previewRows ?? getLayoutBottom(displayLayout), previewBottom);
   const workspaceHeight = rows * UNIT;
   const showGrid = editing || showGridLines;
+
+  const previewKey = previewPlacement ? `${previewPlacement.x},${previewPlacement.y}` : null;
+  useEffect(() => {
+    if (!previewKey) return;
+    previewRef.current?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" });
+  }, [previewKey, reduced]);
 
   return (
     <div ref={containerRef}>
@@ -173,11 +210,17 @@ export function WidgetGrid() {
           style={{ minHeight: workspaceHeight }}
           className="text-muted-foreground/60 grid place-items-center text-sm"
         >
-          Your dashboard is empty. Use Add widget in the header to get started.
+          {previewPlacement && mounted ? (
+            <div className="relative" style={{ width: gw, height: workspaceHeight }}>
+              <PlacementPreview placement={previewPlacement} ref={previewRef} />
+            </div>
+          ) : (
+            "Your dashboard is empty. Use Add widget in the header to get started."
+          )}
         </div>
       ) : (
         mounted && (
-          <div style={{ width: gw }} className="mx-auto">
+          <div style={{ width: gw }} className="relative mx-auto">
             <GridLayout
               width={gw}
               layout={displayLayout}
@@ -219,9 +262,33 @@ export function WidgetGrid() {
                 );
               })}
             </GridLayout>
+            {previewPlacement && (
+              <PlacementPreview placement={previewPlacement} ref={previewRef} />
+            )}
           </div>
         )
       )}
     </div>
+  );
+}
+
+type Placement = { x: number; y: number; w: number; h: number };
+
+function PlacementPreview({ placement, ref }: { placement: Placement; ref?: Ref<HTMLDivElement> }) {
+  return (
+    <div
+      ref={ref}
+      aria-hidden
+      style={{
+        position: "absolute",
+        left: PAD + placement.x * UNIT,
+        top: PAD + placement.y * UNIT,
+        width: placement.w * UNIT - GAP,
+        height: placement.h * UNIT - GAP,
+      }}
+      className="
+        border-foreground/40 bg-foreground/5 pointer-events-none rounded-xl border-2 border-dashed
+      "
+    />
   );
 }

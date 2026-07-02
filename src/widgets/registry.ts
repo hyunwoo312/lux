@@ -25,7 +25,9 @@ const plugins: Record<WidgetType, WidgetPlugin> = {
   news: newsPlugin,
 };
 
-export const widgetPlugins: WidgetPlugin[] = Object.values(plugins);
+export const widgetPlugins: WidgetPlugin[] = Object.values(plugins).sort((a, b) =>
+  a.name.localeCompare(b.name),
+);
 
 export function getWidgetPlugin(type: WidgetType): WidgetPlugin | undefined {
   return plugins[type];

@@ -14,11 +14,14 @@ export function App() {
 
   return (
     <TooltipProvider>
-      <div className="relative min-h-dvh">
+      <div className="relative h-dvh overflow-hidden">
         <Wallpaper />
-        <div className="mx-auto flex min-h-dvh w-[var(--content-width)] flex-col gap-4 py-4">
+        <div className="mx-auto flex h-dvh w-[var(--content-width)] flex-col gap-4 py-4">
           <Header />
-          <main data-tour="grid">
+          <main
+            data-tour="grid"
+            className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]"
+          >
             <WidgetGrid />
           </main>
         </div>
