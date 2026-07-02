@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { getLocal, setLocal } from "@/lib/local-store";
 
 describe("local-store", () => {

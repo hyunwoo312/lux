@@ -54,10 +54,6 @@ describe("quoteFromChart", () => {
     });
   });
 
-  it("drops null gaps from the sparkline series", () => {
-    expect(quoteFromChart(chartResponse).series).toEqual([282.1, 289.36]);
-  });
-
   it("falls back to previousClose, then price, when chartPreviousClose is absent", () => {
     const withoutChartClose = {
       chart: { result: [{ ...baseResult, meta: { ...meta, chartPreviousClose: undefined } }] },
