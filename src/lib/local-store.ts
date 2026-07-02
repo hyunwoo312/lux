@@ -11,3 +11,9 @@ export function setLocal(key: string, value: string): void {
     localStorage.setItem(key, value);
   } catch {}
 }
+
+export function removeLocal(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {}
+}

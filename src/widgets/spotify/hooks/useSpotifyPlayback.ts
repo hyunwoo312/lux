@@ -70,6 +70,22 @@ let currentPollMs = IDLE_POLL_MS;
 let unregisterScheduler: (() => void) | null = null;
 let tickIntervalId: ReturnType<typeof setInterval> | undefined;
 let trackEndTimeoutId: ReturnType<typeof setTimeout> | undefined;
+const followUpTimeouts = new Set<ReturnType<typeof setTimeout>>();
+
+function scheduleRefreshBursts(delays: readonly number[]): void {
+  delays.forEach((delayMs) => {
+    const id = setTimeout(() => {
+      followUpTimeouts.delete(id);
+      void refreshPlayback();
+    }, delayMs);
+    followUpTimeouts.add(id);
+  });
+}
+
+function clearFollowUpTimeouts(): void {
+  for (const id of followUpTimeouts) clearTimeout(id);
+  followUpTimeouts.clear();
+}
 
 function setPendingAction(action: SpotifyPendingAction, isPending: boolean): void {
   const next = new Set(get().pendingActions);
@@ -144,9 +160,7 @@ async function loadDevices(): Promise<void> {
 }
 
 function scheduleFollowUpRefresh(): void {
-  FOLLOW_UP_REFRESH_DELAYS_MS.forEach((delayMs) => {
-    setTimeout(() => void refreshPlayback(), delayMs);
-  });
+  scheduleRefreshBursts(FOLLOW_UP_REFRESH_DELAYS_MS);
 }
 
 async function runPlaybackAction(
@@ -318,9 +332,7 @@ async function refresh(): Promise<void> {
 }
 
 export function requestSpotifyPlaybackRefresh(): void {
-  REQUEST_REFRESH_DELAYS_MS.forEach((delayMs) => {
-    setTimeout(() => void refreshPlayback(), delayMs);
-  });
+  scheduleRefreshBursts(REQUEST_REFRESH_DELAYS_MS);
 }
 
 function registerScheduler(): void {
@@ -360,6 +372,7 @@ function stopPolling(): void {
     clearTimeout(trackEndTimeoutId);
     trackEndTimeoutId = undefined;
   }
+  clearFollowUpTimeouts();
 }
 
 function syncEngine(): void {

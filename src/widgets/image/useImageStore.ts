@@ -3,11 +3,15 @@ import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { missingAssetIds } from "@/lib/asset-store";
-import { getNextSequentialIndex, getRandomIndexExcluding } from "@/lib/media-rotation";
+import {
+  clearNewtabQueue,
+  getNextSequentialIndex,
+  getRandomIndexExcluding,
+} from "@/lib/media-rotation";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector, useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import { deleteImageAsset, imageAssetStore } from "@/widgets/image/media";
+import { deleteImageAsset, imageAssetStore, imageNewtabQueueKey } from "@/widgets/image/media";
 import {
   IMAGE_BRIGHTNESS_MODES,
   IMAGE_FIT_MODES,
@@ -193,6 +197,7 @@ export const useImageStore = create<ImageState>()(
             if (assetId) void deleteImageAsset(assetId).catch(() => undefined);
           }
         }
+        clearNewtabQueue(imageNewtabQueueKey(instanceId));
         set((state) => {
           const indices = { ...state.indices };
           delete indices[instanceId];

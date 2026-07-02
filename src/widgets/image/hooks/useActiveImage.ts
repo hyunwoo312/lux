@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { readImageAsset } from "@/widgets/image/media";
+import { imageNewtabQueueKey, readImageAsset } from "@/widgets/image/media";
 import {
   getSignature,
   readNewtabQueue,
@@ -9,8 +9,6 @@ import {
 import type { ImageItem } from "@/widgets/image/types";
 import { useImage, useImageIndex, useImageStore } from "@/widgets/image/useImageStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-
-const IMAGE_NEWTAB_QUEUE_KEY = "lux.image.newtab-queue";
 
 type ActiveImage = {
   activeItem: ImageItem | null;
@@ -42,7 +40,7 @@ export function useActiveImage(): ActiveImage {
   const newtabEnabled = mode === "multi" && rotateOnNewtab;
   const timedEnabled = mode === "multi" && rotateTimed;
 
-  const queueKey = `${IMAGE_NEWTAB_QUEUE_KEY}.${instanceId}`;
+  const queueKey = imageNewtabQueueKey(instanceId);
   const lastSignature = useRef<string | null>(null);
   useEffect(() => {
     if (lastSignature.current === signature) return;

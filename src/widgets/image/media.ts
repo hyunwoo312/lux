@@ -12,6 +12,12 @@ export type ImageMediaMetadata = StoredAssetMetadata;
 
 export const imageAssetStore = createAssetStore("lux.image-media");
 
+const IMAGE_NEWTAB_QUEUE_KEY = "lux.image.newtab-queue";
+
+export function imageNewtabQueueKey(instanceId: string): string {
+  return `${IMAGE_NEWTAB_QUEUE_KEY}.${instanceId}`;
+}
+
 export function validateImageFile(file: File): string | null {
   return validateImageFileWithLimit(file, IMAGE_MAX_BYTES);
 }
