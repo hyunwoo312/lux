@@ -38,11 +38,53 @@ browser: no account, no tracking, nothing to sign up for.
 - **Configurable and yours.** Tune everything from a settings panel, back up your whole setup to
   a file, and restore it anywhere.
 
+## Using Lux
+
+Everything lives on the new tab. A small toolbar sits at the top — theme, add widget, edit
+layout, settings, and what's new — and the rest of the page is your dashboard.
+
+### Add a widget
+
+Click **Add widget** in the toolbar to open the widget menu. Hover an item to preview exactly where
+it will land, then **click to drop it there** — or **drag it onto the grid** to place it yourself.
+
+<p align="center">
+  <img src="assets/using-add-widget.gif" alt="Opening the add-widget menu and dropping a widget onto the grid" width="100%" />
+</p>
+
+### Arrange the grid
+
+Hit **edit** to rearrange. Drag a widget to move it, or drag its bottom-right corner to resize —
+the grid reflows around it, and each widget gets a remove button while you're editing.
+
+<p align="center">
+  <img src="assets/using-arrange.gif" alt="Edit mode — moving and resizing widgets on the grid" width="100%" />
+</p>
+
+### Make each widget yours
+
+Open a widget's settings from the gear on its header: switch its surface between **Glass** and
+**Solid**, pick an accent, and set widget-specific options. Data widgets like Weather, Stocks, and
+Calendar also get a manual refresh.
+
+<p align="center">
+  <img src="assets/using-widget-settings.gif" alt="Opening a widget's settings to change its surface, accent, and options" width="100%" />
+</p>
+
+### Personalize and back up
+
+Open **settings** to switch light or dark, set a wallpaper, tune defaults, and export your whole
+setup to a file — then import it to restore everything on any machine.
+
+<p align="center">
+  <img src="assets/using-settings.webp" alt="The settings panel — theme, wallpaper, and backup export and import" width="100%" />
+</p>
+
 ## Widgets
 
-Widgets are the heart of Lux: pick the ones that fit how you work, arrange them however you like,
-and skip the rest. Most run entirely on your device, and a few connect to an account only when you
-choose.
+Widgets are the heart of Lux — pick the ones that fit how you work, arrange them however you like,
+and skip the rest. Add as many as you want, even more than one of the same widget. Most run
+entirely on your device, and a few connect to an account only when you choose.
 
 ### AniList
 
@@ -102,6 +144,20 @@ timer.
   <img src="assets/image-slideshow.gif" alt="Lux Image widget — a slideshow fading between photos" width="49%" />
 </p>
 
+### News
+
+Top headlines on your new tab — switch between Google News, The New York Times, the BBC, and Yahoo
+News, and open any story on the publisher's own site.
+
+- **Pick your source.** A tab for each publisher, plus topic sections — World, Business,
+  Technology, and more — wherever a source offers them.
+- **Search the news.** On the Google News tab, search any topic and read the matching headlines.
+
+<p align="center">
+  <img src="assets/news-default.png" alt="Lux News widget — top headlines with source tabs" width="49%" />
+  <img src="assets/news-search.gif" alt="Lux News widget — switching sources and searching for a topic" width="49%" />
+</p>
+
 ### Note
 
 A no-fuss scratch note: plain text, saved as you type, and always a click away — it never leaves
@@ -138,6 +194,21 @@ Your music without the tab-switching (Spotify Premium required to control playba
 <p align="center">
   <img src="assets/spotify-default.png" alt="Lux Spotify widget — now playing with album art and full playback controls" width="49%" />
   <img src="assets/spotify-search.gif" alt="Lux Spotify widget — searching for a track and switching to it" width="49%" />
+</p>
+
+### Stocks
+
+A watchlist for the tickers you follow — live prices and an interactive chart, with no account or
+API key.
+
+- **Your watchlist.** Add symbols, drag to reorder, and see each one's price, the day's change,
+  and a sparkline at a glance.
+- **Ticker detail.** Open a symbol for an interactive chart across ranges, plus key stats like the
+  day's range, 52-week range, and volume.
+
+<p align="center">
+  <img src="assets/stocks-list.png" alt="Lux Stocks widget — watchlist with prices, daily change, and sparklines" width="49%" />
+  <img src="assets/stocks-search.gif" alt="Lux Stocks widget — searching for a stock and seeing ticker detail with an interactive chart and key stats" width="49%" />
 </p>
 
 ### Tasks

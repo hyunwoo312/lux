@@ -31,6 +31,52 @@ export const CHANGE_TYPE_LABEL: Record<ChangeType, string> = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "1.1.0",
+    date: "2026-07-02",
+    changes: [
+      {
+        type: "added",
+        text: "You can add more than one of any widget now — put two Notes side by side, track weather for several cities, whatever fits how you work.",
+      },
+      {
+        type: "added",
+        text: "New Stocks widget: a watchlist with live prices, the day's change, and an interactive mini-chart.",
+      },
+      {
+        type: "added",
+        text: "New News widget: top headlines from Google News, The New York Times, the BBC, and Yahoo News — switch sources with a tab, or search Google News.",
+      },
+      {
+        type: "added",
+        text: "Weather, Stocks, and Calendar now have a manual refresh button for when you don't want to wait for the next auto-update.",
+      },
+      {
+        type: "changed",
+        text: "New widgets now fill the row from left to right instead of stacking straight down, and the dashboard scrolls to whatever you just added.",
+      },
+      {
+        type: "changed",
+        text: "The toolbar stays pinned at the top now — only the widget area scrolls.",
+      },
+      {
+        type: "changed",
+        text: "The add-widget menu got a polish pass: it's alphabetized, hovers smoothly from item to item, previews where a widget will land, and lets you click or drag to add.",
+      },
+      {
+        type: "changed",
+        text: "The clock's colon no longer blinks — it was easy to mistake for the UI lagging.",
+      },
+      {
+        type: "fixed",
+        text: "The Notes widget no longer shows a second, redundant scrollbar.",
+      },
+      {
+        type: "fixed",
+        text: "Your dashboard no longer resets itself if it runs into a widget type it doesn't recognize — it quietly drops just that one and keeps everything else.",
+      },
+    ],
+  },
+  {
     version: "1.0.1",
     date: "2026-06-29",
     changes: [

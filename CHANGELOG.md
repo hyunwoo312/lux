@@ -4,6 +4,27 @@ All notable changes to Lux are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-07-02
+
+### Added
+
+- You can add more than one of any widget now — put two Notes side by side, track weather for several cities, whatever fits how you work.
+- New Stocks widget: a watchlist with live prices, the day's change, and an interactive mini-chart.
+- New News widget: top headlines from Google News, The New York Times, the BBC, and Yahoo News — switch sources with a tab, or search Google News.
+- Weather, Stocks, and Calendar now have a manual refresh button for when you don't want to wait for the next auto-update.
+
+### Changed
+
+- New widgets now fill the row from left to right instead of stacking straight down, and the dashboard scrolls to whatever you just added.
+- The toolbar stays pinned at the top now — only the widget area scrolls.
+- The add-widget menu got a polish pass: it's alphabetized, hovers smoothly from item to item, previews where a widget will land, and lets you click or drag to add.
+- The clock's colon no longer blinks — it was easy to mistake for the UI lagging.
+
+### Fixed
+
+- The Notes widget no longer shows a second, redundant scrollbar.
+- Your dashboard no longer resets itself if it runs into a widget type it doesn't recognize — it quietly drops just that one and keeps everything else.
+
 ## [1.0.1] - 2026-06-29
 
 ### Added

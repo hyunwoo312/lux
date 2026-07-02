@@ -6,6 +6,7 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { LuxMark } from "@/components/LuxMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
+import { useNow } from "@/hooks/useNow";
 import { ChangelogDialog, consumeChangelogAutoShow, useHasUnseenRelease } from "@/changelog";
 import { WidgetPalette } from "@/app/WidgetPalette";
 import { useSettingsStore } from "@/settings";
@@ -105,18 +106,12 @@ function HeaderClock({ className }: { className?: string }) {
       new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", hour12: !clock24h }),
     [clock24h],
   );
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
+  const now = useNow();
 
   const parts = formatter.formatToParts(now);
   const hour = parts.find((part) => part.type === "hour")?.value ?? "";
   const minute = parts.find((part) => part.type === "minute")?.value ?? "";
   const dayPeriod = parts.find((part) => part.type === "dayPeriod")?.value;
-  const colonVisible = now.getSeconds() % 2 === 0;
 
   return (
     <span
@@ -126,11 +121,7 @@ function HeaderClock({ className }: { className?: string }) {
       )}
     >
       {hour}
-      <span
-        className={cn("mx-0.5 transition-opacity duration-150", !colonVisible && "opacity-0")}
-      >
-        :
-      </span>
+      <span className="mx-0.5">:</span>
       {minute}
       {dayPeriod ? <span className="text-muted-foreground ml-1">{dayPeriod}</span> : null}
     </span>
