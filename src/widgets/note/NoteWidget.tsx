@@ -34,7 +34,7 @@ export function NoteWidget() {
       aria-label="Note"
       className={cn(
         `
-          h-full w-full resize-none bg-transparent leading-relaxed outline-none
+          block h-full w-full resize-none bg-transparent leading-relaxed outline-none
           placeholder:text-muted-foreground/50
         `,
         FONT_SIZE_CLASS[fontSize],
