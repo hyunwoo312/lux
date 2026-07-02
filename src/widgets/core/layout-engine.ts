@@ -55,7 +55,31 @@ function pushPosition(item: Box, pusher: Box, layout: readonly Box[], columns: n
   return escape ?? findNearestOpenPosition(item, others, columns);
 }
 
-export function findNearestOpenPosition(item: Box, placed: readonly Box[], columns: number): Position {
+export function findFirstOpenPosition(
+  item: Box,
+  placed: readonly Box[],
+  columns: number,
+): Position {
+  const clamped = clampToColumns(item, columns);
+  const maxSearchRows = Math.max(
+    MIN_SEARCH_ROWS,
+    getLayoutBottom(placed) + clamped.h + SEARCH_ROW_PADDING,
+  );
+  for (let y = 0; y <= maxSearchRows; y += 1) {
+    for (let x = 0; x <= columns - clamped.w; x += 1) {
+      if (!placed.some((other) => collides({ ...clamped, x, y }, other))) {
+        return { x, y };
+      }
+    }
+  }
+  return { x: 0, y: getLayoutBottom(placed) };
+}
+
+export function findNearestOpenPosition(
+  item: Box,
+  placed: readonly Box[],
+  columns: number,
+): Position {
   const clamped = clampToColumns(item, columns);
   if (!placed.some((other) => collides(clamped, other))) {
     return { x: clamped.x, y: clamped.y };
@@ -99,7 +123,9 @@ export function resolveLocalDisplacement<T extends Box>(
     return clampLayout(layout, columns);
   }
 
-  const resolved = new Map<string, T>(layout.map((item) => [item.i, clampToColumns(item, columns)]));
+  const resolved = new Map<string, T>(
+    layout.map((item) => [item.i, clampToColumns(item, columns)]),
+  );
   const priorityItem = resolved.get(priorityItemId)!;
 
   for (const blocker of localBlockers(priorityItem, [...resolved.values()])) {

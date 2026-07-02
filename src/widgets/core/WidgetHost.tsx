@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+import { useReducedMotion } from "motion/react";
 import { BaseWidget } from "@/widgets/core/BaseWidget";
 import { WidgetErrorBoundary } from "@/widgets/core/WidgetErrorBoundary";
 import { CommonWidgetConfig } from "@/widgets/core/CommonWidgetConfig";
@@ -22,8 +24,27 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
   const removeWidget = useDashboardStore((s) => s.removeWidget);
   const background = useWidgetBackground(instance.id);
   const highlighted = useWidgetHighlightStore((s) => s.highlighted === instance.type);
+  const isLastAdded = useDashboardStore((s) => s.lastAddedId === instance.id);
+  const [pulse, setPulse] = useState(isLastAdded);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion();
   const useBare = plugin?.useBare ?? useNoBare;
   const bare = useBare(instance.id);
+
+  useEffect(() => {
+    if (!pulse) return;
+    containerRef.current?.scrollIntoView({
+      behavior: reduced ? "auto" : "smooth",
+      block: "nearest",
+    });
+    const timer = window.setTimeout(() => {
+      setPulse(false);
+      const { lastAddedId, clearLastAdded } = useDashboardStore.getState();
+      if (lastAddedId === instance.id) clearLastAdded();
+    }, 1600);
+    return () => window.clearTimeout(timer);
+  }, [pulse, reduced, instance.id]);
+
   if (!plugin) return null;
 
   const accent = plugin.accent ?? "default";
@@ -36,31 +57,33 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
 
   return (
     <WidgetInstanceContext.Provider value={instance.id}>
-      <BaseWidget
-        title={plugin.name}
-        editing={editing}
-        size={size}
-        background={background}
-        accent={accent}
-        bleed={plugin.bleed}
-        bare={bare}
-        highlighted={highlighted}
-        backdrop={BackdropComponent ? <BackdropComponent /> : undefined}
-        decorativeBackdrop={plugin.decorativeBackdrop}
-        headline={StatusComponent ? <StatusComponent /> : undefined}
-        headerAction={HeaderActionComponent ? <HeaderActionComponent /> : undefined}
-        config={
-          <WidgetConfig>
-            <CommonWidgetConfig />
-            {ConfigComponent && <ConfigComponent />}
-          </WidgetConfig>
-        }
-        onRemove={() => removeWidget(instance.id)}
-      >
-        <WidgetErrorBoundary>
-          <Widget editing={editing} />
-        </WidgetErrorBoundary>
-      </BaseWidget>
+      <div ref={containerRef} className="h-full">
+        <BaseWidget
+          title={plugin.name}
+          editing={editing}
+          size={size}
+          background={background}
+          accent={accent}
+          bleed={plugin.bleed}
+          bare={bare}
+          highlighted={highlighted || pulse}
+          backdrop={BackdropComponent ? <BackdropComponent /> : undefined}
+          decorativeBackdrop={plugin.decorativeBackdrop}
+          headline={StatusComponent ? <StatusComponent /> : undefined}
+          headerAction={HeaderActionComponent ? <HeaderActionComponent /> : undefined}
+          config={
+            <WidgetConfig>
+              <CommonWidgetConfig />
+              {ConfigComponent && <ConfigComponent />}
+            </WidgetConfig>
+          }
+          onRemove={() => removeWidget(instance.id)}
+        >
+          <WidgetErrorBoundary>
+            <Widget editing={editing} />
+          </WidgetErrorBoundary>
+        </BaseWidget>
+      </div>
     </WidgetInstanceContext.Provider>
   );
 }

@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware";
 import { z } from "zod";
 import type { Layout, LayoutItem } from "react-grid-layout";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { findNearestOpenPosition } from "@/widgets/core/layout-engine";
+import { findFirstOpenPosition, findNearestOpenPosition } from "@/widgets/core/layout-engine";
 import { pruneInstance } from "@/widgets/core/instanceCleanup";
 import type { WidgetInstance, WidgetPlugin, WidgetType } from "@/widgets/core/types";
 import { WIDGET_TYPES } from "@/widgets/core/types";
@@ -79,7 +79,9 @@ function placeLayoutItem(
     maxW,
     maxH,
   };
-  const spot = findNearestOpenPosition(base, layout, columns);
+  const spot = override
+    ? findNearestOpenPosition(base, layout, columns)
+    : findFirstOpenPosition(base, layout, columns);
   return { ...base, x: spot.x, y: spot.y };
 }
 

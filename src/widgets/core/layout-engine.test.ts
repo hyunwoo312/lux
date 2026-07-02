@@ -1,5 +1,6 @@
 import {
   collides,
+  findFirstOpenPosition,
   findNearestOpenPosition,
   resolveLayoutCollisions,
   resolveLocalDisplacement,
@@ -18,6 +19,22 @@ describe("layout-engine", () => {
     const placed = [item("b", 0, 0, 2, 2)];
     const position = findNearestOpenPosition(item("a", 0, 0, 2, 2), placed, 6);
     expect(collides({ ...item("a", 0, 0, 2, 2), ...position }, placed[0]!)).toBe(false);
+  });
+
+  it("fills the current row to the right before wrapping below", () => {
+    const placed = [item("a", 0, 0, 6, 6)];
+    expect(findFirstOpenPosition(item("b", 0, 0, 6, 6), placed, 18)).toEqual({ x: 6, y: 0 });
+    expect(
+      findFirstOpenPosition(item("c", 0, 0, 6, 6), [...placed, item("b", 6, 0, 6, 6)], 18),
+    ).toEqual({
+      x: 12,
+      y: 0,
+    });
+  });
+
+  it("wraps to the next row only when the current rows are full", () => {
+    const placed = [item("a", 0, 0, 6, 6), item("b", 6, 0, 6, 6)];
+    expect(findFirstOpenPosition(item("c", 0, 0, 6, 6), placed, 12)).toEqual({ x: 0, y: 6 });
   });
 
   it("pushes a neighbour out of its less-covered side while the priority item stays put", () => {

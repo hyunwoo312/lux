@@ -44,6 +44,17 @@ describe("useDashboardStore", () => {
     expect(first && second && collides(first, second)).toBe(false);
   });
 
+  it("fills the row to the right before stacking below", () => {
+    useDashboardStore.setState({ columns: 18 });
+    store().addWidget("note");
+    store().addWidget("note");
+    store().addWidget("note");
+
+    const rows = store().layout.map((item) => item.y);
+    expect(rows).toEqual([0, 0, 0]);
+    expect(store().layout.map((item) => item.x)).toEqual([0, 6, 12]);
+  });
+
   it("removes a widget and its layout item", () => {
     store().addWidget("quickAccess");
     const id = store().widgets[0]!.id;
