@@ -1,8 +1,8 @@
 import type { CSSProperties, Ref } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
-import { GridLayout, useContainerWidth } from "react-grid-layout";
-import type { Compactor, EventCallback } from "react-grid-layout";
+import { GridLayout, useContainerWidth, setTopLeft } from "react-grid-layout";
+import type { Compactor, EventCallback, Position } from "react-grid-layout";
 import { cn } from "@/lib/utils";
 import { CELL, GAP, gridColumns, gridWidth, PAD, UNIT } from "@/widgets/core/grid";
 import {
@@ -18,6 +18,12 @@ import { getWidgetPlugin } from "@/widgets/registry";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
+
+const topLeftStrategy = {
+  type: "absolute",
+  scale: 1,
+  calcStyle: (pos: Position) => setTopLeft(pos) as CSSProperties,
+} as const;
 
 const MIN_ROWS = 8;
 const EDIT_ROW_BUFFER = 1;
@@ -224,6 +230,7 @@ export function WidgetGrid() {
             <GridLayout
               width={gw}
               layout={displayLayout}
+              positionStrategy={topLeftStrategy}
               gridConfig={{
                 cols,
                 rowHeight: CELL,

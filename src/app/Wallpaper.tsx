@@ -1,6 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { useActiveWallpaper } from "@/app/useActiveWallpaper";
 import { useWallpaperStore, type WallpaperFit } from "@/stores/useWallpaperStore";
 
 const FIT_CLASS: Record<WallpaperFit, string> = {
@@ -10,12 +9,10 @@ const FIT_CLASS: Record<WallpaperFit, string> = {
   "scale-down": "object-scale-down",
 };
 
-export function Wallpaper() {
-  const enabled = useWallpaperStore((s) => s.enabled);
+export function Wallpaper({ imageUrl }: { imageUrl: string | null }) {
   const fit = useWallpaperStore((s) => s.fit);
   const dim = useWallpaperStore((s) => s.dim);
   const blur = useWallpaperStore((s) => s.blur);
-  const { imageUrl } = useActiveWallpaper(enabled);
   const reduced = useReducedMotion();
   const showImage = imageUrl !== null;
 

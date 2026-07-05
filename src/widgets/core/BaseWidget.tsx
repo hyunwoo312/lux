@@ -10,6 +10,7 @@ import { POP } from "@/lib/motion";
 import { getAccentVars, type AccentPreset } from "@/widgets/core/accent";
 import type { WidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
 import { WidgetChromeContext } from "@/widgets/core/useWidgetChrome";
+import { FauxGlassBackdrop } from "@/widgets/core/FauxGlassBackdrop";
 
 type BaseWidgetProps = {
   title: string;
@@ -105,11 +106,20 @@ export function BaseWidget({
           text-card-foreground relative flex h-full flex-col overflow-hidden rounded-xl
           transition-shadow
         `,
-        !omitSurface && (background === "solid" ? "glass-solid" : "glass"),
+        !omitSurface && (background === "solid" ? "glass-solid" : "glass-faux"),
         highlighted && "ring-primary/70 shadow-[0_0_22px_-2px_var(--primary)] ring-2",
         editing && `pointer-events-none select-none`,
       )}
     >
+      {!omitSurface && background !== "solid" && (
+        <>
+          {!editing && <FauxGlassBackdrop />}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-0 bg-[var(--glass-bg)]"
+          />
+        </>
+      )}
       {!omitSurface && (
         <div aria-hidden className="widget-bloom pointer-events-none absolute inset-0 z-0" />
       )}

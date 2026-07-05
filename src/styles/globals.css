@@ -44,7 +44,7 @@
   --scrollbar-thumb: oklch(0 0 0 / 0.18);
   --scrollbar-thumb-hover: oklch(0 0 0 / 0.32);
 
-  --glass-bg: oklch(1 0 0 / 0.3);
+  --glass-bg: oklch(1 0 0 / 0.4);
   --glass-bg-thick: oklch(1 0 0 / 0.6);
   --glass-border: oklch(0 0 0 / 0.1);
   --glass-highlight: oklch(1 0 0 / 0.7);
@@ -94,7 +94,7 @@
   --scrollbar-thumb: oklch(1 0 0 / 0.16);
   --scrollbar-thumb-hover: oklch(1 0 0 / 0.3);
 
-  --glass-bg: oklch(0 0 0 / 0.3);
+  --glass-bg: oklch(0 0 0 / 0.4);
   --glass-bg-thick: oklch(0 0 0 / 0.6);
   --glass-border: oklch(1 0 0 / 0.16);
   --glass-highlight: oklch(1 0 0 / 0.16);
@@ -237,6 +237,12 @@
   box-shadow: var(--glass-shadow);
 }
 
+@utility glass-faux {
+  background-color: transparent;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
 @utility widget-bloom {
   background-image: radial-gradient(
     circle 12rem at 88% 12%,
@@ -312,8 +318,8 @@
   }
 }
 
-.react-grid-item.cssTransforms:not(.react-draggable-dragging):not(.resizing) {
-  transition-property: transform, width, height;
+.react-grid-item:not(.react-draggable-dragging):not(.resizing) {
+  transition-property: width, height;
   transition-duration: 300ms;
   transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
