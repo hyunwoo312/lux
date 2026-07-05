@@ -3,6 +3,7 @@ import { useIntegrationStore } from "@/integrations";
 import { useSettingsStore } from "@/settings";
 import { usePolledResource, type PolledResourceState } from "@/widgets/core/usePolledResource";
 import { fetchDiscover, parseCachedDiscover } from "@/widgets/anilist/lib/anilist-api";
+import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
 import { useAnilist } from "@/widgets/anilist/useAnilistStore";
@@ -19,7 +20,7 @@ export function DiscoverView() {
   const { state } = usePolledResource((signal) => fetchDiscover(lang, signal), {
     enabled: true,
     intervalMs: REFRESH_MS,
-    cacheKey: `anilist:discover:${lang}`,
+    cacheKey: anilistKeys.discover(lang),
     isEmpty: (data) => data.length === 0,
     persist: true,
     parsePersisted: parseCachedDiscover,

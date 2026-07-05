@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Bell, CheckCheck, Loader2 } from "lucide-react";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -13,24 +13,27 @@ import {
 import { FeedList } from "@/widgets/anilist/components/FeedList";
 import { FeedThumb } from "@/widgets/anilist/components/FeedThumb";
 import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
+import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
-import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
+import { useAnilist } from "@/widgets/anilist/useAnilistStore";
 import { ANILIST_MAX_ITEMS, type AnilistNotification } from "@/widgets/anilist/types";
 
 const REFRESH_MS = 3 * 60 * 1000;
 
-function toSeconds(createdAt: string): number {
-  return Math.floor(new Date(createdAt).getTime() / 1000);
-}
-
-export function InboxView({ enabled, newTab }: { enabled: boolean; newTab: boolean }) {
+export function InboxView({
+  enabled,
+  userId,
+  newTab,
+}: {
+  enabled: boolean;
+  userId: number;
+  newTab: boolean;
+}) {
   const lang = useAnilist((d) => d.titleLanguage);
-  const setLastSeen = useAnilistStore((s) => s.setLastSeenInbox);
-  const seenRef = useRef(useAnilistStore.getState().lastSeenInboxAt ?? 0);
   const unread = usePolledResource(fetchUnreadCount, {
     enabled,
     intervalMs: REFRESH_MS,
-    cacheKey: "anilist:unread",
+    cacheKey: anilistKeys.unread(userId),
     persist: true,
     parsePersisted: (raw) => (typeof raw === "number" ? raw : null),
   });
@@ -41,7 +44,7 @@ export function InboxView({ enabled, newTab }: { enabled: boolean; newTab: boole
       enabled,
       intervalMs: REFRESH_MS,
       maxItems: ANILIST_MAX_ITEMS,
-      cacheKey: `anilist:inbox:${lang}`,
+      cacheKey: anilistKeys.inbox(userId, lang),
       getKey: (notification) => notification.id,
       persist: true,
       parsePersisted: parseCachedInbox,
@@ -57,19 +60,13 @@ export function InboxView({ enabled, newTab }: { enabled: boolean; newTab: boole
   const [marking, setMarking] = useState(false);
   const liveUnread = unread.state.status === "success" ? unread.state.data : 0;
 
-  const items = state.status === "success" ? state.items : [];
-  const newest = items[0] ? toSeconds(items[0].createdAt) : undefined;
-  useEffect(() => {
-    if (newest != null) setLastSeen(newest);
-  }, [newest, setLastSeen]);
-
   const markRead = useCallback(() => {
     setMarking(true);
     setUnreadOverride(0);
     markAllNotificationsRead().then(
       () => {
         setMarking(false);
-        invalidatePolledResource("anilist:unread");
+        invalidatePolledResource(anilistKeys.unread(userId));
         unreadRefresh();
       },
       () => {
@@ -77,7 +74,7 @@ export function InboxView({ enabled, newTab }: { enabled: boolean; newTab: boole
         setUnreadOverride(null);
       },
     );
-  }, [unreadRefresh]);
+  }, [unreadRefresh, userId]);
 
   useEffect(() => {
     if (unreadOverride !== null && liveUnread === 0) setUnreadOverride(null);
@@ -89,7 +86,6 @@ export function InboxView({ enabled, newTab }: { enabled: boolean; newTab: boole
   if (state.status === "empty")
     return <AnilistPlaceholder>Inbox zero — nothing waiting.</AnilistPlaceholder>;
 
-  const seen = seenRef.current;
   const unreadCount = unreadOverride ?? liveUnread;
 
   return (
@@ -100,11 +96,11 @@ export function InboxView({ enabled, newTab }: { enabled: boolean; newTab: boole
       isLoadingMore={isLoadingMore}
       loadMore={loadMore}
       header={<InboxHeader unreadCount={unreadCount} marking={marking} onMarkRead={markRead} />}
-      renderItem={(notification) => (
+      renderItem={(notification, index) => (
         <NotificationRow
           notification={notification}
           newTab={newTab}
-          isNew={toSeconds(notification.createdAt) > seen}
+          isUnread={index < unreadCount}
         />
       )}
     />
@@ -164,11 +160,11 @@ function InboxHeader({
 function NotificationRow({
   notification,
   newTab,
-  isNew,
+  isUnread,
 }: {
   notification: AnilistNotification;
   newTab: boolean;
-  isNew: boolean;
+  isUnread: boolean;
 }) {
   const className = "hover:bg-foreground/5 flex items-center gap-2.5 rounded-md px-2 py-1.5";
   const body = (
@@ -182,7 +178,7 @@ function NotificationRow({
       <div className="min-w-0 flex-1">
         <p className="text-foreground line-clamp-2 text-xs">{notification.text}</p>
         <p className="text-muted-foreground text-2xs flex items-center gap-1">
-          {isNew && <span className="bg-primary size-1.5 shrink-0 rounded-full" aria-hidden />}
+          {isUnread && <span className="bg-primary size-1.5 shrink-0 rounded-full" aria-hidden />}
           <span className="truncate">{formatRelativeTime(notification.createdAt)}</span>
         </p>
       </div>

@@ -1,3 +1,4 @@
+import { useIntegrationStore } from "@/integrations";
 import { WidgetRefreshButton } from "@/widgets/core/WidgetRefreshButton";
 import {
   ANILIST_SYNC_COOLDOWN_MS,
@@ -10,13 +11,16 @@ export function AnilistRefreshButton() {
   const lastSyncAt = useAnilistStore((s) => s.lastSyncAt);
   const requestSync = useAnilistStore((s) => s.requestSync);
   const titleLanguage = useAnilist((d) => d.titleLanguage);
+  const viewerId = useIntegrationStore((s) =>
+    Number(s.accounts.find((entry) => entry.providerId === "anilist")?.providerAccountId),
+  );
 
   return (
     <WidgetRefreshButton
       syncing={syncing}
       lastSyncAt={lastSyncAt}
       cooldownMs={ANILIST_SYNC_COOLDOWN_MS}
-      onRefresh={() => requestSync(titleLanguage)}
+      onRefresh={() => requestSync(titleLanguage, viewerId)}
     />
   );
 }

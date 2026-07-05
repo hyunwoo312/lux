@@ -12,13 +12,23 @@ import { FeedList } from "@/widgets/anilist/components/FeedList";
 import { FeedThumb } from "@/widgets/anilist/components/FeedThumb";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
+import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { ANILIST_MAX_ITEMS, type AnilistActivity } from "@/widgets/anilist/types";
 
 const REFRESH_MS = 3 * 60 * 1000;
+const SEEN_DWELL_MS = 2000;
 
-export function ActivityView({ enabled, newTab }: { enabled: boolean; newTab: boolean }) {
+export function ActivityView({
+  enabled,
+  userId,
+  newTab,
+}: {
+  enabled: boolean;
+  userId: number;
+  newTab: boolean;
+}) {
   const setLastSeen = useAnilistStore((s) => s.setLastSeenActivity);
   const lang = useAnilist((d) => d.titleLanguage);
   const seenRef = useRef(useAnilistStore.getState().lastSeenActivityAt ?? 0);
@@ -28,7 +38,7 @@ export function ActivityView({ enabled, newTab }: { enabled: boolean; newTab: bo
       enabled,
       intervalMs: REFRESH_MS,
       maxItems: ANILIST_MAX_ITEMS,
-      cacheKey: `anilist:activity:${lang}`,
+      cacheKey: anilistKeys.activity(userId, lang),
       getKey: (activity) => activity.id,
       persist: true,
       parsePersisted: parseCachedActivity,
@@ -51,7 +61,19 @@ export function ActivityView({ enabled, newTab }: { enabled: boolean; newTab: bo
   const items = state.status === "success" ? state.items : [];
   const newest = items[0]?.createdAt;
   useEffect(() => {
-    if (newest != null) setLastSeen(newest);
+    if (newest == null) return;
+    let timer: number | undefined;
+    const arm = () => {
+      window.clearTimeout(timer);
+      if (document.visibilityState !== "visible") return;
+      timer = window.setTimeout(() => setLastSeen(newest), SEEN_DWELL_MS);
+    };
+    arm();
+    document.addEventListener("visibilitychange", arm);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", arm);
+    };
   }, [newest, setLastSeen]);
 
   if (state.status === "loading") return <AnilistPlaceholder>Loading activity…</AnilistPlaceholder>;

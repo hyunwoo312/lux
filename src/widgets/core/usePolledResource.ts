@@ -28,7 +28,6 @@ export type PolledResource<T> = {
 type Options<T> = {
   enabled?: boolean;
   intervalMs?: number;
-  refreshKey?: string | number;
   isEmpty?: (data: T) => boolean;
   cacheKey?: string;
   persist?: boolean;
@@ -320,7 +319,6 @@ export function usePolledResource<T>(
   const {
     enabled = true,
     intervalMs,
-    refreshKey,
     isEmpty = defaultIsEmpty,
     cacheKey,
     persist = false,
@@ -338,7 +336,6 @@ export function usePolledResource<T>(
   persistRef.current = persist;
   const parsePersistedRef = useRef(parsePersisted);
   parsePersistedRef.current = parsePersisted;
-  const refreshKeyRef = useRef(refreshKey);
 
   const [snapshot, setSnapshot] = useState<Snapshot<T>>(() =>
     seedSnapshot<T>(enabled, cacheKey, persist, parsePersisted),
@@ -371,15 +368,11 @@ export function usePolledResource<T>(
     resourceRef.current = resource;
     setSnapshot(resource.getSnapshot());
     const unsubscribe = resource.subscribe(setSnapshot);
-    if (refreshKeyRef.current !== refreshKey) {
-      refreshKeyRef.current = refreshKey;
-      resource.refresh();
-    }
     return () => {
       resourceRef.current = null;
       unsubscribe();
     };
-  }, [key, cacheKey, enabled, staleMs, intervalMs, refreshKey]);
+  }, [key, cacheKey, enabled, staleMs, intervalMs]);
 
   const refresh = useCallback(() => {
     resourceRef.current?.refresh();

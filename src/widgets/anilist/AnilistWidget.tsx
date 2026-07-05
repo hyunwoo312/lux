@@ -45,9 +45,9 @@ export function AnilistWidget() {
           {activeTab === "current" ? (
             <CurrentView enabled={connected} userId={userId} newTab={newTab} />
           ) : activeTab === "activity" ? (
-            <ActivityView enabled={connected} newTab={newTab} />
+            <ActivityView enabled={connected} userId={userId} newTab={newTab} />
           ) : (
-            <InboxView enabled={connected} newTab={newTab} />
+            <InboxView enabled={connected} userId={userId} newTab={newTab} />
           )}
         </motion.div>
       </AnimatePresence>

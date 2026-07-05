@@ -102,37 +102,6 @@ describe("usePolledResource", () => {
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
-  it("refetches a fresh load when refreshKey changes", async () => {
-    const fetcher = vi.fn().mockResolvedValueOnce(["a"]).mockResolvedValueOnce(["b"]);
-    const { result, rerender } = renderHook(
-      ({ key }) => usePolledResource(fetcher, { refreshKey: key }),
-      {
-        initialProps: { key: "first" },
-      },
-    );
-
-    await waitFor(() => expect(result.current.state).toEqual({ status: "success", data: ["a"] }));
-    rerender({ key: "second" });
-    expect(result.current.state.status).toBe("loading");
-    await waitFor(() => expect(result.current.state).toEqual({ status: "success", data: ["b"] }));
-  });
-
-  it("forces a refetch when refreshKey changes even with a warm cache", async () => {
-    const fetcher = vi.fn().mockResolvedValueOnce(["a"]).mockResolvedValueOnce(["b"]);
-    const cacheKey = "test:refreshkey:forces";
-    const { result, rerender } = renderHook(
-      ({ id }: { id: number }) => usePolledResource(fetcher, { cacheKey, refreshKey: id }),
-      { initialProps: { id: 1 } },
-    );
-
-    await waitFor(() => expect(result.current.state).toEqual({ status: "success", data: ["a"] }));
-    expect(fetcher).toHaveBeenCalledTimes(1);
-
-    rerender({ id: 2 });
-    await waitFor(() => expect(result.current.state).toEqual({ status: "success", data: ["b"] }));
-    expect(fetcher).toHaveBeenCalledTimes(2);
-  });
-
   it("reuses cached data on remount within the stale window without refetching", async () => {
     const fetcher = vi.fn().mockResolvedValue([1, 2]);
     const cacheKey = "test:cache:reuse";

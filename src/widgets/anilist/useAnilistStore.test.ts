@@ -7,7 +7,6 @@ beforeEach(() => {
   useAnilistStore.setState({
     byInstance: {},
     lastSeenActivityAt: undefined,
-    lastSeenInboxAt: undefined,
     syncNonce: 0,
     syncing: false,
     lastSyncAt: undefined,
@@ -38,11 +37,11 @@ describe("useAnilistStore", () => {
   });
 
   it("shares sync state and honors the cooldown", () => {
-    const first = store().requestSync("english");
+    const first = store().requestSync("english", 1);
     expect(first).toEqual({ ok: true, remainingMs: 0 });
     expect(store().syncNonce).toBe(1);
 
-    const second = store().requestSync("romaji");
+    const second = store().requestSync("romaji", 1);
     expect(second.ok).toBe(false);
     expect(second.remainingMs).toBeGreaterThan(0);
     expect(second.remainingMs).toBeLessThanOrEqual(ANILIST_SYNC_COOLDOWN_MS);
@@ -57,7 +56,6 @@ describe("useAnilistStore", () => {
         librarySort: "score",
         titleLanguage: "romaji",
         lastSeenActivityAt: 100,
-        lastSeenInboxAt: 200,
       };
 
       expect(migrate?.(legacy, 1)).toEqual({
@@ -71,7 +69,6 @@ describe("useAnilistStore", () => {
           },
         },
         lastSeenActivityAt: 100,
-        lastSeenInboxAt: 200,
       });
     });
 
@@ -91,7 +88,6 @@ describe("useAnilistStore", () => {
           },
         },
         lastSeenActivityAt: 100,
-        lastSeenInboxAt: 200,
       };
       expect(migrate?.(persisted, 4)).toBe(persisted);
     });

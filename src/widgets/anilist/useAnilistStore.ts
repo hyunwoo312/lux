@@ -9,6 +9,7 @@ import type { OpenBehavior } from "@/lib/open-url";
 import { invalidatePolledResource } from "@/widgets/core/usePolledResource";
 import { invalidatePagedResource } from "@/widgets/core/usePagedResource";
 import { syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
+import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import {
   ANILIST_TABS,
   CURRENT_SORTS,
@@ -35,7 +36,6 @@ type AnilistData = {
 type AnilistStoreState = {
   byInstance: Record<string, AnilistData>;
   lastSeenActivityAt?: number;
-  lastSeenInboxAt?: number;
   syncNonce: number;
   syncing: boolean;
   lastSyncAt?: number;
@@ -46,9 +46,8 @@ type AnilistStoreState = {
   setOpenBehavior: (instanceId: string, openBehavior: OpenBehavior) => void;
   removeInstance: (instanceId: string) => void;
   setLastSeenActivity: (createdAt: number) => void;
-  setLastSeenInbox: (createdAt: number) => void;
   setSyncing: (syncing: boolean) => void;
-  requestSync: (titleLanguage: TitleLanguage) => SyncResult;
+  requestSync: (titleLanguage: TitleLanguage, viewerId: number) => SyncResult;
 };
 
 const DEFAULT_DATA: AnilistData = {
@@ -69,13 +68,11 @@ const configSchema = z.object({
 
 const legacySchema = configSchema.extend({
   lastSeenActivityAt: z.number().optional(),
-  lastSeenInboxAt: z.number().optional(),
 });
 
 const persistedSchema = z.object({
   byInstance: z.record(z.string(), configSchema),
   lastSeenActivityAt: z.number().optional(),
-  lastSeenInboxAt: z.number().optional(),
 });
 
 function migrateLegacyFields(persisted: unknown): unknown {
@@ -110,7 +107,6 @@ export const useAnilistStore = create<AnilistStoreState>()(
     (set, get) => ({
       byInstance: {},
       lastSeenActivityAt: undefined,
-      lastSeenInboxAt: undefined,
       syncNonce: 0,
       syncing: false,
       lastSyncAt: undefined,
@@ -130,20 +126,16 @@ export const useAnilistStore = create<AnilistStoreState>()(
         set((state) => ({
           lastSeenActivityAt: Math.max(state.lastSeenActivityAt ?? 0, createdAt),
         })),
-      setLastSeenInbox: (createdAt) =>
-        set((state) => ({
-          lastSeenInboxAt: Math.max(state.lastSeenInboxAt ?? 0, createdAt),
-        })),
       setSyncing: (syncing) => set({ syncing }),
-      requestSync: (titleLanguage) => {
+      requestSync: (titleLanguage, viewerId) => {
         const remainingMs = syncCooldownRemainingMs(get().lastSyncAt, ANILIST_SYNC_COOLDOWN_MS);
         if (remainingMs > 0) {
           return { ok: false, remainingMs };
         }
-        invalidatePolledResource(`anilist:current:${titleLanguage}`);
-        invalidatePolledResource("anilist:unread");
-        invalidatePagedResource(`anilist:activity:${titleLanguage}`);
-        invalidatePagedResource(`anilist:inbox:${titleLanguage}`);
+        invalidatePolledResource(anilistKeys.current(viewerId, titleLanguage));
+        invalidatePolledResource(anilistKeys.unread(viewerId));
+        invalidatePagedResource(anilistKeys.activity(viewerId, titleLanguage));
+        invalidatePagedResource(anilistKeys.inbox(viewerId, titleLanguage));
         set({ syncNonce: get().syncNonce + 1, lastSyncAt: Date.now() });
         return { ok: true, remainingMs: 0 };
       },
@@ -156,14 +148,13 @@ export const useAnilistStore = create<AnilistStoreState>()(
       partialize: (state) => ({
         byInstance: state.byInstance,
         lastSeenActivityAt: state.lastSeenActivityAt,
-        lastSeenInboxAt: state.lastSeenInboxAt,
       }),
       migrate: (persisted, version) => {
         if (version >= 4) return persisted;
         const legacy = legacySchema.safeParse(migrateLegacyFields(persisted));
         if (!legacy.success) return { byInstance: {} };
-        const { lastSeenActivityAt, lastSeenInboxAt, ...config } = legacy.data;
-        return { byInstance: { anilist: config }, lastSeenActivityAt, lastSeenInboxAt };
+        const { lastSeenActivityAt, ...config } = legacy.data;
+        return { byInstance: { anilist: config }, lastSeenActivityAt };
       },
       merge: (persisted, current) => {
         const parsed = persistedSchema.safeParse(persisted);
@@ -182,7 +173,6 @@ export const useAnilistStore = create<AnilistStoreState>()(
           ...current,
           byInstance,
           lastSeenActivityAt: parsed.data.lastSeenActivityAt,
-          lastSeenInboxAt: parsed.data.lastSeenInboxAt,
         };
       },
     },

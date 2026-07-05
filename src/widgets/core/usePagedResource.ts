@@ -105,7 +105,7 @@ function readPersisted<T>(
       return undefined;
     }
     const items = parse ? parse(entry.items) : (entry.items as T[]);
-    if (!items) return undefined;
+    if (!items || items.length === 0) return undefined;
     return { items, page: entry.page, hasNextPage: entry.hasNextPage, at: entry.at };
   } catch {
     return undefined;
@@ -284,9 +284,19 @@ class SharedResource<T> {
         const items = merged.slice(0, this.config.maxItems);
         const at = Date.now();
         if (this.config.cacheKey) {
-          const entry: CacheEntry<T> = { items, page: nextPage, hasNextPage: result.hasNextPage, at };
-          dataCache.set(this.config.cacheKey, entry);
-          if (this.config.persist) writePersisted(this.config.cacheKey, entry);
+          if (items.length > 0) {
+            const entry: CacheEntry<T> = {
+              items,
+              page: nextPage,
+              hasNextPage: result.hasNextPage,
+              at,
+            };
+            dataCache.set(this.config.cacheKey, entry);
+            if (this.config.persist) writePersisted(this.config.cacheKey, entry);
+          } else {
+            dataCache.delete(this.config.cacheKey);
+            if (this.config.persist) removePersisted(this.config.cacheKey);
+          }
         }
         this.patch({
           items,

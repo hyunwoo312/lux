@@ -14,6 +14,7 @@ import {
 } from "@/widgets/anilist/lib/current";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
+import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
@@ -54,8 +55,7 @@ export function CurrentView({ enabled, userId, newTab }: CurrentViewProps) {
     {
       enabled,
       intervalMs: REFRESH_MS,
-      cacheKey: `anilist:current:${lang}`,
-      refreshKey: userId,
+      cacheKey: anilistKeys.current(userId, lang),
       isEmpty: (data) => data.entries.length === 0,
       persist: true,
       parsePersisted: parseCachedCurrent,
@@ -70,17 +70,19 @@ export function CurrentView({ enabled, userId, newTab }: CurrentViewProps) {
   if (state.status === "empty")
     return <AnilistPlaceholder>Nothing in progress.</AnilistPlaceholder>;
 
-  return <CurrentList data={state.data} newTab={newTab} lang={lang} />;
+  return <CurrentList data={state.data} newTab={newTab} lang={lang} userId={userId} />;
 }
 
 function CurrentList({
   data,
   newTab,
   lang,
+  userId,
 }: {
   data: CurrentData;
   newTab: boolean;
   lang: TitleLanguage;
+  userId: number;
 }) {
   const instanceId = useWidgetInstanceId();
   const filter = useAnilist((d) => d.mediaFilter);
@@ -104,7 +106,7 @@ function CurrentList({
         (saved) => {
           setProgressOverrides((prev) => ({ ...prev, [entry.id]: saved }));
           setPending((prev) => ({ ...prev, [entry.id]: false }));
-          invalidatePolledResource(`anilist:current:${lang}`);
+          invalidatePolledResource(anilistKeys.current(userId, lang));
         },
         () => {
           setProgressOverrides((prev) => ({ ...prev, [entry.id]: current }));
@@ -112,7 +114,7 @@ function CurrentList({
         },
       );
     },
-    [lang],
+    [lang, userId],
   );
 
   const entries = useMemo(() => {

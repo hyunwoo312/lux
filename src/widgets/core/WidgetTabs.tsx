@@ -3,7 +3,12 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import type { WidgetIcon } from "@/widgets/core/types";
 
-export type WidgetTab<T extends string> = { value: T; label: string; icon: WidgetIcon };
+export type WidgetTab<T extends string> = {
+  value: T;
+  label: string;
+  icon: WidgetIcon;
+  badge?: number;
+};
 
 type WidgetTabsProps<T extends string> = {
   tabs: WidgetTab<T>[];
@@ -97,7 +102,7 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
             type="button"
             role="tab"
             aria-selected={isActive}
-            aria-label={tab.label}
+            aria-label={tab.badge ? `${tab.label} (${tab.badge})` : tab.label}
             onClick={() => onSelect(tab.value)}
             className={cn(
               `
@@ -108,6 +113,18 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
               isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >
+            {tab.badge ? (
+              <span
+                aria-hidden
+                className="
+                  bg-primary text-primary-foreground absolute -top-1 -right-0.5 flex h-3.5 min-w-3.5
+                  items-center justify-center rounded-full px-1 text-[9px] leading-none
+                  font-semibold tabular-nums
+                "
+              >
+                {tab.badge > 9 ? "9+" : tab.badge}
+              </span>
+            ) : null}
             <Icon />
             <AnimatePresence initial={false}>
               {(isActive || wide) && (

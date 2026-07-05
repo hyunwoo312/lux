@@ -161,4 +161,38 @@ describe("usePagedResource persistence", () => {
 
     await waitFor(() => expect(localStorage.getItem("lux:paged:paged-write")).toContain('"items":[1]'));
   });
+
+  it("does not persist an empty result", async () => {
+    const fetcher = vi.fn().mockResolvedValue({ items: [], hasNextPage: false });
+    const { result } = renderHook(() =>
+      usePagedResource(fetcher, {
+        maxItems: 50,
+        getKey: (n: number) => n,
+        cacheKey: "paged-empty",
+        persist: true,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.state.status).toBe("empty"));
+    expect(localStorage.getItem("lux:paged:paged-empty")).toBeNull();
+  });
+
+  it("fetches on mount when the persisted cache is empty instead of showing stale empty", async () => {
+    localStorage.setItem(
+      "lux:paged:paged-poisoned",
+      JSON.stringify({ items: [], page: 1, hasNextPage: false, at: Date.now() }),
+    );
+    const fetcher = vi.fn().mockResolvedValue({ items: [1, 2], hasNextPage: false });
+    const { result } = renderHook(() =>
+      usePagedResource(fetcher, {
+        maxItems: 50,
+        getKey: (n: number) => n,
+        cacheKey: "paged-poisoned",
+        persist: true,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.state).toEqual({ status: "success", items: [1, 2] }));
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
 });

@@ -3,7 +3,7 @@ import { Fragment, useEffect, useRef, type ReactNode } from "react";
 type FeedListProps<T> = {
   items: T[];
   getKey: (item: T) => string | number;
-  renderItem: (item: T) => ReactNode;
+  renderItem: (item: T, index: number) => ReactNode;
   hasMore: boolean;
   isLoadingMore: boolean;
   loadMore: () => void;
@@ -42,8 +42,8 @@ export function FeedList<T>({
     <div className="flex h-full flex-col gap-2 p-1">
       {header}
       <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
-        {items.map((item) => (
-          <Fragment key={getKey(item)}>{renderItem(item)}</Fragment>
+        {items.map((item, index) => (
+          <Fragment key={getKey(item)}>{renderItem(item, index)}</Fragment>
         ))}
         {hasMore && (
           <div ref={sentinelRef} className="text-muted-foreground text-2xs py-2 text-center">
