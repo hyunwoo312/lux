@@ -5,7 +5,7 @@ import { STOCKS_SYNC_COOLDOWN_MS, useStocks, useStocksStore } from "@/widgets/st
 export function StocksRefreshButton() {
   const instanceId = useWidgetInstanceId();
   const symbols = useStocks((d) => d.symbols);
-  const syncing = useStocksStore((s) => s.syncing[instanceId] ?? false);
+  const syncing = useStocksStore((s) => (s.syncing[instanceId] ?? 0) > 0);
   const lastSyncAt = useStocksStore((s) => s.lastSyncAt[instanceId]);
   const requestRefresh = useStocksStore((s) => s.requestRefresh);
 

@@ -25,7 +25,7 @@ type StocksState = {
   byInstance: Record<string, StocksData>;
   syncNonce: Record<string, number>;
   lastSyncAt: Record<string, number>;
-  syncing: Record<string, boolean>;
+  syncing: Record<string, number>;
   addSymbol: (instanceId: string, symbol: string) => void;
   removeSymbol: (instanceId: string, symbol: string) => void;
   reorderSymbols: (instanceId: string, activeSymbol: string, overSymbol: string) => void;
@@ -34,7 +34,8 @@ type StocksState = {
   setSort: (instanceId: string, sort: StockSort) => void;
   selectSymbol: (instanceId: string, symbol: string) => void;
   clearSelection: (instanceId: string) => void;
-  setSyncing: (instanceId: string, syncing: boolean) => void;
+  beginSync: (instanceId: string) => void;
+  endSync: (instanceId: string) => void;
   requestRefresh: (instanceId: string) => void;
   removeInstance: (instanceId: string) => void;
 };
@@ -117,8 +118,17 @@ export const useStocksStore = create<StocksState>()(
         set((state) => update(state, instanceId, (data) => ({ ...data, selectedSymbol: symbol }))),
       clearSelection: (instanceId) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, selectedSymbol: null }))),
-      setSyncing: (instanceId, syncing) =>
-        set((state) => ({ syncing: { ...state.syncing, [instanceId]: syncing } })),
+      beginSync: (instanceId) =>
+        set((state) => ({
+          syncing: { ...state.syncing, [instanceId]: (state.syncing[instanceId] ?? 0) + 1 },
+        })),
+      endSync: (instanceId) =>
+        set((state) => ({
+          syncing: {
+            ...state.syncing,
+            [instanceId]: Math.max(0, (state.syncing[instanceId] ?? 0) - 1),
+          },
+        })),
       requestRefresh: (instanceId) => {
         const remainingMs = syncCooldownRemainingMs(
           get().lastSyncAt[instanceId],

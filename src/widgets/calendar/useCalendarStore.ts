@@ -67,6 +67,7 @@ export type CalendarData = {
   refreshIntervalHours: number;
   status: CalendarSyncStatus;
   syncing: CalendarProviderId[];
+  resyncPending: CalendarProviderId[];
   visibleMonth: Date;
   mode: CalendarMode;
   selectedDay: Date | null;
@@ -110,12 +111,20 @@ const EMPTY_PROVIDER: ProviderCalendarSettings = {
 
 function freshNav(): Pick<
   CalendarData,
-  "status" | "syncing" | "visibleMonth" | "mode" | "selectedDay" | "focusRowIndex" | "listAnchor"
+  | "status"
+  | "syncing"
+  | "resyncPending"
+  | "visibleMonth"
+  | "mode"
+  | "selectedDay"
+  | "focusRowIndex"
+  | "listAnchor"
 > {
   const now = new Date();
   return {
     status: "idle",
     syncing: [],
+    resyncPending: [],
     visibleMonth: new Date(now.getFullYear(), now.getMonth(), 1),
     mode: "month",
     selectedDay: null,
@@ -251,7 +260,7 @@ export function getCalendarData(instanceId: string): CalendarData {
 
 export const useCalendarStore = create<CalendarState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       byInstance: {},
       setPrimarySource: (instanceId, provider) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, primarySource: provider }))),
@@ -289,13 +298,25 @@ export const useCalendarStore = create<CalendarState>()(
             (account) => account.providerId === providerId && account.status === "connected",
           );
 
-        const targets = (["google", "microsoft"] as const).filter(
+        const requested = (["google", "microsoft"] as const).filter(
           (providerId) =>
             isConnected(providerId) &&
-            (!options.providerId || options.providerId === providerId) &&
+            (!options.providerId || options.providerId === providerId),
+        );
+        const busy = requested.filter((providerId) => data.syncing.includes(providerId));
+        const targets = requested.filter(
+          (providerId) =>
             !data.syncing.includes(providerId) &&
             (options.bypassCooldown || !isCalendarSyncCoolingDown(data[providerId].lastSyncedAt)),
         );
+        if (options.bypassCooldown && busy.length > 0) {
+          set((state) =>
+            update(state, instanceId, (current) => ({
+              ...current,
+              resyncPending: Array.from(new Set([...current.resyncPending, ...busy])),
+            })),
+          );
+        }
         if (targets.length === 0) return;
 
         set((state) =>
@@ -331,6 +352,7 @@ export const useCalendarStore = create<CalendarState>()(
           }),
         );
 
+        const pendingBeforeCompletion = getCalendarData(instanceId).resyncPending;
         set((state) =>
           update(state, instanceId, (current) => {
             const now = new Date().toISOString();
@@ -359,10 +381,18 @@ export const useCalendarStore = create<CalendarState>()(
               google,
               microsoft,
               syncing,
+              resyncPending: current.resyncPending.filter(
+                (providerId) => !targets.includes(providerId),
+              ),
               status: syncing.length > 0 ? "syncing" : hasError ? "error" : "idle",
             };
           }),
         );
+
+        const resync = targets.filter((providerId) => pendingBeforeCompletion.includes(providerId));
+        for (const providerId of resync) {
+          void get().sync(instanceId, { bypassCooldown: true, providerId });
+        }
       },
       setCalendarSelection: (instanceId, providerId, calendarId, selected) =>
         set((state) =>

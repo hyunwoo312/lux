@@ -1,8 +1,13 @@
 import { integrationFetch } from "@/integrations";
 import { compareEventsByStart } from "@/widgets/calendar/lib/agenda";
-import type { CalendarEvent, ConnectedCalendar } from "@/widgets/calendar/types";
+import {
+  MAX_CALENDAR_EVENTS,
+  type CalendarEvent,
+  type ConnectedCalendar,
+} from "@/widgets/calendar/types";
 
 const API_BASE_URL = "https://graph.microsoft.com/v1.0";
+const MAX_EVENT_PAGES = 10;
 
 type GraphCalendar = {
   id?: string;
@@ -132,21 +137,34 @@ async function fetchEventsForCalendar(
   timeMin: Date,
   timeMax: Date,
 ): Promise<CalendarEvent[]> {
-  const response = await integrationFetch(
-    "microsoft",
-    buildOutlookEventsUrl(calendarId, timeMin, timeMax),
-    { headers: { Prefer: 'outlook.timezone="UTC"' } },
-  );
+  const events: CalendarEvent[] = [];
+  let nextUrl: string | URL | null = buildOutlookEventsUrl(calendarId, timeMin, timeMax);
 
-  if (!response.ok) {
-    throw new Error(`Outlook calendar events request failed for ${calendarId}`);
+  for (let page = 0; page < MAX_EVENT_PAGES && nextUrl; page += 1) {
+    const response = await integrationFetch("microsoft", nextUrl, {
+      headers: { Prefer: 'outlook.timezone="UTC"' },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Outlook calendar events request failed for ${calendarId}`);
+    }
+
+    const payload = (await response.json()) as {
+      value?: GraphEvent[];
+      "@odata.nextLink"?: string;
+    };
+
+    events.push(
+      ...(payload.value ?? [])
+        .map((event) => normalizeOutlookEvent(event, calendarId))
+        .filter((event): event is CalendarEvent => Boolean(event)),
+    );
+
+    if (events.length >= MAX_CALENDAR_EVENTS) break;
+    nextUrl = payload["@odata.nextLink"] ?? null;
   }
 
-  const payload = (await response.json()) as { value?: GraphEvent[] };
-
-  return (payload.value ?? [])
-    .map((event) => normalizeOutlookEvent(event, calendarId))
-    .filter((event): event is CalendarEvent => Boolean(event));
+  return events;
 }
 
 export async function fetchOutlookCalendars(

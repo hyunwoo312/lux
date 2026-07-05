@@ -51,6 +51,7 @@ function baseData(over: Partial<CalendarData> = {}): CalendarData {
     refreshIntervalHours: 6,
     status: "idle",
     syncing: [],
+    resyncPending: [],
     visibleMonth: new Date(now.getFullYear(), now.getMonth(), 1),
     mode: "month",
     selectedDay: null,
@@ -136,6 +137,36 @@ describe("useCalendarStore.sync", () => {
     fetchEventsMock.mockResolvedValue({ events: [], failedCalendarIds: [] });
     await useCalendarStore.getState().sync(ID, { bypassCooldown: true });
     expect(fetchCalendarsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("re-syncs a provider when a selection change arrives mid-sync", async () => {
+    let resolveEvents:
+      | ((value: { events: CalendarEvent[]; failedCalendarIds: string[] }) => void)
+      | undefined;
+    fetchCalendarsMock.mockResolvedValue([createCalendar()]);
+    fetchEventsMock
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveEvents = resolve;
+          }),
+      )
+      .mockResolvedValueOnce({ events: [createEvent()], failedCalendarIds: [] });
+
+    const first = useCalendarStore.getState().sync(ID);
+    expect(data()?.syncing).toEqual(["google"]);
+
+    await useCalendarStore.getState().sync(ID, { bypassCooldown: true, providerId: "google" });
+    expect(data()?.resyncPending).toEqual(["google"]);
+
+    await vi.waitFor(() => expect(resolveEvents).toBeDefined());
+    resolveEvents?.({ events: [], failedCalendarIds: [] });
+    await first;
+
+    await vi.waitFor(() => expect(fetchEventsMock).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(data()?.syncing).toEqual([]));
+    expect(data()?.resyncPending).toEqual([]);
+    expect(data()?.events).toHaveLength(1);
   });
 
   it("keeps instances independent when syncing", async () => {

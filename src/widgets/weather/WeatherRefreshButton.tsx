@@ -9,7 +9,7 @@ import {
 export function WeatherRefreshButton() {
   const instanceId = useWidgetInstanceId();
   const locations = useWeather((d) => d.locations);
-  const syncing = useWeatherStore((s) => s.syncing[instanceId] ?? false);
+  const syncing = useWeatherStore((s) => (s.syncing[instanceId] ?? 0) > 0);
   const lastSyncAt = useWeatherStore((s) => s.lastSyncAt[instanceId]);
   const requestRefresh = useWeatherStore((s) => s.requestRefresh);
 

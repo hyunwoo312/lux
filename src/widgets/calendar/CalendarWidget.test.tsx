@@ -23,6 +23,7 @@ function baseData(over: Partial<CalendarData> = {}): CalendarData {
     refreshIntervalHours: 6,
     status: "idle",
     syncing: [],
+    resyncPending: [],
     visibleMonth: new Date(now.getFullYear(), now.getMonth(), 1),
     mode: "month",
     selectedDay: null,

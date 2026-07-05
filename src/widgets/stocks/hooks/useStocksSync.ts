@@ -5,7 +5,8 @@ import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 export function useStocksSync(refresh: () => void, isRefreshing: boolean): void {
   const instanceId = useWidgetInstanceId();
   const syncNonce = useStocksStore((s) => s.syncNonce[instanceId] ?? 0);
-  const setSyncing = useStocksStore((s) => s.setSyncing);
+  const beginSync = useStocksStore((s) => s.beginSync);
+  const endSync = useStocksStore((s) => s.endSync);
   const lastNonce = useRef(syncNonce);
 
   useEffect(() => {
@@ -16,7 +17,8 @@ export function useStocksSync(refresh: () => void, isRefreshing: boolean): void 
   }, [syncNonce, refresh]);
 
   useEffect(() => {
-    setSyncing(instanceId, isRefreshing);
-    return () => setSyncing(instanceId, false);
-  }, [instanceId, isRefreshing, setSyncing]);
+    if (!isRefreshing) return;
+    beginSync(instanceId);
+    return () => endSync(instanceId);
+  }, [instanceId, isRefreshing, beginSync, endSync]);
 }

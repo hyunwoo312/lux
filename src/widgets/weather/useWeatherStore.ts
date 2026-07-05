@@ -23,7 +23,7 @@ type WeatherState = {
   byInstance: Record<string, WeatherData>;
   syncNonce: Record<string, number>;
   lastSyncAt: Record<string, number>;
-  syncing: Record<string, boolean>;
+  syncing: Record<string, number>;
   addLocation: (instanceId: string, location: WeatherLocation) => void;
   removeLocation: (instanceId: string, id: string) => void;
   reorderLocations: (instanceId: string, activeId: string, overId: string) => void;
@@ -32,7 +32,8 @@ type WeatherState = {
   setUnits: (instanceId: string, units: WeatherUnits) => void;
   openSearch: (instanceId: string) => void;
   closeSearch: (instanceId: string) => void;
-  setSyncing: (instanceId: string, syncing: boolean) => void;
+  beginSync: (instanceId: string) => void;
+  endSync: (instanceId: string) => void;
   requestRefresh: (instanceId: string) => void;
   removeInstance: (instanceId: string) => void;
 };
@@ -145,8 +146,17 @@ export const useWeatherStore = create<WeatherState>()(
         set((state) => update(state, instanceId, (data) => ({ ...data, searchOpen: true }))),
       closeSearch: (instanceId) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, searchOpen: false }))),
-      setSyncing: (instanceId, syncing) =>
-        set((state) => ({ syncing: { ...state.syncing, [instanceId]: syncing } })),
+      beginSync: (instanceId) =>
+        set((state) => ({
+          syncing: { ...state.syncing, [instanceId]: (state.syncing[instanceId] ?? 0) + 1 },
+        })),
+      endSync: (instanceId) =>
+        set((state) => ({
+          syncing: {
+            ...state.syncing,
+            [instanceId]: Math.max(0, (state.syncing[instanceId] ?? 0) - 1),
+          },
+        })),
       requestRefresh: (instanceId) => {
         if (syncCooldownRemainingMs(get().lastSyncAt[instanceId], WEATHER_SYNC_COOLDOWN_MS) > 0) {
           return;

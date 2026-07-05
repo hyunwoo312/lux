@@ -4,7 +4,7 @@ import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 let nextAutoKey = 0;
 const DEFAULT_STALE_MS = 180_000;
 const STORAGE_PREFIX = "lux:polled:";
-const RETRY_BASE_MS = 60_000;
+export const RETRY_BASE_MS = 60_000;
 const RETRY_MAX_MS = 30 * 60_000;
 
 export function backoffDelayMs(failureCount: number): number {

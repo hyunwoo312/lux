@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
+import { backoffDelayMs, RETRY_BASE_MS } from "@/widgets/core/usePolledResource";
 
 let nextAutoKey = 0;
 const DEFAULT_STALE_MS = 180_000;
@@ -180,6 +181,8 @@ class SharedResource<T> {
   private inFlight: Promise<void> | null = null;
   private abort: AbortController | null = null;
   private unregister: (() => void) | null = null;
+  private failureCount = 0;
+  private retryAt = 0;
 
   constructor(
     private readonly config: ResourceConfig<T>,
@@ -226,12 +229,19 @@ class SharedResource<T> {
     void this.run("refresh");
   }
 
+  private pollRefresh(): void {
+    if (Date.now() < this.retryAt) return;
+    void this.run("refresh");
+  }
+
   loadMore(): void {
     if (!this.snapshot.hasNextPage) return;
     void this.run("more");
   }
 
   markStale(): void {
+    this.failureCount = 0;
+    this.retryAt = 0;
     this.patch({ at: 0 });
   }
 
@@ -250,7 +260,7 @@ class SharedResource<T> {
       pollIntervalMs:
         this.config.intervalMs && this.config.intervalMs > 0 ? this.config.intervalMs : undefined,
       getLastRefreshedAt: () => this.snapshot.at,
-      refresh: () => void this.run("refresh"),
+      refresh: () => this.pollRefresh(),
     });
   }
 
@@ -298,6 +308,8 @@ class SharedResource<T> {
             if (this.config.persist) removePersisted(this.config.cacheKey);
           }
         }
+        this.failureCount = 0;
+        this.retryAt = 0;
         this.patch({
           items,
           page: nextPage,
@@ -311,6 +323,9 @@ class SharedResource<T> {
       } catch (caught) {
         if (generation !== this.generation) return;
         const error = caught instanceof Error ? caught : new Error("Request failed");
+        this.failureCount += 1;
+        this.retryAt =
+          Date.now() + backoffDelayMs(this.failureCount) + Math.random() * RETRY_BASE_MS;
         this.patch(
           this.snapshot.hasLoaded
             ? { isRefreshing: false, isLoadingMore: false }

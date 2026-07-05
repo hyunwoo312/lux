@@ -5,7 +5,8 @@ import { useWeatherStore } from "@/widgets/weather/useWeatherStore";
 export function useWeatherSync(refresh: () => void, isRefreshing: boolean): void {
   const instanceId = useWidgetInstanceId();
   const syncNonce = useWeatherStore((s) => s.syncNonce[instanceId] ?? 0);
-  const setSyncing = useWeatherStore((s) => s.setSyncing);
+  const beginSync = useWeatherStore((s) => s.beginSync);
+  const endSync = useWeatherStore((s) => s.endSync);
   const lastNonce = useRef(syncNonce);
 
   useEffect(() => {
@@ -16,7 +17,8 @@ export function useWeatherSync(refresh: () => void, isRefreshing: boolean): void
   }, [syncNonce, refresh]);
 
   useEffect(() => {
-    setSyncing(instanceId, isRefreshing);
-    return () => setSyncing(instanceId, false);
-  }, [instanceId, isRefreshing, setSyncing]);
+    if (!isRefreshing) return;
+    beginSync(instanceId);
+    return () => endSync(instanceId);
+  }, [instanceId, isRefreshing, beginSync, endSync]);
 }

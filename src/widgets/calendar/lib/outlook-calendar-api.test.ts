@@ -1,8 +1,19 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@/integrations", () => ({ integrationFetch: vi.fn() }));
+
+import { integrationFetch } from "@/integrations";
 import {
+  fetchOutlookCalendarEvents,
   normalizeOutlookCalendar,
   normalizeOutlookEvent,
 } from "@/widgets/calendar/lib/outlook-calendar-api";
+
+const mockFetch = vi.mocked(integrationFetch);
+
+afterEach(() => {
+  mockFetch.mockReset();
+});
 
 describe("normalizeOutlookEvent", () => {
   it("normalizes a timed event with UTC dateTime and provider provenance", () => {
@@ -69,6 +80,42 @@ describe("normalizeOutlookEvent", () => {
     );
     expect(event?.title).toBe("Busy");
     expect(event?.visibility).toBe("busy");
+  });
+});
+
+describe("fetchOutlookCalendarEvents", () => {
+  const graphEvent = (id: string) => ({
+    id,
+    subject: `Event ${id}`,
+    start: { dateTime: "2026-06-16T20:00:00.0000000" },
+    end: { dateTime: "2026-06-16T21:00:00.0000000" },
+  });
+
+  const pageResponse = (ids: string[], nextLink?: string) =>
+    new Response(
+      JSON.stringify({ value: ids.map(graphEvent), "@odata.nextLink": nextLink }),
+      { status: 200 },
+    );
+
+  it("follows @odata.nextLink to collect every page of events", async () => {
+    const nextLink = "https://graph.microsoft.com/v1.0/me/calendars/cal1/calendarView?$skip=250";
+    mockFetch
+      .mockResolvedValueOnce(pageResponse(["e1"], nextLink))
+      .mockResolvedValueOnce(pageResponse(["e2"]));
+
+    const result = await fetchOutlookCalendarEvents({
+      calendarIds: ["cal1"],
+      timeMin: new Date("2026-06-01T00:00:00Z"),
+      timeMax: new Date("2026-12-01T00:00:00Z"),
+    });
+
+    expect(result.events.map((event) => event.id)).toEqual([
+      "microsoft-cal1-e1",
+      "microsoft-cal1-e2",
+    ]);
+    expect(result.failedCalendarIds).toEqual([]);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch.mock.calls[1]?.[1]).toBe(nextLink);
   });
 });
 
