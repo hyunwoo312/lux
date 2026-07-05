@@ -53,6 +53,34 @@ describe("useTasksStore", () => {
     expect(store().byInstance[ID]).toBeUndefined();
   });
 
+  describe("merge", () => {
+    const merge = useTasksStore.persist.getOptions().merge;
+
+    const persistedWith = (removeOnCompletion: boolean) => ({
+      byInstance: {
+        [ID]: {
+          tasks: [
+            { id: "1", title: "a", done: true, createdAt: 1000 },
+            { id: "2", title: "b", done: false, createdAt: 2000 },
+          ],
+          autoSort: false,
+          completedPosition: "bottom",
+          removeOnCompletion,
+        },
+      },
+    });
+
+    it("drops lingering done tasks on rehydrate when remove-on-completion is set", () => {
+      const merged = merge?.(persistedWith(true), useTasksStore.getState());
+      expect(merged?.byInstance[ID]?.tasks.map((task) => task.id)).toEqual(["2"]);
+    });
+
+    it("keeps done tasks on rehydrate when remove-on-completion is off", () => {
+      const merged = merge?.(persistedWith(false), useTasksStore.getState());
+      expect(merged?.byInstance[ID]?.tasks.map((task) => task.id)).toEqual(["1", "2"]);
+    });
+  });
+
   describe("migrate", () => {
     const migrate = useTasksStore.persist.getOptions().migrate;
 

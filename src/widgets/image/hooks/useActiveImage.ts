@@ -23,6 +23,7 @@ export function useActiveImage(): ActiveImage {
   const items = useImage((c) => c.items);
   const rotateOnNewtab = useImage((c) => c.rotateOnNewtab);
   const rotateTimed = useImage((c) => c.rotateTimed);
+  const order = useImage((c) => c.order);
   const intervalSeconds = useImage((c) => c.intervalSeconds);
   const currentIndex = useImageIndex();
   const setCurrentIndex = useImageStore((s) => s.setCurrentIndex);
@@ -49,11 +50,12 @@ export function useActiveImage(): ActiveImage {
       const selection = selectNewtabIndex(
         displayItems.map((item) => item.assetId),
         readNewtabQueue(queueKey),
+        order,
       );
       writeNewtabQueue(queueKey, selection.next);
       setCurrentIndex(instanceId, selection.index);
     }
-  }, [signature, newtabEnabled, length, displayItems, setCurrentIndex, instanceId, queueKey]);
+  }, [signature, newtabEnabled, length, displayItems, setCurrentIndex, instanceId, queueKey, order]);
 
   useEffect(() => {
     if (!timedEnabled || length < 2) return;

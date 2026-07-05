@@ -89,7 +89,8 @@ export function Tour() {
         event.preventDefault();
         stop();
       } else if (event.key === "ArrowRight") {
-        next();
+        if (step >= STEPS.length - 1) stop();
+        else next();
       } else if (event.key === "ArrowLeft") {
         if (step === 0) backToWelcome();
         else prev();

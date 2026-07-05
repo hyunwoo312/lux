@@ -9,13 +9,23 @@ export function useBlurredWallpaper(imageUrl: string | null): string | null {
   const objectUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!imageUrl) {
+    const dropCurrent = () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
       setBlurredUrl(null);
+    };
+    if (!imageUrl) {
+      dropCurrent();
       return;
     }
     let cancelled = false;
     const image = new Image();
     image.crossOrigin = "anonymous";
+    image.onerror = () => {
+      if (!cancelled) dropCurrent();
+    };
     image.onload = () => {
       if (cancelled) return;
       const scale = Math.min(1, MAX_EDGE / Math.max(image.width, image.height));

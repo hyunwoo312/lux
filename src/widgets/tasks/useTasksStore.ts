@@ -141,7 +141,15 @@ export const useTasksStore = create<TasksState>()(
       merge: (persisted, current) => {
         const parsed = persistedSchema.safeParse(persisted);
         if (!parsed.success) return current;
-        return { ...current, byInstance: parsed.data.byInstance };
+        const byInstance = Object.fromEntries(
+          Object.entries(parsed.data.byInstance).map(([id, data]) => [
+            id,
+            data.removeOnCompletion
+              ? { ...data, tasks: data.tasks.filter((task) => !task.done) }
+              : data,
+          ]),
+        );
+        return { ...current, byInstance };
       },
     },
   ),

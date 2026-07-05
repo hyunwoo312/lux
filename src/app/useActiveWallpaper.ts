@@ -21,6 +21,7 @@ export function useActiveWallpaper(enabled: boolean): ActiveWallpaper {
   const items = useWallpaperStore((s) => s.items);
   const rotateOnNewtab = useWallpaperStore((s) => s.rotateOnNewtab);
   const rotateTimed = useWallpaperStore((s) => s.rotateTimed);
+  const order = useWallpaperStore((s) => s.order);
   const intervalSeconds = useWallpaperStore((s) => s.intervalSeconds);
   const currentIndex = useWallpaperStore((s) => s.currentIndex);
   const setCurrentIndex = useWallpaperStore((s) => s.setCurrentIndex);
@@ -46,11 +47,12 @@ export function useActiveWallpaper(enabled: boolean): ActiveWallpaper {
       const selection = selectNewtabIndex(
         displayItems.map((item) => item.assetId),
         readNewtabQueue(WALLPAPER_NEWTAB_QUEUE_KEY),
+        order,
       );
       writeNewtabQueue(WALLPAPER_NEWTAB_QUEUE_KEY, selection.next);
       setCurrentIndex(selection.index);
     }
-  }, [signature, newtabEnabled, length, displayItems, setCurrentIndex]);
+  }, [signature, newtabEnabled, length, displayItems, setCurrentIndex, order]);
 
   useEffect(() => {
     if (!timedEnabled || length < 2) return;
