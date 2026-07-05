@@ -4,6 +4,23 @@ All notable changes to Lux are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-07-05
+
+### Changed
+
+- New tabs load a little lighter, and dragging or resizing widgets is smoother.
+
+### Fixed
+
+- The clock now ticks over to the new minute right on time, instead of lagging by up to a minute.
+- After you switch AniList accounts, your currently-watching list updates to the new account instead of briefly showing the old one.
+- Turning a calendar on or off while a sync is already running now takes effect right away, instead of waiting for the next refresh.
+- Outlook calendars with a lot of events no longer cut off early — busier months show everything now.
+- The refresh button on Weather and Stocks now keeps spinning until every place or symbol has finished updating, instead of stopping after the first.
+- With wallpaper or Image-widget rotation set to “sequential,” new tabs now go in order instead of shuffling.
+- Tasks set to disappear when completed now clear even if you close the tab right after ticking them off.
+- The welcome tour no longer gets stuck if you press the right-arrow key on its last step.
+
 ## [1.1.0] - 2026-07-02
 
 ### Added

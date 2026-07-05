@@ -31,6 +31,48 @@ export const CHANGE_TYPE_LABEL: Record<ChangeType, string> = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "1.1.1",
+    date: "2026-07-05",
+    changes: [
+      {
+        type: "changed",
+        text: "New tabs load a little lighter, and dragging or resizing widgets is smoother.",
+      },
+      {
+        type: "fixed",
+        text: "The clock now ticks over to the new minute right on time, instead of lagging by up to a minute.",
+      },
+      {
+        type: "fixed",
+        text: "After you switch AniList accounts, your currently-watching list updates to the new account instead of briefly showing the old one.",
+      },
+      {
+        type: "fixed",
+        text: "Turning a calendar on or off while a sync is already running now takes effect right away, instead of waiting for the next refresh.",
+      },
+      {
+        type: "fixed",
+        text: "Outlook calendars with a lot of events no longer cut off early — busier months show everything now.",
+      },
+      {
+        type: "fixed",
+        text: "The refresh button on Weather and Stocks now keeps spinning until every place or symbol has finished updating, instead of stopping after the first.",
+      },
+      {
+        type: "fixed",
+        text: "With wallpaper or Image-widget rotation set to “sequential,” new tabs now go in order instead of shuffling.",
+      },
+      {
+        type: "fixed",
+        text: "Tasks set to disappear when completed now clear even if you close the tab right after ticking them off.",
+      },
+      {
+        type: "fixed",
+        text: "The welcome tour no longer gets stuck if you press the right-arrow key on its last step.",
+      },
+    ],
+  },
+  {
     version: "1.1.0",
     date: "2026-07-02",
     changes: [
