@@ -24,6 +24,7 @@ async function fetchYahoo(path: string, signal?: AbortSignal): Promise<unknown> 
       const response = await fetch(`${host}${path}`, { signal: withTimeout(signal) });
       if (!response.ok) {
         lastError = new Error(`Yahoo request failed (${response.status})`);
+        if (response.status >= 400 && response.status < 500) break;
         continue;
       }
       return await response.json();

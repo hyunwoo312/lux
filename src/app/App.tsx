@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Wallpaper } from "@/app/Wallpaper";
 import { Header } from "@/app/Header";
@@ -11,6 +12,7 @@ import { useActiveWallpaper } from "@/app/useActiveWallpaper";
 import { useBlurredWallpaper } from "@/app/useBlurredWallpaper";
 import { useWallpaperStore } from "@/stores/useWallpaperStore";
 import { FrostImageProvider } from "@/lib/frost-image";
+import { sweepStaleResourceCaches } from "@/widgets/core/resourceCacheSweep";
 
 export function App() {
   useGlobalShortcuts();
@@ -18,6 +20,10 @@ export function App() {
   const wallpaperEnabled = useWallpaperStore((s) => s.enabled);
   const { imageUrl } = useActiveWallpaper(wallpaperEnabled);
   const frostUrl = useBlurredWallpaper(imageUrl);
+
+  useEffect(() => {
+    sweepStaleResourceCaches(Date.now());
+  }, []);
 
   return (
     <TooltipProvider>

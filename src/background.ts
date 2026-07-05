@@ -1,6 +1,31 @@
 const FETCH_TIMEOUT_MS = 10_000;
+const MAX_FETCH_BYTES = 5_000_000;
 
 type FetchTextResult = { ok: true; text: string } | { ok: false; status?: number; error?: string };
+
+async function readCapped(response: Response, maxBytes: number): Promise<string | null> {
+  const reader = response.body?.getReader();
+  if (!reader) return null;
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(merged);
+}
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason !== "update") return;
@@ -27,7 +52,9 @@ async function fetchText(url: string): Promise<FetchTextResult> {
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
     if (!response.ok) return { ok: false, status: response.status };
-    return { ok: true, text: await response.text() };
+    const text = await readCapped(response, MAX_FETCH_BYTES);
+    if (text === null) return { ok: false, error: "Response too large" };
+    return { ok: true, text };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "Request failed" };
   }
