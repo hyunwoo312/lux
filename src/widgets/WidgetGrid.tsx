@@ -61,6 +61,7 @@ export function WidgetGrid() {
   const activeWidgetId = useRef<string | null>(null);
   const pointerY = useRef<number | null>(null);
   const scrollFrame = useRef<number | null>(null);
+  const scrollerRef = useRef<HTMLElement | null>(null);
 
   const autoScroll = useCallback(() => {
     if (!activeWidgetId.current) {
@@ -68,7 +69,7 @@ export function WidgetGrid() {
       return;
     }
     const y = pointerY.current;
-    const scroller = getScrollParent(containerRef.current);
+    const scroller = scrollerRef.current;
     if (y !== null && scroller) {
       const rect = scroller.getBoundingClientRect();
       const fromBottom = rect.bottom - y;
@@ -82,7 +83,7 @@ export function WidgetGrid() {
       }
     }
     scrollFrame.current = requestAnimationFrame(autoScroll);
-  }, [containerRef]);
+  }, []);
 
   useEffect(
     () => () => {
@@ -143,12 +144,18 @@ export function WidgetGrid() {
   const handleStart: EventCallback = (_layout, _oldItem, newItem, _placeholder, event) => {
     if (!newItem) return;
     activeWidgetId.current = newItem.i;
+    scrollerRef.current = getScrollParent(containerRef.current);
     pointerY.current = event instanceof MouseEvent ? event.clientY : null;
     if (scrollFrame.current === null) scrollFrame.current = requestAnimationFrame(autoScroll);
   };
 
   const handleMove: EventCallback = (next, _oldItem, newItem, _placeholder, event) => {
-    if (newItem) setLiveSize({ id: newItem.i, w: newItem.w, h: newItem.h });
+    if (newItem)
+      setLiveSize((prev) =>
+        prev && prev.id === newItem.i && prev.w === newItem.w && prev.h === newItem.h
+          ? prev
+          : { id: newItem.i, w: newItem.w, h: newItem.h },
+      );
     if (event instanceof MouseEvent) pointerY.current = event.clientY;
     setPreviewRows(getLayoutBottom(next) + EDIT_ROW_BUFFER);
   };
@@ -157,6 +164,7 @@ export function WidgetGrid() {
     setPreviewRows(null);
     setLiveSize(null);
     pointerY.current = null;
+    scrollerRef.current = null;
     if (scrollFrame.current !== null) {
       cancelAnimationFrame(scrollFrame.current);
       scrollFrame.current = null;

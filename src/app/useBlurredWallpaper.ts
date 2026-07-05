@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react";
 
 const BLUR_PX = 20;
 const SATURATE = 1.5;
-const MAX_EDGE = 900;
+const MAX_EDGE = 512;
+const ENCODE_TYPE = "image/webp";
+const ENCODE_QUALITY = 0.8;
 
 export function useBlurredWallpaper(imageUrl: string | null): string | null {
   const [blurredUrl, setBlurredUrl] = useState<string | null>(null);
@@ -38,13 +40,17 @@ export function useBlurredWallpaper(imageUrl: string | null): string | null {
       if (!ctx) return;
       ctx.filter = `blur(${BLUR_PX * scale}px) saturate(${SATURATE})`;
       ctx.drawImage(image, 0, 0, width, height);
-      canvas.toBlob((blob) => {
-        if (cancelled || !blob) return;
-        const next = URL.createObjectURL(blob);
-        if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
-        objectUrlRef.current = next;
-        setBlurredUrl(next);
-      });
+      canvas.toBlob(
+        (blob) => {
+          if (cancelled || !blob) return;
+          const next = URL.createObjectURL(blob);
+          if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+          objectUrlRef.current = next;
+          setBlurredUrl(next);
+        },
+        ENCODE_TYPE,
+        ENCODE_QUALITY,
+      );
     };
     image.src = imageUrl;
     return () => {

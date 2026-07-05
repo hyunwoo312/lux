@@ -28,6 +28,8 @@ export function StocksSearch() {
   const expanded = open || symbols.length === 0;
   const atCap = symbols.length >= MAX_SYMBOLS;
   const addedSymbols = useMemo(() => new Set(symbols), [symbols]);
+  const addedSymbolsRef = useRef(addedSymbols);
+  addedSymbolsRef.current = addedSymbols;
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -47,7 +49,7 @@ export function StocksSearch() {
           setActive(
             Math.max(
               0,
-              found.findIndex((result) => !addedSymbols.has(result.symbol)),
+              found.findIndex((result) => !addedSymbolsRef.current.has(result.symbol)),
             ),
           );
           setSearching(false);
@@ -62,7 +64,7 @@ export function StocksSearch() {
       controller.abort();
       window.clearTimeout(debounceRef.current);
     };
-  }, [query, addedSymbols]);
+  }, [query]);
 
   const isAdded = (result: SymbolSearchResult) => addedSymbols.has(result.symbol);
 

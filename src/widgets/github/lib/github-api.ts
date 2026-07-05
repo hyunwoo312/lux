@@ -26,11 +26,12 @@ const LEVELS: Record<string, ContributionLevel> = {
   FOURTH_QUARTILE: 4,
 };
 
-async function graphql(query: string): Promise<unknown> {
+async function graphql(query: string, signal?: AbortSignal): Promise<unknown> {
   const response = await integrationFetch("github", GRAPHQL_ENDPOINT, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ query }),
+    signal,
   });
   if (!response.ok) {
     throw new Error("GitHub request failed");
@@ -108,8 +109,8 @@ const contributionsSchema = z.object({
   }),
 });
 
-export async function fetchContributions(): Promise<ContributionsData> {
-  const parsed = contributionsSchema.safeParse(await graphql(CONTRIBUTIONS_QUERY));
+export async function fetchContributions(signal?: AbortSignal): Promise<ContributionsData> {
+  const parsed = contributionsSchema.safeParse(await graphql(CONTRIBUTIONS_QUERY, signal));
   if (!parsed.success) {
     throw new Error("Unexpected GitHub contributions response");
   }
@@ -172,9 +173,10 @@ function notificationUrl(subjectUrl: string | null, type: string, repoUrl: strin
   return repoUrl;
 }
 
-async function fetchNotifications(): Promise<InboxNotification[]> {
+async function fetchNotifications(signal?: AbortSignal): Promise<InboxNotification[]> {
   const response = await integrationFetch("github", NOTIFICATIONS_ENDPOINT, {
     headers: { Accept: "application/vnd.github+json" },
+    signal,
   });
   if (!response.ok) {
     throw new Error("GitHub notifications request failed");
@@ -280,8 +282,8 @@ function toPullRequest(node: unknown, kind: InboxPullRequest["kind"]): InboxPull
   };
 }
 
-async function fetchPullRequests(): Promise<InboxPullRequest[]> {
-  const parsed = pullRequestsSchema.safeParse(await graphql(PULL_REQUESTS_QUERY));
+async function fetchPullRequests(signal?: AbortSignal): Promise<InboxPullRequest[]> {
+  const parsed = pullRequestsSchema.safeParse(await graphql(PULL_REQUESTS_QUERY, signal));
   if (!parsed.success) {
     throw new Error("Unexpected GitHub pull request response");
   }
@@ -303,10 +305,10 @@ async function fetchPullRequests(): Promise<InboxPullRequest[]> {
   return result;
 }
 
-export async function fetchInbox(): Promise<InboxData> {
+export async function fetchInbox(signal?: AbortSignal): Promise<InboxData> {
   const [notifications, pullRequests] = await Promise.allSettled([
-    fetchNotifications(),
-    fetchPullRequests(),
+    fetchNotifications(signal),
+    fetchPullRequests(signal),
   ]);
 
   if (notifications.status === "rejected" && pullRequests.status === "rejected") {

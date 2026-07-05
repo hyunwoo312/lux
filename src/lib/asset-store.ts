@@ -49,6 +49,7 @@ export type AssetStore = {
   save: (asset: StoredAsset) => Promise<void>;
   read: (id: string | null | undefined) => Promise<StoredAsset | null>;
   remove: (id: string | null | undefined) => Promise<void>;
+  keys: () => Promise<Set<string>>;
   clearMemoryForTest: () => void;
 };
 
@@ -120,15 +121,15 @@ export function createAssetStore(databaseName: string): AssetStore {
       }
       await runTransaction("readwrite", (store) => store.delete(id));
     },
+    async keys() {
+      if (!isIndexedDbAvailable()) return new Set(memory.keys());
+      const stored = await runTransaction<IDBValidKey[]>("readonly", (store) => store.getAllKeys());
+      return new Set(stored.map((key) => String(key)));
+    },
     clearMemoryForTest() {
       memory.clear();
     },
   };
-}
-
-async function presentAssetIds(store: AssetStore, ids: string[]): Promise<Set<string>> {
-  const checks = await Promise.all(ids.map(async (id) => ((await store.read(id)) ? id : null)));
-  return new Set(checks.filter((id): id is string => id !== null));
 }
 
 export async function missingAssetIds<T extends { assetId: string }>(
@@ -137,7 +138,7 @@ export async function missingAssetIds<T extends { assetId: string }>(
 ): Promise<Set<string>> {
   const ids = refs.filter((ref): ref is T => Boolean(ref)).map((ref) => ref.assetId);
   if (!ids.length) return new Set();
-  const present = await presentAssetIds(store, ids);
+  const present = await store.keys();
   return new Set(ids.filter((id) => !present.has(id)));
 }
 
