@@ -53,7 +53,7 @@ export function Welcome() {
                 Welcome to Lux
               </DialogTitle>
               <DialogDescription className="max-w-xs text-balance">
-                Your new tab, your way. Here&apos;s the quick version.
+                Your new tab, your way. Here are 3 things to know.
               </DialogDescription>
             </motion.div>
 
@@ -75,7 +75,7 @@ export function Welcome() {
                 </motion.span>
               </Row>
               <Row icon={Plug} title="Connect your accounts">
-                Sign in to Calendar, Spotify, and Tasks from Settings.
+                Connect Calendar, Spotify, GitHub, and AniList from Settings.
               </Row>
             </motion.div>
 

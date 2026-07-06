@@ -58,7 +58,7 @@ export function CalendarWidget() {
             ? "Reconnect your calendar to see your schedule."
             : "Connect a calendar to see your schedule."
         }
-        actionLabel="Manage in Settings"
+        actionLabel={hasAccount ? "Reconnect" : "Connect"}
         onAction={() => useSettingsStore.getState().openSettings("accounts")}
       />
     );

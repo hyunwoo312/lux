@@ -77,7 +77,12 @@ export function AccountsTab() {
     } catch (error) {
       setErrors((prev) => ({
         ...prev,
-        [id]: error instanceof Error ? error.message : "Something went wrong",
+        [id]:
+          error instanceof Error
+            ? error.message
+            : kind === "connecting"
+              ? "Couldn’t connect — check your connection and try again."
+              : "Couldn’t disconnect — try again.",
       }));
     } finally {
       setPending((prev) => ({ ...prev, [id]: undefined }));
@@ -88,7 +93,7 @@ export function AccountsTab() {
     <div className="flex flex-col gap-6">
       <SettingsSection
         title="Accounts"
-        description="Services used by your widgets. Tokens stay on this device."
+        description="Services used by your widgets. Your data and tokens stay in this browser."
       >
       {PROVIDERS.map((provider) => {
         const account = accounts.find((entry) => entry.providerId === provider.id);
@@ -140,7 +145,7 @@ export function AccountsTab() {
                           void run(provider.id, "disconnecting", () => disconnect(provider.id));
                         }}
                       >
-                        Confirm
+                        Disconnect
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => setConfirmDisconnect(null)}>
                         Cancel
@@ -185,6 +190,11 @@ export function AccountsTab() {
                 )}
               </div>
             </div>
+            {confirmDisconnect === provider.id && (
+              <p className="text-muted-foreground text-xs">
+                Widgets using {provider.label} pause until you reconnect. Nothing else is deleted.
+              </p>
+            )}
             {error && <p className="text-destructive text-xs">{error}</p>}
             {isSpotify && spotifyClientIdLoaded && (
               <SpotifySetup
@@ -196,6 +206,10 @@ export function AccountsTab() {
           </div>
         );
       })}
+      <p className="text-muted-foreground text-xs">
+        Google, Outlook, and GitHub sign-in goes through a stateless Lux relay that stores nothing.
+        Spotify and AniList connect directly.
+      </p>
       </SettingsSection>
       <PermissionsSection />
     </div>

@@ -106,7 +106,7 @@ beforeEach(() => {
 describe("CalendarWidget", () => {
   it("shows a connect call to action when no account is linked", () => {
     renderWidget();
-    expect(screen.getByRole("button", { name: "Manage in Settings" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Connect" })).toBeInTheDocument();
   });
 
   it("renders the month grid weekday header in calendar view", () => {
@@ -114,7 +114,7 @@ describe("CalendarWidget", () => {
     patch({ events: [timedEvent()] });
     renderWidget();
     expect(screen.getAllByText("W").length).toBeGreaterThan(0);
-    expect(screen.queryByRole("button", { name: "Manage in Settings" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Connect" })).not.toBeInTheDocument();
   });
 
   it("renders event titles and separates multi-day events in list view", () => {

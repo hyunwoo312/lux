@@ -21,6 +21,12 @@ function Message({ children }: { children: string }) {
 
 type BrowserTabKey = Exclude<QuickAccessTab, "home">;
 
+const TAB_NOUN: Record<BrowserTabKey, string> = {
+  bookmarks: "bookmarks",
+  recentlyClosed: "recently closed tabs",
+  history: "recent sites",
+};
+
 const TAB_GATE: Record<
   BrowserTabKey,
   { permission: chrome.runtime.ManifestPermission; message: string }
@@ -69,8 +75,8 @@ export function BrowserTab({ tab, editing }: BrowserTabProps) {
 
   return (
     <div className="h-full overflow-x-hidden overflow-y-auto">
-      {state.status === "loading" && <Message>Loading…</Message>}
-      {state.status === "error" && <Message>Couldn’t load</Message>}
+      {state.status === "loading" && <Message>{`Loading ${TAB_NOUN[tab]}…`}</Message>}
+      {state.status === "error" && <Message>{`Couldn’t load ${TAB_NOUN[tab]}`}</Message>}
       {state.status === "ready" &&
         (state.items.length === 0 ? (
           <Message>Nothing here yet</Message>

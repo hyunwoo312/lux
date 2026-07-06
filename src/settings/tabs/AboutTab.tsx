@@ -27,7 +27,7 @@ const GITHUB_API = "https://api.github.com/repos/hyunwoo312/lux";
 const AUTHOR_URL = "https://hyunwk.me/";
 const SITE_URL = "https://lux.hyunwk.me";
 const PRIVACY_URL = `${SITE_URL}/privacy`;
-const CWS_URL = "https://chromewebstore.google.com/";
+const CWS_URL = "https://chromewebstore.google.com/detail/lux/kmfabjnibncbooljgbkinkfddapmfcna";
 const KOFI_URL = "https://ko-fi.com/hyunwk";
 
 const repoSchema = z.object({ stargazers_count: z.number() });

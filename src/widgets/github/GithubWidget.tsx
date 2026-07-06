@@ -34,7 +34,7 @@ export function GithubWidget() {
             ? "Reconnect GitHub to see your activity."
             : "Connect GitHub to see your activity."
         }
-        actionLabel="Manage in Settings"
+        actionLabel={account ? "Reconnect" : "Connect"}
         onAction={() => useSettingsStore.getState().openSettings("accounts")}
       />
     );

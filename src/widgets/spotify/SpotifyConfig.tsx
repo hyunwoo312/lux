@@ -25,7 +25,7 @@ export function SpotifyConfig() {
     ? account.status === "needsReconnect"
       ? "Reconnect to resume playback."
       : (account.email ?? account.displayName ?? "Connected")
-    : "Not connected.";
+    : "Not connected — connect to control playback.";
 
   return (
     <>
@@ -36,8 +36,8 @@ export function SpotifyConfig() {
           control={
             <IconActionButton
               icon={Settings2}
-              label="Manage account"
-              tooltip="Manage account"
+              label={account ? "Manage account" : "Connect in Settings"}
+              tooltip={account ? "Manage account" : "Connect in Settings"}
               onClick={() => useSettingsStore.getState().openSettings("accounts")}
             />
           }

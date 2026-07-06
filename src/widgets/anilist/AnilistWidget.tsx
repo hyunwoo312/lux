@@ -23,7 +23,7 @@ export function AnilistWidget() {
     if (!loaded) void load();
   }, [loaded, load]);
 
-  if (!loaded) return <AnilistPlaceholder>Loading…</AnilistPlaceholder>;
+  if (!loaded) return <AnilistPlaceholder>Loading AniList…</AnilistPlaceholder>;
 
   const connected = account?.status === "connected";
   if (!connected) return <DiscoverView />;

@@ -42,7 +42,11 @@ export function GeneralTab() {
     try {
       await importSettings(pendingImport);
     } catch (error) {
-      setImportError(error instanceof Error ? error.message : "Could not import settings.");
+      setImportError(
+        error instanceof Error
+          ? error.message
+          : "Couldn’t import that file — it may not be a valid Lux backup.",
+      );
       setPendingImport(null);
     }
   }
@@ -121,7 +125,7 @@ export function GeneralTab() {
       <ResetControl
         onReset={resetAllSettings}
         label="Reset all settings"
-        confirmMessage="Reset all settings? Keeps widgets, content, and accounts."
+        confirmMessage="Reset all settings? Clears theme, shortcuts, and background images. Widgets, content, and accounts are kept."
         doneMessage="Settings reset"
       />
     </div>

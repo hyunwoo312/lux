@@ -73,7 +73,7 @@ export function ResetControl({
               className={cn("text-destructive hover:text-destructive", PRESS)}
               onClick={confirm}
             >
-              Confirm
+              Reset
             </Button>
             <Button
               size="sm"
