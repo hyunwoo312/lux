@@ -7,6 +7,7 @@ export function StocksRefreshButton() {
   const symbols = useStocks((d) => d.symbols);
   const syncing = useStocksStore((s) => (s.syncing[instanceId] ?? 0) > 0);
   const lastSyncAt = useStocksStore((s) => s.lastSyncAt[instanceId]);
+  const dataSyncedAt = useStocksStore((s) => s.dataSyncedAt[instanceId]);
   const requestRefresh = useStocksStore((s) => s.requestRefresh);
 
   if (symbols.length === 0) return null;
@@ -15,6 +16,7 @@ export function StocksRefreshButton() {
     <WidgetRefreshButton
       syncing={syncing}
       lastSyncAt={lastSyncAt}
+      updatedAt={dataSyncedAt}
       cooldownMs={STOCKS_SYNC_COOLDOWN_MS}
       onRefresh={() => requestRefresh(instanceId)}
     />

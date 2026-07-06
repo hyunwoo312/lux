@@ -75,14 +75,14 @@ function notificationIcon(reason: string): LucideIcon {
 
 export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPrivate: boolean }) {
   const newTab = useGithub((d) => d.openBehavior === "newTab");
-  const { state, isRefreshing, refresh } = usePolledResource(fetchInbox, {
+  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledResource(fetchInbox, {
     enabled,
     intervalMs: REFRESH_MS,
     cacheKey: "github:inbox",
     persist: true,
     parsePersisted: parseCachedInbox,
   });
-  useGithubSync(refresh, isRefreshing);
+  useGithubSync(refresh, isRefreshing, lastSyncedAt);
 
   if (state.status === "loading") return <GithubPlaceholder>Loading inbox…</GithubPlaceholder>;
   if (state.status === "error")

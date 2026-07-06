@@ -25,6 +25,7 @@ type StocksState = {
   byInstance: Record<string, StocksData>;
   syncNonce: Record<string, number>;
   lastSyncAt: Record<string, number>;
+  dataSyncedAt: Record<string, number>;
   syncing: Record<string, number>;
   addSymbol: (instanceId: string, symbol: string) => void;
   removeSymbol: (instanceId: string, symbol: string) => void;
@@ -36,6 +37,7 @@ type StocksState = {
   clearSelection: (instanceId: string) => void;
   beginSync: (instanceId: string) => void;
   endSync: (instanceId: string) => void;
+  reportSynced: (instanceId: string, at: number) => void;
   requestRefresh: (instanceId: string) => void;
   removeInstance: (instanceId: string) => void;
 };
@@ -75,6 +77,7 @@ export const useStocksStore = create<StocksState>()(
       byInstance: {},
       syncNonce: {},
       lastSyncAt: {},
+      dataSyncedAt: {},
       syncing: {},
       addSymbol: (instanceId, symbol) =>
         set((state) => {
@@ -129,6 +132,12 @@ export const useStocksStore = create<StocksState>()(
             [instanceId]: Math.max(0, (state.syncing[instanceId] ?? 0) - 1),
           },
         })),
+      reportSynced: (instanceId, at) =>
+        set((state) =>
+          at > (state.dataSyncedAt[instanceId] ?? 0)
+            ? { dataSyncedAt: { ...state.dataSyncedAt, [instanceId]: at } }
+            : state,
+        ),
       requestRefresh: (instanceId) => {
         const remainingMs = syncCooldownRemainingMs(
           get().lastSyncAt[instanceId],
@@ -150,6 +159,7 @@ export const useStocksStore = create<StocksState>()(
           byInstance: dropInstance(state.byInstance, instanceId),
           syncNonce: dropInstance(state.syncNonce, instanceId),
           lastSyncAt: dropInstance(state.lastSyncAt, instanceId),
+          dataSyncedAt: dropInstance(state.dataSyncedAt, instanceId),
           syncing: dropInstance(state.syncing, instanceId),
         })),
     }),

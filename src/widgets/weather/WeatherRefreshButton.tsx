@@ -11,6 +11,7 @@ export function WeatherRefreshButton() {
   const locations = useWeather((d) => d.locations);
   const syncing = useWeatherStore((s) => (s.syncing[instanceId] ?? 0) > 0);
   const lastSyncAt = useWeatherStore((s) => s.lastSyncAt[instanceId]);
+  const dataSyncedAt = useWeatherStore((s) => s.dataSyncedAt[instanceId]);
   const requestRefresh = useWeatherStore((s) => s.requestRefresh);
 
   if (locations.length === 0) return null;
@@ -19,6 +20,7 @@ export function WeatherRefreshButton() {
     <WidgetRefreshButton
       syncing={syncing}
       lastSyncAt={lastSyncAt}
+      updatedAt={dataSyncedAt}
       cooldownMs={WEATHER_SYNC_COOLDOWN_MS}
       onRefresh={() => requestRefresh(instanceId)}
     />

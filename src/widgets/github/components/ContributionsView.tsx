@@ -73,12 +73,12 @@ export function ContributionsView({ enabled }: { enabled: boolean }) {
   const setContributions = useGithubStore((s) => s.setContributions);
   const showPrivate = useGithub((d) => d.showPrivate);
   const newTab = useGithub((d) => d.openBehavior === "newTab");
-  const { state, isRefreshing, refresh } = usePolledResource(fetchContributions, {
+  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledResource(fetchContributions, {
     enabled,
     intervalMs: REFRESH_MS,
     cacheKey: "github:contributions",
   });
-  useGithubSync(refresh, isRefreshing);
+  useGithubSync(refresh, isRefreshing, lastSyncedAt);
 
   const liveData = state.status === "success" ? state.data : null;
   useEffect(() => {

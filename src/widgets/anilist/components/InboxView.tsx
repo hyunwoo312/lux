@@ -38,7 +38,8 @@ export function InboxView({
     parsePersisted: (raw) => (typeof raw === "number" ? raw : null),
   });
   const unreadRefresh = unread.refresh;
-  const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh } = usePagedResource(
+  const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh, lastSyncedAt } =
+    usePagedResource(
     (page, signal) => fetchInboxPage(page, lang, signal),
     {
       enabled,
@@ -54,7 +55,7 @@ export function InboxView({
     refresh();
     unreadRefresh();
   }, [refresh, unreadRefresh]);
-  useAnilistSync(refreshAll, isRefreshing);
+  useAnilistSync(refreshAll, isRefreshing, lastSyncedAt);
 
   const [unreadOverride, setUnreadOverride] = useState<number | null>(null);
   const [marking, setMarking] = useState(false);

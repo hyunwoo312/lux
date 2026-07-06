@@ -26,12 +26,14 @@ type GithubStoreState = {
   syncNonce: number;
   syncing: boolean;
   lastSyncAt?: number;
+  dataSyncedAt?: number;
   setView: (instanceId: string, view: GithubView) => void;
   setShowPrivate: (instanceId: string, showPrivate: boolean) => void;
   setOpenBehavior: (instanceId: string, openBehavior: OpenBehavior) => void;
   removeInstance: (instanceId: string) => void;
   setContributions: (contributions: ContributionsData) => void;
   setSyncing: (syncing: boolean) => void;
+  reportSynced: (at: number) => void;
   requestSync: () => SyncResult;
 };
 
@@ -106,6 +108,7 @@ export const useGithubStore = create<GithubStoreState>()(
       syncNonce: 0,
       syncing: false,
       lastSyncAt: undefined,
+      dataSyncedAt: undefined,
       setView: (instanceId, view) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, view }))),
       setShowPrivate: (instanceId, showPrivate) =>
@@ -116,6 +119,9 @@ export const useGithubStore = create<GithubStoreState>()(
         set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
       setContributions: (contributions) => set({ contributions }),
       setSyncing: (syncing) => set({ syncing }),
+      reportSynced: (at) => {
+        if (at > (get().dataSyncedAt ?? 0)) set({ dataSyncedAt: at });
+      },
       requestSync: () => {
         const remainingMs = syncCooldownRemainingMs(get().lastSyncAt, GITHUB_SYNC_COOLDOWN_MS);
         if (remainingMs > 0) {

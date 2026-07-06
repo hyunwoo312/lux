@@ -55,7 +55,7 @@ export function useQuote(symbol: string) {
     parsePersisted: parseCachedQuote,
   });
 
-  useStocksSync(resource.refresh, resource.isRefreshing);
+  useStocksSync(resource.refresh, resource.isRefreshing, resource.lastSyncedAt);
 
   const data = resource.state.status === "success" ? resource.state.data : null;
   lastData.current = data;

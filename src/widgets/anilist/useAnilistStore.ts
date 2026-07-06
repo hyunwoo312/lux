@@ -39,6 +39,7 @@ type AnilistStoreState = {
   syncNonce: number;
   syncing: boolean;
   lastSyncAt?: number;
+  dataSyncedAt?: number;
   setActiveTab: (instanceId: string, activeTab: AnilistTab) => void;
   setMediaFilter: (instanceId: string, mediaFilter: MediaFilter) => void;
   setCurrentSort: (instanceId: string, currentSort: CurrentSort) => void;
@@ -47,6 +48,7 @@ type AnilistStoreState = {
   removeInstance: (instanceId: string) => void;
   setLastSeenActivity: (createdAt: number) => void;
   setSyncing: (syncing: boolean) => void;
+  reportSynced: (at: number) => void;
   requestSync: (titleLanguage: TitleLanguage, viewerId: number) => SyncResult;
 };
 
@@ -110,6 +112,7 @@ export const useAnilistStore = create<AnilistStoreState>()(
       syncNonce: 0,
       syncing: false,
       lastSyncAt: undefined,
+      dataSyncedAt: undefined,
       setActiveTab: (instanceId, activeTab) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, activeTab }))),
       setMediaFilter: (instanceId, mediaFilter) =>
@@ -127,6 +130,9 @@ export const useAnilistStore = create<AnilistStoreState>()(
           lastSeenActivityAt: Math.max(state.lastSeenActivityAt ?? 0, createdAt),
         })),
       setSyncing: (syncing) => set({ syncing }),
+      reportSynced: (at) => {
+        if (at > (get().dataSyncedAt ?? 0)) set({ dataSyncedAt: at });
+      },
       requestSync: (titleLanguage, viewerId) => {
         const remainingMs = syncCooldownRemainingMs(get().lastSyncAt, ANILIST_SYNC_COOLDOWN_MS);
         if (remainingMs > 0) {

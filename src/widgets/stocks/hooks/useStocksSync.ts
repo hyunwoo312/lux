@@ -2,11 +2,12 @@ import { useEffect, useRef } from "react";
 import { useStocksStore } from "@/widgets/stocks/useStocksStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
-export function useStocksSync(refresh: () => void, isRefreshing: boolean): void {
+export function useStocksSync(refresh: () => void, isRefreshing: boolean, syncedAt: number): void {
   const instanceId = useWidgetInstanceId();
   const syncNonce = useStocksStore((s) => s.syncNonce[instanceId] ?? 0);
   const beginSync = useStocksStore((s) => s.beginSync);
   const endSync = useStocksStore((s) => s.endSync);
+  const reportSynced = useStocksStore((s) => s.reportSynced);
   const lastNonce = useRef(syncNonce);
 
   useEffect(() => {
@@ -21,4 +22,8 @@ export function useStocksSync(refresh: () => void, isRefreshing: boolean): void 
     beginSync(instanceId);
     return () => endSync(instanceId);
   }, [instanceId, isRefreshing, beginSync, endSync]);
+
+  useEffect(() => {
+    if (syncedAt > 0) reportSynced(instanceId, syncedAt);
+  }, [instanceId, syncedAt, reportSynced]);
 }

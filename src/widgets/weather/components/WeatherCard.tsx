@@ -136,13 +136,13 @@ export function WeatherCard({ location, units, mode, onSelect, onRemove }: Weath
     (signal: AbortSignal) => fetchWeather(location, units, signal),
     [location, units],
   );
-  const { state, refresh, isRefreshing } = usePolledResource(fetcher, {
+  const { state, refresh, isRefreshing, lastSyncedAt } = usePolledResource(fetcher, {
     intervalMs: REFRESH_MS,
     cacheKey: `weather:${location.latitude},${location.longitude},${units}`,
     persist: true,
     parsePersisted: parseCachedWeather,
   });
-  useWeatherSync(refresh, isRefreshing);
+  useWeatherSync(refresh, isRefreshing, lastSyncedAt);
 
   if (mode === "detailed") {
     return (

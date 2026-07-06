@@ -8,7 +8,6 @@ vi.mock("@/widgets/news/lib/news", () => ({
   searchUrl: (query: string) => `search:${query}`,
   sourceLabel: (source: string) => source,
   hasThumbnails: (source: string) => source === "nyt" || source === "bbc",
-  relativeTime: () => "now",
   parseCachedNews: () => null,
 }));
 

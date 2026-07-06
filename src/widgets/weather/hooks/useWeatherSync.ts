@@ -2,11 +2,12 @@ import { useEffect, useRef } from "react";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { useWeatherStore } from "@/widgets/weather/useWeatherStore";
 
-export function useWeatherSync(refresh: () => void, isRefreshing: boolean): void {
+export function useWeatherSync(refresh: () => void, isRefreshing: boolean, syncedAt: number): void {
   const instanceId = useWidgetInstanceId();
   const syncNonce = useWeatherStore((s) => s.syncNonce[instanceId] ?? 0);
   const beginSync = useWeatherStore((s) => s.beginSync);
   const endSync = useWeatherStore((s) => s.endSync);
+  const reportSynced = useWeatherStore((s) => s.reportSynced);
   const lastNonce = useRef(syncNonce);
 
   useEffect(() => {
@@ -21,4 +22,8 @@ export function useWeatherSync(refresh: () => void, isRefreshing: boolean): void
     beginSync(instanceId);
     return () => endSync(instanceId);
   }, [instanceId, isRefreshing, beginSync, endSync]);
+
+  useEffect(() => {
+    if (syncedAt > 0) reportSynced(instanceId, syncedAt);
+  }, [instanceId, syncedAt, reportSynced]);
 }

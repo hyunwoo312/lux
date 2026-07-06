@@ -9,6 +9,7 @@ import {
 export function AnilistRefreshButton() {
   const syncing = useAnilistStore((s) => s.syncing);
   const lastSyncAt = useAnilistStore((s) => s.lastSyncAt);
+  const dataSyncedAt = useAnilistStore((s) => s.dataSyncedAt);
   const requestSync = useAnilistStore((s) => s.requestSync);
   const titleLanguage = useAnilist((d) => d.titleLanguage);
   const viewerId = useIntegrationStore((s) =>
@@ -19,6 +20,7 @@ export function AnilistRefreshButton() {
     <WidgetRefreshButton
       syncing={syncing}
       lastSyncAt={lastSyncAt}
+      updatedAt={dataSyncedAt}
       cooldownMs={ANILIST_SYNC_COOLDOWN_MS}
       onRefresh={() => requestSync(titleLanguage, viewerId)}
     />

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { faviconUrl } from "@/lib/favicon";
-import { relativeTime } from "@/widgets/news/lib/news";
+import { formatRelativeTime } from "@/lib/relative-time";
 import type { OpenBehavior } from "@/lib/open-url";
 import type { NewsItem } from "@/widgets/news/types";
 
@@ -21,7 +21,7 @@ export function HeadlineRow({
   const hasImage = item.image !== null && !imageFailed;
   const showSource = item.sourceUrl !== null;
   const favicon = item.sourceUrl ? faviconUrl(item.sourceUrl, 32) : null;
-  const timeLabel = item.publishedAt !== null ? relativeTime(item.publishedAt, now) : null;
+  const timeLabel = item.publishedAt !== null ? formatRelativeTime(item.publishedAt, now) : null;
 
   return (
     <a

@@ -1,5 +1,5 @@
-export function formatRelativeTime(iso: string, now = Date.now()): string {
-  const minutes = Math.round((now - new Date(iso).getTime()) / 60_000);
+export function formatRelativeTime(time: string | number, now = Date.now()): string {
+  const minutes = Math.round((now - new Date(time).getTime()) / 60_000);
   if (minutes < 1) return "just now";
   if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.round(minutes / 60);

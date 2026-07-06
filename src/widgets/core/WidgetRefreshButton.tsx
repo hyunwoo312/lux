@@ -3,12 +3,14 @@ import { RefreshCw } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
+import { formatRelativeTime } from "@/lib/relative-time";
 import { WIDGET_HEADER_ACTION } from "@/widgets/core/BaseWidget";
 import { syncCooldownMessage, syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
 
 type WidgetRefreshButtonProps = {
   syncing: boolean;
   lastSyncAt: number | undefined;
+  updatedAt?: number;
   cooldownMs: number;
   onRefresh: () => void;
 };
@@ -16,6 +18,7 @@ type WidgetRefreshButtonProps = {
 export function WidgetRefreshButton({
   syncing,
   lastSyncAt,
+  updatedAt,
   cooldownMs,
   onRefresh,
 }: WidgetRefreshButtonProps) {
@@ -24,18 +27,28 @@ export function WidgetRefreshButton({
 
   const remainingMs = syncCooldownRemainingMs(lastSyncAt, cooldownMs, now);
   const coolingDown = remainingMs > 0;
+  const freshAt = (updatedAt ?? lastSyncAt) || undefined;
 
   useEffect(() => {
-    if (!coolingDown) return;
-    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    if (!coolingDown && freshAt === undefined) return;
+    const id = window.setInterval(() => setNow(Date.now()), coolingDown ? 1000 : 60_000);
     return () => window.clearInterval(id);
-  }, [coolingDown]);
+  }, [coolingDown, freshAt]);
 
   const spinning = syncing && !reduced;
   const disabled = syncing || coolingDown;
 
   return (
-    <Tooltip content={coolingDown ? syncCooldownMessage(remainingMs) : "Refresh"} sticky>
+    <Tooltip
+      content={
+        coolingDown
+          ? syncCooldownMessage(remainingMs)
+          : freshAt !== undefined
+            ? `Updated ${formatRelativeTime(freshAt, now)}`
+            : "Refresh"
+      }
+      sticky
+    >
       <Button
         variant="ghost"
         size="icon"

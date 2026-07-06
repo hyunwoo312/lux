@@ -1,12 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import {
-  feedUrl,
-  parseCachedNews,
-  parseFeed,
-  relativeTime,
-  searchUrl,
-} from "@/widgets/news/lib/news";
+import { feedUrl, parseCachedNews, parseFeed, searchUrl } from "@/widgets/news/lib/news";
 
 const rssFeed = `<?xml version="1.0"?>
 <rss version="2.0"><channel>
@@ -104,16 +98,6 @@ describe("searchUrl", () => {
     expect(searchUrl("tesla stock")).toContain(
       "https://news.google.com/rss/search?q=tesla%20stock",
     );
-  });
-});
-
-describe("relativeTime", () => {
-  it("formats minutes, hours, and days", () => {
-    const now = Date.parse("2024-01-01T12:00:00Z");
-    expect(relativeTime(now, now)).toBe("now");
-    expect(relativeTime(now - 5 * 60_000, now)).toBe("5m");
-    expect(relativeTime(now - 3 * 3_600_000, now)).toBe("3h");
-    expect(relativeTime(now - 2 * 86_400_000, now)).toBe("2d");
   });
 });
 

@@ -32,7 +32,8 @@ export function ActivityView({
   const setLastSeen = useAnilistStore((s) => s.setLastSeenActivity);
   const lang = useAnilist((d) => d.titleLanguage);
   const seenRef = useRef(useAnilistStore.getState().lastSeenActivityAt ?? 0);
-  const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh } = usePagedResource(
+  const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh, lastSyncedAt } =
+    usePagedResource(
     (page, signal) => fetchActivityPage(page, lang, signal),
     {
       enabled,
@@ -44,7 +45,7 @@ export function ActivityView({
       parsePersisted: parseCachedActivity,
     },
   );
-  useAnilistSync(refresh, isRefreshing);
+  useAnilistSync(refresh, isRefreshing, lastSyncedAt);
 
   const [likes, setLikes] = useState<Record<number, boolean>>({});
   const likesRef = useRef(likes);

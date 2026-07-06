@@ -22,6 +22,7 @@ export type PagedResource<T> = {
   hasMore: boolean;
   isLoadingMore: boolean;
   isRefreshing: boolean;
+  lastSyncedAt: number;
   loadMore: () => void;
   refresh: () => void;
 };
@@ -450,6 +451,7 @@ export function usePagedResource<T>(
     hasMore,
     isLoadingMore: snapshot.isLoadingMore,
     isRefreshing: snapshot.isRefreshing,
+    lastSyncedAt: snapshot.at,
     loadMore,
     refresh,
   };

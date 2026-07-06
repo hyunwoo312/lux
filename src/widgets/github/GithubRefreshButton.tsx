@@ -4,12 +4,14 @@ import { GITHUB_SYNC_COOLDOWN_MS, useGithubStore } from "@/widgets/github/useGit
 export function GithubRefreshButton() {
   const syncing = useGithubStore((s) => s.syncing);
   const lastSyncAt = useGithubStore((s) => s.lastSyncAt);
+  const dataSyncedAt = useGithubStore((s) => s.dataSyncedAt);
   const requestSync = useGithubStore((s) => s.requestSync);
 
   return (
     <WidgetRefreshButton
       syncing={syncing}
       lastSyncAt={lastSyncAt}
+      updatedAt={dataSyncedAt}
       cooldownMs={GITHUB_SYNC_COOLDOWN_MS}
       onRefresh={() => requestSync()}
     />

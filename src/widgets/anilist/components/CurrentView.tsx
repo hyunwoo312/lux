@@ -50,7 +50,7 @@ type CurrentViewProps = {
 
 export function CurrentView({ enabled, userId, newTab }: CurrentViewProps) {
   const lang = useAnilist((d) => d.titleLanguage);
-  const { state, isRefreshing, refresh } = usePolledResource(
+  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledResource(
     (signal) => fetchCurrent(userId, lang, signal),
     {
       enabled,
@@ -61,7 +61,7 @@ export function CurrentView({ enabled, userId, newTab }: CurrentViewProps) {
       parsePersisted: parseCachedCurrent,
     },
   );
-  useAnilistSync(refresh, isRefreshing);
+  useAnilistSync(refresh, isRefreshing, lastSyncedAt);
 
   if (state.status === "loading")
     return <AnilistPlaceholder>Loading your list…</AnilistPlaceholder>;
