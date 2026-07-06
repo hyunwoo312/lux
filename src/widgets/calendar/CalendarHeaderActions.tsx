@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
-  ArrowLeft,
   CalendarClock,
   ChevronDown,
   ChevronLeft,
@@ -69,7 +68,6 @@ export function CalendarHeaderActions() {
   const selectedDay = useCalendar((d) => d.selectedDay);
   const shiftMonth = useCalendarStore((s) => s.shiftMonth);
   const shiftWeek = useCalendarStore((s) => s.shiftWeek);
-  const exitWeek = useCalendarStore((s) => s.exitWeek);
   const goToToday = useCalendarStore((s) => s.goToToday);
 
   const inWeek = view === "calendar" && mode === "week" && selectedDay !== null;
@@ -78,16 +76,6 @@ export function CalendarHeaderActions() {
   return (
     <div className="flex items-center gap-0.5">
       <AnimatePresence initial={false}>
-        {inWeek && (
-          <CollapsingNavButton
-            key="back"
-            reduced={reduced}
-            label="Back to month"
-            onClick={() => exitWeek(instanceId)}
-          >
-            <ArrowLeft />
-          </CollapsingNavButton>
-        )}
         {inWeek && (
           <CollapsingNavButton
             key="prev-week"

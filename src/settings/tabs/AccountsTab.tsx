@@ -29,11 +29,36 @@ type ProviderMeta = {
 };
 
 const PROVIDERS: ProviderMeta[] = [
-  { id: "google", label: "Google", description: "Calendar", icon: GoogleServiceIcon },
-  { id: "microsoft", label: "Outlook", description: "Calendar", icon: OutlookServiceIcon },
-  { id: "spotify", label: "Spotify", description: "Playback & search", icon: SpotifyServiceIcon },
-  { id: "github", label: "GitHub", description: "Contributions & inbox", icon: GitHubServiceIcon },
-  { id: "anilist", label: "AniList", description: "Anime & manga library", icon: AnilistServiceIcon },
+  {
+    id: "google",
+    label: "Google",
+    description: "Reads your calendar and email address — read-only.",
+    icon: GoogleServiceIcon,
+  },
+  {
+    id: "microsoft",
+    label: "Outlook",
+    description: "Reads your calendar and profile — read-only.",
+    icon: OutlookServiceIcon,
+  },
+  {
+    id: "spotify",
+    label: "Spotify",
+    description: "Controls playback; reads your library and playlists.",
+    icon: SpotifyServiceIcon,
+  },
+  {
+    id: "github",
+    label: "GitHub",
+    description: "Reads your profile, notifications, and private repos.",
+    icon: GitHubServiceIcon,
+  },
+  {
+    id: "anilist",
+    label: "AniList",
+    description: "Reads your lists and inbox; AniList grants full access.",
+    icon: AnilistServiceIcon,
+  },
 ];
 
 type Pending = "connecting" | "disconnecting";

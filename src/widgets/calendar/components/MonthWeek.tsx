@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -33,15 +34,21 @@ function EventBar({
   segment: EventSegment;
   color: string;
   showTitle: boolean;
-  onActivate: () => void;
+  onActivate: (column: number) => void;
 }) {
+  const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const ratio = rect.width > 0 ? (event.clientX - rect.left) / rect.width : 0;
+    const offset = Math.min(segment.span - 1, Math.max(0, Math.floor(ratio * segment.span)));
+    onActivate(segment.startCol + offset);
+  };
   return (
     <Tooltip content={getEventTitle(segment.event)} solid side="top">
       <button
         type="button"
         tabIndex={-1}
         aria-label={getEventTitle(segment.event)}
-        onClick={onActivate}
+        onClick={handleClick}
         className={cn(
           "pointer-events-auto absolute flex items-center overflow-hidden px-1 text-2xs font-medium",
           segment.continuesLeft ? "rounded-l-none" : "rounded-l-[3px]",
@@ -213,8 +220,8 @@ export function MonthWeek({
                 segment={segment}
                 color={getEventColor(segment.event, colors)}
                 showTitle={showTitles && segment.span * cellWidth > 56}
-                onActivate={() => {
-                  const date = week.days[segment.startCol]?.date;
+                onActivate={(column) => {
+                  const date = week.days[column]?.date;
                   if (date) activateDay(date);
                 }}
               />

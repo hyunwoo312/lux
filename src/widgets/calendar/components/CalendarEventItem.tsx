@@ -4,7 +4,12 @@ import { GoogleCalendarServiceIcon, OutlookServiceIcon } from "@/components/icon
 import { Tooltip } from "@/components/ui/tooltip";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { EASE_OUT_QUINT } from "@/lib/motion";
-import { formatEventRelativeTime, formatEventTime, getEventTitle } from "@/widgets/calendar/lib/agenda";
+import {
+  formatEventRelativeTime,
+  formatEventTime,
+  getEventStartDate,
+  getEventTitle,
+} from "@/widgets/calendar/lib/agenda";
 import type { CalendarProviderId, DisplayCalendarEvent } from "@/widgets/calendar/types";
 
 type OpenLink = { provider: CalendarProviderId; sourceUrl: string };
@@ -53,7 +58,9 @@ export function CalendarEventItem({
 }: CalendarEventItemProps) {
   const clock24h = useAppSettingsStore((s) => s.clock24h);
   const title = getEventTitle(event);
-  const relative = emphasized ? formatEventRelativeTime(event, now) : null;
+  const startsInMs = getEventStartDate(event).getTime() - now.getTime();
+  const imminent = startsInMs >= 0 && startsInMs <= 60 * 60_000;
+  const relative = emphasized || imminent ? formatEventRelativeTime(event, now) : null;
   const openLinks = event.links.filter((link): link is OpenLink => Boolean(link.sourceUrl));
   const actionCount = openLinks.length;
   const padCount = Math.min(2, actionCount) as 1 | 2;
