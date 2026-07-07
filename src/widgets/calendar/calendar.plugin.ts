@@ -14,4 +14,6 @@ export const calendarPlugin: WidgetPlugin = {
   configComponent: CalendarConfig,
   statusComponent: CalendarStatus,
   headerActionComponent: CalendarHeaderActions,
-  accent: "orange",};
+  accent: "orange",
+  removalNote: () => "Its calendar selection will be reset — your accounts stay connected.",
+};

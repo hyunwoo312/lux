@@ -18,4 +18,12 @@ export const imagePlugin: WidgetPlugin = {
   accent: "yellow",
   bleed: true,
   useBare: (instanceId) => useImageStore((s) => s.byInstance[instanceId]?.hideFrame ?? false),
+  removalNote: (instanceId) => {
+    const data = useImageStore.getState().byInstance[instanceId];
+    const count = !data ? 0 : data.mode === "multi" ? data.items.length : data.single ? 1 : 0;
+    if (count === 0) return null;
+    return count === 1
+      ? "Your uploaded image will be deleted."
+      : `Your ${count} uploaded images will be deleted.`;
+  },
 };

@@ -54,6 +54,7 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
   const StatusComponent = plugin.statusComponent;
   const HeaderActionComponent = plugin.headerActionComponent;
   const BackdropComponent = plugin.backdropComponent;
+  const pluginRemovalNote = plugin.removalNote;
 
   return (
     <WidgetInstanceContext.Provider value={instance.id}>
@@ -78,6 +79,7 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
             </WidgetConfig>
           }
           onRemove={() => removeWidget(instance.id)}
+          removalNote={pluginRemovalNote ? () => pluginRemovalNote(instance.id) : undefined}
         >
           <WidgetErrorBoundary>
             <Widget editing={editing} />

@@ -18,6 +18,21 @@ describe("useTasksStore", () => {
     expect(store().byInstance[ID]?.tasks.map((task) => task.id)).toEqual(["1"]);
   });
 
+  it("restores cleared tasks without duplicating existing ids", () => {
+    store().addTask(ID, "a", "1");
+    store().addTask(ID, "b", "2");
+    store().toggleTask(ID, "2");
+    const done = store().byInstance[ID]?.tasks.filter((task) => task.done) ?? [];
+
+    store().clearCompleted(ID);
+    store().restoreTasks(ID, done);
+
+    expect(store().byInstance[ID]?.tasks.map((task) => task.id)).toEqual(["1", "2"]);
+
+    store().restoreTasks(ID, done);
+    expect(store().byInstance[ID]?.tasks.map((task) => task.id)).toEqual(["1", "2"]);
+  });
+
   it("moves a task to another task's position", () => {
     store().addTask(ID, "a", "1");
     store().addTask(ID, "b", "2");

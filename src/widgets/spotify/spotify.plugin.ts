@@ -19,4 +19,6 @@ export const spotifyPlugin: WidgetPlugin = {
   headerActionComponent: SpotifyOpenLink,
   backdropComponent: SpotifyBackdrop,
   decorativeBackdrop: true,
-  accent: SPOTIFY_ACCENT,};
+  accent: SPOTIFY_ACCENT,
+  removalNote: () => "Its settings will be reset — your Spotify account stays connected.",
+};

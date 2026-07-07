@@ -3,6 +3,7 @@ import type { WidgetPlugin } from "@/widgets/core/types";
 import { NoteConfig } from "@/widgets/note/NoteConfig";
 import { NoteWidget } from "@/widgets/note/NoteWidget";
 import { NoteStatus } from "@/widgets/note/components/NoteStatus";
+import { useNoteStore } from "@/widgets/note/useNoteStore";
 
 export const notePlugin: WidgetPlugin = {
   type: "note",
@@ -12,4 +13,9 @@ export const notePlugin: WidgetPlugin = {
   component: NoteWidget,
   configComponent: NoteConfig,
   statusComponent: NoteStatus,
-  accent: "yellow",};
+  accent: "yellow",
+  removalNote: (instanceId) =>
+    useNoteStore.getState().byInstance[instanceId]?.text.trim()
+      ? "Your note's text will be deleted."
+      : null,
+};

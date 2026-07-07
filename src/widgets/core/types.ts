@@ -42,4 +42,5 @@ export type WidgetPlugin = {
   accent?: AccentPreset;
   bleed?: boolean;
   useBare?: (instanceId: string) => boolean;
+  removalNote?: (instanceId: string) => string | null;
 };

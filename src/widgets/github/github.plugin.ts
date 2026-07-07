@@ -15,4 +15,6 @@ export const githubPlugin: WidgetPlugin = {
   configComponent: GithubConfig,
   statusComponent: GithubProfileLink,
   headerActionComponent: GithubHeaderActions,
-  accent: "violet",};
+  accent: "violet",
+  removalNote: () => "Its settings will be reset — your GitHub account stays connected.",
+};

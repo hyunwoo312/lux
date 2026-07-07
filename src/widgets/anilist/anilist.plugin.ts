@@ -15,4 +15,6 @@ export const anilistPlugin: WidgetPlugin = {
   configComponent: AnilistConfig,
   statusComponent: AnilistTabs,
   headerActionComponent: AnilistHeaderActions,
-  accent: "cyan",};
+  accent: "cyan",
+  removalNote: () => "Its settings will be reset — your AniList account stays connected.",
+};

@@ -21,6 +21,7 @@ type TasksState = {
   editTask: (instanceId: string, id: string, title: string) => void;
   removeTask: (instanceId: string, id: string) => void;
   clearCompleted: (instanceId: string) => void;
+  restoreTasks: (instanceId: string, tasks: Task[]) => void;
   reorderTasks: (instanceId: string, activeId: string, overId: string) => void;
   setAutoSort: (instanceId: string, autoSort: boolean) => void;
   setCompletedPosition: (instanceId: string, completedPosition: CompletedPosition) => void;
@@ -105,6 +106,14 @@ export const useTasksStore = create<TasksState>()(
             ...data,
             tasks: data.tasks.filter((task) => !task.done),
           })),
+        ),
+      restoreTasks: (instanceId, tasks) =>
+        set((state) =>
+          update(state, instanceId, (data) => {
+            const existing = new Set(data.tasks.map((task) => task.id));
+            const restored = tasks.filter((task) => !existing.has(task.id));
+            return restored.length === 0 ? data : { ...data, tasks: [...data.tasks, ...restored] };
+          }),
         ),
       reorderTasks: (instanceId, activeId, overId) =>
         set((state) => {

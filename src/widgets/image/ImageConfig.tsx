@@ -130,6 +130,7 @@ export function ImageConfig() {
           {hasImages && (
             <ClearImagesButton
               label={isMulti ? "Clear images" : "Clear image"}
+              count={isMulti ? items.length : single ? 1 : 0}
               disabled={saving}
               onClear={() => void clearAll()}
             />

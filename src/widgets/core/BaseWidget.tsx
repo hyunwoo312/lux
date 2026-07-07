@@ -4,6 +4,7 @@ import type { Transition, Variants } from "motion/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, Settings, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { POP } from "@/lib/motion";
@@ -27,6 +28,7 @@ type BaseWidgetProps = {
   headerAction?: ReactNode;
   config?: ReactNode;
   onRemove: () => void;
+  removalNote?: () => string | null;
   children: ReactNode;
 };
 
@@ -59,23 +61,18 @@ export function BaseWidget({
   headerAction,
   config,
   onRemove,
+  removalNote,
   children,
 }: BaseWidgetProps) {
   const reduced = useReducedMotion();
   const [showConfig, setShowConfig] = useState(false);
-  const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
   const chrome = useMemo(() => ({ openConfig: () => setShowConfig(true) }), []);
 
   useEffect(() => {
     if (editing) setShowConfig(false);
-    else setConfirmingRemove(false);
+    else setConfirmRemoveOpen(false);
   }, [editing]);
-
-  useEffect(() => {
-    if (!confirmingRemove) return;
-    const timer = window.setTimeout(() => setConfirmingRemove(false), 3000);
-    return () => window.clearTimeout(timer);
-  }, [confirmingRemove]);
 
   const hasBackdrop = Boolean(backdrop);
   const contentBackdrop = hasBackdrop && !decorativeBackdrop;
@@ -204,20 +201,13 @@ export function BaseWidget({
             )}
             {editing && (
               <motion.div key="delete" {...spin}>
-                <Tooltip content={confirmingRemove ? "Click again to remove" : `Remove ${title}`}>
+                <Tooltip content={`Remove ${title}`}>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={cn(
-                      "size-7 rounded-sm [&_svg]:size-4",
-                      confirmingRemove &&
-                        "text-destructive hover:text-destructive ring-destructive/60 ring-1",
-                    )}
-                    aria-label={confirmingRemove ? `Confirm remove ${title}` : `Remove ${title}`}
-                    onClick={() => {
-                      if (confirmingRemove) onRemove();
-                      else setConfirmingRemove(true);
-                    }}
+                    className="size-7 rounded-sm [&_svg]:size-4"
+                    aria-label={`Remove ${title}`}
+                    onClick={() => setConfirmRemoveOpen(true)}
                   >
                     <X />
                   </Button>
@@ -251,6 +241,17 @@ export function BaseWidget({
         </AnimatePresence>
       </div>
     </div>
+    <ConfirmDialog
+      open={confirmRemoveOpen}
+      onOpenChange={setConfirmRemoveOpen}
+      title={`Remove ${title}?`}
+      description={
+        (confirmRemoveOpen && removalNote?.()) ||
+        "Its settings will be reset — you can add it back anytime."
+      }
+      confirmLabel="Remove"
+      onConfirm={onRemove}
+    />
     </WidgetChromeContext.Provider>
   );
 }
