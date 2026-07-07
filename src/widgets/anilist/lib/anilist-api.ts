@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { integrationFetch } from "@/integrations";
+import { rateLimitError } from "@/lib/rate-limit";
 import { computeBehind, sumWaiting } from "@/widgets/anilist/lib/current";
 import {
   ANILIST_MAX_ITEMS,
@@ -48,7 +49,7 @@ async function anilistGraphQL(
     ? await integrationFetch("anilist", ENDPOINT, init)
     : await fetch(ENDPOINT, init);
   if (!response.ok) {
-    throw new Error("AniList request failed");
+    throw rateLimitError(response) ?? new Error("AniList request failed");
   }
   return response.json();
 }

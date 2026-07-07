@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Bell, CheckCheck, Loader2 } from "lucide-react";
 import { formatRelativeTime } from "@/lib/relative-time";
+import { loadErrorMessage } from "@/lib/rate-limit";
 import { Tooltip } from "@/components/ui/tooltip";
 import { usePolledResource, invalidatePolledResource } from "@/widgets/core/usePolledResource";
 import { usePagedResource } from "@/widgets/core/usePagedResource";
@@ -83,7 +84,9 @@ export function InboxView({
 
   if (state.status === "loading") return <AnilistPlaceholder>Loading inbox…</AnilistPlaceholder>;
   if (state.status === "error")
-    return <AnilistPlaceholder>Couldn’t load your inbox.</AnilistPlaceholder>;
+    return (
+      <AnilistPlaceholder>{loadErrorMessage(state.error, "Couldn’t load your inbox.")}</AnilistPlaceholder>
+    );
   if (state.status === "empty")
     return <AnilistPlaceholder>Inbox zero — nothing waiting.</AnilistPlaceholder>;
 

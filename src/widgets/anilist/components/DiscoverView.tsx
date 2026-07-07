@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { loadErrorMessage } from "@/lib/rate-limit";
 import { useIntegrationStore } from "@/integrations";
 import { useSettingsStore } from "@/settings";
 import { usePolledResource, type PolledResourceState } from "@/widgets/core/usePolledResource";
@@ -60,7 +61,11 @@ function DiscoverBody({
   if (state.status === "loading")
     return <AnilistPlaceholder>Loading trending titles…</AnilistPlaceholder>;
   if (state.status === "error")
-    return <AnilistPlaceholder>Couldn’t load trending titles.</AnilistPlaceholder>;
+    return (
+      <AnilistPlaceholder>
+        {loadErrorMessage(state.error, "Couldn’t load trending titles.")}
+      </AnilistPlaceholder>
+    );
   if (state.status === "empty")
     return <AnilistPlaceholder>Nothing trending right now.</AnilistPlaceholder>;
 

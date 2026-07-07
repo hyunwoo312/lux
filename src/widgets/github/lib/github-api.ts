@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { integrationFetch } from "@/integrations";
+import { rateLimitError } from "@/lib/rate-limit";
 import {
   buildContributions,
   buildRepoActivity,
@@ -34,7 +35,7 @@ async function graphql(query: string, signal?: AbortSignal): Promise<unknown> {
     signal,
   });
   if (!response.ok) {
-    throw new Error("GitHub request failed");
+    throw rateLimitError(response) ?? new Error("GitHub request failed");
   }
   return response.json();
 }
@@ -179,7 +180,7 @@ async function fetchNotifications(signal?: AbortSignal): Promise<InboxNotificati
     signal,
   });
   if (!response.ok) {
-    throw new Error("GitHub notifications request failed");
+    throw rateLimitError(response) ?? new Error("GitHub notifications request failed");
   }
   const parsed = notificationsSchema.safeParse(await response.json());
   if (!parsed.success) {

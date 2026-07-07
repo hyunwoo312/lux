@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
+import { loadErrorMessage } from "@/lib/rate-limit";
 import { usePagedResource } from "@/widgets/core/usePagedResource";
 import {
   fetchActivityPage,
@@ -79,7 +80,9 @@ export function ActivityView({
 
   if (state.status === "loading") return <AnilistPlaceholder>Loading activity…</AnilistPlaceholder>;
   if (state.status === "error")
-    return <AnilistPlaceholder>Couldn’t load your feed.</AnilistPlaceholder>;
+    return (
+      <AnilistPlaceholder>{loadErrorMessage(state.error, "Couldn’t load your feed.")}</AnilistPlaceholder>
+    );
   if (state.status === "empty")
     return <AnilistPlaceholder>No recent activity from people you follow.</AnilistPlaceholder>;
 

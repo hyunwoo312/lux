@@ -3,6 +3,7 @@ import type { MouseEvent, ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { loadErrorMessage } from "@/lib/rate-limit";
 import { useElementSize, type ElementSize } from "@/hooks/useElementSize";
 import { usePolledResource } from "@/widgets/core/usePolledResource";
 import { fetchContributions } from "@/widgets/github/lib/github-api";
@@ -108,7 +109,9 @@ export function ContributionsView({ enabled }: { enabled: boolean }) {
 
   if (!data) {
     return state.status === "error" ? (
-      <GithubPlaceholder>Couldn’t load contributions.</GithubPlaceholder>
+      <GithubPlaceholder>
+        {loadErrorMessage(state.error, "Couldn’t load contributions.")}
+      </GithubPlaceholder>
     ) : (
       <GithubPlaceholder>Loading contributions…</GithubPlaceholder>
     );

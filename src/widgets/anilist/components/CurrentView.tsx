@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { Clock, Loader2, Minus, Plus, Star, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
+import { loadErrorMessage } from "@/lib/rate-limit";
 import { ConfigSegmented, ConfigSelect } from "@/components/config/WidgetConfig";
 import { usePolledResource, invalidatePolledResource } from "@/widgets/core/usePolledResource";
 import { fetchCurrent, parseCachedCurrent, saveProgress } from "@/widgets/anilist/lib/anilist-api";
@@ -66,7 +67,9 @@ export function CurrentView({ enabled, userId, newTab }: CurrentViewProps) {
   if (state.status === "loading")
     return <AnilistPlaceholder>Loading your list…</AnilistPlaceholder>;
   if (state.status === "error")
-    return <AnilistPlaceholder>Couldn’t load your list.</AnilistPlaceholder>;
+    return (
+      <AnilistPlaceholder>{loadErrorMessage(state.error, "Couldn’t load your list.")}</AnilistPlaceholder>
+    );
   if (state.status === "empty")
     return <AnilistPlaceholder>Nothing in progress.</AnilistPlaceholder>;
 

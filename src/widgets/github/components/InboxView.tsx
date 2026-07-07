@@ -18,6 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { loadErrorMessage } from "@/lib/rate-limit";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { Tooltip } from "@/components/ui/tooltip";
 import { usePolledResource } from "@/widgets/core/usePolledResource";
@@ -86,7 +87,9 @@ export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPriv
 
   if (state.status === "loading") return <GithubPlaceholder>Loading inbox…</GithubPlaceholder>;
   if (state.status === "error")
-    return <GithubPlaceholder>Couldn’t load your inbox.</GithubPlaceholder>;
+    return (
+      <GithubPlaceholder>{loadErrorMessage(state.error, "Couldn’t load your inbox.")}</GithubPlaceholder>
+    );
   if (state.status === "empty")
     return <GithubPlaceholder>Inbox zero — nothing waiting.</GithubPlaceholder>;
 
