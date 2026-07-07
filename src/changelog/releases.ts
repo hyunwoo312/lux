@@ -31,6 +31,56 @@ export const CHANGE_TYPE_LABEL: Record<ChangeType, string> = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "1.1.2",
+    date: "2026-07-07",
+    changes: [
+      {
+        type: "added",
+        text: "Removing a widget now asks first, with a dialog that says exactly what will be deleted — your saved tickers, tasks, note text, and so on.",
+      },
+      {
+        type: "added",
+        text: "Cleared completed tasks can be brought back — an Undo button sticks around for a few seconds after clearing.",
+      },
+      {
+        type: "added",
+        text: "Hover any widget’s refresh button to see how long ago its data was updated.",
+      },
+      {
+        type: "added",
+        text: "The welcome tour has a new step pointing to where accounts connect, and the Accounts page now says what each connection can access.",
+      },
+      {
+        type: "changed",
+        text: "Clearer wording wherever it matters: connect buttons say Connect, confirmation buttons say what they confirm, and reset or disconnect messages spell out what’s kept and what’s lost.",
+      },
+      {
+        type: "changed",
+        text: "Clearing background or Image-widget photos now asks for confirmation instead of deleting immediately.",
+      },
+      {
+        type: "changed",
+        text: "In the calendar’s week view the back-to-month button now sits next to the date range, and any event starting within the hour shows a countdown.",
+      },
+      {
+        type: "fixed",
+        text: "In the month view, clicking a multi-day event now opens the week with the day you clicked selected, instead of the day the event started.",
+      },
+      {
+        type: "fixed",
+        text: "GitHub and AniList now say when you’ve hit a rate limit and when to try again, instead of a generic error.",
+      },
+      {
+        type: "fixed",
+        text: "The Chrome Web Store link in About now opens Lux’s listing instead of the store homepage.",
+      },
+      {
+        type: "fixed",
+        text: "News headline timestamps now match the style used everywhere else (“2m ago”).",
+      },
+    ],
+  },
+  {
     version: "1.1.1",
     date: "2026-07-05",
     changes: [

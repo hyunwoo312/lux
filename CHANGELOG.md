@@ -4,6 +4,28 @@ All notable changes to Lux are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2026-07-07
+
+### Added
+
+- Removing a widget now asks first, with a dialog that says exactly what will be deleted — your saved tickers, tasks, note text, and so on.
+- Cleared completed tasks can be brought back — an Undo button sticks around for a few seconds after clearing.
+- Hover any widget’s refresh button to see how long ago its data was updated.
+- The welcome tour has a new step pointing to where accounts connect, and the Accounts page now says what each connection can access.
+
+### Changed
+
+- Clearer wording wherever it matters: connect buttons say Connect, confirmation buttons say what they confirm, and reset or disconnect messages spell out what’s kept and what’s lost.
+- Clearing background or Image-widget photos now asks for confirmation instead of deleting immediately.
+- In the calendar’s week view the back-to-month button now sits next to the date range, and any event starting within the hour shows a countdown.
+
+### Fixed
+
+- In the month view, clicking a multi-day event now opens the week with the day you clicked selected, instead of the day the event started.
+- GitHub and AniList now say when you’ve hit a rate limit and when to try again, instead of a generic error.
+- The Chrome Web Store link in About now opens Lux’s listing instead of the store homepage.
+- News headline timestamps now match the style used everywhere else (“2m ago”).
+
 ## [1.1.1] - 2026-07-05
 
 ### Changed
