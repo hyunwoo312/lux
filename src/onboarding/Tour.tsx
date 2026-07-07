@@ -29,6 +29,13 @@ const STEPS: Step[] = [
     title: "Your dashboard",
     body: "Your widgets live here. Add more with the + button, then drag and resize to make it yours.",
   },
+  {
+    spotlight: ["settings"],
+    anchor: "settings",
+    placement: "below",
+    title: "Connect your accounts",
+    body: "Calendar, Spotify, GitHub, and AniList sign in from Settings → Accounts. Your data stays in this browser.",
+  },
 ];
 
 type Rect = { top: number; left: number; width: number; height: number };

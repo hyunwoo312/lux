@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { motion, useReducedMotion, type Variants } from "motion/react";
-import { ArrowRight, Info, LayoutGrid, Palette, Plug, type LucideIcon } from "lucide-react";
+import { ArrowRight, Check, Info, LayoutGrid, Palette, Plug, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -95,11 +95,23 @@ export function Welcome() {
               </p>
             </motion.div>
 
-            <motion.div variants={item} className="flex items-center justify-end gap-2">
-              <Button variant="ghost" onClick={closeWelcome}>
-                Skip
-              </Button>
-              <Button onClick={startTour}>Take a tour</Button>
+            <motion.div variants={item} className="flex items-center justify-between gap-2">
+              <div className="text-2xs flex items-center gap-1.5">
+                <span className="text-primary flex items-center gap-1 font-medium">
+                  <Check className="size-3" aria-hidden />
+                  Installed
+                </span>
+                <span aria-hidden className="bg-border h-px w-4" />
+                <span className="text-muted-foreground">Tour</span>
+                <span aria-hidden className="bg-border h-px w-4" />
+                <span className="text-muted-foreground">Customize</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" onClick={closeWelcome}>
+                  Skip
+                </Button>
+                <Button onClick={startTour}>Take a tour</Button>
+              </div>
             </motion.div>
           </motion.div>
         </div>
