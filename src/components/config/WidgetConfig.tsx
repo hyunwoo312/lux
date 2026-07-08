@@ -195,6 +195,7 @@ type MultiToggleProps<T extends string> = {
   options: ConfigOption<T>[];
   onChange: (values: T[]) => void;
   disabled?: boolean;
+  maxSelected?: number;
   label: string;
 };
 
@@ -203,8 +204,10 @@ export function ConfigMultiToggle<T extends string>({
   options,
   onChange,
   disabled = false,
+  maxSelected,
   label,
 }: MultiToggleProps<T>) {
+  const atCap = maxSelected !== undefined && values.length >= maxSelected;
   return (
     <ToggleGroup
       type="multiple"
@@ -221,10 +224,12 @@ export function ConfigMultiToggle<T extends string>({
           <ToggleGroupItem
             key={option.value}
             value={option.value}
+            disabled={atCap && !active}
             className={cn(
               `
                 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium
                 transition-colors
+                disabled:opacity-40
                 [&_img]:size-4
                 [&_svg]:size-4
               `,
@@ -241,4 +246,3 @@ export function ConfigMultiToggle<T extends string>({
     </ToggleGroup>
   );
 }
-
