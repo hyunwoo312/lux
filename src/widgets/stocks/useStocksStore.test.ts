@@ -57,6 +57,12 @@ describe("useStocksStore", () => {
 
   it("keeps instances independent", () => {
     const OTHER = "stocks-2";
+    useStocksStore.setState((state) => ({
+      byInstance: {
+        ...state.byInstance,
+        [OTHER]: { symbols: [], range: "1d", showName: true, sort: "manual", selectedSymbol: null },
+      },
+    }));
     store().addSymbol(ID, "AAPL");
     store().addSymbol(OTHER, "MSFT");
     expect(symbols(ID)).toEqual(["AAPL"]);

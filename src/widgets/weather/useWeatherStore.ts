@@ -40,10 +40,17 @@ type WeatherState = {
   removeInstance: (instanceId: string) => void;
 };
 
+const DEFAULT_LOCATION: WeatherLocation = {
+  id: makeLocationId(40.7128, -74.006),
+  name: "New York",
+  latitude: 40.7128,
+  longitude: -74.006,
+};
+
 const DEFAULT_DATA: WeatherData = {
-  locations: [],
+  locations: [DEFAULT_LOCATION],
   units: "imperial",
-  selectedId: null,
+  selectedId: DEFAULT_LOCATION.id,
   searchOpen: false,
 };
 
@@ -82,7 +89,10 @@ function update(
   return { byInstance: patchInstance(state.byInstance, instanceId, DEFAULT_DATA, fn) };
 }
 
-function migrateLegacyToConfig(persisted: unknown): { locations: WeatherLocation[]; units: WeatherUnits } {
+function migrateLegacyToConfig(persisted: unknown): {
+  locations: WeatherLocation[];
+  units: WeatherUnits;
+} {
   const legacy = legacySchema.safeParse(persisted);
   if (!legacy.success) return { locations: [], units: "imperial" };
   const previous = legacy.data.location;

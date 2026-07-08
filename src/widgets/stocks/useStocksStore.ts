@@ -43,7 +43,7 @@ type StocksState = {
 };
 
 const DEFAULT_DATA: StocksData = {
-  symbols: [],
+  symbols: ["AAPL", "MSFT", "NVDA", "TSLA"],
   range: "1d",
   showName: true,
   sort: "manual",

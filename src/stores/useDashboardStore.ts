@@ -3,13 +3,44 @@ import { persist } from "zustand/middleware";
 import { z } from "zod";
 import type { Layout, LayoutItem } from "react-grid-layout";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { findFirstOpenPosition, findNearestOpenPosition } from "@/widgets/core/layout-engine";
+import { getLocal } from "@/lib/local-store";
+import { WELCOME_SEEN_KEY } from "@/onboarding";
+import {
+  findFirstOpenPosition,
+  findNearestOpenPosition,
+  resolveLayoutCollisions,
+} from "@/widgets/core/layout-engine";
+import { gridColumns } from "@/widgets/core/grid";
 import { pruneInstance } from "@/widgets/core/instanceCleanup";
 import type { WidgetInstance, WidgetPlugin, WidgetType } from "@/widgets/core/types";
 import { WIDGET_TYPES } from "@/widgets/core/types";
 import { getWidgetPlugin } from "@/widgets/registry";
 
 const DEFAULT_COLUMNS = 12;
+const CONTENT_MAX_WIDTH = 2400;
+const CONTENT_INSET = 100;
+
+const STARTER_WIDGETS: {
+  type: WidgetType;
+  xFraction: number;
+  widthFraction: number;
+  y: number;
+  h: number;
+}[] = [
+  { type: "quickAccess", xFraction: 0.0, widthFraction: 0.34, y: 0, h: 8 },
+  { type: "weather", xFraction: 0.6, widthFraction: 0.16, y: 0, h: 6 },
+  { type: "tasks", xFraction: 0.12, widthFraction: 0.26, y: 8, h: 6 },
+  { type: "stocks", xFraction: 0.46, widthFraction: 0.2, y: 6, h: 9 },
+];
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function starterColumns(): number {
+  const contentWidth = Math.min(CONTENT_MAX_WIDTH, window.innerWidth - CONTENT_INSET);
+  return gridColumns(contentWidth);
+}
 
 type DashboardState = {
   widgets: WidgetInstance[];
@@ -23,6 +54,7 @@ type DashboardState = {
   setColumns: (columns: number) => void;
   toggleEditing: () => void;
   clearLastAdded: () => void;
+  seedStarterIfFirstRun: () => void;
 };
 
 const widgetTypeSchema = z.enum(WIDGET_TYPES);
@@ -122,12 +154,35 @@ export const useDashboardStore = create<DashboardState>()(
       setColumns: (columns) => set({ columns }),
       toggleEditing: () => set((state) => ({ editing: !state.editing })),
       clearLastAdded: () => set({ lastAddedId: null }),
+      seedStarterIfFirstRun: () =>
+        set((state) => {
+          if (state.widgets.length > 0) return state;
+          if (getLocal(WELCOME_SEEN_KEY) !== null) return state;
+          const cols = starterColumns();
+          const widgets: WidgetInstance[] = [];
+          const raw: LayoutItem[] = [];
+          for (const entry of STARTER_WIDGETS) {
+            const plugin = getWidgetPlugin(entry.type);
+            if (!plugin) continue;
+            const id = createInstanceId(entry.type);
+            const { minW, minH, maxW, maxH } = plugin.defaultLayout;
+            const w = clamp(Math.round(cols * entry.widthFraction), minW, maxW);
+            const h = clamp(entry.h, minH, maxH);
+            const x = clamp(Math.round(cols * entry.xFraction), 0, Math.max(0, cols - w));
+            widgets.push({ id, type: entry.type });
+            raw.push({ i: id, x, y: entry.y, w, h, minW, minH, maxW, maxH });
+          }
+          return { widgets, layout: resolveLayoutCollisions(raw, cols, null) };
+        }),
     }),
     {
       name: "dashboard",
       storage: gatedStorage,
       version: 1,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => (state) => {
+        gatedStorage.open();
+        state?.seedStarterIfFirstRun();
+      },
       partialize: (state) => ({
         widgets: state.widgets,
         layout: state.layout,

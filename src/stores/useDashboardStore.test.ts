@@ -1,10 +1,13 @@
+// @vitest-environment jsdom
 import { reconcilePersisted, useDashboardStore } from "@/stores/useDashboardStore";
+import { WELCOME_SEEN_KEY } from "@/onboarding";
 import { collides } from "@/widgets/core/layout-engine";
 
 const store = () => useDashboardStore.getState();
 
 describe("useDashboardStore", () => {
   beforeEach(() => {
+    localStorage.clear();
     useDashboardStore.setState({
       widgets: [],
       layout: [],
@@ -78,6 +81,50 @@ describe("useDashboardStore", () => {
 
     store().clearLastAdded();
     expect(store().lastAddedId).toBeNull();
+  });
+
+  describe("seedStarterIfFirstRun", () => {
+    it("seeds a starter board on a fresh, unseen install", () => {
+      store().seedStarterIfFirstRun();
+
+      const { widgets, layout } = store();
+      expect(widgets.map((widget) => widget.type)).toEqual([
+        "quickAccess",
+        "weather",
+        "tasks",
+        "stocks",
+      ]);
+      expect(layout).toHaveLength(widgets.length);
+      expect(layout.map((item) => item.i)).toEqual(widgets.map((widget) => widget.id));
+    });
+
+    it("seeds the starter widgets without overlap", () => {
+      store().seedStarterIfFirstRun();
+
+      const { layout } = store();
+      for (let i = 0; i < layout.length; i += 1) {
+        for (let j = i + 1; j < layout.length; j += 1) {
+          const a = layout[i]!;
+          const b = layout[j]!;
+          expect(collides(a, b)).toBe(false);
+        }
+      }
+    });
+
+    it("does not seed once the welcome has been seen", () => {
+      localStorage.setItem(WELCOME_SEEN_KEY, "1");
+
+      store().seedStarterIfFirstRun();
+
+      expect(store().widgets).toHaveLength(0);
+    });
+
+    it("does not seed over an existing board", () => {
+      store().addWidget("note");
+      store().seedStarterIfFirstRun();
+
+      expect(store().widgets).toHaveLength(1);
+    });
   });
 
   describe("reconcilePersisted", () => {
