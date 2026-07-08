@@ -10,6 +10,7 @@ import { STOCKS_ACCENT } from "@/widgets/stocks/types";
 export const stocksPlugin: WidgetPlugin = {
   type: "stocks",
   name: "Stocks",
+  description: "Track markets and your watchlist",
   icon: ChartCandlestick,
   defaultLayout: { w: 6, h: 6, minW: 6, minH: 6, maxW: 12, maxH: 12 },
   component: StocksWidget,

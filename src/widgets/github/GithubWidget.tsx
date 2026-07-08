@@ -1,12 +1,10 @@
 import { useEffect } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { GitHubServiceIcon } from "@/components/icons/service-icons";
-import { useSettingsStore } from "@/settings";
 import { useIntegrationStore } from "@/integrations";
 import { useGithub } from "@/widgets/github/useGithubStore";
 import { ContributionsView } from "@/widgets/github/components/ContributionsView";
 import { InboxView } from "@/widgets/github/components/InboxView";
-import { GithubConnectPrompt } from "@/widgets/github/components/GithubConnectPrompt";
+import { GithubSignedOutPreview } from "@/widgets/github/components/GithubSignedOutPreview";
 import { EASE_OUT_QUINT } from "@/lib/motion";
 
 export function GithubWidget() {
@@ -26,18 +24,7 @@ export function GithubWidget() {
   const connected = account?.status === "connected";
 
   if (loaded && !connected) {
-    return (
-      <GithubConnectPrompt
-        icon={GitHubServiceIcon}
-        message={
-          account
-            ? "Reconnect GitHub to see your activity."
-            : "Connect GitHub to see your activity."
-        }
-        actionLabel={account ? "Reconnect" : "Connect"}
-        onAction={() => useSettingsStore.getState().openSettings("accounts")}
-      />
-    );
+    return <GithubSignedOutPreview />;
   }
 
   const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT_QUINT };

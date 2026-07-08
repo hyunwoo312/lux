@@ -88,7 +88,9 @@ export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPriv
   if (state.status === "loading") return <GithubPlaceholder>Loading inbox…</GithubPlaceholder>;
   if (state.status === "error")
     return (
-      <GithubPlaceholder>{loadErrorMessage(state.error, "Couldn’t load your inbox.")}</GithubPlaceholder>
+      <GithubPlaceholder>
+        {loadErrorMessage(state.error, "Couldn’t load your inbox.")}
+      </GithubPlaceholder>
     );
   if (state.status === "empty")
     return <GithubPlaceholder>Inbox zero — nothing waiting.</GithubPlaceholder>;
@@ -96,7 +98,7 @@ export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPriv
   return <InboxList data={state.data} showPrivate={showPrivate} newTab={newTab} />;
 }
 
-function InboxList({
+export function InboxList({
   data,
   showPrivate,
   newTab,

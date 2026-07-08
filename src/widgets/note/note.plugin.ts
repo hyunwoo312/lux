@@ -8,6 +8,8 @@ import { useNoteStore } from "@/widgets/note/useNoteStore";
 export const notePlugin: WidgetPlugin = {
   type: "note",
   name: "Note",
+  description: "A quick scratchpad for jotting things down",
+  recommended: true,
   icon: StickyNote,
   defaultLayout: { w: 6, h: 6, minW: 6, minH: 6, maxW: 12, maxH: 12 },
   component: NoteWidget,

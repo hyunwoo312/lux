@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
-import { CalendarOff, CalendarPlus } from "lucide-react";
-import { useSettingsStore } from "@/settings";
+import { CalendarOff } from "lucide-react";
 import { CalendarConnectPrompt } from "@/widgets/calendar/components/CalendarConnectPrompt";
+import { CalendarSignedOutPreview } from "@/widgets/calendar/components/CalendarSignedOutPreview";
 import { CalendarGrid } from "@/widgets/calendar/CalendarGrid";
 import { CalendarListView } from "@/widgets/calendar/CalendarListView";
 import { useWidgetChrome } from "@/widgets/core/useWidgetChrome";
@@ -32,7 +32,6 @@ export function CalendarWidget() {
   );
 
   const { openConfig } = useWidgetChrome();
-  const hasAccount = Boolean(google.account || microsoft.account);
   const connected =
     google.account?.status === "connected" || microsoft.account?.status === "connected";
   useCalendarAutoSync();
@@ -50,18 +49,7 @@ export function CalendarWidget() {
   const syncError = status === "error" ? (googleError ?? microsoftError ?? null) : null;
 
   if (loaded && !connected) {
-    return (
-      <CalendarConnectPrompt
-        icon={CalendarPlus}
-        message={
-          hasAccount
-            ? "Reconnect your calendar to see your schedule."
-            : "Connect a calendar to see your schedule."
-        }
-        actionLabel={hasAccount ? "Reconnect" : "Connect"}
-        onAction={() => useSettingsStore.getState().openSettings("accounts")}
-      />
-    );
+    return <CalendarSignedOutPreview />;
   }
 
   if (loaded && connected && status === "idle" && (!enabled || enabledCalendarCount === 0)) {

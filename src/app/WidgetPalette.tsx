@@ -3,7 +3,7 @@ import { useMemo, useRef } from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import type { Variants } from "motion/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Plus } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -186,9 +186,7 @@ export function WidgetPalette() {
                 "
               >
                 <div className="px-2 pt-1 pb-1.5">
-                  <p
-                    className="text-muted-foreground text-xs font-semibold tracking-wide uppercase"
-                  >
+                  <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
                     Widgets
                   </p>
                   <p className="text-muted-foreground/60 text-2xs mt-0.5">
@@ -206,48 +204,75 @@ export function WidgetPalette() {
                 >
                   {widgetPlugins.map((plugin) => {
                     const Icon = plugin.icon;
+                    const added = activeTypes.has(plugin.type);
                     return (
-                      <motion.button
-                        key={plugin.type}
-                        variants={itemVariants}
-                        type="button"
-                        style={getAccentVars(plugin.accent ?? "default")}
-                        onPointerDown={(event) => handlePointerDown(event, plugin)}
-                        onMouseEnter={() => previewPlugin(plugin)}
-                        onFocus={() => previewPlugin(plugin)}
-                        onClick={() => handleClick(plugin)}
-                        className="
-                          relative flex cursor-grab touch-none items-center gap-3 rounded-md px-2
-                          py-2 text-left text-sm outline-none
-                        "
-                      >
-                        {previewType === plugin.type && (
-                          <motion.span
-                            layoutId="palette-hover"
-                            aria-hidden
-                            transition={{ type: "spring", stiffness: 520, damping: 42 }}
-                            className="
-                              border-primary/60 bg-primary/10 pointer-events-none absolute inset-0
-                              rounded-md border
-                            "
-                          />
-                        )}
-                        <span
-                          className={cn(
-                            `
-                              relative flex size-8 items-center justify-center
-                              [&_img]:size-6
-                              [&_svg]:size-6
-                            `,
-                            !plugin.brandIcon && "text-foreground/80",
-                          )}
+                      <Tooltip key={plugin.type} content={plugin.description} side="right" solid>
+                        <motion.button
+                          variants={itemVariants}
+                          type="button"
+                          style={getAccentVars(plugin.accent ?? "default")}
+                          onPointerDown={(event) => handlePointerDown(event, plugin)}
+                          onMouseEnter={() => previewPlugin(plugin)}
+                          onFocus={() => previewPlugin(plugin)}
+                          onClick={() => handleClick(plugin)}
+                          className="
+                            relative flex cursor-grab touch-none items-center gap-3 rounded-md px-2
+                            py-2 text-left text-sm outline-none
+                          "
                         >
-                          <Icon />
-                        </span>
-                        <span className="relative flex min-w-0 flex-1 flex-col">
-                          <span className="font-medium">{plugin.name}</span>
-                        </span>
-                      </motion.button>
+                          {previewType === plugin.type && (
+                            <motion.span
+                              layoutId="palette-hover"
+                              aria-hidden
+                              transition={{ type: "spring", stiffness: 520, damping: 42 }}
+                              className="
+                                border-primary/60 bg-primary/10 pointer-events-none absolute inset-0
+                                rounded-md border
+                              "
+                            />
+                          )}
+                          <span
+                            className={cn(
+                              `
+                                relative flex size-8 items-center justify-center
+                                [&_img]:size-6
+                                [&_svg]:size-6
+                              `,
+                              !plugin.brandIcon && "text-foreground/80",
+                            )}
+                          >
+                            <Icon />
+                          </span>
+                          <span className="relative flex min-w-0 flex-1 flex-col">
+                            <span className="flex items-center gap-1.5">
+                              <span className="truncate font-medium">{plugin.name}</span>
+                              {plugin.recommended && !added && (
+                                <span
+                                  className="
+                                    text-primary text-2xs font-semibold tracking-wide uppercase
+                                  "
+                                >
+                                  Recommended
+                                </span>
+                              )}
+                            </span>
+                            <span className="text-muted-foreground truncate text-xs">
+                              {plugin.description}
+                            </span>
+                          </span>
+                          {added && (
+                            <span
+                              className="
+                                text-muted-foreground/70 relative flex shrink-0 items-center gap-1
+                                text-2xs
+                              "
+                            >
+                              <Check className="size-3" aria-hidden />
+                              Added
+                            </span>
+                          )}
+                        </motion.button>
+                      </Tooltip>
                     );
                   })}
                 </div>

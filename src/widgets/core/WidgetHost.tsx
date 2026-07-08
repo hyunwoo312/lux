@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
+import { cn } from "@/lib/utils";
 import { BaseWidget } from "@/widgets/core/BaseWidget";
 import { WidgetErrorBoundary } from "@/widgets/core/WidgetErrorBoundary";
 import { CommonWidgetConfig } from "@/widgets/core/CommonWidgetConfig";
+import { ConnectOverlay } from "@/components/ConnectOverlay";
 import { WidgetConfig } from "@/components/config/WidgetConfig";
+import { getAccentVars } from "@/widgets/core/accent";
 import type { WidgetInstance } from "@/widgets/core/types";
 import { useWidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
 import { useWidgetHighlightStore } from "@/widgets/core/useWidgetHighlightStore";
@@ -18,6 +21,7 @@ type WidgetHostProps = {
 };
 
 const useNoBare = () => false;
+const useNoLock = () => null;
 
 export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
   const plugin = getWidgetPlugin(instance.type);
@@ -30,6 +34,8 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
   const reduced = useReducedMotion();
   const useBare = plugin?.useBare ?? useNoBare;
   const bare = useBare(instance.id);
+  const useLock = plugin?.useLock ?? useNoLock;
+  const lock = useLock(instance.id);
 
   useEffect(() => {
     if (!pulse) return;
@@ -56,35 +62,46 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
   const BackdropComponent = plugin.backdropComponent;
   const pluginRemovalNote = plugin.removalNote;
 
+  const locked = Boolean(lock) && !editing;
+
   return (
     <WidgetInstanceContext.Provider value={instance.id}>
-      <div ref={containerRef} className="h-full">
-        <BaseWidget
-          title={plugin.name}
-          editing={editing}
-          size={size}
-          background={background}
-          accent={accent}
-          bleed={plugin.bleed}
-          bare={bare}
-          highlighted={highlighted || pulse}
-          backdrop={BackdropComponent ? <BackdropComponent /> : undefined}
-          decorativeBackdrop={plugin.decorativeBackdrop}
-          headline={StatusComponent ? <StatusComponent /> : undefined}
-          headerAction={HeaderActionComponent ? <HeaderActionComponent /> : undefined}
-          config={
-            <WidgetConfig>
-              <CommonWidgetConfig />
-              {ConfigComponent && <ConfigComponent />}
-            </WidgetConfig>
-          }
-          onRemove={() => removeWidget(instance.id)}
-          removalNote={pluginRemovalNote ? () => pluginRemovalNote(instance.id) : undefined}
-        >
-          <WidgetErrorBoundary>
-            <Widget editing={editing} />
-          </WidgetErrorBoundary>
-        </BaseWidget>
+      <div ref={containerRef} className="relative h-full" style={getAccentVars(accent)}>
+        <div inert={locked} className={cn("h-full", locked && "blur-[3px]")}>
+          <BaseWidget
+            title={plugin.name}
+            editing={editing}
+            size={size}
+            background={background}
+            accent={accent}
+            bleed={plugin.bleed}
+            bare={bare}
+            highlighted={highlighted || pulse}
+            backdrop={BackdropComponent ? <BackdropComponent /> : undefined}
+            decorativeBackdrop={plugin.decorativeBackdrop}
+            headline={StatusComponent ? <StatusComponent /> : undefined}
+            headerAction={HeaderActionComponent ? <HeaderActionComponent /> : undefined}
+            config={
+              <WidgetConfig>
+                <CommonWidgetConfig />
+                {ConfigComponent && <ConfigComponent />}
+              </WidgetConfig>
+            }
+            onRemove={() => removeWidget(instance.id)}
+            removalNote={pluginRemovalNote ? () => pluginRemovalNote(instance.id) : undefined}
+          >
+            <WidgetErrorBoundary>
+              <Widget editing={editing} />
+            </WidgetErrorBoundary>
+          </BaseWidget>
+        </div>
+        {locked && lock && (
+          <ConnectOverlay
+            message={lock.message}
+            actionLabel={lock.actionLabel}
+            onAction={lock.onAction}
+          />
+        )}
       </div>
     </WidgetInstanceContext.Provider>
   );

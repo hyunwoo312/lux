@@ -104,9 +104,10 @@ beforeEach(() => {
 });
 
 describe("CalendarWidget", () => {
-  it("shows a connect call to action when no account is linked", () => {
+  it("previews sample events when no account is linked", () => {
+    patch({ view: "list" });
     renderWidget();
-    expect(screen.getByRole("button", { name: "Connect" })).toBeInTheDocument();
+    expect(screen.getByText("Team standup")).toBeInTheDocument();
   });
 
   it("renders the month grid weekday header in calendar view", () => {

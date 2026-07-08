@@ -27,9 +27,17 @@ export type WidgetContentProps = {
   editing: boolean;
 };
 
+export type WidgetLock = {
+  message: string;
+  actionLabel: string;
+  onAction: () => void;
+};
+
 export type WidgetPlugin = {
   type: WidgetType;
   name: string;
+  description: string;
+  recommended?: boolean;
   icon: WidgetIcon;
   brandIcon?: boolean;
   defaultLayout: { w: number; h: number; minW: number; minH: number; maxW: number; maxH: number };
@@ -42,5 +50,6 @@ export type WidgetPlugin = {
   accent?: AccentPreset;
   bleed?: boolean;
   useBare?: (instanceId: string) => boolean;
+  useLock?: (instanceId: string) => WidgetLock | null;
   removalNote?: (instanceId: string) => string | null;
 };

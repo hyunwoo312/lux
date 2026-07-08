@@ -9,6 +9,7 @@ import { useImageStore } from "@/widgets/image/useImageStore";
 export const imagePlugin: WidgetPlugin = {
   type: "image",
   name: "Image",
+  description: "Pin a favorite image or photo",
   icon: ImageIcon,
   defaultLayout: { w: 5, h: 5, minW: 5, minH: 5, maxW: 12, maxH: 12 },
   component: ImageWidget,

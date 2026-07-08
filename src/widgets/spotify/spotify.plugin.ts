@@ -10,6 +10,7 @@ import { SPOTIFY_ACCENT } from "@/widgets/spotify/types";
 export const spotifyPlugin: WidgetPlugin = {
   type: "spotify",
   name: "Spotify",
+  description: "See what's playing and control playback",
   icon: SpotifyServiceIcon,
   brandIcon: true,
   defaultLayout: { w: 6, h: 6, minW: 6, minH: 4, maxW: 12, maxH: 12 },

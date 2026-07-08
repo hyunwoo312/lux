@@ -10,6 +10,8 @@ import { WEATHER_ACCENT } from "@/widgets/weather/types";
 export const weatherPlugin: WidgetPlugin = {
   type: "weather",
   name: "Weather",
+  description: "Current conditions and the days ahead",
+  recommended: true,
   icon: CloudSun,
   defaultLayout: { w: 5, h: 5, minW: 5, minH: 5, maxW: 10, maxH: 10 },
   component: WeatherWidget,

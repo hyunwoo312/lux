@@ -9,6 +9,7 @@ import { NEWS_ACCENT } from "@/widgets/news/types";
 export const newsPlugin: WidgetPlugin = {
   type: "news",
   name: "News",
+  description: "Headlines from the sources you choose",
   icon: Newspaper,
   defaultLayout: { w: 6, h: 6, minW: 6, minH: 6, maxW: 12, maxH: 12 },
   component: NewsWidget,
