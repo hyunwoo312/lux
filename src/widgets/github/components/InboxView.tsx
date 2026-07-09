@@ -1,14 +1,18 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import {
   AtSign,
   Bell,
+  BellOff,
+  Check,
+  CheckCheck,
   CheckCircle2,
   CircleDot,
   Eye,
   GitMerge,
   GitPullRequest,
   GitPullRequestDraft,
+  Loader2,
   Mail,
   MessageSquare,
   ShieldAlert,
@@ -21,8 +25,14 @@ import { cn } from "@/lib/utils";
 import { loadErrorMessage } from "@/lib/rate-limit";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { Tooltip } from "@/components/ui/tooltip";
-import { usePolledResource } from "@/widgets/core/usePolledResource";
-import { fetchInbox, parseCachedInbox } from "@/widgets/github/lib/github-api";
+import { invalidatePolledResource, usePolledResource } from "@/widgets/core/usePolledResource";
+import {
+  fetchInbox,
+  markAllGithubNotificationsRead,
+  markGithubThreadRead,
+  parseCachedInbox,
+  unsubscribeGithubThread,
+} from "@/widgets/github/lib/github-api";
 import { GithubPlaceholder } from "@/widgets/github/components/GithubPlaceholder";
 import { useGithub } from "@/widgets/github/useGithubStore";
 import { useGithubSync } from "@/widgets/github/useGithubSync";
@@ -35,6 +45,15 @@ import type {
 } from "@/widgets/github/types";
 
 const REFRESH_MS = 3 * 60 * 1000;
+const INBOX_CACHE_KEY = "github:inbox";
+
+type NotificationActions = {
+  pending: Record<string, boolean>;
+  marking: boolean;
+  onMarkRead: (id: string) => void;
+  onUnsubscribe: (id: string) => void;
+  onMarkAllRead: () => void;
+};
 
 const CI_CLASS: Record<PullRequestCi, string> = {
   success: "bg-emerald-500",
@@ -79,11 +98,43 @@ export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPriv
   const { state, isRefreshing, refresh, lastSyncedAt } = usePolledResource(fetchInbox, {
     enabled,
     intervalMs: REFRESH_MS,
-    cacheKey: "github:inbox",
+    cacheKey: INBOX_CACHE_KEY,
     persist: true,
     parsePersisted: parseCachedInbox,
   });
   useGithubSync(refresh, isRefreshing, lastSyncedAt);
+
+  const [pending, setPending] = useState<Record<string, boolean>>({});
+  const [marking, setMarking] = useState(false);
+
+  const reconcile = () => {
+    invalidatePolledResource(INBOX_CACHE_KEY);
+    refresh();
+  };
+
+  const runThread = (id: string, run: () => Promise<unknown>) => {
+    if (pending[id]) return;
+    setPending((prev) => ({ ...prev, [id]: true }));
+    run().then(
+      () => {
+        reconcile();
+        setPending((prev) => ({ ...prev, [id]: false }));
+      },
+      () => setPending((prev) => ({ ...prev, [id]: false })),
+    );
+  };
+
+  const markAll = () => {
+    if (marking) return;
+    setMarking(true);
+    markAllGithubNotificationsRead().then(
+      () => {
+        reconcile();
+        setMarking(false);
+      },
+      () => setMarking(false),
+    );
+  };
 
   if (state.status === "loading") return <GithubPlaceholder>Loading inbox…</GithubPlaceholder>;
   if (state.status === "error")
@@ -95,17 +146,28 @@ export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPriv
   if (state.status === "empty")
     return <GithubPlaceholder>Inbox zero — nothing waiting.</GithubPlaceholder>;
 
-  return <InboxList data={state.data} showPrivate={showPrivate} newTab={newTab} />;
+  const actions: NotificationActions = {
+    pending,
+    marking,
+    onMarkRead: (id) => runThread(id, () => markGithubThreadRead(id)),
+    onUnsubscribe: (id) =>
+      runThread(id, () => unsubscribeGithubThread(id).then(() => markGithubThreadRead(id))),
+    onMarkAllRead: markAll,
+  };
+
+  return <InboxList data={state.data} showPrivate={showPrivate} newTab={newTab} actions={actions} />;
 }
 
 export function InboxList({
   data,
   showPrivate,
   newTab,
+  actions,
 }: {
   data: InboxData;
   showPrivate: boolean;
   newTab: boolean;
+  actions?: NotificationActions;
 }) {
   const pullRequests = useMemo(
     () => data.pullRequests.filter((pr) => showPrivate || !pr.isPrivate),
@@ -140,9 +202,36 @@ export function InboxList({
         </Section>
       )}
       {notifications.length > 0 && (
-        <Section title="Notifications" count={notifications.length}>
+        <Section
+          title="Notifications"
+          count={notifications.length}
+          action={
+            actions && (
+              <Tooltip content="Mark all read" solid>
+                <button
+                  type="button"
+                  onClick={actions.onMarkAllRead}
+                  disabled={actions.marking}
+                  aria-label="Mark all notifications read"
+                  className="
+                    text-muted-foreground
+                    hover:text-foreground
+                    flex size-6 items-center justify-center rounded-sm
+                    disabled:opacity-50
+                  "
+                >
+                  {actions.marking ? (
+                    <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                  ) : (
+                    <CheckCheck className="size-3.5" aria-hidden />
+                  )}
+                </button>
+              </Tooltip>
+            )
+          }
+        >
           {notifications.map((entry) => (
-            <NotificationRow key={entry.id} notification={entry} newTab={newTab} />
+            <NotificationRow key={entry.id} notification={entry} newTab={newTab} actions={actions} />
           ))}
         </Section>
       )}
@@ -153,25 +242,52 @@ export function InboxList({
 function Section({
   title,
   count,
+  action,
   children,
 }: {
   title: string;
   count: number;
+  action?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <h3
-        className="
-          text-muted-foreground text-2xs flex items-center gap-1.5 px-2 font-semibold tracking-wide
-          uppercase
-        "
-      >
-        <span>{title}</span>
-        <span className="text-muted-foreground/50 tabular-nums">{count}</span>
-      </h3>
+      <div className="flex items-center gap-1.5 px-2">
+        <h3
+          className="text-muted-foreground text-2xs font-semibold tracking-wide uppercase"
+        >
+          {title}
+        </h3>
+        <span className="text-muted-foreground/50 text-2xs tabular-nums">{count}</span>
+        {action && <div className="ml-auto">{action}</div>}
+      </div>
       {children}
     </div>
+  );
+}
+
+function NotificationActionButton({
+  label,
+  icon: Icon,
+  onClick,
+}: {
+  label: string;
+  icon: LucideIcon;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className="
+        text-muted-foreground
+        hover:text-foreground
+        flex size-6 shrink-0 items-center justify-center rounded-sm
+      "
+    >
+      <Icon className="size-3.5" aria-hidden />
+    </button>
   );
 }
 
@@ -260,24 +376,55 @@ function ReviewBadge({ review }: { review: PullRequestReview }) {
 function NotificationRow({
   notification,
   newTab,
+  actions,
 }: {
   notification: InboxNotification;
   newTab: boolean;
+  actions?: NotificationActions;
 }) {
   const Icon = notificationIcon(notification.reason);
   const meta = `${notification.repo} · ${notification.reason.replace(/_/g, " ")} · ${formatRelativeTime(notification.updatedAt)}`;
+  const pending = actions?.pending[notification.id] ?? false;
   return (
-    <a
-      href={notification.url}
-      target={newTab ? "_blank" : undefined}
-      rel="noreferrer"
-      className="hover:bg-foreground/5 flex items-center gap-2 rounded-md px-2 py-1.5"
-    >
-      <Icon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
-      <div className="min-w-0 flex-1">
-        <p className="text-foreground truncate text-xs font-medium">{notification.title}</p>
-        <p className="text-muted-foreground text-2xs truncate">{meta}</p>
-      </div>
-    </a>
+    <div className="group hover:bg-foreground/5 flex items-center gap-2 rounded-md px-2 py-1.5">
+      <a
+        href={notification.url}
+        target={newTab ? "_blank" : undefined}
+        rel="noreferrer"
+        className="flex min-w-0 flex-1 items-center gap-2"
+      >
+        <Icon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
+        <div className="min-w-0 flex-1">
+          <p className="text-foreground truncate text-xs font-medium">{notification.title}</p>
+          <p className="text-muted-foreground text-2xs truncate">{meta}</p>
+        </div>
+      </a>
+      {actions &&
+        (pending ? (
+          <span className="text-muted-foreground flex size-6 shrink-0 items-center justify-center">
+            <Loader2 className="size-3.5 animate-spin" aria-hidden />
+          </span>
+        ) : (
+          <div
+            className="
+              flex w-0 shrink-0 items-center overflow-hidden opacity-0 transition-[width,opacity]
+              duration-200
+              group-hover:w-12 group-hover:opacity-100
+              group-focus-within:w-12 group-focus-within:opacity-100
+            "
+          >
+            <NotificationActionButton
+              label="Mark as read"
+              icon={Check}
+              onClick={() => actions.onMarkRead(notification.id)}
+            />
+            <NotificationActionButton
+              label="Unsubscribe"
+              icon={BellOff}
+              onClick={() => actions.onUnsubscribe(notification.id)}
+            />
+          </div>
+        ))}
+    </div>
   );
 }

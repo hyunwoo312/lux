@@ -306,6 +306,41 @@ async function fetchPullRequests(signal?: AbortSignal): Promise<InboxPullRequest
   return result;
 }
 
+const GITHUB_JSON_HEADERS = { Accept: "application/vnd.github+json" };
+
+export async function markGithubThreadRead(id: string): Promise<void> {
+  const response = await integrationFetch(
+    "github",
+    `${NOTIFICATIONS_ENDPOINT}/threads/${encodeURIComponent(id)}`,
+    { method: "PATCH", headers: GITHUB_JSON_HEADERS },
+  );
+  if (!response.ok) {
+    throw rateLimitError(response) ?? new Error("GitHub notification update failed");
+  }
+}
+
+export async function unsubscribeGithubThread(id: string): Promise<void> {
+  const response = await integrationFetch(
+    "github",
+    `${NOTIFICATIONS_ENDPOINT}/threads/${encodeURIComponent(id)}/subscription`,
+    { method: "DELETE", headers: GITHUB_JSON_HEADERS },
+  );
+  if (!response.ok) {
+    throw rateLimitError(response) ?? new Error("GitHub unsubscribe failed");
+  }
+}
+
+export async function markAllGithubNotificationsRead(): Promise<void> {
+  const response = await integrationFetch("github", NOTIFICATIONS_ENDPOINT, {
+    method: "PUT",
+    headers: { ...GITHUB_JSON_HEADERS, "Content-Type": "application/json" },
+    body: JSON.stringify({ read: true }),
+  });
+  if (!response.ok) {
+    throw rateLimitError(response) ?? new Error("GitHub notifications update failed");
+  }
+}
+
 export async function fetchInbox(signal?: AbortSignal): Promise<InboxData> {
   const [notifications, pullRequests] = await Promise.allSettled([
     fetchNotifications(signal),
