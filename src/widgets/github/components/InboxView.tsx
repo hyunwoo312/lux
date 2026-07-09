@@ -228,26 +228,7 @@ export function InboxList({
           count={notifications.length}
           action={
             actions && (
-              <Tooltip content="Mark all read" solid>
-                <button
-                  type="button"
-                  onClick={actions.onMarkAllRead}
-                  disabled={actions.marking}
-                  aria-label="Mark all notifications read"
-                  className="
-                    text-muted-foreground
-                    hover:text-foreground
-                    flex size-6 items-center justify-center rounded-sm
-                    disabled:opacity-50
-                  "
-                >
-                  {actions.marking ? (
-                    <Loader2 className="size-3.5 animate-spin" aria-hidden />
-                  ) : (
-                    <CheckCheck className="size-3.5" aria-hidden />
-                  )}
-                </button>
-              </Tooltip>
+              <MarkAllReadButton marking={actions.marking} onClick={actions.onMarkAllRead} />
             )
           }
         >
@@ -284,6 +265,31 @@ function Section({
       </div>
       {children}
     </div>
+  );
+}
+
+function MarkAllReadButton({ marking, onClick }: { marking: boolean; onClick: () => void }) {
+  return (
+    <Tooltip content="Mark all read" solid>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={marking}
+        aria-label="Mark all notifications read"
+        className="
+          text-muted-foreground
+          hover:text-foreground
+          flex size-6 items-center justify-center rounded-sm
+          disabled:opacity-50
+        "
+      >
+        {marking ? (
+          <Loader2 className="size-3.5 animate-spin" aria-hidden />
+        ) : (
+          <CheckCheck className="size-3.5" aria-hidden />
+        )}
+      </button>
+    </Tooltip>
   );
 }
 
