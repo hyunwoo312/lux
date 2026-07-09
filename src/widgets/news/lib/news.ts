@@ -1,72 +1,82 @@
 import { z } from "zod";
-import type { NewsItem, NewsSource, NewsTopic } from "@/widgets/news/types";
+import {
+  NEWS_SOURCES,
+  type NewsItem,
+  type NewsRegion,
+  type NewsSource,
+  type NewsTab,
+} from "@/widgets/news/types";
 
 const MAX_ITEMS = 30;
-const GOOGLE_LOCALE = "hl=en-US&gl=US&ceid=US:en";
+
+const GOOGLE_LOCALES: Record<NewsRegion, string> = {
+  us: "hl=en-US&gl=US&ceid=US:en",
+  uk: "hl=en-GB&gl=GB&ceid=GB:en",
+  au: "hl=en-AU&gl=AU&ceid=AU:en",
+  international: "hl=en-US&gl=US&ceid=US:en",
+};
+
+const BBC_TOP = "https://feeds.bbci.co.uk/news/rss.xml";
 
 type SourceMeta = {
   tab: string;
   label: string;
-  topics: Partial<Record<NewsTopic, string>> & { top: string };
+  feed: string | Record<NewsRegion, string>;
 };
 
-function googleTopic(topic: string): string {
-  return `https://news.google.com/rss/headlines/section/topic/${topic}?${GOOGLE_LOCALE}`;
+function googleFeed(region: NewsRegion): string {
+  return `https://news.google.com/rss?${GOOGLE_LOCALES[region]}`;
 }
 
-function nytSection(section: string): string {
-  return `https://rss.nytimes.com/services/xml/rss/nyt/${section}.xml`;
+function guardianEdition(edition: string): string {
+  return `https://www.theguardian.com/${edition}/rss`;
 }
 
 const SOURCES: Record<NewsSource, SourceMeta> = {
+  bbc: {
+    tab: "BBC",
+    label: "BBC News",
+    feed: {
+      us: BBC_TOP,
+      uk: "https://feeds.bbci.co.uk/news/uk/rss.xml",
+      au: BBC_TOP,
+      international: BBC_TOP,
+    },
+  },
   google: {
     tab: "Google",
     label: "Google News",
-    topics: {
-      top: `https://news.google.com/rss?${GOOGLE_LOCALE}`,
-      world: googleTopic("WORLD"),
-      business: googleTopic("BUSINESS"),
-      technology: googleTopic("TECHNOLOGY"),
-      science: googleTopic("SCIENCE"),
-      health: googleTopic("HEALTH"),
-      sports: googleTopic("SPORTS"),
-      entertainment: googleTopic("ENTERTAINMENT"),
+    feed: {
+      us: googleFeed("us"),
+      uk: googleFeed("uk"),
+      au: googleFeed("au"),
+      international: googleFeed("international"),
     },
+  },
+  guardian: {
+    tab: "Guardian",
+    label: "The Guardian",
+    feed: {
+      us: guardianEdition("us"),
+      uk: guardianEdition("uk"),
+      au: guardianEdition("au"),
+      international: guardianEdition("international"),
+    },
+  },
+  npr: {
+    tab: "NPR",
+    label: "NPR",
+    feed: "https://feeds.npr.org/1001/rss.xml",
   },
   nyt: {
     tab: "NYT",
     label: "The New York Times",
-    topics: {
-      top: nytSection("HomePage"),
-      world: nytSection("World"),
-      business: nytSection("Business"),
-      technology: nytSection("Technology"),
-      science: nytSection("Science"),
-      health: nytSection("Health"),
-      sports: nytSection("Sports"),
-      entertainment: nytSection("Arts"),
-    },
-  },
-  bbc: {
-    tab: "BBC",
-    label: "BBC News",
-    topics: {
-      top: "https://feeds.bbci.co.uk/news/rss.xml",
-      world: "https://feeds.bbci.co.uk/news/world/rss.xml",
-      business: "https://feeds.bbci.co.uk/news/business/rss.xml",
-      technology: "https://feeds.bbci.co.uk/news/technology/rss.xml",
-      science: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
-      health: "https://feeds.bbci.co.uk/news/health/rss.xml",
-      sports: "https://feeds.bbci.co.uk/sport/rss.xml",
-      entertainment: "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml",
-    },
+    feed: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
   },
   yahoo: {
     tab: "Yahoo",
     label: "Yahoo News",
-    topics: {
-      top: "https://news.yahoo.com/rss/",
-    },
+    feed: "https://news.yahoo.com/rss/",
   },
 };
 
@@ -74,19 +84,23 @@ export function sourceTab(source: NewsSource): string {
   return SOURCES[source].tab;
 }
 
-export function sourceLabel(source: NewsSource): string {
-  return SOURCES[source].label;
+export function feedUrl(source: NewsSource, region: NewsRegion): string {
+  const feed = SOURCES[source].feed;
+  return typeof feed === "string" ? feed : feed[region];
 }
 
-export function feedUrl(source: NewsSource, topic: NewsTopic): string {
-  return SOURCES[source].topics[topic] ?? SOURCES[source].topics.top;
+export function searchUrl(query: string, region: NewsRegion): string {
+  return `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&${GOOGLE_LOCALES[region]}`;
 }
 
-export function searchUrl(query: string): string {
-  return `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&${GOOGLE_LOCALE}`;
+export function resolveNewsTab(activeSource: NewsTab, sources: NewsSource[]): NewsTab {
+  if (sources.length > 1) {
+    return activeSource === "all" || !sources.includes(activeSource) ? "all" : activeSource;
+  }
+  return sources[0] ?? "google";
 }
 
-const THUMBNAIL_SOURCES = new Set<NewsSource>(["nyt", "bbc"]);
+const THUMBNAIL_SOURCES = new Set<NewsSource>(["nyt", "bbc", "guardian", "yahoo"]);
 
 export function hasThumbnails(source: NewsSource): boolean {
   return THUMBNAIL_SOURCES.has(source);
@@ -106,16 +120,36 @@ function stripSourceSuffix(title: string, source: string): string {
   return title.endsWith(suffix) ? title.slice(0, -suffix.length) : title;
 }
 
+const PREFERRED_IMAGE_WIDTH = 400;
+
 function imageFromNode(node: Element): string | null {
-  const media =
-    node.getElementsByTagName("media:content")[0] ??
-    node.getElementsByTagName("media:thumbnail")[0] ??
-    node.getElementsByTagName("enclosure")[0];
-  const url = media?.getAttribute("url")?.trim();
-  return url && isHttpUrl(url) ? url : null;
+  const candidates = [
+    ...node.getElementsByTagName("media:content"),
+    ...node.getElementsByTagName("media:thumbnail"),
+    ...node.getElementsByTagName("enclosure"),
+  ]
+    .map((media) => ({
+      url: media.getAttribute("url")?.trim() ?? "",
+      width: Number(media.getAttribute("width")) || null,
+    }))
+    .filter((candidate) => isHttpUrl(candidate.url));
+  if (candidates.length === 0) return null;
+
+  const sized = candidates.filter(
+    (candidate): candidate is { url: string; width: number } => candidate.width !== null,
+  );
+  const adequate = sized
+    .filter((candidate) => candidate.width >= PREFERRED_IMAGE_WIDTH)
+    .sort((a, b) => a.width - b.width)[0];
+  const largest = sized.sort((a, b) => b.width - a.width)[0];
+  return (adequate ?? largest ?? candidates[0])?.url ?? null;
 }
 
-export function parseFeed(xml: string, fallbackSource: string): NewsItem[] {
+export function parseFeed(
+  xml: string,
+  fallbackSource: string,
+  sourceKey: NewsSource | null = null,
+): NewsItem[] {
   const doc = new DOMParser().parseFromString(xml, "application/xml");
   if (doc.querySelector("parsererror")) throw new Error("News feed returned invalid XML");
   const nodes = [...doc.querySelectorAll("item"), ...doc.querySelectorAll("entry")];
@@ -139,6 +173,7 @@ export function parseFeed(xml: string, fallbackSource: string): NewsItem[] {
         title: stripSourceSuffix(title, source),
         link,
         source,
+        sourceKey,
         sourceUrl: sourceUrlAttr && isHttpUrl(sourceUrlAttr) ? sourceUrlAttr : null,
         publishedAt: Number.isNaN(parsed) ? null : parsed,
         image: imageFromNode(node),
@@ -157,26 +192,84 @@ type FetchTextResult = { ok: true; text: string } | { ok: false; status?: number
 function abortSignal(signal: AbortSignal): Promise<never> {
   return new Promise((_, reject) => {
     if (signal.aborted) reject(new DOMException("Aborted", "AbortError"));
-    else signal.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), {
-      once: true,
-    });
+    else
+      signal.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), {
+        once: true,
+      });
   });
 }
 
-export async function fetchFeed(
-  url: string,
-  fallbackLabel: string,
-  signal?: AbortSignal,
-): Promise<NewsItem[]> {
+async function fetchText(url: string, signal?: AbortSignal): Promise<string> {
   const request = chrome.runtime.sendMessage({
     type: "lux:fetch-text",
     url,
   }) as Promise<FetchTextResult | undefined>;
   const result = await (signal ? Promise.race([request, abortSignal(signal)]) : request);
   if (!result?.ok) {
-    throw new Error(result?.status ? `News request failed (${result.status})` : "News request failed");
+    throw new Error(
+      result?.status ? `News request failed (${result.status})` : "News request failed",
+    );
   }
-  return parseFeed(result.text, fallbackLabel);
+  return result.text;
+}
+
+export async function fetchFeed(
+  source: NewsSource,
+  region: NewsRegion,
+  signal?: AbortSignal,
+): Promise<NewsItem[]> {
+  const xml = await fetchText(feedUrl(source, region), signal);
+  return parseFeed(xml, SOURCES[source].label, source);
+}
+
+export async function fetchSearch(
+  query: string,
+  region: NewsRegion,
+  signal?: AbortSignal,
+): Promise<NewsItem[]> {
+  const xml = await fetchText(searchUrl(query, region), signal);
+  return parseFeed(xml, SOURCES.google.label, "google");
+}
+
+const MAX_MERGED_ITEMS = 50;
+
+export function normalizeTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+}
+
+export function mergeFeeds(feeds: NewsItem[][]): NewsItem[] {
+  const byTitle = new Map<string, NewsItem>();
+  for (const item of feeds.flat()) {
+    const key = normalizeTitle(item.title);
+    const existing = byTitle.get(key);
+    if (!existing || (!existing.image && item.image)) byTitle.set(key, item);
+  }
+  return [...byTitle.values()]
+    .sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0))
+    .slice(0, MAX_MERGED_ITEMS);
+}
+
+export async function fetchMergedFeeds(
+  sources: NewsSource[],
+  region: NewsRegion,
+  signal?: AbortSignal,
+): Promise<NewsItem[]> {
+  const results = await Promise.allSettled(
+    sources.map((source) => fetchFeed(source, region, signal)),
+  );
+  const loaded = results.filter(
+    (result): result is PromiseFulfilledResult<NewsItem[]> => result.status === "fulfilled",
+  );
+  if (loaded.length === 0) {
+    const first = results[0];
+    throw first?.status === "rejected" && first.reason instanceof Error
+      ? first.reason
+      : new Error("News request failed");
+  }
+  return mergeFeeds(loaded.map((result) => result.value));
 }
 
 const httpUrlSchema = z.string().refine(isHttpUrl);
@@ -186,6 +279,7 @@ const itemSchema = z.object({
   title: z.string(),
   link: httpUrlSchema,
   source: z.string(),
+  sourceKey: z.enum(NEWS_SOURCES).nullable().default(null).catch(null),
   sourceUrl: httpUrlSchema.nullable().default(null),
   publishedAt: z.number().nullable(),
   image: httpUrlSchema.nullable().default(null),

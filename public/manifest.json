@@ -27,6 +27,8 @@
     "https://news.google.com/*",
     "https://rss.nytimes.com/*",
     "https://feeds.bbci.co.uk/*",
+    "https://www.theguardian.com/*",
+    "https://feeds.npr.org/*",
     "https://news.yahoo.com/*"
   ],
   "content_scripts": [

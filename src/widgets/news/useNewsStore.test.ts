@@ -15,14 +15,17 @@ describe("useNewsStore", () => {
   });
 
   it("seeds an instance with defaults on first change", () => {
-    store().setTopic(ID, "world");
+    store().setRegion(ID, "uk");
     expect(store().byInstance[ID]).toMatchObject({
-      activeSource: "google",
-      topic: "world",
+      activeSource: "all",
+      region: "uk",
+      layout: "list",
       googleQuery: "",
-      enabledSources: ["google", "nyt", "bbc", "yahoo"],
+      enabledSources: ["bbc", "guardian", "nyt", "yahoo"],
       openBehavior: "currentTab",
-      sortByLatest: false,
+      sortByLatest: true,
+      mutedTerms: [],
+      highlightTerms: [],
     });
   });
 
@@ -46,12 +49,50 @@ describe("useNewsStore", () => {
     expect(store().byInstance[ID]?.enabledSources).toEqual(["nyt", "bbc"]);
   });
 
+  it("ignores a selection above the enabled-sources cap", () => {
+    store().setEnabledSources(ID, ["nyt", "bbc"]);
+    store().setEnabledSources(ID, ["google", "nyt", "bbc", "guardian", "npr", "yahoo"]);
+    expect(store().byInstance[ID]?.enabledSources).toEqual(["nyt", "bbc"]);
+  });
+
   it("keeps instances independent", () => {
     const OTHER = "news-2";
     store().setActiveSource(ID, "nyt");
     store().setActiveSource(OTHER, "yahoo");
     expect(store().byInstance[ID]?.activeSource).toBe("nyt");
     expect(store().byInstance[OTHER]?.activeSource).toBe("yahoo");
+  });
+
+  it("records read and seen titles without duplicates", () => {
+    store().markRead(ID, "a");
+    store().markRead(ID, "a");
+    store().markSeen(ID, ["x", "y"]);
+    store().markSeen(ID, ["y", "z"]);
+    expect(store().byInstance[ID]?.readTitles).toEqual(["a"]);
+    expect(store().byInstance[ID]?.seenTitles).toEqual(["x", "y", "z"]);
+  });
+
+  it("caps read titles by dropping the oldest", () => {
+    for (let index = 0; index < 205; index += 1) store().markRead(ID, `title-${index}`);
+    const readTitles = store().byInstance[ID]?.readTitles ?? [];
+    expect(readTitles).toHaveLength(200);
+    expect(readTitles[0]).toBe("title-5");
+    expect(readTitles.at(-1)).toBe("title-204");
+  });
+
+  it("adds muted terms trimmed, without case-insensitive duplicates", () => {
+    store().addMutedTerm(ID, "  Crypto ");
+    store().addMutedTerm(ID, "crypto");
+    store().addMutedTerm(ID, "");
+    expect(store().byInstance[ID]?.mutedTerms).toEqual(["Crypto"]);
+
+    store().removeMutedTerm(ID, "Crypto");
+    expect(store().byInstance[ID]?.mutedTerms).toEqual([]);
+  });
+
+  it("caps the muted-terms list at twenty entries", () => {
+    for (let index = 0; index < 25; index += 1) store().addMutedTerm(ID, `term-${index}`);
+    expect(store().byInstance[ID]?.mutedTerms).toHaveLength(20);
   });
 
   it("drops an instance on cleanup", () => {

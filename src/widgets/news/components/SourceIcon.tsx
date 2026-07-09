@@ -5,6 +5,8 @@ import googleNewsIcon from "@/widgets/news/assets/google-news.svg";
 import yahooIcon from "@/widgets/news/assets/yahoo.png";
 import nytIcon from "@/widgets/news/assets/nyt.svg";
 import bbcIcon from "@/widgets/news/assets/bbc.svg";
+import guardianIcon from "@/widgets/news/assets/guardian.svg";
+import nprIcon from "@/widgets/news/assets/npr.svg";
 
 function ColorIcon({ src, className }: { src: string; className?: string }) {
   return (
@@ -52,4 +54,10 @@ export const NytIcon: WidgetIcon = ({ className }) => (
 );
 export const BbcIcon: WidgetIcon = ({ className }) => (
   <MonoIcon src={bbcIcon} className={className} />
+);
+export const GuardianIcon: WidgetIcon = ({ className }) => (
+  <MonoIcon src={guardianIcon} className={className} />
+);
+export const NprIcon: WidgetIcon = ({ className }) => (
+  <MonoIcon src={nprIcon} className={className} />
 );

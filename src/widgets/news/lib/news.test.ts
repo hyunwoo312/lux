@@ -1,6 +1,14 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { feedUrl, parseCachedNews, parseFeed, searchUrl } from "@/widgets/news/lib/news";
+import {
+  feedUrl,
+  mergeFeeds,
+  parseCachedNews,
+  parseFeed,
+  resolveNewsTab,
+  searchUrl,
+} from "@/widgets/news/lib/news";
+import type { NewsItem } from "@/widgets/news/types";
 
 const rssFeed = `<?xml version="1.0"?>
 <rss version="2.0"><channel>
@@ -60,6 +68,32 @@ describe("parseFeed", () => {
     expect(items[1]?.image).toBeNull();
   });
 
+  it("picks the smallest image variant at or above the preferred width", () => {
+    const feed = `<?xml version="1.0"?>
+<rss xmlns:media="http://search.yahoo.com/mrss/" version="2.0"><channel>
+  <item>
+    <title>Multi variant</title>
+    <link>https://example.com/m</link>
+    <media:content url="https://img.example.com/w140.jpg" width="140"/>
+    <media:content url="https://img.example.com/w460.jpg" width="460"/>
+    <media:content url="https://img.example.com/w1024.jpg" width="1024"/>
+  </item>
+  <item>
+    <title>Only small</title>
+    <link>https://example.com/s</link>
+    <media:content url="https://img.example.com/w130.jpg" width="130"/>
+  </item>
+</channel></rss>`;
+    const items = parseFeed(feed, "Yahoo News");
+    expect(items[0]?.image).toBe("https://img.example.com/w460.jpg");
+    expect(items[1]?.image).toBe("https://img.example.com/w130.jpg");
+  });
+
+  it("stamps items with the fetching source key", () => {
+    const items = parseFeed(rssFeed, "Google News", "google");
+    expect(items[0]?.sourceKey).toBe("google");
+  });
+
   it("uses guid for the id and drops items that repeat one", () => {
     const feed = `<?xml version="1.0"?>
 <rss version="2.0"><channel>
@@ -84,20 +118,72 @@ describe("parseFeed", () => {
 });
 
 describe("feedUrl", () => {
-  it("maps a supported topic to that source's section feed", () => {
-    expect(feedUrl("bbc", "technology")).toBe("https://feeds.bbci.co.uk/news/technology/rss.xml");
+  it("maps a region to that source's edition feed", () => {
+    expect(feedUrl("guardian", "uk")).toBe("https://www.theguardian.com/uk/rss");
+    expect(feedUrl("bbc", "uk")).toBe("https://feeds.bbci.co.uk/news/uk/rss.xml");
   });
 
-  it("falls back to the source's top feed for an unsupported topic", () => {
-    expect(feedUrl("yahoo", "technology")).toBe(feedUrl("yahoo", "top"));
+  it("uses the single feed for sources without editions", () => {
+    expect(feedUrl("npr", "uk")).toBe(feedUrl("npr", "us"));
+  });
+});
+
+function mergedItem(id: string, overrides: Partial<NewsItem> = {}): NewsItem {
+  return {
+    id,
+    title: `Story ${id}`,
+    link: `https://example.com/${id}`,
+    source: "Example",
+    sourceKey: null,
+    sourceUrl: null,
+    publishedAt: null,
+    image: null,
+    ...overrides,
+  };
+}
+
+describe("mergeFeeds", () => {
+  it("interleaves feeds by recency with unknown dates last", () => {
+    const merged = mergeFeeds([
+      [mergedItem("old", { publishedAt: 1_000 }), mergedItem("undated")],
+      [mergedItem("new", { publishedAt: 2_000 })],
+    ]);
+    expect(merged.map((entry) => entry.id)).toEqual(["new", "old", "undated"]);
+  });
+
+  it("dedupes cross-source items by normalized title, preferring the one with an image", () => {
+    const merged = mergeFeeds([
+      [mergedItem("g", { title: "Rates fall, markets rally" })],
+      [
+        mergedItem("b", {
+          title: "Rates fall — markets rally!",
+          image: "https://img.test/a.jpg",
+        }),
+      ],
+    ]);
+    expect(merged).toHaveLength(1);
+    expect(merged[0]?.id).toBe("b");
+  });
+});
+
+describe("resolveNewsTab", () => {
+  it("keeps a valid selection and falls back to All otherwise", () => {
+    expect(resolveNewsTab("bbc", ["google", "bbc"])).toBe("bbc");
+    expect(resolveNewsTab("all", ["google", "bbc"])).toBe("all");
+    expect(resolveNewsTab("nyt", ["google", "bbc"])).toBe("all");
+  });
+
+  it("resolves to the only enabled source when just one remains", () => {
+    expect(resolveNewsTab("all", ["nyt"])).toBe("nyt");
+    expect(resolveNewsTab("bbc", ["nyt"])).toBe("nyt");
   });
 });
 
 describe("searchUrl", () => {
-  it("builds a Google News search feed with an encoded query", () => {
-    expect(searchUrl("tesla stock")).toContain(
-      "https://news.google.com/rss/search?q=tesla%20stock",
-    );
+  it("builds a Google News search feed with an encoded query and region locale", () => {
+    const url = searchUrl("tesla stock", "uk");
+    expect(url).toContain("https://news.google.com/rss/search?q=tesla%20stock");
+    expect(url).toContain("gl=GB");
   });
 });
 
@@ -109,6 +195,7 @@ describe("parseCachedNews", () => {
         title: "t",
         link: "https://example.com/a",
         source: "s",
+        sourceKey: null,
         sourceUrl: null,
         publishedAt: null,
         image: null,

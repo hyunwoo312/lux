@@ -1,16 +1,17 @@
 import { useState } from "react";
+import { Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/tooltip";
 import { HeadlineMeta } from "@/widgets/news/components/HeadlineMeta";
 import { HighlightedTitle } from "@/widgets/news/components/HighlightedTitle";
+import { SOURCE_ICONS } from "@/widgets/news/components/sourceIcons";
 import type { OpenBehavior } from "@/lib/open-url";
 import type { NewsItem } from "@/widgets/news/types";
 
-export function HeadlineRow({
+export function HeadlineTile({
   item,
   now,
   openBehavior,
-  withThumbnail,
   withSource,
   isRead,
   isNew,
@@ -20,7 +21,6 @@ export function HeadlineRow({
   item: NewsItem;
   now: number;
   openBehavior: OpenBehavior;
-  withThumbnail: boolean;
   withSource: boolean;
   isRead: boolean;
   isNew: boolean;
@@ -30,42 +30,47 @@ export function HeadlineRow({
   const [imageFailed, setImageFailed] = useState(false);
 
   const hasImage = item.image !== null && !imageFailed;
+  const PlaceholderIcon = item.sourceKey ? SOURCE_ICONS[item.sourceKey] : Newspaper;
 
-  const row = (
+  const tile = (
     <a
       href={item.link}
       target={openBehavior === "newTab" ? "_blank" : undefined}
       rel="noreferrer"
       onClick={onRead}
       onAuxClick={onRead}
-      className="
-        group
-        hover:bg-foreground/5
-        focus-visible:bg-foreground/5
-        flex items-start gap-2.5 rounded-lg px-2 py-1.5 transition-colors
-      "
+      className="group bg-foreground/[0.04] relative block aspect-[2/1] overflow-hidden rounded-lg"
     >
-      {withThumbnail && (
-        <span className="bg-foreground/5 size-11 shrink-0 overflow-hidden rounded-md">
-          {hasImage && (
-            <img
-              src={item.image ?? undefined}
-              alt=""
-              aria-hidden
-              loading="lazy"
-              decoding="async"
-              fetchPriority="low"
-              onError={() => setImageFailed(true)}
-              className="size-full object-cover"
-            />
+      {hasImage ? (
+        <img
+          src={item.image ?? undefined}
+          alt=""
+          aria-hidden
+          loading="lazy"
+          decoding="async"
+          onError={() => setImageFailed(true)}
+          className={cn(
+            `
+              absolute inset-0 size-full object-cover transition-transform duration-300
+              group-hover:scale-105
+              motion-reduce:transition-none
+            `,
+            isRead && "opacity-50",
           )}
-        </span>
+        />
+      ) : (
+        <PlaceholderIcon className="text-muted-foreground/40 absolute top-3 right-3 size-5" />
       )}
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+      <span
+        className="
+          absolute inset-x-0 bottom-0 flex flex-col gap-0.5 bg-gradient-to-t from-black/75
+          to-black/40 px-2 py-1.5 backdrop-blur-[2px]
+        "
+      >
         <span
           className={cn(
-            "group-hover:text-primary line-clamp-2 text-sm leading-snug",
-            isRead ? "text-muted-foreground" : "text-foreground",
+            "group-hover:text-primary line-clamp-2 text-xs leading-snug font-medium",
+            isRead ? "text-white/60" : "text-white",
           )}
         >
           {isNew && (
@@ -79,14 +84,20 @@ export function HeadlineRow({
           )}
           <HighlightedTitle title={item.title} terms={highlightTerms} />
         </span>
-        <HeadlineMeta item={item} now={now} withSource={withSource} isRead={isRead} />
+        <HeadlineMeta
+          item={item}
+          now={now}
+          withSource={withSource}
+          isRead={isRead}
+          className="text-white/65"
+        />
       </span>
     </a>
   );
 
   return (
     <Tooltip content={<span className="block max-w-64">{item.title}</span>} side="bottom">
-      {row}
+      {tile}
     </Tooltip>
   );
 }
