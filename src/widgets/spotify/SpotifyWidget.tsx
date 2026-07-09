@@ -1,9 +1,11 @@
 import { type ReactNode } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useSettingsStore } from "@/settings";
 import { useElementSize } from "@/hooks/useElementSize";
 import { SpotifyDeviceMenu } from "@/widgets/spotify/components/SpotifyDeviceMenu";
 import { SpotifyEmptyState } from "@/widgets/spotify/components/SpotifyEmptyState";
 import { SpotifyPlayer } from "@/widgets/spotify/components/SpotifyPlayer";
+import { SpotifyQueuePanel } from "@/widgets/spotify/components/SpotifyQueuePanel";
 import { useSpotifyConnection } from "@/widgets/spotify/hooks/useSpotifyConnection";
 import { useSpotifyPlayback } from "@/widgets/spotify/hooks/useSpotifyPlayback";
 import { useSpotify } from "@/widgets/spotify/useSpotifyStore";
@@ -45,11 +47,13 @@ function getErrorCopy(error: string): ErrorCopy {
 
 export function SpotifyWidget() {
   const [ref, size] = useElementSize<HTMLDivElement>();
+  const reduced = useReducedMotion();
   const { account, loaded } = useSpotifyConnection();
   const openAccounts = () => useSettingsStore.getState().openSettings("accounts");
   const connected = account?.status === "connected";
   const controller = useSpotifyPlayback(Boolean(connected));
   const timeDisplayMode = useSpotify((d) => d.timeDisplayMode);
+  const queueView = useSpotify((d) => d.queueView);
 
   const view = getViewMode(size);
 
@@ -93,12 +97,27 @@ export function SpotifyWidget() {
     );
   } else if (controller.playback) {
     content = (
-      <SpotifyPlayer
-        controller={controller}
-        playback={controller.playback}
-        view={view}
-        timeDisplayMode={timeDisplayMode}
-      />
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={queueView ? "queue" : "player"}
+          initial={reduced ? { opacity: 0 } : { opacity: 0, x: queueView ? 16 : -16 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={reduced ? { opacity: 0 } : { opacity: 0, x: queueView ? 16 : -16 }}
+          transition={{ duration: reduced ? 0 : 0.2, ease: "easeOut" }}
+          className="h-full min-h-0"
+        >
+          {queueView ? (
+            <SpotifyQueuePanel />
+          ) : (
+            <SpotifyPlayer
+              controller={controller}
+              playback={controller.playback}
+              view={view}
+              timeDisplayMode={timeDisplayMode}
+            />
+          )}
+        </motion.div>
+      </AnimatePresence>
     );
   } else {
     content = (

@@ -1,10 +1,12 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
-import { Heart, Music, Play } from "lucide-react";
+import { Check, Heart, ListPlus, Music, Play } from "lucide-react";
 import { ExpandingSearch } from "@/components/ExpandingSearch";
+import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { getAccentVars } from "@/widgets/core/accent";
 import {
+  addSpotifyToQueue,
   getMySpotifyPlaylists,
   getSpotifyDevices,
   searchSpotify,
@@ -15,7 +17,10 @@ import {
   type SpotifyPlaybackDevice,
   type SpotifySearchResult,
 } from "@/widgets/spotify/types";
-import { requestSpotifyPlaybackRefresh } from "@/widgets/spotify/hooks/useSpotifyPlayback";
+import {
+  loadSpotifyQueue,
+  requestSpotifyPlaybackRefresh,
+} from "@/widgets/spotify/hooks/useSpotifyPlayback";
 
 const MAX_RESULTS = 10;
 const OWNED_PLAYLIST_CAP = 3;
@@ -48,7 +53,15 @@ export function SpotifySearch() {
   const [noDevice, setNoDevice] = useState(false);
   const [myPlaylists, setMyPlaylists] = useState<SpotifySearchResult[]>([]);
   const [playlistsLoading, setPlaylistsLoading] = useState(false);
+  const [queueingId, setQueueingId] = useState<string | null>(null);
+  const [queuedIds, setQueuedIds] = useState<Set<string>>(new Set());
   const debounceRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    if (open) return;
+    setQueuedIds(new Set());
+    setQueueingId(null);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -123,6 +136,21 @@ export function SpotifySearch() {
       .catch((caught: unknown) => {
         setError(caught instanceof Error ? caught.message : "Couldn't start playback.");
       });
+  };
+
+  const addToQueue = (result: SpotifySearchResult) => {
+    const target = devices.find((device) => device.isActive);
+    if (!target || queueingId === result.id || queuedIds.has(result.id)) return;
+    setQueueingId(result.id);
+    addSpotifyToQueue(result.uri, target.id)
+      .then(() => {
+        void loadSpotifyQueue();
+        setQueuedIds((prev) => new Set(prev).add(result.id));
+      })
+      .catch((caught: unknown) => {
+        setError(caught instanceof Error ? caught.message : "Couldn't add to queue.");
+      })
+      .finally(() => setQueueingId(null));
   };
 
   const trimmed = query.trim();
@@ -225,8 +253,7 @@ export function SpotifySearch() {
                   <ul className="flex flex-col gap-0.5">
                     {group.items.map(({ result, index }) => (
                       <li key={result.id}>
-                        <button
-                          type="button"
+                        <div
                           id={optionId(index)}
                           role="option"
                           aria-selected={index === active}
@@ -235,8 +262,8 @@ export function SpotifySearch() {
                           onClick={() => pick(result)}
                           className={cn(
                             `
-                              group flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5
-                              text-left transition-colors
+                              group flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2
+                              py-1.5 text-left transition-colors
                             `,
                             index === active ? "bg-accent text-primary" : "hover:bg-accent/60",
                           )}
@@ -270,6 +297,44 @@ export function SpotifySearch() {
                               aria-hidden
                             />
                           )}
+                          {result.kind === "track" && (
+                            <Tooltip
+                              content={queuedIds.has(result.id) ? "Added to queue" : "Add to queue"}
+                              side="top"
+                            >
+                              <button
+                                type="button"
+                                aria-label={
+                                  queuedIds.has(result.id) ? "Added to queue" : "Add to queue"
+                                }
+                                disabled={queueingId === result.id || queuedIds.has(result.id)}
+                                onMouseDown={(event) => event.preventDefault()}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  addToQueue(result);
+                                }}
+                                className={cn(
+                                  `
+                                    grid size-6 shrink-0 place-items-center rounded-sm
+                                    transition-colors
+                                    focus-visible:ring-ring focus-visible:ring-2
+                                    focus-visible:outline-none
+                                    disabled:pointer-events-none
+                                  `,
+                                  queuedIds.has(result.id)
+                                    ? "text-primary"
+                                    : "text-muted-foreground/70 hover:text-foreground",
+                                  queueingId === result.id && "opacity-50",
+                                )}
+                              >
+                                {queuedIds.has(result.id) ? (
+                                  <Check className="size-3.5" aria-hidden />
+                                ) : (
+                                  <ListPlus className="size-3.5" aria-hidden />
+                                )}
+                              </button>
+                            </Tooltip>
+                          )}
                           <Play
                             className={cn(
                               "size-3.5 shrink-0 transition-opacity",
@@ -277,7 +342,7 @@ export function SpotifySearch() {
                             )}
                             aria-hidden
                           />
-                        </button>
+                        </div>
                       </li>
                     ))}
                   </ul>

@@ -2,6 +2,7 @@ import { integrationFetch } from "@/integrations";
 import type {
   SpotifyPlaybackDevice,
   SpotifyPlaybackState,
+  SpotifyQueueItem,
   SpotifyRepeatMode,
   SpotifySearchResult,
 } from "@/widgets/spotify/types";
@@ -34,6 +35,17 @@ type SpotifyPlaybackPayload = {
 };
 
 type SpotifyDevicesPayload = { devices?: SpotifyDevicePayload[] };
+
+type SpotifyQueueTrackPayload = {
+  id?: string;
+  uri?: string;
+  name?: string;
+  artists?: SpotifyArtistRef[];
+  album?: { images?: SpotifyImage[] };
+  images?: SpotifyImage[];
+};
+
+type SpotifyQueuePayload = { queue?: Array<SpotifyQueueTrackPayload | null> };
 
 type SpotifyArtistRef = { name?: string };
 
@@ -252,6 +264,33 @@ export async function getSpotifyDevices(): Promise<SpotifyPlaybackDevice[]> {
   return (payload.devices ?? []).map(mapDevicePayload).filter((device) => device.id);
 }
 
+function mapQueueItem(item: SpotifyQueueTrackPayload | null): SpotifyQueueItem | null {
+  if (!item?.id || !item.uri || !item.name) return null;
+  return {
+    id: item.id,
+    uri: item.uri,
+    title: item.name,
+    subtitle: joinArtistNames(item.artists),
+    artworkUrl: selectArtworkUrl(item.album?.images ?? item.images),
+  };
+}
+
+export async function getSpotifyQueue(signal?: AbortSignal): Promise<SpotifyQueueItem[]> {
+  const response = await integrationFetch("spotify", `${SPOTIFY_API_BASE_URL}/me/player/queue`, {
+    signal,
+  });
+  if (response.status === 204) {
+    return [];
+  }
+  if (!response.ok) {
+    throw spotifyError(response);
+  }
+  const payload = (await response.json()) as SpotifyQueuePayload;
+  return (payload.queue ?? [])
+    .map(mapQueueItem)
+    .filter((item): item is SpotifyQueueItem => item !== null);
+}
+
 const SPOTIFY_SEARCH_TYPES = "track,album,playlist";
 const SPOTIFY_SEARCH_LIMIT = 5;
 
@@ -338,6 +377,12 @@ export async function startSpotifyPlayback(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+}
+
+export async function addSpotifyToQueue(uri: string, deviceId?: string): Promise<void> {
+  const params = new URLSearchParams({ uri });
+  if (deviceId) params.set("device_id", deviceId);
+  await sendSpotifyCommand(`/me/player/queue?${params.toString()}`, { method: "POST" });
 }
 
 export async function pauseSpotifyPlayback(): Promise<void> {

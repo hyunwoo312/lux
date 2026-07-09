@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { create } from "zustand";
+import { useShallow } from "zustand/react/shallow";
 import {
   getSpotifyDevices,
   getSpotifyPlaybackState,
+  getSpotifyQueue,
   pauseSpotifyPlayback,
   resumeSpotifyPlayback,
   seekSpotifyPlayback,
@@ -19,6 +21,7 @@ import {
   type SpotifyPendingAction,
   type SpotifyPlaybackDevice,
   type SpotifyPlaybackState,
+  type SpotifyQueueItem,
 } from "@/widgets/spotify/types";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 
@@ -31,6 +34,9 @@ const REQUEST_REFRESH_DELAYS_MS = [400, 1400];
 type PlaybackStoreState = {
   playback: SpotifyPlaybackState | null;
   devices: SpotifyPlaybackDevice[];
+  queue: SpotifyQueueItem[];
+  queueLoading: boolean;
+  queueError: string | null;
   pendingActions: Set<SpotifyPendingAction>;
   volumeDraft: number | null;
   progressDraftMs: number | null;
@@ -44,6 +50,9 @@ function initialState(): PlaybackStoreState {
   return {
     playback: null,
     devices: [],
+    queue: [],
+    queueLoading: false,
+    queueError: null,
     pendingActions: new Set(),
     volumeDraft: null,
     progressDraftMs: null,
@@ -159,6 +168,23 @@ async function loadDevices(): Promise<void> {
   }
 }
 
+export async function loadSpotifyQueue(): Promise<void> {
+  if (Date.now() < rateLimitedUntil) return;
+  set({ queueLoading: true, queueError: null });
+  try {
+    set({ queue: await getSpotifyQueue() });
+  } catch (caught) {
+    if (caught instanceof SpotifyRateLimitError) {
+      rateLimitedUntil = Date.now() + caught.retryAfterMs;
+      set({ queueError: "Spotify is busy — try again in a moment." });
+    } else {
+      set({ queueError: caught instanceof Error ? caught.message : "Unable to load the queue." });
+    }
+  } finally {
+    set({ queueLoading: false });
+  }
+}
+
 function scheduleFollowUpRefresh(): void {
   scheduleRefreshBursts(FOLLOW_UP_REFRESH_DELAYS_MS);
 }
@@ -182,7 +208,12 @@ async function runPlaybackAction(
   }
 }
 
-function displayedProgressMs(state: PlaybackStoreState): number {
+type ProgressInputs = Pick<
+  PlaybackStoreState,
+  "progressDraftMs" | "playback" | "nowMs" | "playbackSyncedAt"
+>;
+
+function displayedProgressMs(state: ProgressInputs): number {
   if (state.progressDraftMs !== null) return state.progressDraftMs;
   const { playback } = state;
   if (!playback) return 0;
@@ -430,7 +461,19 @@ export function useSpotifyPlayback(connectedArg: boolean): SpotifyPlaybackContro
     setConnected(connectedArg);
   }, [connectedArg]);
 
-  const state = useSpotifyPlaybackStore();
+  const state = useSpotifyPlaybackStore(
+    useShallow((s) => ({
+      playback: s.playback,
+      devices: s.devices,
+      pendingActions: s.pendingActions,
+      error: s.error,
+      isLoading: s.isLoading,
+      volumeDraft: s.volumeDraft,
+      progressDraftMs: s.progressDraftMs,
+      nowMs: s.nowMs,
+      playbackSyncedAt: s.playbackSyncedAt,
+    })),
+  );
   const { playback, devices } = state;
 
   const deviceOptions =

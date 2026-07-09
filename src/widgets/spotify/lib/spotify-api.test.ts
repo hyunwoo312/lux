@@ -4,9 +4,11 @@ vi.mock("@/integrations", () => ({ integrationFetch: vi.fn() }));
 
 import { integrationFetch } from "@/integrations";
 import {
+  addSpotifyToQueue,
   getMySpotifyPlaylists,
   getSpotifyDevices,
   getSpotifyPlaybackState,
+  getSpotifyQueue,
   getSpotifySavedTrackFlags,
   searchSpotify,
   seekSpotifyPlayback,
@@ -307,6 +309,70 @@ describe("startSpotifyPlayback", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ context_uri: "spotify:album:al1" }),
     });
+  });
+});
+
+describe("getSpotifyQueue", () => {
+  it("returns an empty list on a 204 (nothing playing)", async () => {
+    mockFetch.mockResolvedValue(new Response(null, { status: 204 }));
+    await expect(getSpotifyQueue()).resolves.toEqual([]);
+    expect(mockFetch).toHaveBeenCalledWith(
+      "spotify",
+      "https://api.spotify.com/v1/me/player/queue",
+      { signal: undefined },
+    );
+  });
+
+  it("maps upcoming items and drops entries without an id or name", async () => {
+    mockFetch.mockResolvedValue(
+      jsonResponse({
+        queue: [
+          {
+            id: "q1",
+            uri: "spotify:track:q1",
+            name: "Next",
+            artists: [{ name: "A" }, { name: "B" }],
+            album: {
+              images: [
+                { url: "small", width: 64 },
+                { url: "large", width: 640 },
+              ],
+            },
+          },
+          { id: "q2", name: "No uri" },
+          { id: null, name: "Ghost" },
+          null,
+        ],
+      }),
+    );
+
+    const queue = await getSpotifyQueue();
+
+    expect(queue).toEqual([
+      { id: "q1", uri: "spotify:track:q1", title: "Next", subtitle: "A, B", artworkUrl: "large" },
+    ]);
+  });
+
+  it("raises a rate-limit error on a 429", async () => {
+    mockFetch.mockResolvedValue(new Response(null, { status: 429, headers: { "Retry-After": "4" } }));
+    await expect(getSpotifyQueue()).rejects.toBeInstanceOf(SpotifyRateLimitError);
+  });
+});
+
+describe("addSpotifyToQueue", () => {
+  it("posts the track uri with the device id in the query", async () => {
+    mockFetch.mockResolvedValue(new Response(null, { status: 204 }));
+    await addSpotifyToQueue("spotify:track:t1", "dev1");
+    expect(mockFetch).toHaveBeenCalledWith(
+      "spotify",
+      "https://api.spotify.com/v1/me/player/queue?uri=spotify%3Atrack%3At1&device_id=dev1",
+      { method: "POST" },
+    );
+  });
+
+  it("throws a no-device message on a 404", async () => {
+    mockFetch.mockResolvedValue(new Response(null, { status: 404 }));
+    await expect(addSpotifyToQueue("spotify:track:t1")).rejects.toThrow(/Open Spotify on a device/);
   });
 });
 

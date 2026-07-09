@@ -3,7 +3,7 @@ import type { WidgetPlugin } from "@/widgets/core/types";
 import { SpotifyWidget } from "@/widgets/spotify/SpotifyWidget";
 import { SpotifyConfig } from "@/widgets/spotify/SpotifyConfig";
 import { SpotifyStatus } from "@/widgets/spotify/SpotifyStatus";
-import { SpotifyOpenLink } from "@/widgets/spotify/SpotifyOpenLink";
+import { SpotifyHeaderActions } from "@/widgets/spotify/SpotifyHeaderActions";
 import { SpotifyBackdrop } from "@/widgets/spotify/components/SpotifyBackdrop";
 import { SPOTIFY_ACCENT } from "@/widgets/spotify/types";
 
@@ -17,7 +17,7 @@ export const spotifyPlugin: WidgetPlugin = {
   component: SpotifyWidget,
   configComponent: SpotifyConfig,
   statusComponent: SpotifyStatus,
-  headerActionComponent: SpotifyOpenLink,
+  headerActionComponent: SpotifyHeaderActions,
   backdropComponent: SpotifyBackdrop,
   decorativeBackdrop: true,
   accent: SPOTIFY_ACCENT,

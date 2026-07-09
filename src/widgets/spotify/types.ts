@@ -34,6 +34,14 @@ export type SpotifyPlaybackState = {
   track: SpotifyPlaybackTrack;
 };
 
+export type SpotifyQueueItem = {
+  id: string;
+  uri: string;
+  title: string;
+  subtitle: string;
+  artworkUrl?: string;
+};
+
 export type SpotifySearchKind = "track" | "album" | "playlist";
 
 export type SpotifySearchResult = {

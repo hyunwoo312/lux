@@ -300,6 +300,16 @@
   animation: task-reveal 0.7s ease-out both;
 }
 
+@keyframes lux-equalize {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
 @keyframes theme-wipe {
   from {
     clip-path: inset(0 100% 0 0);
