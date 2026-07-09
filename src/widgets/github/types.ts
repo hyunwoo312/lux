@@ -66,7 +66,21 @@ export type InboxPullRequest = {
   review: PullRequestReview;
 };
 
+export type IssueKind = "assigned" | "mention";
+
+export type InboxIssue = {
+  id: string;
+  title: string;
+  url: string;
+  number: number;
+  repo: string;
+  isPrivate: boolean;
+  updatedAt: string;
+  kind: IssueKind;
+};
+
 export type InboxData = {
   notifications: InboxNotification[];
   pullRequests: InboxPullRequest[];
+  issues: InboxIssue[];
 };

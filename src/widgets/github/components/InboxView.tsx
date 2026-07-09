@@ -38,6 +38,7 @@ import { useGithub } from "@/widgets/github/useGithubStore";
 import { useGithubSync } from "@/widgets/github/useGithubSync";
 import type {
   InboxData,
+  InboxIssue,
   InboxNotification,
   InboxPullRequest,
   PullRequestCi,
@@ -177,11 +178,17 @@ export function InboxList({
     () => data.notifications.filter((entry) => showPrivate || !entry.isPrivate),
     [data.notifications, showPrivate],
   );
+  const issues = useMemo(
+    () => data.issues.filter((entry) => showPrivate || !entry.isPrivate),
+    [data.issues, showPrivate],
+  );
 
   const reviewRequests = pullRequests.filter((pr) => pr.kind === "reviewRequested");
   const yourPrs = pullRequests.filter((pr) => pr.kind === "mine");
+  const assignedIssues = issues.filter((issue) => issue.kind === "assigned");
+  const mentions = issues.filter((issue) => issue.kind === "mention");
 
-  if (pullRequests.length === 0 && notifications.length === 0) {
+  if (pullRequests.length === 0 && issues.length === 0 && notifications.length === 0) {
     return <GithubPlaceholder>Inbox zero — nothing waiting.</GithubPlaceholder>;
   }
 
@@ -198,6 +205,20 @@ export function InboxList({
         <Section title="Your pull requests" count={yourPrs.length}>
           {yourPrs.map((pr) => (
             <PullRequestRow key={pr.id} pr={pr} newTab={newTab} />
+          ))}
+        </Section>
+      )}
+      {assignedIssues.length > 0 && (
+        <Section title="Assigned to you" count={assignedIssues.length}>
+          {assignedIssues.map((issue) => (
+            <IssueRow key={issue.id} issue={issue} newTab={newTab} />
+          ))}
+        </Section>
+      )}
+      {mentions.length > 0 && (
+        <Section title="Mentions" count={mentions.length}>
+          {mentions.map((issue) => (
+            <IssueRow key={issue.id} issue={issue} newTab={newTab} />
           ))}
         </Section>
       )}
@@ -371,6 +392,25 @@ function ReviewBadge({ review }: { review: PullRequestReview }) {
   if (review === "changesRequested")
     return <XCircle className="text-destructive size-3 shrink-0" aria-hidden />;
   return <CircleDot className="text-muted-foreground size-3 shrink-0" aria-hidden />;
+}
+
+function IssueRow({ issue, newTab }: { issue: InboxIssue; newTab: boolean }) {
+  const Icon = issue.kind === "mention" ? AtSign : CircleDot;
+  const meta = `${issue.repo} #${issue.number} · ${formatRelativeTime(issue.updatedAt)}`;
+  return (
+    <a
+      href={issue.url}
+      target={newTab ? "_blank" : undefined}
+      rel="noreferrer"
+      className="hover:bg-foreground/5 flex items-center gap-2 rounded-md px-2 py-1.5"
+    >
+      <Icon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
+      <div className="min-w-0 flex-1">
+        <p className="text-foreground truncate text-xs font-medium">{issue.title}</p>
+        <p className="text-muted-foreground text-2xs truncate">{meta}</p>
+      </div>
+    </a>
+  );
 }
 
 function NotificationRow({

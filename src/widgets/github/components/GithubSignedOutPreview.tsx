@@ -97,6 +97,28 @@ const SAMPLE_INBOX: InboxData = {
       review: "none",
     },
   ],
+  issues: [
+    {
+      id: "i1",
+      title: "Search returns stale results after filter change",
+      url: "#",
+      number: 274,
+      repo: "acme/web",
+      isPrivate: false,
+      updatedAt: hoursAgo(3),
+      kind: "assigned",
+    },
+    {
+      id: "i2",
+      title: "Proposal: unify the toast + banner components",
+      url: "#",
+      number: 258,
+      repo: "acme/web",
+      isPrivate: false,
+      updatedAt: hoursAgo(20),
+      kind: "mention",
+    },
+  ],
   notifications: [
     {
       id: "n1",

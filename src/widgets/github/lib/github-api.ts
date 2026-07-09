@@ -10,6 +10,7 @@ import type {
   ContributionLevel,
   ContributionsData,
   InboxData,
+  InboxIssue,
   InboxNotification,
   InboxPullRequest,
   PullRequestCi,
@@ -200,12 +201,18 @@ async function fetchNotifications(signal?: AbortSignal): Promise<InboxNotificati
     }));
 }
 
-const PULL_REQUESTS_QUERY = `query {
+const INBOX_ITEMS_QUERY = `query {
   reviewRequested: search(query: "is:open is:pr review-requested:@me", type: ISSUE, first: 20) {
     nodes { ...pr }
   }
   mine: search(query: "is:open is:pr author:@me", type: ISSUE, first: 20) {
     nodes { ...pr }
+  }
+  assigned: search(query: "is:open is:issue assignee:@me", type: ISSUE, first: 20) {
+    nodes { ...issue }
+  }
+  mentioned: search(query: "is:open is:issue mentions:@me", type: ISSUE, first: 20) {
+    nodes { ...issue }
   }
 }
 fragment pr on PullRequest {
@@ -219,6 +226,14 @@ fragment pr on PullRequest {
   author { login }
   reviewDecision
   commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }
+}
+fragment issue on Issue {
+  id
+  title
+  url
+  number
+  updatedAt
+  repository { nameWithOwner isPrivate }
 }`;
 
 const prNodeSchema = z.object({
@@ -242,10 +257,23 @@ const prNodeSchema = z.object({
   }),
 });
 
-const pullRequestsSchema = z.object({
+const issueNodeSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  url: z.string(),
+  number: z.number(),
+  updatedAt: z.string(),
+  repository: z.object({ nameWithOwner: z.string(), isPrivate: z.boolean() }),
+});
+
+const searchNodes = z.object({ nodes: z.array(z.unknown()) });
+
+const inboxItemsSchema = z.object({
   data: z.object({
-    reviewRequested: z.object({ nodes: z.array(z.unknown()) }),
-    mine: z.object({ nodes: z.array(z.unknown()) }),
+    reviewRequested: searchNodes,
+    mine: searchNodes,
+    assigned: searchNodes,
+    mentioned: searchNodes,
   }),
 });
 
@@ -283,27 +311,62 @@ function toPullRequest(node: unknown, kind: InboxPullRequest["kind"]): InboxPull
   };
 }
 
-async function fetchPullRequests(signal?: AbortSignal): Promise<InboxPullRequest[]> {
-  const parsed = pullRequestsSchema.safeParse(await graphql(PULL_REQUESTS_QUERY, signal));
+function toIssue(node: unknown, kind: InboxIssue["kind"]): InboxIssue | null {
+  const parsed = issueNodeSchema.safeParse(node);
+  if (!parsed.success) return null;
+  const issue = parsed.data;
+  return {
+    id: issue.id,
+    title: issue.title,
+    url: issue.url,
+    number: issue.number,
+    repo: issue.repository.nameWithOwner,
+    isPrivate: issue.repository.isPrivate,
+    updatedAt: issue.updatedAt,
+    kind,
+  };
+}
+
+type InboxItems = { pullRequests: InboxPullRequest[]; issues: InboxIssue[] };
+
+async function fetchInboxItems(signal?: AbortSignal): Promise<InboxItems> {
+  const parsed = inboxItemsSchema.safeParse(await graphql(INBOX_ITEMS_QUERY, signal));
   if (!parsed.success) {
-    throw new Error("Unexpected GitHub pull request response");
+    throw new Error("Unexpected GitHub inbox response");
   }
-  const seen = new Set<string>();
-  const result: InboxPullRequest[] = [];
-  const groups: Array<[unknown[], InboxPullRequest["kind"]]> = [
-    [parsed.data.data.reviewRequested.nodes, "reviewRequested"],
-    [parsed.data.data.mine.nodes, "mine"],
-  ];
-  for (const [nodes, kind] of groups) {
+  const { reviewRequested, mine, assigned, mentioned } = parsed.data.data;
+
+  const seenPr = new Set<string>();
+  const pullRequests: InboxPullRequest[] = [];
+  for (const [nodes, kind] of [
+    [reviewRequested.nodes, "reviewRequested"],
+    [mine.nodes, "mine"],
+  ] as const) {
     for (const node of nodes) {
       const pr = toPullRequest(node, kind);
-      if (pr && !seen.has(pr.id)) {
-        seen.add(pr.id);
-        result.push(pr);
+      if (pr && !seenPr.has(pr.id)) {
+        seenPr.add(pr.id);
+        pullRequests.push(pr);
       }
     }
   }
-  return result;
+
+  const seenIssue = new Set<string>();
+  const issues: InboxIssue[] = [];
+  for (const [nodes, kind] of [
+    [assigned.nodes, "assigned"],
+    [mentioned.nodes, "mention"],
+  ] as const) {
+    for (const node of nodes) {
+      const issue = toIssue(node, kind);
+      if (issue && !seenIssue.has(issue.id)) {
+        seenIssue.add(issue.id);
+        issues.push(issue);
+      }
+    }
+  }
+
+  return { pullRequests, issues };
 }
 
 const GITHUB_JSON_HEADERS = { Accept: "application/vnd.github+json" };
@@ -342,18 +405,19 @@ export async function markAllGithubNotificationsRead(): Promise<void> {
 }
 
 export async function fetchInbox(signal?: AbortSignal): Promise<InboxData> {
-  const [notifications, pullRequests] = await Promise.allSettled([
+  const [notifications, items] = await Promise.allSettled([
     fetchNotifications(signal),
-    fetchPullRequests(signal),
+    fetchInboxItems(signal),
   ]);
 
-  if (notifications.status === "rejected" && pullRequests.status === "rejected") {
+  if (notifications.status === "rejected" && items.status === "rejected") {
     throw notifications.reason;
   }
 
   return {
     notifications: notifications.status === "fulfilled" ? notifications.value : [],
-    pullRequests: pullRequests.status === "fulfilled" ? pullRequests.value : [],
+    pullRequests: items.status === "fulfilled" ? items.value.pullRequests : [],
+    issues: items.status === "fulfilled" ? items.value.issues : [],
   };
 }
 
@@ -382,9 +446,21 @@ const inboxPullRequestSchema = z.object({
   review: z.enum(["approved", "changesRequested", "reviewRequired", "none"]),
 });
 
+const inboxIssueSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  url: z.string(),
+  number: z.number(),
+  repo: z.string(),
+  isPrivate: z.boolean(),
+  updatedAt: z.string(),
+  kind: z.enum(["assigned", "mention"]),
+});
+
 const inboxDataSchema = z.object({
   notifications: z.array(inboxNotificationSchema),
   pullRequests: z.array(inboxPullRequestSchema),
+  issues: z.array(inboxIssueSchema).default([]),
 });
 
 export function parseCachedInbox(raw: unknown): InboxData | null {
