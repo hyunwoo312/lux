@@ -18,6 +18,10 @@ export type Quote = {
   asOf: number | null;
   sessionStart: number | null;
   sessionEnd: number | null;
+  preMarketPrice: number | null;
+  postMarketPrice: number | null;
+  preMarketStart: number | null;
+  postMarketEnd: number | null;
   series: number[];
   timestamps: number[];
   dayHigh: number | null;

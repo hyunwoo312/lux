@@ -1,7 +1,12 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatPrice, formatSigned } from "@/widgets/stocks/lib/format";
-import { changeTone, deriveChange, referencePrice } from "@/widgets/stocks/lib/quote";
+import {
+  changeTone,
+  deriveChange,
+  extendedSession,
+  referencePrice,
+} from "@/widgets/stocks/lib/quote";
 import { useQuote } from "@/widgets/stocks/hooks/useQuote";
 import { useStocks } from "@/widgets/stocks/useStocksStore";
 import { StockRemoveButton } from "@/widgets/stocks/components/StockRemoveButton";
@@ -19,6 +24,7 @@ export function StockRow({ symbol, onSelect, onRemove }: StockRowProps) {
   const reference = data ? referencePrice(data, range) : 0;
   const { change, percent } = data ? deriveChange(data, reference) : { change: 0, percent: 0 };
   const tone = changeTone(change);
+  const extended = data ? extendedSession(data, Date.now()) : null;
   const graphClass = cn("min-w-0 flex-1", showName ? "h-7" : "h-9");
 
   return (
@@ -74,6 +80,16 @@ export function StockRow({ symbol, onSelect, onRemove }: StockRowProps) {
               <span className={cn("text-xs leading-tight tabular-nums", tone)}>
                 {formatSigned(change)} ({formatSigned(percent)}%)
               </span>
+              {extended ? (
+                <span
+                  className={cn("text-xs leading-tight tabular-nums", changeTone(extended.change))}
+                >
+                  <span className="text-muted-foreground">
+                    {extended.kind === "pre" ? "Pre" : "AH"}{" "}
+                  </span>
+                  {formatSigned(extended.percent)}%
+                </span>
+              ) : null}
             </>
           ) : state.status === "error" ? (
             <span className="text-muted-foreground text-xs">Unavailable</span>

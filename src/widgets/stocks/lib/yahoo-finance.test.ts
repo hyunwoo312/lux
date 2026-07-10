@@ -35,7 +35,7 @@ const chartResponse = { chart: { result: [baseResult], error: null } };
 
 describe("quoteFromChart", () => {
   it("maps a chart response to a normalized quote", () => {
-    expect(quoteFromChart(chartResponse)).toEqual({
+    expect(quoteFromChart(chartResponse, "1d")).toEqual({
       symbol: "AAPL",
       name: "Apple Inc.",
       price: 289.36,
@@ -45,6 +45,10 @@ describe("quoteFromChart", () => {
       asOf: 1782849601000,
       sessionStart: 1782826200,
       sessionEnd: 1782849600,
+      preMarketPrice: null,
+      postMarketPrice: null,
+      preMarketStart: null,
+      postMarketEnd: null,
       series: [282.1, 289.36],
       timestamps: [1782826200, 1782826800],
       dayHigh: 291.0,
@@ -56,11 +60,46 @@ describe("quoteFromChart", () => {
     });
   });
 
+  it("splits pre/post points off the sparkline on the intraday range", () => {
+    const withExtended = {
+      chart: {
+        result: [
+          {
+            meta: {
+              ...meta,
+              currentTradingPeriod: {
+                pre: { start: 1782812400, end: 1782826200 },
+                regular: { start: 1782826200, end: 1782849600 },
+                post: { start: 1782849600, end: 1782864000 },
+              },
+            },
+            timestamp: [1782822600, 1782826200, 1782826800, 1782853200],
+            indicators: { quote: [{ close: [279.5, 282.1, 289.36, 290.75] }] },
+          },
+        ],
+      },
+    };
+    const quote = quoteFromChart(withExtended, "1d");
+    expect(quote.series).toEqual([282.1, 289.36]);
+    expect(quote.timestamps).toEqual([1782826200, 1782826800]);
+    expect(quote.preMarketPrice).toBe(279.5);
+    expect(quote.postMarketPrice).toBe(290.75);
+    expect(quote.preMarketStart).toBe(1782812400);
+    expect(quote.postMarketEnd).toBe(1782864000);
+  });
+
+  it("keeps every point in the sparkline for multi-day ranges", () => {
+    const quote = quoteFromChart(chartResponse, "5d");
+    expect(quote.series).toEqual([282.1, 289.36]);
+    expect(quote.preMarketPrice).toBeNull();
+    expect(quote.postMarketPrice).toBeNull();
+  });
+
   it("falls back to previousClose, then price, when chartPreviousClose is absent", () => {
     const withoutChartClose = {
       chart: { result: [{ ...baseResult, meta: { ...meta, chartPreviousClose: undefined } }] },
     };
-    expect(quoteFromChart(withoutChartClose).previousClose).toBe(281.74);
+    expect(quoteFromChart(withoutChartClose, "1d").previousClose).toBe(281.74);
 
     const withoutAnyClose = {
       chart: {
@@ -72,17 +111,17 @@ describe("quoteFromChart", () => {
         ],
       },
     };
-    expect(quoteFromChart(withoutAnyClose).previousClose).toBe(289.36);
+    expect(quoteFromChart(withoutAnyClose, "1d").previousClose).toBe(289.36);
   });
 
   it("throws when the symbol has no result", () => {
     expect(() =>
-      quoteFromChart({ chart: { result: null, error: { code: "Not Found" } } }),
+      quoteFromChart({ chart: { result: null, error: { code: "Not Found" } } }, "1d"),
     ).toThrow();
   });
 
   it("throws on a malformed response", () => {
-    expect(() => quoteFromChart({ chart: { result: [{ meta: {} }] } })).toThrow();
+    expect(() => quoteFromChart({ chart: { result: [{ meta: {} }] } }, "1d")).toThrow();
   });
 });
 
@@ -129,6 +168,10 @@ describe("parseCachedQuote", () => {
     asOf: 1782849601000,
     sessionStart: 1782826200,
     sessionEnd: 1782849600,
+    preMarketPrice: null,
+    postMarketPrice: null,
+    preMarketStart: null,
+    postMarketEnd: null,
     series: [282.1, 289.36],
     timestamps: [1782826200, 1782826800],
     dayHigh: 291.0,

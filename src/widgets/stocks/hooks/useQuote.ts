@@ -5,7 +5,7 @@ import {
   watchPolledResource,
 } from "@/widgets/core/usePolledResource";
 import { fetchQuote, parseCachedQuote } from "@/widgets/stocks/lib/yahoo-finance";
-import { marketState, quoteCacheKey } from "@/widgets/stocks/lib/quote";
+import { extendedSession, marketState, quoteCacheKey } from "@/widgets/stocks/lib/quote";
 import { useStocks } from "@/widgets/stocks/useStocksStore";
 import { useStocksSync } from "@/widgets/stocks/hooks/useStocksSync";
 import type { Quote, StockRange } from "@/widgets/stocks/types";
@@ -38,8 +38,11 @@ export function useQuote(symbol: string) {
   const range = useStocks((d) => d.range);
   const lastData = useRef<Quote | null>(null);
 
+  const now = Date.now();
   const intervalMs =
-    lastData.current && marketState(lastData.current, Date.now()) === "closed"
+    lastData.current &&
+    marketState(lastData.current, now) === "closed" &&
+    !extendedSession(lastData.current, now)
       ? CLOSED_INTERVAL_MS
       : OPEN_INTERVAL_MS;
 

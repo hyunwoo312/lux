@@ -3,7 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatPrice, formatSigned, formatVolume } from "@/widgets/stocks/lib/format";
-import { changeTone, deriveChange, marketState, referencePrice } from "@/widgets/stocks/lib/quote";
+import {
+  changeTone,
+  deriveChange,
+  extendedSession,
+  marketState,
+  referencePrice,
+} from "@/widgets/stocks/lib/quote";
 import { useQuote } from "@/widgets/stocks/hooks/useQuote";
 import { StockRemoveButton } from "@/widgets/stocks/components/StockRemoveButton";
 import { Sparkline } from "@/widgets/stocks/components/Sparkline";
@@ -62,7 +68,9 @@ function DetailBody({ data, range }: { data: Quote; range: StockRange }) {
   const reference = referencePrice(data, range);
   const { change, percent } = deriveChange(data, reference);
   const tone = changeTone(change);
-  const market = marketState(data, Date.now());
+  const now = Date.now();
+  const market = marketState(data, now);
+  const extended = extendedSession(data, now);
   const asOf =
     data.asOf != null
       ? new Date(data.asOf).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
@@ -99,6 +107,19 @@ function DetailBody({ data, range }: { data: Quote; range: StockRange }) {
             `As of ${asOf}`
           ) : null}
         </div>
+        {extended ? (
+          <div className="mt-1 flex items-baseline gap-1.5 text-xs">
+            <span className="text-muted-foreground">
+              {extended.kind === "pre" ? "Pre-market" : "After hours"}
+            </span>
+            <span className="text-foreground tabular-nums">
+              {formatPrice(extended.price, data.currency, data.priceHint)}
+            </span>
+            <span className={cn("tabular-nums", changeTone(extended.change))}>
+              {formatSigned(extended.change)} ({formatSigned(extended.percent)}%)
+            </span>
+          </div>
+        ) : null}
       </div>
 
       <Sparkline

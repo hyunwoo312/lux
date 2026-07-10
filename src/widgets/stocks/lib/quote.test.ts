@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { changeTone, deriveChange, marketState, referencePrice } from "@/widgets/stocks/lib/quote";
+import {
+  changeTone,
+  deriveChange,
+  extendedSession,
+  marketState,
+  referencePrice,
+} from "@/widgets/stocks/lib/quote";
 import type { Quote } from "@/widgets/stocks/types";
 
 function quote(overrides: Partial<Quote> = {}): Quote {
@@ -13,6 +19,10 @@ function quote(overrides: Partial<Quote> = {}): Quote {
     asOf: 0,
     sessionStart: null,
     sessionEnd: null,
+    preMarketPrice: null,
+    postMarketPrice: null,
+    preMarketStart: null,
+    postMarketEnd: null,
     series: [],
     timestamps: [],
     dayHigh: null,
@@ -67,5 +77,50 @@ describe("marketState", () => {
 
   it("is unknown without a session window", () => {
     expect(marketState(quote(), 1500 * 1000)).toBe("unknown");
+  });
+});
+
+describe("extendedSession", () => {
+  const withExtended = quote({
+    price: 200,
+    previousClose: 190,
+    sessionStart: 1000,
+    sessionEnd: 2000,
+    preMarketStart: 500,
+    postMarketEnd: 3000,
+    preMarketPrice: 193,
+    postMarketPrice: 202,
+  });
+
+  it("reports the after-hours session and its change vs the regular close", () => {
+    expect(extendedSession(withExtended, 2500 * 1000)).toEqual({
+      kind: "post",
+      price: 202,
+      change: 2,
+      percent: 1,
+    });
+  });
+
+  it("reports the pre-market session and its change vs the previous close", () => {
+    expect(extendedSession(withExtended, 700 * 1000)).toEqual({
+      kind: "pre",
+      price: 193,
+      change: 3,
+      percent: (3 / 190) * 100,
+    });
+  });
+
+  it("is null during the regular session", () => {
+    expect(extendedSession(withExtended, 1500 * 1000)).toBeNull();
+  });
+
+  it("is null once the extended window has closed", () => {
+    expect(extendedSession(withExtended, 3500 * 1000)).toBeNull();
+  });
+
+  it("is null when there is no extended-hours price", () => {
+    expect(
+      extendedSession(quote({ sessionStart: 1000, sessionEnd: 2000 }), 2500 * 1000),
+    ).toBeNull();
   });
 });

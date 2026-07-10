@@ -60,7 +60,9 @@ const chartSchema = z.object({
             exchangeName: z.string().optional(),
             currentTradingPeriod: z
               .object({
+                pre: z.object({ start: z.number(), end: z.number() }).optional(),
                 regular: z.object({ start: z.number(), end: z.number() }).optional(),
+                post: z.object({ start: z.number(), end: z.number() }).optional(),
               })
               .optional(),
           }),
@@ -77,7 +79,7 @@ const chartSchema = z.object({
   }),
 });
 
-export function quoteFromChart(raw: unknown): Quote {
+export function quoteFromChart(raw: unknown, range: StockRange): Quote {
   const parsed = chartSchema.safeParse(raw);
   if (!parsed.success) throw new Error("Unexpected quote response");
   const result = parsed.data.chart.result?.[0];
@@ -85,12 +87,28 @@ export function quoteFromChart(raw: unknown): Quote {
   const { meta } = result;
   const closes = result.indicators?.quote[0]?.close ?? [];
   const times = result.timestamp ?? [];
+  const preStart = meta.currentTradingPeriod?.pre?.start ?? null;
+  const regStart = meta.currentTradingPeriod?.regular?.start ?? null;
+  const regEnd = meta.currentTradingPeriod?.regular?.end ?? null;
+  const postEnd = meta.currentTradingPeriod?.post?.end ?? null;
+  const splitExtended = range === "1d" && regStart != null && regEnd != null;
   const series: number[] = [];
   const timestamps: number[] = [];
+  let preMarketPrice: number | null = null;
+  let postMarketPrice: number | null = null;
   closes.forEach((value, index) => {
-    if (value != null) {
+    if (value == null) return;
+    const ts = times[index] ?? 0;
+    if (!splitExtended) {
       series.push(value);
-      timestamps.push(times[index] ?? 0);
+      timestamps.push(ts);
+    } else if (ts >= regStart && ts < regEnd) {
+      series.push(value);
+      timestamps.push(ts);
+    } else if (preStart != null && ts >= preStart && ts < regStart) {
+      preMarketPrice = value;
+    } else if (postEnd != null && ts >= regEnd && ts < postEnd) {
+      postMarketPrice = value;
     }
   });
   return {
@@ -101,8 +119,12 @@ export function quoteFromChart(raw: unknown): Quote {
     currency: meta.currency ?? "USD",
     priceHint: meta.priceHint ?? 2,
     asOf: meta.regularMarketTime != null ? meta.regularMarketTime * 1000 : null,
-    sessionStart: meta.currentTradingPeriod?.regular?.start ?? null,
-    sessionEnd: meta.currentTradingPeriod?.regular?.end ?? null,
+    sessionStart: regStart,
+    sessionEnd: regEnd,
+    preMarketPrice,
+    postMarketPrice,
+    preMarketStart: splitExtended ? preStart : null,
+    postMarketEnd: splitExtended ? postEnd : null,
     series,
     timestamps,
     dayHigh: meta.regularMarketDayHigh ?? null,
@@ -145,11 +167,12 @@ export async function fetchQuote(
   range: StockRange,
   signal?: AbortSignal,
 ): Promise<Quote> {
+  const prePost = range === "1d" ? "&includePrePost=true" : "";
   const data = await fetchYahoo(
-    `/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=${RANGE_INTERVAL[range]}`,
+    `/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=${RANGE_INTERVAL[range]}${prePost}`,
     signal,
   );
-  return quoteFromChart(data);
+  return quoteFromChart(data, range);
 }
 
 export async function searchSymbols(
@@ -172,6 +195,10 @@ const quoteSchema = z.object({
   asOf: z.number().nullable(),
   sessionStart: z.number().nullable().default(null),
   sessionEnd: z.number().nullable().default(null),
+  preMarketPrice: z.number().nullable().default(null),
+  postMarketPrice: z.number().nullable().default(null),
+  preMarketStart: z.number().nullable().default(null),
+  postMarketEnd: z.number().nullable().default(null),
   series: z.array(z.number()),
   timestamps: z.array(z.number()).default([]),
   dayHigh: z.number().nullable().default(null),
