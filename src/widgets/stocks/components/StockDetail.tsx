@@ -9,9 +9,14 @@ import { StockRemoveButton } from "@/widgets/stocks/components/StockRemoveButton
 import { Sparkline } from "@/widgets/stocks/components/Sparkline";
 import type { Quote, StockRange } from "@/widgets/stocks/types";
 
-function formatRange(low: number | null, high: number | null, currency: string): string {
+function formatRange(
+  low: number | null,
+  high: number | null,
+  currency: string,
+  priceHint: number,
+): string {
   if (low == null || high == null) return "—";
-  return `${formatPrice(low, currency)} – ${formatPrice(high, currency)}`;
+  return `${formatPrice(low, currency, priceHint)} – ${formatPrice(high, currency, priceHint)}`;
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -72,7 +77,7 @@ function DetailBody({ data, range }: { data: Quote; range: StockRange }) {
         </div>
         <div className="mt-1 flex items-baseline gap-2">
           <span className="text-foreground text-2xl font-semibold tabular-nums">
-            {formatPrice(data.price, data.currency)}
+            {formatPrice(data.price, data.currency, data.priceHint)}
           </span>
           <span className={cn("text-sm tabular-nums", tone)}>
             {formatSigned(change)} ({formatSigned(percent)}%)
@@ -100,6 +105,7 @@ function DetailBody({ data, range }: { data: Quote; range: StockRange }) {
         series={data.series}
         timestamps={data.timestamps}
         currency={data.currency}
+        priceHint={data.priceHint}
         range={range}
         tone={tone}
         baseline={reference}
@@ -111,16 +117,19 @@ function DetailBody({ data, range }: { data: Quote; range: StockRange }) {
         <div className="col-span-2 flex flex-col gap-0.5">
           <dt className="text-muted-foreground text-xs">Day range</dt>
           <dd className="text-foreground text-sm tabular-nums">
-            {formatRange(data.dayLow, data.dayHigh, data.currency)}
+            {formatRange(data.dayLow, data.dayHigh, data.currency, data.priceHint)}
           </dd>
           {data.dayLow != null && data.dayHigh != null ? (
             <RangeBar low={data.dayLow} high={data.dayHigh} value={data.price} />
           ) : null}
         </div>
-        <Stat label="Prev close" value={formatPrice(data.previousClose, data.currency)} />
+        <Stat
+          label="Prev close"
+          value={formatPrice(data.previousClose, data.currency, data.priceHint)}
+        />
         <Stat
           label="52-wk range"
-          value={formatRange(data.week52Low, data.week52High, data.currency)}
+          value={formatRange(data.week52Low, data.week52High, data.currency, data.priceHint)}
         />
         <Stat label="Volume" value={data.volume != null ? formatVolume(data.volume) : "—"} />
         {data.exchange ? <Stat label="Exchange" value={data.exchange} /> : null}

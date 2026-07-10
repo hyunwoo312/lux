@@ -8,6 +8,7 @@ import type { Quote } from "@/widgets/stocks/types";
 
 const meta = {
   currency: "USD",
+  priceHint: 4,
   symbol: "AAPL",
   regularMarketTime: 1782849601,
   regularMarketPrice: 289.36,
@@ -40,6 +41,7 @@ describe("quoteFromChart", () => {
       price: 289.36,
       previousClose: 281.74,
       currency: "USD",
+      priceHint: 4,
       asOf: 1782849601000,
       sessionStart: 1782826200,
       sessionEnd: 1782849600,
@@ -96,14 +98,18 @@ describe("symbolsFromSearch", () => {
       },
       { symbol: "^GSPC", shortname: "S&P 500", exchDisp: "SNP", quoteType: "INDEX" },
       { symbol: "BTC-USD", shortname: "Bitcoin USD", exchDisp: "CCC", quoteType: "CRYPTOCURRENCY" },
+      { symbol: "EURUSD=X", shortname: "EUR/USD", exchDisp: "CCY", quoteType: "CURRENCY" },
+      { symbol: "MUTF", shortname: "Some Fund", exchDisp: "—", quoteType: "MUTUALFUND" },
     ],
   };
 
-  it("keeps equities, ETFs, and indices and maps them", () => {
+  it("keeps equities, ETFs, indices, crypto, and FX; drops other types", () => {
     expect(symbolsFromSearch(searchResponse)).toEqual([
       { symbol: "AAPL", name: "Apple Inc.", exchange: "NASDAQ" },
       { symbol: "SPY", name: "SPDR S&P 500 ETF Trust", exchange: "NYSEArca" },
       { symbol: "^GSPC", name: "S&P 500", exchange: "SNP" },
+      { symbol: "BTC-USD", name: "Bitcoin USD", exchange: "CCC" },
+      { symbol: "EURUSD=X", name: "EUR/USD", exchange: "CCY" },
     ]);
   });
 
@@ -119,6 +125,7 @@ describe("parseCachedQuote", () => {
     price: 289.36,
     previousClose: 281.74,
     currency: "USD",
+    priceHint: 2,
     asOf: 1782849601000,
     sessionStart: 1782826200,
     sessionEnd: 1782849600,

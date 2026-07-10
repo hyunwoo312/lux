@@ -3,7 +3,7 @@ import type { Quote, StockRange, SymbolSearchResult } from "@/widgets/stocks/typ
 
 const HOSTS = ["https://query1.finance.yahoo.com", "https://query2.finance.yahoo.com"];
 const REQUEST_TIMEOUT_MS = 10_000;
-const SEARCHABLE_TYPES = new Set(["EQUITY", "ETF", "INDEX"]);
+const SEARCHABLE_TYPES = new Set(["EQUITY", "ETF", "INDEX", "CRYPTOCURRENCY", "CURRENCY"]);
 const RANGE_INTERVAL: Record<StockRange, string> = {
   "1d": "5m",
   "5d": "30m",
@@ -44,6 +44,7 @@ const chartSchema = z.object({
           meta: z.object({
             symbol: z.string(),
             currency: z.string().optional(),
+            priceHint: z.number().optional(),
             regularMarketPrice: z.number(),
             chartPreviousClose: z.number().optional(),
             previousClose: z.number().optional(),
@@ -98,6 +99,7 @@ export function quoteFromChart(raw: unknown): Quote {
     price: meta.regularMarketPrice,
     previousClose: meta.chartPreviousClose ?? meta.previousClose ?? meta.regularMarketPrice,
     currency: meta.currency ?? "USD",
+    priceHint: meta.priceHint ?? 2,
     asOf: meta.regularMarketTime != null ? meta.regularMarketTime * 1000 : null,
     sessionStart: meta.currentTradingPeriod?.regular?.start ?? null,
     sessionEnd: meta.currentTradingPeriod?.regular?.end ?? null,
@@ -166,6 +168,7 @@ const quoteSchema = z.object({
   price: z.number(),
   previousClose: z.number(),
   currency: z.string(),
+  priceHint: z.number().default(2),
   asOf: z.number().nullable(),
   sessionStart: z.number().nullable().default(null),
   sessionEnd: z.number().nullable().default(null),

@@ -14,6 +14,7 @@ export type Quote = {
   price: number;
   previousClose: number;
   currency: string;
+  priceHint: number;
   asOf: number | null;
   sessionStart: number | null;
   sessionEnd: number | null;

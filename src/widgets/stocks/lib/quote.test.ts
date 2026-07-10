@@ -9,6 +9,7 @@ function quote(overrides: Partial<Quote> = {}): Quote {
     price: 150,
     previousClose: 100,
     currency: "USD",
+    priceHint: 2,
     asOf: 0,
     sessionStart: null,
     sessionEnd: null,

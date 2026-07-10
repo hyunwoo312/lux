@@ -5,11 +5,26 @@ export function formatSigned(value: number, digits = 2): string {
   return `${sign}${Math.abs(value).toFixed(digits)}`;
 }
 
-export function formatPrice(value: number, currency: string): string {
+function magnitudeDecimals(value: number): number {
+  const abs = Math.abs(value);
+  if (abs === 0 || abs >= 1) return 2;
+  if (abs >= 0.01) return 4;
+  if (abs >= 0.0001) return 6;
+  return 8;
+}
+
+export function formatPrice(value: number, currency: string, priceHint = 2): string {
+  const maxDigits = Math.min(8, Math.max(priceHint, magnitudeDecimals(value)));
+  const options: Intl.NumberFormatOptions = {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: maxDigits,
+  };
   try {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(value);
+    return new Intl.NumberFormat(undefined, options).format(value);
   } catch {
-    return value.toFixed(2);
+    return value.toFixed(maxDigits);
   }
 }
 

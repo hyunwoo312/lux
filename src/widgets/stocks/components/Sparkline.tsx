@@ -10,6 +10,7 @@ type SparklineProps = {
   series: number[];
   timestamps: number[];
   currency: string;
+  priceHint: number;
   range: StockRange;
   tone: string;
   baseline?: number;
@@ -21,6 +22,7 @@ export function Sparkline({
   series,
   timestamps,
   currency,
+  priceHint,
   range,
   tone,
   baseline,
@@ -131,7 +133,7 @@ export function Sparkline({
             "
           >
             <span className="text-foreground text-xs font-medium tabular-nums">
-              {formatPrice(series[idx] ?? 0, currency)}
+              {formatPrice(series[idx] ?? 0, currency, priceHint)}
             </span>
             {detail && (timestamps[idx] ?? 0) > 0 ? (
               <span className="text-muted-foreground text-xs tabular-nums">

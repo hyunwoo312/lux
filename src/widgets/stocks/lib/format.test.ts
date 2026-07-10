@@ -1,5 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { formatSigned, formatVolume } from "@/widgets/stocks/lib/format";
+import { formatPrice, formatSigned, formatVolume } from "@/widgets/stocks/lib/format";
+
+describe("formatPrice", () => {
+  it("uses two decimals for ordinary prices", () => {
+    expect(formatPrice(150.25, "USD", 2)).toContain("150.25");
+    expect(formatPrice(60_123.4, "USD", 2)).toContain("123.40");
+  });
+
+  it("honors a higher priceHint for FX rates", () => {
+    expect(formatPrice(1.0842, "USD", 4)).toContain("1.0842");
+  });
+
+  it("shows enough decimals for sub-dollar crypto even when the hint is low", () => {
+    expect(formatPrice(0.1234, "USD", 2)).toContain("0.1234");
+    expect(formatPrice(0.00001234, "USD", 2)).toContain("0.00001234");
+  });
+});
 
 describe("formatSigned", () => {
   it("prefixes a plus for positive values", () => {

@@ -51,6 +51,7 @@ export function StockRow({ symbol, onSelect, onRemove }: StockRowProps) {
             series={data.series}
             timestamps={data.timestamps}
             currency={data.currency}
+            priceHint={data.priceHint}
             range={range}
             tone={tone}
             baseline={reference}
@@ -68,7 +69,7 @@ export function StockRow({ symbol, onSelect, onRemove }: StockRowProps) {
           {data ? (
             <>
               <span className="text-foreground text-sm leading-tight font-semibold tabular-nums">
-                {formatPrice(data.price, data.currency)}
+                {formatPrice(data.price, data.currency, data.priceHint)}
               </span>
               <span className={cn("text-xs leading-tight tabular-nums", tone)}>
                 {formatSigned(change)} ({formatSigned(percent)}%)

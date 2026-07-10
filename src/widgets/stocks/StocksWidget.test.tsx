@@ -23,6 +23,7 @@ function quote(symbol: string, price: number, previousClose: number): Quote {
     price,
     previousClose,
     currency: "USD",
+    priceHint: 2,
     asOf: 1,
     sessionStart: null,
     sessionEnd: null,
