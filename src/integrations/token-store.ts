@@ -1,4 +1,4 @@
-import { read, write } from "@/lib/storage";
+import { read, writeOrThrow } from "@/lib/storage";
 import {
   integrationAccountSchema,
   integrationStorageSchema,
@@ -39,7 +39,7 @@ async function readStorage(): Promise<IntegrationStorageState> {
 }
 
 async function writeStorage(state: IntegrationStorageState): Promise<void> {
-  await write(STORAGE_KEY, integrationStorageSchema.parse(state));
+  await writeOrThrow(STORAGE_KEY, integrationStorageSchema.parse(state));
   for (const listener of listeners) listener();
 }
 

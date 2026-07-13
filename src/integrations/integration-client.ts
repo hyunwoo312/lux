@@ -147,14 +147,34 @@ export async function disconnectIntegration(providerId: IntegrationProviderId): 
 }
 
 async function markNeedsReconnect(account: IntegrationAccount, message: string): Promise<void> {
-  await writeAccount({ ...account, status: "needsReconnect", lastError: message, token: undefined });
+  await writeAccount({
+    ...account,
+    status: "needsReconnect",
+    lastError: message,
+    token: undefined,
+  });
 }
 
 const refreshingTokens = new Map<IntegrationProviderId, Promise<string>>();
 
+function tokenNeedsRefresh(
+  token: NonNullable<IntegrationAccount["token"]>,
+  staleToken: string | undefined,
+): boolean {
+  if (staleToken !== undefined) return token.accessToken === staleToken;
+  return token.expiresAt - Date.now() <= TOKEN_REFRESH_BUFFER_MS;
+}
+
+function withRefreshLock<T>(providerId: IntegrationProviderId, task: () => Promise<T>): Promise<T> {
+  if (typeof navigator !== "undefined" && navigator.locks?.request) {
+    return navigator.locks.request(`lux:token-refresh:${providerId}`, task);
+  }
+  return task();
+}
+
 async function getProviderAccessToken(
   providerId: IntegrationProviderId,
-  forceRefresh = false,
+  staleToken?: string,
 ): Promise<string> {
   const provider = getProvider(providerId);
   const account = await getAccountByProvider(providerId);
@@ -163,14 +183,23 @@ async function getProviderAccessToken(
     throw new Error(`${provider.label} is not connected`);
   }
 
-  if (!forceRefresh && account.token.expiresAt - Date.now() > TOKEN_REFRESH_BUFFER_MS) {
+  if (!tokenNeedsRefresh(account.token, staleToken)) {
     return account.token.accessToken;
   }
 
   const inFlight = refreshingTokens.get(providerId);
   if (inFlight) return inFlight;
 
-  const refresh = refreshProviderToken(provider, account).finally(() => {
+  const refresh = withRefreshLock(providerId, async () => {
+    const current = await getAccountByProvider(providerId);
+    if (!current?.token || current.status !== "connected") {
+      throw new Error(`${provider.label} is not connected`);
+    }
+    if (!tokenNeedsRefresh(current.token, staleToken)) {
+      return current.token.accessToken;
+    }
+    return refreshProviderToken(provider, current);
+  }).finally(() => {
     refreshingTokens.delete(providerId);
   });
   refreshingTokens.set(providerId, refresh);
@@ -249,7 +278,7 @@ export async function integrationFetch(
     return response;
   }
 
-  const refreshedToken = await getProviderAccessToken(providerId, true);
+  const refreshedToken = await getProviderAccessToken(providerId, accessToken);
   const retried = await fetch(input, authorize(init, refreshedToken));
 
   if (retried.status === 401) {

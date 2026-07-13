@@ -51,4 +51,13 @@ describe("token-store", () => {
   it("returns null when no account exists for a provider", async () => {
     expect(await getAccountByProvider("google")).toBeNull();
   });
+
+  it("propagates a storage write failure instead of swallowing it", async () => {
+    const chromeRef = (globalThis as unknown as { chrome: typeof chrome }).chrome;
+    chromeRef.storage.local.set = (async () => {
+      throw new Error("QUOTA_BYTES quota exceeded");
+    }) as typeof chrome.storage.local.set;
+
+    await expect(writeAccount(createAccount())).rejects.toThrow("QUOTA_BYTES");
+  });
 });

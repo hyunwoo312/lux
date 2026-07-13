@@ -27,6 +27,10 @@ export async function write(name: string, value: unknown): Promise<void> {
   }
 }
 
+export async function writeOrThrow(name: string, value: unknown): Promise<void> {
+  await chrome.storage.local.set({ [namespaced(name)]: value });
+}
+
 export async function remove(name: string): Promise<void> {
   try {
     await chrome.storage.local.remove(namespaced(name));
