@@ -15,7 +15,12 @@ import { githubProvider } from "@/integrations/providers/github";
 import { googleProvider } from "@/integrations/providers/google";
 import { microsoftProvider } from "@/integrations/providers/microsoft";
 import { spotifyProvider } from "@/integrations/providers/spotify";
-import { deleteAccount, getAccountByProvider, writeAccount } from "@/integrations/token-store";
+import {
+  deleteAccount,
+  getAccountByProvider,
+  replaceProviderAccount,
+  writeAccount,
+} from "@/integrations/token-store";
 import type {
   IntegrationAccount,
   IntegrationProvider,
@@ -134,7 +139,7 @@ export async function connectIntegration(
     },
   };
 
-  await writeAccount(account);
+  await replaceProviderAccount(account);
   return account;
 }
 

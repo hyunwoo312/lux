@@ -3,6 +3,7 @@ import {
   deleteAccount,
   getAccountByProvider,
   readAccountSummaries,
+  replaceProviderAccount,
   writeAccount,
 } from "@/integrations/token-store";
 import type { IntegrationAccount } from "@/integrations/types";
@@ -50,6 +51,25 @@ describe("token-store", () => {
 
   it("returns null when no account exists for a provider", async () => {
     expect(await getAccountByProvider("google")).toBeNull();
+  });
+
+  it("drops a stale same-provider account when connecting a different one", async () => {
+    const stale: IntegrationAccount = {
+      ...createAccount(),
+      id: "google-old",
+      providerAccountId: "old",
+      status: "needsReconnect",
+      token: undefined,
+    };
+    await writeAccount(stale);
+
+    const fresh = createAccount();
+    await replaceProviderAccount(fresh);
+
+    const google = (await readAccountSummaries()).filter((s) => s.providerId === "google");
+    expect(google).toHaveLength(1);
+    expect(google[0]?.id).toBe(fresh.id);
+    expect(await getAccountByProvider("google")).toEqual(fresh);
   });
 
   it("propagates a storage write failure instead of swallowing it", async () => {

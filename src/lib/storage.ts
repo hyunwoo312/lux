@@ -39,6 +39,19 @@ export async function remove(name: string): Promise<void> {
   }
 }
 
+export function watchStorage(name: string, onChange: () => void): () => void {
+  if (typeof chrome === "undefined" || !chrome.storage?.onChanged) return () => {};
+  const key = namespaced(name);
+  const listener = (
+    changes: Record<string, chrome.storage.StorageChange>,
+    areaName: chrome.storage.AreaName,
+  ) => {
+    if (areaName === "local" && key in changes) onChange();
+  };
+  chrome.storage.onChanged.addListener(listener);
+  return () => chrome.storage.onChanged.removeListener(listener);
+}
+
 type GatedStorage<S> = PersistStorage<S> & { open: () => void };
 
 export function createGatedChromeStorage<S>(): GatedStorage<S> {

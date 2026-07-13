@@ -1,4 +1,4 @@
-import { read, writeOrThrow } from "@/lib/storage";
+import { read, watchStorage, writeOrThrow } from "@/lib/storage";
 import {
   integrationAccountSchema,
   integrationStorageSchema,
@@ -64,9 +64,24 @@ export async function writeAccount(account: IntegrationAccount): Promise<void> {
   });
 }
 
+export async function replaceProviderAccount(account: IntegrationAccount): Promise<void> {
+  const parsed = integrationAccountSchema.parse(account);
+  const state = await readStorage();
+  const accounts: Record<string, IntegrationAccount> = {};
+  for (const [id, existing] of Object.entries(state.accounts)) {
+    if (existing.providerId !== parsed.providerId) accounts[id] = existing;
+  }
+  accounts[parsed.id] = parsed;
+  await writeStorage({ ...state, accounts });
+}
+
 export async function deleteAccount(accountId: string): Promise<void> {
   const state = await readStorage();
   const accounts = { ...state.accounts };
   delete accounts[accountId];
   await writeStorage({ ...state, accounts });
 }
+
+watchStorage(STORAGE_KEY, () => {
+  for (const listener of listeners) listener();
+});
