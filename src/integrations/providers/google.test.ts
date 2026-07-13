@@ -1,5 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { googleProvider } from "@/integrations/providers/google";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 const baseParams = {
   clientId: "client-123",
@@ -22,5 +26,13 @@ describe("googleProvider.buildPkceAuthUrl", () => {
 
   it("supports refresh through the relay", () => {
     expect(typeof googleProvider.refreshToken).toBe("function");
+  });
+
+  it("falls back to a non-storm expiry when the relay omits expires_in", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ access_token: "tok", token_type: "Bearer" })),
+    );
+    const token = await googleProvider.refreshToken!({ clientId: "c", refreshToken: "r" });
+    expect(token.expiresIn).toBeGreaterThan(300);
   });
 });

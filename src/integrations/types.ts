@@ -27,7 +27,7 @@ export const integrationAccountSchema = z.object({
   providerAccountId: z.string().min(1),
   displayName: z.string().min(1),
   email: z.string().email().optional().catch(undefined),
-  avatarUrl: z.string().url().optional(),
+  avatarUrl: z.string().url().optional().catch(undefined),
   status: integrationAccountStatusSchema,
   token: integrationTokenSchema.optional(),
   connectedAt: z.string().datetime({ offset: true }),

@@ -5,6 +5,8 @@ const PROFILE_ENDPOINT = "https://graph.microsoft.com/v1.0/me";
 
 const SCOPES = ["offline_access", "User.Read", "Calendars.Read"];
 
+const ACCESS_TOKEN_TTL_SECONDS = 3600;
+
 type MicrosoftProfile = {
   id: string;
   displayName?: string;
@@ -24,6 +26,7 @@ export const microsoftProvider: IntegrationProvider = createRelayProvider({
   authorizationEndpoint: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
   authParams: { prompt: "select_account" },
   supportsRefresh: true,
+  defaultExpiresIn: ACCESS_TOKEN_TTL_SECONDS,
   fetchProfile: async (accessToken) => {
     const response = await fetch(PROFILE_ENDPOINT, {
       headers: { Authorization: `Bearer ${accessToken}` },

@@ -72,6 +72,13 @@ describe("token-store", () => {
     expect(await getAccountByProvider("google")).toEqual(fresh);
   });
 
+  it("coerces an invalid avatar URL to undefined instead of dropping the account", async () => {
+    await writeAccount({ ...createAccount(), avatarUrl: "not-a-url" });
+    const account = await getAccountByProvider("google");
+    expect(account?.displayName).toBe("Ada Lovelace");
+    expect(account?.avatarUrl).toBeUndefined();
+  });
+
   it("propagates a storage write failure instead of swallowing it", async () => {
     const chromeRef = (globalThis as unknown as { chrome: typeof chrome }).chrome;
     chromeRef.storage.local.set = (async () => {
