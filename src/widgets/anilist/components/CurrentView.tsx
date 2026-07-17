@@ -9,6 +9,7 @@ import { fetchCurrent, parseCachedCurrent, saveProgress } from "@/widgets/anilis
 import {
   computeBehind,
   formatAiringIn,
+  formatScore,
   progressLabel,
   sortCurrentEntries,
   sumWaiting,
@@ -24,6 +25,7 @@ import type {
   CurrentEntry,
   CurrentSort,
   MediaFilter,
+  ScoreFormat,
   TitleLanguage,
   WaitingTotals,
 } from "@/widgets/anilist/types";
@@ -68,7 +70,9 @@ export function CurrentView({ enabled, userId, newTab }: CurrentViewProps) {
     return <AnilistPlaceholder>Loading your list…</AnilistPlaceholder>;
   if (state.status === "error")
     return (
-      <AnilistPlaceholder>{loadErrorMessage(state.error, "Couldn’t load your list.")}</AnilistPlaceholder>
+      <AnilistPlaceholder>
+        {loadErrorMessage(state.error, "Couldn’t load your list.")}
+      </AnilistPlaceholder>
     );
   if (state.status === "empty")
     return <AnilistPlaceholder>Nothing in progress.</AnilistPlaceholder>;
@@ -170,6 +174,7 @@ function CurrentList({
               key={`${entry.kind}-${entry.id}`}
               entry={entry}
               newTab={newTab}
+              scoreFormat={data.scoreFormat}
               pending={pending[entry.id] ?? false}
               onIncrement={() => changeProgress(entry, 1)}
               onDecrement={() => changeProgress(entry, -1)}
@@ -202,18 +207,22 @@ function WaitingSummary({ waiting }: { waiting: WaitingTotals }) {
 function CurrentRow({
   entry,
   newTab,
+  scoreFormat,
   pending,
   onIncrement,
   onDecrement,
 }: {
   entry: CurrentEntry;
   newTab: boolean;
+  scoreFormat: ScoreFormat;
   pending: boolean;
   onIncrement: () => void;
   onDecrement: () => void;
 }) {
   const canIncrement = entry.total == null || entry.progress < entry.total;
   const canDecrement = entry.progress > 0;
+  const scoreText = entry.score != null ? formatScore(entry.score, scoreFormat) : null;
+  const showScoreIcon = scoreFormat !== "POINT_5" && scoreFormat !== "POINT_3";
   const stepperWidth =
     canIncrement && canDecrement
       ? "group-hover:w-12 group-focus-within:w-12"
@@ -291,12 +300,12 @@ function CurrentRow({
             </div>
           )
         )}
-        {entry.score != null && (
+        {scoreText != null && (
           <span className="
             text-muted-foreground inline-flex items-center gap-0.5 text-2xs tabular-nums
           ">
-            <Star className="size-2.5" aria-hidden />
-            {entry.score}
+            {showScoreIcon && <Star className="size-2.5" aria-hidden />}
+            {scoreText}
           </span>
         )}
       </div>

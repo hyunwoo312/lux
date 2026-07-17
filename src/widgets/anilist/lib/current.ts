@@ -1,4 +1,10 @@
-import type { CurrentEntry, CurrentSort, MediaKind, WaitingTotals } from "@/widgets/anilist/types";
+import type {
+  CurrentEntry,
+  CurrentSort,
+  MediaKind,
+  ScoreFormat,
+  WaitingTotals,
+} from "@/widgets/anilist/types";
 
 export function sortCurrentEntries(entries: CurrentEntry[], sort: CurrentSort): CurrentEntry[] {
   const sorted = [...entries];
@@ -39,6 +45,21 @@ export function progressLabel(entry: CurrentEntry): string {
   const unit = entry.kind === "anime" ? "Ep" : "Ch";
   const total = entry.total != null ? entry.total : "?";
   return `${unit} ${entry.progress}/${total}`;
+}
+
+export function formatScore(score: number, format: ScoreFormat): string | null {
+  if (score <= 0) return null;
+  switch (format) {
+    case "POINT_100":
+    case "POINT_10":
+      return String(Math.round(score));
+    case "POINT_10_DECIMAL":
+      return score.toFixed(1);
+    case "POINT_5":
+      return `${Math.round(score)}★`;
+    case "POINT_3":
+      return score >= 3 ? "🙂" : score === 2 ? "😐" : "🙁";
+  }
 }
 
 export function formatAiringIn(airingAt: number, now = Date.now()): string {

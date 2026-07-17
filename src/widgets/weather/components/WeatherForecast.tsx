@@ -3,7 +3,7 @@ import { formatHour, formatTemperature, formatWeekday } from "@/widgets/weather/
 import { WeatherIcon } from "@/widgets/weather/components/WeatherIcon";
 import type { WeatherData } from "@/widgets/weather/types";
 
-const HOURLY_COUNT = 6;
+const HOURLY_COUNT = 24;
 const DAILY_COUNT = 5;
 const HOURLY_PRECIP_MIN = 20;
 
@@ -23,9 +23,9 @@ export function WeatherForecast({ data, showHourly, showDaily }: WeatherForecast
   return (
     <div className="flex flex-col gap-2">
       {showHourly && hours.length > 0 && (
-        <div className="border-border/50 grid grid-cols-6 gap-1 border-t pt-2">
+        <div className="border-border/50 flex gap-1 overflow-x-auto border-t pt-2">
           {hours.map((hour) => (
-            <div key={hour.time} className="flex flex-col items-center gap-1">
+            <div key={hour.time} className="flex w-10 shrink-0 flex-col items-center gap-1">
               <span className="text-muted-foreground text-2xs">
                 {formatHour(hour.time, !clock24h)}
               </span>
@@ -52,11 +52,7 @@ export function WeatherForecast({ data, showHourly, showDaily }: WeatherForecast
           {days.map((day) => (
             <div key={day.date} className="flex items-center gap-3 text-sm">
               <span className="text-muted-foreground w-9 shrink-0">{formatWeekday(day.date)}</span>
-              <WeatherIcon
-                code={day.weatherCode}
-                isDay
-                className="text-muted-foreground size-4"
-              />
+              <WeatherIcon code={day.weatherCode} isDay className="text-muted-foreground size-4" />
               <span className="text-foreground ml-auto tabular-nums">
                 {formatTemperature(day.max)}
               </span>

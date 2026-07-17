@@ -9,8 +9,22 @@ export function TasksStatus() {
   const remaining = tasks.length - done;
 
   return (
-    <span className={HEADER_LABEL}>
-      {done} done · {remaining} left
-    </span>
+    <div className="flex flex-col gap-1">
+      <span className={HEADER_LABEL}>
+        {done} done · {remaining} left
+      </span>
+      <span
+        className="bg-foreground/10 relative block h-0.5 w-full overflow-hidden rounded-full"
+        aria-hidden
+      >
+        <span
+          className="
+            bg-primary absolute inset-y-0 left-0 w-full origin-left rounded-full
+            transition-transform duration-300 ease-out
+          "
+          style={{ transform: `scaleX(${done / tasks.length})` }}
+        />
+      </span>
+    </div>
   );
 }

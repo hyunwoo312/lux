@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   computeBehind,
   formatAiringIn,
+  formatScore,
   progressLabel,
   sumWaiting,
 } from "@/widgets/anilist/lib/current";
@@ -61,6 +62,34 @@ describe("progressLabel", () => {
 
   it("shows a question mark when the total is unknown", () => {
     expect(progressLabel(entry({ kind: "manga", progress: 30, total: null }))).toBe("Ch 30/?");
+  });
+});
+
+describe("formatScore", () => {
+  it("shows an integer for the 100-point scale", () => {
+    expect(formatScore(85, "POINT_100")).toBe("85");
+  });
+
+  it("shows one decimal for the decimal 10-point scale", () => {
+    expect(formatScore(8.5, "POINT_10_DECIMAL")).toBe("8.5");
+  });
+
+  it("shows an integer for the 10-point scale", () => {
+    expect(formatScore(8, "POINT_10")).toBe("8");
+  });
+
+  it("appends a star for the 5-point scale", () => {
+    expect(formatScore(3, "POINT_5")).toBe("3★");
+  });
+
+  it("maps the 3-point scale to faces", () => {
+    expect(formatScore(1, "POINT_3")).toBe("🙁");
+    expect(formatScore(2, "POINT_3")).toBe("😐");
+    expect(formatScore(3, "POINT_3")).toBe("🙂");
+  });
+
+  it("renders nothing for an unrated entry", () => {
+    expect(formatScore(0, "POINT_10")).toBeNull();
   });
 });
 

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { formatPrice, formatSigned, formatVolume } from "@/widgets/stocks/lib/format";
+import {
+  formatCountdown,
+  formatPrice,
+  formatSigned,
+  formatVolume,
+} from "@/widgets/stocks/lib/format";
 
 describe("formatPrice", () => {
   it("uses two decimals for ordinary prices", () => {
@@ -28,6 +33,24 @@ describe("formatSigned", () => {
 
   it("omits the sign for zero", () => {
     expect(formatSigned(0)).toBe("0.00");
+  });
+});
+
+describe("formatCountdown", () => {
+  it("combines hours and minutes", () => {
+    expect(formatCountdown(3 * 3_600_000 + 12 * 60_000)).toBe("3h 12m");
+  });
+
+  it("shows minutes only under an hour", () => {
+    expect(formatCountdown(12 * 60_000)).toBe("12m");
+  });
+
+  it("combines days and hours for multi-day gaps", () => {
+    expect(formatCountdown(2 * 86_400_000 + 3 * 3_600_000)).toBe("2d 3h");
+  });
+
+  it("rounds sub-minute durations up to one minute", () => {
+    expect(formatCountdown(30_000)).toBe("1m");
   });
 });
 

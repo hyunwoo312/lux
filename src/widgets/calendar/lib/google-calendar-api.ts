@@ -1,8 +1,13 @@
 import { integrationFetch } from "@/integrations";
 import { compareEventsByStart } from "@/widgets/calendar/lib/agenda";
-import type { CalendarEvent, ConnectedCalendar } from "@/widgets/calendar/types";
+import {
+  MAX_CALENDAR_EVENTS,
+  type CalendarEvent,
+  type ConnectedCalendar,
+} from "@/widgets/calendar/types";
 
 const API_BASE_URL = "https://www.googleapis.com/calendar/v3";
+const MAX_EVENT_PAGES = 10;
 
 type GoogleCalendarListEntry = {
   id?: string;
@@ -108,17 +113,36 @@ async function fetchEventsForCalendar(
   timeMin: Date,
   timeMax: Date,
 ): Promise<CalendarEvent[]> {
-  const response = await integrationFetch("google", buildGoogleEventsUrl(calendarId, timeMin, timeMax));
+  const events: CalendarEvent[] = [];
+  let pageToken: string | undefined;
 
-  if (!response.ok) {
-    throw new Error(`Google calendar events request failed for ${calendarId}`);
+  for (let page = 0; page < MAX_EVENT_PAGES; page += 1) {
+    const url = buildGoogleEventsUrl(calendarId, timeMin, timeMax);
+    if (pageToken) url.searchParams.set("pageToken", pageToken);
+
+    const response = await integrationFetch("google", url);
+
+    if (!response.ok) {
+      throw new Error(`Google calendar events request failed for ${calendarId}`);
+    }
+
+    const payload = (await response.json()) as {
+      items?: GoogleCalendarEvent[];
+      nextPageToken?: string;
+    };
+
+    events.push(
+      ...(payload.items ?? [])
+        .map((event) => normalizeGoogleEvent(event, calendarId))
+        .filter((event): event is CalendarEvent => Boolean(event)),
+    );
+
+    if (events.length >= MAX_CALENDAR_EVENTS) break;
+    pageToken = payload.nextPageToken;
+    if (!pageToken) break;
   }
 
-  const payload = (await response.json()) as { items?: GoogleCalendarEvent[] };
-
-  return (payload.items ?? [])
-    .map((event) => normalizeGoogleEvent(event, calendarId))
-    .filter((event): event is CalendarEvent => Boolean(event));
+  return events;
 }
 
 export async function fetchGoogleCalendars(
@@ -147,7 +171,9 @@ export async function fetchGoogleCalendarEvents({
   );
 
   const events = results
-    .filter((result): result is PromiseFulfilledResult<CalendarEvent[]> => result.status === "fulfilled")
+    .filter(
+      (result): result is PromiseFulfilledResult<CalendarEvent[]> => result.status === "fulfilled",
+    )
     .flatMap((result) => result.value)
     .sort(compareEventsByStart);
 

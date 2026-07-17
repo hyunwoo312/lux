@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { integrationFetch } from "@/integrations";
-import { rateLimitError } from "@/lib/rate-limit";
+import { loadErrorMessage, rateLimitError, RateLimitError } from "@/lib/rate-limit";
 import {
   buildContributions,
   buildRepoActivity,
@@ -28,6 +28,10 @@ const LEVELS: Record<string, ContributionLevel> = {
   FOURTH_QUARTILE: 4,
 };
 
+const graphqlErrorsSchema = z.object({
+  errors: z.array(z.object({ type: z.string().optional(), message: z.string().optional() })).min(1),
+});
+
 async function graphql(query: string, signal?: AbortSignal): Promise<unknown> {
   const response = await integrationFetch("github", GRAPHQL_ENDPOINT, {
     method: "POST",
@@ -38,7 +42,16 @@ async function graphql(query: string, signal?: AbortSignal): Promise<unknown> {
   if (!response.ok) {
     throw rateLimitError(response) ?? new Error("GitHub request failed");
   }
-  return response.json();
+  const body: unknown = await response.json();
+  const parsed = graphqlErrorsSchema.safeParse(body);
+  if (parsed.success) {
+    const { errors } = parsed.data;
+    if (errors.some((error) => error.type === "RATE_LIMITED")) {
+      throw new RateLimitError("Rate limited — try again in a moment.");
+    }
+    throw new Error(errors[0]?.message ?? "GitHub request failed");
+  }
+  return body;
 }
 
 const REPO_ACTIVITY_FIELDS = `repository { nameWithOwner url isPrivate }
@@ -404,6 +417,10 @@ export async function markAllGithubNotificationsRead(): Promise<void> {
   }
 }
 
+function sectionErrorMessage(reason: unknown, fallback: string): string {
+  return reason instanceof Error ? loadErrorMessage(reason, fallback) : fallback;
+}
+
 export async function fetchInbox(signal?: AbortSignal): Promise<InboxData> {
   const [notifications, items] = await Promise.allSettled([
     fetchNotifications(signal),
@@ -418,6 +435,14 @@ export async function fetchInbox(signal?: AbortSignal): Promise<InboxData> {
     notifications: notifications.status === "fulfilled" ? notifications.value : [],
     pullRequests: items.status === "fulfilled" ? items.value.pullRequests : [],
     issues: items.status === "fulfilled" ? items.value.issues : [],
+    notificationsError:
+      notifications.status === "rejected"
+        ? sectionErrorMessage(notifications.reason, "Couldn’t load notifications.")
+        : undefined,
+    itemsError:
+      items.status === "rejected"
+        ? sectionErrorMessage(items.reason, "Couldn’t load pull requests and issues.")
+        : undefined,
   };
 }
 

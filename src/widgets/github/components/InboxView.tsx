@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import {
+  AlertCircle,
   AtSign,
   Bell,
   BellOff,
@@ -15,6 +16,7 @@ import {
   Loader2,
   Mail,
   MessageSquare,
+  RotateCw,
   ShieldAlert,
   UserPlus,
   XCircle,
@@ -156,7 +158,15 @@ export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPriv
     onMarkAllRead: markAll,
   };
 
-  return <InboxList data={state.data} showPrivate={showPrivate} newTab={newTab} actions={actions} />;
+  return (
+    <InboxList
+      data={state.data}
+      showPrivate={showPrivate}
+      newTab={newTab}
+      actions={actions}
+      onRetry={refresh}
+    />
+  );
 }
 
 export function InboxList({
@@ -164,11 +174,13 @@ export function InboxList({
   showPrivate,
   newTab,
   actions,
+  onRetry,
 }: {
   data: InboxData;
   showPrivate: boolean;
   newTab: boolean;
   actions?: NotificationActions;
+  onRetry?: () => void;
 }) {
   const pullRequests = useMemo(
     () => data.pullRequests.filter((pr) => showPrivate || !pr.isPrivate),
@@ -188,7 +200,9 @@ export function InboxList({
   const assignedIssues = issues.filter((issue) => issue.kind === "assigned");
   const mentions = issues.filter((issue) => issue.kind === "mention");
 
-  if (pullRequests.length === 0 && issues.length === 0 && notifications.length === 0) {
+  const nothingToShow =
+    pullRequests.length === 0 && issues.length === 0 && notifications.length === 0;
+  if (nothingToShow && !data.itemsError && !data.notificationsError) {
     return <GithubPlaceholder>Inbox zero — nothing waiting.</GithubPlaceholder>;
   }
 
@@ -222,6 +236,9 @@ export function InboxList({
           ))}
         </Section>
       )}
+      {data.itemsError && (
+        <SectionError title="Pull requests & issues" message={data.itemsError} onRetry={onRetry} />
+      )}
       {notifications.length > 0 && (
         <Section
           title="Notifications"
@@ -233,10 +250,56 @@ export function InboxList({
           }
         >
           {notifications.map((entry) => (
-            <NotificationRow key={entry.id} notification={entry} newTab={newTab} actions={actions} />
+            <NotificationRow
+              key={entry.id}
+              notification={entry}
+              newTab={newTab}
+              actions={actions}
+            />
           ))}
         </Section>
       )}
+      {data.notificationsError && (
+        <SectionError title="Notifications" message={data.notificationsError} onRetry={onRetry} />
+      )}
+    </div>
+  );
+}
+
+function SectionError({
+  title,
+  message,
+  onRetry,
+}: {
+  title: string;
+  message: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <div className="flex items-center gap-1.5 px-2">
+        <h3 className="text-muted-foreground text-2xs font-semibold tracking-wide uppercase">
+          {title}
+        </h3>
+        {onRetry && (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="
+              text-muted-foreground
+              hover:text-foreground
+              text-2xs ml-auto flex items-center gap-1 rounded-sm
+            "
+          >
+            <RotateCw className="size-3" aria-hidden />
+            Retry
+          </button>
+        )}
+      </div>
+      <p className="text-muted-foreground/80 flex items-center gap-1.5 px-2 py-1 text-xs">
+        <AlertCircle className="size-3.5 shrink-0" aria-hidden />
+        {message}
+      </p>
     </div>
   );
 }
@@ -255,9 +318,7 @@ function Section({
   return (
     <div className="flex flex-col gap-0.5">
       <div className="flex items-center gap-1.5 px-2">
-        <h3
-          className="text-muted-foreground text-2xs font-semibold tracking-wide uppercase"
-        >
+        <h3 className="text-muted-foreground text-2xs font-semibold tracking-wide uppercase">
           {title}
         </h3>
         <span className="text-muted-foreground/50 text-2xs tabular-nums">{count}</span>

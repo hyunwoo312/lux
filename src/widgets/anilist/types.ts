@@ -1,4 +1,4 @@
-export const ANILIST_TABS = ["activity", "current", "inbox"] as const;
+export const ANILIST_TABS = ["activity", "current", "inbox", "discover"] as const;
 export type AnilistTab = (typeof ANILIST_TABS)[number];
 
 export const ANILIST_MAX_ITEMS = 100;
@@ -12,6 +12,15 @@ export type CurrentSort = (typeof CURRENT_SORTS)[number];
 
 export const TITLE_LANGUAGES = ["english", "romaji", "native"] as const;
 export type TitleLanguage = (typeof TITLE_LANGUAGES)[number];
+
+export const SCORE_FORMATS = [
+  "POINT_100",
+  "POINT_10_DECIMAL",
+  "POINT_10",
+  "POINT_5",
+  "POINT_3",
+] as const;
+export type ScoreFormat = (typeof SCORE_FORMATS)[number];
 
 export type MediaKind = "anime" | "manga";
 
@@ -35,6 +44,7 @@ export type WaitingTotals = { episodes: number; chapters: number };
 export type CurrentData = {
   entries: CurrentEntry[];
   waiting: WaitingTotals;
+  scoreFormat: ScoreFormat;
 };
 
 export type AnilistNotification = {

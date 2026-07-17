@@ -10,6 +10,9 @@ const RANGE_INTERVAL: Record<StockRange, string> = {
   "1mo": "1d",
   "6mo": "1d",
   "1y": "1wk",
+  ytd: "1d",
+  "5y": "1wk",
+  max: "1mo",
 };
 
 function withTimeout(signal?: AbortSignal): AbortSignal {
@@ -24,7 +27,7 @@ async function fetchYahoo(path: string, signal?: AbortSignal): Promise<unknown> 
       const response = await fetch(`${host}${path}`, { signal: withTimeout(signal) });
       if (!response.ok) {
         lastError = new Error(`Yahoo request failed (${response.status})`);
-        if (response.status >= 400 && response.status < 500) break;
+        if (response.status >= 400 && response.status < 500 && response.status !== 429) break;
         continue;
       }
       return await response.json();

@@ -2,7 +2,7 @@ import type { AccentPreset } from "@/widgets/core/accent";
 
 export const STOCKS_ACCENT: AccentPreset = "green";
 
-export const STOCK_RANGES = ["1d", "5d", "1mo", "6mo", "1y"] as const;
+export const STOCK_RANGES = ["1d", "5d", "1mo", "6mo", "1y", "ytd", "5y", "max"] as const;
 export type StockRange = (typeof STOCK_RANGES)[number];
 
 export const STOCK_SORTS = ["manual", "change", "alpha"] as const;

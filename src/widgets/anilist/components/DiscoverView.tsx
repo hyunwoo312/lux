@@ -27,6 +27,7 @@ export function DiscoverView() {
     parsePersisted: parseCachedDiscover,
   });
 
+  const connected = account?.status === "connected";
   const needsReconnect = account?.status === "needsReconnect";
 
   return (
@@ -35,14 +36,16 @@ export function DiscoverView() {
         <span className="text-muted-foreground text-2xs font-semibold tracking-wide uppercase">
           Trending now
         </span>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 px-2 text-xs"
-          onClick={() => useSettingsStore.getState().openSettings("accounts")}
-        >
-          {needsReconnect ? "Reconnect AniList" : "Connect AniList"}
-        </Button>
+        {!connected && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 px-2 text-xs"
+            onClick={() => useSettingsStore.getState().openSettings("accounts")}
+          >
+            {needsReconnect ? "Reconnect AniList" : "Connect AniList"}
+          </Button>
+        )}
       </div>
       <div className="min-h-0 flex-1">
         <DiscoverBody state={state} newTab={newTab} />

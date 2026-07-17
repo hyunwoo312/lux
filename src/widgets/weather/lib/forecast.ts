@@ -31,7 +31,7 @@ export function findImminentPrecip(
 }
 
 const SECTION_GAP = 8;
-const HOURLY_H = 76;
+const HOURLY_H = 88;
 const DAILY_MIN_H = 72;
 
 export function forecastVisibility(

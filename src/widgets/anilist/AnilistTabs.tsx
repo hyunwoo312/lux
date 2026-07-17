@@ -1,4 +1,4 @@
-import { Inbox, Newspaper, PlayCircle } from "lucide-react";
+import { Compass, Inbox, Newspaper, PlayCircle } from "lucide-react";
 import { AnilistServiceIcon } from "@/components/icons/service-icons";
 import { useIntegrationStore } from "@/integrations";
 import { WidgetTabs, type WidgetTab } from "@/widgets/core/WidgetTabs";
@@ -26,6 +26,7 @@ export function AnilistTabs() {
     { value: "activity", label: "Activity", icon: Newspaper, badge: activityNew },
     { value: "current", label: "Current", icon: PlayCircle },
     { value: "inbox", label: "Inbox", icon: Inbox, badge: inboxUnread },
+    { value: "discover", label: "Discover", icon: Compass },
   ];
 
   return (

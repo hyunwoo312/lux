@@ -46,6 +46,8 @@ export function AnilistWidget() {
             <CurrentView enabled={connected} userId={userId} newTab={newTab} />
           ) : activeTab === "activity" ? (
             <ActivityView enabled={connected} userId={userId} newTab={newTab} />
+          ) : activeTab === "discover" ? (
+            <DiscoverView />
           ) : (
             <InboxView enabled={connected} userId={userId} newTab={newTab} />
           )}

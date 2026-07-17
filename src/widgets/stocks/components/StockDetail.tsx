@@ -2,7 +2,12 @@ import { Loader2, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { formatPrice, formatSigned, formatVolume } from "@/widgets/stocks/lib/format";
+import {
+  formatCountdown,
+  formatPrice,
+  formatSigned,
+  formatVolume,
+} from "@/widgets/stocks/lib/format";
 import {
   changeTone,
   deriveChange,
@@ -71,6 +76,7 @@ function DetailBody({ data, range }: { data: Quote; range: StockRange }) {
   const now = Date.now();
   const market = marketState(data, now);
   const extended = extendedSession(data, now);
+  const opensInMs = data.sessionStart != null ? data.sessionStart * 1000 - now : null;
   const asOf =
     data.asOf != null
       ? new Date(data.asOf).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
@@ -98,7 +104,9 @@ function DetailBody({ data, range }: { data: Quote; range: StockRange }) {
               Live
             </>
           ) : market === "closed" ? (
-            asOf ? (
+            opensInMs != null && opensInMs > 0 ? (
+              `Opens in ${formatCountdown(opensInMs)}`
+            ) : asOf ? (
               `Closed · as of ${asOf}`
             ) : (
               "Closed"

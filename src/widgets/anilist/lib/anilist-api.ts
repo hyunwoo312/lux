@@ -8,9 +8,11 @@ import {
   type AnilistActivity,
   type AnilistNotification,
   type DiscoverMedia,
+  SCORE_FORMATS,
   type CurrentData,
   type CurrentEntry,
   type MediaKind,
+  type ScoreFormat,
   type TitleLanguage,
 } from "@/widgets/anilist/types";
 
@@ -80,7 +82,10 @@ const mediaSchema = z.object({
 
 type MediaNode = z.infer<typeof mediaSchema>;
 
+const DEFAULT_SCORE_FORMAT: ScoreFormat = "POINT_10";
+
 const CURRENT_QUERY = `query ($userId: Int!) {
+  Viewer { mediaListOptions { scoreFormat } }
   anime: MediaListCollection(userId: $userId, type: ANIME, status_in: [CURRENT, REPEATING]) {
     lists { entries { progress score updatedAt media { ...mediaFields } } }
   }
@@ -108,7 +113,15 @@ const collectionSchema = z
   .nullable();
 
 const currentSchema = z.object({
-  data: z.object({ anime: collectionSchema, manga: collectionSchema }),
+  data: z.object({
+    Viewer: z
+      .object({
+        mediaListOptions: z.object({ scoreFormat: z.enum(SCORE_FORMATS).nullable() }).nullable(),
+      })
+      .nullable(),
+    anime: collectionSchema,
+    manga: collectionSchema,
+  }),
 });
 
 function toCurrentEntry(
@@ -181,7 +194,9 @@ export async function fetchCurrent(
   ]
     .sort((a, b) => (b.behind ?? -1) - (a.behind ?? -1))
     .slice(0, ANILIST_MAX_ITEMS);
-  return { entries, waiting: sumWaiting(entries) };
+  const scoreFormat =
+    parsed.data.data.Viewer?.mediaListOptions?.scoreFormat ?? DEFAULT_SCORE_FORMAT;
+  return { entries, waiting: sumWaiting(entries), scoreFormat };
 }
 
 const SAVE_PROGRESS_MUTATION = `mutation ($mediaId: Int!, $progress: Int!) {
@@ -545,6 +560,7 @@ const currentEntrySchema = z.object({
 const currentDataSchema = z.object({
   entries: z.array(currentEntrySchema),
   waiting: z.object({ episodes: z.number(), chapters: z.number() }),
+  scoreFormat: z.enum(SCORE_FORMATS).default(DEFAULT_SCORE_FORMAT),
 });
 
 const discoverMediaSchema = z.object({

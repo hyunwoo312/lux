@@ -83,4 +83,6 @@ export type InboxData = {
   notifications: InboxNotification[];
   pullRequests: InboxPullRequest[];
   issues: InboxIssue[];
+  notificationsError?: string;
+  itemsError?: string;
 };

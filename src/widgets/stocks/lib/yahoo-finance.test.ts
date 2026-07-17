@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   parseCachedQuote,
   quoteFromChart,
+  searchSymbols,
   symbolsFromSearch,
 } from "@/widgets/stocks/lib/yahoo-finance";
 import type { Quote } from "@/widgets/stocks/types";
@@ -154,6 +155,63 @@ describe("symbolsFromSearch", () => {
 
   it("returns an empty list when there are no quotes", () => {
     expect(symbolsFromSearch({})).toEqual([]);
+  });
+});
+
+describe("fetchYahoo host fallback", () => {
+  const originalFetch = globalThis.fetch;
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.restoreAllMocks();
+  });
+
+  function httpResponse(status: number, body: unknown = {}): Response {
+    return {
+      ok: status >= 200 && status < 300,
+      status,
+      json: async () => body,
+    } as Response;
+  }
+
+  it("falls back to the second host when the first is rate limited", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(httpResponse(429))
+      .mockResolvedValueOnce(httpResponse(200, { quotes: [] }));
+    globalThis.fetch = fetchMock;
+
+    await expect(searchSymbols("aapl")).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain("query1");
+    expect(String(fetchMock.mock.calls[1]?.[0])).toContain("query2");
+  });
+
+  it("falls back to the second host on a server error", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(httpResponse(503))
+      .mockResolvedValueOnce(httpResponse(200, { quotes: [] }));
+    globalThis.fetch = fetchMock;
+
+    await expect(searchSymbols("aapl")).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("throws when every host is rate limited", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(httpResponse(429));
+    globalThis.fetch = fetchMock;
+
+    await expect(searchSymbols("aapl")).rejects.toThrow(/429/);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("stops without falling back on a fatal 4xx", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(httpResponse(404));
+    globalThis.fetch = fetchMock;
+
+    await expect(searchSymbols("aapl")).rejects.toThrow(/404/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
 

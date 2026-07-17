@@ -108,7 +108,7 @@ describe("forecastVisibility", () => {
   });
 
   it("reveals the hourly strip once there is room for it", () => {
-    expect(forecastVisibility(210, 120)).toEqual({ showHourly: true, showDaily: false });
+    expect(forecastVisibility(220, 120)).toEqual({ showHourly: true, showDaily: false });
   });
 
   it("reveals the daily list once there is room for a useful slice", () => {

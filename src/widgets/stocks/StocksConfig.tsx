@@ -14,6 +14,9 @@ const RANGE_OPTIONS: { value: StockRange; label: string }[] = [
   { value: "1mo", label: "1 month" },
   { value: "6mo", label: "6 months" },
   { value: "1y", label: "1 year" },
+  { value: "ytd", label: "YTD" },
+  { value: "5y", label: "5 years" },
+  { value: "max", label: "Max" },
 ];
 
 const NAME_OPTIONS: { value: "show" | "hide"; label: string }[] = [
