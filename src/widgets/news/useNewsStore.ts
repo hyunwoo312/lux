@@ -11,10 +11,12 @@ import {
   NEWS_REGIONS,
   NEWS_SOURCES,
   NEWS_TABS,
+  NEWS_TOPICS,
   type NewsLayout,
   type NewsRegion,
   type NewsSource,
   type NewsTab,
+  type NewsTopic,
 } from "@/widgets/news/types";
 
 export const NEWS_SYNC_COOLDOWN_MS = 60_000;
@@ -33,6 +35,7 @@ function appendCapped(existing: string[], added: string[], cap: number): string[
 type NewsData = {
   activeSource: NewsTab;
   region: NewsRegion;
+  topic: NewsTopic;
   layout: NewsLayout;
   googleQuery: string;
   enabledSources: NewsSource[];
@@ -48,6 +51,7 @@ type NewsState = {
   byInstance: Record<string, NewsData>;
   setActiveSource: (instanceId: string, source: NewsTab) => void;
   setRegion: (instanceId: string, region: NewsRegion) => void;
+  setTopic: (instanceId: string, topic: NewsTopic) => void;
   setLayout: (instanceId: string, layout: NewsLayout) => void;
   setGoogleQuery: (instanceId: string, query: string) => void;
   setEnabledSources: (instanceId: string, sources: NewsSource[]) => void;
@@ -65,6 +69,7 @@ type NewsState = {
 const DEFAULT_DATA: NewsData = {
   activeSource: "all",
   region: "us",
+  topic: "top",
   layout: "list",
   googleQuery: "",
   enabledSources: DEFAULT_ENABLED_SOURCES,
@@ -83,6 +88,7 @@ function isNewsSource(value: string): value is NewsSource {
 const dataSchema = z.object({
   activeSource: z.enum(NEWS_TABS).default("all").catch("all"),
   region: z.enum(NEWS_REGIONS).default("us"),
+  topic: z.enum(NEWS_TOPICS).default("top").catch("top"),
   layout: z.enum(NEWS_LAYOUTS).default("list"),
   googleQuery: z.string().default(""),
   enabledSources: z
@@ -140,6 +146,8 @@ export const useNewsStore = create<NewsState>()(
         set((state) => update(state, instanceId, (data) => ({ ...data, activeSource }))),
       setRegion: (instanceId, region) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, region }))),
+      setTopic: (instanceId, topic) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, topic }))),
       setLayout: (instanceId, layout) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, layout }))),
       setGoogleQuery: (instanceId, googleQuery) =>

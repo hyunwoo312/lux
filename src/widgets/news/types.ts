@@ -14,6 +14,9 @@ export type NewsLayout = (typeof NEWS_LAYOUTS)[number];
 export const NEWS_REGIONS = ["us", "uk", "au", "international"] as const;
 export type NewsRegion = (typeof NEWS_REGIONS)[number];
 
+export const NEWS_TOPICS = ["top", "world", "business", "technology", "science", "sports"] as const;
+export type NewsTopic = (typeof NEWS_TOPICS)[number];
+
 export type NewsItem = {
   id: string;
   title: string;
@@ -23,4 +26,6 @@ export type NewsItem = {
   sourceUrl: string | null;
   publishedAt: number | null;
   image: string | null;
+  dek: string | null;
+  alsoIn: string[];
 };

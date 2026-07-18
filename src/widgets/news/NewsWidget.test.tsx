@@ -32,6 +32,8 @@ function item(id: string, title: string, image: string | null = null): NewsItem 
     sourceUrl: null,
     publishedAt: null,
     image,
+    dek: null,
+    alsoIn: [],
   };
 }
 
@@ -47,6 +49,7 @@ function seed(
       [instanceId]: {
         activeSource,
         region,
+        topic: "top",
         layout: "list",
         googleQuery,
         enabledSources: [...NEWS_SOURCES],
@@ -84,7 +87,7 @@ describe("NewsWidget", () => {
 
     expect(await screen.findByText("First headline")).toBeInTheDocument();
     expect(screen.getByText("Second headline")).toBeInTheDocument();
-    expect(fetchFeedMock).toHaveBeenCalledWith("bbc", "us", expect.anything());
+    expect(fetchFeedMock).toHaveBeenCalledWith("bbc", "us", "top", expect.anything());
   });
 
   it("shows a retry affordance when the fetch fails", async () => {
@@ -162,6 +165,7 @@ describe("NewsWidget", () => {
         "news-sort": {
           activeSource: "nyt",
           region: "uk",
+          topic: "top",
           layout: "list",
           googleQuery: "",
           enabledSources: [...NEWS_SOURCES],
@@ -220,7 +224,12 @@ describe("NewsWidget", () => {
 
     expect(await screen.findByText("Merged story")).toBeInTheDocument();
     expect(screen.getByText("BBC News")).toBeInTheDocument();
-    expect(fetchMergedFeedsMock).toHaveBeenCalledWith([...NEWS_SOURCES], "us", expect.anything());
+    expect(fetchMergedFeedsMock).toHaveBeenCalledWith(
+      [...NEWS_SOURCES],
+      "us",
+      "top",
+      expect.anything(),
+    );
   });
 
   it("filters the All tab by headline or source text", async () => {

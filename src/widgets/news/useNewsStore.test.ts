@@ -19,6 +19,7 @@ describe("useNewsStore", () => {
     expect(store().byInstance[ID]).toMatchObject({
       activeSource: "all",
       region: "uk",
+      topic: "top",
       layout: "list",
       googleQuery: "",
       enabledSources: ["bbc", "guardian", "nyt", "yahoo"],
@@ -27,6 +28,11 @@ describe("useNewsStore", () => {
       mutedTerms: [],
       highlightTerms: [],
     });
+  });
+
+  it("sets the topic", () => {
+    store().setTopic(ID, "technology");
+    expect(store().byInstance[ID]?.topic).toBe("technology");
   });
 
   it("toggles sort-by-latest", () => {

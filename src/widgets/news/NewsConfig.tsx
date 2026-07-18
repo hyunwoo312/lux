@@ -13,7 +13,13 @@ import {
 import type { OpenBehavior } from "@/lib/open-url";
 import { sourceTab } from "@/widgets/news/lib/news";
 import { SOURCE_ICONS } from "@/widgets/news/components/sourceIcons";
-import { NEWS_REGIONS, NEWS_SOURCES, type NewsRegion } from "@/widgets/news/types";
+import {
+  NEWS_REGIONS,
+  NEWS_SOURCES,
+  NEWS_TOPICS,
+  type NewsRegion,
+  type NewsTopic,
+} from "@/widgets/news/types";
 import { MAX_ENABLED_SOURCES, useNews, useNewsStore } from "@/widgets/news/useNewsStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
@@ -27,6 +33,20 @@ const REGION_LABELS: Record<NewsRegion, string> = {
 const REGION_OPTIONS = NEWS_REGIONS.map((region) => ({
   value: region,
   label: REGION_LABELS[region],
+}));
+
+const TOPIC_LABELS: Record<NewsTopic, string> = {
+  top: "Top stories",
+  world: "World",
+  business: "Business",
+  technology: "Technology",
+  science: "Science",
+  sports: "Sports",
+};
+
+const TOPIC_OPTIONS = NEWS_TOPICS.map((topic) => ({
+  value: topic,
+  label: TOPIC_LABELS[topic],
 }));
 
 const SOURCE_OPTIONS = NEWS_SOURCES.map((source) => ({
@@ -43,10 +63,12 @@ const OPEN_OPTIONS: { value: OpenBehavior; label: string }[] = [
 export function NewsConfig() {
   const instanceId = useWidgetInstanceId();
   const region = useNews((d) => d.region);
+  const topic = useNews((d) => d.topic);
   const openBehavior = useNews((d) => d.openBehavior);
   const enabledSources = useNews((d) => d.enabledSources);
   const sortByLatest = useNews((d) => d.sortByLatest);
   const setRegion = useNewsStore((s) => s.setRegion);
+  const setTopic = useNewsStore((s) => s.setTopic);
   const setOpenBehavior = useNewsStore((s) => s.setOpenBehavior);
   const setEnabledSources = useNewsStore((s) => s.setEnabledSources);
   const setSortByLatest = useNewsStore((s) => s.setSortByLatest);
@@ -56,6 +78,18 @@ export function NewsConfig() {
   return (
     <>
       <WidgetConfigGroup label="News">
+        <WidgetConfigItem
+          title="Topic"
+          description="Section shown where a source offers one"
+          control={
+            <ConfigSelect
+              label="Topic"
+              value={topic}
+              options={TOPIC_OPTIONS}
+              onChange={(value) => setTopic(instanceId, value)}
+            />
+          }
+        />
         <WidgetConfigItem
           title="Region"
           description="Edition used where a source offers one"

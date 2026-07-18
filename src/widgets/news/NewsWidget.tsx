@@ -1,9 +1,10 @@
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Search, X } from "lucide-react";
+import { Loader2, Search, WifiOff, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatRelativeTime } from "@/lib/relative-time";
 import type { PolledResourceState } from "@/widgets/core/usePolledResource";
 import { hasThumbnails, normalizeTitle } from "@/widgets/news/lib/news";
 import { HeadlineRow } from "@/widgets/news/components/HeadlineRow";
@@ -17,7 +18,7 @@ import type { OpenBehavior } from "@/lib/open-url";
 
 export function NewsWidget() {
   const instanceId = useWidgetInstanceId();
-  const { state, refresh, isRefreshing, tab, query } = useNewsResource();
+  const { state, refresh, isRefreshing, tab, query, isStale, lastSyncedAt } = useNewsResource();
   const openBehavior = useNews((d) => d.openBehavior);
   const googleQuery = useNews((d) => d.googleQuery);
   const sortByLatest = useNews((d) => d.sortByLatest);
@@ -90,6 +91,8 @@ export function NewsWidget() {
           searchQuery={query || undefined}
           filterQuery={tab === "google" ? "" : allFilter.trim()}
           now={now}
+          isStale={isStale}
+          lastSyncedAt={lastSyncedAt}
           readTitles={readSet}
           newTitles={newTitles}
           mutedTerms={mutedTerms}
@@ -113,6 +116,8 @@ type NewsContentProps = {
   searchQuery: string | undefined;
   filterQuery: string;
   now: number;
+  isStale: boolean;
+  lastSyncedAt: number;
   readTitles: Set<string>;
   newTitles: Set<string>;
   mutedTerms: string[];
@@ -134,6 +139,8 @@ function NewsContent({
   searchQuery,
   filterQuery,
   now,
+  isStale,
+  lastSyncedAt,
   readTitles,
   newTitles,
   mutedTerms,
@@ -283,6 +290,12 @@ function NewsContent({
 
   return (
     <div className="flex h-full flex-col">
+      {isStale && (
+        <div className="text-muted-foreground flex items-center gap-1.5 px-2 pb-1.5 text-xs">
+          <WifiOff className="size-3 shrink-0" aria-hidden />
+          Offline · updated {formatRelativeTime(lastSyncedAt, now)}
+        </div>
+      )}
       {newCount > 0 && (
         <div className="text-muted-foreground flex items-center gap-1.5 px-2 pb-1.5 text-xs">
           <span className="bg-primary size-1.5 rounded-full" aria-hidden />

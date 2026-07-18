@@ -105,6 +105,45 @@ describe("parseFeed", () => {
     expect(items.map((entry) => entry.id)).toEqual(["guid-1", "guid-2"]);
   });
 
+  it("extracts a stripped one-line dek from the description", () => {
+    const feed = `<?xml version="1.0"?>
+<rss version="2.0"><channel>
+  <item>
+    <title>Headline</title>
+    <link>https://example.com/d</link>
+    <description><![CDATA[<p>A short  summary with <a href="x">markup</a>.</p>]]></description>
+  </item>
+</channel></rss>`;
+    const items = parseFeed(feed, "BBC", "bbc");
+    expect(items[0]?.dek).toBe("A short summary with markup.");
+  });
+
+  it("skips the description for Google News (markup, not prose)", () => {
+    const feed = `<?xml version="1.0"?>
+<rss version="2.0"><channel>
+  <item>
+    <title>Headline</title>
+    <link>https://example.com/g</link>
+    <description><![CDATA[<ol><li><a href="x">Related</a></li></ol>]]></description>
+  </item>
+</channel></rss>`;
+    const items = parseFeed(feed, "Google News", "google");
+    expect(items[0]?.dek).toBeNull();
+  });
+
+  it("drops a dek that merely repeats the title", () => {
+    const feed = `<?xml version="1.0"?>
+<rss version="2.0"><channel>
+  <item>
+    <title>Same thing</title>
+    <link>https://example.com/s</link>
+    <description>Same thing</description>
+  </item>
+</channel></rss>`;
+    const items = parseFeed(feed, "NPR", "npr");
+    expect(items[0]?.dek).toBeNull();
+  });
+
   it("drops items whose link is not an http(s) URL", () => {
     const feed = `<?xml version="1.0"?>
 <rss version="2.0"><channel>
@@ -126,6 +165,29 @@ describe("feedUrl", () => {
   it("uses the single feed for sources without editions", () => {
     expect(feedUrl("npr", "uk")).toBe(feedUrl("npr", "us"));
   });
+
+  it("resolves a topic to that source's section feed", () => {
+    expect(feedUrl("google", "us", "technology")).toContain(
+      "/rss/headlines/section/topic/TECHNOLOGY",
+    );
+    expect(feedUrl("bbc", "us", "science")).toBe(
+      "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
+    );
+    expect(feedUrl("guardian", "us", "sports")).toBe("https://www.theguardian.com/sport/rss");
+    expect(feedUrl("npr", "us", "world")).toBe("https://feeds.npr.org/1004/rss.xml");
+    expect(feedUrl("nyt", "us", "business")).toBe(
+      "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml",
+    );
+  });
+
+  it("keeps the region locale for Google topic feeds", () => {
+    expect(feedUrl("google", "uk", "world")).toContain("gl=GB");
+  });
+
+  it("falls back to the homepage feed where a source lacks a section", () => {
+    expect(feedUrl("nyt", "us", "sports")).toBe(feedUrl("nyt", "us", "top"));
+    expect(feedUrl("yahoo", "us", "world")).toBe(feedUrl("yahoo", "us", "top"));
+  });
 });
 
 function mergedItem(id: string, overrides: Partial<NewsItem> = {}): NewsItem {
@@ -138,6 +200,8 @@ function mergedItem(id: string, overrides: Partial<NewsItem> = {}): NewsItem {
     sourceUrl: null,
     publishedAt: null,
     image: null,
+    dek: null,
+    alsoIn: [],
     ...overrides,
   };
 }
@@ -163,6 +227,28 @@ describe("mergeFeeds", () => {
     ]);
     expect(merged).toHaveLength(1);
     expect(merged[0]?.id).toBe("b");
+  });
+
+  it("records the other covering sources on the representative as alsoIn", () => {
+    const merged = mergeFeeds([
+      [mergedItem("g", { title: "Big story", source: "Google News" })],
+      [
+        mergedItem("b", {
+          title: "Big story!",
+          source: "BBC News",
+          image: "https://img.test/a.jpg",
+        }),
+      ],
+      [mergedItem("n", { title: "Big story.", source: "NPR" })],
+    ]);
+    expect(merged).toHaveLength(1);
+    expect(merged[0]?.source).toBe("BBC News");
+    expect(merged[0]?.alsoIn).toEqual(["Google News", "NPR"]);
+  });
+
+  it("leaves alsoIn empty when a headline has a single source", () => {
+    const merged = mergeFeeds([[mergedItem("a", { source: "NPR" })]]);
+    expect(merged[0]?.alsoIn).toEqual([]);
   });
 });
 
@@ -199,6 +285,8 @@ describe("parseCachedNews", () => {
         sourceUrl: null,
         publishedAt: null,
         image: null,
+        dek: null,
+        alsoIn: [],
       },
     ];
     expect(parseCachedNews(valid)).toEqual(valid);

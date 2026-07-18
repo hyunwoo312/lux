@@ -79,6 +79,16 @@ export function HeadlineRow({
           )}
           <HighlightedTitle title={item.title} terms={highlightTerms} />
         </span>
+        {item.dek && (
+          <span
+            className={cn(
+              "line-clamp-1 text-xs leading-snug",
+              isRead ? "text-muted-foreground/70" : "text-muted-foreground",
+            )}
+          >
+            {item.dek}
+          </span>
+        )}
         <HeadlineMeta item={item} now={now} withSource={withSource} isRead={isRead} />
       </span>
     </a>
