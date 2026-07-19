@@ -5,6 +5,7 @@ import {
   type StoredAsset,
   type StoredAssetMetadata,
 } from "@/lib/asset-store";
+import { downscaleImage } from "@/widgets/image/downscale";
 import { IMAGE_MAX_BYTES } from "@/widgets/image/types";
 
 export type ImageMediaAsset = StoredAsset;
@@ -35,12 +36,13 @@ export async function saveImageAsset(file: File): Promise<ImageMediaMetadata> {
   const validationError = validateImageFile(file);
   if (validationError) throw new Error(validationError);
 
+  const blob = await downscaleImage(file);
   const asset: ImageMediaAsset = {
     id: createAssetId("image"),
     fileName: file.name || "Image",
-    mimeType: file.type,
-    size: file.size,
-    blob: file,
+    mimeType: blob.type || file.type,
+    size: blob.size,
+    blob,
   };
 
   await imageAssetStore.save(asset);

@@ -13,14 +13,21 @@ export type ImageMode = (typeof IMAGE_MODES)[number];
 export const IMAGE_ORDER_MODES = ["shuffle", "sequential"] as const;
 export type ImageOrder = (typeof IMAGE_ORDER_MODES)[number];
 
+export const IMAGE_TRANSITIONS = ["crossfade", "slide", "none"] as const;
+export type ImageTransition = (typeof IMAGE_TRANSITIONS)[number];
+
 export const MIN_INTERVAL_SECONDS = 15;
 export const MAX_INTERVAL_SECONDS = 300;
 export const MAX_MULTI_IMAGES = 10;
 export const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+
+export type ImageFocalPoint = { x: number; y: number };
 
 export type ImageItem = {
   assetId: string;
   fileName: string;
   mimeType: string;
   size: number;
+  caption?: string;
+  focal?: ImageFocalPoint;
 };

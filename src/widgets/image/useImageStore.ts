@@ -17,6 +17,7 @@ import {
   IMAGE_FIT_MODES,
   IMAGE_MODES,
   IMAGE_ORDER_MODES,
+  IMAGE_TRANSITIONS,
   MAX_INTERVAL_SECONDS,
   MAX_MULTI_IMAGES,
   MIN_INTERVAL_SECONDS,
@@ -25,6 +26,7 @@ import {
   type ImageItem,
   type ImageMode,
   type ImageOrder,
+  type ImageTransition,
 } from "@/widgets/image/types";
 
 type ImageConfig = {
@@ -39,7 +41,11 @@ type ImageConfig = {
   fit: ImageFit;
   brightness: ImageBrightness;
   hideFrame: boolean;
+  transition: ImageTransition;
+  kenBurns: boolean;
 };
+
+type ImageItemUpdate = Partial<Pick<ImageItem, "caption" | "focal">>;
 
 type ImageState = {
   byInstance: Record<string, ImageConfig>;
@@ -55,6 +61,9 @@ type ImageState = {
   setFit: (instanceId: string, fit: ImageFit) => void;
   setBrightness: (instanceId: string, brightness: ImageBrightness) => void;
   setHideFrame: (instanceId: string, hideFrame: boolean) => void;
+  setTransition: (instanceId: string, transition: ImageTransition) => void;
+  setKenBurns: (instanceId: string, kenBurns: boolean) => void;
+  updateItem: (instanceId: string, assetId: string, update: ImageItemUpdate) => void;
   setCurrentIndex: (instanceId: string, index: number) => void;
   advanceImage: (instanceId: string) => void;
   sanitizeAssets: () => Promise<void>;
@@ -73,6 +82,8 @@ const DEFAULT_CONFIG: ImageConfig = {
   fit: "cover",
   brightness: "normal",
   hideFrame: false,
+  transition: "crossfade",
+  kenBurns: false,
 };
 
 const itemSchema = z.object({
@@ -80,6 +91,8 @@ const itemSchema = z.object({
   fileName: z.string(),
   mimeType: z.string(),
   size: z.number(),
+  caption: z.string().optional(),
+  focal: z.object({ x: z.number(), y: z.number() }).optional(),
 });
 
 const configSchema = z.object({
@@ -94,6 +107,8 @@ const configSchema = z.object({
   fit: z.enum(IMAGE_FIT_MODES).default("cover"),
   brightness: z.enum(IMAGE_BRIGHTNESS_MODES).default("normal"),
   hideFrame: z.boolean().default(false),
+  transition: z.enum(IMAGE_TRANSITIONS).default("crossfade"),
+  kenBurns: z.boolean().default(false),
 });
 
 const persistedSchema = z.object({
@@ -157,6 +172,22 @@ export const useImageStore = create<ImageState>()(
         set((state) => update(state, instanceId, (config) => ({ ...config, brightness }))),
       setHideFrame: (instanceId, hideFrame) =>
         set((state) => update(state, instanceId, (config) => ({ ...config, hideFrame }))),
+      setTransition: (instanceId, transition) =>
+        set((state) => update(state, instanceId, (config) => ({ ...config, transition }))),
+      setKenBurns: (instanceId, kenBurns) =>
+        set((state) => update(state, instanceId, (config) => ({ ...config, kenBurns }))),
+      updateItem: (instanceId, assetId, itemUpdate) =>
+        set((state) =>
+          update(state, instanceId, (config) => {
+            const apply = (item: ImageItem): ImageItem =>
+              item.assetId === assetId ? { ...item, ...itemUpdate } : item;
+            return {
+              ...config,
+              single: config.single ? apply(config.single) : config.single,
+              items: config.items.map(apply),
+            };
+          }),
+        ),
       setCurrentIndex: (instanceId, index) =>
         set((state) => ({ indices: { ...state.indices, [instanceId]: index } })),
       advanceImage: (instanceId) =>
@@ -208,7 +239,7 @@ export const useImageStore = create<ImageState>()(
     {
       name: "widget:image",
       storage: gatedStorage,
-      version: 2,
+      version: 3,
       onRehydrateStorage: () => (state) => {
         gatedStorage.open();
         void state?.sanitizeAssets();

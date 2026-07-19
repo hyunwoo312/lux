@@ -21,6 +21,8 @@ const base = {
   fit: "cover" as const,
   brightness: "normal" as const,
   hideFrame: false,
+  transition: "crossfade" as const,
+  kenBurns: false,
 };
 
 describe("useImageStore", () => {
@@ -56,7 +58,44 @@ describe("useImageStore", () => {
     store().setFit(ID, "contain");
     store().setBrightness(ID, "dark");
     store().setHideFrame(ID, true);
-    expect(config(ID)).toMatchObject({ fit: "contain", brightness: "dark", hideFrame: true });
+    store().setTransition(ID, "slide");
+    store().setKenBurns(ID, true);
+    expect(config(ID)).toMatchObject({
+      fit: "contain",
+      brightness: "dark",
+      hideFrame: true,
+      transition: "slide",
+      kenBurns: true,
+    });
+  });
+
+  it("updates a caption and focal point on the matching item", () => {
+    useImageStore.setState({
+      byInstance: {
+        [ID]: { ...base, mode: "multi", items: [makeItem("a"), makeItem("b")] },
+      },
+      indices: {},
+    });
+
+    store().updateItem(ID, "b", { caption: "Sunset", focal: { x: 0.25, y: 0.75 } });
+
+    const items = config(ID)?.items ?? [];
+    expect(items[0]?.assetId).toBe("a");
+    expect(items[0]?.caption).toBeUndefined();
+    expect(items[1]).toMatchObject({
+      assetId: "b",
+      caption: "Sunset",
+      focal: { x: 0.25, y: 0.75 },
+    });
+  });
+
+  it("updates a caption on the single image", () => {
+    useImageStore.setState({
+      byInstance: { [ID]: { ...base, single: makeItem("solo") } },
+      indices: {},
+    });
+    store().updateItem(ID, "solo", { caption: "Hello" });
+    expect(config(ID)?.single).toMatchObject({ assetId: "solo", caption: "Hello" });
   });
 
   it("advances sequentially through the image pool and wraps", () => {
@@ -109,6 +148,8 @@ describe("useImageStore", () => {
         fit: "contain",
         brightness: "dark",
         hideFrame: true,
+        transition: "slide",
+        kenBurns: true,
       };
 
       expect(migrate?.(legacy, 1)).toEqual({ byInstance: { image: legacy } });

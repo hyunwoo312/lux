@@ -12,6 +12,7 @@ import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 type ActiveImage = {
   activeItem: ImageItem | null;
+  activeIndex: number;
   imageUrl: string | null;
   loadError: string | null;
 };
@@ -55,7 +56,16 @@ export function useActiveImage(): ActiveImage {
       writeNewtabQueue(queueKey, selection.next);
       setCurrentIndex(instanceId, selection.index);
     }
-  }, [signature, newtabEnabled, length, displayItems, setCurrentIndex, instanceId, queueKey, order]);
+  }, [
+    signature,
+    newtabEnabled,
+    length,
+    displayItems,
+    setCurrentIndex,
+    instanceId,
+    queueKey,
+    order,
+  ]);
 
   useEffect(() => {
     if (!timedEnabled || length < 2) return;
@@ -114,5 +124,5 @@ export function useActiveImage(): ActiveImage {
     [],
   );
 
-  return { activeItem, imageUrl, loadError };
+  return { activeItem, activeIndex: boundedIndex, imageUrl, loadError };
 }

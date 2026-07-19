@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
   ConfigMultiToggle,
@@ -10,7 +11,9 @@ import {
 import { ClearImagesButton } from "@/components/media/ClearImagesButton";
 import { ImageUploadButton } from "@/components/media/ImageUploadButton";
 import { MultiImageItems } from "@/components/media/MultiImageItems";
+import { ImageDetailsEditor } from "@/widgets/image/ImageDetailsEditor";
 import { useImageUploads } from "@/widgets/image/hooks/useImageUploads";
+import { useSetImageAsBackground } from "@/widgets/image/hooks/useSetImageAsBackground";
 import { imageAssetStore } from "@/widgets/image/media";
 import { getMetadataLabel } from "@/lib/media-format";
 import {
@@ -19,6 +22,7 @@ import {
   type ImageFit,
   type ImageMode,
   type ImageOrder,
+  type ImageTransition,
 } from "@/widgets/image/types";
 import { useImage, useImageStore } from "@/widgets/image/useImageStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
@@ -55,6 +59,18 @@ const BRIGHTNESS_OPTIONS: { value: ImageBrightness; label: string }[] = [
   { value: "dim", label: "Dim" },
   { value: "dark", label: "Dark" },
 ];
+const TRANSITION_OPTIONS: { value: ImageTransition; label: string }[] = [
+  { value: "crossfade", label: "Crossfade" },
+  { value: "slide", label: "Slide" },
+  { value: "none", label: "None" },
+];
+
+const BACKGROUND_LABELS: Record<ReturnType<typeof useSetImageAsBackground>["status"], string> = {
+  idle: "Set as background",
+  saving: "Setting…",
+  done: "Background updated",
+  error: "Couldn't set",
+};
 
 export function ImageConfig() {
   const instanceId = useWidgetInstanceId();
@@ -69,6 +85,8 @@ export function ImageConfig() {
   const fit = useImage((c) => c.fit);
   const brightness = useImage((c) => c.brightness);
   const hideFrame = useImage((c) => c.hideFrame);
+  const transition = useImage((c) => c.transition);
+  const kenBurns = useImage((c) => c.kenBurns);
   const setMode = useImageStore((s) => s.setMode);
   const setItems = useImageStore((s) => s.setItems);
   const setRotateOnNewtab = useImageStore((s) => s.setRotateOnNewtab);
@@ -79,8 +97,11 @@ export function ImageConfig() {
   const setFit = useImageStore((s) => s.setFit);
   const setBrightness = useImageStore((s) => s.setBrightness);
   const setHideFrame = useImageStore((s) => s.setHideFrame);
+  const setTransition = useImageStore((s) => s.setTransition);
+  const setKenBurns = useImageStore((s) => s.setKenBurns);
 
   const { saving, error, handleFiles, removeItem, clearAll } = useImageUploads();
+  const { setAsBackground, canSet, status: backgroundStatus } = useSetImageAsBackground();
 
   const isMulti = mode === "multi";
   const hasImages = isMulti ? items.length > 0 : Boolean(single);
@@ -145,6 +166,7 @@ export function ImageConfig() {
             onReorder={(next) => setItems(instanceId, next)}
           />
         )}
+        {hasImages && <ImageDetailsEditor />}
         {error && <p className="text-destructive text-xs">{error}</p>}
       </WidgetConfigGroup>
 
@@ -212,6 +234,31 @@ export function ImageConfig() {
             />
           }
         />
+        {isMulti && (
+          <WidgetConfigItem
+            title="Transition"
+            description="How images change over"
+            control={
+              <ConfigSelect
+                label="Image transition"
+                value={transition}
+                options={TRANSITION_OPTIONS}
+                onChange={(value) => setTransition(instanceId, value)}
+              />
+            }
+          />
+        )}
+        <WidgetConfigItem
+          title="Ken Burns"
+          description="Slow pan and zoom on the image"
+          control={
+            <Switch
+              checked={kenBurns}
+              onCheckedChange={(checked) => setKenBurns(instanceId, checked === true)}
+              aria-label="Ken Burns effect"
+            />
+          }
+        />
         <WidgetConfigItem
           title="Hide frame"
           description="Show only the image, hiding the card and header"
@@ -223,6 +270,22 @@ export function ImageConfig() {
             />
           }
         />
+        {hasImages && (
+          <WidgetConfigItem
+            title="Dashboard background"
+            description="Use the current image as the page background"
+            control={
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!canSet || backgroundStatus === "saving"}
+                onClick={() => void setAsBackground()}
+              >
+                {BACKGROUND_LABELS[backgroundStatus]}
+              </Button>
+            }
+          />
+        )}
       </WidgetConfigGroup>
     </>
   );
