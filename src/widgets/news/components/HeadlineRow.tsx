@@ -95,7 +95,7 @@ export function HeadlineRow({
   );
 
   return (
-    <Tooltip content={<span className="block max-w-64">{item.title}</span>} side="bottom">
+    <Tooltip content={item.title} side="bottom" solid>
       {row}
     </Tooltip>
   );
