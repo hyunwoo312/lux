@@ -31,6 +31,64 @@ export const CHANGE_TYPE_LABEL: Record<ChangeType, string> = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "1.2.0",
+    date: "2026-07-20",
+    changes: [
+      {
+        type: "added",
+        text: "New installs open to a starter dashboard — clock, weather, tasks, a note, and quick access — instead of a blank grid.",
+      },
+      {
+        type: "added",
+        text: "The Add-widget picker now describes each widget, flags the recommended ones, and shows a live preview — including account widgets before you sign in.",
+      },
+      {
+        type: "added",
+        text: "News shows image tiles, merges every enabled source into one “All” feed, and adds The Guardian and NPR alongside regional editions (US, UK, Australia, International).",
+      },
+      {
+        type: "added",
+        text: "Filter any news source by topic — World, Business, Technology, Science, or Sports — mute or highlight keywords, and see read and new markers plus a note when several outlets cover the same story.",
+      },
+      {
+        type: "added",
+        text: "Spotify gained an Up Next queue: see what’s coming, add tracks to it from search, and jump ahead to any track.",
+      },
+      {
+        type: "added",
+        text: "The GitHub inbox can act on notifications — mark read, unsubscribe, or mark all read — and surfaces issues assigned to you and where you’re mentioned.",
+      },
+      {
+        type: "added",
+        text: "Stocks now supports crypto and currencies, shows pre- and post-market prices, adds year-to-date, 5-year, and max ranges, and tells you when a closed market reopens.",
+      },
+      {
+        type: "added",
+        text: "The Image widget added a slow pan-and-zoom, per-image captions and focal points, more transition styles, a one-tap “set as dashboard background”, and automatic compression to save space.",
+      },
+      {
+        type: "added",
+        text: "Weather has a scrollable 24-hour forecast, the Tasks widget shows a completion bar, and AniList’s Discover tab is now available while signed in.",
+      },
+      {
+        type: "fixed",
+        text: "Connecting and refreshing accounts is more reliable across multiple open tabs and after reconnecting — tokens are no longer dropped and accounts no longer get stuck needing a reconnect.",
+      },
+      {
+        type: "fixed",
+        text: "AniList scores display in your chosen format (100-point, 10-point, 5-star, or 3-smiley) instead of a raw number.",
+      },
+      {
+        type: "fixed",
+        text: "The GitHub inbox shows when a section fails to load instead of looking empty, and reports GitHub rate limits.",
+      },
+      {
+        type: "fixed",
+        text: "Stocks recovers from rate limits by failing over to a backup data source, and calendars with very large event counts no longer drop the extras.",
+      },
+    ],
+  },
+  {
     version: "1.1.2",
     date: "2026-07-07",
     changes: [
