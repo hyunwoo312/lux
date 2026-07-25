@@ -42,6 +42,11 @@ describe("importSettings", () => {
     await expect(importSettings(file)).rejects.toThrow(/valid Lux settings file/i);
   });
 
+  it("rejects a file that is not valid JSON", async () => {
+    const file = new File(["<html>not json</html>"], "backup.json", { type: "application/json" });
+    await expect(importSettings(file)).rejects.toThrow(/valid Lux settings file/i);
+  });
+
   it("removes stored settings the backup does not contain", async () => {
     await chrome.storage.local.set({
       "lux:widget:note": { text: "stale" },

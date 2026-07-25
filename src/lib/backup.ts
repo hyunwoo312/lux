@@ -66,8 +66,16 @@ function pruneLocalKeysMissingFrom(replacement: Record<string, string>): void {
   for (const key of staleLocalKeys) localStorage.removeItem(key);
 }
 
+function parseBackupFile(text: string): Partial<Backup> {
+  try {
+    return JSON.parse(text) as Partial<Backup>;
+  } catch {
+    throw new Error("Not a valid Lux settings file.");
+  }
+}
+
 export async function importSettings(file: File): Promise<void> {
-  const parsed = JSON.parse(await file.text()) as Partial<Backup>;
+  const parsed = parseBackupFile(await file.text());
   if (parsed.marker !== MARKER || !parsed.chromeLocal || !parsed.local) {
     throw new Error("Not a valid Lux settings file.");
   }
