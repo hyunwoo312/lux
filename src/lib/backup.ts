@@ -49,6 +49,23 @@ export async function exportSettings(): Promise<void> {
   URL.revokeObjectURL(url);
 }
 
+async function pruneKeysMissingFrom(replacement: Record<string, unknown>): Promise<void> {
+  const stored = await chrome.storage.local.get(null);
+  const staleChromeKeys = Object.keys(stored).filter(
+    (key) => isBackupKey(key) && !(key in replacement),
+  );
+  if (staleChromeKeys.length > 0) await chrome.storage.local.remove(staleChromeKeys);
+}
+
+function pruneLocalKeysMissingFrom(replacement: Record<string, string>): void {
+  const staleLocalKeys: string[] = [];
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (key?.startsWith(LOCAL_PREFIX) && !(key in replacement)) staleLocalKeys.push(key);
+  }
+  for (const key of staleLocalKeys) localStorage.removeItem(key);
+}
+
 export async function importSettings(file: File): Promise<void> {
   const parsed = JSON.parse(await file.text()) as Partial<Backup>;
   if (parsed.marker !== MARKER || !parsed.chromeLocal || !parsed.local) {
@@ -62,13 +79,16 @@ export async function importSettings(file: File): Promise<void> {
   for (const [key, value] of Object.entries(parsed.chromeLocal)) {
     if (isBackupKey(key)) chromeEntries[key] = normalizeValue(value);
   }
-  await chrome.storage.local.set(chromeEntries);
-
+  const localEntries: Record<string, string> = {};
   for (const [key, value] of Object.entries(parsed.local)) {
-    if (key.startsWith(LOCAL_PREFIX) && typeof value === "string") {
-      localStorage.setItem(key, value);
-    }
+    if (key.startsWith(LOCAL_PREFIX) && typeof value === "string") localEntries[key] = value;
   }
+
+  await chrome.storage.local.set(chromeEntries);
+  await pruneKeysMissingFrom(chromeEntries);
+
+  for (const [key, value] of Object.entries(localEntries)) localStorage.setItem(key, value);
+  pruneLocalKeysMissingFrom(localEntries);
 
   location.reload();
 }
