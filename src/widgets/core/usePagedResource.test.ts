@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { usePagedResource } from "@/widgets/core/usePagedResource";
+import { invalidatePagedResource, usePagedResource } from "@/widgets/core/usePagedResource";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -140,6 +140,92 @@ describe("usePagedResource", () => {
     await waitFor(() => expect(b.result.current.state).toEqual({ status: "success", items: [1, 2] }));
     expect(a.result.current.state).toEqual({ status: "success", items: [1, 2] });
     expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it("refreshes in the background when the list is not expanded", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [1], hasNextPage: true })
+      .mockResolvedValue({ items: [9], hasNextPage: true });
+    const { result } = renderHook(() =>
+      usePagedResource(fetcher, { maxItems: 50, getKey: (n: number) => n, intervalMs: 1 }),
+    );
+
+    await waitFor(() => expect(result.current.state).toEqual({ status: "success", items: [1] }));
+
+    act(() => void window.dispatchEvent(new Event("focus")));
+    await waitFor(() => expect(result.current.state).toEqual({ status: "success", items: [9] }));
+  });
+
+  it("leaves an expanded list alone when a background refresh fires", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [1, 2], hasNextPage: true })
+      .mockResolvedValueOnce({ items: [3, 4], hasNextPage: false })
+      .mockResolvedValue({ items: [9], hasNextPage: true });
+    const { result } = renderHook(() =>
+      usePagedResource(fetcher, { maxItems: 50, getKey: (n: number) => n, intervalMs: 1 }),
+    );
+
+    await waitFor(() => expect(result.current.state).toEqual({ status: "success", items: [1, 2] }));
+    act(() => result.current.loadMore());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ status: "success", items: [1, 2, 3, 4] }),
+    );
+
+    act(() => void window.dispatchEvent(new Event("focus")));
+    await act(async () => {});
+
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(result.current.state).toEqual({ status: "success", items: [1, 2, 3, 4] });
+  });
+
+  it("refetches an expanded list after its cache is invalidated", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [1, 2], hasNextPage: true })
+      .mockResolvedValueOnce({ items: [3, 4], hasNextPage: false })
+      .mockResolvedValue({ items: [9], hasNextPage: true });
+    const cacheKey = "test:paged:invalidate-expanded";
+    const { result } = renderHook(() =>
+      usePagedResource(fetcher, {
+        maxItems: 50,
+        getKey: (n: number) => n,
+        intervalMs: 1,
+        cacheKey,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.state).toEqual({ status: "success", items: [1, 2] }));
+    act(() => result.current.loadMore());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ status: "success", items: [1, 2, 3, 4] }),
+    );
+
+    act(() => invalidatePagedResource(cacheKey));
+    act(() => void window.dispatchEvent(new Event("focus")));
+
+    await waitFor(() => expect(result.current.state).toEqual({ status: "success", items: [9] }));
+  });
+
+  it("still refetches an expanded list when the user asks for it", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [1, 2], hasNextPage: true })
+      .mockResolvedValueOnce({ items: [3, 4], hasNextPage: false })
+      .mockResolvedValue({ items: [9], hasNextPage: true });
+    const { result } = renderHook(() =>
+      usePagedResource(fetcher, { maxItems: 50, getKey: (n: number) => n, intervalMs: 1 }),
+    );
+
+    await waitFor(() => expect(result.current.state).toEqual({ status: "success", items: [1, 2] }));
+    act(() => result.current.loadMore());
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ status: "success", items: [1, 2, 3, 4] }),
+    );
+
+    act(() => result.current.refresh());
+    await waitFor(() => expect(result.current.state).toEqual({ status: "success", items: [9] }));
   });
 });
 

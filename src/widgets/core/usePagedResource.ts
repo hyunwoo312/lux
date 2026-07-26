@@ -232,6 +232,7 @@ class SharedResource<T> {
 
   private pollRefresh(): void {
     if (Date.now() < this.retryAt) return;
+    if (this.snapshot.page > 1) return;
     void this.run("refresh");
   }
 
@@ -243,7 +244,7 @@ class SharedResource<T> {
   markStale(): void {
     this.failureCount = 0;
     this.retryAt = 0;
-    this.patch({ at: 0 });
+    this.patch({ at: 0, page: Math.min(this.snapshot.page, 1) });
   }
 
   private patch(part: Partial<Snapshot<T>>): void {
