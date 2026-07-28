@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
-import type { Shortcut } from "@/lib/shortcuts";
+import { shortcutsEqual, type Shortcut } from "@/lib/shortcuts";
 import {
   SHORTCUT_DEFAULTS,
   SHORTCUT_DEFINITIONS,
@@ -50,7 +50,11 @@ export const useShortcutsStore = create<ShortcutsState>()(
       ...initialBindings(),
       setShortcutSlot: (action, slot, shortcut) =>
         set((state) => {
-          const next = [...state[action]];
+          const current = state[action];
+          if (current.some((held, index) => index !== slot && shortcutsEqual(held, shortcut))) {
+            return {};
+          }
+          const next = [...current];
           if (slot < next.length) next[slot] = shortcut;
           else if (slot === next.length && next.length < MAX_SHORTCUT_SLOTS) next.push(shortcut);
           return { [action]: next };
