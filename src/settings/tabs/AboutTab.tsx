@@ -16,6 +16,7 @@ import { motion, useAnimationControls, useReducedMotion, type Variants } from "m
 import { z } from "zod";
 import { IconRow } from "@/components/IconRow";
 import { EASE_OUT_EXPO } from "@/lib/motion";
+import { read, write } from "@/lib/storage";
 import { SettingsSection } from "@/settings/components/SettingsSection";
 import { useSettingsStore } from "@/settings/useSettingsStore";
 
@@ -31,6 +32,10 @@ const CWS_URL = "https://chromewebstore.google.com/detail/lux/kmfabjnibncbooljgb
 const KOFI_URL = "https://ko-fi.com/hyunwk";
 
 const repoSchema = z.object({ stargazers_count: z.number() });
+
+const STARS_CACHE_KEY = "github-stars";
+const STARS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const starsCacheSchema = z.object({ count: z.number(), at: z.number() });
 
 function readVersion(): string {
   try {
@@ -53,23 +58,42 @@ const item: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: EASE_OUT_EXPO } },
 };
 
-export function AboutTab() {
-  const reduced = useReducedMotion();
-  const setTab = useSettingsStore((s) => s.setTab);
-  const version = readVersion();
+function useGithubStars(): number | null {
   const [stars, setStars] = useState<number | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(GITHUB_API, { signal: controller.signal })
-      .then((response) => (response.ok ? (response.json() as Promise<unknown>) : null))
-      .then((data) => {
-        const parsed = repoSchema.safeParse(data);
-        if (parsed.success) setStars(parsed.data.stargazers_count);
-      })
-      .catch(() => undefined);
+
+    void (async () => {
+      const cached = await read(STARS_CACHE_KEY, starsCacheSchema.nullable(), null);
+      if (controller.signal.aborted) return;
+      if (cached) setStars(cached.count);
+      if (cached && Date.now() - cached.at < STARS_CACHE_TTL_MS) return;
+
+      try {
+        const response = await fetch(GITHUB_API, { signal: controller.signal });
+        if (!response.ok) return;
+        const parsed = repoSchema.safeParse(await response.json());
+        if (!parsed.success) return;
+        const count = parsed.data.stargazers_count;
+        setStars(count);
+        await write(STARS_CACHE_KEY, { count, at: Date.now() });
+      } catch {
+        return;
+      }
+    })();
+
     return () => controller.abort();
   }, []);
+
+  return stars;
+}
+
+export function AboutTab() {
+  const reduced = useReducedMotion();
+  const setTab = useSettingsStore((s) => s.setTab);
+  const version = readVersion();
+  const stars = useGithubStars();
 
   return (
     <motion.div
