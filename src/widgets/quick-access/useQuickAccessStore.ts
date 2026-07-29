@@ -173,3 +173,7 @@ export const useQuickAccessStore = create<QuickAccessState>()(
 registerInstanceCleanup((instanceId) => useQuickAccessStore.getState().removeInstance(instanceId));
 
 export const useQuickAccess = createInstanceSelector(useQuickAccessStore, DEFAULT_DATA);
+
+export function getQuickAccessData(instanceId: string): QuickAccessData {
+  return useQuickAccessStore.getState().byInstance[instanceId] ?? DEFAULT_DATA;
+}

@@ -2,7 +2,7 @@ import { MousePointer2 } from "lucide-react";
 import type { WidgetPlugin } from "@/widgets/core/types";
 import { QuickAccessConfig } from "@/widgets/quick-access/QuickAccessConfig";
 import { QuickAccessWidget } from "@/widgets/quick-access/QuickAccessWidget";
-import { QuickAccessLayoutToggle } from "@/widgets/quick-access/components/QuickAccessLayoutToggle";
+import { QuickAccessHeaderActions } from "@/widgets/quick-access/components/QuickAccessHeaderActions";
 import { QuickAccessTabs } from "@/widgets/quick-access/components/QuickAccessTabs";
 import { useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
 
@@ -16,7 +16,7 @@ export const quickAccessPlugin: WidgetPlugin = {
   component: QuickAccessWidget,
   configComponent: QuickAccessConfig,
   statusComponent: QuickAccessTabs,
-  headerActionComponent: QuickAccessLayoutToggle,
+  headerActionComponent: QuickAccessHeaderActions,
   accent: "rose",
   removalNote: (instanceId) => {
     const count = useQuickAccessStore.getState().byInstance[instanceId]?.links.length ?? 0;
