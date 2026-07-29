@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 
 vi.mock("@/widgets/spotify/lib/spotify-api", () => ({
   getSpotifyPlaybackState: vi.fn(),
   getSpotifyDevices: vi.fn().mockResolvedValue([]),
+  getSpotifySavedTrackFlags: vi.fn().mockResolvedValue(new Set<string>()),
+  SpotifyRateLimitError: class SpotifyRateLimitError extends Error {},
   pauseSpotifyPlayback: vi.fn(),
   resumeSpotifyPlayback: vi.fn(),
   skipSpotifyNext: vi.fn(),
@@ -17,14 +19,21 @@ vi.mock("@/widgets/spotify/lib/spotify-api", () => ({
 }));
 
 import { useIntegrationStore } from "@/integrations";
-import { getSpotifyPlaybackState } from "@/widgets/spotify/lib/spotify-api";
+import {
+  getSpotifyPlaybackState,
+  getSpotifySavedTrackFlags,
+} from "@/widgets/spotify/lib/spotify-api";
 import { SpotifyWidget } from "@/widgets/spotify/SpotifyWidget";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
-import { useSpotifyPlaybackStore } from "@/widgets/spotify/hooks/useSpotifyPlayback";
+import {
+  requestSpotifyPlaybackRefresh,
+  useSpotifyPlaybackStore,
+} from "@/widgets/spotify/hooks/useSpotifyPlayback";
 import type { IntegrationAccountStatus } from "@/integrations/types";
 import type { SpotifyPlaybackState } from "@/widgets/spotify/types";
 
 const playbackMock = vi.mocked(getSpotifyPlaybackState);
+const savedFlagsMock = vi.mocked(getSpotifySavedTrackFlags);
 
 function setAccount(status: IntegrationAccountStatus | null) {
   useIntegrationStore.setState({
@@ -72,12 +81,15 @@ function renderWidget() {
 beforeEach(() => {
   playbackMock.mockReset();
   playbackMock.mockResolvedValue(null);
+  savedFlagsMock.mockReset();
+  savedFlagsMock.mockResolvedValue(new Set<string>());
   useSpotifyPlaybackStore.setState({
     playback: null,
     devices: [],
     pendingActions: new Set(),
     volumeDraft: null,
     progressDraftMs: null,
+    likedTrack: null,
     error: null,
     isLoading: true,
   });
@@ -104,6 +116,40 @@ describe("SpotifyWidget", () => {
     expect(await screen.findByText("Lullaby")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Next track" })).toBeInTheDocument();
+  });
+
+  it("marks the current track when it is saved to the library", async () => {
+    setAccount("connected");
+    playbackMock.mockResolvedValue(playingState());
+    savedFlagsMock.mockResolvedValue(new Set(["t1"]));
+    renderWidget();
+
+    expect(await screen.findByLabelText("Saved to your Spotify library")).toBeInTheDocument();
+  });
+
+  it("leaves the current track unmarked when it is not saved", async () => {
+    setAccount("connected");
+    playbackMock.mockResolvedValue(playingState());
+    savedFlagsMock.mockResolvedValue(new Set<string>());
+    renderWidget();
+
+    expect(await screen.findByText("Lullaby")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Saved to your Spotify library")).not.toBeInTheDocument();
+  });
+
+  it("checks the saved state once per track, not on every poll", async () => {
+    setAccount("connected");
+    playbackMock.mockResolvedValue(playingState());
+    savedFlagsMock.mockResolvedValue(new Set<string>());
+    renderWidget();
+
+    await screen.findByText("Lullaby");
+    await waitFor(() => expect(savedFlagsMock).toHaveBeenCalledTimes(1));
+
+    requestSpotifyPlaybackRefresh();
+    await waitFor(() => expect(playbackMock.mock.calls.length).toBeGreaterThan(1));
+
+    expect(savedFlagsMock).toHaveBeenCalledTimes(1);
   });
 
   it("shows the nothing-playing state when connected with no playback", async () => {

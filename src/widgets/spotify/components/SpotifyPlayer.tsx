@@ -1,4 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { Heart } from "lucide-react";
 import { SpotifyServiceIcon } from "@/components/icons/service-icons";
 import { SpotifyControls } from "@/widgets/spotify/components/SpotifyControls";
 import { SpotifyMarquee } from "@/widgets/spotify/components/SpotifyMarquee";
@@ -72,7 +73,21 @@ export function SpotifyPlayer({ controller, playback, view, timeDisplayMode }: S
       )}
 
       <div className="flex min-w-0 flex-col gap-0.5">
-        <SpotifyMarquee label={playback.track.title} className="text-sm font-semibold" />
+        <div className="flex min-w-0 items-center gap-1.5">
+          <SpotifyMarquee
+            label={playback.track.title}
+            className="min-w-0 flex-1 text-sm font-semibold"
+          />
+          {controller.isTrackLiked && (
+            <span
+              role="img"
+              aria-label="Saved to your Spotify library"
+              className="text-primary flex shrink-0"
+            >
+              <Heart className="size-3 fill-current" />
+            </span>
+          )}
+        </div>
         <p className="text-muted-foreground truncate text-xs">{playback.track.artist}</p>
         {view !== "compact" && (
           <p className="text-muted-foreground/70 truncate text-2xs">{playback.track.album}</p>

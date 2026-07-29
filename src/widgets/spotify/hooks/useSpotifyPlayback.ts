@@ -5,6 +5,7 @@ import {
   getSpotifyDevices,
   getSpotifyPlaybackState,
   getSpotifyQueue,
+  getSpotifySavedTrackFlags,
   pauseSpotifyPlayback,
   resumeSpotifyPlayback,
   seekSpotifyPlayback,
@@ -42,6 +43,7 @@ type PlaybackStoreState = {
   progressDraftMs: number | null;
   playbackSyncedAt: number;
   nowMs: number;
+  likedTrack: { trackId: string; isLiked: boolean } | null;
   error: string | null;
   isLoading: boolean;
 };
@@ -58,6 +60,7 @@ function initialState(): PlaybackStoreState {
     progressDraftMs: null,
     playbackSyncedAt: Date.now(),
     nowMs: Date.now(),
+    likedTrack: null,
     error: null,
     isLoading: true,
   };
@@ -145,6 +148,7 @@ async function refreshPlayback(): Promise<void> {
     markSyncedNow();
     lastPolledAt = Date.now();
     reconcileTimers();
+    void refreshLikedTrack(nextPlayback?.track.id ?? null);
   } catch (caught) {
     if (requestId !== refreshRequestId) return;
     if (caught instanceof SpotifyRateLimitError) {
@@ -154,6 +158,24 @@ async function refreshPlayback(): Promise<void> {
     }
   } finally {
     if (requestId === refreshRequestId) set({ isLoading: false });
+  }
+}
+
+async function refreshLikedTrack(trackId: string | null): Promise<void> {
+  if (trackId === null) {
+    if (get().likedTrack !== null) set({ likedTrack: null });
+    return;
+  }
+  if (get().likedTrack?.trackId === trackId) return;
+  if (Date.now() < rateLimitedUntil) return;
+  try {
+    const liked = await getSpotifySavedTrackFlags([trackId]);
+    if (get().playback?.track.id !== trackId) return;
+    set({ likedTrack: { trackId, isLiked: liked.has(trackId) } });
+  } catch (caught) {
+    if (caught instanceof SpotifyRateLimitError) {
+      rateLimitedUntil = Date.now() + caught.retryAfterMs;
+    }
   }
 }
 
@@ -431,6 +453,7 @@ function setConnected(next: boolean): void {
 export type SpotifyPlaybackController = {
   playback: SpotifyPlaybackState | null;
   deviceOptions: SpotifyPlaybackDevice[];
+  isTrackLiked: boolean;
   pendingActions: Set<SpotifyPendingAction>;
   error: string | null;
   isLoading: boolean;
@@ -472,6 +495,7 @@ export function useSpotifyPlayback(connectedArg: boolean): SpotifyPlaybackContro
       progressDraftMs: s.progressDraftMs,
       nowMs: s.nowMs,
       playbackSyncedAt: s.playbackSyncedAt,
+      likedTrack: s.likedTrack,
     })),
   );
   const { playback, devices } = state;
@@ -488,6 +512,10 @@ export function useSpotifyPlayback(connectedArg: boolean): SpotifyPlaybackContro
   return {
     playback,
     deviceOptions,
+    isTrackLiked:
+      playback !== null &&
+      state.likedTrack?.trackId === playback.track.id &&
+      state.likedTrack.isLiked,
     pendingActions: state.pendingActions,
     error: state.error,
     isLoading: state.isLoading,
