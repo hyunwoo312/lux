@@ -1,6 +1,7 @@
 import { useElementSize } from "@/hooks/useElementSize";
 import { Heatmap, Stats } from "@/widgets/github/components/ContributionsChart";
 import { InboxList } from "@/widgets/github/components/InboxView";
+import { buildContributions } from "@/widgets/github/lib/contributions";
 import { useGithub } from "@/widgets/github/useGithubStore";
 import type {
   ContributionDay,
@@ -26,8 +27,6 @@ function buildSampleContributions(): ContributionsData {
   start.setDate(start.getDate() - (totalDays - 1));
   const weeks: ContributionDay[][] = [];
   let total = 0;
-  let current = 0;
-  let longest = 0;
   for (let week = 0; week < WEEKS; week += 1) {
     const days: ContributionDay[] = [];
     for (let day = 0; day < 7; day += 1) {
@@ -37,13 +36,11 @@ function buildSampleContributions(): ContributionsData {
       const level = sampleLevel(index);
       const count = level === 0 ? 0 : level * 3 + (index % 4);
       total += count;
-      current = count > 0 ? current + 1 : 0;
-      longest = Math.max(longest, current);
       days.push({ date: date.toISOString().slice(0, 10), count, level });
     }
     weeks.push(days);
   }
-  return { weeks, total, currentStreak: current, longestStreak: longest };
+  return buildContributions(weeks, total);
 }
 
 function hoursAgo(hours: number): string {

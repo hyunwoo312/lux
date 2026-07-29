@@ -48,7 +48,32 @@ describe("buildContributions", () => {
       total: 3,
       currentStreak: 1,
       longestStreak: 2,
+      bestDay: day("d1", 1),
+      dailyAverage: 0.75,
     });
+  });
+
+  it("reports the best day and the daily average", () => {
+    const weeks = [
+      [day("2026-01-01", 0), day("2026-01-02", 4)],
+      [day("2026-01-03", 9), day("2026-01-04", 3)],
+    ];
+
+    const result = buildContributions(weeks, 16);
+
+    expect(result.bestDay).toEqual(day("2026-01-03", 9));
+    expect(result.dailyAverage).toBe(4);
+  });
+
+  it("leaves the best day unset when nothing was contributed", () => {
+    const result = buildContributions([[day("2026-01-01", 0), day("2026-01-02", 0)]], 0);
+
+    expect(result.bestDay).toBeUndefined();
+    expect(result.dailyAverage).toBe(0);
+  });
+
+  it("does not divide by zero on an empty calendar", () => {
+    expect(buildContributions([], 0).dailyAverage).toBe(0);
   });
 });
 

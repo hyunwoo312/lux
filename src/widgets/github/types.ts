@@ -35,6 +35,8 @@ export type ContributionsData = {
   login?: string;
   totals?: ContributionTotals;
   activity?: RepoActivity[];
+  bestDay?: ContributionDay;
+  dailyAverage?: number;
 };
 
 export type InboxNotification = {

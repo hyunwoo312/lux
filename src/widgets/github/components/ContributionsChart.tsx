@@ -66,7 +66,11 @@ export function Stats({ data }: { data: ContributionsData }) {
         <span className="text-foreground text-lg font-semibold tabular-nums">
           {data.total.toLocaleString()}
         </span>
-        <span className="text-muted-foreground text-2xs">contributions in the last year</span>
+        <span className="text-muted-foreground text-2xs">
+          {data.dailyAverage === undefined
+            ? "contributions in the last year"
+            : `contributions in the last year · ${data.dailyAverage.toFixed(1)} / day`}
+        </span>
       </div>
       <div className="flex items-center gap-3">
         <Stat
@@ -76,6 +80,7 @@ export function Stats({ data }: { data: ContributionsData }) {
           icon={<Flame className="size-3" />}
         />
         <Stat label="Longest" value={data.longestStreak} />
+        {data.bestDay && <Stat label="Best" value={data.bestDay.count} />}
       </div>
     </div>
   );

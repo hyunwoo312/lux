@@ -75,6 +75,8 @@ const contributionsDataSchema = z.object({
     })
     .optional(),
   activity: z.array(repoActivitySchema).optional(),
+  bestDay: contributionDaySchema.optional(),
+  dailyAverage: z.number().optional(),
 });
 
 const configSchema = z.object({

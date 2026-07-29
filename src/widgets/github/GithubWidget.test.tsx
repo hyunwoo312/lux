@@ -35,7 +35,7 @@ describe("GithubWidget signed-out preview", () => {
   it("previews the contribution graph with sample data when signed out", () => {
     renderWidget();
 
-    expect(screen.getByText("contributions in the last year")).toBeInTheDocument();
+    expect(screen.getByText(/contributions in the last year/)).toBeInTheDocument();
   });
 
   it("previews the inbox with sample data when signed out", () => {

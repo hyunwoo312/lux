@@ -36,10 +36,25 @@ export function computeStreaks(days: ContributionDay[]): {
   return { current, longest };
 }
 
+function bestContributionDay(days: ContributionDay[]): ContributionDay | undefined {
+  let best: ContributionDay | undefined;
+  for (const day of days) {
+    if (day.count > 0 && (!best || day.count > best.count)) best = day;
+  }
+  return best;
+}
+
 export function buildContributions(weeks: ContributionDay[][], total: number): ContributionsData {
   const days = weeks.flat();
   const { current, longest } = computeStreaks(days);
-  return { weeks, total, currentStreak: current, longestStreak: longest };
+  return {
+    weeks,
+    total,
+    currentStreak: current,
+    longestStreak: longest,
+    bestDay: bestContributionDay(days),
+    dailyAverage: days.length > 0 ? total / days.length : 0,
+  };
 }
 
 export function buildRepoActivity(groups: RepoActivityGroups): RepoActivity[] {
