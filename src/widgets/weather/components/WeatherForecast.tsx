@@ -3,7 +3,7 @@ import { formatHour, formatTemperature, formatWeekday } from "@/widgets/weather/
 import { WeatherIcon } from "@/widgets/weather/components/WeatherIcon";
 import type { WeatherData } from "@/widgets/weather/types";
 
-const HOURLY_COUNT = 24;
+const HOURLY_COUNT = 48;
 const DAILY_COUNT = 5;
 const HOURLY_PRECIP_MIN = 20;
 
