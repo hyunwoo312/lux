@@ -78,3 +78,7 @@ registerInstanceCleanup((id) => useNoteStore.getState().removeInstance(id));
 export function useNote(id: string): NoteData {
   return useNoteStore((s) => s.byInstance[id] ?? DEFAULT_NOTE);
 }
+
+export function getNoteData(id: string): NoteData {
+  return useNoteStore.getState().byInstance[id] ?? DEFAULT_NOTE;
+}
