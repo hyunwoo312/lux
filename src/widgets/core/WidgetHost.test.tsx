@@ -22,13 +22,13 @@ describe("WidgetHost lock overlay", () => {
     renderHost();
 
     expect(screen.getByRole("button", { name: "Connect" })).toBeInTheDocument();
-    expect(screen.getByText("contributions in the last year")).toBeInTheDocument();
+    expect(screen.getByText(/contributions in the last year/)).toBeInTheDocument();
   });
 
   it("makes the sample content inert so keyboard focus can't reach behind the overlay", () => {
     renderHost();
 
-    expect(screen.getByText("contributions in the last year").closest("[inert]")).not.toBeNull();
+    expect(screen.getByText(/contributions in the last year/).closest("[inert]")).not.toBeNull();
   });
 
   it("drops the connect overlay while editing so the widget stays manageable", () => {
