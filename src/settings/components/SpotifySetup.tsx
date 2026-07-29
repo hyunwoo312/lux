@@ -74,7 +74,11 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
 
   async function handleCopy() {
     if (!redirectUri) return;
-    await navigator.clipboard.writeText(redirectUri);
+    try {
+      await navigator.clipboard.writeText(redirectUri);
+    } catch {
+      return;
+    }
     setCopied(true);
     window.clearTimeout(copiedTimeout.current);
     copiedTimeout.current = window.setTimeout(() => setCopied(false), FEEDBACK_MS);
