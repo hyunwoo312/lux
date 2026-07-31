@@ -31,6 +31,52 @@ export const CHANGE_TYPE_LABEL: Record<ChangeType, string> = {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "1.2.1",
+    date: "2026-07-31",
+    changes: [
+      {
+        type: "added",
+        text: "Copy a note to the clipboard or save it as a text file, straight from the widget’s header.",
+      },
+      {
+        type: "added",
+        text: "Quick Access can open all of your pinned links at once, each in its own tab.",
+      },
+      {
+        type: "added",
+        text: "Weather’s hourly forecast now runs 48 hours instead of 24.",
+      },
+      {
+        type: "added",
+        text: "The GitHub contribution graph shows your best day and your daily average alongside your current and longest streaks.",
+      },
+      {
+        type: "added",
+        text: "Spotify marks the track that’s playing when it’s already saved to your library.",
+      },
+      {
+        type: "changed",
+        text: "Restoring a settings backup now replaces your settings instead of merging them into what’s already there, so a restored dashboard matches the backup exactly. Your connected accounts stay signed in either way.",
+      },
+      {
+        type: "fixed",
+        text: "Picking the wrong file when restoring a backup now says what went wrong, instead of showing a raw error message.",
+      },
+      {
+        type: "fixed",
+        text: "Lists you’ve expanded with “load more” — like AniList activity — no longer snap back to the first page when they refresh in the background.",
+      },
+      {
+        type: "fixed",
+        text: "The same keyboard shortcut can no longer be saved into both slots for one action, leaving the second slot wasted.",
+      },
+      {
+        type: "fixed",
+        text: "The GitHub star count in About no longer goes missing after opening Settings several times.",
+      },
+    ],
+  },
+  {
     version: "1.2.0",
     date: "2026-07-20",
     changes: [

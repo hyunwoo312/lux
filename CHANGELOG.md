@@ -4,6 +4,27 @@ All notable changes to Lux are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-07-31
+
+### Added
+
+- Copy a note to the clipboard or save it as a text file, straight from the widget’s header.
+- Quick Access can open all of your pinned links at once, each in its own tab.
+- Weather’s hourly forecast now runs 48 hours instead of 24.
+- The GitHub contribution graph shows your best day and your daily average alongside your current and longest streaks.
+- Spotify marks the track that’s playing when it’s already saved to your library.
+
+### Changed
+
+- Restoring a settings backup now replaces your settings instead of merging them into what’s already there, so a restored dashboard matches the backup exactly. Your connected accounts stay signed in either way.
+
+### Fixed
+
+- Picking the wrong file when restoring a backup now says what went wrong, instead of showing a raw error message.
+- Lists you’ve expanded with “load more” — like AniList activity — no longer snap back to the first page when they refresh in the background.
+- The same keyboard shortcut can no longer be saved into both slots for one action, leaving the second slot wasted.
+- The GitHub star count in About no longer goes missing after opening Settings several times.
+
 ## [1.2.0] - 2026-07-20
 
 ### Added
