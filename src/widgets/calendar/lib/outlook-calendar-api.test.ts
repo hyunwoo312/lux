@@ -16,6 +16,47 @@ afterEach(() => {
 });
 
 describe("normalizeOutlookEvent", () => {
+  it("uses the online meeting join url", () => {
+    const event = normalizeOutlookEvent(
+      {
+        id: "e1",
+        subject: "Standup",
+        start: { dateTime: "2026-08-04T09:00:00", timeZone: "UTC" },
+        end: { dateTime: "2026-08-04T09:15:00", timeZone: "UTC" },
+        onlineMeeting: { joinUrl: "https://teams.microsoft.com/l/meetup-join/1" },
+      },
+      "cal-1",
+    );
+
+    expect(event?.joinUrl).toBe("https://teams.microsoft.com/l/meetup-join/1");
+  });
+
+  it("treats the organizer as accepted and maps tentative", () => {
+    const organizer = normalizeOutlookEvent(
+      {
+        id: "e1",
+        subject: "Sync",
+        start: { dateTime: "2026-08-04T09:00:00", timeZone: "UTC" },
+        end: { dateTime: "2026-08-04T09:30:00", timeZone: "UTC" },
+        responseStatus: { response: "organizer" },
+      },
+      "cal-1",
+    );
+    const maybe = normalizeOutlookEvent(
+      {
+        id: "e2",
+        subject: "Sync",
+        start: { dateTime: "2026-08-04T09:00:00", timeZone: "UTC" },
+        end: { dateTime: "2026-08-04T09:30:00", timeZone: "UTC" },
+        responseStatus: { response: "tentativelyAccepted" },
+      },
+      "cal-1",
+    );
+
+    expect(organizer?.rsvp).toBe("accepted");
+    expect(maybe?.rsvp).toBe("tentative");
+  });
+
   it("normalizes a timed event with UTC dateTime and provider provenance", () => {
     const event = normalizeOutlookEvent(
       {

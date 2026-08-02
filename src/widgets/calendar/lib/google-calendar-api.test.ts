@@ -17,6 +17,74 @@ afterEach(() => {
 });
 
 describe("normalizeGoogleEvent", () => {
+  it("carries the hangout link through as a join url", () => {
+    const event = normalizeGoogleEvent(
+      {
+        id: "e1",
+        summary: "Standup",
+        start: { dateTime: "2026-08-04T09:00:00Z" },
+        end: { dateTime: "2026-08-04T09:15:00Z" },
+        hangoutLink: "https://meet.google.com/abc-defg-hij",
+      },
+      "cal-1",
+    );
+
+    expect(event?.joinUrl).toBe("https://meet.google.com/abc-defg-hij");
+  });
+
+  it("falls back to a video conference entry point", () => {
+    const event = normalizeGoogleEvent(
+      {
+        id: "e1",
+        summary: "Review",
+        start: { dateTime: "2026-08-04T09:00:00Z" },
+        end: { dateTime: "2026-08-04T09:30:00Z" },
+        conferenceData: {
+          entryPoints: [
+            { entryPointType: "phone", uri: "tel:+123" },
+            { entryPointType: "video", uri: "https://zoom.us/j/1" },
+          ],
+        },
+      },
+      "cal-1",
+    );
+
+    expect(event?.joinUrl).toBe("https://zoom.us/j/1");
+  });
+
+  it("reads the signed-in user's rsvp, not another attendee's", () => {
+    const event = normalizeGoogleEvent(
+      {
+        id: "e1",
+        summary: "Sync",
+        start: { dateTime: "2026-08-04T09:00:00Z" },
+        end: { dateTime: "2026-08-04T09:30:00Z" },
+        attendees: [
+          { responseStatus: "accepted" },
+          { self: true, responseStatus: "needsAction" },
+        ],
+      },
+      "cal-1",
+    );
+
+    expect(event?.rsvp).toBe("needsAction");
+  });
+
+  it("leaves join url and rsvp unset when the event has neither", () => {
+    const event = normalizeGoogleEvent(
+      {
+        id: "e1",
+        summary: "Focus time",
+        start: { dateTime: "2026-08-04T09:00:00Z" },
+        end: { dateTime: "2026-08-04T10:00:00Z" },
+      },
+      "cal-1",
+    );
+
+    expect(event?.joinUrl).toBeUndefined();
+    expect(event?.rsvp).toBeUndefined();
+  });
+
   it("normalizes a timed event with title and links", () => {
     const event = normalizeGoogleEvent(
       {

@@ -4,6 +4,7 @@ import {
   MAX_CALENDAR_EVENTS,
   type CalendarEvent,
   type ConnectedCalendar,
+  type RsvpStatus,
 } from "@/widgets/calendar/types";
 
 const API_BASE_URL = "https://graph.microsoft.com/v1.0";
@@ -48,7 +49,27 @@ type GraphEvent = {
   isCancelled?: boolean;
   location?: { displayName?: string };
   webLink?: string;
+  onlineMeeting?: { joinUrl?: string } | null;
+  onlineMeetingUrl?: string | null;
+  responseStatus?: { response?: string };
 };
+
+const GRAPH_RSVP: Record<string, RsvpStatus> = {
+  accepted: "accepted",
+  organizer: "accepted",
+  declined: "declined",
+  tentativelyAccepted: "tentative",
+  notResponded: "needsAction",
+};
+
+function outlookJoinUrl(event: GraphEvent): string | undefined {
+  return event.onlineMeeting?.joinUrl ?? event.onlineMeetingUrl ?? undefined;
+}
+
+function outlookRsvp(event: GraphEvent): RsvpStatus | undefined {
+  const response = event.responseStatus?.response;
+  return response ? GRAPH_RSVP[response] : undefined;
+}
 
 type OutlookEventWindow = {
   calendarIds: string[];
@@ -118,6 +139,8 @@ export function normalizeOutlookEvent(
     sourceUrl: event.webLink,
     isAllDay,
     visibility: event.subject ? "default" : "busy",
+    joinUrl: outlookJoinUrl(event),
+    rsvp: outlookRsvp(event),
   };
 }
 

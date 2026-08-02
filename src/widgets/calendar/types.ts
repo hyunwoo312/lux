@@ -19,6 +19,9 @@ export type CalendarEventLink = {
   sourceUrl?: string;
 };
 
+export const RSVP_STATUSES = ["accepted", "declined", "tentative", "needsAction"] as const;
+export type RsvpStatus = (typeof RSVP_STATUSES)[number];
+
 export const calendarEventSchema = z.object({
   id: z.string().min(1),
   calendarId: z.string().min(1),
@@ -30,6 +33,8 @@ export const calendarEventSchema = z.object({
   sourceUrl: z.string().optional(),
   isAllDay: z.boolean(),
   visibility: z.enum(["default", "busy"]),
+  joinUrl: z.string().optional(),
+  rsvp: z.enum(RSVP_STATUSES).optional(),
 });
 export type CalendarEvent = z.infer<typeof calendarEventSchema>;
 

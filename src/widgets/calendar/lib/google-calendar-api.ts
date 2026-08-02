@@ -4,6 +4,7 @@ import {
   MAX_CALENDAR_EVENTS,
   type CalendarEvent,
   type ConnectedCalendar,
+  type RsvpStatus,
 } from "@/widgets/calendar/types";
 
 const API_BASE_URL = "https://www.googleapis.com/calendar/v3";
@@ -29,7 +30,29 @@ type GoogleCalendarEvent = {
   location?: string;
   status?: "confirmed" | "tentative" | "cancelled";
   htmlLink?: string;
+  hangoutLink?: string;
+  conferenceData?: { entryPoints?: Array<{ entryPointType?: string; uri?: string }> };
+  attendees?: Array<{ self?: boolean; responseStatus?: string }>;
 };
+
+const GOOGLE_RSVP: Record<string, RsvpStatus> = {
+  accepted: "accepted",
+  declined: "declined",
+  tentative: "tentative",
+  needsAction: "needsAction",
+};
+
+function googleJoinUrl(event: GoogleCalendarEvent): string | undefined {
+  if (event.hangoutLink) return event.hangoutLink;
+  return event.conferenceData?.entryPoints?.find(
+    (entry) => entry.entryPointType === "video" && entry.uri,
+  )?.uri;
+}
+
+function googleRsvp(event: GoogleCalendarEvent): RsvpStatus | undefined {
+  const self = event.attendees?.find((attendee) => attendee.self);
+  return self?.responseStatus ? GOOGLE_RSVP[self.responseStatus] : undefined;
+}
 
 type GoogleCalendarEventWindow = {
   calendarIds: string[];
@@ -95,6 +118,8 @@ export function normalizeGoogleEvent(
     sourceUrl: event.htmlLink,
     isAllDay: Boolean(event.start?.date),
     visibility: event.summary ? "default" : "busy",
+    joinUrl: googleJoinUrl(event),
+    rsvp: googleRsvp(event),
   };
 }
 
