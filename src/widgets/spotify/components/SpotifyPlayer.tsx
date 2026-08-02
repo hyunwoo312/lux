@@ -90,7 +90,11 @@ export function SpotifyPlayer({ controller, playback, view, timeDisplayMode }: S
         </div>
         <p className="text-muted-foreground truncate text-xs">{playback.track.artist}</p>
         {view !== "compact" && (
-          <p className="text-muted-foreground/70 truncate text-2xs">{playback.track.album}</p>
+          <p className="text-muted-foreground/70 truncate text-2xs">
+            {controller.contextName
+              ? `${playback.track.album} · from ${controller.contextName}`
+              : playback.track.album}
+          </p>
         )}
       </div>
 

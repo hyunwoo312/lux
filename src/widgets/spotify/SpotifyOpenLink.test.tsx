@@ -12,6 +12,7 @@ function playbackWithTrack(trackId: string): SpotifyPlaybackState {
     progressMs: 0,
     shuffle: false,
     repeatMode: "off",
+    context: null,
     device: { id: "dev1", name: "Desk", type: "Computer", isActive: true, volumePercent: 50 },
     track: { id: trackId, title: "Lullaby", artist: "Artist", album: "Album", durationMs: 200_000 },
   };

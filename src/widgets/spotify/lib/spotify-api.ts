@@ -1,5 +1,6 @@
 import { integrationFetch } from "@/integrations";
 import type {
+  SpotifyPlaybackContext,
   SpotifyPlaybackDevice,
   SpotifyPlaybackState,
   SpotifyQueueItem,
@@ -25,6 +26,7 @@ type SpotifyPlaybackPayload = {
   shuffle_state?: boolean;
   repeat_state?: SpotifyRepeatMode;
   device?: SpotifyDevicePayload | null;
+  context?: { uri?: string; type?: string } | null;
   item?: {
     id?: string;
     name?: string;
@@ -188,6 +190,16 @@ function mapDevicePayload(device: SpotifyDevicePayload | null | undefined): Spot
   };
 }
 
+const CONTEXT_KINDS = ["playlist", "album", "artist"] as const;
+
+function mapContextPayload(
+  context: SpotifyPlaybackPayload["context"],
+): SpotifyPlaybackContext | null {
+  const uri = context?.uri;
+  const kind = CONTEXT_KINDS.find((entry) => entry === context?.type);
+  return uri && kind ? { uri, kind } : null;
+}
+
 function mapPlaybackPayload(payload: SpotifyPlaybackPayload): SpotifyPlaybackState | null {
   if (!payload.item?.id || !payload.item.name) {
     return null;
@@ -199,6 +211,7 @@ function mapPlaybackPayload(payload: SpotifyPlaybackPayload): SpotifyPlaybackSta
     shuffle: Boolean(payload.shuffle_state),
     repeatMode: payload.repeat_state ?? "off",
     device: mapDevicePayload(payload.device),
+    context: mapContextPayload(payload.context),
     track: {
       id: payload.item.id,
       title: payload.item.name,
@@ -232,6 +245,37 @@ export async function getSpotifyPlaybackState(): Promise<SpotifyPlaybackState | 
   }
 
   return mapPlaybackPayload((await response.json()) as SpotifyPlaybackPayload);
+}
+
+const CONTEXT_PATHS: Record<SpotifyPlaybackContext["kind"], string> = {
+  playlist: "playlists",
+  album: "albums",
+  artist: "artists",
+};
+
+const contextNameCache = new Map<string, string>();
+
+export async function getSpotifyContextName(
+  context: SpotifyPlaybackContext,
+  signal?: AbortSignal,
+): Promise<string | null> {
+  const cached = contextNameCache.get(context.uri);
+  if (cached !== undefined) return cached;
+
+  const id = context.uri.split(":").pop();
+  if (!id) return null;
+  const response = await integrationFetch(
+    "spotify",
+    `${SPOTIFY_API_BASE_URL}/${CONTEXT_PATHS[context.kind]}/${encodeURIComponent(id)}`,
+    { signal },
+  );
+  if (!response.ok) {
+    throw spotifyError(response);
+  }
+  const payload = (await response.json()) as { name?: unknown };
+  if (typeof payload.name !== "string" || payload.name.length === 0) return null;
+  contextNameCache.set(context.uri, payload.name);
+  return payload.name;
 }
 
 export async function getSpotifyDevices(): Promise<SpotifyPlaybackDevice[]> {

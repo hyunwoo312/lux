@@ -6,6 +6,7 @@ vi.mock("@/widgets/spotify/lib/spotify-api", () => ({
   getSpotifyPlaybackState: vi.fn(),
   getSpotifyDevices: vi.fn().mockResolvedValue([]),
   getSpotifySavedTrackFlags: vi.fn().mockResolvedValue(new Set<string>()),
+  getSpotifyContextName: vi.fn().mockResolvedValue(null),
   SpotifyRateLimitError: class SpotifyRateLimitError extends Error {},
   pauseSpotifyPlayback: vi.fn(),
   resumeSpotifyPlayback: vi.fn(),
@@ -20,6 +21,7 @@ vi.mock("@/widgets/spotify/lib/spotify-api", () => ({
 
 import { useIntegrationStore } from "@/integrations";
 import {
+  getSpotifyContextName,
   getSpotifyPlaybackState,
   getSpotifySavedTrackFlags,
 } from "@/widgets/spotify/lib/spotify-api";
@@ -34,6 +36,7 @@ import type { SpotifyPlaybackState } from "@/widgets/spotify/types";
 
 const playbackMock = vi.mocked(getSpotifyPlaybackState);
 const savedFlagsMock = vi.mocked(getSpotifySavedTrackFlags);
+const contextNameMock = vi.mocked(getSpotifyContextName);
 
 function setAccount(status: IntegrationAccountStatus | null) {
   useIntegrationStore.setState({
@@ -59,6 +62,7 @@ function playingState(): SpotifyPlaybackState {
     progressMs: 1000,
     shuffle: false,
     repeatMode: "off",
+    context: null,
     device: { id: "dev1", name: "Desk", type: "Computer", isActive: true, volumePercent: 50 },
     track: {
       id: "t1",
@@ -83,6 +87,8 @@ beforeEach(() => {
   playbackMock.mockResolvedValue(null);
   savedFlagsMock.mockReset();
   savedFlagsMock.mockResolvedValue(new Set<string>());
+  contextNameMock.mockReset();
+  contextNameMock.mockResolvedValue(null);
   useSpotifyPlaybackStore.setState({
     playback: null,
     devices: [],
@@ -90,6 +96,7 @@ beforeEach(() => {
     volumeDraft: null,
     progressDraftMs: null,
     likedTrack: null,
+    contextLabel: null,
     error: null,
     isLoading: true,
   });

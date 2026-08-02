@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import {
+  getSpotifyContextName,
   getSpotifyDevices,
   getSpotifyPlaybackState,
   getSpotifyQueue,
@@ -20,6 +21,7 @@ import {
 import {
   SPOTIFY_REPEAT_MODES,
   type SpotifyPendingAction,
+  type SpotifyPlaybackContext,
   type SpotifyPlaybackDevice,
   type SpotifyPlaybackState,
   type SpotifyQueueItem,
@@ -44,6 +46,7 @@ type PlaybackStoreState = {
   playbackSyncedAt: number;
   nowMs: number;
   likedTrack: { trackId: string; isLiked: boolean } | null;
+  contextLabel: { uri: string; name: string | null } | null;
   error: string | null;
   isLoading: boolean;
 };
@@ -61,6 +64,7 @@ function initialState(): PlaybackStoreState {
     playbackSyncedAt: Date.now(),
     nowMs: Date.now(),
     likedTrack: null,
+    contextLabel: null,
     error: null,
     isLoading: true,
   };
@@ -149,6 +153,7 @@ async function refreshPlayback(): Promise<void> {
     lastPolledAt = Date.now();
     reconcileTimers();
     void refreshLikedTrack(nextPlayback?.track.id ?? null);
+    void refreshContextName(nextPlayback?.context ?? null);
   } catch (caught) {
     if (requestId !== refreshRequestId) return;
     if (caught instanceof SpotifyRateLimitError) {
@@ -174,6 +179,22 @@ async function refreshLikedTrack(trackId: string | null): Promise<void> {
     set({ likedTrack: { trackId, isLiked: liked.has(trackId) } });
   } catch {
     set({ likedTrack: { trackId, isLiked: false } });
+  }
+}
+
+async function refreshContextName(context: SpotifyPlaybackContext | null): Promise<void> {
+  if (context === null) {
+    if (get().contextLabel !== null) set({ contextLabel: null });
+    return;
+  }
+  if (get().contextLabel?.uri === context.uri) return;
+  if (Date.now() < rateLimitedUntil) return;
+  try {
+    const name = await getSpotifyContextName(context);
+    if (get().playback?.context?.uri !== context.uri) return;
+    set({ contextLabel: { uri: context.uri, name } });
+  } catch {
+    set({ contextLabel: { uri: context.uri, name: null } });
   }
 }
 
@@ -452,6 +473,7 @@ export type SpotifyPlaybackController = {
   playback: SpotifyPlaybackState | null;
   deviceOptions: SpotifyPlaybackDevice[];
   isTrackLiked: boolean;
+  contextName: string | null;
   pendingActions: Set<SpotifyPendingAction>;
   error: string | null;
   isLoading: boolean;
@@ -494,6 +516,7 @@ export function useSpotifyPlayback(connectedArg: boolean): SpotifyPlaybackContro
       nowMs: s.nowMs,
       playbackSyncedAt: s.playbackSyncedAt,
       likedTrack: s.likedTrack,
+      contextLabel: s.contextLabel,
     })),
   );
   const { playback, devices } = state;
@@ -514,6 +537,10 @@ export function useSpotifyPlayback(connectedArg: boolean): SpotifyPlaybackContro
       playback !== null &&
       state.likedTrack?.trackId === playback.track.id &&
       state.likedTrack.isLiked,
+    contextName:
+      playback?.context && state.contextLabel?.uri === playback.context.uri
+        ? state.contextLabel.name
+        : null,
     pendingActions: state.pendingActions,
     error: state.error,
     isLoading: state.isLoading,

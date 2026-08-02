@@ -25,6 +25,11 @@ export type SpotifyPlaybackDevice = {
   volumePercent: number | null;
 };
 
+export type SpotifyPlaybackContext = {
+  uri: string;
+  kind: "playlist" | "album" | "artist";
+};
+
 export type SpotifyPlaybackState = {
   isPlaying: boolean;
   progressMs: number;
@@ -32,6 +37,7 @@ export type SpotifyPlaybackState = {
   repeatMode: SpotifyRepeatMode;
   device: SpotifyPlaybackDevice;
   track: SpotifyPlaybackTrack;
+  context: SpotifyPlaybackContext | null;
 };
 
 export type SpotifyQueueItem = {
