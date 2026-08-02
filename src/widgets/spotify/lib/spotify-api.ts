@@ -178,26 +178,6 @@ function takeResults<T>(
     .slice(0, cap);
 }
 
-async function flagLikedTracks(
-  tracks: SpotifySearchResult[],
-  signal?: AbortSignal,
-): Promise<SpotifySearchResult[]> {
-  if (tracks.length === 0) return tracks;
-  let liked: Set<string>;
-  try {
-    liked = await getSpotifySavedTrackFlags(
-      tracks.map((track) => track.id),
-      signal,
-    );
-  } catch {
-    return tracks;
-  }
-  const flagged = tracks.map((track) =>
-    liked.has(track.id) ? { ...track, liked: true } : track,
-  );
-  return [...flagged.filter((track) => track.liked), ...flagged.filter((track) => !track.liked)];
-}
-
 function mapDevicePayload(device: SpotifyDevicePayload | null | undefined): SpotifyPlaybackDevice {
   return {
     id: device?.id ?? "",
@@ -312,10 +292,7 @@ export async function searchSpotify(
     throw spotifyError(response);
   }
   const payload = (await response.json()) as SpotifySearchPayload;
-  const tracks = await flagLikedTracks(
-    takeResults(payload.tracks?.items ?? [], mapSearchTrack, SEARCH_RESULT_CAPS.track),
-    signal,
-  );
+  const tracks = takeResults(payload.tracks?.items ?? [], mapSearchTrack, SEARCH_RESULT_CAPS.track);
   const albums = takeResults(payload.albums?.items ?? [], mapSearchAlbum, SEARCH_RESULT_CAPS.album);
   const playlists = takeResults(
     payload.playlists?.items ?? [],

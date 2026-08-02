@@ -9,6 +9,7 @@ import {
   addSpotifyToQueue,
   getMySpotifyPlaylists,
   getSpotifyDevices,
+  getSpotifySavedTrackFlags,
   searchSpotify,
   startSpotifyPlayback,
 } from "@/widgets/spotify/lib/spotify-api";
@@ -50,7 +51,7 @@ export function SpotifySearch() {
   const [error, setError] = useState<string | null>(null);
   const [active, setActive] = useState(0);
   const [devices, setDevices] = useState<SpotifyPlaybackDevice[]>([]);
-  const [noDevice, setNoDevice] = useState(false);
+  const [targetDeviceId, setTargetDeviceId] = useState<string | null>(null);
   const [myPlaylists, setMyPlaylists] = useState<SpotifySearchResult[]>([]);
   const [playlistsLoading, setPlaylistsLoading] = useState(false);
   const [queueingId, setQueueingId] = useState<string | null>(null);
@@ -70,12 +71,10 @@ export function SpotifySearch() {
       .then((found) => {
         if (cancelled) return;
         setDevices(found);
-        setNoDevice(!found.some((device) => device.isActive));
       })
       .catch(() => {
         if (cancelled) return;
         setDevices([]);
-        setNoDevice(true);
       });
     setPlaylistsLoading(true);
     getMySpotifyPlaylists()
@@ -92,6 +91,21 @@ export function SpotifySearch() {
       cancelled = true;
     };
   }, [open]);
+
+  const markLikedTracks = async (found: SpotifySearchResult[], signal: AbortSignal) => {
+    const ids = found.filter((result) => result.kind === "track").map((result) => result.id);
+    if (ids.length === 0) return;
+    let liked: Set<string>;
+    try {
+      liked = await getSpotifySavedTrackFlags(ids, signal);
+    } catch {
+      return;
+    }
+    if (signal.aborted || liked.size === 0) return;
+    setResults((prev) =>
+      prev.map((result) => (liked.has(result.id) ? { ...result, liked: true } : result)),
+    );
+  };
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -110,6 +124,7 @@ export function SpotifySearch() {
           setResults(found);
           setActive(0);
           setSearching(false);
+          void markLikedTracks(found, controller.signal);
         })
         .catch((caught: unknown) => {
           if (caught instanceof DOMException && caught.name === "AbortError") return;
@@ -123,10 +138,14 @@ export function SpotifySearch() {
     };
   }, [query]);
 
+  const targetDevice =
+    devices.find((device) => device.id === targetDeviceId) ??
+    devices.find((device) => device.isActive) ??
+    (devices.length === 1 ? devices[0] : undefined);
+
   const pick = (result: SpotifySearchResult) => {
-    const target = devices.find((device) => device.isActive);
-    if (!target) return;
-    startSpotifyPlayback(result, target.id)
+    if (!targetDevice) return;
+    startSpotifyPlayback(result, targetDevice.id)
       .then(() => {
         requestSpotifyPlaybackRefresh();
         setQuery("");
@@ -139,10 +158,9 @@ export function SpotifySearch() {
   };
 
   const addToQueue = (result: SpotifySearchResult) => {
-    const target = devices.find((device) => device.isActive);
-    if (!target || queueingId === result.id || queuedIds.has(result.id)) return;
+    if (!targetDevice || queueingId === result.id || queuedIds.has(result.id)) return;
     setQueueingId(result.id);
-    addSpotifyToQueue(result.uri, target.id)
+    addSpotifyToQueue(result.uri, targetDevice.id)
       .then(() => {
         void loadSpotifyQueue();
         setQueuedIds((prev) => new Set(prev).add(result.id));
@@ -166,7 +184,8 @@ export function SpotifySearch() {
       )
     : myPlaylists.slice(0, MAX_RESULTS);
 
-  const hasOptions = open && !noDevice && !error && rows.length > 0;
+  const hasOptions = open && !error && rows.length > 0;
+  const needsDeviceChoice = !targetDevice && devices.length > 0;
   const listboxId = `${baseId}-listbox`;
   const optionId = (index: number) => `${baseId}-opt-${index}`;
 
@@ -222,11 +241,37 @@ export function SpotifySearch() {
         className="border-input bg-popover w-full overflow-hidden rounded-sm border shadow-md"
       >
         <div className="max-h-72 overflow-y-auto p-1">
-          {noDevice ? (
-            <p className="text-muted-foreground px-2 py-2 text-xs">
-              No active device. Open Spotify on a device, then try again.
+          {devices.length === 0 && (
+            <p className="border-border/60 text-muted-foreground border-b px-2 py-2 text-xs">
+              Open Spotify on a device to start playback.
             </p>
-          ) : error ? (
+          )}
+          {needsDeviceChoice && (
+            <div
+              className="
+                border-border/60 flex flex-wrap items-center gap-1 border-b px-2 pt-1.5 pb-2
+              "
+            >
+              <span className="text-muted-foreground text-2xs mr-0.5">Play on</span>
+              {devices.map((device) => (
+                <button
+                  key={device.id}
+                  type="button"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => setTargetDeviceId(device.id)}
+                  className="
+                    border-border text-muted-foreground rounded-full border px-2 py-0.5 text-2xs
+                    transition-colors
+                    hover:text-foreground hover:border-foreground/40
+                    focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none
+                  "
+                >
+                  {device.name}
+                </button>
+              ))}
+            </div>
+          )}
+          {error ? (
             <p className="text-muted-foreground px-2 py-2 text-xs">{error}</p>
           ) : isSearch && searching && rows.length === 0 ? (
             <p className="text-muted-foreground px-2 py-2 text-xs">Searching…</p>

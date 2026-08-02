@@ -30,7 +30,7 @@ const RESTART_THRESHOLD_MS = 3_000;
 const PLAYING_POLL_MS = 10_000;
 const IDLE_POLL_MS = 20_000;
 const FOLLOW_UP_REFRESH_DELAYS_MS = [350, 1100, 2600, 5200];
-const REQUEST_REFRESH_DELAYS_MS = [400, 1400];
+const REQUEST_REFRESH_DELAYS_MS = [0, 800, 2000];
 
 type PlaybackStoreState = {
   playback: SpotifyPlaybackState | null;
@@ -172,10 +172,8 @@ async function refreshLikedTrack(trackId: string | null): Promise<void> {
     const liked = await getSpotifySavedTrackFlags([trackId]);
     if (get().playback?.track.id !== trackId) return;
     set({ likedTrack: { trackId, isLiked: liked.has(trackId) } });
-  } catch (caught) {
-    if (caught instanceof SpotifyRateLimitError) {
-      rateLimitedUntil = Date.now() + caught.retryAfterMs;
-    }
+  } catch {
+    set({ likedTrack: { trackId, isLiked: false } });
   }
 }
 

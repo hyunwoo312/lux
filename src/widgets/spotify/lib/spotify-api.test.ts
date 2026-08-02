@@ -169,7 +169,7 @@ describe("searchSpotify", () => {
     await expect(searchSpotify("x")).rejects.toBeInstanceOf(SpotifyRateLimitError);
   });
 
-  it("flags saved tracks and sorts liked ones first", async () => {
+  it("returns search results in Spotify's own order without waiting on liked flags", async () => {
     mockFetch.mockImplementation((_provider, url) => {
       if (String(url).includes("/search")) {
         return Promise.resolve(
@@ -183,40 +183,18 @@ describe("searchSpotify", () => {
           }),
         );
       }
-      if (String(url).includes("/me/tracks/contains")) {
-        return Promise.resolve(jsonResponse([false, true]));
-      }
       return Promise.resolve(new Response(null, { status: 204 }));
     });
 
     const results = await searchSpotify("x");
 
-    expect(results.map((result) => result.id)).toEqual(["t2", "t1"]);
-    expect(results[0]).toMatchObject({ id: "t2", liked: true });
-    expect(results[1]?.liked).toBeUndefined();
+    expect(results.map((result) => result.id)).toEqual(["t1", "t2"]);
+    expect(results.every((result) => result.liked === undefined)).toBe(true);
+    expect(mockFetch.mock.calls.every(([, url]) => !String(url).includes("/me/tracks/contains"))).toBe(
+      true,
+    );
   });
 
-  it("degrades to unflagged results when the saved-tracks check fails", async () => {
-    mockFetch.mockImplementation((_provider, url) => {
-      if (String(url).includes("/search")) {
-        return Promise.resolve(
-          jsonResponse({
-            tracks: {
-              items: [
-                { id: "t1", uri: "spotify:track:t1", name: "One", artists: [{ name: "A" }], album: { images: [] } },
-              ],
-            },
-          }),
-        );
-      }
-      return Promise.resolve(new Response(null, { status: 403 }));
-    });
-
-    const results = await searchSpotify("x");
-    expect(results).toEqual([
-      { id: "t1", uri: "spotify:track:t1", kind: "track", title: "One", subtitle: "A", artworkUrl: undefined },
-    ]);
-  });
 });
 
 describe("getSpotifySavedTrackFlags", () => {
