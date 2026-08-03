@@ -3,7 +3,9 @@ import {
   computeBehind,
   formatAiringIn,
   formatScore,
+  groupByAiringDay,
   progressLabel,
+  sortCurrentEntries,
   sumWaiting,
 } from "@/widgets/anilist/lib/current";
 import type { CurrentEntry } from "@/widgets/anilist/types";
@@ -107,5 +109,52 @@ describe("formatAiringIn", () => {
 
   it("reports now once the air time has passed", () => {
     expect(formatAiringIn(Math.floor(now / 1000) - 10, now)).toBe("now");
+  });
+});
+
+describe("airing sort and grouping", () => {
+  const DAY = 86_400;
+  const now = new Date("2026-08-04T12:00:00").getTime();
+  const at = (offsetSeconds: number) => Math.floor(now / 1000) + offsetSeconds;
+
+  const airing = (id: number, offsetSeconds: number | null): CurrentEntry => ({
+    id,
+    kind: "anime",
+    title: `Show ${id}`,
+    siteUrl: `https://anilist.co/anime/${id}`,
+    progress: 1,
+    total: 12,
+    behind: 0,
+    ...(offsetSeconds === null
+      ? {}
+      : { nextEpisode: { episode: 2, airingAt: at(offsetSeconds) } }),
+  });
+
+  it("orders by soonest airing and pushes entries with no next episode last", () => {
+    const sorted = sortCurrentEntries(
+      [airing(1, 3 * 3600), airing(2, null), airing(3, 600)],
+      "airing",
+    );
+    expect(sorted.map((entry) => entry.id)).toEqual([3, 1, 2]);
+  });
+
+  it("labels today and tomorrow, and falls back to a weekday after that", () => {
+    const groups = groupByAiringDay([airing(1, 3600), airing(2, DAY), airing(3, 3 * DAY)], now);
+
+    expect(groups[0]?.label).toBe("Today");
+    expect(groups[1]?.label).toBe("Tomorrow");
+    expect(groups[2]?.label).not.toBe("Tomorrow");
+    expect(groups[2]?.label).toMatch(/^\w+$/);
+  });
+
+  it("skips entries with no next episode entirely", () => {
+    const groups = groupByAiringDay([airing(1, null), airing(2, 3600)], now);
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.entries.map((entry) => entry.id)).toEqual([2]);
+  });
+
+  it("returns no groups when nothing is airing", () => {
+    expect(groupByAiringDay([airing(1, null)], now)).toEqual([]);
   });
 });

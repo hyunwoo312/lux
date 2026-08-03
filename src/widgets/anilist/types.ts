@@ -7,7 +7,7 @@ export const ANILIST_PAGE_SIZE = 20;
 export const MEDIA_FILTERS = ["both", "anime", "manga"] as const;
 export type MediaFilter = (typeof MEDIA_FILTERS)[number];
 
-export const CURRENT_SORTS = ["waiting", "recent", "score"] as const;
+export const CURRENT_SORTS = ["waiting", "recent", "score", "airing"] as const;
 export type CurrentSort = (typeof CURRENT_SORTS)[number];
 
 export const TITLE_LANGUAGES = ["english", "romaji", "native"] as const;

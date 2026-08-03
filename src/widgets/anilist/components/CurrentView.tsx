@@ -10,6 +10,7 @@ import {
   computeBehind,
   formatAiringIn,
   formatScore,
+  groupByAiringDay,
   progressLabel,
   sortCurrentEntries,
   sumWaiting,
@@ -43,6 +44,7 @@ const SORT_OPTIONS: { value: CurrentSort; label: string }[] = [
   { value: "waiting", label: "Most behind" },
   { value: "recent", label: "Recently updated" },
   { value: "score", label: "Highest score" },
+  { value: "airing", label: "Airing soon" },
 ];
 
 type CurrentViewProps = {
@@ -144,6 +146,10 @@ function CurrentList({
   }, [data.entries, progressOverrides, filter, sort]);
 
   const waiting = useMemo(() => sumWaiting(entries), [entries]);
+  const airingGroups = useMemo(
+    () => (sort === "airing" ? groupByAiringDay(entries) : []),
+    [entries, sort],
+  );
 
   return (
     <div className="flex h-full flex-col gap-2 p-1">
@@ -168,6 +174,33 @@ function CurrentList({
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {entries.length === 0 ? (
           <AnilistPlaceholder>Nothing here.</AnilistPlaceholder>
+        ) : sort === "airing" ? (
+          airingGroups.length === 0 ? (
+            <AnilistPlaceholder>Nothing airing soon.</AnilistPlaceholder>
+          ) : (
+            airingGroups.map((group) => (
+              <section key={group.key} className="flex flex-col gap-1">
+                <h4
+                  className="
+                    text-muted-foreground/70 text-2xs px-1 pt-1 font-bold tracking-wider uppercase
+                  "
+                >
+                  {group.label}
+                </h4>
+                {group.entries.map((entry) => (
+                  <CurrentRow
+                    key={`${entry.kind}-${entry.id}`}
+                    entry={entry}
+                    newTab={newTab}
+                    scoreFormat={data.scoreFormat}
+                    pending={pending[entry.id] ?? false}
+                    onIncrement={() => changeProgress(entry, 1)}
+                    onDecrement={() => changeProgress(entry, -1)}
+                  />
+                ))}
+              </section>
+            ))
+          )
         ) : (
           entries.map((entry) => (
             <CurrentRow

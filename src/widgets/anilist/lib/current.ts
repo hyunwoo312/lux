@@ -8,7 +8,9 @@ import type {
 
 export function sortCurrentEntries(entries: CurrentEntry[], sort: CurrentSort): CurrentEntry[] {
   const sorted = [...entries];
-  if (sort === "recent") {
+  if (sort === "airing") {
+    sorted.sort((a, b) => (a.nextEpisode?.airingAt ?? Infinity) - (b.nextEpisode?.airingAt ?? Infinity));
+  } else if (sort === "recent") {
     sorted.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
   } else if (sort === "score") {
     sorted.sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
@@ -70,4 +72,44 @@ export function formatAiringIn(airingAt: number, now = Date.now()): string {
   const hours = Math.floor(seconds / 3_600);
   if (hours > 0) return `${hours}h`;
   return `${Math.max(1, Math.floor(seconds / 60))}m`;
+}
+
+export type AiringGroup = { key: string; label: string; entries: CurrentEntry[] };
+
+const WEEKDAY_FORMATTER = new Intl.DateTimeFormat(undefined, { weekday: "long" });
+
+function dayKey(date: Date): string {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
+export function groupByAiringDay(entries: CurrentEntry[], now = Date.now()): AiringGroup[] {
+  const today = new Date(now);
+  const todayKey = dayKey(today);
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowKey = dayKey(tomorrow);
+
+  const groups: AiringGroup[] = [];
+  const byKey = new Map<string, AiringGroup>();
+
+  for (const entry of entries) {
+    if (!entry.nextEpisode) continue;
+    const airsAt = new Date(entry.nextEpisode.airingAt * 1000);
+    const key = dayKey(airsAt);
+    let group = byKey.get(key);
+    if (!group) {
+      const label =
+        key === todayKey
+          ? "Today"
+          : key === tomorrowKey
+            ? "Tomorrow"
+            : WEEKDAY_FORMATTER.format(airsAt);
+      group = { key, label, entries: [] };
+      byKey.set(key, group);
+      groups.push(group);
+    }
+    group.entries.push(entry);
+  }
+
+  return groups;
 }
