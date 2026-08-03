@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   dedupeCalendarEvents,
+  formatEventTime,
+  formatFreeUntil,
   getAgendaGroups,
   getEventsInRange,
   getMultiDayEvents,
@@ -79,5 +81,56 @@ describe("getEventsInRange + getAgendaGroups", () => {
     const groups = getAgendaGroups([todayEvent], today, 7, today);
     expect(groups).toHaveLength(1);
     expect(groups[0]?.label).toBe("Today");
+  });
+});
+
+describe("formatFreeUntil", () => {
+  const now = new Date("2026-08-04T09:00:00");
+
+  const event = (start: string, end: string, extra: Partial<CalendarEvent> = {}): CalendarEvent => ({
+    id: `e-${start}`,
+    calendarId: "c1",
+    title: "Meeting",
+    startsAt: new Date(start).toISOString(),
+    endsAt: new Date(end).toISOString(),
+    isAllDay: false,
+    visibility: "default",
+    ...extra,
+  });
+
+  it("reports the gap until the next event today", () => {
+    const label = formatFreeUntil([event("2026-08-04T15:00:00", "2026-08-04T16:00:00")], now, false);
+    expect(label).toMatch(/^Free until /);
+  });
+
+  it("says nothing while an event is in progress", () => {
+    const label = formatFreeUntil([event("2026-08-04T08:30:00", "2026-08-04T09:30:00")], now, false);
+    expect(label).toBeNull();
+  });
+
+  it("says nothing when the next event is tomorrow", () => {
+    const label = formatFreeUntil([event("2026-08-05T09:00:00", "2026-08-05T10:00:00")], now, false);
+    expect(label).toBeNull();
+  });
+
+  it("ignores all-day events", () => {
+    const label = formatFreeUntil(
+      [event("2026-08-04T15:00:00", "2026-08-04T16:00:00", { isAllDay: true })],
+      now,
+      false,
+    );
+    expect(label).toBeNull();
+  });
+
+  it("picks the earliest upcoming event, not the first in the list", () => {
+    const label = formatFreeUntil(
+      [
+        event("2026-08-04T17:00:00", "2026-08-04T18:00:00"),
+        event("2026-08-04T11:00:00", "2026-08-04T12:00:00"),
+      ],
+      now,
+      false,
+    );
+    expect(label).toBe(`Free until ${formatEventTime(event("2026-08-04T11:00:00", "2026-08-04T12:00:00"), false)}`);
   });
 });

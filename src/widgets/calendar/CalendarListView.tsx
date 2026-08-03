@@ -7,12 +7,14 @@ import { CalendarEventItem } from "@/widgets/calendar/components/CalendarEventIt
 import { getEventColor } from "@/widgets/calendar/lib/colors";
 import {
   formatEventDateRange,
+  formatFreeUntil,
   getAgendaGroups,
   getEventsInRange,
   getMultiDayEvents,
   isMultiDayEvent,
 } from "@/widgets/calendar/lib/agenda";
 import { startOfDay } from "@/widgets/calendar/lib/dates";
+import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useCalendar } from "@/widgets/calendar/useCalendarStore";
 import type { CalendarSyncStatus, DisplayCalendarEvent } from "@/widgets/calendar/types";
 
@@ -28,7 +30,9 @@ export function CalendarListView({ events, colors, enabled, status }: CalendarLi
   const lookaheadDays = useCalendar((d) => d.lookaheadDays);
   const listAnchor = useCalendar((d) => d.listAnchor);
   const now = useNow();
+  const clock24h = useAppSettingsStore((s) => s.clock24h);
   const today = useMemo(() => startOfDay(now), [now]);
+  const freeUntil = useMemo(() => formatFreeUntil(events, now, !clock24h), [events, now, clock24h]);
   const rangeEvents = useMemo(
     () => getEventsInRange(events, listAnchor, lookaheadDays),
     [events, listAnchor, lookaheadDays],
@@ -60,6 +64,9 @@ export function CalendarListView({ events, colors, enabled, status }: CalendarLi
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto pr-0.5">
+      {freeUntil && (
+        <p className="text-muted-foreground pl-1 text-2xs font-medium">{freeUntil}</p>
+      )}
       {multiDayEvents.length > 0 && (
         <section className="flex flex-col gap-1.5">
           <h4 className="text-muted-foreground text-2xs pl-1 font-bold tracking-wider uppercase">

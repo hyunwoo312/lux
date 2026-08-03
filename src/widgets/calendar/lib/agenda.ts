@@ -187,6 +187,44 @@ export function formatEventRelativeTime(event: CalendarEvent, now: Date): string
   return `in ${Math.round(minutes / 60)}h`;
 }
 
+function findNextEvent<T extends CalendarEvent>(events: T[], now: Date): T | null {
+  let next: T | null = null;
+  let nextStart = Infinity;
+  for (const event of events) {
+    if (event.isAllDay) continue;
+    const start = getEventStartDate(event).getTime();
+    if (start <= now.getTime()) continue;
+    if (start < nextStart) {
+      nextStart = start;
+      next = event;
+    }
+  }
+  return next;
+}
+
+export function formatFreeUntil(
+  events: CalendarEvent[],
+  now: Date,
+  hour12: boolean,
+): string | null {
+  const inProgress = events.some(
+    (event) =>
+      !event.isAllDay &&
+      getEventStartDate(event).getTime() <= now.getTime() &&
+      getEventDisplayEndDate(event).getTime() > now.getTime(),
+  );
+  if (inProgress) return null;
+
+  const next = findNextEvent(events, now);
+  if (!next) return null;
+
+  const startsAt = getEventStartDate(next);
+  if (startsAt.getTime() - now.getTime() > 12 * 60 * 60 * 1000) return null;
+  if (getDateKey(startsAt) !== getDateKey(now)) return null;
+
+  return `Free until ${formatEventTime(next, hour12)}`;
+}
+
 export function formatEventDateRange(event: CalendarEvent): string {
   const formatter = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
   const startsAt = getEventStartDate(event);
