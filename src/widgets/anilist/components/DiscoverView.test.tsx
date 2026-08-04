@@ -64,7 +64,6 @@ function setConnected(connected: boolean) {
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
-  // the polled-resource cache is module-level and would otherwise leak between tests
   invalidatePolledResource(anilistKeys.discover("english", "trending", "anime"));
   discoverMock.mockResolvedValue([]);
   saveStatusMock.mockResolvedValue("PLANNING");

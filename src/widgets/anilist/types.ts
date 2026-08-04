@@ -1,4 +1,8 @@
-export const ANILIST_TABS = ["activity", "current", "inbox", "discover"] as const;
+import type { AccentPreset } from "@/widgets/core/accent";
+
+export const ANILIST_ACCENT: AccentPreset = "cyan";
+
+export const ANILIST_TABS = ["activity", "library", "inbox", "discover"] as const;
 export type AnilistTab = (typeof ANILIST_TABS)[number];
 
 export const ANILIST_MAX_ITEMS = 100;
@@ -8,6 +12,16 @@ export const MEDIA_FILTERS = ["both", "anime", "manga"] as const;
 export type MediaFilter = (typeof MEDIA_FILTERS)[number];
 
 export const CURRENT_SORTS = ["waiting", "recent", "score", "airing"] as const;
+
+export const LIST_FILTERS = [
+  "all",
+  "progress",
+  "planned",
+  "completed",
+  "paused",
+  "dropped",
+] as const;
+export type ListFilter = (typeof LIST_FILTERS)[number];
 export type CurrentSort = (typeof CURRENT_SORTS)[number];
 
 export const TITLE_LANGUAGES = ["english", "romaji", "native"] as const;
@@ -51,15 +65,14 @@ export type CurrentEntry = {
   total: number | null;
   behind: number | null;
   nextEpisode?: { episode: number; airingAt: number };
+  status?: ListStatus;
   score?: number;
   updatedAt?: number;
 };
 
-export type WaitingTotals = { episodes: number; chapters: number };
 
 export type CurrentData = {
   entries: CurrentEntry[];
-  waiting: WaitingTotals;
   scoreFormat: ScoreFormat;
 };
 

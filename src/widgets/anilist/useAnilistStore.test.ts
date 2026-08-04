@@ -24,8 +24,14 @@ describe("useAnilistStore", () => {
     expect(store().byInstance["b"]?.activeTab).toBe("activity");
   });
 
+  it("defaults a new instance to sorting by highest score", () => {
+    expect(store().byInstance["fresh"]).toBeUndefined();
+    store().setActiveTab("fresh", "library");
+    expect(store().byInstance["fresh"]?.currentSort).toBe("score");
+  });
+
   it("drops an instance's view settings on cleanup", () => {
-    store().setActiveTab("a", "current");
+    store().setActiveTab("a", "library");
     store().removeInstance("a");
     expect(store().byInstance["a"]).toBeUndefined();
   });
@@ -61,13 +67,14 @@ describe("useAnilistStore", () => {
       expect(migrate?.(legacy, 1)).toEqual({
         byInstance: {
           anilist: {
-            activeTab: "current",
+            activeTab: "library",
             mediaFilter: "both",
             currentSort: "score",
             titleLanguage: "romaji",
             openBehavior: "currentTab",
             discoverFeed: "trending",
             discoverType: "anime",
+            listFilter: "all",
           },
         },
         lastSeenActivityAt: 100,
@@ -91,7 +98,23 @@ describe("useAnilistStore", () => {
         },
         lastSeenActivityAt: 100,
       };
-      expect(migrate?.(persisted, 4)).toBe(persisted);
+      expect(migrate?.(persisted, 5)).toBe(persisted);
+    });
+
+    it("merges the old current and planning tabs into the single list tab", () => {
+      const persisted = {
+        byInstance: {
+          "anilist-1": { activeTab: "current", titleLanguage: "english" },
+          "anilist-2": { activeTab: "planning", titleLanguage: "english" },
+          "anilist-3": { activeTab: "inbox", titleLanguage: "english" },
+        },
+      };
+
+      const migrated = migrate?.(persisted, 5) as typeof persisted;
+
+      expect(migrated.byInstance["anilist-1"]?.activeTab).toBe("library");
+      expect(migrated.byInstance["anilist-2"]?.activeTab).toBe("library");
+      expect(migrated.byInstance["anilist-3"]?.activeTab).toBe("inbox");
     });
   });
 });

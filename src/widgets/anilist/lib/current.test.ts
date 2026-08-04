@@ -6,7 +6,6 @@ import {
   groupByAiringDay,
   progressLabel,
   sortCurrentEntries,
-  sumWaiting,
 } from "@/widgets/anilist/lib/current";
 import type { CurrentEntry } from "@/widgets/anilist/types";
 
@@ -45,17 +44,6 @@ describe("computeBehind", () => {
   });
 });
 
-describe("sumWaiting", () => {
-  it("splits the backlog into episodes and chapters", () => {
-    const entries = [
-      entry({ kind: "anime", behind: 3 }),
-      entry({ kind: "anime", behind: 0 }),
-      entry({ kind: "manga", behind: 5 }),
-      entry({ kind: "manga", behind: null }),
-    ];
-    expect(sumWaiting(entries)).toEqual({ episodes: 3, chapters: 5 });
-  });
-});
 
 describe("progressLabel", () => {
   it("shows a known total", () => {

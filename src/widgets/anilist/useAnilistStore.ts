@@ -13,6 +13,8 @@ import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import {
   ANILIST_TABS,
   CURRENT_SORTS,
+  LIST_FILTERS,
+  type ListFilter,
   DISCOVER_FEEDS,
   DISCOVER_TYPES,
   type DiscoverFeed,
@@ -33,6 +35,7 @@ type AnilistData = {
   activeTab: AnilistTab;
   mediaFilter: MediaFilter;
   currentSort: CurrentSort;
+  listFilter: ListFilter;
   titleLanguage: TitleLanguage;
   openBehavior: OpenBehavior;
   discoverFeed: DiscoverFeed;
@@ -49,6 +52,7 @@ type AnilistStoreState = {
   setActiveTab: (instanceId: string, activeTab: AnilistTab) => void;
   setMediaFilter: (instanceId: string, mediaFilter: MediaFilter) => void;
   setCurrentSort: (instanceId: string, currentSort: CurrentSort) => void;
+  setListFilter: (instanceId: string, listFilter: ListFilter) => void;
   setTitleLanguage: (instanceId: string, titleLanguage: TitleLanguage) => void;
   setOpenBehavior: (instanceId: string, openBehavior: OpenBehavior) => void;
   setDiscoverFeed: (instanceId: string, discoverFeed: DiscoverFeed) => void;
@@ -63,7 +67,8 @@ type AnilistStoreState = {
 const DEFAULT_DATA: AnilistData = {
   activeTab: "activity",
   mediaFilter: "both",
-  currentSort: "waiting",
+  currentSort: "score",
+  listFilter: "all",
   titleLanguage: "english",
   openBehavior: "currentTab",
   discoverFeed: "trending",
@@ -73,7 +78,8 @@ const DEFAULT_DATA: AnilistData = {
 const configSchema = z.object({
   activeTab: z.enum(ANILIST_TABS).default("activity"),
   mediaFilter: z.enum(MEDIA_FILTERS).default("both"),
-  currentSort: z.enum(CURRENT_SORTS).default("waiting"),
+  currentSort: z.enum(CURRENT_SORTS).default("score"),
+  listFilter: z.enum(LIST_FILTERS).default("all"),
   titleLanguage: z.enum(TITLE_LANGUAGES).default("english"),
   openBehavior: z.enum(["currentTab", "newTab"]).default("currentTab"),
   discoverFeed: z.enum(DISCOVER_FEEDS).default("trending"),
@@ -89,6 +95,25 @@ const persistedSchema = z.object({
   lastSeenActivityAt: z.number().optional(),
 });
 
+function mergeLibraryTab(persisted: unknown): unknown {
+  if (!persisted || typeof persisted !== "object") return persisted;
+  const raw = persisted as { byInstance?: Record<string, { activeTab?: unknown }> };
+  if (!raw.byInstance) return persisted;
+  const entries = Object.entries(raw.byInstance);
+  if (!entries.some(([, data]) => data?.activeTab === "current" || data?.activeTab === "planning")) {
+    return persisted;
+  }
+  const byInstance = Object.fromEntries(
+    entries.map(([id, data]) => [
+      id,
+      data?.activeTab === "current" || data?.activeTab === "planning"
+        ? { ...data, activeTab: "library" }
+        : data,
+    ]),
+  );
+  return { ...raw, byInstance };
+}
+
 function migrateLegacyFields(persisted: unknown): unknown {
   if (!persisted || typeof persisted !== "object") return persisted;
   const raw = { ...(persisted as Record<string, unknown>) };
@@ -99,7 +124,7 @@ function migrateLegacyFields(persisted: unknown): unknown {
       raw.activeTab = raw.view === "inbox" ? "inbox" : "current";
     }
   }
-  if (raw.activeTab === "library") raw.activeTab = "current";
+  if (raw.activeTab === "current" || raw.activeTab === "planning") raw.activeTab = "library";
   if (raw.currentSort === undefined && typeof raw.librarySort === "string") {
     raw.currentSort = raw.librarySort;
   }
@@ -129,6 +154,8 @@ export const useAnilistStore = create<AnilistStoreState>()(
         set((state) => update(state, instanceId, (data) => ({ ...data, activeTab }))),
       setMediaFilter: (instanceId, mediaFilter) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, mediaFilter }))),
+      setListFilter: (instanceId, listFilter) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, listFilter }))),
       setCurrentSort: (instanceId, currentSort) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, currentSort }))),
       setTitleLanguage: (instanceId, titleLanguage) =>
@@ -154,7 +181,7 @@ export const useAnilistStore = create<AnilistStoreState>()(
         if (remainingMs > 0) {
           return { ok: false, remainingMs };
         }
-        invalidatePolledResource(anilistKeys.current(viewerId, titleLanguage));
+        invalidatePolledResource(anilistKeys.library(viewerId, titleLanguage, "all"));
         invalidatePolledResource(anilistKeys.unread(viewerId));
         invalidatePagedResource(anilistKeys.activity(viewerId, titleLanguage));
         invalidatePagedResource(anilistKeys.inbox(viewerId, titleLanguage));
@@ -165,14 +192,14 @@ export const useAnilistStore = create<AnilistStoreState>()(
     {
       name: "widget:anilist",
       storage: gatedStorage,
-      version: 4,
+      version: 5,
       onRehydrateStorage: () => () => gatedStorage.open(),
       partialize: (state) => ({
         byInstance: state.byInstance,
         lastSeenActivityAt: state.lastSeenActivityAt,
       }),
       migrate: (persisted, version) => {
-        if (version >= 4) return persisted;
+        if (version >= 5) return mergeLibraryTab(persisted);
         const legacy = legacySchema.safeParse(migrateLegacyFields(persisted));
         if (!legacy.success) return { byInstance: {} };
         const { lastSeenActivityAt, ...config } = legacy.data;
@@ -187,6 +214,7 @@ export const useAnilistStore = create<AnilistStoreState>()(
             activeTab: data.activeTab,
             mediaFilter: data.mediaFilter,
             currentSort: data.currentSort,
+            listFilter: data.listFilter,
             discoverFeed: data.discoverFeed,
             discoverType: data.discoverType,
             titleLanguage: data.titleLanguage,

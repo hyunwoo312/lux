@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useIntegrationStore } from "@/integrations";
 import { useAnilist } from "@/widgets/anilist/useAnilistStore";
-import { CurrentView } from "@/widgets/anilist/components/CurrentView";
+import { LibraryView } from "@/widgets/anilist/components/LibraryView";
 import { ActivityView } from "@/widgets/anilist/components/ActivityView";
 import { InboxView } from "@/widgets/anilist/components/InboxView";
 import { DiscoverView } from "@/widgets/anilist/components/DiscoverView";
@@ -42,8 +42,8 @@ export function AnilistWidget() {
           exit={{ opacity: 0 }}
           transition={transition}
         >
-          {activeTab === "current" ? (
-            <CurrentView enabled={connected} userId={userId} newTab={newTab} />
+          {activeTab === "library" ? (
+            <LibraryView enabled={connected} userId={userId} newTab={newTab} />
           ) : activeTab === "activity" ? (
             <ActivityView enabled={connected} userId={userId} newTab={newTab} />
           ) : activeTab === "discover" ? (

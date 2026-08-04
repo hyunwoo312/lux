@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { integrationFetch } from "@/integrations";
 import { rateLimitError } from "@/lib/rate-limit";
-import { computeBehind, sumWaiting } from "@/widgets/anilist/lib/current";
+import { computeBehind } from "@/widgets/anilist/lib/current";
 import { buildDiscoverVariables } from "@/widgets/anilist/lib/discover";
 import {
   ANILIST_MAX_ITEMS,
@@ -89,13 +89,13 @@ type MediaNode = z.infer<typeof mediaSchema>;
 
 const DEFAULT_SCORE_FORMAT: ScoreFormat = "POINT_10";
 
-const CURRENT_QUERY = `query ($userId: Int!) {
+const LIST_QUERY = `query ($userId: Int!, $status: [MediaListStatus]) {
   Viewer { mediaListOptions { scoreFormat } }
-  anime: MediaListCollection(userId: $userId, type: ANIME, status_in: [CURRENT, REPEATING]) {
-    lists { entries { progress score updatedAt media { ...mediaFields } } }
+  anime: MediaListCollection(userId: $userId, type: ANIME, status_in: $status) {
+    lists { entries { status progress score updatedAt media { ...mediaFields } } }
   }
-  manga: MediaListCollection(userId: $userId, type: MANGA, status_in: [CURRENT, REPEATING]) {
-    lists { entries { progress score updatedAt media { ...mediaFields } } }
+  manga: MediaListCollection(userId: $userId, type: MANGA, status_in: $status) {
+    lists { entries { status progress score updatedAt media { ...mediaFields } } }
   }
 }
 ${MEDIA_FRAGMENT}`;
@@ -106,6 +106,7 @@ const collectionSchema = z
       z.object({
         entries: z.array(
           z.object({
+            status: z.enum(LIST_STATUSES).nullable(),
             progress: z.number().nullable(),
             score: z.number().nullable(),
             updatedAt: z.number().nullable(),
@@ -174,34 +175,33 @@ function collectEntries(
         entry.media,
         lang,
       );
-      return built ? [built] : [];
+      return built ? [{ ...built, status: entry.status ?? undefined }] : [];
     }),
   );
 }
 
-export async function fetchCurrent(
+export async function fetchList(
   userId: number,
   lang: TitleLanguage,
+  statuses: ListStatus[],
   signal?: AbortSignal,
 ): Promise<CurrentData> {
   if (!Number.isFinite(userId)) {
     throw new Error("AniList account is missing an id");
   }
   const parsed = currentSchema.safeParse(
-    await anilistGraphQL(CURRENT_QUERY, { userId }, true, signal),
+    await anilistGraphQL(LIST_QUERY, { userId, status: statuses }, true, signal),
   );
   if (!parsed.success) {
-    throw new Error("Unexpected AniList current response");
+    throw new Error("Unexpected AniList list response");
   }
   const entries = [
     ...collectEntries("anime", parsed.data.data.anime, lang),
     ...collectEntries("manga", parsed.data.data.manga, lang),
-  ]
-    .sort((a, b) => (b.behind ?? -1) - (a.behind ?? -1))
-    .slice(0, ANILIST_MAX_ITEMS);
+  ].slice(0, ANILIST_MAX_ITEMS);
   const scoreFormat =
     parsed.data.data.Viewer?.mediaListOptions?.scoreFormat ?? DEFAULT_SCORE_FORMAT;
-  return { entries, waiting: sumWaiting(entries), scoreFormat };
+  return { entries, scoreFormat };
 }
 
 const SAVE_PROGRESS_MUTATION = `mutation ($mediaId: Int!, $progress: Int!) {
@@ -608,6 +608,7 @@ export async function fetchDiscover(
   );
 }
 
+
 const currentEntrySchema = z.object({
   id: z.number(),
   kind: z.enum(["anime", "manga"]),
@@ -621,6 +622,7 @@ const currentEntrySchema = z.object({
   nextEpisode: z.object({ episode: z.number(), airingAt: z.number() }).optional(),
   score: z.number().optional(),
   updatedAt: z.number().optional(),
+  status: z.enum(LIST_STATUSES).optional(),
 });
 
 const currentDataSchema = z.object({

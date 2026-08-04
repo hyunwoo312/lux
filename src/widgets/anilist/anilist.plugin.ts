@@ -1,5 +1,6 @@
 import { AnilistServiceIcon } from "@/components/icons/service-icons";
 import type { WidgetPlugin } from "@/widgets/core/types";
+import { ANILIST_ACCENT } from "@/widgets/anilist/types";
 import { AnilistWidget } from "@/widgets/anilist/AnilistWidget";
 import { AnilistConfig } from "@/widgets/anilist/AnilistConfig";
 import { AnilistHeaderActions } from "@/widgets/anilist/AnilistHeaderActions";
@@ -16,6 +17,6 @@ export const anilistPlugin: WidgetPlugin = {
   configComponent: AnilistConfig,
   statusComponent: AnilistTabs,
   headerActionComponent: AnilistHeaderActions,
-  accent: "cyan",
+  accent: ANILIST_ACCENT,
   removalNote: () => "Its settings will be reset — your AniList account stays connected.",
 };

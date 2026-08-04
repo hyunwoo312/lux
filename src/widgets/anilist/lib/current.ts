@@ -3,7 +3,6 @@ import type {
   CurrentSort,
   MediaKind,
   ScoreFormat,
-  WaitingTotals,
 } from "@/widgets/anilist/types";
 
 export function sortCurrentEntries(entries: CurrentEntry[], sort: CurrentSort): CurrentEntry[] {
@@ -32,16 +31,6 @@ export function computeBehind(
   return Math.max(0, latestAvailable - progress);
 }
 
-export function sumWaiting(entries: CurrentEntry[]): WaitingTotals {
-  return entries.reduce<WaitingTotals>(
-    (totals, entry) => {
-      if (entry.behind == null || entry.behind <= 0) return totals;
-      if (entry.kind === "anime") return { ...totals, episodes: totals.episodes + entry.behind };
-      return { ...totals, chapters: totals.chapters + entry.behind };
-    },
-    { episodes: 0, chapters: 0 },
-  );
-}
 
 export function progressLabel(entry: CurrentEntry): string {
   const unit = entry.kind === "anime" ? "Ep" : "Ch";
