@@ -84,6 +84,10 @@ function installScrollObserver() {
   } as unknown as typeof IntersectionObserver;
 }
 
+async function waitForEndOfListWatcher() {
+  await waitFor(() => expect(observed.length).toBeGreaterThan(0));
+}
+
 function scrollToBottom() {
   if (observed.length === 0) throw new Error("nothing is watching for the end of the list");
   for (const trigger of observed) trigger();
@@ -210,6 +214,7 @@ describe("LibraryView", () => {
     renderView();
     await screen.findByText("Title 1");
 
+    await waitForEndOfListWatcher();
     act(() => scrollToBottom());
 
     expect(await screen.findByText("Title 45")).toBeInTheDocument();
@@ -220,6 +225,7 @@ describe("LibraryView", () => {
     renderView();
     await screen.findByText("Title 1");
 
+    await waitForEndOfListWatcher();
     act(() => scrollToBottom());
 
     expect(await screen.findByText("45 titles")).toBeInTheDocument();
