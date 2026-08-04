@@ -181,7 +181,7 @@ export const useAnilistStore = create<AnilistStoreState>()(
         if (remainingMs > 0) {
           return { ok: false, remainingMs };
         }
-        invalidatePolledResource(anilistKeys.library(viewerId, titleLanguage, "all"));
+        invalidatePolledResource(anilistKeys.library(viewerId, titleLanguage));
         invalidatePolledResource(anilistKeys.unread(viewerId));
         invalidatePagedResource(anilistKeys.activity(viewerId, titleLanguage));
         invalidatePagedResource(anilistKeys.inbox(viewerId, titleLanguage));

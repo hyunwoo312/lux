@@ -11,6 +11,18 @@ if (hasDom) {
     disconnect() {}
   };
 
+  globalThis.IntersectionObserver ??= class {
+    readonly root = null;
+    readonly rootMargin = "";
+    readonly thresholds: number[] = [];
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords(): IntersectionObserverEntry[] {
+      return [];
+    }
+  } as unknown as typeof IntersectionObserver;
+
   window.matchMedia ??= ((query: string) => ({
     matches: false,
     media: query,

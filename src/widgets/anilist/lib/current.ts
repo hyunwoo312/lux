@@ -19,6 +19,16 @@ export function sortCurrentEntries(entries: CurrentEntry[], sort: CurrentSort): 
   return sorted;
 }
 
+export function dedupeEntries(entries: CurrentEntry[]): CurrentEntry[] {
+  const seen = new Set<string>();
+  return entries.filter((entry) => {
+    const key = `${entry.kind}-${entry.id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export function computeBehind(
   kind: MediaKind,
   progress: number,

@@ -1,14 +1,31 @@
 import { describe, expect, it } from "vitest";
-import { emptyListMessage, listFilterLabel, statusesFor } from "@/widgets/anilist/lib/list-status";
+import {
+  emptyListMessage,
+  listFilterLabel,
+  matchesListFilter,
+} from "@/widgets/anilist/lib/list-status";
 
-describe("statusesFor", () => {
+describe("matchesListFilter", () => {
   it("treats rewatching as in progress", () => {
-    expect(statusesFor("progress")).toEqual(["CURRENT", "REPEATING"]);
+    expect(matchesListFilter("progress", "CURRENT")).toBe(true);
+    expect(matchesListFilter("progress", "REPEATING")).toBe(true);
+    expect(matchesListFilter("progress", "PLANNING")).toBe(false);
   });
 
   it("maps each filter to its AniList statuses", () => {
-    expect(statusesFor("planned")).toEqual(["PLANNING"]);
-    expect(statusesFor("dropped")).toEqual(["DROPPED"]);
+    expect(matchesListFilter("planned", "PLANNING")).toBe(true);
+    expect(matchesListFilter("dropped", "DROPPED")).toBe(true);
+    expect(matchesListFilter("dropped", "PAUSED")).toBe(false);
+  });
+
+  it("admits every status under the all filter", () => {
+    expect(matchesListFilter("all", "COMPLETED")).toBe(true);
+    expect(matchesListFilter("all", "DROPPED")).toBe(true);
+  });
+
+  it("keeps a status-less entry under all but out of the narrower filters", () => {
+    expect(matchesListFilter("all", undefined)).toBe(true);
+    expect(matchesListFilter("progress", undefined)).toBe(false);
   });
 });
 

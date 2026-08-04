@@ -73,6 +73,12 @@ const dataCache = new Map<string, CacheEntry<unknown>>();
 const cacheVersions = new Map<string, number>();
 const cacheWatchers = new Map<string, Set<() => void>>();
 
+function storeEntry<T>(cacheKey: string, entry: CacheEntry<T>, persist: boolean): void {
+  dataCache.set(cacheKey, entry);
+  if (persist) writePersisted(cacheKey, entry);
+  bumpCacheVersion(cacheKey);
+}
+
 function bumpCacheVersion(cacheKey: string): void {
   cacheVersions.set(cacheKey, (cacheVersions.get(cacheKey) ?? 0) + 1);
   const watchers = cacheWatchers.get(cacheKey);
@@ -121,6 +127,14 @@ function writePersisted<T>(cacheKey: string, entry: CacheEntry<T>): void {
     localStorage.setItem(STORAGE_PREFIX + cacheKey, JSON.stringify(entry));
   } catch {
     return;
+  }
+}
+
+function hasPersisted(cacheKey: string): boolean {
+  try {
+    return localStorage.getItem(STORAGE_PREFIX + cacheKey) !== null;
+  } catch {
+    return false;
   }
 }
 
@@ -219,6 +233,15 @@ class SharedResource<T> {
     this.patch({ at: 0 });
   }
 
+  applyPatch(update: (data: T) => T): void {
+    if (!this.snapshot.hasLoaded || this.snapshot.data === undefined) return;
+    const data = update(this.snapshot.data);
+    if (this.config.cacheKey) {
+      storeEntry(this.config.cacheKey, { data, at: this.snapshot.at }, this.config.persist);
+    }
+    this.patch({ data });
+  }
+
   private patch(part: Partial<Snapshot<T>>): void {
     this.snapshot = { ...this.snapshot, ...part };
     for (const listener of this.listeners) listener(this.snapshot);
@@ -261,10 +284,7 @@ class SharedResource<T> {
         if (generation !== this.generation) return;
         const at = Date.now();
         if (this.config.cacheKey) {
-          const entry: CacheEntry<T> = { data, at };
-          dataCache.set(this.config.cacheKey, entry);
-          if (this.config.persist) writePersisted(this.config.cacheKey, entry);
-          bumpCacheVersion(this.config.cacheKey);
+          storeEntry(this.config.cacheKey, { data, at }, this.config.persist);
         }
         this.failureCount = 0;
         this.retryAt = 0;
@@ -303,6 +323,17 @@ function acquireResource<T>(
 
 export function peekPolledResource<T>(cacheKey: string): T | undefined {
   return (dataCache.get(cacheKey) as CacheEntry<T> | undefined)?.data;
+}
+
+export function patchPolledResource<T>(cacheKey: string, update: (data: T) => T): void {
+  const live = liveResources.get(cacheKey) as SharedResource<T> | undefined;
+  if (live) {
+    live.applyPatch(update);
+    return;
+  }
+  const entry = dataCache.get(cacheKey) as CacheEntry<T> | undefined;
+  if (!entry) return;
+  storeEntry(cacheKey, { data: update(entry.data), at: entry.at }, hasPersisted(cacheKey));
 }
 
 export function invalidatePolledResource(cacheKey: string): void {

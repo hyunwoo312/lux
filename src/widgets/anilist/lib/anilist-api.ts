@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { integrationFetch } from "@/integrations";
 import { rateLimitError } from "@/lib/rate-limit";
-import { computeBehind } from "@/widgets/anilist/lib/current";
+import { computeBehind, dedupeEntries } from "@/widgets/anilist/lib/current";
 import { buildDiscoverVariables } from "@/widgets/anilist/lib/discover";
 import {
-  ANILIST_MAX_ITEMS,
+  ANILIST_MAX_LIBRARY_ITEMS,
   ANILIST_PAGE_SIZE,
   type AnilistActivity,
   type AnilistNotification,
@@ -183,22 +183,21 @@ function collectEntries(
 export async function fetchList(
   userId: number,
   lang: TitleLanguage,
-  statuses: ListStatus[],
   signal?: AbortSignal,
 ): Promise<CurrentData> {
   if (!Number.isFinite(userId)) {
     throw new Error("AniList account is missing an id");
   }
   const parsed = currentSchema.safeParse(
-    await anilistGraphQL(LIST_QUERY, { userId, status: statuses }, true, signal),
+    await anilistGraphQL(LIST_QUERY, { userId, status: LIST_STATUSES }, true, signal),
   );
   if (!parsed.success) {
     throw new Error("Unexpected AniList list response");
   }
-  const entries = [
+  const entries = dedupeEntries([
     ...collectEntries("anime", parsed.data.data.anime, lang),
     ...collectEntries("manga", parsed.data.data.manga, lang),
-  ].slice(0, ANILIST_MAX_ITEMS);
+  ]).slice(0, ANILIST_MAX_LIBRARY_ITEMS);
   const scoreFormat =
     parsed.data.data.Viewer?.mediaListOptions?.scoreFormat ?? DEFAULT_SCORE_FORMAT;
   return { entries, scoreFormat };
@@ -627,7 +626,6 @@ const currentEntrySchema = z.object({
 
 const currentDataSchema = z.object({
   entries: z.array(currentEntrySchema),
-  waiting: z.object({ episodes: z.number(), chapters: z.number() }),
   scoreFormat: z.enum(SCORE_FORMATS).default(DEFAULT_SCORE_FORMAT),
 });
 

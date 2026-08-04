@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { backoffDelayMs, usePolledResource } from "@/widgets/core/usePolledResource";
+import {
+  backoffDelayMs,
+  patchPolledResource,
+  usePolledResource,
+} from "@/widgets/core/usePolledResource";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -132,6 +136,61 @@ describe("usePolledResource", () => {
     );
     expect(a.result.current.state).toEqual({ status: "success", data: [1, 2] });
     expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("patchPolledResource", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("updates a live resource without refetching", async () => {
+    const fetcher = vi.fn().mockResolvedValue({ value: 1 });
+    const { result } = renderHook(() =>
+      usePolledResource(fetcher, { cacheKey: "patch-live", intervalMs: 10_000 }),
+    );
+    await waitFor(() => expect(result.current.state.status).toBe("success"));
+
+    act(() =>
+      patchPolledResource<{ value: number }>("patch-live", (data) => ({
+        value: data.value + 1,
+      })),
+    );
+
+    expect(result.current.state).toEqual({ status: "success", data: { value: 2 } });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it("writes the patched value through to the persisted cache", async () => {
+    const fetcher = vi.fn().mockResolvedValue({ value: 1 });
+    const { result } = renderHook(() =>
+      usePolledResource(fetcher, { cacheKey: "patch-persist", persist: true, intervalMs: 10_000 }),
+    );
+    await waitFor(() => expect(result.current.state.status).toBe("success"));
+
+    act(() => patchPolledResource<{ value: number }>("patch-persist", () => ({ value: 7 })));
+
+    expect(localStorage.getItem("lux:polled:patch-persist")).toContain('"value":7');
+  });
+
+  it("still patches the cache after the last consumer unmounts", async () => {
+    const fetcher = vi.fn().mockResolvedValue({ value: 1 });
+    const { result, unmount } = renderHook(() =>
+      usePolledResource(fetcher, { cacheKey: "patch-detached", persist: true, intervalMs: 10_000 }),
+    );
+    await waitFor(() => expect(result.current.state.status).toBe("success"));
+    unmount();
+
+    patchPolledResource<{ value: number }>("patch-detached", (data) => ({ value: data.value + 1 }));
+
+    expect(localStorage.getItem("lux:polled:patch-detached")).toContain('"value":2');
+  });
+
+  it("ignores a key with no cached data", () => {
+    const update = vi.fn();
+
+    expect(() => patchPolledResource("patch-absent", update)).not.toThrow();
+    expect(update).not.toHaveBeenCalled();
   });
 });
 

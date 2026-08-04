@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   computeBehind,
+  dedupeEntries,
   formatAiringIn,
   formatScore,
   groupByAiringDay,
@@ -21,6 +22,43 @@ function entry(overrides: Partial<CurrentEntry>): CurrentEntry {
     ...overrides,
   };
 }
+
+describe("dedupeEntries", () => {
+  it("drops the copies a custom list adds for the same title", () => {
+    const result = dedupeEntries([
+      entry({ id: 20613, title: "Completed TV copy" }),
+      entry({ id: 20613, title: "Recommend copy" }),
+      entry({ id: 10719 }),
+    ]);
+
+    expect(result.map((e) => e.id)).toEqual([20613, 10719]);
+  });
+
+  it("keeps the first copy, which carries the status list's own row", () => {
+    const result = dedupeEntries([
+      entry({ id: 1, status: "COMPLETED" }),
+      entry({ id: 1, status: undefined }),
+    ]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.status).toBe("COMPLETED");
+  });
+
+  it("does not merge an anime and a manga that share a media id", () => {
+    const result = dedupeEntries([
+      entry({ id: 7, kind: "anime" }),
+      entry({ id: 7, kind: "manga" }),
+    ]);
+
+    expect(result).toHaveLength(2);
+  });
+
+  it("leaves a list without duplicates untouched", () => {
+    const entries = [entry({ id: 1 }), entry({ id: 2 }), entry({ id: 3 })];
+
+    expect(dedupeEntries(entries).map((e) => e.id)).toEqual([1, 2, 3]);
+  });
+});
 
 describe("computeBehind", () => {
   it("derives airing anime backlog from the next airing episode", () => {

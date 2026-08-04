@@ -1,7 +1,6 @@
 import type { ListFilter, ListStatus, MediaFilter } from "@/widgets/anilist/types";
 
-const FILTER_STATUSES: Record<ListFilter, ListStatus[]> = {
-  all: ["CURRENT", "REPEATING", "PLANNING", "COMPLETED", "PAUSED", "DROPPED"],
+const FILTER_STATUSES: Record<Exclude<ListFilter, "all">, ListStatus[]> = {
   progress: ["CURRENT", "REPEATING"],
   planned: ["PLANNING"],
   completed: ["COMPLETED"],
@@ -13,8 +12,9 @@ export function isInProgressStatus(status: ListStatus): boolean {
   return FILTER_STATUSES.progress.includes(status);
 }
 
-export function statusesFor(filter: ListFilter): ListStatus[] {
-  return FILTER_STATUSES[filter];
+export function matchesListFilter(filter: ListFilter, status: ListStatus | undefined): boolean {
+  if (filter === "all") return true;
+  return status != null && FILTER_STATUSES[filter].includes(status);
 }
 
 export function listFilterLabel(filter: ListFilter, media: MediaFilter): string {

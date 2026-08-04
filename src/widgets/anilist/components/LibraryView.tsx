@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Bookmark,
   CalendarClock,
@@ -27,7 +27,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ConfigSegmented } from "@/components/config/WidgetConfig";
 import { EASE_OUT_QUINT } from "@/lib/motion";
 import { getAccentVars } from "@/widgets/core/accent";
-import { usePolledResource, invalidatePolledResource } from "@/widgets/core/usePolledResource";
+import { usePolledResource, patchPolledResource } from "@/widgets/core/usePolledResource";
 import {
   fetchList,
   parseCachedCurrent,
@@ -46,7 +46,7 @@ import {
   emptyListMessage,
   isInProgressStatus,
   listFilterLabel,
-  statusesFor,
+  matchesListFilter,
 } from "@/widgets/anilist/lib/list-status";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
@@ -54,9 +54,8 @@ import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import {
-  ANILIST_ACCENT,
-} from "@/widgets/anilist/types";
+import { useInfiniteScroll } from "@/widgets/anilist/useInfiniteScroll";
+import { ANILIST_ACCENT, LIST_FILTERS } from "@/widgets/anilist/types";
 import type {
   CurrentData,
   CurrentEntry,
@@ -69,6 +68,8 @@ import type {
 
 const REFRESH_MS = 3 * 60 * 1000;
 const DAY_SECONDS = 86_400;
+const LIBRARY_PAGE_SIZE = 30;
+const WRITE_ERROR = "Couldn’t update your list. Try again.";
 
 const FILTER_OPTIONS: { value: MediaFilter; label: string }[] = [
   { value: "both", label: "All" },
@@ -99,15 +100,6 @@ const SORT_ICONS: Record<CurrentSort, LucideIcon> = {
   airing: CalendarClock,
 };
 
-const LIST_FILTER_ORDER: ListFilter[] = [
-  "all",
-  "progress",
-  "planned",
-  "completed",
-  "paused",
-  "dropped",
-];
-
 function showsInProgress(listFilter: ListFilter): boolean {
   return listFilter === "progress" || listFilter === "all";
 }
@@ -124,6 +116,14 @@ function resolveSort(sort: CurrentSort, listFilter: ListFilter): CurrentSort {
   return availableSorts(listFilter).some((option) => option.value === sort) ? sort : "score";
 }
 
+function withProgress(entry: CurrentEntry, progress: number): CurrentEntry {
+  return {
+    ...entry,
+    progress,
+    behind: computeBehind(entry.kind, progress, entry.total, entry.nextEpisode?.episode ?? null),
+  };
+}
+
 type LibraryViewProps = {
   enabled: boolean;
   userId: number;
@@ -133,13 +133,12 @@ type LibraryViewProps = {
 export function LibraryView({ enabled, userId, newTab }: LibraryViewProps) {
   const lang = useAnilist((d) => d.titleLanguage);
   const listFilter = useAnilist((d) => d.listFilter);
-  const statuses = statusesFor(listFilter);
   const { state, isRefreshing, refresh, lastSyncedAt } = usePolledResource(
-    (signal) => fetchList(userId, lang, statuses, signal),
+    (signal) => fetchList(userId, lang, signal),
     {
       enabled,
       intervalMs: REFRESH_MS,
-      cacheKey: anilistKeys.library(userId, lang, listFilter),
+      cacheKey: anilistKeys.library(userId, lang),
       isEmpty: (data) => data.entries.length === 0,
       persist: true,
       parsePersisted: parseCachedCurrent,
@@ -168,7 +167,7 @@ export function LibraryView({ enabled, userId, newTab }: LibraryViewProps) {
                 {loadErrorMessage(state.error, "Couldn’t load your list.")}
               </AnilistPlaceholder>
             ) : state.status === "empty" ? (
-              <AnilistPlaceholder>{emptyListMessage(listFilter)}</AnilistPlaceholder>
+              <AnilistPlaceholder>{emptyListMessage("all")}</AnilistPlaceholder>
             ) : (
               <ListBody data={state.data} newTab={newTab} lang={lang} userId={userId} />
             )}
@@ -192,7 +191,7 @@ function LibraryControls() {
   const effectiveSort = resolveSort(sort, listFilter);
   const statusOptions = useMemo(
     () =>
-      LIST_FILTER_ORDER.map((value) => ({
+      LIST_FILTERS.map((value) => ({
         value,
         label: listFilterLabel(value, filter),
         icon: LIST_FILTER_ICONS[value],
@@ -242,130 +241,161 @@ function ListBody({
   const filter = useAnilist((d) => d.mediaFilter);
   const sort = useAnilist((d) => d.currentSort);
   const listFilter = useAnilist((d) => d.listFilter);
-  const [promoted, setPromoted] = useState<Record<number, ListFilter>>({});
+  const [pending, setPending] = useState<Record<number, boolean>>({});
+  const [writeError, setWriteError] = useState("");
+  const pendingRef = useRef(pending);
+  pendingRef.current = pending;
 
   const effectiveSort = resolveSort(sort, listFilter);
   const isInProgress = (entry: CurrentEntry) =>
     entry.status ? isInProgressStatus(entry.status) : showsInProgress(listFilter);
 
+  const libraryKey = anilistKeys.library(userId, lang);
+  const patchEntry = useCallback(
+    (target: CurrentEntry, change: (entry: CurrentEntry) => CurrentEntry) => {
+      patchPolledResource<CurrentData>(libraryKey, (current) => ({
+        ...current,
+        entries: current.entries.map((entry) =>
+          entry.id === target.id && entry.kind === target.kind ? change(entry) : entry,
+        ),
+      }));
+    },
+    [libraryKey],
+  );
+
   const promote = useCallback(
     (entry: CurrentEntry) => {
       if (pendingRef.current[entry.id]) return;
       setPending((prev) => ({ ...prev, [entry.id]: true }));
+      setWriteError("");
       saveListStatus(entry.id, "CURRENT")
-        .then(() => {
-          setPromoted((prev) => ({ ...prev, [entry.id]: listFilter }));
-          invalidatePolledResource(anilistKeys.library(userId, lang, listFilter));
-        })
-        .catch(() => undefined)
+        .then((status) => patchEntry(entry, (item) => ({ ...item, status })))
+        .catch(() => setWriteError(WRITE_ERROR))
         .finally(() => setPending((prev) => ({ ...prev, [entry.id]: false })));
     },
-    [lang, userId, listFilter],
+    [patchEntry],
   );
-
-  const [progressOverrides, setProgressOverrides] = useState<Record<number, number>>({});
-  const overridesRef = useRef(progressOverrides);
-  overridesRef.current = progressOverrides;
-  const [pending, setPending] = useState<Record<number, boolean>>({});
-  const pendingRef = useRef(pending);
-  pendingRef.current = pending;
 
   const changeProgress = useCallback(
     (entry: CurrentEntry, delta: number) => {
-      const current = overridesRef.current[entry.id] ?? entry.progress;
-      const next = current + delta;
-      if (next < 0) return;
-      setProgressOverrides((prev) => ({ ...prev, [entry.id]: next }));
+      const next = entry.progress + delta;
+      if (next < 0 || pendingRef.current[entry.id]) return;
       setPending((prev) => ({ ...prev, [entry.id]: true }));
-      saveProgress(entry.id, next).then(
-        (saved) => {
-          setProgressOverrides((prev) => ({ ...prev, [entry.id]: saved }));
-          setPending((prev) => ({ ...prev, [entry.id]: false }));
-          invalidatePolledResource(anilistKeys.library(userId, lang, listFilter));
-        },
-        () => {
-          setProgressOverrides((prev) => ({ ...prev, [entry.id]: current }));
-          setPending((prev) => ({ ...prev, [entry.id]: false }));
-        },
-      );
+      setWriteError("");
+      patchEntry(entry, (item) => withProgress(item, next));
+      saveProgress(entry.id, next)
+        .then((saved) => patchEntry(entry, (item) => withProgress(item, saved)))
+        .catch(() => {
+          patchEntry(entry, (item) => withProgress(item, entry.progress));
+          setWriteError(WRITE_ERROR);
+        })
+        .finally(() => setPending((prev) => ({ ...prev, [entry.id]: false })));
     },
-    [lang, userId, listFilter],
+    [patchEntry],
   );
 
-  const entries = useMemo(() => {
-    const effective = data.entries.map((entry) => {
-      const override = progressOverrides[entry.id];
-      if (override == null) return entry;
-      return {
-        ...entry,
-        progress: override,
-        behind: computeBehind(
-          entry.kind,
-          override,
-          entry.total,
-          entry.nextEpisode?.episode ?? null,
-        ),
-      };
-    });
-    const filtered = effective.filter(
-      (entry) => (filter === "both" || entry.kind === filter) && promoted[entry.id] !== listFilter,
-    );
-    return sortCurrentEntries(filtered, effectiveSort);
-  }, [data.entries, progressOverrides, filter, effectiveSort, promoted, listFilter]);
-
-  const airingGroups = useMemo(
-    () => (effectiveSort === "airing" ? groupByAiringDay(entries) : []),
-    [entries, effectiveSort],
+  const statusMatched = useMemo(
+    () => data.entries.filter((entry) => matchesListFilter(listFilter, entry.status)),
+    [data.entries, listFilter],
   );
+
+  const entries = useMemo(
+    () =>
+      sortCurrentEntries(
+        statusMatched.filter((entry) => filter === "both" || entry.kind === filter),
+        effectiveSort,
+      ),
+    [statusMatched, filter, effectiveSort],
+  );
+
+  const grouped = effectiveSort === "airing";
+  const displayEntries = useMemo(
+    () => (grouped ? entries.filter((entry) => entry.nextEpisode) : entries),
+    [entries, grouped],
+  );
+
+  if (displayEntries.length === 0) {
+    const message = grouped
+      ? "Nothing airing soon."
+      : statusMatched.length === 0
+        ? emptyListMessage(listFilter)
+        : "Nothing here.";
+    return <AnilistPlaceholder>{message}</AnilistPlaceholder>;
+  }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
-        {entries.length === 0 ? (
-          <AnilistPlaceholder>Nothing here.</AnilistPlaceholder>
-        ) : effectiveSort === "airing" ? (
-          airingGroups.length === 0 ? (
-            <AnilistPlaceholder>Nothing airing soon.</AnilistPlaceholder>
-          ) : (
-            airingGroups.map((group) => (
-              <section key={group.key} className="flex flex-col gap-1">
-                <h4
-                  className="
-                    text-muted-foreground/70 text-2xs px-1 pt-1 font-bold tracking-wider uppercase
-                  "
-                >
-                  {group.label}
-                </h4>
-                {group.entries.map((entry) => (
-                  <CurrentRow
-                    key={`${entry.kind}-${entry.id}`}
-                    entry={entry}
-                    newTab={newTab}
-                    scoreFormat={data.scoreFormat}
-                    pending={pending[entry.id] ?? false}
-                    inProgress={isInProgress(entry)}
-                    onIncrement={() => changeProgress(entry, 1)}
-                    onDecrement={() => changeProgress(entry, -1)}
-                    onPromote={() => promote(entry)}
-                  />
-                ))}
-              </section>
-            ))
-          )
-        ) : (
-          entries.map((entry) => (
-            <CurrentRow
-              key={`${entry.kind}-${entry.id}`}
-              entry={entry}
-              newTab={newTab}
-              scoreFormat={data.scoreFormat}
-              pending={pending[entry.id] ?? false}
-              inProgress={isInProgress(entry)}
-              onIncrement={() => changeProgress(entry, 1)}
-              onDecrement={() => changeProgress(entry, -1)}
-              onPromote={() => promote(entry)}
-            />
-          ))
+    <div className="flex min-h-0 flex-1 flex-col">
+      {writeError && (
+        <p role="status" className="text-muted-foreground text-2xs shrink-0 px-2 py-1 text-center">
+          {writeError}
+        </p>
+      )}
+      <LibraryRows
+        key={`${listFilter}-${filter}-${effectiveSort}`}
+        entries={displayEntries}
+        grouped={grouped}
+        renderRow={(entry) => (
+          <CurrentRow
+            entry={entry}
+            newTab={newTab}
+            scoreFormat={data.scoreFormat}
+            pending={pending[entry.id] ?? false}
+            inProgress={isInProgress(entry)}
+            onIncrement={() => changeProgress(entry, 1)}
+            onDecrement={() => changeProgress(entry, -1)}
+            onPromote={() => promote(entry)}
+          />
         )}
+      />
+    </div>
+  );
+}
+
+function LibraryRows({
+  entries,
+  grouped,
+  renderRow,
+}: {
+  entries: CurrentEntry[];
+  grouped: boolean;
+  renderRow: (entry: CurrentEntry) => ReactNode;
+}) {
+  const [visibleCount, setVisibleCount] = useState(LIBRARY_PAGE_SIZE);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const visible = useMemo(() => entries.slice(0, visibleCount), [entries, visibleCount]);
+  const hasMore = visible.length < entries.length;
+  const loadMore = useCallback(() => setVisibleCount((count) => count + LIBRARY_PAGE_SIZE), []);
+  useInfiniteScroll(scrollRef, sentinelRef, hasMore, loadMore);
+
+  const groups = useMemo(() => (grouped ? groupByAiringDay(visible) : []), [grouped, visible]);
+
+  return (
+    <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+      {grouped
+        ? groups.map((group) => (
+            <section key={group.key} className="flex flex-col gap-1">
+              <h4
+                className="
+                  text-muted-foreground/70 text-2xs px-1 pt-1 font-bold tracking-wider uppercase
+                "
+              >
+                {group.label}
+              </h4>
+              {group.entries.map((entry) => (
+                <Fragment key={`${entry.kind}-${entry.id}`}>{renderRow(entry)}</Fragment>
+              ))}
+            </section>
+          ))
+        : visible.map((entry) => (
+            <Fragment key={`${entry.kind}-${entry.id}`}>{renderRow(entry)}</Fragment>
+          ))}
+      {entries.length > LIBRARY_PAGE_SIZE && (
+        <div ref={sentinelRef} className="text-muted-foreground/70 text-2xs py-2 text-center">
+          {hasMore ? `Showing ${visible.length} of ${entries.length}` : `${entries.length} titles`}
+        </div>
+      )}
     </div>
   );
 }

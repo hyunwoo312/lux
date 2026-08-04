@@ -1,4 +1,5 @@
-import { Fragment, useEffect, useRef, type ReactNode } from "react";
+import { Fragment, useRef, type ReactNode } from "react";
+import { useInfiniteScroll } from "@/widgets/anilist/useInfiniteScroll";
 
 type FeedListProps<T> = {
   items: T[];
@@ -21,22 +22,7 @@ export function FeedList<T>({
 }: FeedListProps<T>) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const loadMoreRef = useRef(loadMore);
-  loadMoreRef.current = loadMore;
-
-  useEffect(() => {
-    const root = scrollRef.current;
-    const target = sentinelRef.current;
-    if (!root || !target || !hasMore) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) loadMoreRef.current();
-      },
-      { root, rootMargin: "120px" },
-    );
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [hasMore]);
+  useInfiniteScroll(scrollRef, sentinelRef, hasMore, loadMore);
 
   return (
     <div className="flex h-full flex-col gap-2 p-1">
