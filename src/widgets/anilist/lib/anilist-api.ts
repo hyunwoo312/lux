@@ -2,12 +2,17 @@ import { z } from "zod";
 import { integrationFetch } from "@/integrations";
 import { rateLimitError } from "@/lib/rate-limit";
 import { computeBehind, sumWaiting } from "@/widgets/anilist/lib/current";
+import { buildDiscoverVariables } from "@/widgets/anilist/lib/discover";
 import {
   ANILIST_MAX_ITEMS,
   ANILIST_PAGE_SIZE,
   type AnilistActivity,
   type AnilistNotification,
+  type DiscoverFeed,
   type DiscoverMedia,
+  type DiscoverType,
+  LIST_STATUSES,
+  type ListStatus,
   SCORE_FORMATS,
   type CurrentData,
   type CurrentEntry,
@@ -221,6 +226,30 @@ export async function saveProgress(
     throw new Error("Couldn't update progress");
   }
   return parsed.data.data.SaveMediaListEntry.progress ?? progress;
+}
+
+const SAVE_STATUS_MUTATION = `mutation ($mediaId: Int!, $status: MediaListStatus!) {
+  SaveMediaListEntry(mediaId: $mediaId, status: $status) { id status }
+}`;
+
+const saveStatusSchema = z.object({
+  data: z.object({
+    SaveMediaListEntry: z.object({ status: z.enum(LIST_STATUSES).nullable() }).nullable(),
+  }),
+});
+
+export async function saveListStatus(
+  mediaId: number,
+  status: ListStatus,
+  signal?: AbortSignal,
+): Promise<ListStatus> {
+  const parsed = saveStatusSchema.safeParse(
+    await anilistGraphQL(SAVE_STATUS_MUTATION, { mediaId, status }, true, signal),
+  );
+  if (!parsed.success || !parsed.data.data.SaveMediaListEntry) {
+    throw new Error("Couldn't update your list");
+  }
+  return parsed.data.data.SaveMediaListEntry.status ?? status;
 }
 
 const UNREAD_QUERY = `query { Viewer { unreadNotificationCount } }`;
@@ -504,22 +533,55 @@ export async function toggleActivityLike(id: number, signal?: AbortSignal): Prom
   return parsed.data.data.ToggleLikeV2.isLiked ?? false;
 }
 
-const DISCOVER_QUERY = `query {
+const DISCOVER_QUERY = `query (
+  $type: MediaType!
+  $sort: [MediaSort]
+  $season: MediaSeason
+  $seasonYear: Int
+  $status: MediaStatus
+) {
   Page(page: 1, perPage: 30) {
-    media(sort: TRENDING_DESC, type: ANIME, isAdult: false) { ...mediaFields }
+    media(
+      sort: $sort
+      type: $type
+      season: $season
+      seasonYear: $seasonYear
+      status: $status
+      isAdult: false
+    ) {
+      ...mediaFields
+      averageScore
+      genres
+      mediaListEntry { status }
+    }
   }
 }
 ${MEDIA_FRAGMENT}`;
 
+const discoverWireSchema = mediaSchema.extend({
+  averageScore: z.number().nullable().optional(),
+  genres: z.array(z.string()).nullable().optional(),
+  mediaListEntry: z
+    .object({ status: z.enum(LIST_STATUSES).nullable() })
+    .nullable()
+    .optional(),
+});
+
 const discoverSchema = z.object({
-  data: z.object({ Page: z.object({ media: z.array(mediaSchema) }).nullable() }),
+  data: z.object({ Page: z.object({ media: z.array(discoverWireSchema) }).nullable() }),
 });
 
 export async function fetchDiscover(
   lang: TitleLanguage,
+  feed: DiscoverFeed,
+  type: DiscoverType,
+  authed: boolean,
   signal?: AbortSignal,
 ): Promise<DiscoverMedia[]> {
-  const parsed = discoverSchema.safeParse(await anilistGraphQL(DISCOVER_QUERY, {}, false, signal));
+  const variables = buildDiscoverVariables(feed, type, new Date());
+  const parsed = discoverSchema.safeParse(
+    await anilistGraphQL(DISCOVER_QUERY, variables, authed, signal),
+  );
   if (!parsed.success) {
     throw new Error("Unexpected AniList discover response");
   }
@@ -530,12 +592,16 @@ export async function fetchDiscover(
       return [
         {
           id: media.id,
-          kind: "anime" as const,
+          kind: type,
           title,
           coverImage: media.coverImage?.medium ?? undefined,
           coverColor: media.coverImage?.color ?? undefined,
           format: media.format ?? undefined,
           siteUrl: media.siteUrl,
+          averageScore: media.averageScore ?? undefined,
+          genres: media.genres?.slice(0, 2) ?? undefined,
+          episodes: media.episodes ?? undefined,
+          listStatus: media.mediaListEntry?.status ?? undefined,
         },
       ];
     }) ?? []
@@ -571,6 +637,10 @@ const discoverMediaSchema = z.object({
   coverColor: z.string().optional(),
   format: z.string().optional(),
   siteUrl: z.string(),
+  averageScore: z.number().optional(),
+  genres: z.array(z.string()).optional(),
+  episodes: z.number().optional(),
+  listStatus: z.enum(LIST_STATUSES).optional(),
 });
 
 const notificationSchema = z.object({

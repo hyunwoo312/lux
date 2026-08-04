@@ -13,6 +13,10 @@ import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import {
   ANILIST_TABS,
   CURRENT_SORTS,
+  DISCOVER_FEEDS,
+  DISCOVER_TYPES,
+  type DiscoverFeed,
+  type DiscoverType,
   MEDIA_FILTERS,
   TITLE_LANGUAGES,
   type AnilistTab,
@@ -31,6 +35,8 @@ type AnilistData = {
   currentSort: CurrentSort;
   titleLanguage: TitleLanguage;
   openBehavior: OpenBehavior;
+  discoverFeed: DiscoverFeed;
+  discoverType: DiscoverType;
 };
 
 type AnilistStoreState = {
@@ -45,6 +51,8 @@ type AnilistStoreState = {
   setCurrentSort: (instanceId: string, currentSort: CurrentSort) => void;
   setTitleLanguage: (instanceId: string, titleLanguage: TitleLanguage) => void;
   setOpenBehavior: (instanceId: string, openBehavior: OpenBehavior) => void;
+  setDiscoverFeed: (instanceId: string, discoverFeed: DiscoverFeed) => void;
+  setDiscoverType: (instanceId: string, discoverType: DiscoverType) => void;
   removeInstance: (instanceId: string) => void;
   setLastSeenActivity: (createdAt: number) => void;
   setSyncing: (syncing: boolean) => void;
@@ -58,6 +66,8 @@ const DEFAULT_DATA: AnilistData = {
   currentSort: "waiting",
   titleLanguage: "english",
   openBehavior: "currentTab",
+  discoverFeed: "trending",
+  discoverType: "anime",
 };
 
 const configSchema = z.object({
@@ -66,6 +76,8 @@ const configSchema = z.object({
   currentSort: z.enum(CURRENT_SORTS).default("waiting"),
   titleLanguage: z.enum(TITLE_LANGUAGES).default("english"),
   openBehavior: z.enum(["currentTab", "newTab"]).default("currentTab"),
+  discoverFeed: z.enum(DISCOVER_FEEDS).default("trending"),
+  discoverType: z.enum(DISCOVER_TYPES).default("anime"),
 });
 
 const legacySchema = configSchema.extend({
@@ -121,6 +133,10 @@ export const useAnilistStore = create<AnilistStoreState>()(
         set((state) => update(state, instanceId, (data) => ({ ...data, currentSort }))),
       setTitleLanguage: (instanceId, titleLanguage) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, titleLanguage }))),
+      setDiscoverFeed: (instanceId, discoverFeed) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, discoverFeed }))),
+      setDiscoverType: (instanceId, discoverType) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, discoverType }))),
       setOpenBehavior: (instanceId, openBehavior) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, openBehavior }))),
       removeInstance: (instanceId) =>
@@ -171,6 +187,8 @@ export const useAnilistStore = create<AnilistStoreState>()(
             activeTab: data.activeTab,
             mediaFilter: data.mediaFilter,
             currentSort: data.currentSort,
+            discoverFeed: data.discoverFeed,
+            discoverType: data.discoverType,
             titleLanguage: data.titleLanguage,
             openBehavior: data.openBehavior,
           };

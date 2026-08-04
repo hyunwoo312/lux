@@ -24,6 +24,22 @@ export type ScoreFormat = (typeof SCORE_FORMATS)[number];
 
 export type MediaKind = "anime" | "manga";
 
+export const DISCOVER_FEEDS = ["trending", "season", "top", "upcoming"] as const;
+export type DiscoverFeed = (typeof DISCOVER_FEEDS)[number];
+
+export const DISCOVER_TYPES = ["anime", "manga"] as const;
+export type DiscoverType = (typeof DISCOVER_TYPES)[number];
+
+export const LIST_STATUSES = [
+  "CURRENT",
+  "PLANNING",
+  "COMPLETED",
+  "DROPPED",
+  "PAUSED",
+  "REPEATING",
+] as const;
+export type ListStatus = (typeof LIST_STATUSES)[number];
+
 export type CurrentEntry = {
   id: number;
   kind: MediaKind;
@@ -77,4 +93,8 @@ export type DiscoverMedia = {
   coverColor?: string;
   format?: string;
   siteUrl: string;
+  averageScore?: number;
+  genres?: string[];
+  episodes?: number;
+  listStatus?: ListStatus;
 };

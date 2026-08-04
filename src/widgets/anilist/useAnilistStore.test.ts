@@ -66,6 +66,8 @@ describe("useAnilistStore", () => {
             currentSort: "score",
             titleLanguage: "romaji",
             openBehavior: "currentTab",
+            discoverFeed: "trending",
+            discoverType: "anime",
           },
         },
         lastSeenActivityAt: 100,
