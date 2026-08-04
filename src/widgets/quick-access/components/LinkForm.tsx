@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { getAccentVars } from "@/widgets/core/accent";
+import { QUICK_ACCESS_ACCENT } from "@/widgets/quick-access/types";
 import { Favicon } from "@/widgets/quick-access/components/Favicon";
 import { useHistorySuggestions } from "@/widgets/quick-access/hooks/useHistorySuggestions";
 import { hostnameOf, keyOf } from "@/widgets/quick-access/lib/url";
@@ -109,6 +111,7 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
           onOpenAutoFocus={(event) => event.preventDefault()}
           onCloseAutoFocus={(event) => event.preventDefault()}
           className="max-h-60 w-[var(--radix-popover-trigger-width)] overflow-y-auto p-1"
+          style={getAccentVars(QUICK_ACCESS_ACCENT)}
         >
           <ul>
             {matches.map((item, index) => {
