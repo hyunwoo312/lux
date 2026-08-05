@@ -54,7 +54,7 @@ import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import { useInfiniteScroll } from "@/widgets/anilist/useInfiniteScroll";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { ANILIST_ACCENT, LIST_FILTERS } from "@/widgets/anilist/types";
 import type {
   CurrentData,

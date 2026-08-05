@@ -1,5 +1,5 @@
 import { Fragment, useRef, type ReactNode } from "react";
-import { useInfiniteScroll } from "@/widgets/anilist/useInfiniteScroll";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 
 type FeedListProps<T> = {
   items: T[];
