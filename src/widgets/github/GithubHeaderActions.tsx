@@ -1,7 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useIntegrationStore } from "@/integrations";
+import { GithubProfileLink } from "@/widgets/github/GithubProfileLink";
 import { GithubRefreshButton } from "@/widgets/github/GithubRefreshButton";
-import { GithubViewToggle } from "@/widgets/github/GithubViewToggle";
 
 export function GithubHeaderActions() {
   const reduced = useReducedMotion();
@@ -11,6 +11,7 @@ export function GithubHeaderActions() {
 
   return (
     <div className="flex items-center gap-0.5">
+      <GithubProfileLink />
       <AnimatePresence initial={false}>
         {connected && (
           <motion.div
@@ -25,7 +26,6 @@ export function GithubHeaderActions() {
           </motion.div>
         )}
       </AnimatePresence>
-      <GithubViewToggle />
     </div>
   );
 }

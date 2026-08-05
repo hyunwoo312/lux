@@ -131,6 +131,7 @@ export const useGithubStore = create<GithubStoreState>()(
         }
         invalidatePolledResource("github:contributions");
         invalidatePolledResource("github:inbox");
+        invalidatePolledResource("github:releases");
         set({ syncNonce: get().syncNonce + 1, lastSyncAt: Date.now() });
         return { ok: true, remainingMs: 0 };
       },

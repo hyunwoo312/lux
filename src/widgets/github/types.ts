@@ -1,4 +1,4 @@
-export const GITHUB_VIEWS = ["contributions", "inbox"] as const;
+export const GITHUB_VIEWS = ["contributions", "inbox", "releases"] as const;
 export type GithubView = (typeof GITHUB_VIEWS)[number];
 
 export type ContributionLevel = 0 | 1 | 2 | 3 | 4;
@@ -79,6 +79,23 @@ export type InboxIssue = {
   isPrivate: boolean;
   updatedAt: string;
   kind: IssueKind;
+};
+
+export type Release = {
+  id: string;
+  repo: string;
+  isPrivate: boolean;
+  name: string;
+  tagName: string;
+  url: string;
+  publishedAt: string;
+  isPrerelease: boolean;
+};
+
+export type ReleasesData = {
+  releases: Release[];
+  watchedCount: number;
+  watchedScanned: number;
 };
 
 export type InboxData = {

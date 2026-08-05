@@ -44,4 +44,12 @@ describe("GithubWidget signed-out preview", () => {
 
     expect(screen.getByText("Review requests")).toBeInTheDocument();
   });
+
+  it("previews watched releases with sample data when signed out", () => {
+    patchView("releases");
+    renderWidget();
+
+    expect(screen.getByText("acme/api")).toBeInTheDocument();
+    expect(screen.getByText("Pre-release")).toBeInTheDocument();
+  });
 });

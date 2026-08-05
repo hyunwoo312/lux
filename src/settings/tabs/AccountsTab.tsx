@@ -50,7 +50,7 @@ const PROVIDERS: ProviderMeta[] = [
   {
     id: "github",
     label: "GitHub",
-    description: "Reads your profile, notifications, and private repos.",
+    description: "Reads your profile, notifications, watched repos, and private repos.",
     icon: GitHubServiceIcon,
   },
   {

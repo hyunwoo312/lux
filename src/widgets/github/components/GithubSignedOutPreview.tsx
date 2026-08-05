@@ -1,6 +1,7 @@
 import { useElementSize } from "@/hooks/useElementSize";
 import { Heatmap, Stats } from "@/widgets/github/components/ContributionsChart";
 import { InboxList } from "@/widgets/github/components/InboxView";
+import { ReleaseList } from "@/widgets/github/components/ReleasesView";
 import { buildContributions } from "@/widgets/github/lib/contributions";
 import { useGithub } from "@/widgets/github/useGithubStore";
 import type {
@@ -8,6 +9,7 @@ import type {
   ContributionLevel,
   ContributionsData,
   InboxData,
+  ReleasesData,
 } from "@/widgets/github/types";
 
 const WEEKS = 53;
@@ -138,6 +140,43 @@ const SAMPLE_INBOX: InboxData = {
   ],
 };
 
+const SAMPLE_RELEASES: ReleasesData = {
+  watchedCount: 24,
+  watchedScanned: 24,
+  releases: [
+    {
+      id: "r1",
+      repo: "acme/api",
+      isPrivate: false,
+      name: "Streaming responses",
+      tagName: "v4.2.0",
+      url: "#",
+      publishedAt: hoursAgo(5),
+      isPrerelease: false,
+    },
+    {
+      id: "r2",
+      repo: "acme/cli",
+      isPrivate: false,
+      name: "v2.0.0-rc.1",
+      tagName: "v2.0.0-rc.1",
+      url: "#",
+      publishedAt: hoursAgo(31),
+      isPrerelease: true,
+    },
+    {
+      id: "r3",
+      repo: "acme/web",
+      isPrivate: false,
+      name: "Grid performance pass",
+      tagName: "v1.9.3",
+      url: "#",
+      publishedAt: hoursAgo(96),
+      isPrerelease: false,
+    },
+  ],
+};
+
 function SampleContributions() {
   const [ref, size] = useElementSize<HTMLDivElement>();
   return (
@@ -153,9 +192,7 @@ function SampleContributions() {
 export function GithubSignedOutPreview() {
   const view = useGithub((d) => d.view);
 
-  return view === "inbox" ? (
-    <InboxList data={SAMPLE_INBOX} showPrivate newTab={false} />
-  ) : (
-    <SampleContributions />
-  );
+  if (view === "inbox") return <InboxList data={SAMPLE_INBOX} showPrivate newTab={false} />;
+  if (view === "releases") return <ReleaseList data={SAMPLE_RELEASES} showPrivate newTab={false} />;
+  return <SampleContributions />;
 }

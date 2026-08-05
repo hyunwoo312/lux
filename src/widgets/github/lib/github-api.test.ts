@@ -7,8 +7,10 @@ import { RateLimitError } from "@/lib/rate-limit";
 import {
   fetchContributions,
   fetchInbox,
+  fetchReleases,
   markAllGithubNotificationsRead,
   markGithubThreadRead,
+  parseCachedReleases,
   unsubscribeGithubThread,
 } from "@/widgets/github/lib/github-api";
 
@@ -71,6 +73,138 @@ describe("fetchInbox — assigned issues & mentions", () => {
       ["1", "assigned", false],
       ["2", "mention", true],
     ]);
+  });
+});
+
+type SampleRelease = {
+  name?: string | null;
+  tagName: string;
+  publishedAt: string | null;
+  isPrerelease?: boolean;
+};
+
+function watchedRepo(name: string, release: SampleRelease | null, isPrivate = false) {
+  return {
+    id: `repo-${name}`,
+    nameWithOwner: name,
+    isPrivate,
+    latestRelease: release
+      ? {
+          name: release.name ?? null,
+          tagName: release.tagName,
+          url: `https://github.com/${name}/releases/tag/${release.tagName}`,
+          publishedAt: release.publishedAt,
+          isPrerelease: release.isPrerelease ?? false,
+        }
+      : null,
+  };
+}
+
+function watchingResponse(nodes: unknown[], totalCount = nodes.length) {
+  return jsonResponse({ data: { viewer: { watching: { totalCount, nodes } } } });
+}
+
+describe("fetchReleases", () => {
+  it("returns the newest release first regardless of how repositories are ordered", async () => {
+    mockFetch.mockResolvedValue(
+      watchingResponse([
+        watchedRepo("o/old", { tagName: "v1.0.0", publishedAt: "2026-01-01T00:00:00Z" }),
+        watchedRepo("o/new", { tagName: "v3.0.0", publishedAt: "2026-07-30T00:00:00Z" }),
+        watchedRepo("o/mid", { tagName: "v2.0.0", publishedAt: "2026-04-15T00:00:00Z" }),
+      ]),
+    );
+
+    const { releases } = await fetchReleases();
+
+    expect(releases.map((release) => release.repo)).toEqual(["o/new", "o/mid", "o/old"]);
+  });
+
+  it("drops watched repositories that have never published a release", async () => {
+    mockFetch.mockResolvedValue(
+      watchingResponse([
+        watchedRepo("o/quiet", null),
+        watchedRepo("o/shipping", { tagName: "v1.0.0", publishedAt: "2026-07-01T00:00:00Z" }),
+      ]),
+    );
+
+    const { releases } = await fetchReleases();
+
+    expect(releases.map((release) => release.repo)).toEqual(["o/shipping"]);
+  });
+
+  it("drops an unpublished release rather than sorting it as undated", async () => {
+    mockFetch.mockResolvedValue(
+      watchingResponse([
+        watchedRepo("o/draft", { tagName: "v2.0.0", publishedAt: null }),
+        watchedRepo("o/live", { tagName: "v1.0.0", publishedAt: "2026-07-01T00:00:00Z" }),
+      ]),
+    );
+
+    const { releases } = await fetchReleases();
+
+    expect(releases.map((release) => release.repo)).toEqual(["o/live"]);
+  });
+
+  it("keeps the rest of the list when one repository is malformed", async () => {
+    mockFetch.mockResolvedValue(
+      watchingResponse([
+        { id: "broken" },
+        null,
+        watchedRepo("o/fine", { tagName: "v1.0.0", publishedAt: "2026-07-01T00:00:00Z" }),
+      ]),
+    );
+
+    const { releases } = await fetchReleases();
+
+    expect(releases.map((release) => release.repo)).toEqual(["o/fine"]);
+  });
+
+  it("falls back to the tag when a release has no name", async () => {
+    mockFetch.mockResolvedValue(
+      watchingResponse([
+        watchedRepo("o/a", { name: "  ", tagName: "v9.9.9", publishedAt: "2026-07-01T00:00:00Z" }),
+      ]),
+    );
+
+    const { releases } = await fetchReleases();
+
+    expect(releases[0]?.name).toBe("v9.9.9");
+  });
+
+  it("reports how much of the watch list was scanned so the cap can be surfaced", async () => {
+    mockFetch.mockResolvedValue(
+      watchingResponse(
+        [watchedRepo("o/a", { tagName: "v1.0.0", publishedAt: "2026-07-01T00:00:00Z" })],
+        240,
+      ),
+    );
+
+    const data = await fetchReleases();
+
+    expect(data.watchedCount).toBe(240);
+    expect(data.watchedScanned).toBe(1);
+  });
+
+  it("throws when the response is not a watch list", async () => {
+    mockFetch.mockResolvedValue(jsonResponse({ data: { viewer: {} } }));
+    await expect(fetchReleases()).rejects.toThrow("Unexpected GitHub releases response");
+  });
+});
+
+describe("parseCachedReleases", () => {
+  it("round-trips a fetched payload", async () => {
+    mockFetch.mockResolvedValue(
+      watchingResponse([
+        watchedRepo("o/a", { tagName: "v1.0.0", publishedAt: "2026-07-01T00:00:00Z" }),
+      ]),
+    );
+    const data = await fetchReleases();
+
+    expect(parseCachedReleases(JSON.parse(JSON.stringify(data)))).toEqual(data);
+  });
+
+  it("rejects a cache entry that is missing the watch counts", () => {
+    expect(parseCachedReleases({ releases: [] })).toBeNull();
   });
 });
 

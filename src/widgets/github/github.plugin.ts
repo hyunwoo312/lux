@@ -5,18 +5,18 @@ import type { WidgetPlugin } from "@/widgets/core/types";
 import { GithubWidget } from "@/widgets/github/GithubWidget";
 import { GithubConfig } from "@/widgets/github/GithubConfig";
 import { GithubHeaderActions } from "@/widgets/github/GithubHeaderActions";
-import { GithubProfileLink } from "@/widgets/github/GithubProfileLink";
+import { GithubTabs } from "@/widgets/github/GithubTabs";
 
 export const githubPlugin: WidgetPlugin = {
   type: "github",
   name: "GitHub",
-  description: "Your contributions and notification inbox",
+  description: "Your contributions, notification inbox and watched releases",
   icon: GitHubServiceIcon,
   brandIcon: true,
   defaultLayout: { w: 8, h: 7, minW: 5, minH: 5, maxW: 10, maxH: 10 },
   component: GithubWidget,
   configComponent: GithubConfig,
-  statusComponent: GithubProfileLink,
+  statusComponent: GithubTabs,
   headerActionComponent: GithubHeaderActions,
   accent: "violet",
   useLock: () => {
