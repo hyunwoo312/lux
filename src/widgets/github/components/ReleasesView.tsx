@@ -27,7 +27,9 @@ export function ReleasesView({ enabled, showPrivate }: { enabled: boolean; showP
   if (state.status === "loading") return <GithubPlaceholder>Loading releases…</GithubPlaceholder>;
   if (state.status === "error")
     return (
-      <GithubPlaceholder>{loadErrorMessage(state.error, "Couldn’t load releases.")}</GithubPlaceholder>
+      <GithubPlaceholder>
+        {loadErrorMessage(state.error, "Couldn’t load releases.")}
+      </GithubPlaceholder>
     );
   if (state.status === "empty")
     return <GithubPlaceholder>Watch a repository to follow its releases.</GithubPlaceholder>;
@@ -62,7 +64,7 @@ export function ReleaseList({
   return (
     <div className="flex h-full flex-col gap-0.5 overflow-y-auto p-1">
       {releases.map((release) => (
-        <ReleaseRow key={release.id} release={release} newTab={newTab} />
+        <ReleaseRow key={release.repo} release={release} newTab={newTab} />
       ))}
       {data.watchedCount > data.watchedScanned && (
         <p className="text-muted-foreground/70 text-2xs shrink-0 px-2 py-1">

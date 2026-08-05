@@ -85,7 +85,6 @@ type SampleRelease = {
 
 function watchedRepo(name: string, release: SampleRelease | null, isPrivate = false) {
   return {
-    id: `repo-${name}`,
     nameWithOwner: name,
     isPrivate,
     latestRelease: release
@@ -148,7 +147,7 @@ describe("fetchReleases", () => {
   it("keeps the rest of the list when one repository is malformed", async () => {
     mockFetch.mockResolvedValue(
       watchingResponse([
-        { id: "broken" },
+        { nameWithOwner: 42 },
         null,
         watchedRepo("o/fine", { tagName: "v1.0.0", publishedAt: "2026-07-01T00:00:00Z" }),
       ]),

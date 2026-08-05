@@ -502,7 +502,6 @@ const RELEASES_QUERY = `query {
     watching(first: ${WATCHED_REPO_LIMIT}, orderBy: { field: PUSHED_AT, direction: DESC }) {
       totalCount
       nodes {
-        id
         nameWithOwner
         isPrivate
         latestRelease { name tagName url publishedAt isPrerelease }
@@ -512,7 +511,6 @@ const RELEASES_QUERY = `query {
 }`;
 
 const watchedRepoSchema = z.object({
-  id: z.string(),
   nameWithOwner: z.string(),
   isPrivate: z.boolean(),
   latestRelease: z
@@ -541,7 +539,6 @@ function toRelease(repo: z.infer<typeof watchedRepoSchema>): Release | null {
   const release = repo.latestRelease;
   if (!release?.publishedAt) return null;
   return {
-    id: repo.id,
     repo: repo.nameWithOwner,
     isPrivate: repo.isPrivate,
     name: release.name?.trim() || release.tagName,
@@ -569,7 +566,6 @@ export async function fetchReleases(signal?: AbortSignal): Promise<ReleasesData>
 }
 
 const releaseSchema = z.object({
-  id: z.string(),
   repo: z.string(),
   isPrivate: z.boolean(),
   name: z.string(),

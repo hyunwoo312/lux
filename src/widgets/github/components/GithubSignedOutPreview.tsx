@@ -145,7 +145,6 @@ const SAMPLE_RELEASES: ReleasesData = {
   watchedScanned: 24,
   releases: [
     {
-      id: "r1",
       repo: "acme/api",
       isPrivate: false,
       name: "Streaming responses",
@@ -155,7 +154,6 @@ const SAMPLE_RELEASES: ReleasesData = {
       isPrerelease: false,
     },
     {
-      id: "r2",
       repo: "acme/cli",
       isPrivate: false,
       name: "v2.0.0-rc.1",
@@ -165,7 +163,6 @@ const SAMPLE_RELEASES: ReleasesData = {
       isPrerelease: true,
     },
     {
-      id: "r3",
       repo: "acme/web",
       isPrivate: false,
       name: "Grid performance pass",

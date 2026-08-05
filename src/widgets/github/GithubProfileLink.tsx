@@ -7,7 +7,11 @@ export function GithubProfileLink() {
   const newTab = useGithub((d) => d.openBehavior === "newTab");
 
   if (!login) {
-    return <GitHubServiceIcon className="size-4" />;
+    return (
+      <span className="inline-flex size-7 items-center justify-center">
+        <GitHubServiceIcon className="size-4" />
+      </span>
+    );
   }
 
   return (
@@ -17,7 +21,10 @@ export function GithubProfileLink() {
         target={newTab ? "_blank" : undefined}
         rel="noreferrer"
         aria-label="Open GitHub profile"
-        className="inline-flex opacity-80 transition-opacity hover:opacity-100"
+        className="
+          inline-flex size-7 items-center justify-center rounded-sm opacity-80 transition-opacity
+          hover:opacity-100
+        "
       >
         <GitHubServiceIcon className="size-4" />
       </a>

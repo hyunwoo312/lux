@@ -82,7 +82,6 @@ export type InboxIssue = {
 };
 
 export type Release = {
-  id: string;
   repo: string;
   isPrivate: boolean;
   name: string;

@@ -6,7 +6,6 @@ import type { Release, ReleasesData } from "@/widgets/github/types";
 
 function release(overrides: Partial<Release> = {}): Release {
   return {
-    id: "r1",
     repo: "o/web",
     isPrivate: false,
     name: "Grid pass",
@@ -45,10 +44,7 @@ describe("ReleaseList", () => {
   it("marks a pre-release and leaves a stable release unmarked", () => {
     renderList(
       data({
-        releases: [
-          release({ id: "r1", repo: "o/stable" }),
-          release({ id: "r2", repo: "o/beta", isPrerelease: true }),
-        ],
+        releases: [release({ repo: "o/stable" }), release({ repo: "o/beta", isPrerelease: true })],
       }),
     );
 
