@@ -1,0 +1,155 @@
+import { useEffect, useRef, useState } from "react";
+import { ChevronRight, Folder } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { BrowserMessage } from "@/widgets/quick-access/components/BrowserMessage";
+import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
+import { useBookmarkTree } from "@/widgets/quick-access/hooks/useBrowserItems";
+import { useItemActions } from "@/widgets/quick-access/hooks/useItemActions";
+import { resolveFolderTrail } from "@/widgets/quick-access/browser";
+import {
+  QA_GRID_CONTAINER,
+  QA_LIST_CONTAINER,
+  qaTileClass,
+} from "@/widgets/quick-access/lib/itemStyles";
+import type { BookmarkFolder, QuickAccessView } from "@/widgets/quick-access/types";
+import { useQuickAccess } from "@/widgets/quick-access/useQuickAccessStore";
+
+export function BookmarksView({ editing }: { editing: boolean }) {
+  const state = useBookmarkTree();
+  const view = useQuickAccess((d) => d.view);
+  const { pinnedUrls, open, togglePin } = useItemActions();
+  const [path, setPath] = useState<string[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const folderId = path[path.length - 1] ?? "";
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  }, [folderId]);
+
+  if (state.status === "loading") return <BrowserMessage>Loading bookmarks…</BrowserMessage>;
+  if (state.status === "error") return <BrowserMessage>Couldn’t load bookmarks</BrowserMessage>;
+
+  const trail = resolveFolderTrail(state.root, path);
+  const current = trail[trail.length - 1] ?? state.root;
+  const reachedPath = trail.slice(1).map((folder) => folder.id);
+  const isEmpty = current.folders.length === 0 && current.items.length === 0;
+
+  return (
+    <div className="flex h-full flex-col">
+      {trail.length > 1 && (
+        <Breadcrumb trail={trail} onNavigate={(depth) => setPath(reachedPath.slice(0, depth))} />
+      )}
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+        {isEmpty ? (
+          <BrowserMessage>Nothing here yet</BrowserMessage>
+        ) : (
+          <>
+            {current.folders.length > 0 && (
+              <ul className={view === "grid" ? QA_GRID_CONTAINER : QA_LIST_CONTAINER}>
+                {current.folders.map((folder) => (
+                  <FolderTile
+                    key={folder.id}
+                    folder={folder}
+                    view={view}
+                    onOpen={() => setPath([...reachedPath, folder.id])}
+                  />
+                ))}
+              </ul>
+            )}
+            {current.items.length > 0 && (
+              <BrowserList
+                key={current.id}
+                items={current.items}
+                view={view}
+                animateLayout={!editing}
+                pinnedUrls={pinnedUrls}
+                scrollRef={scrollRef}
+                onOpen={open}
+                onTogglePin={togglePin}
+              />
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Breadcrumb({
+  trail,
+  onNavigate,
+}: {
+  trail: BookmarkFolder[];
+  onNavigate: (depth: number) => void;
+}) {
+  return (
+    <nav aria-label="Bookmark folders" className="flex shrink-0 items-center gap-0.5 px-1 pb-1.5">
+      {trail.map((folder, index) => {
+        const isCurrent = index === trail.length - 1;
+        return (
+          <span key={folder.id} className="flex min-w-0 items-center gap-0.5">
+            {index > 0 && (
+              <ChevronRight className="text-muted-foreground/40 size-3 shrink-0" aria-hidden />
+            )}
+            <button
+              type="button"
+              onClick={() => onNavigate(index)}
+              aria-current={isCurrent ? "page" : undefined}
+              disabled={isCurrent}
+              className={cn(
+                "text-2xs max-w-28 truncate rounded-sm px-1 py-0.5",
+                isCurrent
+                  ? "text-foreground font-semibold"
+                  : "text-muted-foreground hover:text-foreground cursor-pointer",
+              )}
+            >
+              {folder.title}
+            </button>
+          </span>
+        );
+      })}
+    </nav>
+  );
+}
+
+function FolderTile({
+  folder,
+  view,
+  onOpen,
+}: {
+  folder: BookmarkFolder;
+  view: QuickAccessView;
+  onOpen: () => void;
+}) {
+  const count = folder.folders.length + folder.items.length;
+  return (
+    <li className="group relative">
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={`Open folder ${folder.title}`}
+        className={qaTileClass(view)}
+      >
+        <span
+          className={cn(
+            "text-muted-foreground grid shrink-0 place-items-center",
+            view === "grid" ? "size-8 [&_svg]:size-5" : "size-4 [&_svg]:size-4",
+          )}
+        >
+          <Folder />
+        </span>
+        <span
+          className={cn(
+            "truncate",
+            view === "grid" ? "w-full text-center text-xs" : "min-w-0 flex-1 text-sm",
+          )}
+        >
+          {folder.title}
+        </span>
+        {view === "list" && (
+          <span className="text-muted-foreground/60 text-2xs shrink-0 tabular-nums">{count}</span>
+        )}
+      </button>
+    </li>
+  );
+}

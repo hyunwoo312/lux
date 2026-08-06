@@ -1,19 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
+import { usePolledResource } from "@/widgets/core/usePolledResource";
 import {
-  fetchBookmarks,
+  fetchBookmarkTree,
   fetchHistory,
   fetchRecentlyClosed,
   fetchTopSites,
 } from "@/widgets/quick-access/browser";
-import type { BrowserItem, BrowserSource } from "@/widgets/quick-access/types";
+import type { BookmarkFolder, BrowserItem, ItemSource } from "@/widgets/quick-access/types";
 
 type BrowserState =
   | { status: "loading" }
   | { status: "error" }
   | { status: "ready"; items: BrowserItem[] };
 
-const FETCHERS: Record<BrowserSource, () => Promise<BrowserItem[]>> = {
-  bookmarks: fetchBookmarks,
+type BookmarkTreeState =
+  | { status: "loading" }
+  | { status: "error" }
+  | { status: "ready"; root: BookmarkFolder };
+
+const FETCHERS: Record<ItemSource, () => Promise<BrowserItem[]>> = {
   recentlyClosed: fetchRecentlyClosed,
   history: fetchHistory,
   topSites: fetchTopSites,
@@ -21,54 +26,39 @@ const FETCHERS: Record<BrowserSource, () => Promise<BrowserItem[]>> = {
 
 const REFRESH_MS = 60_000;
 
-export function useBrowserItems(tab: BrowserSource, enabled = true): BrowserState {
-  const [state, setState] = useState<BrowserState>({ status: "loading" });
-
+function useRefreshOnMount(refresh: () => void, enabled: boolean): void {
   useEffect(() => {
-    if (!enabled) {
-      setState({ status: "ready", items: [] });
-      return;
-    }
-    let active = true;
-    let fetching = false;
-    let lastRefresh = 0;
+    if (enabled) refresh();
+  }, [enabled, refresh]);
+}
 
-    const refresh = async (showLoading: boolean, force = false) => {
-      if (!active || fetching) return;
-      if (!force && Date.now() - lastRefresh < REFRESH_MS) return;
-      fetching = true;
-      if (showLoading) setState({ status: "loading" });
-      try {
-        const items = await FETCHERS[tab]();
-        if (active) {
-          lastRefresh = Date.now();
-          setState({ status: "ready", items });
-        }
-      } catch {
-        if (active) setState({ status: "error" });
-      } finally {
-        fetching = false;
-      }
-    };
+export function useBrowserItems(tab: ItemSource, enabled = true): BrowserState {
+  const { state, refresh } = usePolledResource(() => FETCHERS[tab](), {
+    enabled,
+    intervalMs: REFRESH_MS,
+    cacheKey: `quickAccess:${tab}`,
+  });
+  useRefreshOnMount(refresh, enabled);
 
-    const refreshWhenVisible = () => {
-      if (document.visibilityState === "hidden") return;
-      void refresh(false);
-    };
+  return useMemo(() => {
+    if (state.status === "success") return { status: "ready", items: state.data };
+    if (state.status === "empty") return { status: "ready", items: [] };
+    if (state.status === "error") return { status: "error" };
+    return { status: "loading" };
+  }, [state]);
+}
 
-    void refresh(true, true);
+export function useBookmarkTree(enabled = true): BookmarkTreeState {
+  const { state, refresh } = usePolledResource(fetchBookmarkTree, {
+    enabled,
+    intervalMs: REFRESH_MS,
+    cacheKey: "quickAccess:bookmarks",
+  });
+  useRefreshOnMount(refresh, enabled);
 
-    const interval = window.setInterval(refreshWhenVisible, REFRESH_MS);
-    window.addEventListener("focus", refreshWhenVisible);
-    document.addEventListener("visibilitychange", refreshWhenVisible);
-
-    return () => {
-      active = false;
-      window.clearInterval(interval);
-      window.removeEventListener("focus", refreshWhenVisible);
-      document.removeEventListener("visibilitychange", refreshWhenVisible);
-    };
-  }, [tab, enabled]);
-
-  return state;
+  return useMemo(() => {
+    if (state.status === "success") return { status: "ready", root: state.data };
+    if (state.status === "error") return { status: "error" };
+    return { status: "loading" };
+  }, [state]);
 }

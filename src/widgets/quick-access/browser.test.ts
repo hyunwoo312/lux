@@ -1,26 +1,62 @@
 import {
-  flattenBookmarks,
   historyToItem,
+  resolveFolderTrail,
+  restoreSession,
   searchHistory,
   sessionToItem,
+  toBookmarkFolder,
 } from "@/widgets/quick-access/browser";
 
-describe("flattenBookmarks", () => {
-  it("collects nested url nodes and skips folders", () => {
-    const tree = [
-      {
-        id: "0",
-        title: "root",
-        children: [
-          { id: "1", title: "Folder", children: [{ id: "2", title: "GitHub", url: "https://github.com/" }] },
-          { id: "3", title: "Mail", url: "https://mail.google.com/" },
-        ],
-      },
-    ] as chrome.bookmarks.BookmarkTreeNode[];
+const TREE = {
+  id: "0",
+  title: "",
+  children: [
+    {
+      id: "1",
+      title: "Bar",
+      children: [
+        { id: "2", title: "GitHub", url: "https://github.com/" },
+        { id: "4", title: "", children: [{ id: "5", title: "Deep", url: "https://deep.com/" }] },
+      ],
+    },
+    { id: "3", title: "Mail", url: "https://mail.google.com/" },
+  ],
+} as chrome.bookmarks.BookmarkTreeNode;
 
-    expect(flattenBookmarks(tree)).toEqual([
-      { id: "2", title: "GitHub", url: "https://github.com/" },
-      { id: "3", title: "Mail", url: "https://mail.google.com/" },
+describe("toBookmarkFolder", () => {
+  it("keeps folders and links apart instead of flattening them together", () => {
+    const root = toBookmarkFolder(TREE, "Bookmarks");
+
+    expect(root.title).toBe("Bookmarks");
+    expect(root.folders.map((folder) => folder.id)).toEqual(["1"]);
+    expect(root.items.map((item) => item.id)).toEqual(["3"]);
+    expect(root.folders[0]?.items.map((item) => item.id)).toEqual(["2"]);
+  });
+
+  it("names an untitled folder rather than showing a blank row", () => {
+    const root = toBookmarkFolder(TREE, "Bookmarks");
+
+    expect(root.folders[0]?.folders[0]?.title).toBe("Folder");
+  });
+});
+
+describe("resolveFolderTrail", () => {
+  it("returns the breadcrumb down to the requested folder", () => {
+    const root = toBookmarkFolder(TREE, "Bookmarks");
+
+    expect(resolveFolderTrail(root, ["1", "4"]).map((folder) => folder.title)).toEqual([
+      "Bookmarks",
+      "Bar",
+      "Folder",
+    ]);
+  });
+
+  it("stops at the last folder that still exists when one was deleted", () => {
+    const root = toBookmarkFolder(TREE, "Bookmarks");
+
+    expect(resolveFolderTrail(root, ["1", "gone", "4"]).map((folder) => folder.id)).toEqual([
+      "0",
+      "1",
     ]);
   });
 });
@@ -32,6 +68,7 @@ describe("sessionToItem", () => {
       id: "closed-s1",
       title: "Docs",
       url: "https://docs.com/",
+      sessionId: "s1",
     });
   });
 
@@ -47,7 +84,9 @@ describe("sessionToItem", () => {
 
 describe("historyToItem", () => {
   it("uses url as title when title is missing", () => {
-    expect(historyToItem({ id: "h1", url: "https://x.com/" } as chrome.history.HistoryItem)).toEqual({
+    expect(
+      historyToItem({ id: "h1", url: "https://x.com/" } as chrome.history.HistoryItem),
+    ).toEqual({
       id: "h1",
       title: "https://x.com/",
       url: "https://x.com/",
@@ -68,5 +107,25 @@ describe("searchHistory", () => {
     const items = await searchHistory("a", 2);
 
     expect(items.map((item) => item.url)).toEqual(["https://a.com/", "https://b.com/"]);
+  });
+});
+
+describe("restoreSession", () => {
+  it("restores the closed tab through the sessions API", async () => {
+    const chromeRef = (globalThis as unknown as { chrome: typeof chrome }).chrome;
+    const restore = vi.fn(async () => undefined);
+    chromeRef.sessions.restore = restore as unknown as typeof chrome.sessions.restore;
+
+    await expect(restoreSession("s1")).resolves.toBe(true);
+    expect(restore).toHaveBeenCalledWith("s1");
+  });
+
+  it("reports failure so the caller can fall back instead of doing nothing", async () => {
+    const chromeRef = (globalThis as unknown as { chrome: typeof chrome }).chrome;
+    chromeRef.sessions.restore = (async () => {
+      throw new Error("Session expired");
+    }) as unknown as typeof chrome.sessions.restore;
+
+    await expect(restoreSession("gone")).resolves.toBe(false);
   });
 });

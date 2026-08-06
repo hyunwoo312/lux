@@ -1,28 +1,30 @@
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { setPermissionGranted } from "@/lib/permissions";
+import { setPermissionsGranted } from "@/lib/permissions";
 
 type PermissionPromptProps = {
-  permission: chrome.runtime.ManifestPermission;
+  permissions: readonly chrome.runtime.ManifestPermission[];
   message: string;
   onOpenSettings: () => void;
   variant?: "full" | "inline";
 };
 
 export function PermissionPrompt({
-  permission,
+  permissions,
   message,
   onOpenSettings,
   variant = "full",
 }: PermissionPromptProps) {
-  const enable = () => void setPermissionGranted(permission, true);
+  const enable = () => void setPermissionsGranted(permissions, true);
 
   if (variant === "inline") {
     return (
-      <div className="
-        border-border/60 bg-card/30 flex items-center gap-2.5 rounded-lg border border-dashed px-3
-        py-2
-      ">
+      <div
+        className="
+          border-border/60 bg-card/30 flex items-center gap-2.5 rounded-lg border border-dashed px-3
+          py-2
+        "
+      >
         <Lock className="text-muted-foreground/60 size-4 shrink-0" aria-hidden />
         <span className="text-muted-foreground min-w-0 flex-1 text-xs">{message}</span>
         <button

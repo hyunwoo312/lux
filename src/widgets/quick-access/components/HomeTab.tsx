@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import {
@@ -28,7 +28,7 @@ import {
   qaItemGeometry,
 } from "@/widgets/quick-access/lib/itemStyles";
 import { keyOf } from "@/widgets/quick-access/lib/url";
-import type { BrowserItem, QuickLink } from "@/widgets/quick-access/types";
+import type { BrowserItem, LinkResult, QuickLink } from "@/widgets/quick-access/types";
 import { useQuickAccess, useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
@@ -60,6 +60,8 @@ export function HomeTab({ editing }: { editing: boolean }) {
   const topSitesBlocked = showTopSites && isPermissionsManageable() && !topSitesGranted;
   const topSitesState = useBrowserItems("topSites", showTopSites && !topSitesBlocked);
   const [form, setForm] = useState<FormState | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
   const open = (url: string) => openUrl(url, openBehavior);
 
@@ -82,10 +84,13 @@ export function HomeTab({ editing }: { editing: boolean }) {
     setLinks(instanceId, arrayMove(links, oldIndex, newIndex));
   };
 
-  const submit = (title: string, url: string) => {
-    if (form?.mode === "edit") editLink(instanceId, form.link.id, title, url);
-    else addLink(instanceId, title, url);
-    setForm(null);
+  const submit = (title: string, url: string, icon: string): LinkResult => {
+    const result =
+      form?.mode === "edit"
+        ? editLink(instanceId, form.link.id, title, url, icon)
+        : addLink(instanceId, title, url, icon);
+    if (result === "ok") setForm(null);
+    return result;
   };
 
   const onTogglePin = (item: BrowserItem) => togglePin(instanceId, item.title, item.url);
@@ -93,6 +98,7 @@ export function HomeTab({ editing }: { editing: boolean }) {
   return (
     <div className="relative h-full overflow-hidden">
       <motion.div
+        ref={scrollRef}
         animate={{ x: form ? "-12%" : 0, opacity: form ? 0 : 1 }}
         transition={{ duration: 0.25, ease: "easeOut" }}
         className={cn("h-full overflow-x-hidden overflow-y-auto", form && "pointer-events-none")}
@@ -166,7 +172,7 @@ export function HomeTab({ editing }: { editing: boolean }) {
           <section className="mt-3 flex flex-col gap-1.5">
             <SectionHeader>Top sites</SectionHeader>
             <PermissionPrompt
-              permission="topSites"
+              permissions={["topSites"]}
               variant="inline"
               message="Turn on the Top sites permission to show your most-visited sites."
               onOpenSettings={() => useSettingsStore.getState().openPermissions("topSites")}
@@ -180,9 +186,10 @@ export function HomeTab({ editing }: { editing: boolean }) {
             <BrowserList
               items={topSites}
               view={view}
+              scrollRef={scrollRef}
               animateLayout={!editing}
               pinnedUrls={pinnedKeys}
-              onOpen={open}
+              onOpen={(item) => open(item.url)}
               onTogglePin={onTogglePin}
             />
           </section>

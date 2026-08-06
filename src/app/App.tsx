@@ -12,6 +12,8 @@ import { useActiveWallpaper } from "@/app/useActiveWallpaper";
 import { useBlurredWallpaper } from "@/app/useBlurredWallpaper";
 import { useWallpaperStore } from "@/stores/useWallpaperStore";
 import { FrostImageProvider } from "@/lib/frost-image";
+import { takePendingPermissionHighlight } from "@/lib/permissions";
+import { useSettingsStore } from "@/settings";
 import { sweepStaleResourceCaches } from "@/widgets/core/resourceCacheSweep";
 
 export function App() {
@@ -23,6 +25,8 @@ export function App() {
 
   useEffect(() => {
     sweepStaleResourceCaches(Date.now());
+    const pending = takePendingPermissionHighlight();
+    if (pending) useSettingsStore.getState().openPermissions(pending);
   }, []);
 
   return (

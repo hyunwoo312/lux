@@ -1,6 +1,8 @@
+import { useCallback, useMemo, useRef, useState, type RefObject } from "react";
 import { motion } from "motion/react";
 import { Pin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { ItemActionButton } from "@/widgets/quick-access/components/ItemActionButton";
 import { QuickItem } from "@/widgets/quick-access/components/QuickItem";
 import {
@@ -17,9 +19,12 @@ type BrowserListProps = {
   view: QuickAccessView;
   animateLayout: boolean;
   pinnedUrls: Set<string>;
-  onOpen: (url: string) => void;
+  scrollRef: RefObject<HTMLElement | null>;
+  onOpen: (item: BrowserItem) => void;
   onTogglePin: (item: BrowserItem) => void;
 };
+
+const PAGE_SIZE = 30;
 
 function PinButton({
   item,
@@ -56,16 +61,25 @@ export function BrowserList({
   view,
   animateLayout,
   pinnedUrls,
+  scrollRef,
   onOpen,
   onTogglePin,
 }: BrowserListProps) {
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const sentinelRef = useRef<HTMLLIElement>(null);
+
+  const visible = useMemo(() => items.slice(0, visibleCount), [items, visibleCount]);
+  const hasMore = visible.length < items.length;
+  const loadMore = useCallback(() => setVisibleCount((count) => count + PAGE_SIZE), []);
+  useInfiniteScroll(scrollRef, sentinelRef, hasMore, loadMore);
+
   return (
     <ul className={view === "grid" ? QA_GRID_CONTAINER : QA_LIST_CONTAINER}>
-      {items.map((item) => {
+      {visible.map((item) => {
         const pinned = pinnedUrls.has(keyOf(item.url));
         return (
           <motion.li key={item.id} layout={animateLayout} className="group relative">
-            <button type="button" onClick={() => onOpen(item.url)} className={qaTileClass(view)}>
+            <button type="button" onClick={() => onOpen(item)} className={qaTileClass(view)}>
               <QuickItem
                 url={item.url}
                 title={item.title}
@@ -77,6 +91,7 @@ export function BrowserList({
           </motion.li>
         );
       })}
+      {hasMore && <li ref={sentinelRef} aria-hidden className="h-px" />}
     </ul>
   );
 }

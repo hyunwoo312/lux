@@ -24,6 +24,26 @@ function createChromeMock() {
         clear: vi.fn(async () => store.clear()),
       },
     },
+    permissions: {
+      getAll: vi.fn(async () => ({
+        permissions: [
+          "storage",
+          "favicon",
+          "identity",
+          "bookmarks",
+          "history",
+          "sessions",
+          "tabs",
+          "topSites",
+        ],
+        origins: [] as string[],
+      })),
+      request: vi.fn(async () => true),
+      remove: vi.fn(async () => true),
+      contains: vi.fn(async () => true),
+      onAdded: { addListener: vi.fn(), removeListener: vi.fn() },
+      onRemoved: { addListener: vi.fn(), removeListener: vi.fn() },
+    },
     bookmarks: {
       getTree: vi.fn(async () => []),
       search: vi.fn(async () => []),
@@ -33,6 +53,7 @@ function createChromeMock() {
     },
     sessions: {
       getRecentlyClosed: vi.fn(async () => []),
+      restore: vi.fn(async () => undefined),
     },
     topSites: {
       get: vi.fn(async () => []),

@@ -9,19 +9,22 @@ import { getAccentVars } from "@/widgets/core/accent";
 import { QUICK_ACCESS_ACCENT } from "@/widgets/quick-access/types";
 import { Favicon } from "@/widgets/quick-access/components/Favicon";
 import { useHistorySuggestions } from "@/widgets/quick-access/hooks/useHistorySuggestions";
+import { firstGrapheme } from "@/widgets/quick-access/lib/icon";
 import { hostnameOf, keyOf } from "@/widgets/quick-access/lib/url";
-import type { QuickLink } from "@/widgets/quick-access/types";
+import type { LinkResult, QuickLink } from "@/widgets/quick-access/types";
 
 type LinkFormProps = {
   initial?: QuickLink;
   pinnedUrls: Set<string>;
-  onSubmit: (title: string, url: string) => void;
+  onSubmit: (title: string, url: string, icon: string) => LinkResult;
   onCancel: () => void;
 };
 
 export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormProps) {
   const [url, setUrl] = useState(initial?.url ?? "");
   const [title, setTitle] = useState(initial?.title ?? "");
+  const [icon, setIcon] = useState(initial?.icon ?? "");
+  const [error, setError] = useState("");
   const [focused, setFocused] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -33,6 +36,7 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
   const choose = (item: { title: string; url: string }) => {
     setUrl(item.url);
     setTitle(item.title);
+    setError("");
     setDismissed(true);
     setActiveIndex(-1);
   };
@@ -51,8 +55,13 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!url.trim()) return;
-    onSubmit(title, url);
+    const result = onSubmit(title, url, icon);
+    if (result === "ok") return;
+    setError(
+      result === "duplicate"
+        ? "That link is already pinned."
+        : "Enter a web address, like example.com",
+    );
   };
 
   const handleUrlKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -96,6 +105,7 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
               setUrl(event.target.value);
               setDismissed(false);
               setActiveIndex(-1);
+              setError("");
             }}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
@@ -153,12 +163,27 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
           </ul>
         </PopoverContent>
       </Popover>
-      <Input
-        value={title}
-        onChange={(event) => setTitle(event.target.value)}
-        placeholder="Title (optional)"
-        aria-label="Link title"
-      />
+      <div className="flex items-center gap-2">
+        <Input
+          value={icon}
+          onChange={(event) => setIcon(firstGrapheme(event.target.value))}
+          onFocus={(event) => event.target.select()}
+          placeholder="🔖"
+          aria-label="Link icon"
+          className="w-12 shrink-0 text-center"
+        />
+        <Input
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          placeholder="Title (optional)"
+          aria-label="Link title"
+        />
+      </div>
+      {error && (
+        <p role="alert" className="text-destructive text-xs">
+          {error}
+        </p>
+      )}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
           Cancel

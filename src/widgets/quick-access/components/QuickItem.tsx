@@ -6,13 +6,14 @@ type QuickItemProps = {
   url: string;
   title: string;
   view: QuickAccessView;
+  icon?: string;
   trailingPad?: string;
 };
 
-export function QuickItem({ url, title, view, trailingPad }: QuickItemProps) {
+export function QuickItem({ url, title, view, icon, trailingPad }: QuickItemProps) {
   return (
     <>
-      <LinkIcon url={url} view={view} />
+      <LinkIcon url={url} view={view} icon={icon} />
       <span
         className={cn(
           "truncate",

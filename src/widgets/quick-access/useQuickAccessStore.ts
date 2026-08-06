@@ -5,12 +5,15 @@ import { createGatedChromeStorage } from "@/lib/storage";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
+import { firstGrapheme } from "@/widgets/quick-access/lib/icon";
 import { hostnameOf, normalizeUrl } from "@/widgets/quick-access/lib/url";
 import type {
+  LinkResult,
   OpenBehavior,
   QuickAccessTab,
   QuickAccessView,
   QuickLink,
+  RemovedLink,
 } from "@/widgets/quick-access/types";
 
 const DEFAULT_LINKS: QuickLink[] = [
@@ -30,9 +33,18 @@ type QuickAccessData = {
 
 type QuickAccessState = {
   byInstance: Record<string, QuickAccessData>;
-  addLink: (instanceId: string, title: string, url: string) => void;
-  editLink: (instanceId: string, id: string, title: string, url: string) => void;
+  removed: Record<string, RemovedLink | undefined>;
+  addLink: (instanceId: string, title: string, url: string, icon: string) => LinkResult;
+  editLink: (
+    instanceId: string,
+    id: string,
+    title: string,
+    url: string,
+    icon: string,
+  ) => LinkResult;
   removeLink: (instanceId: string, id: string) => void;
+  undoRemove: (instanceId: string) => void;
+  dismissRemoved: (instanceId: string) => void;
   togglePin: (instanceId: string, title: string, url: string) => void;
   setLinks: (instanceId: string, links: QuickLink[]) => void;
   setActiveTab: (instanceId: string, tab: QuickAccessTab) => void;
@@ -50,7 +62,12 @@ const DEFAULT_DATA: QuickAccessData = {
   showTopSites: true,
 };
 
-const linkSchema = z.object({ id: z.string(), title: z.string(), url: z.string() });
+const linkSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  url: z.string(),
+  icon: z.string().optional(),
+});
 
 const dataSchema = z.object({
   links: z.array(linkSchema),
@@ -74,59 +91,95 @@ function update(
   return { byInstance: patchInstance(state.byInstance, instanceId, DEFAULT_DATA, fn) };
 }
 
+function removeById(
+  state: QuickAccessState,
+  instanceId: string,
+  id: string,
+): Pick<QuickAccessState, "byInstance" | "removed"> {
+  const data = state.byInstance[instanceId] ?? DEFAULT_DATA;
+  const index = data.links.findIndex((link) => link.id === id);
+  const link = data.links[index];
+  if (!link) return { byInstance: state.byInstance, removed: state.removed };
+  return {
+    ...update(state, instanceId, (current) => ({
+      ...current,
+      links: current.links.filter((entry) => entry.id !== id),
+    })),
+    removed: { ...state.removed, [instanceId]: { link, index } },
+  };
+}
+
 export const useQuickAccessStore = create<QuickAccessState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       byInstance: {},
-      addLink: (instanceId, title, url) =>
-        set((state) => {
-          const normalized = normalizeUrl(url);
-          const data = state.byInstance[instanceId] ?? DEFAULT_DATA;
-          if (!normalized || data.links.some((link) => link.url === normalized)) return state;
-          const link: QuickLink = {
-            id: crypto.randomUUID(),
-            title: title.trim() || hostnameOf(normalized),
-            url: normalized,
-          };
-          return update(state, instanceId, (current) => ({
+      removed: {},
+      addLink: (instanceId, title, url, icon) => {
+        const normalized = normalizeUrl(url);
+        if (!normalized) return "invalid";
+        const data = get().byInstance[instanceId] ?? DEFAULT_DATA;
+        if (data.links.some((link) => link.url === normalized)) return "duplicate";
+        const link: QuickLink = {
+          id: crypto.randomUUID(),
+          title: title.trim() || hostnameOf(normalized),
+          url: normalized,
+          icon: firstGrapheme(icon) || undefined,
+        };
+        set((state) =>
+          update(state, instanceId, (current) => ({
             ...current,
             links: [...current.links, link],
-          }));
-        }),
-      editLink: (instanceId, id, title, url) =>
-        set((state) => {
-          const normalized = normalizeUrl(url);
-          const data = state.byInstance[instanceId] ?? DEFAULT_DATA;
-          if (!normalized) return state;
-          if (data.links.some((link) => link.id !== id && link.url === normalized)) return state;
-          return update(state, instanceId, (current) => ({
+          })),
+        );
+        return "ok";
+      },
+      editLink: (instanceId, id, title, url, icon) => {
+        const normalized = normalizeUrl(url);
+        if (!normalized) return "invalid";
+        const data = get().byInstance[instanceId] ?? DEFAULT_DATA;
+        if (data.links.some((link) => link.id !== id && link.url === normalized))
+          return "duplicate";
+        set((state) =>
+          update(state, instanceId, (current) => ({
             ...current,
             links: current.links.map((link) =>
               link.id === id
-                ? { ...link, title: title.trim() || hostnameOf(normalized), url: normalized }
+                ? {
+                    ...link,
+                    title: title.trim() || hostnameOf(normalized),
+                    url: normalized,
+                    icon: firstGrapheme(icon) || undefined,
+                  }
                 : link,
             ),
-          }));
-        }),
-      removeLink: (instanceId, id) =>
-        set((state) =>
-          update(state, instanceId, (data) => ({
-            ...data,
-            links: data.links.filter((link) => link.id !== id),
           })),
-        ),
+        );
+        return "ok";
+      },
+      removeLink: (instanceId, id) => set((state) => removeById(state, instanceId, id)),
+      undoRemove: (instanceId) =>
+        set((state) => {
+          const entry = state.removed[instanceId];
+          if (!entry) return state;
+          return {
+            ...update(state, instanceId, (data) => {
+              if (data.links.some((link) => link.id === entry.link.id)) return data;
+              const links = [...data.links];
+              links.splice(Math.min(Math.max(entry.index, 0), links.length), 0, entry.link);
+              return { ...data, links };
+            }),
+            removed: { ...state.removed, [instanceId]: undefined },
+          };
+        }),
+      dismissRemoved: (instanceId) =>
+        set((state) => ({ removed: { ...state.removed, [instanceId]: undefined } })),
       togglePin: (instanceId, title, url) =>
         set((state) => {
           const normalized = normalizeUrl(url);
           if (!normalized) return state;
           const data = state.byInstance[instanceId] ?? DEFAULT_DATA;
           const existing = data.links.find((link) => link.url === normalized);
-          if (existing) {
-            return update(state, instanceId, (current) => ({
-              ...current,
-              links: current.links.filter((link) => link.id !== existing.id),
-            }));
-          }
+          if (existing) return removeById(state, instanceId, existing.id);
           const link: QuickLink = {
             id: crypto.randomUUID(),
             title: title.trim() || hostnameOf(normalized),
@@ -148,7 +201,10 @@ export const useQuickAccessStore = create<QuickAccessState>()(
       setShowTopSites: (instanceId, showTopSites) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, showTopSites }))),
       removeInstance: (instanceId) =>
-        set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
+        set((state) => ({
+          byInstance: dropInstance(state.byInstance, instanceId),
+          removed: { ...state.removed, [instanceId]: undefined },
+        })),
     }),
     {
       name: "widget:quick-access",

@@ -12,18 +12,23 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useGrantedPermissions } from "@/hooks/usePermission";
-import { isPermissionsManageable, setPermissionGranted } from "@/lib/permissions";
+import { isPermissionsManageable, setPermissionsGranted } from "@/lib/permissions";
 import { SettingsSection } from "@/settings/components/SettingsSection";
 import { useSettingsStore } from "@/settings/useSettingsStore";
 
 type PermissionItem = {
   id: chrome.runtime.ManifestPermission;
+  alsoNeeds?: chrome.runtime.ManifestPermission[];
   name: string;
   description: string;
   usedBy: string;
   icon: ComponentType<{ className?: string }>;
   required: boolean;
 };
+
+function permissionsOf(item: PermissionItem): chrome.runtime.ManifestPermission[] {
+  return [item.id, ...(item.alsoNeeds ?? [])];
+}
 
 const PERMISSIONS: PermissionItem[] = [
   {
@@ -44,8 +49,10 @@ const PERMISSIONS: PermissionItem[] = [
   },
   {
     id: "sessions",
+    alsoNeeds: ["tabs"],
     name: "Recently closed tabs",
-    description: "Lists recently closed tabs in Quick Access.",
+    description:
+      "Lists recently closed tabs in Quick Access. Chrome only reveals their titles and addresses to extensions that can read tab details, so this asks for both.",
     usedBy: "Quick Access",
     icon: Clock,
     required: false,
@@ -124,9 +131,13 @@ export function PermissionsSection() {
           rowRef={registerRow(permission.id)}
           permission={permission}
           highlighted={highlight === permission.id}
-          checked={granted.has(permission.id)}
+          checked={permissionsOf(permission).every((name) => granted.has(name))}
           disabled={!available}
-          onToggle={(enabled) => void setPermissionGranted(permission.id, enabled)}
+          onToggle={(enabled) =>
+            void setPermissionsGranted(permissionsOf(permission), enabled, {
+              reopenSettings: true,
+            })
+          }
         />
       ))}
 
@@ -146,10 +157,12 @@ export function PermissionsSection() {
 
 function SubLabel({ children }: { children: ReactNode }) {
   return (
-    <span className="
-      text-muted-foreground/70 text-2xs mt-2 px-0.5 font-semibold tracking-wider uppercase
-      first:mt-0
-    ">
+    <span
+      className="
+        text-muted-foreground/70 text-2xs mt-2 px-0.5 font-semibold tracking-wider uppercase
+        first:mt-0
+      "
+    >
       {children}
     </span>
   );
@@ -185,19 +198,23 @@ function PermissionRow({
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex items-center gap-1.5">
           <span className="text-sm font-medium">{permission.name}</span>
-          <span className="
-            bg-muted/70 text-muted-foreground/80 rounded px-1 py-px text-[0.6rem] font-medium
-          ">
+          <span
+            className="
+              bg-muted/70 text-muted-foreground/80 rounded px-1 py-px text-[0.6rem] font-medium
+            "
+          >
             {permission.usedBy}
           </span>
         </span>
         <span className="text-muted-foreground text-xs">{permission.description}</span>
       </div>
       {required ? (
-        <span className="
-          border-border/60 text-muted-foreground/80 text-2xs shrink-0 rounded-full border px-2
-          py-0.5 font-medium
-        ">
+        <span
+          className="
+            border-border/60 text-muted-foreground/80 text-2xs shrink-0 rounded-full border px-2
+            py-0.5 font-medium
+          "
+        >
           Required
         </span>
       ) : (

@@ -20,29 +20,29 @@ describe("useQuickAccessStore", () => {
   });
 
   it("adds a link, normalizing the url and defaulting the title to the host", () => {
-    store().addLink(ID, "", "github.com");
+    store().addLink(ID, "", "github.com", "");
 
     const link = links(ID)[0];
     expect(link?.url).toBe("https://github.com/");
     expect(link?.title).toBe("github.com");
   });
 
-  it("ignores an invalid url", () => {
-    store().addLink(ID, "Bad", "   ");
+  it("reports an invalid url instead of failing silently", () => {
+    expect(store().addLink(ID, "Bad", "   ", "")).toBe("invalid");
     expect(links(ID)).toHaveLength(0);
   });
 
   it("edits a link", () => {
-    store().addLink(ID, "GitHub", "github.com");
+    store().addLink(ID, "GitHub", "github.com", "");
     const id = links(ID)[0]!.id;
 
-    store().editLink(ID, id, "Code", "gitlab.com");
+    store().editLink(ID, id, "Code", "gitlab.com", "");
 
     expect(links(ID)[0]).toMatchObject({ title: "Code", url: "https://gitlab.com/" });
   });
 
   it("removes a link", () => {
-    store().addLink(ID, "GitHub", "github.com");
+    store().addLink(ID, "GitHub", "github.com", "");
     const id = links(ID)[0]!.id;
 
     store().removeLink(ID, id);
@@ -50,11 +50,66 @@ describe("useQuickAccessStore", () => {
     expect(links(ID)).toHaveLength(0);
   });
 
-  it("ignores a duplicate url when adding", () => {
-    store().addLink(ID, "GitHub", "github.com");
-    store().addLink(ID, "GitHub again", "https://github.com/");
+  it("reports a duplicate url instead of failing silently", () => {
+    store().addLink(ID, "GitHub", "github.com", "");
+
+    expect(store().addLink(ID, "GitHub again", "https://github.com/", "")).toBe("duplicate");
+    expect(links(ID)).toHaveLength(1);
+  });
+
+  it("keeps only the first grapheme of a custom icon", () => {
+    store().addLink(ID, "Family", "example.com", "\u{1F468}\u200D\u{1F469}\u200D\u{1F467}xy");
+
+    expect(links(ID)[0]?.icon).toBe("\u{1F468}\u200D\u{1F469}\u200D\u{1F467}");
+  });
+
+  it("stores no icon when the field is left blank", () => {
+    store().addLink(ID, "Plain", "example.com", "   ");
+
+    expect(links(ID)[0]?.icon).toBeUndefined();
+  });
+
+  it("restores a removed link to the position it was removed from", () => {
+    store().addLink(ID, "One", "one.com", "");
+    store().addLink(ID, "Two", "two.com", "");
+    store().addLink(ID, "Three", "three.com", "");
+
+    store().removeLink(ID, links(ID)[1]!.id);
+    store().undoRemove(ID);
+
+    expect(links(ID).map((link) => link.title)).toEqual(["One", "Two", "Three"]);
+  });
+
+  it("keeps a customized pin recoverable when it is unpinned from a browser list", () => {
+    store().addLink(ID, "Code", "github.com", "🐙");
+    const pinned = links(ID)[0]!;
+
+    store().togglePin(ID, "GitHub", "https://github.com/");
+    expect(links(ID)).toHaveLength(0);
+
+    store().undoRemove(ID);
+
+    expect(links(ID)[0]).toEqual(pinned);
+  });
+
+  it("does not duplicate a link when undo runs twice", () => {
+    store().addLink(ID, "One", "one.com", "");
+
+    store().removeLink(ID, links(ID)[0]!.id);
+    store().undoRemove(ID);
+    store().undoRemove(ID);
 
     expect(links(ID)).toHaveLength(1);
+  });
+
+  it("forgets the removal once it is dismissed", () => {
+    store().addLink(ID, "One", "one.com", "");
+
+    store().removeLink(ID, links(ID)[0]!.id);
+    store().dismissRemoved(ID);
+    store().undoRemove(ID);
+
+    expect(links(ID)).toHaveLength(0);
   });
 
   it("pins a url when not pinned and unpins it when already pinned", () => {
@@ -85,8 +140,8 @@ describe("useQuickAccessStore", () => {
     };
     useQuickAccessStore.setState({ byInstance: { a: { ...empty }, b: { ...empty } } });
 
-    store().addLink("a", "A", "a.com");
-    store().addLink("b", "B", "b.com");
+    store().addLink("a", "A", "a.com", "");
+    store().addLink("b", "B", "b.com", "");
 
     expect(links("a").map((link) => link.url)).toEqual(["https://a.com/"]);
     expect(links("b").map((link) => link.url)).toEqual(["https://b.com/"]);

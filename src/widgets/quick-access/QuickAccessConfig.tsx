@@ -1,5 +1,9 @@
 import { Switch } from "@/components/ui/switch";
-import { ConfigSegmented, WidgetConfigGroup, WidgetConfigItem } from "@/components/config/WidgetConfig";
+import {
+  ConfigSegmented,
+  WidgetConfigGroup,
+  WidgetConfigItem,
+} from "@/components/config/WidgetConfig";
 import type { OpenBehavior } from "@/widgets/quick-access/types";
 import { useQuickAccess, useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";

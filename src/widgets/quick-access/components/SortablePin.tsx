@@ -51,6 +51,7 @@ export function SortablePin({ link, view, onOpen, onEdit, onRemove }: SortablePi
         url={link.url}
         title={link.title}
         view={view}
+        icon={link.icon}
         trailingPad={view === "list" ? "group-hover:pr-12 group-focus-within:pr-12" : undefined}
       />
       {view === "grid" ? (

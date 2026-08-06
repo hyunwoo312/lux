@@ -40,13 +40,49 @@ export function getGrantedPermissions(): Set<chrome.runtime.ManifestPermission> 
   return granted;
 }
 
-export async function setPermissionGranted(
-  name: chrome.runtime.ManifestPermission,
+const APPLIED_ONLY_AFTER_RELOAD: ReadonlySet<chrome.runtime.ManifestPermission> = new Set(["tabs"]);
+
+const REOPEN_PERMISSIONS_KEY = "lux:reopen-permissions";
+
+function reloadPage(reopenSettingsAt: chrome.runtime.ManifestPermission | undefined): void {
+  try {
+    if (reopenSettingsAt) sessionStorage.setItem(REOPEN_PERMISSIONS_KEY, reopenSettingsAt);
+  } catch {
+    void 0;
+  }
+  window.location.reload();
+}
+
+const OPTIONAL_PERMISSIONS: readonly chrome.runtime.ManifestPermission[] = [
+  "bookmarks",
+  "history",
+  "sessions",
+  "tabs",
+  "topSites",
+];
+
+export function takePendingPermissionHighlight(): chrome.runtime.ManifestPermission | null {
+  try {
+    const pending = sessionStorage.getItem(REOPEN_PERMISSIONS_KEY);
+    if (pending) sessionStorage.removeItem(REOPEN_PERMISSIONS_KEY);
+    return OPTIONAL_PERMISSIONS.find((name) => name === pending) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function setPermissionsGranted(
+  names: readonly chrome.runtime.ManifestPermission[],
   enabled: boolean,
+  options: { reopenSettings?: boolean } = {},
 ): Promise<void> {
   if (!isPermissionsManageable()) return;
+  const permissions = [...names];
   const update = enabled
-    ? chrome.permissions.request({ permissions: [name] })
-    : chrome.permissions.remove({ permissions: [name] });
-  await update.catch(() => undefined);
+    ? chrome.permissions.request({ permissions })
+    : chrome.permissions.remove({ permissions });
+  const applied = await update.catch(() => false);
+  if (!applied) return;
+  if (!names.some((name) => APPLIED_ONLY_AFTER_RELOAD.has(name))) return;
+  reloadPage(options.reopenSettings ? names[0] : undefined);
 }

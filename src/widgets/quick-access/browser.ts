@@ -1,28 +1,58 @@
-import type { BrowserItem } from "@/widgets/quick-access/types";
+import type { BookmarkFolder, BrowserItem } from "@/widgets/quick-access/types";
 
 const RECENTLY_CLOSED_REQUEST = 25;
-const RECENTLY_CLOSED_LIMIT = 10;
-const HISTORY_LIMIT = 25;
+const HISTORY_LIMIT = 300;
 const HISTORY_SUGGESTION_LIMIT = 7;
-const BOOKMARK_LIMIT = 50;
-const TOP_SITES_LIMIT = 12;
 
-export function flattenBookmarks(nodes: chrome.bookmarks.BookmarkTreeNode[]): BrowserItem[] {
+const ROOT_TITLE = "Bookmarks";
+const UNTITLED_FOLDER = "Folder";
+
+const EMPTY_TREE: BookmarkFolder = { id: "0", title: ROOT_TITLE, folders: [], items: [] };
+
+export function toBookmarkFolder(
+  node: chrome.bookmarks.BookmarkTreeNode,
+  fallbackTitle: string,
+): BookmarkFolder {
+  const folders: BookmarkFolder[] = [];
   const items: BrowserItem[] = [];
-  const walk = (list: chrome.bookmarks.BookmarkTreeNode[]) => {
-    for (const node of list) {
-      if (node.url) items.push({ id: node.id, title: node.title || node.url, url: node.url });
-      if (node.children) walk(node.children);
-    }
-  };
-  walk(nodes);
-  return items;
+  for (const child of node.children ?? []) {
+    if (child.url) items.push({ id: child.id, title: child.title || child.url, url: child.url });
+    else folders.push(toBookmarkFolder(child, UNTITLED_FOLDER));
+  }
+  return { id: node.id, title: node.title || fallbackTitle, folders, items };
+}
+
+export function resolveFolderTrail(root: BookmarkFolder, path: string[]): BookmarkFolder[] {
+  const trail = [root];
+  let current = root;
+  for (const id of path) {
+    const next = current.folders.find((folder) => folder.id === id);
+    if (!next) break;
+    trail.push(next);
+    current = next;
+  }
+  return trail;
 }
 
 export function sessionToItem(session: chrome.sessions.Session): BrowserItem | null {
   const tab = session.tab ?? session.window?.tabs?.find((entry) => Boolean(entry.url));
   if (!tab?.url) return null;
-  return { id: `closed-${tab.sessionId ?? tab.url}`, title: tab.title || tab.url, url: tab.url };
+  return {
+    id: `closed-${tab.sessionId ?? tab.url}`,
+    title: tab.title || tab.url,
+    url: tab.url,
+    sessionId: tab.sessionId,
+  };
+}
+
+export async function restoreSession(sessionId: string): Promise<boolean> {
+  if (typeof chrome === "undefined" || !chrome.sessions?.restore) return false;
+  try {
+    await chrome.sessions.restore(sessionId);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function historyToItem(item: chrome.history.HistoryItem): BrowserItem | null {
@@ -30,10 +60,10 @@ export function historyToItem(item: chrome.history.HistoryItem): BrowserItem | n
   return { id: item.id, title: item.title || item.url, url: item.url };
 }
 
-export async function fetchBookmarks(): Promise<BrowserItem[]> {
-  if (typeof chrome === "undefined" || !chrome.bookmarks?.getTree) return [];
-  const tree = await chrome.bookmarks.getTree();
-  return flattenBookmarks(tree).slice(0, BOOKMARK_LIMIT);
+export async function fetchBookmarkTree(): Promise<BookmarkFolder> {
+  if (typeof chrome === "undefined" || !chrome.bookmarks?.getTree) return EMPTY_TREE;
+  const [root] = await chrome.bookmarks.getTree();
+  return root ? toBookmarkFolder(root, ROOT_TITLE) : EMPTY_TREE;
 }
 
 export async function fetchHistory(): Promise<BrowserItem[]> {
@@ -47,8 +77,7 @@ export async function fetchRecentlyClosed(): Promise<BrowserItem[]> {
   const sessions = await chrome.sessions.getRecentlyClosed({ maxResults: RECENTLY_CLOSED_REQUEST });
   return sessions
     .map(sessionToItem)
-    .filter((item): item is BrowserItem => item !== null && /^https?:\/\//.test(item.url))
-    .slice(0, RECENTLY_CLOSED_LIMIT);
+    .filter((item): item is BrowserItem => item !== null && /^https?:\/\//.test(item.url));
 }
 
 export async function searchHistory(
@@ -74,6 +103,5 @@ export async function fetchTopSites(): Promise<BrowserItem[]> {
   const sites = await chrome.topSites.get();
   return sites
     .filter((site) => /^https?:\/\//.test(site.url))
-    .map((site) => ({ id: `top-${site.url}`, title: site.title || site.url, url: site.url }))
-    .slice(0, TOP_SITES_LIMIT);
+    .map((site) => ({ id: `top-${site.url}`, title: site.title || site.url, url: site.url }));
 }
