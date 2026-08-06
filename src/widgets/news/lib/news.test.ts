@@ -275,7 +275,7 @@ describe("searchUrl", () => {
 
 describe("parseCachedNews", () => {
   it("accepts a well-formed cached list and rejects a bad one", () => {
-    const valid = [
+    const valid: NewsItem[] = [
       {
         id: "a",
         title: "t",
@@ -292,6 +292,25 @@ describe("parseCachedNews", () => {
     expect(parseCachedNews(valid)).toEqual(valid);
     expect(parseCachedNews([{ id: "a" }])).toBeNull();
     expect(parseCachedNews("nope")).toBeNull();
+  });
+
+  it("reads back every field, including the ones that are usually null", () => {
+    const populated: NewsItem[] = [
+      {
+        id: "b",
+        title: "Markets rally",
+        link: "https://example.com/b",
+        source: "BBC",
+        sourceKey: "bbc",
+        sourceUrl: "https://bbc.co.uk",
+        publishedAt: 1782849601000,
+        image: "https://example.com/b.jpg",
+        dek: "A short summary of the story.",
+        alsoIn: ["BBC", "NPR"],
+      },
+    ];
+
+    expect(parseCachedNews(JSON.parse(JSON.stringify(populated)))).toEqual(populated);
   });
 
   it("rejects cached items whose link is not an http(s) URL", () => {
