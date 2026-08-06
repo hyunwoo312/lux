@@ -10,6 +10,7 @@ import {
   fetchReleases,
   markAllGithubNotificationsRead,
   markGithubThreadRead,
+  parseCachedInbox,
   parseCachedReleases,
   unsubscribeGithubThread,
 } from "@/widgets/github/lib/github-api";
@@ -204,6 +205,58 @@ describe("parseCachedReleases", () => {
 
   it("rejects a cache entry that is missing the watch counts", () => {
     expect(parseCachedReleases({ releases: [] })).toBeNull();
+  });
+});
+
+describe("parseCachedInbox", () => {
+  function prNode(id: string) {
+    return {
+      id,
+      title: `PR ${id}`,
+      url: `https://github.com/o/r/pull/${id}`,
+      number: Number(id),
+      isDraft: true,
+      updatedAt: "2026-07-01T00:00:00Z",
+      repository: { nameWithOwner: "o/r", isPrivate: true },
+      author: { login: "someone" },
+      reviewDecision: "CHANGES_REQUESTED",
+      commits: { nodes: [{ commit: { statusCheckRollup: { state: "FAILURE" } } }] },
+    };
+  }
+
+  it("round-trips a fetched payload", async () => {
+    mockFetch.mockImplementation((_provider, url) => {
+      if (isGraphql(url)) {
+        return Promise.resolve(
+          jsonResponse({
+            data: {
+              reviewRequested: { nodes: [prNode("1")] },
+              mine: { nodes: [prNode("2")] },
+              assigned: { nodes: [issueNode("3")] },
+              mentioned: { nodes: [issueNode("4", true)] },
+            },
+          }),
+        );
+      }
+      return Promise.resolve(jsonResponse([notificationEntry("n1")]));
+    });
+    const data = await fetchInbox();
+
+    expect(data.notifications).toHaveLength(1);
+    expect(data.pullRequests).toHaveLength(2);
+    expect(data.issues).toHaveLength(2);
+    expect(parseCachedInbox(JSON.parse(JSON.stringify(data)))).toEqual(data);
+  });
+
+  it("round-trips the per-section error fields", async () => {
+    mockFetch.mockImplementation((_provider, url) => {
+      if (isGraphql(url)) return Promise.resolve(new Response(null, { status: 500 }));
+      return Promise.resolve(jsonResponse([notificationEntry("n1")]));
+    });
+    const data = await fetchInbox();
+
+    expect(data.itemsError).toBeDefined();
+    expect(parseCachedInbox(JSON.parse(JSON.stringify(data)))).toEqual(data);
   });
 });
 

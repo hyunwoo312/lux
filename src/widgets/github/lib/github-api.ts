@@ -488,6 +488,8 @@ const inboxDataSchema = z.object({
   notifications: z.array(inboxNotificationSchema),
   pullRequests: z.array(inboxPullRequestSchema),
   issues: z.array(inboxIssueSchema).default([]),
+  notificationsError: z.string().optional(),
+  itemsError: z.string().optional(),
 });
 
 export function parseCachedInbox(raw: unknown): InboxData | null {
