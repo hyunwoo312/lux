@@ -64,6 +64,7 @@ describe("StocksWidget", () => {
           symbols: [],
           range: "1d",
           showName: true,
+          showIndices: false,
           sort: "manual",
           selectedSymbol: null,
         },
@@ -80,6 +81,7 @@ describe("StocksWidget", () => {
           symbols: ["AAPL", "MSFT"],
           range: "1d",
           showName: true,
+          showIndices: false,
           sort: "manual",
           selectedSymbol: null,
         },
@@ -104,6 +106,7 @@ describe("StocksWidget", () => {
           symbols: ["GOOG", "AMZN"],
           range: "1d",
           showName: true,
+          showIndices: false,
           sort: "change",
           selectedSymbol: null,
         },
@@ -126,6 +129,7 @@ describe("StocksWidget", () => {
           symbols: ["TSLA", "NVDA"],
           range: "1d",
           showName: true,
+          showIndices: false,
           sort: "manual",
           selectedSymbol: null,
         },
@@ -146,6 +150,7 @@ describe("StocksWidget", () => {
           symbols: ["AAPL"],
           range: "1d",
           showName: true,
+          showIndices: false,
           sort: "manual",
           selectedSymbol: null,
         },
@@ -165,6 +170,7 @@ describe("StocksWidget", () => {
           symbols: ["AAPL", "MSFT"],
           range: "1d",
           showName: true,
+          showIndices: false,
           sort: "manual",
           selectedSymbol: null,
         },
@@ -177,5 +183,50 @@ describe("StocksWidget", () => {
 
     expect(useStocksStore.getState().byInstance["stocks-open"]?.selectedSymbol).toBe("AAPL");
     expect(screen.getByText("Prev close")).toBeInTheDocument();
+  });
+
+  it("shows the major indices above the watchlist when enabled", async () => {
+    useStocksStore.setState({
+      byInstance: {
+        "stocks-idx": {
+          symbols: ["IDXA"],
+          range: "1d",
+          showName: true,
+          showIndices: true,
+          sort: "manual",
+          selectedSymbol: null,
+        },
+      },
+    });
+
+    renderWidget("stocks-idx");
+
+    expect(await screen.findByText("S&P 500")).toBeInTheDocument();
+    expect(screen.getByText("Nasdaq")).toBeInTheDocument();
+    expect(screen.getByText("Dow")).toBeInTheDocument();
+    expect(fetchQuoteMock.mock.calls.map((call) => call[0])).toEqual(
+      expect.arrayContaining(["^GSPC", "^IXIC", "^DJI"]),
+    );
+  });
+
+  it("leaves the indices out when the setting is off", async () => {
+    useStocksStore.setState({
+      byInstance: {
+        "stocks-noidx": {
+          symbols: ["NOIDX"],
+          range: "1d",
+          showName: true,
+          showIndices: false,
+          sort: "manual",
+          selectedSymbol: null,
+        },
+      },
+    });
+
+    renderWidget("stocks-noidx");
+    await screen.findByText("Prev close");
+
+    expect(screen.queryByText("S&P 500")).not.toBeInTheDocument();
+    expect(fetchQuoteMock.mock.calls.map((call) => call[0])).not.toContain("^GSPC");
   });
 });

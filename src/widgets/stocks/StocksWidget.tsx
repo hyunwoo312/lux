@@ -8,6 +8,7 @@ import { peekPolledResource } from "@/widgets/core/usePolledResource";
 import { SortableRow } from "@/widgets/core/SortableRow";
 import { StockRow } from "@/widgets/stocks/components/StockRow";
 import { StockDetail } from "@/widgets/stocks/components/StockDetail";
+import { IndexStrip } from "@/widgets/stocks/components/IndexStrip";
 import { deriveChange, quoteCacheKey, referencePrice } from "@/widgets/stocks/lib/quote";
 import { useQuotesVersion } from "@/widgets/stocks/hooks/useQuote";
 import { useStocks, useStocksStore } from "@/widgets/stocks/useStocksStore";
@@ -35,6 +36,7 @@ export function StocksWidget() {
   const range = useStocks((d) => d.range);
   const sort = useStocks((d) => d.sort);
   const selectedSymbol = useStocks((d) => d.selectedSymbol);
+  const showIndices = useStocks((d) => d.showIndices);
   const selectSymbol = useStocksStore((s) => s.selectSymbol);
   const removeSymbol = useStocksStore((s) => s.removeSymbol);
   const reorderSymbols = useStocksStore((s) => s.reorderSymbols);
@@ -62,77 +64,80 @@ export function StocksWidget() {
   };
 
   return (
-    <div className="relative h-full overflow-hidden">
-      {symbols.length === 0 ? (
-        <div
-          className="
-            text-muted-foreground flex h-full items-center justify-center px-2 text-center text-sm
-          "
-        >
-          Search above to add a symbol.
-        </div>
-      ) : (
-        <AnimatePresence initial={false} mode="popLayout">
-          {detail ? (
-            <motion.div
-              key="detail"
-              className="absolute inset-0"
-              initial={{ opacity: 0, y: reduced ? 0 : "-4%" }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: reduced ? 0 : "-4%" }}
-              transition={transition}
-            >
-              <StockDetail symbol={detail} onRemove={() => removeSymbol(instanceId, detail)} />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="list"
-              className="absolute inset-0 overflow-x-hidden overflow-y-auto"
-              initial={{ opacity: 0, y: offset }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: offset }}
-              transition={transition}
-            >
-              {sort === "manual" ? (
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  modifiers={VERTICAL_LIST_MODIFIERS}
-                  onDragEnd={handleDragEnd}
-                >
-                  <SortableContext items={ordered} strategy={verticalListSortingStrategy}>
-                    <ul className="flex flex-col gap-0.5">
-                      <AnimatePresence initial={false} mode="popLayout">
-                        {ordered.map((symbol) => (
-                          <SortableRow key={symbol} id={symbol}>
-                            <StockRow
-                              symbol={symbol}
-                              onSelect={() => selectSymbol(instanceId, symbol)}
-                              onRemove={() => removeSymbol(instanceId, symbol)}
-                            />
-                          </SortableRow>
-                        ))}
-                      </AnimatePresence>
-                    </ul>
-                  </SortableContext>
-                </DndContext>
-              ) : (
-                <ul className="flex flex-col gap-0.5">
-                  {ordered.map((symbol) => (
-                    <li key={symbol}>
-                      <StockRow
-                        symbol={symbol}
-                        onSelect={() => selectSymbol(instanceId, symbol)}
-                        onRemove={() => removeSymbol(instanceId, symbol)}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      )}
+    <div className="flex h-full flex-col overflow-hidden">
+      {showIndices ? <IndexStrip /> : null}
+      <div className="relative min-h-0 flex-1">
+        {symbols.length === 0 ? (
+          <div
+            className="
+              text-muted-foreground flex h-full items-center justify-center px-2 text-center text-sm
+            "
+          >
+            Search above to add a symbol.
+          </div>
+        ) : (
+          <AnimatePresence initial={false} mode="popLayout">
+            {detail ? (
+              <motion.div
+                key="detail"
+                className="absolute inset-0"
+                initial={{ opacity: 0, y: reduced ? 0 : "-4%" }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: reduced ? 0 : "-4%" }}
+                transition={transition}
+              >
+                <StockDetail symbol={detail} onRemove={() => removeSymbol(instanceId, detail)} />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="list"
+                className="absolute inset-0 overflow-x-hidden overflow-y-auto"
+                initial={{ opacity: 0, y: offset }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: offset }}
+                transition={transition}
+              >
+                {sort === "manual" ? (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    modifiers={VERTICAL_LIST_MODIFIERS}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext items={ordered} strategy={verticalListSortingStrategy}>
+                      <ul className="flex flex-col gap-0.5">
+                        <AnimatePresence initial={false} mode="popLayout">
+                          {ordered.map((symbol) => (
+                            <SortableRow key={symbol} id={symbol}>
+                              <StockRow
+                                symbol={symbol}
+                                onSelect={() => selectSymbol(instanceId, symbol)}
+                                onRemove={() => removeSymbol(instanceId, symbol)}
+                              />
+                            </SortableRow>
+                          ))}
+                        </AnimatePresence>
+                      </ul>
+                    </SortableContext>
+                  </DndContext>
+                ) : (
+                  <ul className="flex flex-col gap-0.5">
+                    {ordered.map((symbol) => (
+                      <li key={symbol}>
+                        <StockRow
+                          symbol={symbol}
+                          onSelect={() => selectSymbol(instanceId, symbol)}
+                          onRemove={() => removeSymbol(instanceId, symbol)}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
+      </div>
     </div>
   );
 }

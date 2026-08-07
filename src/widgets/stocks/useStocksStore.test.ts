@@ -8,7 +8,14 @@ const symbols = (instanceId: string) => store().byInstance[instanceId]?.symbols;
 beforeEach(() => {
   useStocksStore.setState({
     byInstance: {
-      [ID]: { symbols: [], range: "1d", showName: true, sort: "manual", selectedSymbol: null },
+      [ID]: {
+        symbols: [],
+        range: "1d",
+        showName: true,
+        showIndices: false,
+        sort: "manual",
+        selectedSymbol: null,
+      },
     },
     syncNonce: {},
     lastSyncAt: {},
@@ -60,7 +67,14 @@ describe("useStocksStore", () => {
     useStocksStore.setState((state) => ({
       byInstance: {
         ...state.byInstance,
-        [OTHER]: { symbols: [], range: "1d", showName: true, sort: "manual", selectedSymbol: null },
+        [OTHER]: {
+          symbols: [],
+          range: "1d",
+          showName: true,
+          showIndices: false,
+          sort: "manual",
+          selectedSymbol: null,
+        },
       },
     }));
     store().addSymbol(ID, "AAPL");

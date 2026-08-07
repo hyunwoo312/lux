@@ -33,7 +33,14 @@ beforeEach(() => {
   vi.clearAllMocks();
   useStocksStore.setState({
     byInstance: {
-      [ID]: { symbols: [], range: "1d", showName: true, sort: "manual", selectedSymbol: null },
+      [ID]: {
+        symbols: [],
+        range: "1d",
+        showName: true,
+        showIndices: false,
+        sort: "manual",
+        selectedSymbol: null,
+      },
     },
   });
 });
@@ -59,6 +66,7 @@ describe("StocksSearch", () => {
           symbols: ["AAPL"],
           range: "1d",
           showName: true,
+          showIndices: false,
           sort: "manual",
           selectedSymbol: null,
         },

@@ -8,6 +8,7 @@ import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { invalidatePolledResource } from "@/widgets/core/usePolledResource";
 import { syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
 import { quoteCacheKey } from "@/widgets/stocks/lib/quote";
+import { INDEX_RANGE, MARKET_INDICES } from "@/widgets/stocks/lib/indices";
 import { STOCK_RANGES, STOCK_SORTS, type StockRange, type StockSort } from "@/widgets/stocks/types";
 
 export const MAX_SYMBOLS = 20;
@@ -17,6 +18,7 @@ type StocksData = {
   symbols: string[];
   range: StockRange;
   showName: boolean;
+  showIndices: boolean;
   sort: StockSort;
   selectedSymbol: string | null;
 };
@@ -32,6 +34,7 @@ type StocksState = {
   reorderSymbols: (instanceId: string, activeSymbol: string, overSymbol: string) => void;
   setRange: (instanceId: string, range: StockRange) => void;
   setShowName: (instanceId: string, showName: boolean) => void;
+  setShowIndices: (instanceId: string, showIndices: boolean) => void;
   setSort: (instanceId: string, sort: StockSort) => void;
   selectSymbol: (instanceId: string, symbol: string) => void;
   clearSelection: (instanceId: string) => void;
@@ -46,6 +49,7 @@ const DEFAULT_DATA: StocksData = {
   symbols: ["AAPL", "MSFT", "NVDA", "TSLA"],
   range: "1d",
   showName: true,
+  showIndices: false,
   sort: "manual",
   selectedSymbol: null,
 };
@@ -54,6 +58,7 @@ const dataSchema = z.object({
   symbols: z.array(z.string()).max(MAX_SYMBOLS).default([]),
   range: z.enum(STOCK_RANGES).default("1d"),
   showName: z.boolean().default(true),
+  showIndices: z.boolean().default(false),
   sort: z.enum(STOCK_SORTS).default("manual"),
 });
 
@@ -115,6 +120,8 @@ export const useStocksStore = create<StocksState>()(
         set((state) => update(state, instanceId, (data) => ({ ...data, range }))),
       setShowName: (instanceId, showName) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, showName }))),
+      setShowIndices: (instanceId, showIndices) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, showIndices }))),
       setSort: (instanceId, sort) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, sort }))),
       selectSymbol: (instanceId, symbol) =>
@@ -149,6 +156,11 @@ export const useStocksStore = create<StocksState>()(
         for (const symbol of data.symbols) {
           invalidatePolledResource(quoteCacheKey(symbol, data.range));
         }
+        if (data.showIndices) {
+          for (const index of MARKET_INDICES) {
+            invalidatePolledResource(quoteCacheKey(index.symbol, INDEX_RANGE));
+          }
+        }
         set((state) => ({
           syncNonce: { ...state.syncNonce, [instanceId]: (state.syncNonce[instanceId] ?? 0) + 1 },
           lastSyncAt: { ...state.lastSyncAt, [instanceId]: Date.now() },
@@ -172,7 +184,13 @@ export const useStocksStore = create<StocksState>()(
         byInstance: Object.fromEntries(
           Object.entries(state.byInstance).map(([id, data]) => [
             id,
-            { symbols: data.symbols, range: data.range, showName: data.showName, sort: data.sort },
+            {
+              symbols: data.symbols,
+              range: data.range,
+              showName: data.showName,
+              showIndices: data.showIndices,
+              sort: data.sort,
+            },
           ]),
         ),
       }),
@@ -185,6 +203,7 @@ export const useStocksStore = create<StocksState>()(
             symbols: data.symbols,
             range: data.range,
             showName: data.showName,
+            showIndices: data.showIndices,
             sort: data.sort,
             selectedSymbol: null,
           };

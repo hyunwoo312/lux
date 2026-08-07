@@ -34,8 +34,9 @@ export function useQuotesVersion(symbols: string[], range: StockRange, enabled: 
   return useSyncExternalStore(subscribe, getVersion);
 }
 
-export function useQuote(symbol: string) {
-  const range = useStocks((d) => d.range);
+export function useQuote(symbol: string, rangeOverride?: StockRange) {
+  const storeRange = useStocks((d) => d.range);
+  const range = rangeOverride ?? storeRange;
   const lastData = useRef<Quote | null>(null);
 
   const now = Date.now();

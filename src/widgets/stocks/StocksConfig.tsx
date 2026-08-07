@@ -36,6 +36,8 @@ export function StocksConfig() {
   const setRange = useStocksStore((s) => s.setRange);
   const showName = useStocks((d) => d.showName);
   const setShowName = useStocksStore((s) => s.setShowName);
+  const showIndices = useStocks((d) => d.showIndices);
+  const setShowIndices = useStocksStore((s) => s.setShowIndices);
   const sort = useStocks((d) => d.sort);
   const setSort = useStocksStore((s) => s.setSort);
 
@@ -63,6 +65,18 @@ export function StocksConfig() {
               value={showName ? "show" : "hide"}
               options={NAME_OPTIONS}
               onChange={(value) => setShowName(instanceId, value === "show")}
+            />
+          }
+        />
+        <WidgetConfigItem
+          title="Market indices"
+          description="Show S&P 500, Nasdaq and Dow above the watchlist"
+          control={
+            <ConfigSegmented
+              label="Market indices"
+              value={showIndices ? "show" : "hide"}
+              options={NAME_OPTIONS}
+              onChange={(value) => setShowIndices(instanceId, value === "show")}
             />
           }
         />
