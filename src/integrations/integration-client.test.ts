@@ -1,0 +1,123 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { integrationFetch } from "@/integrations/integration-client";
+import { writeSpotifyClientId } from "@/integrations/provider-config";
+import { getAccountByProvider, writeAccount } from "@/integrations/token-store";
+import type { IntegrationAccount } from "@/integrations/types";
+
+const CONFIG_KEY = "lux:integration-config";
+const API_URL = "https://api.spotify.com/v1/me/player";
+
+function expiredSpotifyAccount(): IntegrationAccount {
+  return {
+    id: "spotify-1",
+    providerId: "spotify",
+    providerAccountId: "user-1",
+    displayName: "Someone",
+    status: "connected",
+    connectedAt: "2026-08-01T00:00:00.000Z",
+    token: {
+      accessToken: "stale-access-token",
+      refreshToken: "the-refresh-token",
+      expiresAt: Date.now() - 60_000,
+      tokenType: "Bearer",
+      scopes: ["user-read-playback-state"],
+    },
+  };
+}
+
+function tokenResponse(): Response {
+  return new Response(
+    JSON.stringify({
+      access_token: "fresh-access-token",
+      refresh_token: "rotated-refresh-token",
+      expires_in: 3600,
+      token_type: "Bearer",
+      scope: "user-read-playback-state",
+    }),
+    { status: 200, headers: { "Content-Type": "application/json" } },
+  );
+}
+
+beforeEach(async () => {
+  await chrome.storage.local.clear();
+  await writeSpotifyClientId("client-abc");
+  await writeAccount(expiredSpotifyAccount());
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+describe("refreshing a Spotify token", () => {
+  it("keeps the account connected when the client ID cannot be read", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) =>
+        String(input).includes("accounts.spotify.com")
+          ? tokenResponse()
+          : new Response("{}", { status: 200 }),
+      ),
+    );
+    await chrome.storage.local.set({ [CONFIG_KEY]: { version: 1, spotifyClientId: 42 } });
+
+    await expect(integrationFetch("spotify", API_URL)).rejects.toThrow();
+
+    const account = await getAccountByProvider("spotify");
+    expect(account?.status).toBe("connected");
+    expect(account?.token?.refreshToken).toBe("the-refresh-token");
+  });
+
+  it("keeps the account connected when the token request fails with a network error", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        if (String(input).includes("accounts.spotify.com")) {
+          throw new TypeError("Failed to fetch");
+        }
+        return new Response("{}", { status: 200 });
+      }),
+    );
+
+    await expect(integrationFetch("spotify", API_URL)).rejects.toThrow();
+
+    const account = await getAccountByProvider("spotify");
+    expect(account?.status).toBe("connected");
+    expect(account?.token?.refreshToken).toBe("the-refresh-token");
+  });
+
+  it("keeps the refresh token when the grant is genuinely rejected", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) =>
+        String(input).includes("accounts.spotify.com")
+          ? new Response(JSON.stringify({ error: "invalid_grant" }), { status: 400 })
+          : new Response("{}", { status: 200 }),
+      ),
+    );
+
+    await expect(integrationFetch("spotify", API_URL)).rejects.toThrow();
+
+    const account = await getAccountByProvider("spotify");
+    expect(account?.status).toBe("needsReconnect");
+    expect(account?.token?.refreshToken).toBe("the-refresh-token");
+  });
+
+  it("refreshes and stores the rotated token on success", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) =>
+        String(input).includes("accounts.spotify.com")
+          ? tokenResponse()
+          : new Response("{}", { status: 200 }),
+      ),
+    );
+
+    const response = await integrationFetch("spotify", API_URL);
+
+    expect(response.status).toBe(200);
+    const account = await getAccountByProvider("spotify");
+    expect(account?.status).toBe("connected");
+    expect(account?.token?.accessToken).toBe("fresh-access-token");
+    expect(account?.token?.refreshToken).toBe("rotated-refresh-token");
+  });
+});

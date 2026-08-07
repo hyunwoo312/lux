@@ -156,7 +156,6 @@ async function markNeedsReconnect(account: IntegrationAccount, message: string):
     ...account,
     status: "needsReconnect",
     lastError: message,
-    token: undefined,
   });
 }
 
@@ -215,14 +214,16 @@ async function refreshProviderToken(
   provider: IntegrationProvider,
   account: IntegrationAccount,
 ): Promise<string> {
+  const refresh = provider.refreshToken;
+  const refreshToken = account.token?.refreshToken;
+  const params =
+    refresh && refreshToken
+      ? { clientId: await resolveClientId(provider), refreshToken }
+      : undefined;
+
   try {
     const token =
-      provider.refreshToken && account.token?.refreshToken
-        ? await provider.refreshToken({
-            clientId: await resolveClientId(provider),
-            refreshToken: account.token.refreshToken,
-          })
-        : await requestToken(provider, false);
+      refresh && params ? await refresh(params) : await requestToken(provider, false);
     await writeAccount({
       ...account,
       status: "connected",

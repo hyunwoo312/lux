@@ -1,4 +1,5 @@
 import {
+  fetchTokenEndpoint,
   IntegrationReconnectRequiredError,
   IntegrationTemporaryAuthError,
   isReconnectRequiredStatus,
@@ -81,7 +82,7 @@ export function createPkceProvider(config: PkceProviderConfig): IntegrationProvi
         body.set("scope", config.scopes.join(" "));
       }
 
-      const response = await fetch(config.tokenEndpoint, {
+      const response = await fetchTokenEndpoint(config.label, config.tokenEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body,

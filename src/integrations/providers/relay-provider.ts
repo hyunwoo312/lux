@@ -1,4 +1,5 @@
 import {
+  fetchTokenEndpoint,
   IntegrationReconnectRequiredError,
   IntegrationTemporaryAuthError,
   isReconnectRequiredStatus,
@@ -47,7 +48,7 @@ export function createRelayProvider(config: RelayProviderConfig): IntegrationPro
   });
 
   const postToRelay = (body: Record<string, string>): Promise<Response> =>
-    fetch(relayEndpoint, {
+    fetchTokenEndpoint(config.label, relayEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
