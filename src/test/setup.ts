@@ -1,10 +1,11 @@
-import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach } from "vitest";
 import { installChromeMock } from "./chrome-mock";
+import { clearPolledResources } from "@/widgets/core/usePolledResource";
 
 const hasDom = typeof window !== "undefined";
 
 if (hasDom) {
+  await import("@testing-library/jest-dom/vitest");
   globalThis.ResizeObserver ??= class {
     observe() {}
     unobserve() {}
@@ -37,6 +38,8 @@ if (hasDom) {
 
 beforeEach(() => {
   installChromeMock();
+  globalThis.localStorage?.clear();
+  clearPolledResources();
 });
 
 afterEach(async () => {

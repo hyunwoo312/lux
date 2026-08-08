@@ -75,7 +75,6 @@ function renderWidget(instanceId: string) {
 }
 
 beforeEach(() => {
-  localStorage.clear();
   vi.clearAllMocks();
 });
 

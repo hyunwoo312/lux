@@ -336,6 +336,16 @@ export function patchPolledResource<T>(cacheKey: string, update: (data: T) => T)
   storeEntry(cacheKey, { data: update(entry.data), at: entry.at }, hasPersisted(cacheKey));
 }
 
+export function clearPolledResources(): void {
+  for (const cacheKey of [...dataCache.keys()]) {
+    removePersisted(cacheKey);
+    bumpCacheVersion(cacheKey);
+  }
+  dataCache.clear();
+  cacheVersions.clear();
+  liveResources.clear();
+}
+
 export function invalidatePolledResource(cacheKey: string): void {
   dataCache.delete(cacheKey);
   removePersisted(cacheKey);

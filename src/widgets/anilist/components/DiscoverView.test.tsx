@@ -63,7 +63,6 @@ function setConnected(connected: boolean) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  localStorage.clear();
   invalidatePolledResource(anilistKeys.discover("english", "trending", "anime"));
   discoverMock.mockResolvedValue([]);
   saveStatusMock.mockResolvedValue("PLANNING");

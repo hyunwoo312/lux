@@ -7,7 +7,6 @@ const store = () => useDashboardStore.getState();
 
 describe("useDashboardStore", () => {
   beforeEach(() => {
-    localStorage.clear();
     useDashboardStore.setState({
       widgets: [],
       layout: [],

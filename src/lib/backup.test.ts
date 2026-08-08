@@ -19,7 +19,6 @@ function makeBackup(parts: {
 }
 
 beforeEach(() => {
-  localStorage.clear();
   Object.defineProperty(window, "location", {
     configurable: true,
     value: { reload: vi.fn() },

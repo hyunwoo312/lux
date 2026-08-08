@@ -101,7 +101,6 @@ function manyEntries(count: number): CurrentEntry[] {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  localStorage.clear();
   USER += 1;
   observed = [];
   installScrollObserver();

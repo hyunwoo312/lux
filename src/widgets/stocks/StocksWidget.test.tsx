@@ -51,7 +51,6 @@ function renderWidget(instanceId: string) {
 }
 
 beforeEach(() => {
-  localStorage.clear();
   vi.clearAllMocks();
   fetchQuoteMock.mockImplementation((symbol) => Promise.resolve(quote(symbol, 110, 100)));
 });

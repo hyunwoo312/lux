@@ -1,10 +1,8 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from "vitest";
+import {describe, expect, it} from "vitest";
 import { sweepStaleResourceCaches } from "@/widgets/core/resourceCacheSweep";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-afterEach(() => localStorage.clear());
 
 describe("sweepStaleResourceCaches", () => {
   it("removes stale resource entries and keeps fresh ones", () => {

@@ -2,7 +2,6 @@
 import { getLocal, setLocal } from "@/lib/local-store";
 
 describe("local-store", () => {
-  beforeEach(() => localStorage.clear());
 
   it("round-trips a value", () => {
     setLocal("key", "value");

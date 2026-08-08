@@ -5,7 +5,6 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 
 describe("ThemeToggle", () => {
   beforeEach(() => {
-    localStorage.clear();
     document.documentElement.className = "";
   });
 
