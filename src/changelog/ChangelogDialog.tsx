@@ -4,7 +4,14 @@ import { motion, useReducedMotion } from "motion/react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { EASE_OUT_EXPO } from "@/lib/motion";
-import { CHANGE_TYPE_LABEL, CHANGE_TYPE_ORDER, RELEASES, type Release } from "@/changelog/releases";
+import {
+  CHANGE_TYPE_LABEL,
+  CHANGE_TYPE_ORDER,
+  RELEASES,
+  sortChanges,
+  type Release,
+  type ReleaseChange,
+} from "@/changelog/releases";
 import { useChangelogStore } from "@/changelog/useChangelogStore";
 
 type Props = {
@@ -41,6 +48,18 @@ export function ChangelogDialog({ open, onOpenChange }: Props) {
       </DialogContent>
     </Dialog>
   );
+}
+
+function groupByArea(
+  changes: readonly ReleaseChange[],
+): { area: string; changes: ReleaseChange[] }[] {
+  const groups: { area: string; changes: ReleaseChange[] }[] = [];
+  for (const change of changes) {
+    const current = groups.at(-1);
+    if (current?.area === change.area) current.changes.push(change);
+    else groups.push({ area: change.area, changes: [change] });
+  }
+  return groups;
 }
 
 function ReleaseSection({ release, latest }: { release: Release; latest: boolean }) {
@@ -84,26 +103,37 @@ function ReleaseSection({ release, latest }: { release: Release; latest: boolean
         transition={{ duration: reduced ? 0 : 0.25, ease: EASE_OUT_EXPO }}
         className="overflow-hidden"
       >
-        <div className="flex flex-col gap-3 pt-3">
+        <div className="flex flex-col gap-5 pt-3">
+          <p className="text-muted-foreground text-sm">{release.summary}</p>
           {CHANGE_TYPE_ORDER.map((type) => {
-            const items = release.changes.filter((change) => change.type === type);
+            const items = sortChanges(release.changes.filter((change) => change.type === type));
             if (items.length === 0) return null;
             return (
-              <div key={type} className="flex flex-col gap-1.5">
-                <h4 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-                  {CHANGE_TYPE_LABEL[type]}
+              <section key={type} className="flex flex-col gap-3">
+                <h4 className="flex items-center gap-2.5">
+                  <span
+                    className="text-foreground text-xs font-semibold tracking-widest uppercase"
+                  >
+                    {CHANGE_TYPE_LABEL[type]}
+                  </span>
+                  <span aria-hidden className="bg-border/70 h-px flex-1" />
                 </h4>
-                <ul className="flex flex-col gap-1.5">
-                  {items.map((change) => (
-                    <li key={change.text} className="text-foreground/90 flex gap-2 text-sm">
-                      <span aria-hidden className="text-muted-foreground/60 select-none">
-                        •
-                      </span>
-                      <span>{change.text}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                {groupByArea(items).map(({ area, changes }) => (
+                  <div key={area} className="flex flex-col gap-1.5 pl-1">
+                    <h5 className="text-foreground/70 text-xs font-medium">{area}</h5>
+                    <ul className="flex flex-col gap-1.5 pl-3">
+                      {changes.map((change) => (
+                        <li key={change.text} className="text-foreground/90 flex gap-2 text-sm">
+                          <span aria-hidden className="text-muted-foreground/50 select-none">
+                            •
+                          </span>
+                          <span>{change.text}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </section>
             );
           })}
         </div>
