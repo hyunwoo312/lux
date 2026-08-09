@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { App } from "@/app/App";
 import { useOnboardingStore } from "@/onboarding";
 
@@ -10,8 +10,11 @@ describe("App", () => {
 
   it("renders the header controls", () => {
     render(<App />);
-    expect(screen.getByRole("button", { name: "Add widget" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Edit layout" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument();
+    const header = within(screen.getByRole("banner"));
+
+    expect(header.getByRole("button", { name: "Add widget" })).toBeInTheDocument();
+    expect(header.getByRole("button", { name: "Edit layout" })).toBeInTheDocument();
+    expect(header.getByRole("button", { name: "Settings" })).toBeInTheDocument();
+    expect(header.getByRole("button", { name: "Send feedback" })).toBeInTheDocument();
   });
 });

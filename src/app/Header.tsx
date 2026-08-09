@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, Pencil, Settings } from "lucide-react";
+import { Check, MessageSquarePlus, Pencil, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useNow } from "@/hooks/useNow";
 import { ChangelogDialog, consumeChangelogAutoShow, useHasUnseenRelease } from "@/changelog";
+import { FeedbackDialog } from "@/feedback";
 import { WidgetPalette } from "@/app/WidgetPalette";
 import { useSettingsStore } from "@/settings";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
@@ -19,6 +20,7 @@ export function Header() {
   const openSettings = useSettingsStore((s) => s.openSettings);
   const hasUnseenRelease = useHasUnseenRelease();
   const [changelogOpen, setChangelogOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -85,16 +87,33 @@ export function Header() {
           >
             <LuxMark className="size-5" />
             {hasUnseenRelease && (
-              <span aria-hidden className="bg-primary absolute top-2 right-2 size-1.5 rounded-full" />
+              <span
+                aria-hidden
+                className="bg-primary absolute top-2 right-2 size-1.5 rounded-full"
+              />
             )}
+          </Button>
+        </Tooltip>
+        <Tooltip content="Send feedback">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-10 [&_svg]:size-5"
+            aria-label="Send feedback"
+            onClick={() => setFeedbackOpen(true)}
+          >
+            <MessageSquarePlus className="size-5" />
           </Button>
         </Tooltip>
       </div>
 
       <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
-      <HeaderClock className="
-        glass col-start-3 inline-flex items-center justify-self-end self-stretch rounded-md px-3
-      " />
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+      <HeaderClock
+        className="
+          glass col-start-3 inline-flex items-center justify-self-end self-stretch rounded-md px-3
+        "
+      />
     </header>
   );
 }
@@ -115,10 +134,7 @@ function HeaderClock({ className }: { className?: string }) {
 
   return (
     <span
-      className={cn(
-        "text-foreground text-2xl font-semibold tracking-wide tabular-nums",
-        className,
-      )}
+      className={cn("text-foreground text-2xl font-semibold tracking-wide tabular-nums", className)}
     >
       {hour}
       <span className="mx-0.5">:</span>

@@ -5,14 +5,13 @@ import {
   isReconnectRequiredStatus,
 } from "@/integrations/errors";
 import { buildPkceAuthorizeUrl, parseScopes } from "@/integrations/providers/pkce";
+import { RELAY_BASE_URL } from "@/lib/links";
 import type {
   IntegrationProfile,
   IntegrationProvider,
   IntegrationProviderId,
   IntegrationTokenResponse,
 } from "@/integrations/types";
-
-const RELAY_BASE_URL = "https://lux.hyunwk.me";
 
 type RelayTokenPayload = {
   access_token?: string;

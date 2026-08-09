@@ -8,7 +8,7 @@ import { SettingsSection } from "@/settings/components/SettingsSection";
 import { useSettingsStore } from "@/settings/useSettingsStore";
 import { useShortcutsStore } from "@/stores/useShortcutsStore";
 
-const REPO_URL = "https://github.com/hyunwoo312/lux";
+import { REPO_URL } from "@/lib/links";
 const SHORTCUT_PREVIEW = 3;
 
 export function HelpTab() {
@@ -135,9 +135,11 @@ function Keys({ list }: { list: Shortcut[] }) {
 
 function Key({ children }: { children: ReactNode }) {
   return (
-    <kbd className="
-      border-border/60 bg-card text-foreground rounded border px-1.5 py-0.5 text-xs font-medium
-    ">
+    <kbd
+      className="
+        border-border/60 bg-card text-foreground rounded border px-1.5 py-0.5 text-xs font-medium
+      "
+    >
       {children}
     </kbd>
   );

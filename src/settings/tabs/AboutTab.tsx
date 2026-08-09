@@ -23,13 +23,12 @@ import { useSettingsStore } from "@/settings/useSettingsStore";
 const DESCRIPTION =
   "A customizable new tab dashboard — widgets and quick access to the sites you visit most.";
 
-const REPO_URL = "https://github.com/hyunwoo312/lux";
+import { CWS_URL, KOFI_URL, REPO_URL } from "@/lib/links";
+
 const GITHUB_API = "https://api.github.com/repos/hyunwoo312/lux";
 const AUTHOR_URL = "https://hyunwk.me/";
 const SITE_URL = "https://lux.hyunwk.me";
 const PRIVACY_URL = `${SITE_URL}/privacy`;
-const CWS_URL = "https://chromewebstore.google.com/detail/lux/kmfabjnibncbooljgbkinkfddapmfcna";
-const KOFI_URL = "https://ko-fi.com/hyunwk";
 
 const repoSchema = z.object({ stargazers_count: z.number() });
 
