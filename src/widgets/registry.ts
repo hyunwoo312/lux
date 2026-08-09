@@ -10,6 +10,7 @@ import { anilistPlugin } from "@/widgets/anilist";
 import { notePlugin } from "@/widgets/note";
 import { stocksPlugin } from "@/widgets/stocks";
 import { newsPlugin } from "@/widgets/news";
+import { sportsPlugin } from "@/widgets/sports";
 
 const plugins: Record<WidgetType, WidgetPlugin> = {
   tasks: tasksPlugin,
@@ -23,6 +24,7 @@ const plugins: Record<WidgetType, WidgetPlugin> = {
   note: notePlugin,
   stocks: stocksPlugin,
   news: newsPlugin,
+  sports: sportsPlugin,
 };
 
 export const widgetPlugins: WidgetPlugin[] = Object.values(plugins).sort((a, b) =>
