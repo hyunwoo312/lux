@@ -2,7 +2,7 @@ import type { Match } from "@/widgets/sports/types";
 
 export type DetailPerson = {
   logo?: string;
-  label: string;
+  label?: string;
   name: string;
   detail?: string;
 };
@@ -12,7 +12,7 @@ export function peopleFor(match: Match): DetailPerson[] {
   if (match.state === "pre") {
     return sides
       .filter((team) => team.probable)
-      .map((team) => ({ logo: team.logo, label: "SP", name: team.probable ?? "" }));
+      .map((team) => ({ logo: team.logo, name: team.probable ?? "" }));
   }
   return sides.flatMap((team) =>
     team.leaders.map((leader) => ({

@@ -46,18 +46,26 @@ const competitorSchema = z.object({
   }),
 });
 
-const MAX_LEADERS = 2;
+const MAX_LEADERS = 3;
+
+function listsSeveralStats(detail: string): boolean {
+  return detail.includes(",");
+}
 
 function toLeaders(raw: z.infer<typeof competitorSchema>["leaders"]): MatchLeader[] {
   if (!raw) return [];
+  const credited = new Set<string>();
   return raw
     .flatMap((group) => {
       const top = group.leaders?.[0];
       const athlete = top?.athlete?.shortName ?? top?.athlete?.displayName;
-      if (!top?.displayValue || !athlete) return [];
+      if (!top?.displayValue || !athlete || credited.has(athlete)) return [];
+      credited.add(athlete);
       return [
         {
-          label: group.abbreviation ?? group.shortDisplayName ?? "",
+          label: listsSeveralStats(top.displayValue)
+            ? undefined
+            : (group.abbreviation ?? group.shortDisplayName),
           athlete,
           detail: top.displayValue,
         },
@@ -295,7 +303,7 @@ const cachedTeamSchema = z.object({
   hits: z.number().optional(),
   errors: z.number().optional(),
   leaders: z
-    .array(z.object({ label: z.string(), athlete: z.string(), detail: z.string() }))
+    .array(z.object({ label: z.string().optional(), athlete: z.string(), detail: z.string() }))
     .catch([]),
   probable: z.string().optional(),
 });

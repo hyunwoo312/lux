@@ -40,6 +40,10 @@ function event(
   };
 }
 
+function leaderGroup(abbreviation: string, athlete: string, displayValue: string) {
+  return { abbreviation, leaders: [{ displayValue, athlete: { shortName: athlete } }] };
+}
+
 function enrich(competitor: object, overrides: object = {}) {
   Object.assign(competitor, {
     hits: 10,
@@ -78,15 +82,52 @@ describe("box score fields", () => {
     expect(match?.home.errors).toBe(1);
   });
 
-  it("keeps only the top scorer per category, capped so the row stays readable", () => {
+  it("keeps three distinct performers, so the pitching line survives the cap", () => {
     const raw = event("1", "in", "End 7th", ["NYM", "6"], ["PIT", "2"]);
-    enrich(raw.competitions[0]!.competitors[0]!);
+    enrich(raw.competitions[0]!.competitors[0]!, {
+      leaders: [
+        leaderGroup("AVG", "N. Sogard", "3-4, 2 2B"),
+        leaderGroup("HR", "W. Contreras", "1-5, 3 K"),
+        leaderGroup("RAT", "S. Lugo", "6.0 IP, 1 ER, 7 K"),
+        leaderGroup("MLB", "A. Monasterio", "1-3, 2 RBI"),
+      ],
+    });
 
     const [match] = parseScoreboard({ events: [raw] });
 
     expect(match?.home.leaders).toEqual([
-      { label: "AVG", athlete: "N. Sogard", detail: "3-4, 2 2B" },
-      { label: "HR", athlete: "W. Contreras", detail: "1-5, 3 K" },
+      { label: undefined, athlete: "N. Sogard", detail: "3-4, 2 2B" },
+      { label: undefined, athlete: "W. Contreras", detail: "1-5, 3 K" },
+      { label: undefined, athlete: "S. Lugo", detail: "6.0 IP, 1 ER, 7 K" },
+    ]);
+  });
+
+  it("credits one athlete once, so a player leading three categories does not fill every row", () => {
+    const raw = event("1", "in", "End 7th", ["NYM", "6"], ["PIT", "2"]);
+    Object.assign(raw.competitions[0]!.competitors[0]!, {
+      leaders: [
+        leaderGroup("AVG", "J. Fermin", "1-2, BB, K"),
+        leaderGroup("HR", "J. Fermin", "1-2, BB, K"),
+        leaderGroup("RBI", "J. Fermin", "1-2, BB, K"),
+        leaderGroup("RAT", "M. Liberatore", "5.1 IP, 2 ER, 6 K"),
+      ],
+    });
+
+    expect(parseScoreboard({ events: [raw] })[0]?.home.leaders).toEqual([
+      { label: undefined, athlete: "J. Fermin", detail: "1-2, BB, K" },
+      { label: undefined, athlete: "M. Liberatore", detail: "5.1 IP, 2 ER, 6 K" },
+    ]);
+  });
+
+  it("keeps the category label when the value is a bare stat that means nothing on its own", () => {
+    const raw = event("1", "in", "Q3 4:12", ["MIA", "58"], ["TOR", "61"]);
+    Object.assign(raw.competitions[0]!.competitors[0]!, {
+      leaders: [leaderGroup("PTS", "K. Mitchell", "24.3"), leaderGroup("REB", "A. Boston", "8.4")],
+    });
+
+    expect(parseScoreboard({ events: [raw] })[0]?.home.leaders).toEqual([
+      { label: "PTS", athlete: "K. Mitchell", detail: "24.3" },
+      { label: "REB", athlete: "A. Boston", detail: "8.4" },
     ]);
   });
 

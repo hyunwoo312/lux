@@ -42,7 +42,7 @@ describe("peopleFor", () => {
     );
 
     expect(people.map((person) => person.name)).toEqual(["S. Lugo", "G. Cole"]);
-    expect(people.every((person) => person.label === "SP")).toBe(true);
+    expect(people.every((person) => person.label === undefined)).toBe(true);
   });
 
   it("skips a side with no announced starter rather than rendering a blank row", () => {

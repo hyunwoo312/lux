@@ -6,7 +6,7 @@ export const MATCH_STATES = ["pre", "in", "post"] as const;
 export type MatchState = (typeof MATCH_STATES)[number];
 
 export type MatchLeader = {
-  label: string;
+  label?: string;
   athlete: string;
   detail: string;
 };

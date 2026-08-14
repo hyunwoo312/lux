@@ -52,7 +52,9 @@ function PersonRow({ logo, label, name, detail }: DetailPerson) {
     <div className="flex items-center gap-1.5">
       <TeamLogo src={logo} className="size-3" />
       <span className="text-2xs text-foreground min-w-0 shrink truncate font-medium">{name}</span>
-      <span className="text-muted-foreground/60 text-2xs shrink-0 font-medium">{label}</span>
+      {label ? (
+        <span className="text-muted-foreground/60 text-2xs shrink-0 font-medium">{label}</span>
+      ) : null}
       {detail ? (
         <span className="text-2xs text-muted-foreground ml-auto min-w-0 truncate tabular-nums">
           {detail}
@@ -99,9 +101,12 @@ export function MatchDetail({ match }: { match: Match }) {
 
       {people.length > 0 ? (
         <Section>
+          <p className="text-muted-foreground/60 text-2xs mb-1.5 font-medium uppercase">
+            {match.state === "pre" ? "Probable starters" : "Top performers"}
+          </p>
           <div className="flex flex-col gap-1">
             {people.map((person, index) => (
-              <PersonRow key={`${person.name}-${person.label}-${index}`} {...person} />
+              <PersonRow key={`${person.name}-${index}`} {...person} />
             ))}
           </div>
         </Section>
