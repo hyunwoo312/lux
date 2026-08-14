@@ -72,6 +72,21 @@ describe("token-store", () => {
     expect(await getAccountByProvider("google")).toEqual(fresh);
   });
 
+  it("keeps both accounts when two providers refresh at the same moment", async () => {
+    const google = createAccount();
+    const microsoft: IntegrationAccount = {
+      ...google,
+      id: "microsoft-456",
+      providerId: "microsoft",
+      providerAccountId: "456",
+    };
+
+    await Promise.all([writeAccount(google), writeAccount(microsoft)]);
+
+    expect(await getAccountByProvider("google")).toEqual(google);
+    expect(await getAccountByProvider("microsoft")).toEqual(microsoft);
+  });
+
   it("coerces an invalid avatar URL to undefined instead of dropping the account", async () => {
     await writeAccount({ ...createAccount(), avatarUrl: "not-a-url" });
     const account = await getAccountByProvider("google");

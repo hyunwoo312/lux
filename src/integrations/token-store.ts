@@ -9,10 +9,22 @@ import {
 } from "@/integrations/types";
 
 const STORAGE_KEY = "integrations";
+const ACCOUNTS_LOCK = "lux:integration-accounts";
 
 const EMPTY_STORAGE: IntegrationStorageState = { version: 1, accounts: {} };
 
 const listeners = new Set<() => void>();
+
+let queued: Promise<unknown> = Promise.resolve();
+
+function withAccountsLock<T>(task: () => Promise<T>): Promise<T> {
+  if (typeof navigator !== "undefined" && navigator.locks?.request) {
+    return navigator.locks.request(ACCOUNTS_LOCK, task);
+  }
+  const run = queued.then(task, task);
+  queued = run.catch(() => undefined);
+  return run;
+}
 
 export function subscribeAccounts(listener: () => void): () => void {
   listeners.add(listener);
@@ -57,29 +69,35 @@ export async function getAccountByProvider(
 
 export async function writeAccount(account: IntegrationAccount): Promise<void> {
   const parsed = integrationAccountSchema.parse(account);
-  const state = await readStorage();
-  await writeStorage({
-    ...state,
-    accounts: { ...state.accounts, [parsed.id]: parsed },
+  await withAccountsLock(async () => {
+    const state = await readStorage();
+    await writeStorage({
+      ...state,
+      accounts: { ...state.accounts, [parsed.id]: parsed },
+    });
   });
 }
 
 export async function replaceProviderAccount(account: IntegrationAccount): Promise<void> {
   const parsed = integrationAccountSchema.parse(account);
-  const state = await readStorage();
-  const accounts: Record<string, IntegrationAccount> = {};
-  for (const [id, existing] of Object.entries(state.accounts)) {
-    if (existing.providerId !== parsed.providerId) accounts[id] = existing;
-  }
-  accounts[parsed.id] = parsed;
-  await writeStorage({ ...state, accounts });
+  await withAccountsLock(async () => {
+    const state = await readStorage();
+    const accounts: Record<string, IntegrationAccount> = {};
+    for (const [id, existing] of Object.entries(state.accounts)) {
+      if (existing.providerId !== parsed.providerId) accounts[id] = existing;
+    }
+    accounts[parsed.id] = parsed;
+    await writeStorage({ ...state, accounts });
+  });
 }
 
 export async function deleteAccount(accountId: string): Promise<void> {
-  const state = await readStorage();
-  const accounts = { ...state.accounts };
-  delete accounts[accountId];
-  await writeStorage({ ...state, accounts });
+  await withAccountsLock(async () => {
+    const state = await readStorage();
+    const accounts = { ...state.accounts };
+    delete accounts[accountId];
+    await writeStorage({ ...state, accounts });
+  });
 }
 
 watchStorage(STORAGE_KEY, () => {
