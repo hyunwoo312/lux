@@ -4,6 +4,8 @@ import { clearPolledResources } from "@/widgets/core/usePolledResource";
 
 const hasDom = typeof window !== "undefined";
 
+installChromeMock();
+
 if (hasDom) {
   await import("@testing-library/jest-dom/vitest");
   globalThis.ResizeObserver ??= class {
