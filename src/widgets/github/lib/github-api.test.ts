@@ -32,18 +32,37 @@ function issueNode(id: string, isPrivate = false) {
   };
 }
 
-function notificationEntry(id: string) {
+function notificationEntry(id: string, subject: object = {}) {
   return {
     id,
     reason: "mention",
     updated_at: "2026-07-01T00:00:00Z",
-    subject: { title: `Ping ${id}`, url: null, type: "Issue" },
+    subject: { title: `Ping ${id}`, url: null, type: "Issue", ...subject },
     repository: { full_name: "o/r", html_url: "https://github.com/o/r", private: false },
   };
 }
 
 function isGraphql(url: unknown): boolean {
   return String(url).includes("/graphql");
+}
+
+async function notificationLink(subject: object): Promise<string | undefined> {
+  mockFetch.mockImplementation((_provider, url) =>
+    Promise.resolve(
+      isGraphql(url)
+        ? jsonResponse({
+            data: {
+              reviewRequested: { nodes: [] },
+              mine: { nodes: [] },
+              assigned: { nodes: [] },
+              mentioned: { nodes: [] },
+            },
+          })
+        : jsonResponse([notificationEntry("n1", subject)]),
+    ),
+  );
+  const inbox = await fetchInbox();
+  return inbox.notifications[0]?.url;
 }
 
 afterEach(() => {
@@ -367,5 +386,25 @@ describe("fetchInbox — per-section failures", () => {
     });
 
     await expect(fetchInbox()).rejects.toThrow();
+  });
+});
+
+describe("notification links", () => {
+  it("rewrites a pull request subject onto its web URL", async () => {
+    const url = await notificationLink({
+      type: "PullRequest",
+      url: "https://api.github.com/repos/o/r/pulls/12",
+    });
+
+    expect(url).toBe("https://github.com/o/r/pull/12");
+  });
+
+  it("leaves the path alone for an issue in a repository named pulls", async () => {
+    const url = await notificationLink({
+      type: "Issue",
+      url: "https://api.github.com/repos/o/pulls/issues/5",
+    });
+
+    expect(url).toBe("https://github.com/o/pulls/issues/5");
   });
 });

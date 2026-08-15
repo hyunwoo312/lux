@@ -185,7 +185,7 @@ function notificationUrl(subjectUrl: string | null, type: string, repoUrl: strin
   if (subjectUrl && (type === "PullRequest" || type === "Issue")) {
     return subjectUrl
       .replace("https://api.github.com/repos/", "https://github.com/")
-      .replace("/pulls/", "/pull/");
+      .replace(/\/pulls\/(\d+)$/, "/pull/$1");
   }
   return repoUrl;
 }
