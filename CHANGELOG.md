@@ -4,6 +4,26 @@ All notable changes to Lux are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-08-15
+
+_Steadier account refreshes, tidier Sports detail, and a dashboard that copes when browser storage fills up._
+
+### Changed
+
+#### Sports
+- Match detail now names its list — probable starters before the game, top performers during it — and shows up to three per team, without repeating a player who leads more than one stat.
+
+### Fixed
+
+#### Dashboard
+- Running out of browser storage no longer quietly stops your theme from being remembered — Lux clears its oldest cached widget data to make room, and tells you in Settings if it still can’t save.
+
+#### Accounts
+- Two accounts refreshing at the same moment no longer overwrite each other’s sign-in, which could leave one of them asking to be reconnected.
+
+#### GitHub
+- A pull request notification now opens the pull request itself, instead of a broken link when the repository or its owner is named “pulls”.
+
 ## [1.3.0] - 2026-08-10
 
 _A Sports widget, in-app feedback, and a much deeper AniList, Calendar and Quick Access._

@@ -60,6 +60,34 @@ export function sortChanges(changes: readonly ReleaseChange[]): ReleaseChange[] 
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "1.3.1",
+    date: "2026-08-15",
+    summary:
+      "Steadier account refreshes, tidier Sports detail, and a dashboard that copes when browser storage fills up.",
+    changes: [
+      {
+        type: "fixed",
+        area: "Dashboard",
+        text: "Running out of browser storage no longer quietly stops your theme from being remembered — Lux clears its oldest cached widget data to make room, and tells you in Settings if it still can’t save.",
+      },
+      {
+        type: "fixed",
+        area: "Accounts",
+        text: "Two accounts refreshing at the same moment no longer overwrite each other’s sign-in, which could leave one of them asking to be reconnected.",
+      },
+      {
+        type: "changed",
+        area: "Sports",
+        text: "Match detail now names its list — probable starters before the game, top performers during it — and shows up to three per team, without repeating a player who leads more than one stat.",
+      },
+      {
+        type: "fixed",
+        area: "GitHub",
+        text: "A pull request notification now opens the pull request itself, instead of a broken link when the repository or its owner is named “pulls”.",
+      },
+    ],
+  },
+  {
     version: "1.3.0",
     date: "2026-08-10",
     summary:

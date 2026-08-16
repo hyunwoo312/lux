@@ -37,11 +37,13 @@ browser: no account, no tracking, nothing to sign up for.
   transition, and accent color used only where it actually signals something.
 - **Configurable and yours.** Tune everything from a settings panel, back up your whole setup to
   a file, and restore it anywhere.
+- **Keyboard-friendly.** Settings, the widget palette, layout editing, grid lines, and the theme
+  all have shortcuts — each rebindable, with two slots apiece.
 
 ## Using Lux
 
 Everything lives on the new tab. A small toolbar sits at the top — theme, add widget, edit
-layout, settings, and what's new — and the rest of the page is your dashboard.
+layout, settings, what's new, and feedback — and the rest of the page is your dashboard.
 
 ### Add a widget
 
@@ -88,17 +90,19 @@ entirely on your device, and a few connect to an account only when you choose.
 
 ### AniList
 
-Your anime and manga life across three tabs — sign in with AniList, or browse trending titles
+Your anime and manga life across four tabs — sign in with AniList, or browse trending titles
 first.
 
 - **Activity** — a feed of what the people you follow are reading and watching, with one-tap likes.
-- **Current** — your library with progress and exactly how far behind you are, filterable by anime
-  or manga and sortable.
+- **Library** — everything on your list with progress and exactly how far behind you are; filter by
+  status or what's airing soon, sort it, and page through as you scroll.
 - **Inbox** — your AniList notifications: airing updates, new additions, and likes.
+- **Discover** — trending, popular this season, top rated, and upcoming, each marked with what's
+  already on your list.
 
 <p align="center">
   <img src="assets/anilist-activity.png" alt="Lux AniList widget — Activity tab, a feed of the people you follow" width="32%" />
-  <img src="assets/anilist-current.png" alt="Lux AniList widget — Current tab, your library with progress and how far behind you are" width="32%" />
+  <img src="assets/anilist-current.png" alt="Lux AniList widget — Library tab, your list with progress and how far behind you are" width="32%" />
   <img src="assets/anilist-inbox.png" alt="Lux AniList widget — Inbox tab, your notifications" width="32%" />
 </p>
 
@@ -110,6 +114,9 @@ grid and a list view to match how you like to scan.
 - **Calendar view.** A full grid with multi-day events as continuous bars, a "+N more" overflow,
   and today highlighted.
 - **List view.** Flip to a chronological agenda when you'd rather just scan what's next.
+- **Ready for the next meeting.** Events carry a one-tap join link for Meet, Teams, and the rest,
+  show your RSVP and flag invitations still waiting on an answer, and tell you how long you're free
+  before the next thing starts.
 
 <p align="center">
   <img src="assets/calendar-default.png" alt="Lux Calendar widget — month grid with multi-day event bars" width="49%" />
@@ -122,12 +129,13 @@ grid and a list view to match how you like to scan.
 
 ### GitHub
 
-Your GitHub activity at a glance — toggle between two views right on your new tab:
+Your GitHub activity at a glance — toggle between three views right on your new tab:
 
 - **Contributions** — your full-year contribution heatmap with current and longest streaks, your
   yearly total, and a per-repository breakdown of commits and pull requests.
 - **Inbox** — your open pull requests and unread notifications together, so a review request or a
   mention never slips by.
+- **Releases** — the latest versions from the repositories you watch, newest first.
 
 <p align="center">
   <img src="assets/github-contributions.png" alt="Lux GitHub widget — contribution heatmap with streaks and a per-repository breakdown" width="49%" />
@@ -146,16 +154,19 @@ timer.
 
 ### News
 
-Top headlines on your new tab — switch between Google News, The New York Times, the BBC, and Yahoo
-News, and open any story on the publisher's own site.
+Top headlines on your new tab — Google News, The New York Times, the BBC, The Guardian, NPR, and
+Yahoo News, with every story opening on the publisher's own site.
 
-- **Pick your source.** A tab for each publisher, plus topic sections — World, Business,
-  Technology, and more — wherever a source offers them.
-- **Search the news.** On the Google News tab, search any topic and read the matching headlines.
+- **Pick your sources.** A tab for each publisher you enable, plus an **All** tab that merges them
+  and folds duplicate coverage of the same story together.
+- **Topics and regions.** World, Business, Technology, and more wherever a source offers them, for
+  the US, UK, Australian, or international editions.
+- **Search or filter.** Search any topic on the Google News tab, or narrow what's already loaded
+  on the others by headline or publisher.
 
 <p align="center">
-  <img src="assets/news-default.png" alt="Lux News widget — top headlines with source tabs" width="49%" />
-  <img src="assets/news-search.gif" alt="Lux News widget — switching sources and searching for a topic" width="49%" />
+  <img src="assets/news-default.png" alt="Lux News widget — headline tiles with source tabs and publisher names" width="49%" />
+  <img src="assets/news-browse.gif" alt="Lux News widget — switching between source tabs and browsing headline tiles, with new-since-last-visit markers" width="49%" />
 </p>
 
 ### Note
@@ -175,12 +186,29 @@ most-visited sites.
 
 - **Pin what matters.** Add links as favicon tiles, drag to reorder, and switch between grid and
   list.
-- **Or pull from the browser.** Tabs for your bookmarks, recently closed tabs, and history — each
-  opt-in by permission.
+- **Or pull from the browser.** Tabs for your bookmarks — browsable folder by folder — plus
+  recently closed tabs, history, and your most-visited sites, each opt-in by permission.
 
 <p align="center">
   <img src="assets/quick-access-default.png" alt="Lux Quick Access widget — pinned site tiles with Home, Bookmarks, Recent, and History tabs" width="49%" />
   <img src="assets/quick-access-customize.gif" alt="Lux Quick Access widget — adding a link and dragging tiles to reorder" width="49%" />
+</p>
+
+### Sports
+
+Scores for the teams you actually follow — no account and no API key.
+
+- **Your leagues, your teams.** NFL, NBA, WNBA, MLB, and NHL — follow a whole league or just the
+  teams you care about.
+- **Only the games you want.** Filter by live, upcoming, or final, and widen the day range from
+  today out to a few days either side.
+- **Open a game.** The line score, probable starters before it begins and top performers once it's
+  underway, and live detail that keeps up while it plays — including bases, count, and outs for
+  baseball.
+
+<p align="center">
+  <img src="assets/sports-default.png" alt="Lux Sports widget — the day's MLB scoreboard with scores and game states" width="49%" />
+  <img src="assets/sports-detail.gif" alt="Lux Sports widget — opening games for their line score and top performers" width="49%" />
 </p>
 
 ### Spotify
@@ -188,8 +216,9 @@ most-visited sites.
 Your music without the tab-switching (Spotify Premium required to control playback).
 
 - **Full now-playing.** Album art, a scrubber, and the whole transport — shuffle, skip, repeat,
-  volume, and device switching.
+  volume, and device switching — plus the playlist or album the track is playing from.
 - **Search to play.** Find a track in your library and switch to it on the spot.
+- **What's next.** Open the queue to see what's coming and jump straight to a track in it.
 
 <p align="center">
   <img src="assets/spotify-default.png" alt="Lux Spotify widget — now playing with album art and full playback controls" width="49%" />
@@ -205,6 +234,8 @@ API key.
   and a sparkline at a glance.
 - **Ticker detail.** Open a symbol for an interactive chart across ranges, plus key stats like the
   day's range, 52-week range, and volume.
+- **The market above it.** An optional strip with the S&P 500, Nasdaq, and Dow, so you can read
+  your symbols against the day's direction.
 
 <p align="center">
   <img src="assets/stocks-list.png" alt="Lux Stocks widget — watchlist with prices, daily change, and sparklines" width="49%" />
