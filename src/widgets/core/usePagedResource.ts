@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { PAGED_CACHE_PREFIX, setLocal } from "@/lib/local-store";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 import { backoffDelayMs, RETRY_BASE_MS } from "@/widgets/core/usePolledResource";
 
 let nextAutoKey = 0;
 const DEFAULT_STALE_MS = 180_000;
-const STORAGE_PREFIX = "lux:paged:";
 
 export type PagedFetcher<T> = (
   page: number,
@@ -91,7 +91,7 @@ function readPersisted<T>(
   parse?: (raw: unknown) => T[] | null,
 ): CacheEntry<T> | undefined {
   try {
-    const raw = localStorage.getItem(STORAGE_PREFIX + cacheKey);
+    const raw = localStorage.getItem(PAGED_CACHE_PREFIX + cacheKey);
     if (!raw) return undefined;
     const entry = JSON.parse(raw) as {
       items: unknown;
@@ -115,16 +115,12 @@ function readPersisted<T>(
 }
 
 function writePersisted<T>(cacheKey: string, entry: CacheEntry<T>): void {
-  try {
-    localStorage.setItem(STORAGE_PREFIX + cacheKey, JSON.stringify(entry));
-  } catch {
-    return;
-  }
+  setLocal(PAGED_CACHE_PREFIX + cacheKey, JSON.stringify(entry));
 }
 
 function removePersisted(cacheKey: string): void {
   try {
-    localStorage.removeItem(STORAGE_PREFIX + cacheKey);
+    localStorage.removeItem(PAGED_CACHE_PREFIX + cacheKey);
   } catch {
     return;
   }

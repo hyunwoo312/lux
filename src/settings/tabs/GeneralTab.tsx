@@ -25,6 +25,7 @@ export function GeneralTab() {
   const setClock24h = useAppSettingsStore((s) => s.setClock24h);
   const showGridLines = useAppSettingsStore((s) => s.showGridLines);
   const setShowGridLines = useAppSettingsStore((s) => s.setShowGridLines);
+  const isThemePersisted = useThemeStore((s) => s.isPersisted);
   const fileRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | undefined>(undefined);
   const [pendingImport, setPendingImport] = useState<File | null>(null);
@@ -58,7 +59,13 @@ export function GeneralTab() {
           title="Theme"
           description="Switch between the light and dark glass themes."
           control={<ThemeToggle />}
-        />
+        >
+          {!isThemePersisted && (
+            <p className="text-destructive text-xs">
+              Browser storage is full, so this theme won’t be remembered in new tabs.
+            </p>
+          )}
+        </SettingsRow>
         <SettingsRow
           title="Grid lines"
           description="Always show the dashboard grid, not only while editing."

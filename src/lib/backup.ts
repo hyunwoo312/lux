@@ -1,3 +1,5 @@
+import { setLocal } from "@/lib/local-store";
+
 const CHROME_PREFIX = "lux:";
 const LOCAL_PREFIX = "lux.";
 const EXCLUDED = new Set(["lux:integrations", "lux:integration-config"]);
@@ -95,7 +97,7 @@ export async function importSettings(file: File): Promise<void> {
   await chrome.storage.local.set(chromeEntries);
   await pruneKeysMissingFrom(chromeEntries);
 
-  for (const [key, value] of Object.entries(localEntries)) localStorage.setItem(key, value);
+  for (const [key, value] of Object.entries(localEntries)) setLocal(key, value);
   pruneLocalKeysMissingFrom(localEntries);
 
   location.reload();

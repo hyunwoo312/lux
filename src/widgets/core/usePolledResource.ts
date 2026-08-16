@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { POLLED_CACHE_PREFIX, setLocal } from "@/lib/local-store";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 
 let nextAutoKey = 0;
 const DEFAULT_STALE_MS = 180_000;
-const STORAGE_PREFIX = "lux:polled:";
 export const RETRY_BASE_MS = 60_000;
 const RETRY_MAX_MS = 30 * 60_000;
 
@@ -110,7 +110,7 @@ function readPersisted<T>(
   parse?: (raw: unknown) => T | null,
 ): CacheEntry<T> | undefined {
   try {
-    const raw = localStorage.getItem(STORAGE_PREFIX + cacheKey);
+    const raw = localStorage.getItem(POLLED_CACHE_PREFIX + cacheKey);
     if (!raw) return undefined;
     const entry = JSON.parse(raw) as { data: unknown; at: unknown };
     if (typeof entry?.at !== "number") return undefined;
@@ -123,16 +123,12 @@ function readPersisted<T>(
 }
 
 function writePersisted<T>(cacheKey: string, entry: CacheEntry<T>): void {
-  try {
-    localStorage.setItem(STORAGE_PREFIX + cacheKey, JSON.stringify(entry));
-  } catch {
-    return;
-  }
+  setLocal(POLLED_CACHE_PREFIX + cacheKey, JSON.stringify(entry));
 }
 
 function hasPersisted(cacheKey: string): boolean {
   try {
-    return localStorage.getItem(STORAGE_PREFIX + cacheKey) !== null;
+    return localStorage.getItem(POLLED_CACHE_PREFIX + cacheKey) !== null;
   } catch {
     return false;
   }
@@ -140,7 +136,7 @@ function hasPersisted(cacheKey: string): boolean {
 
 function removePersisted(cacheKey: string): void {
   try {
-    localStorage.removeItem(STORAGE_PREFIX + cacheKey);
+    localStorage.removeItem(POLLED_CACHE_PREFIX + cacheKey);
   } catch {
     return;
   }

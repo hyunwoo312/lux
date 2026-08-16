@@ -1,4 +1,5 @@
-const RESOURCE_CACHE_PREFIXES = ["lux:polled:", "lux:paged:"];
+import { RESOURCE_CACHE_PREFIXES } from "@/lib/local-store";
+
 const DEFAULT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 function isStale(raw: string, now: number, maxAgeMs: number): boolean {

@@ -10,10 +10,6 @@ export function getStoredTheme(): Theme {
   return value === "light" || value === "dark" ? value : DEFAULT_THEME;
 }
 
-function persistTheme(theme: Theme): void {
-  setLocal(STORAGE_KEY, theme);
-}
-
 export function applyThemeClass(theme: Theme): void {
   document.documentElement.classList.toggle("dark", theme === "dark");
 }
@@ -26,12 +22,13 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export function applyTheme(theme: Theme, animate: boolean): void {
-  persistTheme(theme);
+export function applyTheme(theme: Theme, animate: boolean): boolean {
+  const isPersisted = setLocal(STORAGE_KEY, theme);
   const doc = document as DocumentWithViewTransition;
   if (animate && doc.startViewTransition && !prefersReducedMotion()) {
     doc.startViewTransition(() => applyThemeClass(theme));
   } else {
     applyThemeClass(theme);
   }
+  return isPersisted;
 }

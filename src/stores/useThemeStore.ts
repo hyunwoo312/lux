@@ -3,19 +3,19 @@ import { applyTheme, getStoredTheme, type Theme } from "@/lib/theme";
 
 type ThemeState = {
   theme: Theme;
+  isPersisted: boolean;
   setTheme: (theme: Theme) => void;
   toggle: () => void;
 };
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
   theme: getStoredTheme(),
+  isPersisted: true,
   setTheme: (theme) => {
-    applyTheme(theme, true);
-    set({ theme });
+    set({ theme, isPersisted: applyTheme(theme, true) });
   },
   toggle: () => {
     const next: Theme = get().theme === "dark" ? "light" : "dark";
-    applyTheme(next, true);
-    set({ theme: next });
+    set({ theme: next, isPersisted: applyTheme(next, true) });
   },
 }));
