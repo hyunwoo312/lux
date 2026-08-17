@@ -19,9 +19,8 @@
 
 ## What it is
 
-Lux turns every new tab into a dashboard you actually want to look at — a grid of widgets you
-arrange yourself and a glassmorphic look that adapts to light and dark. It runs entirely in your
-browser: no account, no tracking, nothing to sign up for.
+Lux replaces the new tab page with a dashboard — a grid of widgets you arrange yourself, in a
+glassy light or dark theme. It runs in your browser, and there's no Lux account to sign up for.
 
 ## Install
 
@@ -31,24 +30,24 @@ browser: no account, no tracking, nothing to sign up for.
 
 ## Features
 
-- **A widget dashboard you arrange.** Drag, drop, and resize widgets on a grid — each with its
-  own Glass or Solid surface and accent.
-- **Made to look good.** A light / dark glassmorphism theme with a smooth theme-switch
-  transition, and accent color used only where it actually signals something.
-- **Configurable and yours.** Tune everything from a settings panel, back up your whole setup to
-  a file, and restore it anywhere.
-- **Keyboard-friendly.** Settings, the widget palette, layout editing, grid lines, and the theme
-  all have shortcuts — each rebindable, with two slots apiece.
+- **Widgets on a grid.** Drag, drop, and resize them. Each one has a Glass or Solid surface and its
+  own accent color.
+- **Light and dark.** Both themes are glass-styled, and the accent color is kept for things that
+  signal state — selected, live, destructive.
+- **Settings and backup.** Options live in one panel, and you can export your whole setup to a file
+  and import it again later.
+- **Keyboard shortcuts.** Settings, the widget palette, layout editing, grid lines, and the theme
+  each have one, and you can rebind them — two bindings per action.
 
 ## Using Lux
 
-Everything lives on the new tab. A small toolbar sits at the top — theme, add widget, edit
-layout, settings, what's new, and feedback — and the rest of the page is your dashboard.
+Everything lives on the new tab. The toolbar at the top has theme, add widget, edit layout,
+settings, what's new, and feedback; the rest of the page is your dashboard.
 
 ### Add a widget
 
-Click **Add widget** in the toolbar to open the widget menu. Hover an item to preview exactly where
-it will land, then **click to drop it there** — or **drag it onto the grid** to place it yourself.
+Click **Add widget** in the toolbar to open the widget menu. Hover an item to preview where it will
+land, then **click to drop it there** — or **drag it onto the grid** to place it yourself.
 
 <p align="center">
   <img src="assets/using-add-widget.gif" alt="Opening the add-widget menu and dropping a widget onto the grid" width="100%" />
@@ -63,20 +62,20 @@ the grid reflows around it, and each widget gets a remove button while you're ed
   <img src="assets/using-arrange.gif" alt="Edit mode — moving and resizing widgets on the grid" width="100%" />
 </p>
 
-### Make each widget yours
+### Widget settings
 
 Open a widget's settings from the gear on its header: switch its surface between **Glass** and
-**Solid**, pick an accent, and set widget-specific options. Data widgets like Weather, Stocks, and
-Calendar also get a manual refresh.
+**Solid**, pick an accent, and set the options for that widget. Data widgets like Weather, Stocks,
+and Calendar also have a manual refresh.
 
 <p align="center">
   <img src="assets/using-widget-settings.gif" alt="Opening a widget's settings to change its surface, accent, and options" width="100%" />
 </p>
 
-### Personalize and back up
+### Theme, wallpaper, and backup
 
-Open **settings** to switch light or dark, set a wallpaper, tune defaults, and export your whole
-setup to a file — then import it to restore everything on any machine.
+Open **settings** to switch between light and dark, set a wallpaper, and change defaults. You can
+also export your setup to a file and import it to restore everything on another machine.
 
 <p align="center">
   <img src="assets/using-settings.webp" alt="The settings panel — theme, wallpaper, and backup export and import" width="100%" />
@@ -84,19 +83,19 @@ setup to a file — then import it to restore everything on any machine.
 
 ## Widgets
 
-Widgets are the heart of Lux — pick the ones that fit how you work, arrange them however you like,
-and skip the rest. Add as many as you want, even more than one of the same widget. Most run
-entirely on your device, and a few connect to an account only when you choose.
+Twelve to choose from, and you can add more than one of the same kind. Most work on their own;
+AniList, Calendar, GitHub, and Spotify need you to connect that account first — see
+[Connecting accounts](#connecting-accounts).
 
 ### AniList
 
-Your anime and manga life across four tabs — sign in with AniList, or browse trending titles
-first.
+Your anime and manga list, across four tabs. Sign in to see your own, or browse trending titles
+without signing in.
 
-- **Activity** — a feed of what the people you follow are reading and watching, with one-tap likes.
-- **Library** — everything on your list with progress and exactly how far behind you are; filter by
-  status or what's airing soon, sort it, and page through as you scroll.
-- **Inbox** — your AniList notifications: airing updates, new additions, and likes.
+- **Activity** — what the people you follow are watching and reading, with one-tap likes.
+- **Library** — your list with progress and how far behind you are. Filter by status or what's
+  airing soon, sort it, and page through as you scroll.
+- **Inbox** — AniList notifications: airing updates, new additions, and likes.
 - **Discover** — trending, popular this season, top rated, and upcoming, each marked with what's
   already on your list.
 
@@ -108,15 +107,13 @@ first.
 
 ### Calendar
 
-Your Google and Outlook events together — read-only, on every new tab. Switch between a calendar
-grid and a list view to match how you like to scan.
+Google and Outlook events together, read-only, in two views.
 
-- **Calendar view.** A full grid with multi-day events as continuous bars, a "+N more" overflow,
-  and today highlighted.
-- **List view.** Flip to a chronological agenda when you'd rather just scan what's next.
-- **Ready for the next meeting.** Events carry a one-tap join link for Meet, Teams, and the rest,
-  show your RSVP and flag invitations still waiting on an answer, and tell you how long you're free
-  before the next thing starts.
+- **Calendar** — a month grid with multi-day events as continuous bars, a "+N more" overflow, and
+  today highlighted.
+- **List** — the same events as a chronological agenda.
+- **Meetings** — events carry a join link for Meet, Teams, and others, show your RSVP with pending
+  invitations flagged, and tell you how long you're free before the next one.
 
 <p align="center">
   <img src="assets/calendar-default.png" alt="Lux Calendar widget — month grid with multi-day event bars" width="49%" />
@@ -129,12 +126,11 @@ grid and a list view to match how you like to scan.
 
 ### GitHub
 
-Your GitHub activity at a glance — toggle between three views right on your new tab:
+Three views of your GitHub activity.
 
-- **Contributions** — your full-year contribution heatmap with current and longest streaks, your
+- **Contributions** — the year's contribution heatmap with current and longest streaks, your
   yearly total, and a per-repository breakdown of commits and pull requests.
-- **Inbox** — your open pull requests and unread notifications together, so a review request or a
-  mention never slips by.
+- **Inbox** — your open pull requests and unread notifications in one list.
 - **Releases** — the latest versions from the repositories you watch, newest first.
 
 <p align="center">
@@ -144,8 +140,7 @@ Your GitHub activity at a glance — toggle between three views right on your ne
 
 ### Image
 
-Your own photos on the new tab — show a single image, or a slideshow that fades through a set on a
-timer.
+Your own photos — a single image, or a slideshow that fades through a set on a timer.
 
 <p align="center">
   <img src="assets/image-default.png" alt="Lux Image widget — a single photo filling the widget" width="49%" />
@@ -154,15 +149,15 @@ timer.
 
 ### News
 
-Top headlines on your new tab — Google News, The New York Times, the BBC, The Guardian, NPR, and
-Yahoo News, with every story opening on the publisher's own site.
+Headlines from Google News, The New York Times, the BBC, The Guardian, NPR, and Yahoo News. Stories
+open on the publisher's own site.
 
-- **Pick your sources.** A tab for each publisher you enable, plus an **All** tab that merges them
-  and folds duplicate coverage of the same story together.
-- **Topics and regions.** World, Business, Technology, and more wherever a source offers them, for
-  the US, UK, Australian, or international editions.
-- **Search or filter.** Search any topic on the Google News tab, or narrow what's already loaded
-  on the others by headline or publisher.
+- **Sources** — a tab for each publisher you enable, plus an **All** tab that merges them and
+  folds duplicate coverage of the same story together.
+- **Topics and regions** — World, Business, Technology, and more where a source offers them, in
+  US, UK, Australian, or international editions.
+- **Search and filter** — search a topic on the Google News tab; on the others, narrow what's
+  loaded by headline or publisher.
 
 <p align="center">
   <img src="assets/news-default.png" alt="Lux News widget — headline tiles with source tabs and publisher names" width="49%" />
@@ -171,8 +166,7 @@ Yahoo News, with every story opening on the publisher's own site.
 
 ### Note
 
-A no-fuss scratch note: plain text, saved as you type, and always a click away — it never leaves
-your browser.
+A plain-text scratch note, saved as you type.
 
 <p align="center">
   <img src="assets/note-default.png" alt="Lux Note widget — an empty scratch note ready for input" width="49%" />
@@ -181,13 +175,11 @@ your browser.
 
 ### Quick Access
 
-Your launchpad for the sites you actually use — pinned links alongside your bookmarks, history, and
-most-visited sites.
+Links you pin yourself, alongside the lists the browser already keeps.
 
-- **Pin what matters.** Add links as favicon tiles, drag to reorder, and switch between grid and
-  list.
-- **Or pull from the browser.** Tabs for your bookmarks — browsable folder by folder — plus
-  recently closed tabs, history, and your most-visited sites, each opt-in by permission.
+- **Pinned links** — favicon tiles you can drag to reorder, shown as a grid or a list.
+- **From the browser** — bookmarks (browsable folder by folder), recently closed tabs, history,
+  and most-visited sites. Each asks for its permission the first time you use it.
 
 <p align="center">
   <img src="assets/quick-access-default.png" alt="Lux Quick Access widget — pinned site tiles with Home, Bookmarks, Recent, and History tabs" width="49%" />
@@ -196,15 +188,13 @@ most-visited sites.
 
 ### Sports
 
-Scores for the teams you actually follow — no account and no API key.
+Scores for the leagues and teams you follow.
 
-- **Your leagues, your teams.** NFL, NBA, WNBA, MLB, and NHL — follow a whole league or just the
-  teams you care about.
-- **Only the games you want.** Filter by live, upcoming, or final, and widen the day range from
-  today out to a few days either side.
-- **Open a game.** The line score, probable starters before it begins and top performers once it's
-  underway, and live detail that keeps up while it plays — including bases, count, and outs for
-  baseball.
+- **Leagues and teams** — NFL, NBA, WNBA, MLB, and NHL. Follow a whole league, or only the teams
+  you pick.
+- **Filters** — show live, upcoming, or final games, across today or a few days either side.
+- **Game detail** — the line score, probable starters before the game and top performers during
+  it, and live detail while it plays, including bases, count, and outs for baseball.
 
 <p align="center">
   <img src="assets/sports-default.png" alt="Lux Sports widget — the day's MLB scoreboard with scores and game states" width="49%" />
@@ -213,12 +203,13 @@ Scores for the teams you actually follow — no account and no API key.
 
 ### Spotify
 
-Your music without the tab-switching (Spotify Premium required to control playback).
+What's playing, with controls. Changing playback needs Spotify Premium — that's a restriction on
+Spotify's API.
 
-- **Full now-playing.** Album art, a scrubber, and the whole transport — shuffle, skip, repeat,
-  volume, and device switching — plus the playlist or album the track is playing from.
-- **Search to play.** Find a track in your library and switch to it on the spot.
-- **What's next.** Open the queue to see what's coming and jump straight to a track in it.
+- **Now playing** — album art, a scrubber, and the transport: shuffle, skip, repeat, volume, and
+  device switching, plus the playlist or album the track is playing from.
+- **Search** — find a track in your library and switch to it.
+- **Queue** — see what's coming next and jump to a track in it.
 
 <p align="center">
   <img src="assets/spotify-default.png" alt="Lux Spotify widget — now playing with album art and full playback controls" width="49%" />
@@ -227,15 +218,13 @@ Your music without the tab-switching (Spotify Premium required to control playba
 
 ### Stocks
 
-A watchlist for the tickers you follow — live prices and an interactive chart, with no account or
-API key.
+A watchlist with live prices and a chart.
 
-- **Your watchlist.** Add symbols, drag to reorder, and see each one's price, the day's change,
-  and a sparkline at a glance.
-- **Ticker detail.** Open a symbol for an interactive chart across ranges, plus key stats like the
-  day's range, 52-week range, and volume.
-- **The market above it.** An optional strip with the S&P 500, Nasdaq, and Dow, so you can read
-  your symbols against the day's direction.
+- **Watchlist** — add symbols and drag to reorder. Each row shows the price, the day's change, and
+  a sparkline.
+- **Ticker detail** — an interactive chart across ranges, plus the day's range, 52-week range, and
+  volume.
+- **Market indices** — an optional strip with the S&P 500, Nasdaq, and Dow above the watchlist.
 
 <p align="center">
   <img src="assets/stocks-list.png" alt="Lux Stocks widget — watchlist with prices, daily change, and sparklines" width="49%" />
@@ -244,11 +233,11 @@ API key.
 
 ### Tasks
 
-A fast, local to-do list — no account, nothing synced anywhere.
+A to-do list that stays on this machine.
 
-- **Add, check off, reorder.** Type to add, click to complete (with a running done / left count),
-  and drag to reorder.
-- **Stays tidy.** Completed items strike through and clear in a tap.
+- **Add, check off, reorder** — type to add, click to complete, and drag to reorder. There's a
+  running done / left count.
+- **Clearing up** — completed items strike through, and clear in one tap.
 
 <p align="center">
   <img src="assets/tasks-default.png" alt="Lux Tasks widget — local to-do list with a done and left count and completed items struck through" width="49%" />
@@ -257,11 +246,10 @@ A fast, local to-do list — no account, nothing synced anywhere.
 
 ### Weather
 
-Current conditions and forecasts with no account and no API key — just add the places you care
-about.
+Current conditions and forecasts for the places you add.
 
-- **Your cities** — a saved list showing each city's current temperature and the day's high and
-  low at a glance, with day and night icons.
+- **Your cities** — each city's current temperature with the day's high and low, and day or night
+  icons.
 - **City detail** — feels-like, humidity, wind, UV, sunrise and sunset, plus an hourly strip and a
   multi-day forecast.
 
@@ -272,30 +260,35 @@ about.
 
 ## Connecting accounts
 
-Some widgets can connect to your accounts over OAuth — only when you choose. That data is fetched
-straight from the provider to your browser and is never sent to a Lux server:
+Four widgets can connect to an account over OAuth, each only when you start the connection:
 
 - **Google Calendar / Outlook** — read-only calendar events.
-- **Spotify** — now playing and playback control (Premium to control).
+- **Spotify** — what's playing, and playback control.
 - **GitHub** — contributions and notifications.
 - **AniList** — library, progress, and notifications.
 
-> **Heads-up for early users (Google):** Lux's Google verification is still in review, so
-> connecting **Google Calendar** may show a "Google hasn't verified this app" screen. It's safe
-> to continue — choose **Advanced**, then **Go to lux.hyunwk.me**. Lux only requests read-only
-> calendar access, and your calendar data never touches a Lux server.
+Requests go from your browser to the provider, and you can disconnect any of them from settings.
+
+> **Connecting Google Calendar:** Lux's Google verification is still in review, so you may see a
+> "Google hasn't verified this app" screen. To continue, choose **Advanced**, then
+> **Go to lux.hyunwk.me**. Lux asks for read-only calendar access.
 
 ## Privacy
 
-Lux is local-first: your dashboard data lives in `chrome.storage.local` and never leaves your
-browser. No Lux account, no telemetry. The only Lux-operated backend is a minimal, stateless
-OAuth token relay used solely to complete sign-in and refresh access tokens for providers that
-require it — it stores nothing. Full policy: <https://lux.hyunwk.me/privacy>.
+Your dashboard lives on your machine: layout, widget settings, and account tokens are kept in
+`chrome.storage.local`. There's no Lux account and no analytics of any kind.
+
+The one server Lux operates is a small stateless relay. It does two jobs — completing sign-in and
+refreshing tokens for the providers whose token exchange needs a client secret (Google, Microsoft,
+GitHub), and forwarding feedback you write and submit yourself — and it stores nothing. Everything
+else talks to the provider directly from your browser.
+
+Full policy: <https://lux.hyunwk.me/privacy>.
 
 ## Contributing
 
-Lux is maintained solo and isn't taking pull requests right now — but bug reports are welcome,
-and you're free to fork it under MIT. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Lux is maintained solo and isn't taking pull requests right now, but bug reports are welcome, and
+you're free to fork it under MIT. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

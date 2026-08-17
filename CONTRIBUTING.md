@@ -10,9 +10,8 @@ merging. Nothing personal; it's just how I want to work on this at the moment.
 That said, two things are very welcome:
 
 - **Found a bug? Open an issue.** There's a template to fill in — the more detail (steps, your
-  browser and version, what you expected to happen), the easier it is for me to fix. If you'd
-  rather not use GitHub, the feedback button in the Lux toolbar sends the same thing straight to
-  me.
+  browser and version, what you expected to happen), the easier it is for me to fix. The feedback
+  button in the Lux toolbar reaches me too, if you'd rather not use GitHub.
 - **Want to build on it? Fork away.** Lux is [MIT-licensed](LICENSE), so take it and make it
   your own.
 
@@ -20,9 +19,9 @@ That said, two things are very welcome:
 
 If you find something security-sensitive, **please don't put it in a public issue.** Email me at
 **hyunwoojames@gmail.com** with the details and steps to reproduce, and I'll look into it. For
-context: Lux is local-first — your dashboard data and account tokens live in
-`chrome.storage.local`, and the only backend is a stateless token relay that stores nothing —
-but I still want to hear about anything that looks off.
+context on where to look: dashboard data and account tokens live in `chrome.storage.local`, and the
+only backend is the stateless token relay. Either way, I want to hear about anything that looks
+off.
 
 ## Running it yourself
 
