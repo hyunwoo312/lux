@@ -5,8 +5,12 @@ import {
   type StoredAsset,
   type StoredAssetMetadata,
 } from "@/lib/asset-store";
-import { downscaleImage } from "@/widgets/image/downscale";
-import { IMAGE_MAX_BYTES } from "@/widgets/image/types";
+import { encodeToWebp } from "@/lib/image-encode";
+import {
+  IMAGE_ENCODE_QUALITY,
+  IMAGE_MAX_BYTES,
+  IMAGE_MAX_DIMENSION,
+} from "@/widgets/image/types";
 
 export type ImageMediaAsset = StoredAsset;
 export type ImageMediaMetadata = StoredAssetMetadata;
@@ -36,7 +40,10 @@ export async function saveImageAsset(file: File): Promise<ImageMediaMetadata> {
   const validationError = validateImageFile(file);
   if (validationError) throw new Error(validationError);
 
-  const blob = await downscaleImage(file);
+  const blob = await encodeToWebp(file, {
+    quality: IMAGE_ENCODE_QUALITY,
+    maxDimension: IMAGE_MAX_DIMENSION,
+  });
   const asset: ImageMediaAsset = {
     id: createAssetId("image"),
     fileName: file.name || "Image",

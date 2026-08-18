@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createAssetStore, missingAssetIds, type MediaImageItem } from "@/lib/asset-store";
+import { encodeToWebp, isOptimizedMimeType } from "@/lib/image-encode";
+import { getLocal, setLocal } from "@/lib/local-store";
 import { getNextSequentialIndex, getRandomIndexExcluding } from "@/lib/media-rotation";
 import { createGatedChromeStorage } from "@/lib/storage";
 
@@ -15,6 +17,7 @@ export const WALLPAPER_ORDERS = ["shuffle", "sequential"] as const;
 export type WallpaperOrder = (typeof WALLPAPER_ORDERS)[number];
 
 export const WALLPAPER_MAX_BYTES = 10 * 1024 * 1024;
+export const WALLPAPER_ENCODE_QUALITY = 0.9;
 export const MAX_WALLPAPER_IMAGES = 12;
 const WALLPAPER_MIN_INTERVAL = 15;
 const WALLPAPER_MAX_INTERVAL = 300;
@@ -50,8 +53,43 @@ type WallpaperState = {
   setCurrentIndex: (index: number) => void;
   advance: () => void;
   sanitizeAssets: () => Promise<void>;
+  optimizeAssets: () => Promise<void>;
   reset: () => void;
 };
+
+const OPTIMIZE_CHECKED_KEY = "lux.wallpaper.optimized-at";
+const OPTIMIZE_INTERVAL_MS = 24 * 60 * 60 * 1000;
+
+type AssetEncoding = Pick<MediaImageItem, "mimeType" | "size">;
+
+function isOptimizeDue(now: number): boolean {
+  const stored = getLocal(OPTIMIZE_CHECKED_KEY);
+  if (stored === null) return true;
+  const last = Number(stored);
+  return !Number.isFinite(last) || now - last >= OPTIMIZE_INTERVAL_MS;
+}
+
+async function reencodeStoredAsset(assetId: string): Promise<AssetEncoding | null> {
+  try {
+    const asset = await wallpaperAssets.read(assetId);
+    if (!asset) return null;
+    const blob = await encodeToWebp(asset.blob, { quality: WALLPAPER_ENCODE_QUALITY });
+    if (blob === asset.blob) return null;
+    const encoding: AssetEncoding = { mimeType: blob.type, size: blob.size };
+    await wallpaperAssets.save({ ...asset, ...encoding, blob });
+    return encoding;
+  } catch {
+    return null;
+  }
+}
+
+function whenIdle(task: () => void): void {
+  if (typeof requestIdleCallback === "function") {
+    requestIdleCallback(() => task(), { timeout: 10_000 });
+    return;
+  }
+  setTimeout(task, 2_000);
+}
 
 const DEFAULTS = {
   enabled: true,
@@ -139,6 +177,28 @@ export const useWallpaperStore = create<WallpaperState>()(
           items: state.items.filter((item) => !missing.has(item.assetId)),
         }));
       },
+      optimizeAssets: async () => {
+        const now = Date.now();
+        if (!isOptimizeDue(now)) return;
+        setLocal(OPTIMIZE_CHECKED_KEY, String(now));
+        const { single, items } = get();
+        const stale = [single, ...items].filter(
+          (item): item is MediaImageItem => item !== null && !isOptimizedMimeType(item.mimeType),
+        );
+        for (const item of stale) {
+          const encoding = await reencodeStoredAsset(item.assetId);
+          if (!encoding) continue;
+          set((state) => ({
+            single:
+              state.single?.assetId === item.assetId
+                ? { ...state.single, ...encoding }
+                : state.single,
+            items: state.items.map((entry) =>
+              entry.assetId === item.assetId ? { ...entry, ...encoding } : entry,
+            ),
+          }));
+        }
+      },
       reset: () => set({ ...DEFAULTS }),
     }),
     {
@@ -147,7 +207,11 @@ export const useWallpaperStore = create<WallpaperState>()(
       version: 1,
       onRehydrateStorage: () => (state) => {
         gatedStorage.open();
-        void state?.sanitizeAssets();
+        if (!state) return;
+        void state
+          .sanitizeAssets()
+          .catch(() => undefined)
+          .then(() => whenIdle(() => void state.optimizeAssets()));
       },
       partialize: (state) => ({
         enabled: state.enabled,

@@ -1,19 +1,22 @@
 import { useState } from "react";
 import { createAssetId, validateImageFile, type MediaImageItem } from "@/lib/asset-store";
+import { encodeToWebp } from "@/lib/image-encode";
 import {
   MAX_WALLPAPER_IMAGES,
+  WALLPAPER_ENCODE_QUALITY,
   WALLPAPER_MAX_BYTES,
   useWallpaperStore,
   wallpaperAssets,
 } from "@/stores/useWallpaperStore";
 
 async function saveWallpaperAsset(file: File): Promise<MediaImageItem> {
+  const blob = await encodeToWebp(file, { quality: WALLPAPER_ENCODE_QUALITY });
   const asset = {
     id: createAssetId("wallpaper"),
     fileName: file.name || "Background",
-    mimeType: file.type,
-    size: file.size,
-    blob: file,
+    mimeType: blob.type || file.type,
+    size: blob.size,
+    blob,
   };
   await wallpaperAssets.save(asset);
   return { assetId: asset.id, fileName: asset.fileName, mimeType: asset.mimeType, size: asset.size };
