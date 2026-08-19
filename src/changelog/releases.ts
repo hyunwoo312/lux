@@ -1,4 +1,4 @@
-type ChangeType = "added" | "changed" | "deprecated" | "removed" | "fixed" | "security";
+type ChangeType = "added" | "changed" | "fixed";
 
 export const CHANGE_AREAS = [
   "Dashboard",
@@ -36,22 +36,12 @@ export type Release = {
   changes: ReleaseChange[];
 };
 
-export const CHANGE_TYPE_ORDER: readonly ChangeType[] = [
-  "added",
-  "changed",
-  "deprecated",
-  "removed",
-  "fixed",
-  "security",
-];
+export const CHANGE_TYPE_ORDER: readonly ChangeType[] = ["added", "changed", "fixed"];
 
 export const CHANGE_TYPE_LABEL: Record<ChangeType, string> = {
   added: "Added",
   changed: "Changed",
-  deprecated: "Deprecated",
-  removed: "Removed",
   fixed: "Fixed",
-  security: "Security",
 };
 
 export function sortChanges(changes: readonly ReleaseChange[]): ReleaseChange[] {

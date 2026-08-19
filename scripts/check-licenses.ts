@@ -20,9 +20,34 @@ const PERMISSIVE_ASSET = new Set(["OFL-1.1", "CC-BY-4.0"]);
 const ALLOWED = new Set([...PERMISSIVE_CODE, ...PERMISSIVE_ASSET]);
 
 const pkg = JSON.parse(readFileSync("package.json", "utf8")) as {
+  license?: string;
   dependencies?: Record<string, string>;
 };
 const runtime = Object.keys(pkg.dependencies ?? {});
+
+const OWN_LICENSE = "Apache-2.0";
+const ownProblems: string[] = [];
+
+if (pkg.license !== OWN_LICENSE) {
+  ownProblems.push(`package.json license is ${pkg.license ?? "unset"}, expected ${OWN_LICENSE}`);
+}
+
+const licenseText = existsSync("LICENSE") ? readFileSync("LICENSE", "utf8") : "";
+if (!licenseText.includes("Apache License")) {
+  ownProblems.push("LICENSE does not contain the Apache License text");
+}
+if (!licenseText.includes("Version 2.0")) {
+  ownProblems.push("LICENSE is not version 2.0");
+}
+if (!existsSync("NOTICE")) {
+  ownProblems.push("NOTICE is missing — Apache-2.0 forks are required to preserve it");
+}
+
+if (ownProblems.length > 0) {
+  process.stderr.write("check-licenses: this project's own licensing is inconsistent:\n");
+  for (const p of ownProblems) process.stderr.write(`  ${p}\n`);
+  process.exit(1);
+}
 
 function licenseOf(name: string): string {
   const p = join("node_modules", name, "package.json");
@@ -60,4 +85,7 @@ if (flagged.length > 0) {
   process.exit(1);
 }
 
-process.stdout.write(`check-licenses: ${runtime.length} runtime dependencies, all permissive.\n`);
+process.stdout.write(
+  `check-licenses: ${OWN_LICENSE} declared and consistent; ` +
+    `${runtime.length} runtime dependencies, all permissive.\n`,
+);

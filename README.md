@@ -288,8 +288,9 @@ Full policy: <https://lux.hyunwk.me/privacy>.
 ## Contributing
 
 Lux is maintained solo and isn't taking pull requests right now, but bug reports are welcome, and
-you're free to fork it under MIT. See [CONTRIBUTING.md](CONTRIBUTING.md).
+you're free to fork it under Apache 2.0 — keep `LICENSE` and `NOTICE`, and ship under a
+different name. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-[MIT](LICENSE) © Hyunwoo Kim
+[Apache 2.0](LICENSE) © Hyunwoo Kim

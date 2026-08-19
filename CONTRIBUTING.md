@@ -12,8 +12,15 @@ That said, two things are very welcome:
 - **Found a bug? Open an issue.** There's a template to fill in — the more detail (steps, your
   browser and version, what you expected to happen), the easier it is for me to fix. The feedback
   button in the Lux toolbar reaches me too, if you'd rather not use GitHub.
-- **Want to build on it? Fork away.** Lux is [MIT-licensed](LICENSE), so take it and make it
-  your own.
+- **Want to build on it? Fork away.** Lux is [Apache-2.0 licensed](LICENSE), so take it and make
+  it your own. Two conditions come with that: keep the `LICENSE` and `NOTICE` files, and ship
+  under a different name — section 6 of the licence grants no rights to the Lux name or mark.
+
+## Pull requests
+
+I'm not taking pull requests at the moment, so please open an issue first rather than spending
+time on a patch I may not be able to merge. If a PR is opened and merged anyway, it is understood
+to be contributed under the terms of the [Apache License 2.0](LICENSE), per section 5.
 
 ## Security
 
@@ -52,5 +59,5 @@ Lux follows [Semantic Versioning](https://semver.org/) — `MAJOR.MINOR.PATCH`:
 - **MINOR** — a new widget or feature
 - **PATCH** — fixes and polish
 
-`package.json` is the source of truth for the version; the manifest version is synced from it at
-build time.
+`package.json` is the source of truth for the version; `public/manifest.json` must be updated to
+match, and `npm run check` fails until it does.
