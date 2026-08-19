@@ -1,32 +1,29 @@
 import type { ReactNode } from "react";
 import { Compass, MousePointerClick, Plug, type LucideIcon } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
 import { Button } from "@/components/ui/button";
 import { IconRow } from "@/components/IconRow";
 import { formatShortcut, type Shortcut } from "@/lib/shortcuts";
 import { useOnboardingStore } from "@/onboarding";
 import { SettingsSection } from "@/settings/components/SettingsSection";
 import { useSettingsStore } from "@/settings/useSettingsStore";
-import { useShortcutsStore } from "@/stores/useShortcutsStore";
+import { SHORTCUT_DEFINITIONS, useShortcutsStore } from "@/stores/useShortcutsStore";
 
 import { REPO_URL } from "@/lib/links";
-const SHORTCUT_PREVIEW = 3;
+const PREVIEW_SHORTCUTS = SHORTCUT_DEFINITIONS.slice(0, 3);
 
 export function HelpTab() {
   const setTab = useSettingsStore((s) => s.setTab);
   const closeSettings = useSettingsStore((s) => s.closeSettings);
   const startTour = useOnboardingStore((s) => s.startTour);
-  const openSettings = useShortcutsStore((s) => s.openSettings);
-  const toggleTheme = useShortcutsStore((s) => s.toggleTheme);
+  const bindings = useShortcutsStore(
+    useShallow((s) => PREVIEW_SHORTCUTS.map((definition) => s[definition.id])),
+  );
 
   function takeTour() {
     closeSettings();
     startTour();
   }
-
-  const shortcuts = [
-    { label: "Open settings", list: openSettings },
-    { label: "Toggle light / dark", list: toggleTheme },
-  ];
 
   return (
     <div className="flex flex-col gap-6">
@@ -51,12 +48,18 @@ export function HelpTab() {
         title="Keyboard shortcuts"
         description="Prefer the keyboard? These speed things up."
       >
-        {shortcuts.slice(0, SHORTCUT_PREVIEW).map((shortcut) => (
-          <ShortcutRow key={shortcut.label} label={shortcut.label} list={shortcut.list} />
+        {PREVIEW_SHORTCUTS.map((definition, index) => (
+          <ShortcutRow
+            key={definition.id}
+            label={definition.label}
+            list={bindings[index] ?? []}
+          />
         ))}
-        <span aria-hidden className="text-foreground -my-1 text-sm leading-none tracking-widest">
-          …
-        </span>
+        {SHORTCUT_DEFINITIONS.length > PREVIEW_SHORTCUTS.length && (
+          <span aria-hidden className="text-foreground -my-1 text-sm leading-none tracking-widest">
+            …
+          </span>
+        )}
         <LinkButton onClick={() => setTab("shortcuts")}>
           See and edit all keyboard shortcuts
         </LinkButton>

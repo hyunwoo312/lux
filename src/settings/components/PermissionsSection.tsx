@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import {
   Bookmark,
   Clock,
+  Database,
   HardDrive,
   History,
   Image as ImageIcon,
@@ -71,6 +72,15 @@ const PERMISSIONS: PermissionItem[] = [
     description: "Saves your dashboard, widgets, and settings on this device.",
     usedBy: "Everywhere",
     icon: HardDrive,
+    required: true,
+  },
+  {
+    id: "unlimitedStorage",
+    name: "Unlimited local storage",
+    description:
+      "Lifts the browser's storage cap so background images and cached widget data fit on disk.",
+    usedBy: "Backgrounds",
+    icon: Database,
     required: true,
   },
   {
