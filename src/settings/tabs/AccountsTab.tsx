@@ -8,6 +8,7 @@ import {
   SpotifyServiceIcon,
 } from "@/components/icons/service-icons";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { PermissionsSection } from "@/settings/components/PermissionsSection";
@@ -93,6 +94,7 @@ export function AccountsTab() {
   }
 
   const spotifyRedirectUri = getIntegrationRedirectUri("spotify");
+  const pendingDisconnect = PROVIDERS.find((provider) => provider.id === confirmDisconnect);
 
   async function run(id: IntegrationProviderId, kind: Pending, action: () => Promise<void>) {
     setPending((prev) => ({ ...prev, [id]: kind }));
@@ -158,50 +160,28 @@ export function AccountsTab() {
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {account ? (
-                  confirmDisconnect === provider.id ? (
-                    <>
+                  <>
+                    {status === "needsReconnect" && (
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="text-destructive hover:text-destructive"
-                        disabled={busy === "disconnecting"}
-                        onClick={() => {
-                          setConfirmDisconnect(null);
-                          void run(provider.id, "disconnecting", () => disconnect(provider.id));
-                        }}
-                      >
-                        Disconnect
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => setConfirmDisconnect(null)}>
-                        Cancel
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      {status === "needsReconnect" && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-warning hover:text-warning"
-                          disabled={Boolean(busy)}
-                          onClick={() =>
-                            run(provider.id, "connecting", () => connect(provider.id))
-                          }
-                        >
-                          {busy === "connecting" ? "Reconnecting…" : "Reconnect"}
-                        </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive hover:text-destructive"
+                        className="text-warning hover:text-warning"
                         disabled={Boolean(busy)}
-                        onClick={() => setConfirmDisconnect(provider.id)}
+                        onClick={() => run(provider.id, "connecting", () => connect(provider.id))}
                       >
-                        {busy === "disconnecting" ? "Disconnecting…" : "Disconnect"}
+                        {busy === "connecting" ? "Reconnecting…" : "Reconnect"}
                       </Button>
-                    </>
-                  )
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      disabled={Boolean(busy)}
+                      onClick={() => setConfirmDisconnect(provider.id)}
+                    >
+                      {busy === "disconnecting" ? "Disconnecting…" : "Disconnect"}
+                    </Button>
+                  </>
                 ) : (
                   <Button
                     size="sm"
@@ -215,11 +195,6 @@ export function AccountsTab() {
                 )}
               </div>
             </div>
-            {confirmDisconnect === provider.id && (
-              <p className="text-muted-foreground text-xs">
-                Widgets using {provider.label} pause until you reconnect. Nothing else is deleted.
-              </p>
-            )}
             {error && <p className="text-destructive text-xs">{error}</p>}
             {isSpotify && spotifyClientIdLoaded && (
               <SpotifySetup
@@ -237,6 +212,25 @@ export function AccountsTab() {
       </p>
       </SettingsSection>
       <PermissionsSection />
+      <ConfirmDialog
+        open={confirmDisconnect !== null}
+        onOpenChange={(next) => {
+          if (!next) setConfirmDisconnect(null);
+        }}
+        title={pendingDisconnect ? `Disconnect ${pendingDisconnect.label}?` : ""}
+        description={
+          pendingDisconnect
+            ? `Widgets using ${pendingDisconnect.label} pause until you reconnect. Nothing else is deleted.`
+            : ""
+        }
+        confirmLabel="Disconnect"
+        onConfirm={() => {
+          if (!pendingDisconnect) return;
+          const { id } = pendingDisconnect;
+          setConfirmDisconnect(null);
+          void run(id, "disconnecting", () => disconnect(id));
+        }}
+      />
     </div>
   );
 }

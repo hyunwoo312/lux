@@ -3,6 +3,7 @@ import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/r
 import { RotateCcw, Search, TriangleAlert } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tooltip } from "@/components/ui/tooltip";
 import { shortcutsEqual, type Shortcut } from "@/lib/shortcuts";
 import { SettingsSection } from "@/settings/components/SettingsSection";
@@ -56,18 +57,12 @@ export function ShortcutsTab() {
         <Search className="
           text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2
         " />
-        <input
+        <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search shortcuts"
           spellCheck={false}
-          className="
-            border-border bg-background/40
-            placeholder:text-muted-foreground/70
-            focus-visible:ring-ring
-            w-full rounded-lg border py-2 pr-3 pl-9 text-sm outline-none
-            focus-visible:ring-2
-          "
+          className="h-9 rounded-lg pl-9"
         />
       </div>
 
