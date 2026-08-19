@@ -1,4 +1,5 @@
 import { createRelayProvider } from "@/integrations/providers/relay-provider";
+import { withTimeout } from "@/lib/abort";
 import type { IntegrationProvider } from "@/integrations/types";
 
 const USERINFO_ENDPOINT = "https://www.googleapis.com/oauth2/v2/userinfo";
@@ -26,6 +27,7 @@ export const googleProvider: IntegrationProvider = createRelayProvider({
   defaultExpiresIn: ACCESS_TOKEN_TTL_SECONDS,
   fetchProfile: async (accessToken) => {
     const response = await fetch(USERINFO_ENDPOINT, {
+      signal: withTimeout(),
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 

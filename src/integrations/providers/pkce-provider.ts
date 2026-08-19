@@ -54,7 +54,7 @@ export function createPkceProvider(config: PkceProviderConfig): IntegrationProvi
         params,
       ),
     exchangeCode: async ({ clientId, code, redirectUri, codeVerifier }) => {
-      const response = await fetch(config.tokenEndpoint, {
+      const response = await fetchTokenEndpoint(config.label, config.tokenEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({

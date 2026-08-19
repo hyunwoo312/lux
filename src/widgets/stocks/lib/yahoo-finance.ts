@@ -1,8 +1,8 @@
 import { z } from "zod";
+import { withTimeout } from "@/lib/abort";
 import type { Quote, StockRange, SymbolSearchResult } from "@/widgets/stocks/types";
 
 const HOSTS = ["https://query1.finance.yahoo.com", "https://query2.finance.yahoo.com"];
-const REQUEST_TIMEOUT_MS = 10_000;
 const SEARCHABLE_TYPES = new Set(["EQUITY", "ETF", "INDEX", "CRYPTOCURRENCY", "CURRENCY"]);
 const RANGE_INTERVAL: Record<StockRange, string> = {
   "1d": "5m",
@@ -15,10 +15,6 @@ const RANGE_INTERVAL: Record<StockRange, string> = {
   max: "1mo",
 };
 
-function withTimeout(signal?: AbortSignal): AbortSignal {
-  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
-  return signal ? AbortSignal.any([signal, timeout]) : timeout;
-}
 
 async function fetchYahoo(path: string, signal?: AbortSignal): Promise<unknown> {
   let lastError: Error | undefined;

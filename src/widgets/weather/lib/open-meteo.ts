@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { withTimeout } from "@/lib/abort";
 import type {
   GeocodeResult,
   WeatherData,
@@ -9,12 +10,7 @@ import type {
 
 const FORECAST_ENDPOINT = "https://api.open-meteo.com/v1/forecast";
 const GEOCODE_ENDPOINT = "https://geocoding-api.open-meteo.com/v1/search";
-const REQUEST_TIMEOUT_MS = 10_000;
 
-function withTimeout(signal?: AbortSignal): AbortSignal {
-  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
-  return signal ? AbortSignal.any([signal, timeout]) : timeout;
-}
 
 const forecastSchema = z.object({
   current: z.object({

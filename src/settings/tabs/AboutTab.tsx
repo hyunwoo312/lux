@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { withTimeout } from "@/lib/abort";
 import { useEffect, useState } from "react";
 import {
   Code2,
@@ -70,7 +71,7 @@ function useGithubStars(): number | null {
       if (cached && Date.now() - cached.at < STARS_CACHE_TTL_MS) return;
 
       try {
-        const response = await fetch(GITHUB_API, { signal: controller.signal });
+        const response = await fetch(GITHUB_API, { signal: withTimeout(controller.signal) });
         if (!response.ok) return;
         const parsed = repoSchema.safeParse(await response.json());
         if (!parsed.success) return;

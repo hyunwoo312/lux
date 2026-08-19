@@ -1,4 +1,5 @@
 import { createRelayProvider } from "@/integrations/providers/relay-provider";
+import { withTimeout } from "@/lib/abort";
 import type { IntegrationProvider } from "@/integrations/types";
 
 const PROFILE_ENDPOINT = "https://api.github.com/user";
@@ -25,6 +26,7 @@ export const githubProvider: IntegrationProvider = createRelayProvider({
   defaultExpiresIn: NON_EXPIRING_TTL_SECONDS,
   fetchProfile: async (accessToken) => {
     const response = await fetch(PROFILE_ENDPOINT, {
+      signal: withTimeout(),
       headers: {
         Authorization: `Bearer ${accessToken}`,
         Accept: "application/vnd.github+json",

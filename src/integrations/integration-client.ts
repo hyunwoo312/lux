@@ -6,6 +6,7 @@ import {
   launchWebAuthFlow,
   parseAuthCodeCallback,
 } from "@/integrations/oauth";
+import { withTimeout } from "@/lib/abort";
 import {
   IntegrationReconnectRequiredError,
   IntegrationTemporaryAuthError,
@@ -29,7 +30,6 @@ import type {
 } from "@/integrations/types";
 
 const TOKEN_REFRESH_BUFFER_MS = 300_000;
-const REQUEST_TIMEOUT_MS = 10_000;
 
 const providers: Record<IntegrationProviderId, IntegrationProvider> = {
   google: googleProvider,
@@ -261,10 +261,6 @@ async function markProviderNeedsReconnect(providerId: IntegrationProviderId): Pr
   }
 }
 
-function withTimeout(signal?: AbortSignal | null): AbortSignal {
-  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
-  return signal ? AbortSignal.any([signal, timeout]) : timeout;
-}
 
 function authorize(init: RequestInit, accessToken: string): RequestInit {
   const headers = new Headers(init.headers);

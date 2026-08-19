@@ -1,4 +1,5 @@
 import { createRelayProvider } from "@/integrations/providers/relay-provider";
+import { withTimeout } from "@/lib/abort";
 import type { IntegrationProvider } from "@/integrations/types";
 
 const PROFILE_ENDPOINT = "https://graph.microsoft.com/v1.0/me";
@@ -29,6 +30,7 @@ export const microsoftProvider: IntegrationProvider = createRelayProvider({
   defaultExpiresIn: ACCESS_TOKEN_TTL_SECONDS,
   fetchProfile: async (accessToken) => {
     const response = await fetch(PROFILE_ENDPOINT, {
+      signal: withTimeout(),
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 

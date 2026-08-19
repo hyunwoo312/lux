@@ -1,4 +1,5 @@
 import { IntegrationReconnectRequiredError } from "@/integrations/errors";
+import { withTimeout } from "@/lib/abort";
 import type {
   AcquireTokenParams,
   IntegrationProvider,
@@ -120,6 +121,7 @@ export const anilistProvider: IntegrationProvider = {
         Accept: "application/json",
       },
       body: JSON.stringify({ query: VIEWER_QUERY }),
+      signal: withTimeout(),
     });
 
     if (!response.ok) {

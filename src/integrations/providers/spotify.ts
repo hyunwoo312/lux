@@ -1,4 +1,5 @@
 import { readSpotifyClientId } from "@/integrations/provider-config";
+import { withTimeout } from "@/lib/abort";
 import { createPkceProvider } from "@/integrations/providers/pkce-provider";
 import type { IntegrationProvider } from "@/integrations/types";
 
@@ -28,6 +29,7 @@ export const spotifyProvider: IntegrationProvider = createPkceProvider({
   authParams: { show_dialog: "true" },
   fetchProfile: async (accessToken) => {
     const response = await fetch(PROFILE_ENDPOINT, {
+      signal: withTimeout(),
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 

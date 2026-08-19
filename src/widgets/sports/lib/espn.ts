@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { withTimeout } from "@/lib/abort";
 import {
   MATCH_STATES,
   type Match,
@@ -9,7 +10,6 @@ import {
 
 const API_BASE = "https://site.api.espn.com/apis/site/v2/sports";
 const CDN_BASE = "https://cdn.espn.com/core";
-const REQUEST_TIMEOUT_MS = 10_000;
 
 const athleteSchema = z.object({
   shortName: z.string().optional(),
@@ -207,7 +207,7 @@ async function fetchMatches(
   signal?: AbortSignal,
 ): Promise<Match[]> {
   const response = await fetch(url, {
-    signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)]) : undefined,
+    signal: withTimeout(signal),
   });
 
   if (!response.ok) {
@@ -281,7 +281,7 @@ export function parseTeams(raw: unknown): TeamOption[] {
 
 export async function fetchTeams(path: string, signal?: AbortSignal): Promise<TeamOption[]> {
   const response = await fetch(`${API_BASE}/${path}/teams`, {
-    signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)]) : undefined,
+    signal: withTimeout(signal),
   });
 
   if (!response.ok) throw new Error("Teams are unavailable right now");
