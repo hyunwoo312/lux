@@ -30,3 +30,4 @@ coverage/
 # Local-only project docs
 CLAUDE.md
 docs/
+.vitest-results.json

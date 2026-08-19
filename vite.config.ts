@@ -1,29 +1,42 @@
-import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { defineConfig, type Plugin } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
-function syncManifestVersion(): Plugin {
+function preloadBodyFont(): Plugin {
   return {
-    name: "sync-manifest-version",
+    name: "preload-body-font",
     apply: "build",
-    closeBundle() {
-      const pkg = JSON.parse(readFileSync(resolve(__dirname, "package.json"), "utf8")) as {
-        version: string;
-      };
-      const manifestPath = resolve(__dirname, "dist/manifest.json");
-      const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { version: string };
-      if (manifest.version !== pkg.version) {
-        manifest.version = pkg.version;
-        writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-      }
+    transformIndexHtml: {
+      order: "post",
+      handler(html, ctx) {
+        const font = Object.keys(ctx.bundle ?? {}).find((name) =>
+          /inter-latin-wght-normal-[^/]+\.woff2$/.test(name),
+        );
+        if (!font) return html;
+        return {
+          html,
+          tags: [
+            {
+              tag: "link",
+              attrs: {
+                rel: "preload",
+                as: "font",
+                type: "font/woff2",
+                href: `/${font}`,
+                crossorigin: "",
+              },
+              injectTo: "head-prepend",
+            },
+          ],
+        };
+      },
     },
   };
 }
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), syncManifestVersion()],
+  plugins: [react(), tailwindcss(), preloadBodyFont()],
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),
@@ -54,5 +67,24 @@ export default defineConfig({
     pool: "threads",
     maxWorkers: 8,
     setupFiles: ["./src/test/setup.ts"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text-summary", "html", "lcov"],
+      reportsDirectory: "coverage",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "src/**/*.test.{ts,tsx}",
+        "src/test/**",
+        "src/vite-env.d.ts",
+        "src/**/index.ts",
+        "src/**/types.ts",
+      ],
+      thresholds: {
+        statements: 63,
+        branches: 52,
+        functions: 58,
+        lines: 65,
+      },
+    },
   },
 });

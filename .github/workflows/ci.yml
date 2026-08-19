@@ -20,3 +20,17 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+
+  supply-chain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Runtime dependency licences
+        run: npm run licenses
+      - name: Known vulnerabilities (runtime deps)
+        run: npm run audit:deps

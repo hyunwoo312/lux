@@ -1,0 +1,5 @@
+#!/bin/sh
+if ! npx tsc -b; then
+  echo "Typecheck failed. Fix the errors above, or run: npm run typecheck"
+  exit 1
+fi
