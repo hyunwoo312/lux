@@ -173,6 +173,7 @@ export function WidgetPalette() {
               align="end"
               sideOffset={8}
               className="z-50"
+              onOpenAutoFocus={(event) => event.preventDefault()}
               onCloseAutoFocus={(event) => event.preventDefault()}
             >
               <motion.div

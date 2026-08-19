@@ -4,6 +4,7 @@ import { useReducedMotion } from "motion/react";
 import { GridLayout, useContainerWidth, setTopLeft } from "react-grid-layout";
 import type { Compactor, EventCallback, Position } from "react-grid-layout";
 import { cn } from "@/lib/utils";
+import { getAccentVars, type AccentPreset } from "@/widgets/core/accent";
 import { CELL, GAP, gridColumns, gridWidth, PAD, UNIT } from "@/widgets/core/grid";
 import {
   clampLayout,
@@ -204,7 +205,7 @@ export function WidgetGrid() {
     if (!plugin) return null;
     const { w, h } = plugin.defaultLayout;
     const spot = findFirstOpenPosition({ i: "__preview__", x: 0, y: 0, w, h }, displayLayout, cols);
-    return { x: spot.x, y: spot.y, w, h };
+    return { x: spot.x, y: spot.y, w, h, accent: plugin.accent ?? "default" };
   }, [previewType, displayLayout, cols]);
   const previewBottom = previewPlacement ? previewPlacement.y + previewPlacement.h : 0;
   const rows = Math.max(availableRows, previewRows ?? getLayoutBottom(displayLayout), previewBottom);
@@ -287,7 +288,7 @@ export function WidgetGrid() {
   );
 }
 
-type Placement = { x: number; y: number; w: number; h: number };
+type Placement = { x: number; y: number; w: number; h: number; accent: AccentPreset };
 
 function PlacementPreview({ placement, ref }: { placement: Placement; ref?: Ref<HTMLDivElement> }) {
   return (
@@ -300,9 +301,11 @@ function PlacementPreview({ placement, ref }: { placement: Placement; ref?: Ref<
         top: PAD + placement.y * UNIT,
         width: placement.w * UNIT - GAP,
         height: placement.h * UNIT - GAP,
+        ...getAccentVars(placement.accent),
       }}
       className="
-        border-foreground/40 bg-foreground/5 pointer-events-none rounded-xl border-2 border-dashed
+        border-primary bg-primary/15 pointer-events-none rounded-xl border-2 border-dashed
+        shadow-[0_0_22px_-6px_var(--primary)]
       "
     />
   );
