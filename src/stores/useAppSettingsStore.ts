@@ -13,9 +13,7 @@ type AppSettingsState = {
 
 const DEFAULTS = { clock24h: false, showGridLines: false };
 
-const persistedSchema = z
-  .object({ clock24h: z.boolean(), showGridLines: z.boolean() })
-  .partial();
+const persistedSchema = z.object({ clock24h: z.boolean(), showGridLines: z.boolean() }).partial();
 
 const gatedStorage = createGatedChromeStorage();
 

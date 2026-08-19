@@ -82,7 +82,9 @@ export async function importSettings(file: File): Promise<void> {
     throw new Error("Not a valid Lux settings file.");
   }
   if (typeof parsed.version === "number" && parsed.version > BACKUP_VERSION) {
-    throw new Error("This backup was created by a newer version of Lux. Update Lux, then try again.");
+    throw new Error(
+      "This backup was created by a newer version of Lux. Update Lux, then try again.",
+    );
   }
 
   const chromeEntries: Record<string, unknown> = {};

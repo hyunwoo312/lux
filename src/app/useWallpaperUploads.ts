@@ -19,7 +19,12 @@ async function saveWallpaperAsset(file: File): Promise<MediaImageItem> {
     blob,
   };
   await wallpaperAssets.save(asset);
-  return { assetId: asset.id, fileName: asset.fileName, mimeType: asset.mimeType, size: asset.size };
+  return {
+    assetId: asset.id,
+    fileName: asset.fileName,
+    mimeType: asset.mimeType,
+    size: asset.size,
+  };
 }
 
 export function useWallpaperUploads() {

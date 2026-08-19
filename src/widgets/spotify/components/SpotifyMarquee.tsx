@@ -36,7 +36,11 @@ export function SpotifyMarquee({ label, className, children }: SpotifyMarqueePro
   const durationSeconds = Math.min(18, Math.max(8, label.length * 0.28));
 
   return (
-    <span ref={containerRef} className={cn("block overflow-hidden whitespace-nowrap", className)} aria-label={label}>
+    <span
+      ref={containerRef}
+      className={cn("block overflow-hidden whitespace-nowrap", className)}
+      aria-label={label}
+    >
       <motion.span
         ref={textRef}
         className="inline-block"

@@ -132,9 +132,7 @@ describe("optimizeAssets resilience", () => {
     useWallpaperStore.setState({
       items: [item("a", "image/jpeg", 1000), item("b", "image/jpeg", 1000)],
     });
-    encodeMock
-      .mockRejectedValueOnce(new Error("decode blew up"))
-      .mockResolvedValueOnce(webp(300));
+    encodeMock.mockRejectedValueOnce(new Error("decode blew up")).mockResolvedValueOnce(webp(300));
 
     await expect(store().optimizeAssets()).resolves.toBeUndefined();
 

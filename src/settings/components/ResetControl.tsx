@@ -75,12 +75,7 @@ export function ResetControl({
             >
               Reset
             </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className={PRESS}
-              onClick={() => setPhase("idle")}
-            >
+            <Button size="sm" variant="ghost" className={PRESS} onClick={() => setPhase("idle")}>
               Cancel
             </Button>
           </motion.div>

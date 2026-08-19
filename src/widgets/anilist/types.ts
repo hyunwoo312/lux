@@ -71,7 +71,6 @@ export type CurrentEntry = {
   updatedAt?: number;
 };
 
-
 export type CurrentData = {
   entries: CurrentEntry[];
   scoreFormat: ScoreFormat;

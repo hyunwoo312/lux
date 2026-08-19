@@ -12,7 +12,10 @@ function ToggleGroup({ className, ...props }: ComponentProps<typeof ToggleGroupP
   );
 }
 
-function ToggleGroupItem({ className, ...props }: ComponentProps<typeof ToggleGroupPrimitive.Item>) {
+function ToggleGroupItem({
+  className,
+  ...props
+}: ComponentProps<typeof ToggleGroupPrimitive.Item>) {
   return (
     <ToggleGroupPrimitive.Item
       data-slot="toggle-group-item"

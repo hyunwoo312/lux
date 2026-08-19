@@ -44,8 +44,7 @@ export function ShortcutsTab() {
   const reduced = useReducedMotion();
 
   const needle = query.trim().toLowerCase();
-  const matches = (...parts: string[]) =>
-    !needle || parts.join(" ").toLowerCase().includes(needle);
+  const matches = (...parts: string[]) => !needle || parts.join(" ").toLowerCase().includes(needle);
 
   const visibleShortcuts = SHORTCUT_DEFINITIONS.filter((action) =>
     matches(action.label, action.description),
@@ -54,9 +53,12 @@ export function ShortcutsTab() {
   return (
     <div className="flex flex-col gap-6">
       <div className="relative">
-        <Search className="
-          text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2
-        " />
+        <Search
+          className="
+            text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4
+            -translate-y-1/2
+          "
+        />
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -72,7 +74,8 @@ export function ShortcutsTab() {
           description="Click a shortcut to rebind it, or add a second. Up to two per action."
           action={
             SHORTCUT_DEFINITIONS.some(
-              (definition) => !sameBindings(shortcuts[definition.id], SHORTCUT_DEFAULTS[definition.id]),
+              (definition) =>
+                !sameBindings(shortcuts[definition.id], SHORTCUT_DEFAULTS[definition.id]),
             ) ? (
               <Button
                 variant="ghost"

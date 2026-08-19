@@ -200,30 +200,30 @@ function LibraryControls() {
   );
 
   return (
-      <div className="flex min-w-0 items-center gap-1.5 px-1">
-        <ConfigSegmented
-          label="Media filter"
-          value={filter}
-          options={FILTER_OPTIONS}
-          onChange={(value) => setFilter(instanceId, value)}
+    <div className="flex min-w-0 items-center gap-1.5 px-1">
+      <ConfigSegmented
+        label="Media filter"
+        value={filter}
+        options={FILTER_OPTIONS}
+        onChange={(value) => setFilter(instanceId, value)}
+      />
+      <div className="ml-auto flex shrink-0 items-center gap-1">
+        <FilterMenu
+          value={listFilter}
+          options={statusOptions}
+          onChange={(value) => setListFilter(instanceId, value)}
+          ariaLabel="Change status filter"
+          tooltip={listFilterLabel(listFilter, filter)}
         />
-        <div className="ml-auto flex shrink-0 items-center gap-1">
-          <FilterMenu
-            value={listFilter}
-            options={statusOptions}
-            onChange={(value) => setListFilter(instanceId, value)}
-            ariaLabel="Change status filter"
-            tooltip={listFilterLabel(listFilter, filter)}
-          />
-          <FilterMenu
-            value={effectiveSort}
-            options={sortOptions}
-            onChange={(value) => setSort(instanceId, value)}
-            ariaLabel="Change sort order"
-            tooltip={`Sorted by ${(SORT_OPTIONS.find((o) => o.value === sort)?.label ?? "").toLowerCase()}`}
-          />
-        </div>
+        <FilterMenu
+          value={effectiveSort}
+          options={sortOptions}
+          onChange={(value) => setSort(instanceId, value)}
+          ariaLabel="Change sort order"
+          tooltip={`Sorted by ${(SORT_OPTIONS.find((o) => o.value === sort)?.label ?? "").toLowerCase()}`}
+        />
       </div>
+    </div>
   );
 }
 
@@ -512,9 +512,7 @@ function CurrentRow({
           )
         )}
         {scoreText != null && (
-          <span className="
-            text-muted-foreground inline-flex items-center gap-0.5 text-2xs tabular-nums
-          ">
+          <span className="text-muted-foreground inline-flex items-center gap-0.5 text-2xs tabular-nums">
             {showScoreIcon && <Star className="size-2.5" aria-hidden />}
             {scoreText}
           </span>

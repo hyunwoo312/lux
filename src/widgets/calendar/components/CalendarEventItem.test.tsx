@@ -128,9 +128,7 @@ describe("CalendarEventItem join action", () => {
   });
 
   it("keeps the countdown when an imminent event has no join url", () => {
-    renderItem(
-      event({ startsAt: "2026-08-04T09:20:00Z", endsAt: "2026-08-04T09:50:00Z" }),
-    );
+    renderItem(event({ startsAt: "2026-08-04T09:20:00Z", endsAt: "2026-08-04T09:50:00Z" }));
 
     expect(screen.getByText(/^in /)).toBeInTheDocument();
   });

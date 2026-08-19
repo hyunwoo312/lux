@@ -247,8 +247,8 @@ export const useWallpaperStore = create<WallpaperState>()(
 
 export async function clearWallpaperAssets(): Promise<void> {
   const { single, items } = useWallpaperStore.getState();
-  const ids = [single?.assetId, ...items.map((item) => item.assetId)].filter(
-    (id): id is string => Boolean(id),
+  const ids = [single?.assetId, ...items.map((item) => item.assetId)].filter((id): id is string =>
+    Boolean(id),
   );
   await Promise.all(ids.map((id) => wallpaperAssets.remove(id).catch(() => undefined)));
 }

@@ -130,7 +130,9 @@ export function SpotifyQueuePanel() {
       )}
 
       <div className="flex min-h-0 flex-1 flex-col gap-1.5">
-        <p className="text-muted-foreground text-2xs font-medium tracking-wide uppercase">Up next</p>
+        <p className="text-muted-foreground text-2xs font-medium tracking-wide uppercase">
+          Up next
+        </p>
         {playError && <p className="text-muted-foreground text-2xs">{playError}</p>}
         {queueError && upNext.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">

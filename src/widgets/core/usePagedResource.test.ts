@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from "@testing-library/react";
-import {afterEach, describe, expect, it, vi} from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { invalidatePagedResource, usePagedResource } from "@/widgets/core/usePagedResource";
 
 afterEach(() => {
@@ -137,7 +137,9 @@ describe("usePagedResource", () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
 
     act(() => a.result.current.loadMore());
-    await waitFor(() => expect(b.result.current.state).toEqual({ status: "success", items: [1, 2] }));
+    await waitFor(() =>
+      expect(b.result.current.state).toEqual({ status: "success", items: [1, 2] }),
+    );
     expect(a.result.current.state).toEqual({ status: "success", items: [1, 2] });
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
@@ -230,7 +232,7 @@ describe("usePagedResource", () => {
 });
 
 describe("usePagedResource persistence", () => {
-    it("persists a successful result to localStorage", async () => {
+  it("persists a successful result to localStorage", async () => {
     const fetcher = vi.fn().mockResolvedValue({ items: [1], hasNextPage: false });
     renderHook(() =>
       usePagedResource(fetcher, {
@@ -241,7 +243,9 @@ describe("usePagedResource persistence", () => {
       }),
     );
 
-    await waitFor(() => expect(localStorage.getItem("lux:paged:paged-write")).toContain('"items":[1]'));
+    await waitFor(() =>
+      expect(localStorage.getItem("lux:paged:paged-write")).toContain('"items":[1]'),
+    );
   });
 
   it("does not persist an empty result", async () => {

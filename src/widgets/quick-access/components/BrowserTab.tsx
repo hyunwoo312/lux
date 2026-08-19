@@ -35,7 +35,8 @@ const TAB_GATE: Record<
   recentlyClosed: {
     permissions: ["sessions", "tabs"],
     highlight: "sessions",
-    message: "Turn on the Recently closed tabs permission to list them here. Enabling it reloads this tab.",
+    message:
+      "Turn on the Recently closed tabs permission to list them here. Enabling it reloads this tab.",
     partlyGrantedMessage:
       "Chrome only reveals closed tabs’ titles to extensions that can read tab details. Enable that to list them here — it reloads this tab.",
   },

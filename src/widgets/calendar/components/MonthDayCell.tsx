@@ -32,7 +32,9 @@ export function MonthDayCell({ day, children }: MonthDayCellProps) {
       role="gridcell"
       aria-label={headingFormatter.format(day.date)}
       aria-selected={isSelected || undefined}
-      onClick={() => (mode === "week" ? selectDay(instanceId, day.date) : focusDay(instanceId, day.date))}
+      onClick={() =>
+        mode === "week" ? selectDay(instanceId, day.date) : focusDay(instanceId, day.date)
+      }
       className={cn(
         "focus-visible:bg-foreground/[0.05]",
         "relative flex min-w-0 flex-col overflow-hidden rounded-md text-left outline-none",

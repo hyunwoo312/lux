@@ -71,7 +71,13 @@ describe("getSpotifyPlaybackState", () => {
       shuffle: true,
       repeatMode: "track",
       device: { id: "dev1", name: "Desk", volumePercent: 40 },
-      track: { title: "Song", artist: "A, B", album: "Album", artworkUrl: "large", durationMs: 200_000 },
+      track: {
+        title: "Song",
+        artist: "A, B",
+        album: "Album",
+        artworkUrl: "large",
+        durationMs: 200_000,
+      },
     });
   });
 
@@ -86,7 +92,9 @@ describe("getSpotifyPlaybackState", () => {
   });
 
   it("raises a rate-limit error carrying the Retry-After delay on a 429", async () => {
-    mockFetch.mockResolvedValue(new Response(null, { status: 429, headers: { "Retry-After": "7" } }));
+    mockFetch.mockResolvedValue(
+      new Response(null, { status: 429, headers: { "Retry-After": "7" } }),
+    );
     const error = await getSpotifyPlaybackState().catch((caught: unknown) => caught);
     expect(error).toBeInstanceOf(SpotifyRateLimitError);
     expect((error as SpotifyRateLimitError).retryAfterMs).toBe(7000);
@@ -158,14 +166,37 @@ describe("searchSpotify", () => {
       { signal: undefined },
     );
     expect(results).toEqual<SpotifySearchResult[]>([
-      { id: "t1", uri: "spotify:track:t1", kind: "track", title: "Song", subtitle: "A, B", artworkUrl: "art-t" },
-      { id: "al1", uri: "spotify:album:al1", kind: "album", title: "Record", subtitle: "C", artworkUrl: "art-al" },
-      { id: "pl1", uri: "spotify:playlist:pl1", kind: "playlist", title: "Mix", subtitle: "Ada", artworkUrl: "art-pl" },
+      {
+        id: "t1",
+        uri: "spotify:track:t1",
+        kind: "track",
+        title: "Song",
+        subtitle: "A, B",
+        artworkUrl: "art-t",
+      },
+      {
+        id: "al1",
+        uri: "spotify:album:al1",
+        kind: "album",
+        title: "Record",
+        subtitle: "C",
+        artworkUrl: "art-al",
+      },
+      {
+        id: "pl1",
+        uri: "spotify:playlist:pl1",
+        kind: "playlist",
+        title: "Mix",
+        subtitle: "Ada",
+        artworkUrl: "art-pl",
+      },
     ]);
   });
 
   it("raises a rate-limit error on a 429", async () => {
-    mockFetch.mockResolvedValue(new Response(null, { status: 429, headers: { "Retry-After": "3" } }));
+    mockFetch.mockResolvedValue(
+      new Response(null, { status: 429, headers: { "Retry-After": "3" } }),
+    );
     await expect(searchSpotify("x")).rejects.toBeInstanceOf(SpotifyRateLimitError);
   });
 
@@ -176,8 +207,20 @@ describe("searchSpotify", () => {
           jsonResponse({
             tracks: {
               items: [
-                { id: "t1", uri: "spotify:track:t1", name: "One", artists: [{ name: "A" }], album: { images: [] } },
-                { id: "t2", uri: "spotify:track:t2", name: "Two", artists: [{ name: "B" }], album: { images: [] } },
+                {
+                  id: "t1",
+                  uri: "spotify:track:t1",
+                  name: "One",
+                  artists: [{ name: "A" }],
+                  album: { images: [] },
+                },
+                {
+                  id: "t2",
+                  uri: "spotify:track:t2",
+                  name: "Two",
+                  artists: [{ name: "B" }],
+                  album: { images: [] },
+                },
               ],
             },
           }),
@@ -190,11 +233,10 @@ describe("searchSpotify", () => {
 
     expect(results.map((result) => result.id)).toEqual(["t1", "t2"]);
     expect(results.every((result) => result.liked === undefined)).toBe(true);
-    expect(mockFetch.mock.calls.every(([, url]) => !String(url).includes("/me/tracks/contains"))).toBe(
-      true,
-    );
+    expect(
+      mockFetch.mock.calls.every(([, url]) => !String(url).includes("/me/tracks/contains")),
+    ).toBe(true);
   });
-
 });
 
 describe("getSpotifySavedTrackFlags", () => {
@@ -332,7 +374,9 @@ describe("getSpotifyQueue", () => {
   });
 
   it("raises a rate-limit error on a 429", async () => {
-    mockFetch.mockResolvedValue(new Response(null, { status: 429, headers: { "Retry-After": "4" } }));
+    mockFetch.mockResolvedValue(
+      new Response(null, { status: 429, headers: { "Retry-After": "4" } }),
+    );
     await expect(getSpotifyQueue()).rejects.toBeInstanceOf(SpotifyRateLimitError);
   });
 });

@@ -1,4 +1,14 @@
-import { Cloud, CloudDrizzle, CloudFog, CloudLightning, CloudRain, CloudSnow, CloudSun, Moon, Sun } from "lucide-react";
+import {
+  Cloud,
+  CloudDrizzle,
+  CloudFog,
+  CloudLightning,
+  CloudRain,
+  CloudSnow,
+  CloudSun,
+  Moon,
+  Sun,
+} from "lucide-react";
 import type { WidgetIcon } from "@/widgets/core/types";
 
 export type WmoInfo = {
@@ -11,11 +21,20 @@ type Entry = { label: string; day: WidgetIcon; night?: WidgetIcon; precipitation
 
 const CLEAR: Entry = { label: "Clear", day: Sun, night: Moon, precipitation: false };
 const MAINLY_CLEAR: Entry = { label: "Mainly clear", day: Sun, night: Moon, precipitation: false };
-const PARTLY_CLOUDY: Entry = { label: "Partly cloudy", day: CloudSun, night: Cloud, precipitation: false };
+const PARTLY_CLOUDY: Entry = {
+  label: "Partly cloudy",
+  day: CloudSun,
+  night: Cloud,
+  precipitation: false,
+};
 const OVERCAST: Entry = { label: "Overcast", day: Cloud, precipitation: false };
 const FOG: Entry = { label: "Fog", day: CloudFog, precipitation: false };
 const DRIZZLE: Entry = { label: "Drizzle", day: CloudDrizzle, precipitation: true };
-const FREEZING_DRIZZLE: Entry = { label: "Freezing drizzle", day: CloudDrizzle, precipitation: true };
+const FREEZING_DRIZZLE: Entry = {
+  label: "Freezing drizzle",
+  day: CloudDrizzle,
+  precipitation: true,
+};
 const RAIN: Entry = { label: "Rain", day: CloudRain, precipitation: true };
 const FREEZING_RAIN: Entry = { label: "Freezing rain", day: CloudRain, precipitation: true };
 const SNOW: Entry = { label: "Snow", day: CloudSnow, precipitation: true };

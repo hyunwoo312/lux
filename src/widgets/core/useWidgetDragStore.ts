@@ -30,8 +30,7 @@ export const useWidgetDragStore = create<WidgetDragStore>((set) => ({
   geometry: null,
   dropMorph: null,
   setGeometry: (geometry) => set({ geometry }),
-  start: (type, x, y, ghostW, ghostH) =>
-    set({ type, pointerX: x, pointerY: y, ghostW, ghostH }),
+  start: (type, x, y, ghostW, ghostH) => set({ type, pointerX: x, pointerY: y, ghostW, ghostH }),
   move: (x, y) => set({ pointerX: x, pointerY: y }),
   cancel: () => set({ type: null }),
   drop: (morph) => set({ type: null, dropMorph: morph }),

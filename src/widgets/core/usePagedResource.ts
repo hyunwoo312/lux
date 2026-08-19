@@ -338,7 +338,10 @@ class SharedResource<T> {
   }
 }
 
-function acquireResource<T>(config: ResourceConfig<T>, fetcher: PagedFetcher<T>): SharedResource<T> {
+function acquireResource<T>(
+  config: ResourceConfig<T>,
+  fetcher: PagedFetcher<T>,
+): SharedResource<T> {
   let resource = liveResources.get(config.key) as SharedResource<T> | undefined;
   if (!resource) {
     resource = new SharedResource<T>(config, fetcher);

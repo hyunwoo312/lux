@@ -11,7 +11,6 @@ import type {
 const FORECAST_ENDPOINT = "https://api.open-meteo.com/v1/forecast";
 const GEOCODE_ENDPOINT = "https://geocoding-api.open-meteo.com/v1/search";
 
-
 const forecastSchema = z.object({
   current: z.object({
     time: z.string(),

@@ -34,7 +34,11 @@ describe("githubProvider.exchangeCode", () => {
   it("posts the PKCE code to the Lux token relay and maps the token", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
-        JSON.stringify({ access_token: "tok", scope: "read:user,notifications,repo", token_type: "bearer" }),
+        JSON.stringify({
+          access_token: "tok",
+          scope: "read:user,notifications,repo",
+          token_type: "bearer",
+        }),
       ),
     );
 
@@ -80,7 +84,12 @@ describe("githubProvider.fetchProfile", () => {
   it("maps the GitHub user payload to a profile", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
-        JSON.stringify({ id: 42, login: "octocat", name: "The Octocat", avatar_url: "https://x/y.png" }),
+        JSON.stringify({
+          id: 42,
+          login: "octocat",
+          name: "The Octocat",
+          avatar_url: "https://x/y.png",
+        }),
       ),
     );
 

@@ -100,7 +100,9 @@ function mergeLibraryTab(persisted: unknown): unknown {
   const raw = persisted as { byInstance?: Record<string, { activeTab?: unknown }> };
   if (!raw.byInstance) return persisted;
   const entries = Object.entries(raw.byInstance);
-  if (!entries.some(([, data]) => data?.activeTab === "current" || data?.activeTab === "planning")) {
+  if (
+    !entries.some(([, data]) => data?.activeTab === "current" || data?.activeTab === "planning")
+  ) {
     return persisted;
   }
   const byInstance = Object.fromEntries(

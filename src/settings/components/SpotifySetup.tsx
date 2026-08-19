@@ -179,10 +179,12 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
                 <Field label="Redirect URI">
                   {redirectUri ? (
                     <div className="flex items-center gap-2">
-                      <code className="
-                        border-border bg-background/40 min-w-0 flex-1 truncate rounded-lg border
-                        px-3 py-2 text-xs
-                      ">
+                      <code
+                        className="
+                          border-border bg-background/40 min-w-0 flex-1 truncate rounded-lg border
+                          px-3 py-2 text-xs
+                        "
+                      >
                         {redirectUri}
                       </code>
                       <Button
@@ -356,7 +358,9 @@ function DrawnCheck({ reduced }: { reduced: boolean | null }) {
         d="M5 12.5l4.5 4.5L19 7"
         initial={reduced ? { pathLength: 1 } : { pathLength: 0 }}
         animate={{ pathLength: 1 }}
-        transition={reduced ? { duration: 0 } : { duration: 0.3, ease: [0.65, 0, 0.35, 1], delay: 0.06 }}
+        transition={
+          reduced ? { duration: 0 } : { duration: 0.3, ease: [0.65, 0, 0.35, 1], delay: 0.06 }
+        }
       />
     </motion.svg>
   );

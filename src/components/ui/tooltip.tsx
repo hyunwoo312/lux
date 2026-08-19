@@ -62,7 +62,12 @@ type TooltipProps = {
 const SHOW_DELAY = 200;
 const HOVER_RECHECK_DELAY = 500;
 
-function StickyTooltip({ content, children, side, align }: Omit<TooltipProps, "disabled" | "sticky">) {
+function StickyTooltip({
+  content,
+  children,
+  side,
+  align,
+}: Omit<TooltipProps, "disabled" | "sticky">) {
   const [open, setOpen] = useState(false);
   const showTimer = useRef<number | null>(null);
   const recheckTimer = useRef<number | null>(null);

@@ -111,9 +111,7 @@ function ReleaseSection({ release, latest }: { release: Release; latest: boolean
             return (
               <section key={type} className="flex flex-col gap-3">
                 <h4 className="flex items-center gap-2.5">
-                  <span
-                    className="text-foreground text-xs font-semibold tracking-widest uppercase"
-                  >
+                  <span className="text-foreground text-xs font-semibold tracking-widest uppercase">
                     {CHANGE_TYPE_LABEL[type]}
                   </span>
                   <span aria-hidden className="bg-border/70 h-px flex-1" />

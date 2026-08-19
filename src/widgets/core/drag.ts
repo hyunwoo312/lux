@@ -50,6 +50,10 @@ export function resolveDrop(
   const w = plugin.defaultLayout.w;
   const h = plugin.defaultLayout.h;
   const { col, row } = pointerToCell(x, y, geometry, w, h);
-  const open = findNearestOpenPosition({ i: plugin.type, x: col, y: row, w, h }, layout, geometry.cols);
+  const open = findNearestOpenPosition(
+    { i: plugin.type, x: col, y: row, w, h },
+    layout,
+    geometry.cols,
+  );
   return { spot: { x: open.x, y: open.y }, rect: cellRect(open.x, open.y, w, h, geometry) };
 }

@@ -205,9 +205,11 @@ async function syncProvider(
   connected: boolean,
   current: ProviderCalendarSettings,
   fetchCalendars: (ids: readonly string[]) => Promise<ConnectedCalendar[]>,
-  fetchEvents: (
-    window: { calendarIds: string[]; timeMin: Date; timeMax: Date },
-  ) => Promise<{ events: CalendarEvent[]; failedCalendarIds: string[] }>,
+  fetchEvents: (window: {
+    calendarIds: string[];
+    timeMin: Date;
+    timeMax: Date;
+  }) => Promise<{ events: CalendarEvent[]; failedCalendarIds: string[] }>,
   syncWindow: SyncWindow,
 ): Promise<ProviderSyncResult> {
   if (!connected) return { settings: current, events: [], failed: false };
@@ -283,7 +285,9 @@ export const useCalendarStore = create<CalendarState>()(
           }),
         ),
       setListAnchor: (instanceId, date) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, listAnchor: startOfDay(date) }))),
+        set((state) =>
+          update(state, instanceId, (data) => ({ ...data, listAnchor: startOfDay(date) })),
+        ),
       setLookaheadDays: (instanceId, days) =>
         set((state) =>
           update(state, instanceId, (data) => ({ ...data, lookaheadDays: clampLookahead(days) })),
@@ -300,8 +304,7 @@ export const useCalendarStore = create<CalendarState>()(
 
         const requested = (["google", "microsoft"] as const).filter(
           (providerId) =>
-            isConnected(providerId) &&
-            (!options.providerId || options.providerId === providerId),
+            isConnected(providerId) && (!options.providerId || options.providerId === providerId),
         );
         const busy = requested.filter((providerId) => data.syncing.includes(providerId));
         const targets = requested.filter(
@@ -466,7 +469,9 @@ export const useCalendarStore = create<CalendarState>()(
           }),
         ),
       selectDay: (instanceId, date) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, selectedDay: startOfDay(date) }))),
+        set((state) =>
+          update(state, instanceId, (data) => ({ ...data, selectedDay: startOfDay(date) })),
+        ),
       shiftWeek: (instanceId, offset) =>
         set((state) =>
           update(state, instanceId, (data) =>

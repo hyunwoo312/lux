@@ -2,7 +2,11 @@ import { Settings2 } from "lucide-react";
 import { IconActionButton } from "@/components/IconActionButton";
 import { Switch } from "@/components/ui/switch";
 import { useSettingsStore } from "@/settings";
-import { ConfigSegmented, WidgetConfigGroup, WidgetConfigItem } from "@/components/config/WidgetConfig";
+import {
+  ConfigSegmented,
+  WidgetConfigGroup,
+  WidgetConfigItem,
+} from "@/components/config/WidgetConfig";
 import { useSpotifyConnection } from "@/widgets/spotify/hooks/useSpotifyConnection";
 import { useSpotify, useSpotifyStore } from "@/widgets/spotify/useSpotifyStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";

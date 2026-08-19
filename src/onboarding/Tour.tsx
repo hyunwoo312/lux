@@ -110,9 +110,7 @@ export function Tour() {
   if (!active || !current) return null;
 
   const isLast = step >= STEPS.length - 1;
-  const spotRects = current.spotlight
-    .map((id) => rects[id])
-    .filter((r): r is Rect => Boolean(r));
+  const spotRects = current.spotlight.map((id) => rects[id]).filter((r): r is Rect => Boolean(r));
   const anchor = rects[current.anchor];
 
   let cardTop = window.innerHeight / 2 - 80;
@@ -207,11 +205,7 @@ export function Tour() {
         <h3 className="mt-1.5 text-sm font-semibold">{current.title}</h3>
         <p className="text-muted-foreground mt-1 text-xs leading-relaxed">{current.body}</p>
         <div className="mt-3 flex items-center justify-between gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => (step === 0 ? backToWelcome() : prev())}
-          >
+          <Button variant="ghost" size="sm" onClick={() => (step === 0 ? backToWelcome() : prev())}>
             Back
           </Button>
           <Button size="sm" onClick={() => (isLast ? stop() : next())}>

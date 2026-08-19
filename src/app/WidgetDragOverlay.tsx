@@ -68,7 +68,14 @@ export function WidgetDragOverlay() {
     const { rect } = resolveDrop(plugin, layout, pointerX, pointerY, geometry);
     placeholder = (
       <div
-        style={{ position: "fixed", left: rect.x, top: rect.y, width: rect.w, height: rect.h, zIndex: 50 }}
+        style={{
+          position: "fixed",
+          left: rect.x,
+          top: rect.y,
+          width: rect.w,
+          height: rect.h,
+          zIndex: 50,
+        }}
         className="
           border-foreground/40 bg-foreground/5 pointer-events-none rounded-xl border-2 border-dashed
         "

@@ -36,7 +36,11 @@ describe("dedupeCalendarEvents", () => {
   it("keeps events that differ in time", () => {
     const events = [
       createEvent({ id: "a" }),
-      createEvent({ id: "b", startsAt: "2026-06-20T11:00:00.000Z", endsAt: "2026-06-20T12:00:00.000Z" }),
+      createEvent({
+        id: "b",
+        startsAt: "2026-06-20T11:00:00.000Z",
+        endsAt: "2026-06-20T12:00:00.000Z",
+      }),
     ];
     expect(dedupeCalendarEvents(events)).toHaveLength(2);
   });
@@ -68,8 +72,16 @@ describe("multi-day events", () => {
 describe("getEventsInRange + getAgendaGroups", () => {
   it("includes only events that fall within the lookahead window", () => {
     const start = new Date(2026, 5, 20);
-    const inRange = createEvent({ id: "in", startsAt: "2026-06-21T09:00:00.000Z", endsAt: "2026-06-21T10:00:00.000Z" });
-    const outOfRange = createEvent({ id: "out", startsAt: "2026-07-15T09:00:00.000Z", endsAt: "2026-07-15T10:00:00.000Z" });
+    const inRange = createEvent({
+      id: "in",
+      startsAt: "2026-06-21T09:00:00.000Z",
+      endsAt: "2026-06-21T10:00:00.000Z",
+    });
+    const outOfRange = createEvent({
+      id: "out",
+      startsAt: "2026-07-15T09:00:00.000Z",
+      endsAt: "2026-07-15T10:00:00.000Z",
+    });
 
     const ranged = getEventsInRange([inRange, outOfRange], start, 7);
     expect(ranged.map((event) => event.id)).toEqual(["in"]);
@@ -77,7 +89,11 @@ describe("getEventsInRange + getAgendaGroups", () => {
 
   it("groups events by day with friendly labels", () => {
     const today = new Date(2026, 5, 20);
-    const todayEvent = createEvent({ id: "today", startsAt: "2026-06-20T09:00:00.000Z", endsAt: "2026-06-20T10:00:00.000Z" });
+    const todayEvent = createEvent({
+      id: "today",
+      startsAt: "2026-06-20T09:00:00.000Z",
+      endsAt: "2026-06-20T10:00:00.000Z",
+    });
     const groups = getAgendaGroups([todayEvent], today, 7, today);
     expect(groups).toHaveLength(1);
     expect(groups[0]?.label).toBe("Today");
@@ -87,7 +103,11 @@ describe("getEventsInRange + getAgendaGroups", () => {
 describe("formatFreeUntil", () => {
   const now = new Date("2026-08-04T09:00:00");
 
-  const event = (start: string, end: string, extra: Partial<CalendarEvent> = {}): CalendarEvent => ({
+  const event = (
+    start: string,
+    end: string,
+    extra: Partial<CalendarEvent> = {},
+  ): CalendarEvent => ({
     id: `e-${start}`,
     calendarId: "c1",
     title: "Meeting",
@@ -99,17 +119,29 @@ describe("formatFreeUntil", () => {
   });
 
   it("reports the gap until the next event today", () => {
-    const label = formatFreeUntil([event("2026-08-04T15:00:00", "2026-08-04T16:00:00")], now, false);
+    const label = formatFreeUntil(
+      [event("2026-08-04T15:00:00", "2026-08-04T16:00:00")],
+      now,
+      false,
+    );
     expect(label).toMatch(/^Free until /);
   });
 
   it("says nothing while an event is in progress", () => {
-    const label = formatFreeUntil([event("2026-08-04T08:30:00", "2026-08-04T09:30:00")], now, false);
+    const label = formatFreeUntil(
+      [event("2026-08-04T08:30:00", "2026-08-04T09:30:00")],
+      now,
+      false,
+    );
     expect(label).toBeNull();
   });
 
   it("says nothing when the next event is tomorrow", () => {
-    const label = formatFreeUntil([event("2026-08-05T09:00:00", "2026-08-05T10:00:00")], now, false);
+    const label = formatFreeUntil(
+      [event("2026-08-05T09:00:00", "2026-08-05T10:00:00")],
+      now,
+      false,
+    );
     expect(label).toBeNull();
   });
 
@@ -131,6 +163,8 @@ describe("formatFreeUntil", () => {
       now,
       false,
     );
-    expect(label).toBe(`Free until ${formatEventTime(event("2026-08-04T11:00:00", "2026-08-04T12:00:00"), false)}`);
+    expect(label).toBe(
+      `Free until ${formatEventTime(event("2026-08-04T11:00:00", "2026-08-04T12:00:00"), false)}`,
+    );
   });
 });

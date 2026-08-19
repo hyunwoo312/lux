@@ -134,9 +134,7 @@ export function BackgroundSetting() {
 
         {isMulti && (
           <div className="flex flex-col gap-3">
-            <span className="
-              text-muted-foreground/70 text-2xs font-semibold tracking-wider uppercase
-            ">
+            <span className="text-muted-foreground/70 text-2xs font-semibold tracking-wider uppercase">
               Rotation
             </span>
             <SettingsRow

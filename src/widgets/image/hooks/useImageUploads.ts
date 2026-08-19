@@ -98,7 +98,10 @@ export function useImageUploads() {
   async function removeItem(item: ImageItem) {
     setSaving(true);
     try {
-      setItems(instanceId, items.filter((candidate) => candidate.assetId !== item.assetId));
+      setItems(
+        instanceId,
+        items.filter((candidate) => candidate.assetId !== item.assetId),
+      );
       await deleteImageAsset(item.assetId).catch(() => undefined);
     } finally {
       setSaving(false);

@@ -10,12 +10,7 @@ import {
   MonthWeek,
 } from "@/widgets/calendar/components/MonthWeek";
 import { getEventsByDate } from "@/widgets/calendar/lib/agenda";
-import {
-  addDays,
-  getDateKey,
-  getMonthGridDays,
-  startOfDay,
-} from "@/widgets/calendar/lib/dates";
+import { addDays, getDateKey, getMonthGridDays, startOfDay } from "@/widgets/calendar/lib/dates";
 import { computeMonthLayout } from "@/widgets/calendar/lib/month-layout";
 import { SLIDE_SPRING } from "@/widgets/calendar/lib/motion";
 import { EASE_OUT_QUINT } from "@/lib/motion";
@@ -74,7 +69,9 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
   const selectedKey = selectedDay ? getDateKey(selectedDay) : null;
   const focusedWeek = useMemo(() => {
     if (mode !== "week" || !selectedDay || !selectedKey) return null;
-    const inGrid = layout.weeks.find((week) => week.days.some((day) => day.dateKey === selectedKey));
+    const inGrid = layout.weeks.find((week) =>
+      week.days.some((day) => day.dateKey === selectedKey),
+    );
     if (inGrid) return inGrid;
     const weekMonth = new Date(selectedDay.getFullYear(), selectedDay.getMonth(), 1);
     const weekLayout = computeMonthLayout(getMonthGridDays(weekMonth), events, weekMonth, todayKey);
@@ -135,10 +132,14 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
               setHover((prev) => (prev ? null : prev));
               return;
             }
-            setHover((prev) => (prev && prev.row === 0 && prev.col === col ? prev : { row: 0, col }));
+            setHover((prev) =>
+              prev && prev.row === 0 && prev.col === col ? prev : { row: 0, col },
+            );
           } else {
             const row = Math.min(5, Math.max(0, Math.floor(localY / rowHeight)));
-            setHover((prev) => (prev && prev.row === row && prev.col === col ? prev : { row, col }));
+            setHover((prev) =>
+              prev && prev.row === row && prev.col === col ? prev : { row, col },
+            );
           }
         }}
         onMouseLeave={() => setHover((prev) => (prev ? null : prev))}
@@ -233,11 +234,11 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
                         className="absolute inset-0"
                       >
                         <DayPreview
-                        events={dayEvents}
-                        colors={colors}
-                        now={now}
-                        reduced={reduced}
-                      />
+                          events={dayEvents}
+                          colors={colors}
+                          now={now}
+                          reduced={reduced}
+                        />
                       </motion.div>
                     </AnimatePresence>
                   </div>

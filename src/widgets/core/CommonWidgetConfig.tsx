@@ -1,4 +1,8 @@
-import { ConfigSegmented, WidgetConfigGroup, WidgetConfigItem } from "@/components/config/WidgetConfig";
+import {
+  ConfigSegmented,
+  WidgetConfigGroup,
+  WidgetConfigItem,
+} from "@/components/config/WidgetConfig";
 import {
   useWidgetBackground,
   useWidgetSettingsStore,

@@ -13,10 +13,12 @@ type IconRowProps = {
 export function IconRow({ icon: Icon, title, action, control, children }: IconRowProps) {
   return (
     <div className={cn("flex gap-3", control ? "items-center" : "items-start")}>
-      <span className="
-        bg-primary/10 text-primary grid size-8 shrink-0 place-items-center rounded-lg
-        [&_svg]:size-4
-      ">
+      <span
+        className="
+          bg-primary/10 text-primary grid size-8 shrink-0 place-items-center rounded-lg
+          [&_svg]:size-4
+        "
+      >
         <Icon aria-hidden />
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">

@@ -34,9 +34,7 @@ export function ActivityView({
   const lang = useAnilist((d) => d.titleLanguage);
   const seenRef = useRef(useAnilistStore.getState().lastSeenActivityAt ?? 0);
   const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh, lastSyncedAt } =
-    usePagedResource(
-    (page, signal) => fetchActivityPage(page, lang, signal),
-    {
+    usePagedResource((page, signal) => fetchActivityPage(page, lang, signal), {
       enabled,
       intervalMs: REFRESH_MS,
       maxItems: ANILIST_MAX_ITEMS,
@@ -44,8 +42,7 @@ export function ActivityView({
       getKey: (activity) => activity.id,
       persist: true,
       parsePersisted: parseCachedActivity,
-    },
-  );
+    });
   useAnilistSync(refresh, isRefreshing, lastSyncedAt);
 
   const [likes, setLikes] = useState<Record<number, boolean>>({});
@@ -81,7 +78,9 @@ export function ActivityView({
   if (state.status === "loading") return <AnilistPlaceholder>Loading activity…</AnilistPlaceholder>;
   if (state.status === "error")
     return (
-      <AnilistPlaceholder>{loadErrorMessage(state.error, "Couldn’t load your feed.")}</AnilistPlaceholder>
+      <AnilistPlaceholder>
+        {loadErrorMessage(state.error, "Couldn’t load your feed.")}
+      </AnilistPlaceholder>
     );
   if (state.status === "empty")
     return <AnilistPlaceholder>No recent activity from people you follow.</AnilistPlaceholder>;

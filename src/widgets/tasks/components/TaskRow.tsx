@@ -33,9 +33,7 @@ export function DraftTaskRow({ text }: { text: string }) {
       transition={ROW_TRANSITION}
       className="flex items-center gap-2.5 rounded-lg px-2 py-1.5"
     >
-      <span className="
-        border-muted-foreground/40 size-4 shrink-0 rounded-[5px] border border-dashed
-      " />
+      <span className="border-muted-foreground/40 size-4 shrink-0 rounded-[5px] border border-dashed" />
       <div className="min-w-0 flex-1">
         <TextMorph
           text={text}
@@ -46,7 +44,14 @@ export function DraftTaskRow({ text }: { text: string }) {
   );
 }
 
-export function TaskRow({ task, sortable, revealing = false, onToggle, onEdit, onRemove }: TaskRowProps) {
+export function TaskRow({
+  task,
+  sortable,
+  revealing = false,
+  onToggle,
+  onEdit,
+  onRemove,
+}: TaskRowProps) {
   const reduced = useReducedMotion();
   const [editing, setEditing] = useState(false);
   const [revealActive, setRevealActive] = useState(false);

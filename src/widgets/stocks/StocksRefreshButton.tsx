@@ -1,6 +1,10 @@
 import { WidgetRefreshButton } from "@/widgets/core/WidgetRefreshButton";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import { STOCKS_SYNC_COOLDOWN_MS, useStocks, useStocksStore } from "@/widgets/stocks/useStocksStore";
+import {
+  STOCKS_SYNC_COOLDOWN_MS,
+  useStocks,
+  useStocksStore,
+} from "@/widgets/stocks/useStocksStore";
 
 export function StocksRefreshButton() {
   const instanceId = useWidgetInstanceId();

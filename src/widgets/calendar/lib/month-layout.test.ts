@@ -46,12 +46,24 @@ describe("computeMonthLayout", () => {
     const layout = computeMonthLayout(DAYS, [allDayEvent("e", 10, 10)], VISIBLE_MONTH, TODAY_KEY);
     expect(layout.weeks[1]?.laneCount).toBe(1);
     expect(layout.weeks[1]?.segments).toEqual([
-      { event: expect.objectContaining({ id: "e" }), lane: 0, startCol: 3, span: 1, continuesLeft: false, continuesRight: false },
+      {
+        event: expect.objectContaining({ id: "e" }),
+        lane: 0,
+        startCol: 3,
+        span: 1,
+        continuesLeft: false,
+        continuesRight: false,
+      },
     ]);
   });
 
   it("splits a multi-day event into per-week segments on the same lane", () => {
-    const layout = computeMonthLayout(DAYS, [allDayEvent("trip", 12, 16)], VISIBLE_MONTH, TODAY_KEY);
+    const layout = computeMonthLayout(
+      DAYS,
+      [allDayEvent("trip", 12, 16)],
+      VISIBLE_MONTH,
+      TODAY_KEY,
+    );
 
     expect(layout.weeks[1]?.segments[0]).toMatchObject({
       lane: 0,

@@ -71,7 +71,12 @@ export const useSpotifyStore = create<SpotifyState>()(
         const legacy = configSchema.safeParse(persisted);
         return {
           byInstance: legacy.success
-            ? { spotify: { timeDisplayMode: legacy.data.timeDisplayMode, ambient: legacy.data.ambient } }
+            ? {
+                spotify: {
+                  timeDisplayMode: legacy.data.timeDisplayMode,
+                  ambient: legacy.data.ambient,
+                },
+              }
             : {},
         };
       },

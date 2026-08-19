@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from "@testing-library/react";
-import {afterEach, describe, expect, it, vi} from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   backoffDelayMs,
   patchPolledResource,
@@ -140,7 +140,7 @@ describe("usePolledResource", () => {
 });
 
 describe("patchPolledResource", () => {
-    it("updates a live resource without refetching", async () => {
+  it("updates a live resource without refetching", async () => {
     const fetcher = vi.fn().mockResolvedValue({ value: 1 });
     const { result } = renderHook(() =>
       usePolledResource(fetcher, { cacheKey: "patch-live", intervalMs: 10_000 }),
@@ -191,7 +191,7 @@ describe("patchPolledResource", () => {
 });
 
 describe("usePolledResource persistence", () => {
-    it("persists a successful result to localStorage", async () => {
+  it("persists a successful result to localStorage", async () => {
     const fetcher = vi.fn().mockResolvedValue({ value: 1 });
     const { result } = renderHook(() =>
       usePolledResource(fetcher, { cacheKey: "persist-write", persist: true }),

@@ -33,7 +33,12 @@ export function SpotifyVolume({ volumePercent, disabled, onChange, onCommit }: S
       >
         <VolumeIcon volumePercent={volumePercent} />
       </PopoverTrigger>
-      <PopoverContent align="center" side="top" className="w-44 px-3 py-3" style={getAccentVars(SPOTIFY_ACCENT)}>
+      <PopoverContent
+        align="center"
+        side="top"
+        className="w-44 px-3 py-3"
+        style={getAccentVars(SPOTIFY_ACCENT)}
+      >
         <Slider
           value={[Math.round(volumePercent)]}
           min={0}

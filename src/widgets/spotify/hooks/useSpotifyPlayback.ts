@@ -276,7 +276,9 @@ function togglePlayback(): void {
     playback.isPlaying ? pauseSpotifyPlayback : resumeSpotifyPlayback,
     () => {
       set((state) =>
-        state.playback ? { playback: { ...state.playback, isPlaying: !state.playback.isPlaying } } : state,
+        state.playback
+          ? { playback: { ...state.playback, isPlaying: !state.playback.isPlaying } }
+          : state,
       );
       markSyncedNow();
     },
@@ -289,7 +291,9 @@ function previousTrack(): void {
     void runPlaybackAction(
       () => seekSpotifyPlayback(0),
       () => {
-        set((state) => (state.playback ? { playback: { ...state.playback, progressMs: 0 } } : state));
+        set((state) =>
+          state.playback ? { playback: { ...state.playback, progressMs: 0 } } : state,
+        );
         markSyncedNow();
       },
       "previous",
@@ -309,7 +313,10 @@ function toggleShuffle(): void {
   const nextShuffle = !playback.shuffle;
   void runPlaybackAction(
     () => setSpotifyShuffle(nextShuffle),
-    () => set((state) => (state.playback ? { playback: { ...state.playback, shuffle: nextShuffle } } : state)),
+    () =>
+      set((state) =>
+        state.playback ? { playback: { ...state.playback, shuffle: nextShuffle } } : state,
+      ),
     "shuffle",
   );
 }

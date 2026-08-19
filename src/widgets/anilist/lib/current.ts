@@ -1,14 +1,11 @@
-import type {
-  CurrentEntry,
-  CurrentSort,
-  MediaKind,
-  ScoreFormat,
-} from "@/widgets/anilist/types";
+import type { CurrentEntry, CurrentSort, MediaKind, ScoreFormat } from "@/widgets/anilist/types";
 
 export function sortCurrentEntries(entries: CurrentEntry[], sort: CurrentSort): CurrentEntry[] {
   const sorted = [...entries];
   if (sort === "airing") {
-    sorted.sort((a, b) => (a.nextEpisode?.airingAt ?? Infinity) - (b.nextEpisode?.airingAt ?? Infinity));
+    sorted.sort(
+      (a, b) => (a.nextEpisode?.airingAt ?? Infinity) - (b.nextEpisode?.airingAt ?? Infinity),
+    );
   } else if (sort === "recent") {
     sorted.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
   } else if (sort === "score") {
@@ -40,7 +37,6 @@ export function computeBehind(
   if (latestAvailable == null) return null;
   return Math.max(0, latestAvailable - progress);
 }
-
 
 export function progressLabel(entry: CurrentEntry): string {
   const unit = entry.kind === "anime" ? "Ep" : "Ch";

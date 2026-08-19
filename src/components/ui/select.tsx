@@ -65,9 +65,7 @@ function SelectContent({
         )}
         {...props}
       >
-        <SelectPrimitive.Viewport className="w-full p-0">
-          {children}
-        </SelectPrimitive.Viewport>
+        <SelectPrimitive.Viewport className="w-full p-0">{children}</SelectPrimitive.Viewport>
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
   );

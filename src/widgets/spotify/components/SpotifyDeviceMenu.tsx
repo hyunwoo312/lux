@@ -42,7 +42,12 @@ export function SpotifyDeviceMenu({
       >
         <Monitor className="size-4" aria-hidden />
       </PopoverTrigger>
-      <PopoverContent align="start" side="top" className="w-56 p-1.5" style={getAccentVars(SPOTIFY_ACCENT)}>
+      <PopoverContent
+        align="start"
+        side="top"
+        className="w-56 p-1.5"
+        style={getAccentVars(SPOTIFY_ACCENT)}
+      >
         <div className="flex flex-col gap-0.5">
           {devices.map((device) => {
             const active = device.id === activeId || device.isActive;
@@ -61,12 +66,18 @@ export function SpotifyDeviceMenu({
                   disabled:pointer-events-none disabled:opacity-50
                 "
               >
-                <Monitor className={cn("size-4 shrink-0", active ? "text-primary" : `
-                  text-muted-foreground
-                `)} aria-hidden />
+                <Monitor
+                  className={cn(
+                    "size-4 shrink-0",
+                    active ? "text-primary" : `text-muted-foreground`,
+                  )}
+                  aria-hidden
+                />
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate text-sm leading-none font-medium">{device.name}</span>
-                  <span className="text-muted-foreground text-2xs mt-0.5 truncate">{device.type}</span>
+                  <span className="text-muted-foreground text-2xs mt-0.5 truncate">
+                    {device.type}
+                  </span>
                 </span>
                 {active && <Check className="text-primary ml-auto size-3.5 shrink-0" aria-hidden />}
               </button>

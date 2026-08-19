@@ -18,7 +18,13 @@ const valid: WeatherData = {
   sunset: "2026-06-26T20:45",
   uvIndex: 3,
   hourly: [
-    { time: "2026-06-26T11:00", temperature: 21, weatherCode: 1, precipitationProbability: 10, isDay: true },
+    {
+      time: "2026-06-26T11:00",
+      temperature: 21,
+      weatherCode: 1,
+      precipitationProbability: 10,
+      isDay: true,
+    },
   ],
   daily: [{ date: "2026-06-26", weatherCode: 1, max: 25, min: 15 }],
   unitLabels: { temperature: "°F", windSpeed: "mph" },
@@ -34,7 +40,9 @@ describe("parseCachedWeather", () => {
   });
 
   it("rejects a payload with a wrong field type", () => {
-    expect(parseCachedWeather({ ...valid, current: { ...valid.current, isDay: "yes" } })).toBeNull();
+    expect(
+      parseCachedWeather({ ...valid, current: { ...valid.current, isDay: "yes" } }),
+    ).toBeNull();
   });
 
   it("rejects a payload missing a required field", () => {

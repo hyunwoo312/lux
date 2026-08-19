@@ -133,10 +133,9 @@ describe("fetchOutlookCalendarEvents", () => {
   });
 
   const pageResponse = (ids: string[], nextLink?: string) =>
-    new Response(
-      JSON.stringify({ value: ids.map(graphEvent), "@odata.nextLink": nextLink }),
-      { status: 200 },
-    );
+    new Response(JSON.stringify({ value: ids.map(graphEvent), "@odata.nextLink": nextLink }), {
+      status: 200,
+    });
 
   it("follows @odata.nextLink to collect every page of events", async () => {
     const nextLink = "https://graph.microsoft.com/v1.0/me/calendars/cal1/calendarView?$skip=250";

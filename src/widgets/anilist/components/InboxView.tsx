@@ -40,9 +40,7 @@ export function InboxView({
   });
   const unreadRefresh = unread.refresh;
   const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh, lastSyncedAt } =
-    usePagedResource(
-    (page, signal) => fetchInboxPage(page, lang, signal),
-    {
+    usePagedResource((page, signal) => fetchInboxPage(page, lang, signal), {
       enabled,
       intervalMs: REFRESH_MS,
       maxItems: ANILIST_MAX_ITEMS,
@@ -50,8 +48,7 @@ export function InboxView({
       getKey: (notification) => notification.id,
       persist: true,
       parsePersisted: parseCachedInbox,
-    },
-  );
+    });
   const refreshAll = useCallback(() => {
     refresh();
     unreadRefresh();
@@ -85,7 +82,9 @@ export function InboxView({
   if (state.status === "loading") return <AnilistPlaceholder>Loading inbox…</AnilistPlaceholder>;
   if (state.status === "error")
     return (
-      <AnilistPlaceholder>{loadErrorMessage(state.error, "Couldn’t load your inbox.")}</AnilistPlaceholder>
+      <AnilistPlaceholder>
+        {loadErrorMessage(state.error, "Couldn’t load your inbox.")}
+      </AnilistPlaceholder>
     );
   if (state.status === "empty")
     return <AnilistPlaceholder>Inbox zero — nothing waiting.</AnilistPlaceholder>;

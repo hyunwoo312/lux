@@ -222,8 +222,7 @@ async function refreshProviderToken(
       : undefined;
 
   try {
-    const token =
-      refresh && params ? await refresh(params) : await requestToken(provider, false);
+    const token = refresh && params ? await refresh(params) : await requestToken(provider, false);
     await writeAccount({
       ...account,
       status: "connected",
@@ -260,7 +259,6 @@ async function markProviderNeedsReconnect(providerId: IntegrationProviderId): Pr
     await markNeedsReconnect(account, `${getProvider(providerId).label} needs to be reconnected`);
   }
 }
-
 
 function authorize(init: RequestInit, accessToken: string): RequestInit {
   const headers = new Headers(init.headers);

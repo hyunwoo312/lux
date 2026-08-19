@@ -4,11 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BaseWidget } from "@/widgets/core/BaseWidget";
 
-function editingWidget(
-  onRemove: () => void,
-  editing = true,
-  removalNote?: () => string | null,
-) {
+function editingWidget(onRemove: () => void, editing = true, removalNote?: () => string | null) {
   return (
     <TooltipProvider>
       <BaseWidget title="Notes" editing={editing} onRemove={onRemove} removalNote={removalNote}>

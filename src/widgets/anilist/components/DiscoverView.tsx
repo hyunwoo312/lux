@@ -7,7 +7,11 @@ import { loadErrorMessage } from "@/lib/rate-limit";
 import { useIntegrationStore } from "@/integrations";
 import { useSettingsStore } from "@/settings";
 import { usePolledResource, type PolledResourceState } from "@/widgets/core/usePolledResource";
-import { fetchDiscover, parseCachedDiscover, saveListStatus } from "@/widgets/anilist/lib/anilist-api";
+import {
+  fetchDiscover,
+  parseCachedDiscover,
+  saveListStatus,
+} from "@/widgets/anilist/lib/anilist-api";
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";

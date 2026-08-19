@@ -39,10 +39,12 @@ export function ImageUploadButton({
         disabled:cursor-default disabled:opacity-60
       "
     >
-      <span className="
-        bg-foreground/5 flex size-8 shrink-0 items-center justify-center rounded-md
-        [&_svg]:size-4
-      ">
+      <span
+        className="
+          bg-foreground/5 flex size-8 shrink-0 items-center justify-center rounded-md
+          [&_svg]:size-4
+        "
+      >
         <Upload aria-hidden />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">

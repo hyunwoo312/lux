@@ -34,7 +34,9 @@ export function Wallpaper({ imageUrl }: { imageUrl: string | null }) {
           />
         )}
       </AnimatePresence>
-      {showImage && dim > 0 && <div className="absolute inset-0 bg-black" style={{ opacity: dim }} />}
+      {showImage && dim > 0 && (
+        <div className="absolute inset-0 bg-black" style={{ opacity: dim }} />
+      )}
     </div>
   );
 }

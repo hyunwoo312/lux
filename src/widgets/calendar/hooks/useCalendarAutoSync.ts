@@ -1,7 +1,11 @@
 import { useEffect } from "react";
 import { useIntegrationStore } from "@/integrations";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
-import { getCalendarData, useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import {
+  getCalendarData,
+  useCalendar,
+  useCalendarStore,
+} from "@/widgets/calendar/useCalendarStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 const PROVIDERS = ["google", "microsoft"] as const;

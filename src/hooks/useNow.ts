@@ -6,10 +6,13 @@ export function useNow(intervalMs = 60_000): Date {
   useEffect(() => {
     let intervalId: number | undefined;
     const tick = () => setNow(new Date());
-    const timeoutId = window.setTimeout(() => {
-      tick();
-      intervalId = window.setInterval(tick, intervalMs);
-    }, intervalMs - (Date.now() % intervalMs));
+    const timeoutId = window.setTimeout(
+      () => {
+        tick();
+        intervalId = window.setInterval(tick, intervalMs);
+      },
+      intervalMs - (Date.now() % intervalMs),
+    );
     const onVisible = () => {
       if (document.visibilityState === "visible") tick();
     };

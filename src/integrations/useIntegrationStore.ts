@@ -1,8 +1,5 @@
 import { create } from "zustand";
-import {
-  connectIntegration,
-  disconnectIntegration,
-} from "@/integrations/integration-client";
+import { connectIntegration, disconnectIntegration } from "@/integrations/integration-client";
 import { readAccountSummaries, subscribeAccounts } from "@/integrations/token-store";
 import type { IntegrationAccountSummary, IntegrationProviderId } from "@/integrations/types";
 

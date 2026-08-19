@@ -1,12 +1,6 @@
 import type { ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import {
-  CalendarClock,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-} from "lucide-react";
+import { CalendarClock, ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { CalendarRefreshButton } from "@/widgets/calendar/CalendarRefreshButton";
@@ -14,7 +8,8 @@ import { CalendarViewToggle } from "@/widgets/calendar/CalendarViewToggle";
 import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
-const NAV_BUTTON = "text-muted-foreground/60 hover:text-foreground size-6 rounded-sm [&_svg]:size-3.5";
+const NAV_BUTTON =
+  "text-muted-foreground/60 hover:text-foreground size-6 rounded-sm [&_svg]:size-3.5";
 
 function NavButton({
   label,
@@ -27,7 +22,13 @@ function NavButton({
 }) {
   return (
     <Tooltip content={label}>
-      <Button variant="ghost" size="icon" className={NAV_BUTTON} aria-label={label} onClick={onClick}>
+      <Button
+        variant="ghost"
+        size="icon"
+        className={NAV_BUTTON}
+        aria-label={label}
+        onClick={onClick}
+      >
         {children}
       </Button>
     </Tooltip>

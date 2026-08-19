@@ -82,7 +82,6 @@ describe("computeBehind", () => {
   });
 });
 
-
 describe("progressLabel", () => {
   it("shows a known total", () => {
     expect(progressLabel(entry({ kind: "anime", progress: 5, total: 12 }))).toBe("Ep 5/12");
@@ -151,9 +150,7 @@ describe("airing sort and grouping", () => {
     progress: 1,
     total: 12,
     behind: 0,
-    ...(offsetSeconds === null
-      ? {}
-      : { nextEpisode: { episode: 2, airingAt: at(offsetSeconds) } }),
+    ...(offsetSeconds === null ? {} : { nextEpisode: { episode: 2, airingAt: at(offsetSeconds) } }),
   });
 
   it("orders by soonest airing and pushes entries with no next episode last", () => {

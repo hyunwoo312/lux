@@ -28,7 +28,10 @@ function renderBody(release: Release): string {
       }
       blocks.push(`- ${change.text}\n`);
     }
-    const body = blocks.join("").replace(/\n(#### )/g, "\n\n$1").trimEnd();
+    const body = blocks
+      .join("")
+      .replace(/\n(#### )/g, "\n\n$1")
+      .trimEnd();
     return [`### ${CHANGE_TYPE_LABEL[type]}\n\n${body}`];
   });
   return [`_${release.summary}_`, ...sections].join("\n\n");

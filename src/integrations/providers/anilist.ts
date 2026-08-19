@@ -57,9 +57,7 @@ function acquireToken({
   interactive,
 }: AcquireTokenParams): Promise<IntegrationTokenResponse> {
   if (!interactive) {
-    return Promise.reject(
-      new IntegrationReconnectRequiredError("AniList needs to be reconnected"),
-    );
+    return Promise.reject(new IntegrationReconnectRequiredError("AniList needs to be reconnected"));
   }
 
   return new Promise((resolve, reject) => {

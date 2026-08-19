@@ -88,7 +88,12 @@ describe("createRelayProvider.refreshToken", () => {
   it("rotates the refresh token when the relay returns a new one", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
-        JSON.stringify({ access_token: "tok2", refresh_token: "ref2", expires_in: 3600, token_type: "Bearer" }),
+        JSON.stringify({
+          access_token: "tok2",
+          refresh_token: "ref2",
+          expires_in: 3600,
+          token_type: "Bearer",
+        }),
       ),
     );
     const token = await provider.refreshToken!({ clientId: "client-1", refreshToken: "ref1" });
@@ -97,7 +102,9 @@ describe("createRelayProvider.refreshToken", () => {
 
   it("keeps the existing refresh token when the relay omits a new one", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ access_token: "tok2", expires_in: 3600, token_type: "Bearer" })),
+      new Response(
+        JSON.stringify({ access_token: "tok2", expires_in: 3600, token_type: "Bearer" }),
+      ),
     );
     const token = await provider.refreshToken!({ clientId: "client-1", refreshToken: "ref1" });
     expect(token).toMatchObject({ accessToken: "tok2", refreshToken: "ref1" });

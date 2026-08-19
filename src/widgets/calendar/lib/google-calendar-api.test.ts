@@ -59,10 +59,7 @@ describe("normalizeGoogleEvent", () => {
         summary: "Sync",
         start: { dateTime: "2026-08-04T09:00:00Z" },
         end: { dateTime: "2026-08-04T09:30:00Z" },
-        attendees: [
-          { responseStatus: "accepted" },
-          { self: true, responseStatus: "needsAction" },
-        ],
+        attendees: [{ responseStatus: "accepted" }, { self: true, responseStatus: "needsAction" }],
       },
       "cal-1",
     );

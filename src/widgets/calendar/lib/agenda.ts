@@ -26,7 +26,10 @@ export function getEventDisplayEndDate(event: CalendarEvent): Date {
 }
 
 export function isMultiDayEvent(event: CalendarEvent): boolean {
-  return startOfDay(getEventStartDate(event)).getTime() < startOfDay(getEventDisplayEndDate(event)).getTime();
+  return (
+    startOfDay(getEventStartDate(event)).getTime() <
+    startOfDay(getEventDisplayEndDate(event)).getTime()
+  );
 }
 
 export function getEventTitle(event: CalendarEvent): string {
@@ -97,7 +100,9 @@ export function getEventsInRange<T extends CalendarEvent>(
       (event) =>
         getEventDisplayEndDate(event) >= rangeStart && getEventStartDate(event) <= rangeEnd,
     )
-    .sort((first, second) => getEventStartDate(first).getTime() - getEventStartDate(second).getTime());
+    .sort(
+      (first, second) => getEventStartDate(first).getTime() - getEventStartDate(second).getTime(),
+    );
 }
 
 export function getEventsByDate<T extends CalendarEvent>(events: T[]): Map<string, T[]> {
@@ -153,7 +158,11 @@ export function getAgendaGroups<T extends CalendarEvent>(
   const groups: AgendaGroup<T>[] = [];
   const rangeEnd = getRangeEndDate(startDate, lookaheadDays);
 
-  for (let cursor = startOfDay(startDate); cursor <= rangeEnd; cursor.setDate(cursor.getDate() + 1)) {
+  for (
+    let cursor = startOfDay(startDate);
+    cursor <= rangeEnd;
+    cursor.setDate(cursor.getDate() + 1)
+  ) {
     const date = new Date(cursor);
     const dayEvents = events.filter((event) => isEventActiveOnDate(event, date));
     if (dayEvents.length) {

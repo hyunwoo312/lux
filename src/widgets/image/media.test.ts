@@ -13,7 +13,9 @@ function makeFile(type: string, size: number, name = "pic.png"): File {
 
 describe("validateImageFile", () => {
   it("rejects unsupported types", () => {
-    expect(validateImageFile(makeFile("image/svg+xml", 10))).toBe("Use a PNG, JPG, WebP, or GIF image.");
+    expect(validateImageFile(makeFile("image/svg+xml", 10))).toBe(
+      "Use a PNG, JPG, WebP, or GIF image.",
+    );
   });
 
   it("rejects files over the size limit", () => {

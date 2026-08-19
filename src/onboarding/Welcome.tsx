@@ -38,7 +38,9 @@ export function Welcome() {
             initial={reduced ? false : { scale: 0, rotate: -120, opacity: 0 }}
             animate={{ scale: 1, rotate: 0, opacity: 1 }}
             transition={
-              reduced ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 15, delay: 0.1 }
+              reduced
+                ? { duration: 0 }
+                : { type: "spring", stiffness: 260, damping: 15, delay: 0.1 }
             }
           />
 

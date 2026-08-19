@@ -1,4 +1,8 @@
-import { ConfigSegmented, WidgetConfigGroup, WidgetConfigItem } from "@/components/config/WidgetConfig";
+import {
+  ConfigSegmented,
+  WidgetConfigGroup,
+  WidgetConfigItem,
+} from "@/components/config/WidgetConfig";
 import { useWeather, useWeatherStore } from "@/widgets/weather/useWeatherStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import type { WeatherUnits } from "@/widgets/weather/types";

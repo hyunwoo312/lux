@@ -64,9 +64,7 @@ export function selectNewtabIndex(
   const known = new Set(assetIds);
   const previous = stored?.last ?? null;
   let queue =
-    stored && stored.signature === signature
-      ? stored.queue.filter((id) => known.has(id))
-      : [];
+    stored && stored.signature === signature ? stored.queue.filter((id) => known.has(id)) : [];
 
   if (!queue.length) {
     queue =

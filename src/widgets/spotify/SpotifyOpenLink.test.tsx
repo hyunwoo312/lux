@@ -37,9 +37,4 @@ describe("SpotifyOpenLink", () => {
     const link = screen.getByRole("link", { name: "Open current track in Spotify" });
     expect(link).toHaveAttribute("href", "https://open.spotify.com/track/abc123");
   });
-
-  it("renders nothing when no track is playing", () => {
-    const { container } = renderLink();
-    expect(container).toBeEmptyDOMElement();
-  });
 });

@@ -34,7 +34,8 @@ const ACCENT_STYLE = {
   "--primary-foreground": ACCENT.primaryForeground,
 } as CSSProperties;
 
-const NAV_BUTTON = "text-muted-foreground/70 hover:text-foreground absolute size-6 [&_svg]:size-3.5";
+const NAV_BUTTON =
+  "text-muted-foreground/70 hover:text-foreground absolute size-6 [&_svg]:size-3.5";
 
 type MiniMonthProps = {
   month: Date;

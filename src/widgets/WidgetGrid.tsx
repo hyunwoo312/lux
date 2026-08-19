@@ -208,7 +208,11 @@ export function WidgetGrid() {
     return { x: spot.x, y: spot.y, w, h, accent: plugin.accent ?? "default" };
   }, [previewType, displayLayout, cols]);
   const previewBottom = previewPlacement ? previewPlacement.y + previewPlacement.h : 0;
-  const rows = Math.max(availableRows, previewRows ?? getLayoutBottom(displayLayout), previewBottom);
+  const rows = Math.max(
+    availableRows,
+    previewRows ?? getLayoutBottom(displayLayout),
+    previewBottom,
+  );
   const workspaceHeight = rows * UNIT;
   const showGrid = editing || showGridLines;
 
@@ -278,9 +282,7 @@ export function WidgetGrid() {
                 );
               })}
             </GridLayout>
-            {previewPlacement && (
-              <PlacementPreview placement={previewPlacement} ref={previewRef} />
-            )}
+            {previewPlacement && <PlacementPreview placement={previewPlacement} ref={previewRef} />}
           </div>
         )
       )}

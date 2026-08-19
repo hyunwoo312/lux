@@ -50,7 +50,11 @@ export function CalendarListView({ events, colors, enabled, status }: CalendarLi
   );
 
   if (!enabled) {
-    return <CalendarEmpty icon={CalendarOff}>Events are hidden. Re-enable them in settings.</CalendarEmpty>;
+    return (
+      <CalendarEmpty icon={CalendarOff}>
+        Events are hidden. Re-enable them in settings.
+      </CalendarEmpty>
+    );
   }
 
   const hasEvents = multiDayEvents.length > 0 || groups.length > 0;
@@ -64,9 +68,7 @@ export function CalendarListView({ events, colors, enabled, status }: CalendarLi
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto pr-0.5">
-      {freeUntil && (
-        <p className="text-muted-foreground pl-1 text-2xs font-medium">{freeUntil}</p>
-      )}
+      {freeUntil && <p className="text-muted-foreground pl-1 text-2xs font-medium">{freeUntil}</p>}
       {multiDayEvents.length > 0 && (
         <section className="flex flex-col gap-1.5">
           <h4 className="text-muted-foreground text-2xs pl-1 font-bold tracking-wider uppercase">

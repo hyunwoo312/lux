@@ -122,94 +122,94 @@ export function AccountsTab() {
         title="Accounts"
         description="Services used by your widgets. Your data and tokens stay in this browser."
       >
-      {PROVIDERS.map((provider) => {
-        const account = accounts.find((entry) => entry.providerId === provider.id);
-        const busy = pending[provider.id];
-        const error = errors[provider.id] ?? account?.lastError;
-        const status = account?.status;
-        const Icon = provider.icon;
-        const isSpotify = provider.id === "spotify";
-        const connectDisabled = isSpotify && !spotifyClientId;
+        {PROVIDERS.map((provider) => {
+          const account = accounts.find((entry) => entry.providerId === provider.id);
+          const busy = pending[provider.id];
+          const error = errors[provider.id] ?? account?.lastError;
+          const status = account?.status;
+          const Icon = provider.icon;
+          const isSpotify = provider.id === "spotify";
+          const connectDisabled = isSpotify && !spotifyClientId;
 
-        const identity = account?.email ?? account?.displayName ?? "Connected";
-        const subline =
-          status === "connected"
-            ? account?.lastSyncedAt
-              ? `${identity} · synced ${formatRelativeTime(account.lastSyncedAt)}`
-              : identity
-            : status === "needsReconnect"
-              ? "Reconnect to continue"
-              : connectDisabled
-                ? "Add your Client ID below to connect"
-                : provider.description;
+          const identity = account?.email ?? account?.displayName ?? "Connected";
+          const subline =
+            status === "connected"
+              ? account?.lastSyncedAt
+                ? `${identity} · synced ${formatRelativeTime(account.lastSyncedAt)}`
+                : identity
+              : status === "needsReconnect"
+                ? "Reconnect to continue"
+                : connectDisabled
+                  ? "Add your Client ID below to connect"
+                  : provider.description;
 
-        return (
-          <div key={provider.id} className="flex flex-col gap-2">
-            <div className="flex items-center gap-3 py-2">
-              <AccountAvatar
-                Icon={Icon}
-                avatarUrl={account?.avatarUrl}
-                connected={Boolean(account)}
-              />
-              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{provider.label}</span>
-                  <StatusBadge status={status} />
+          return (
+            <div key={provider.id} className="flex flex-col gap-2">
+              <div className="flex items-center gap-3 py-2">
+                <AccountAvatar
+                  Icon={Icon}
+                  avatarUrl={account?.avatarUrl}
+                  connected={Boolean(account)}
+                />
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{provider.label}</span>
+                    <StatusBadge status={status} />
+                  </div>
+                  <span className="text-muted-foreground truncate text-xs">{subline}</span>
                 </div>
-                <span className="text-muted-foreground truncate text-xs">{subline}</span>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                {account ? (
-                  <>
-                    {status === "needsReconnect" && (
+                <div className="flex shrink-0 items-center gap-2">
+                  {account ? (
+                    <>
+                      {status === "needsReconnect" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-warning hover:text-warning"
+                          disabled={Boolean(busy)}
+                          onClick={() => run(provider.id, "connecting", () => connect(provider.id))}
+                        >
+                          {busy === "connecting" ? "Reconnecting…" : "Reconnect"}
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="text-warning hover:text-warning"
+                        className="text-destructive hover:text-destructive"
                         disabled={Boolean(busy)}
-                        onClick={() => run(provider.id, "connecting", () => connect(provider.id))}
+                        onClick={() => setConfirmDisconnect(provider.id)}
                       >
-                        {busy === "connecting" ? "Reconnecting…" : "Reconnect"}
+                        {busy === "disconnecting" ? "Disconnecting…" : "Disconnect"}
                       </Button>
-                    )}
+                    </>
+                  ) : (
                     <Button
                       size="sm"
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive"
-                      disabled={Boolean(busy)}
-                      onClick={() => setConfirmDisconnect(provider.id)}
+                      variant="secondary"
+                      className={cn(isSpotify && SPOTIFY_BUTTON_ACCENT)}
+                      disabled={Boolean(busy) || connectDisabled}
+                      onClick={() => run(provider.id, "connecting", () => connect(provider.id))}
                     >
-                      {busy === "disconnecting" ? "Disconnecting…" : "Disconnect"}
+                      {busy === "connecting" ? "Connecting…" : "Connect"}
                     </Button>
-                  </>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className={cn(isSpotify && SPOTIFY_BUTTON_ACCENT)}
-                    disabled={Boolean(busy) || connectDisabled}
-                    onClick={() => run(provider.id, "connecting", () => connect(provider.id))}
-                  >
-                    {busy === "connecting" ? "Connecting…" : "Connect"}
-                  </Button>
-                )}
+                  )}
+                </div>
               </div>
+              {error && <p className="text-destructive text-xs">{error}</p>}
+              {isSpotify && spotifyClientIdLoaded && (
+                <SpotifySetup
+                  clientId={spotifyClientId}
+                  redirectUri={spotifyRedirectUri}
+                  onSave={saveSpotifyClientId}
+                />
+              )}
             </div>
-            {error && <p className="text-destructive text-xs">{error}</p>}
-            {isSpotify && spotifyClientIdLoaded && (
-              <SpotifySetup
-                clientId={spotifyClientId}
-                redirectUri={spotifyRedirectUri}
-                onSave={saveSpotifyClientId}
-              />
-            )}
-          </div>
-        );
-      })}
-      <p className="text-muted-foreground text-xs">
-        Google, Outlook, and GitHub sign-in goes through a stateless Lux relay that stores nothing.
-        Spotify and AniList connect directly.
-      </p>
+          );
+        })}
+        <p className="text-muted-foreground text-xs">
+          Google, Outlook, and GitHub sign-in goes through a stateless Lux relay that stores
+          nothing. Spotify and AniList connect directly.
+        </p>
       </SettingsSection>
       <PermissionsSection />
       <ConfirmDialog

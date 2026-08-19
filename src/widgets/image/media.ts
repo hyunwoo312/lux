@@ -6,11 +6,7 @@ import {
   type StoredAssetMetadata,
 } from "@/lib/asset-store";
 import { encodeToWebp } from "@/lib/image-encode";
-import {
-  IMAGE_ENCODE_QUALITY,
-  IMAGE_MAX_BYTES,
-  IMAGE_MAX_DIMENSION,
-} from "@/widgets/image/types";
+import { IMAGE_ENCODE_QUALITY, IMAGE_MAX_BYTES, IMAGE_MAX_DIMENSION } from "@/widgets/image/types";
 
 export type ImageMediaAsset = StoredAsset;
 export type ImageMediaMetadata = StoredAssetMetadata;

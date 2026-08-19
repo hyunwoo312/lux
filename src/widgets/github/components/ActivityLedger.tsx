@@ -68,9 +68,7 @@ function RepoRow({
     >
       <div className="flex items-center gap-2">
         <span className="text-foreground min-w-0 flex-1 truncate text-xs">{repo.repo}</span>
-        <span
-          className="text-muted-foreground text-2xs flex shrink-0 items-center gap-1.5 tabular-nums"
-        >
+        <span className="text-muted-foreground text-2xs flex shrink-0 items-center gap-1.5 tabular-nums">
           <Mix icon={GitCommitHorizontal} value={repo.commits} />
           <Mix icon={GitPullRequest} value={repo.prs} />
           <Mix icon={CircleDot} value={repo.issues} />

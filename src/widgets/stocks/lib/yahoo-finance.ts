@@ -15,7 +15,6 @@ const RANGE_INTERVAL: Record<StockRange, string> = {
   max: "1mo",
 };
 
-
 async function fetchYahoo(path: string, signal?: AbortSignal): Promise<unknown> {
   let lastError: Error | undefined;
   for (const host of HOSTS) {

@@ -89,11 +89,17 @@ export function CalendarEventItem({
         declined && "opacity-50",
       )}
     >
-      <span aria-hidden className="size-2 flex-none rounded-full" style={{ backgroundColor: color }} />
+      <span
+        aria-hidden
+        className="size-2 flex-none rounded-full"
+        style={{ backgroundColor: color }}
+      />
       <span className="text-muted-foreground w-12 flex-none text-2xs font-semibold tabular-nums">
         {timeLabel ?? formatEventTime(event, !clock24h)}
       </span>
-      <span className={cn("flex min-w-0 flex-1 flex-col transition-[padding] duration-200", padClass)}>
+      <span
+        className={cn("flex min-w-0 flex-1 flex-col transition-[padding] duration-200", padClass)}
+      >
         <span className="flex min-w-0 items-baseline gap-1.5">
           <span
             className={cn(

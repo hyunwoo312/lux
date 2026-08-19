@@ -116,10 +116,7 @@ export function normalizeOutlookCalendar(
   };
 }
 
-export function normalizeOutlookEvent(
-  event: GraphEvent,
-  calendarId: string,
-): CalendarEvent | null {
+export function normalizeOutlookEvent(event: GraphEvent, calendarId: string): CalendarEvent | null {
   if (!event.id || event.isCancelled) return null;
 
   const isAllDay = Boolean(event.isAllDay);

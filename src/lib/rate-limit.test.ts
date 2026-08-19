@@ -36,9 +36,9 @@ describe("rateLimitError", () => {
 
 describe("loadErrorMessage", () => {
   it("prefers the rate-limit message and falls back otherwise", () => {
-    expect(loadErrorMessage(new RateLimitError("Rate limited — try again in 2m."), "Couldn’t load.")).toBe(
-      "Rate limited — try again in 2m.",
-    );
+    expect(
+      loadErrorMessage(new RateLimitError("Rate limited — try again in 2m."), "Couldn’t load."),
+    ).toBe("Rate limited — try again in 2m.");
     expect(loadErrorMessage(new Error("boom"), "Couldn’t load.")).toBe("Couldn’t load.");
   });
 });

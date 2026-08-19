@@ -608,7 +608,6 @@ export async function fetchDiscover(
   );
 }
 
-
 const currentEntrySchema = z.object({
   id: z.number(),
   kind: z.enum(["anime", "manga"]),

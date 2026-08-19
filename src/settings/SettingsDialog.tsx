@@ -116,7 +116,6 @@ export function SettingsDialog() {
           bg-transparent p-0
         "
       >
-
         <aside
           className={cn(
             `
@@ -170,9 +169,7 @@ export function SettingsDialog() {
                       layoutId="settings-active-tab"
                       className="bg-accent absolute inset-0 rounded-lg"
                       transition={
-                        reduced
-                          ? { duration: 0 }
-                          : { type: "spring", stiffness: 480, damping: 40 }
+                        reduced ? { duration: 0 } : { type: "spring", stiffness: 480, damping: 40 }
                       }
                     />
                   )}
@@ -235,10 +232,12 @@ export function SettingsDialog() {
         </aside>
 
         <div className="bg-popover/90 flex min-w-0 flex-1 flex-col">
-          <header className="
-            border-border/60 relative flex h-[4.25rem] shrink-0 items-center overflow-hidden
-            border-b px-6
-          ">
+          <header
+            className="
+              border-border/60 relative flex h-[4.25rem] shrink-0 items-center overflow-hidden
+              border-b px-6
+            "
+          >
             <AnimatePresence mode="popLayout" custom={direction} initial={false}>
               <motion.div
                 key={tab}

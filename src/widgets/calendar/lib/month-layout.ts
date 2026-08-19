@@ -65,7 +65,11 @@ function getRangedSpans(events: CalendarEvent[], gridStart: Date): RangedSpan[] 
     }));
 }
 
-function buildWeekSegments(spans: RangedSpan[], weekStart: number, weekEnd: number): EventSegment[] {
+function buildWeekSegments(
+  spans: RangedSpan[],
+  weekStart: number,
+  weekEnd: number,
+): EventSegment[] {
   const weekSpans = spans
     .filter((span) => span.startIndex <= weekEnd && span.endIndex >= weekStart)
     .map((span) => {

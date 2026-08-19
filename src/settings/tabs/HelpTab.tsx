@@ -49,11 +49,7 @@ export function HelpTab() {
         description="Prefer the keyboard? These speed things up."
       >
         {PREVIEW_SHORTCUTS.map((definition, index) => (
-          <ShortcutRow
-            key={definition.id}
-            label={definition.label}
-            list={bindings[index] ?? []}
-          />
+          <ShortcutRow key={definition.id} label={definition.label} list={bindings[index] ?? []} />
         ))}
         {SHORTCUT_DEFINITIONS.length > PREVIEW_SHORTCUTS.length && (
           <span aria-hidden className="text-foreground -my-1 text-sm leading-none tracking-widest">
