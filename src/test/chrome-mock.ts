@@ -2,11 +2,26 @@ import { vi } from "vitest";
 
 function createChromeMock() {
   const store = new Map<string, unknown>();
+  const session = new Map<string, unknown>();
+  const changeListeners = new Set<
+    (changes: Record<string, { newValue?: unknown }>, areaName: string) => void
+  >();
+
+  function emitChange(changes: Record<string, { newValue?: unknown }>, areaName: string) {
+    for (const listener of changeListeners) listener(changes, areaName);
+  }
 
   return {
     runtime: {
       onInstalled: { addListener: vi.fn() },
+      onMessage: { addListener: vi.fn(), removeListener: vi.fn() },
+      sendMessage: vi.fn(async () => undefined),
       lastError: undefined as { message: string } | undefined,
+    },
+    tabs: {
+      create: vi.fn(async () => ({ id: 1 })),
+      remove: vi.fn(async () => undefined),
+      onRemoved: { addListener: vi.fn(), removeListener: vi.fn() },
     },
     storage: {
       local: {
@@ -22,6 +37,35 @@ function createChromeMock() {
           for (const k of Array.isArray(keys) ? keys : [keys]) store.delete(k);
         }),
         clear: vi.fn(async () => store.clear()),
+      },
+      session: {
+        get: vi.fn(async (keys?: string | string[] | null) => {
+          if (keys == null) return Object.fromEntries(session);
+          const list = Array.isArray(keys) ? keys : [keys];
+          return Object.fromEntries(
+            list.filter((k) => session.has(k)).map((k) => [k, session.get(k)]),
+          );
+        }),
+        set: vi.fn(async (items: Record<string, unknown>) => {
+          const changes: Record<string, { newValue?: unknown }> = {};
+          for (const [k, v] of Object.entries(items)) {
+            session.set(k, v);
+            changes[k] = { newValue: v };
+          }
+          emitChange(changes, "session");
+        }),
+        remove: vi.fn(async (keys: string | string[]) => {
+          for (const k of Array.isArray(keys) ? keys : [keys]) session.delete(k);
+        }),
+        clear: vi.fn(async () => session.clear()),
+      },
+      onChanged: {
+        addListener: vi.fn((listener: (c: never, a: string) => void) => {
+          changeListeners.add(listener as never);
+        }),
+        removeListener: vi.fn((listener: (c: never, a: string) => void) => {
+          changeListeners.delete(listener as never);
+        }),
       },
     },
     permissions: {

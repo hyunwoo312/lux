@@ -10,6 +10,7 @@ const AUTHORIZE_ENDPOINT = "https://anilist.co/api/v2/oauth/authorize";
 const GRAPHQL_ENDPOINT = "https://graphql.anilist.co";
 const ONE_YEAR_SECONDS = 365 * 24 * 60 * 60;
 const SIGN_IN_TIMEOUT_MS = 5 * 60 * 1000;
+const CALLBACK_KEY = "lux:anilist-callback";
 
 const VIEWER_QUERY = `query { Viewer { id name avatar { large } } }`;
 
@@ -17,14 +18,30 @@ type ViewerPayload = {
   data?: { Viewer?: { id: number; name: string; avatar?: { large?: string } } };
 };
 
-type AnilistCallbackMessage = {
-  type: "anilist-oauth";
+type AnilistCallback = {
   accessToken?: string;
   tokenType?: string;
   expiresIn?: string;
   state?: string;
   error?: string;
 };
+
+async function readCallback(): Promise<AnilistCallback | null> {
+  try {
+    const stored = await chrome.storage.session.get(CALLBACK_KEY);
+    return (stored[CALLBACK_KEY] as AnilistCallback | undefined) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function clearCallback(): Promise<void> {
+  try {
+    await chrome.storage.session.remove(CALLBACK_KEY);
+  } catch {
+    return;
+  }
+}
 
 function buildAuthorizeUrl(clientId: string, state: string): string {
   const url = new URL(AUTHORIZE_ENDPOINT);
@@ -58,43 +75,56 @@ function acquireToken({
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      chrome.runtime.onMessage.removeListener(onMessage);
+      chrome.storage.onChanged.removeListener(onStorageChanged);
       chrome.tabs.onRemoved.removeListener(onRemoved);
       if (tabId !== undefined) void chrome.tabs.remove(tabId).catch(() => undefined);
       action();
     }
 
-    function onMessage(message: unknown, sender: chrome.runtime.MessageSender) {
-      const data = message as AnilistCallbackMessage;
-      if (data?.type !== "anilist-oauth") return;
-      if (sender.tab?.id === undefined || sender.tab.id !== tabId) return;
-      if (!data.state || data.state !== state) return;
+    function settleFrom(callback: AnilistCallback): boolean {
+      if (!callback.state || callback.state !== state) return false;
+      void clearCallback();
 
-      const accessToken = data.accessToken;
-      if (data.error || !accessToken) {
+      const accessToken = callback.accessToken;
+      if (callback.error || !accessToken) {
         finish(() => reject(new Error("AniList sign-in could not be completed")));
-        return;
+        return true;
       }
 
-      const expiresIn = Number(data.expiresIn);
+      const expiresIn = Number(callback.expiresIn);
       finish(() =>
         resolve({
           accessToken,
           expiresIn: Number.isFinite(expiresIn) && expiresIn > 0 ? expiresIn : ONE_YEAR_SECONDS,
-          tokenType: data.tokenType || "Bearer",
+          tokenType: callback.tokenType || "Bearer",
           scopes: [],
         }),
       );
+      return true;
+    }
+
+    function onStorageChanged(
+      changes: Record<string, chrome.storage.StorageChange>,
+      areaName: chrome.storage.AreaName,
+    ) {
+      if (areaName !== "session") return;
+      const next = changes[CALLBACK_KEY]?.newValue as AnilistCallback | undefined;
+      if (next) settleFrom(next);
     }
 
     function onRemoved(closedTabId: number) {
-      if (closedTabId === tabId) finish(() => reject(new Error("AniList sign-in was cancelled")));
+      if (closedTabId !== tabId) return;
+      void readCallback().then((callback) => {
+        if (callback && settleFrom(callback)) return;
+        finish(() => reject(new Error("AniList sign-in was cancelled")));
+      });
     }
 
-    chrome.runtime.onMessage.addListener(onMessage);
+    chrome.storage.onChanged.addListener(onStorageChanged);
     chrome.tabs.onRemoved.addListener(onRemoved);
-    chrome.tabs
-      .create({ url: buildAuthorizeUrl(clientId, state) })
+
+    void clearCallback()
+      .then(() => chrome.tabs.create({ url: buildAuthorizeUrl(clientId, state) }))
       .then((tab) => {
         tabId = tab.id;
       })

@@ -1,5 +1,14 @@
 const FETCH_TIMEOUT_MS = 10_000;
+const ANILIST_CALLBACK_KEY = "lux:anilist-callback";
 const MAX_FETCH_BYTES = 5_000_000;
+
+type AnilistCallback = {
+  accessToken?: string;
+  tokenType?: string;
+  expiresIn?: string;
+  state?: string;
+  error?: string;
+};
 
 type FetchTextResult = { ok: true; text: string } | { ok: false; status?: number; error?: string };
 
@@ -34,7 +43,7 @@ chrome.runtime.onInstalled.addListener((details) => {
   });
 });
 
-chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
   if (
     typeof message === "object" &&
     message !== null &&
@@ -44,8 +53,37 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
     void fetchText((message as { url: string }).url).then(sendResponse);
     return true;
   }
+
+  if (
+    typeof message === "object" &&
+    message !== null &&
+    (message as { type?: unknown }).type === "anilist-oauth"
+  ) {
+    const { accessToken, tokenType, expiresIn, state, error } = message as AnilistCallback;
+    void stashAnilistCallback({ accessToken, tokenType, expiresIn, state, error }, sender.tab?.id);
+    sendResponse({ received: true });
+    return undefined;
+  }
+
   return undefined;
 });
+
+async function stashAnilistCallback(
+  callback: AnilistCallback,
+  tabId: number | undefined,
+): Promise<void> {
+  try {
+    await chrome.storage.session.set({ [ANILIST_CALLBACK_KEY]: callback });
+  } catch {
+    return;
+  }
+  if (tabId === undefined) return;
+  try {
+    await chrome.tabs.remove(tabId);
+  } catch {
+    return;
+  }
+}
 
 async function fetchText(url: string): Promise<FetchTextResult> {
   if (!url.startsWith("https://")) return { ok: false, error: "Unsupported URL" };

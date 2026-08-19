@@ -13,6 +13,8 @@ if (accessToken || error) {
       state: params.get("state") ?? undefined,
       error,
     })
+    .then(() => {
+      window.history.replaceState(null, "", window.location.pathname);
+    })
     .catch(() => {});
-  window.history.replaceState(null, "", window.location.pathname);
 }
