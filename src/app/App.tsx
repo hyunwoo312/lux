@@ -9,7 +9,6 @@ import { WidgetGrid } from "@/widgets/WidgetGrid";
 import { useGlobalShortcuts } from "@/app/useGlobalShortcuts";
 import { useDisableContextMenu } from "@/app/useDisableContextMenu";
 import { useActiveWallpaper } from "@/app/useActiveWallpaper";
-import { useBlurredWallpaper } from "@/app/useBlurredWallpaper";
 import { useWallpaperStore } from "@/stores/useWallpaperStore";
 import { FrostImageProvider } from "@/lib/frost-image";
 import { takePendingPermissionHighlight } from "@/lib/permissions";
@@ -20,8 +19,7 @@ export function App() {
   useGlobalShortcuts();
   useDisableContextMenu();
   const wallpaperEnabled = useWallpaperStore((s) => s.enabled);
-  const { imageUrl } = useActiveWallpaper(wallpaperEnabled);
-  const frostUrl = useBlurredWallpaper(imageUrl);
+  const { imageUrl, frostUrl } = useActiveWallpaper(wallpaperEnabled);
 
   useEffect(() => {
     sweepStaleResourceCaches(Date.now());

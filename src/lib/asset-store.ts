@@ -6,6 +6,8 @@ export type StoredAsset = {
   mimeType: string;
   size: number;
   blob: Blob;
+  frost?: Blob;
+  frostVersion?: number;
 };
 
 export type StoredAssetMetadata = Omit<StoredAsset, "blob">;

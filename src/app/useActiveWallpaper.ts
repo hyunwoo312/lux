@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { RefObject } from "react";
 import type { MediaImageItem } from "@/lib/asset-store";
+import { resolveFrost } from "@/lib/frost";
 import {
   getSignature,
   readNewtabQueue,
@@ -9,11 +11,19 @@ import {
 import { useWallpaperStore, wallpaperAssets } from "@/stores/useWallpaperStore";
 
 const WALLPAPER_NEWTAB_QUEUE_KEY = "lux.wallpaper.newtab-queue";
+const URL_RELEASE_DELAY_MS = 600;
 
 type ActiveWallpaper = {
   activeItem: MediaImageItem | null;
   imageUrl: string | null;
+  frostUrl: string | null;
 };
+
+function swapObjectUrl(ref: RefObject<string | null>, next: string | null): void {
+  const previous = ref.current;
+  ref.current = next;
+  if (previous) window.setTimeout(() => URL.revokeObjectURL(previous), URL_RELEASE_DELAY_MS);
+}
 
 export function useActiveWallpaper(enabled: boolean): ActiveWallpaper {
   const mode = useWallpaperStore((s) => s.mode);
@@ -65,26 +75,31 @@ export function useActiveWallpaper(enabled: boolean): ActiveWallpaper {
   const activeAssetId = activeItem?.assetId ?? null;
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [frostUrl, setFrostUrl] = useState<string | null>(null);
   const objectUrlRef = useRef<string | null>(null);
+  const frostUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     let active = true;
     if (!enabled || !activeAssetId) {
       setImageUrl(null);
-      if (objectUrlRef.current) {
-        URL.revokeObjectURL(objectUrlRef.current);
-        objectUrlRef.current = null;
-      }
+      setFrostUrl(null);
+      swapObjectUrl(objectUrlRef, null);
+      swapObjectUrl(frostUrlRef, null);
       return;
     }
     void (async () => {
       const asset = await wallpaperAssets.read(activeAssetId).catch(() => null);
       if (!active || !asset) return;
       const nextUrl = URL.createObjectURL(asset.blob);
-      const previousUrl = objectUrlRef.current;
-      objectUrlRef.current = nextUrl;
+      swapObjectUrl(objectUrlRef, nextUrl);
       setImageUrl(nextUrl);
-      if (previousUrl) window.setTimeout(() => URL.revokeObjectURL(previousUrl), 600);
+
+      const frost = await resolveFrost(wallpaperAssets, asset);
+      if (!active) return;
+      const nextFrostUrl = frost ? URL.createObjectURL(frost) : null;
+      swapObjectUrl(frostUrlRef, nextFrostUrl);
+      setFrostUrl(nextFrostUrl);
     })();
     return () => {
       active = false;
@@ -94,9 +109,10 @@ export function useActiveWallpaper(enabled: boolean): ActiveWallpaper {
   useEffect(
     () => () => {
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+      if (frostUrlRef.current) URL.revokeObjectURL(frostUrlRef.current);
     },
     [],
   );
 
-  return { activeItem, imageUrl };
+  return { activeItem, imageUrl, frostUrl };
 }

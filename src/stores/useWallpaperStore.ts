@@ -76,7 +76,13 @@ async function reencodeStoredAsset(assetId: string): Promise<AssetEncoding | nul
     const blob = await encodeToWebp(asset.blob, { quality: WALLPAPER_ENCODE_QUALITY });
     if (blob === asset.blob) return null;
     const encoding: AssetEncoding = { mimeType: blob.type, size: blob.size };
-    await wallpaperAssets.save({ ...asset, ...encoding, blob });
+    await wallpaperAssets.save({
+      ...asset,
+      ...encoding,
+      blob,
+      frost: undefined,
+      frostVersion: undefined,
+    });
     return encoding;
   } catch {
     return null;
