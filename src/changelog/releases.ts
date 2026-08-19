@@ -60,6 +60,59 @@ export function sortChanges(changes: readonly ReleaseChange[]): ReleaseChange[] 
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "1.3.2",
+    date: "2026-08-18",
+    summary:
+      "Lighter background images, a cleaner frosted backdrop, and an AniList sign-in that finishes on its own.",
+    changes: [
+      {
+        type: "changed",
+        area: "Dashboard",
+        text: "The drop preview now takes on the accent color of the widget you’re placing, so it’s easier to see where it will land.",
+      },
+      {
+        type: "fixed",
+        area: "Dashboard",
+        text: "Opening the widget menu no longer highlights the first widget before you point at anything.",
+      },
+      {
+        type: "fixed",
+        area: "Dashboard",
+        text: "The frosted backdrop behind widgets is no longer blocky over a custom background, and it is reused between tabs instead of being blurred again each time.",
+      },
+      {
+        type: "fixed",
+        area: "Dashboard",
+        text: "A widget whose request stalls now settles into its error state instead of loading forever.",
+      },
+      {
+        type: "changed",
+        area: "Accounts",
+        text: "Disconnecting an account now asks in the same confirmation dialog used everywhere else, instead of swapping the buttons in the row.",
+      },
+      {
+        type: "changed",
+        area: "Settings",
+        text: "Background images are converted to WebP when you add them, so a photo takes a fraction of the space and is far less likely to be dropped when browser storage fills up.",
+      },
+      {
+        type: "fixed",
+        area: "Settings",
+        text: "The permissions list now accounts for every permission Lux holds, including unlimited local storage, instead of leaving one out.",
+      },
+      {
+        type: "fixed",
+        area: "Settings",
+        text: "Help previews the same keyboard shortcuts you can rebind, instead of a fixed pair that could fall behind.",
+      },
+      {
+        type: "fixed",
+        area: "AniList",
+        text: "Signing in no longer leaves the callback tab spinning on “Finishing AniList sign-in” — it closes on its own, even if you moved away from the Lux tab while signing in.",
+      },
+    ],
+  },
+  {
     version: "1.3.1",
     date: "2026-08-15",
     summary:
