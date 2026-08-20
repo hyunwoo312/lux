@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PAGED_CACHE_PREFIX, setLocal } from "@/lib/local-store";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
-import { retryDelayMs } from "@/widgets/core/usePolledResource";
+import { effectiveCadence, retryDelayMs, type Cadence } from "@/widgets/core/usePolledResource";
 
 let nextAutoKey = 0;
 const DEFAULT_STALE_MS = 180_000;
@@ -173,7 +173,8 @@ class SharedResource<T> {
   private snapshot: Snapshot<T>;
   private readonly listeners = new Set<(snapshot: Snapshot<T>) => void>();
   private fetcher: PagedFetcher<T>;
-  private subscribers = 0;
+  private readonly cadences = new Map<object, Cadence>();
+  private registered: Cadence | null = null;
   private generation = 0;
   private inFlight: Promise<void> | null = null;
   private abort: AbortController | null = null;
@@ -211,15 +212,54 @@ class SharedResource<T> {
     this.fetcher = fetcher;
   }
 
-  subscribe(listener: (snapshot: Snapshot<T>) => void): () => void {
+  subscribe(listener: (snapshot: Snapshot<T>) => void, cadence: Cadence): () => void {
+    const token = {};
     this.listeners.add(listener);
-    this.subscribers += 1;
-    if (this.subscribers === 1) this.start();
+    this.cadences.set(token, cadence);
+    if (this.cadences.size === 1) this.start();
+    else this.syncCadence();
     return () => {
       this.listeners.delete(listener);
-      this.subscribers -= 1;
-      if (this.subscribers === 0) this.stop();
+      this.cadences.delete(token);
+      if (this.cadences.size === 0) this.stop();
+      else this.syncCadence();
     };
+  }
+
+  private cadence(): Cadence {
+    return effectiveCadence(this.cadences.values(), {
+      staleMs: this.config.staleMs,
+      intervalMs: this.config.intervalMs,
+    });
+  }
+
+  private syncCadence(): void {
+    const next = this.cadence();
+    if (
+      this.registered &&
+      this.registered.staleMs === next.staleMs &&
+      this.registered.intervalMs === next.intervalMs
+    ) {
+      return;
+    }
+    this.unregister?.();
+    this.register(next);
+  }
+
+  private register(cadence: Cadence): void {
+    this.registered = cadence;
+    this.unregister = refreshScheduler.register({
+      id: `paged:${this.config.key}`,
+      staleMs: cadence.staleMs,
+      pollIntervalMs:
+        cadence.intervalMs !== undefined && cadence.intervalMs > 0 ? cadence.intervalMs : undefined,
+      getLastRefreshedAt: () => this.snapshot.at,
+      refresh: () => this.pollRefresh(),
+      clearBackoff: () => {
+        this.failureCount = 0;
+        this.retryAt = 0;
+      },
+    });
   }
 
   refresh(): void {
@@ -249,21 +289,10 @@ class SharedResource<T> {
   }
 
   private start(): void {
+    const cadence = this.cadence();
     if (!this.snapshot.hasLoaded) void this.run("initial");
-    else if (Date.now() - this.snapshot.at >= this.config.staleMs) void this.run("refresh");
-
-    this.unregister = refreshScheduler.register({
-      id: `paged:${this.config.key}`,
-      staleMs: this.config.staleMs,
-      pollIntervalMs:
-        this.config.intervalMs && this.config.intervalMs > 0 ? this.config.intervalMs : undefined,
-      getLastRefreshedAt: () => this.snapshot.at,
-      refresh: () => this.pollRefresh(),
-      clearBackoff: () => {
-        this.failureCount = 0;
-        this.retryAt = 0;
-      },
-    });
+    else if (Date.now() - this.snapshot.at >= cadence.staleMs) void this.run("refresh");
+    this.register(cadence);
   }
 
   private stop(): void {
@@ -272,6 +301,7 @@ class SharedResource<T> {
     this.abort = null;
     this.unregister?.();
     this.unregister = null;
+    this.registered = null;
     this.inFlight = null;
     liveResources.delete(this.config.key);
   }
@@ -422,7 +452,7 @@ export function usePagedResource<T>(
     );
     resourceRef.current = resource;
     setSnapshot(resource.getSnapshot());
-    const unsubscribe = resource.subscribe(setSnapshot);
+    const unsubscribe = resource.subscribe(setSnapshot, { staleMs, intervalMs });
     return () => {
       resourceRef.current = null;
       unsubscribe();

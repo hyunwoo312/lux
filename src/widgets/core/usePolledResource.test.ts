@@ -4,10 +4,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   RETRY_BASE_MS,
   backoffDelayMs,
+  effectiveCadence,
   patchPolledResource,
   retryDelayMs,
   usePolledResource,
 } from "@/widgets/core/usePolledResource";
+import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 import { RateLimitError } from "@/lib/net";
 
 afterEach(() => {
@@ -259,5 +261,91 @@ describe("retryDelayMs", () => {
   it("ignores a rate limit that carries no wait", () => {
     const delay = retryDelayMs(new RateLimitError(0), 2);
     expect(delay).toBeGreaterThanOrEqual(backoffDelayMs(2));
+  });
+});
+
+describe("effectiveCadence", () => {
+  it("falls back when nothing is subscribed", () => {
+    expect(effectiveCadence([], { staleMs: 5, intervalMs: 6 })).toEqual({
+      staleMs: 5,
+      intervalMs: 6,
+    });
+  });
+
+  it("takes the most demanding subscriber", () => {
+    expect(
+      effectiveCadence(
+        [
+          { staleMs: 600, intervalMs: 600 },
+          { staleMs: 60, intervalMs: 60 },
+        ],
+        { staleMs: 1, intervalMs: 1 },
+      ),
+    ).toEqual({ staleMs: 60, intervalMs: 60 });
+  });
+
+  it("ignores subscribers that do not poll", () => {
+    expect(
+      effectiveCadence([{ staleMs: 300 }, { staleMs: 900, intervalMs: 900 }], { staleMs: 1 }),
+    ).toEqual({ staleMs: 300, intervalMs: 900 });
+  });
+});
+
+describe("two widgets sharing one resource", () => {
+  let keySeed = 0;
+  const nextKey = () => `cadence-${(keySeed += 1)}`;
+
+  function lastCadence(register: ReturnType<typeof vi.spyOn>) {
+    const calls = register.mock.calls;
+    const last = calls[calls.length - 1]?.[0] as { staleMs: number; pollIntervalMs?: number };
+    return { staleMs: last.staleMs, pollIntervalMs: last.pollIntervalMs };
+  }
+
+  it("polls at the interval of whichever widget wants it soonest", async () => {
+    const register = vi.spyOn(refreshScheduler, "register");
+    const cacheKey = nextKey();
+    const fetcher = vi.fn().mockResolvedValue([1]);
+
+    const slow = renderHook(() => usePolledResource(fetcher, { cacheKey, intervalMs: 600_000 }));
+    await waitFor(() => expect(slow.result.current.state.status).toBe("success"));
+    expect(lastCadence(register)).toEqual({ staleMs: 600_000, pollIntervalMs: 600_000 });
+
+    const fast = renderHook(() => usePolledResource(fetcher, { cacheKey, intervalMs: 60_000 }));
+    await waitFor(() => expect(fast.result.current.state.status).toBe("success"));
+
+    expect(lastCadence(register)).toEqual({ staleMs: 60_000, pollIntervalMs: 60_000 });
+  });
+
+  it("adopts a new interval when one widget changes its setting, keeping its data", async () => {
+    const register = vi.spyOn(refreshScheduler, "register");
+    const cacheKey = nextKey();
+    const fetcher = vi.fn().mockResolvedValue([1]);
+
+    const { result, rerender } = renderHook(
+      ({ intervalMs }: { intervalMs: number }) =>
+        usePolledResource(fetcher, { cacheKey, intervalMs }),
+      { initialProps: { intervalMs: 600_000 } },
+    );
+    await waitFor(() => expect(result.current.state.status).toBe("success"));
+
+    rerender({ intervalMs: 60_000 });
+
+    await waitFor(() => expect(lastCadence(register).pollIntervalMs).toBe(60_000));
+    expect(result.current.state).toEqual({ status: "success", data: [1] });
+  });
+
+  it("relaxes again once the demanding widget is gone", async () => {
+    const register = vi.spyOn(refreshScheduler, "register");
+    const cacheKey = nextKey();
+    const fetcher = vi.fn().mockResolvedValue([1]);
+
+    const slow = renderHook(() => usePolledResource(fetcher, { cacheKey, intervalMs: 600_000 }));
+    const fast = renderHook(() => usePolledResource(fetcher, { cacheKey, intervalMs: 60_000 }));
+    await waitFor(() => expect(slow.result.current.state.status).toBe("success"));
+    expect(lastCadence(register)).toEqual({ staleMs: 60_000, pollIntervalMs: 60_000 });
+
+    act(() => fast.unmount());
+
+    expect(lastCadence(register)).toEqual({ staleMs: 600_000, pollIntervalMs: 600_000 });
   });
 });

@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { invalidatePagedResource, usePagedResource } from "@/widgets/core/usePagedResource";
 import { RateLimitError } from "@/lib/net";
@@ -288,5 +289,38 @@ describe("usePagedResource persistence", () => {
 describe("paged resource retry timing", () => {
   it("uses the same rate-limit-aware delay as the polled resource", () => {
     expect(retryDelayMs(new RateLimitError(45_000), 3)).toBe(45_000);
+  });
+});
+
+describe("two paged widgets sharing one resource", () => {
+  it("polls at the interval of whichever widget wants it soonest", async () => {
+    const register = vi.spyOn(refreshScheduler, "register");
+    const cacheKey = "paged-cadence-1";
+    const fetcher = vi.fn().mockResolvedValue({ items: [{ id: 1 }], hasNextPage: false });
+
+    const slow = renderHook(() =>
+      usePagedResource(fetcher, {
+        cacheKey,
+        intervalMs: 600_000,
+        maxItems: 10,
+        getKey: (item: { id: number }) => item.id,
+      }),
+    );
+    await waitFor(() => expect(slow.result.current.state.status).toBe("success"));
+
+    renderHook(() =>
+      usePagedResource(fetcher, {
+        cacheKey,
+        intervalMs: 60_000,
+        maxItems: 10,
+        getKey: (item: { id: number }) => item.id,
+      }),
+    );
+
+    await waitFor(() => {
+      const calls = register.mock.calls;
+      const last = calls[calls.length - 1]?.[0] as { pollIntervalMs?: number };
+      expect(last.pollIntervalMs).toBe(60_000);
+    });
   });
 });
