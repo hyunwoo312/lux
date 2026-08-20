@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { RemoteImage } from "@/components/media/RemoteImage";
 import { Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -42,12 +43,10 @@ export function HeadlineTile({
       className="group bg-foreground/[0.04] relative block aspect-[2/1] overflow-hidden rounded-lg"
     >
       {hasImage ? (
-        <img
+        <RemoteImage
           src={item.image ?? undefined}
           alt=""
           aria-hidden
-          loading="lazy"
-          decoding="async"
           onError={() => setImageFailed(true)}
           className={cn(
             `

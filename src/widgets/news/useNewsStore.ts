@@ -40,6 +40,7 @@ type NewsData = {
   googleQuery: string;
   enabledSources: NewsSource[];
   openBehavior: OpenBehavior;
+  loadImages: boolean;
   sortByLatest: boolean;
   readTitles: string[];
   seenTitles: string[];
@@ -56,6 +57,7 @@ type NewsState = {
   setGoogleQuery: (instanceId: string, query: string) => void;
   setEnabledSources: (instanceId: string, sources: NewsSource[]) => void;
   setOpenBehavior: (instanceId: string, behavior: OpenBehavior) => void;
+  setLoadImages: (instanceId: string, loadImages: boolean) => void;
   setSortByLatest: (instanceId: string, sortByLatest: boolean) => void;
   markRead: (instanceId: string, title: string) => void;
   markSeen: (instanceId: string, titles: string[]) => void;
@@ -74,6 +76,7 @@ const DEFAULT_DATA: NewsData = {
   googleQuery: "",
   enabledSources: DEFAULT_ENABLED_SOURCES,
   openBehavior: "currentTab",
+  loadImages: true,
   sortByLatest: true,
   readTitles: [],
   seenTitles: [],
@@ -99,6 +102,7 @@ const dataSchema = z.object({
       return valid.length > 0 ? valid : DEFAULT_ENABLED_SOURCES;
     }),
   openBehavior: z.enum(["currentTab", "newTab"]).default("currentTab"),
+  loadImages: z.boolean().default(true),
   sortByLatest: z.boolean().default(true),
   readTitles: z.array(z.string()).default([]),
   seenTitles: z.array(z.string()).default([]),
@@ -162,6 +166,8 @@ export const useNewsStore = create<NewsState>()(
         ),
       setOpenBehavior: (instanceId, openBehavior) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, openBehavior }))),
+      setLoadImages: (instanceId, loadImages) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, loadImages }))),
       setSortByLatest: (instanceId, sortByLatest) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, sortByLatest }))),
       markRead: (instanceId, title) => {

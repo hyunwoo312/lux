@@ -1,4 +1,5 @@
 import { Loader2, RotateCw } from "lucide-react";
+import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -70,6 +71,7 @@ function DetailSkeleton() {
 }
 
 function DetailBody({ data, range }: { data: Quote; range: StockRange }) {
+  const clock24h = useAppSettingsStore((state) => state.clock24h);
   const reference = referencePrice(data, range);
   const { change, percent } = deriveChange(data, reference);
   const tone = changeTone(change);
@@ -79,7 +81,11 @@ function DetailBody({ data, range }: { data: Quote; range: StockRange }) {
   const opensInMs = data.sessionStart != null ? data.sessionStart * 1000 - now : null;
   const asOf =
     data.asOf != null
-      ? new Date(data.asOf).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
+      ? new Date(data.asOf).toLocaleTimeString(undefined, {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: !clock24h,
+        })
       : null;
 
   return (

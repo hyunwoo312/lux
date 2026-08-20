@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { RemoteImage } from "@/components/media/RemoteImage";
 import { cn } from "@/lib/utils";
 
 type MediaCoverProps = {
@@ -13,11 +14,10 @@ export function MediaCover({ src, title, color, className }: MediaCoverProps) {
 
   if (src && !broken) {
     return (
-      <img
+      <RemoteImage
         src={src}
         alt=""
         aria-hidden
-        loading="lazy"
         onError={() => setBroken(true)}
         className={cn("shrink-0 rounded object-cover", className)}
       />

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatChartTime,
   formatCountdown,
   formatPrice,
   formatSigned,
@@ -60,5 +61,23 @@ describe("formatVolume", () => {
     expect(formatVolume(2_300_000_000)).toBe("2.30B");
     expect(formatVolume(5400)).toBe("5.4K");
     expect(formatVolume(640)).toBe("640");
+  });
+});
+
+describe("formatChartTime honours the global clock setting", () => {
+  const point = Date.parse("2026-08-20T18:30:00Z") / 1000;
+
+  it("renders intraday points in 12- or 24-hour time", () => {
+    expect(formatChartTime(point, "1d", true)).toMatch(/AM|PM/);
+    expect(formatChartTime(point, "1d", false)).not.toMatch(/AM|PM/);
+  });
+
+  it("applies the same setting to the 5-day axis", () => {
+    expect(formatChartTime(point, "5d", true)).toMatch(/AM|PM/);
+    expect(formatChartTime(point, "5d", false)).not.toMatch(/AM|PM/);
+  });
+
+  it("leaves date-only ranges alone", () => {
+    expect(formatChartTime(point, "1y", true)).not.toMatch(/AM|PM/);
   });
 });

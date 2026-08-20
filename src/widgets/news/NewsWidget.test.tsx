@@ -54,6 +54,7 @@ function seed(
         googleQuery,
         enabledSources: [...NEWS_SOURCES],
         openBehavior: "newTab",
+        loadImages: true,
         sortByLatest: false,
         readTitles: [],
         seenTitles,
@@ -169,6 +170,7 @@ describe("NewsWidget", () => {
           googleQuery: "",
           enabledSources: [...NEWS_SOURCES],
           openBehavior: "newTab",
+          loadImages: true,
           sortByLatest: true,
           readTitles: [],
           seenTitles: [],
@@ -397,5 +399,53 @@ describe("NewsWidget", () => {
 
     const button = await screen.findByRole("button", { name: "Refresh" });
     await waitFor(() => expect(button).toBeDisabled());
+  });
+});
+
+describe("news image loading", () => {
+  it("loads publisher thumbnails by default", async () => {
+    fetchFeedMock.mockResolvedValue([item("p", "Pictured", "https://img.test/a.jpg")]);
+    seed("news-img-on", "bbc", "", "international");
+    const { container } = renderWidget("news-img-on");
+
+    await screen.findByText("Pictured");
+    expect(container.querySelector('img[src="https://img.test/a.jpg"]')).not.toBeNull();
+  });
+
+  it("requests no publisher images when loading is turned off", async () => {
+    fetchFeedMock.mockResolvedValue([item("p", "Pictured", "https://img.test/a.jpg")]);
+    seed("news-img-off", "bbc", "", "international");
+    act(() => {
+      useNewsStore.getState().setLoadImages("news-img-off", false);
+    });
+    const { container } = renderWidget("news-img-off");
+
+    await screen.findByText("Pictured");
+    expect(container.querySelector('img[src="https://img.test/a.jpg"]')).toBeNull();
+  });
+
+  it("falls back to the list even when the tile layout was chosen", async () => {
+    fetchFeedMock.mockResolvedValue([item("p", "Pictured", "https://img.test/a.jpg")]);
+    seed("news-img-tiles", "bbc", "", "international");
+    act(() => {
+      useNewsStore.getState().setLayout("news-img-tiles", "tiles");
+      useNewsStore.getState().setLoadImages("news-img-tiles", false);
+    });
+    const { container } = renderWidget("news-img-tiles");
+
+    await screen.findByText("Pictured");
+    expect(container.querySelector("img")).toBeNull();
+  });
+});
+
+describe("remote images carry a no-referrer policy", () => {
+  it("does not leak the extension origin to publishers", async () => {
+    fetchFeedMock.mockResolvedValue([item("p", "Pictured", "https://img.test/a.jpg")]);
+    seed("news-referrer", "bbc", "", "international");
+    const { container } = renderWidget("news-referrer");
+
+    await screen.findByText("Pictured");
+    const image = container.querySelector('img[src="https://img.test/a.jpg"]');
+    expect(image?.getAttribute("referrerpolicy")).toBe("no-referrer");
   });
 });

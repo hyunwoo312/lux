@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import { RemoteImage } from "@/components/media/RemoteImage";
 import { useEffect, useState } from "react";
 import {
   AnilistServiceIcon,
@@ -279,11 +280,10 @@ function AccountAvatar({
   return (
     <span className="relative inline-flex size-9 shrink-0">
       <Icon className="absolute top-0 left-0 size-6 object-contain" />
-      <img
+      <RemoteImage
         src={avatarUrl}
         alt=""
         aria-hidden
-        referrerPolicy="no-referrer"
         onError={() => setBroken(true)}
         className="
           border-background absolute right-0 bottom-0 size-6 rounded-full border-2 object-cover

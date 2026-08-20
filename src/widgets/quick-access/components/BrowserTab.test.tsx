@@ -53,7 +53,7 @@ describe("recently closed tabs", () => {
   it("re-reads the list when the view is reopened, not just once a minute", async () => {
     mockClosedTabs([]);
     const first = renderTab();
-    await screen.findByText("Nothing here yet");
+    await screen.findByText("No recently closed tabs yet");
     first.unmount();
 
     mockClosedTabs([closedTab("s2", "News")]);

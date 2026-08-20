@@ -1,4 +1,5 @@
 import type { ChangeEvent } from "react";
+import { NOTE_MAX_LENGTH } from "@/widgets/note/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useDashboardStore } from "@/stores/useDashboardStore";
@@ -62,6 +63,7 @@ export function NoteWidget() {
       value={value}
       onChange={handleChange}
       onBlur={commit}
+      maxLength={NOTE_MAX_LENGTH}
       placeholder="Write a note…"
       aria-label="Note"
       className={cn(

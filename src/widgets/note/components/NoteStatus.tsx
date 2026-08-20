@@ -1,5 +1,6 @@
 import { HEADER_LABEL } from "@/widgets/core/BaseWidget";
 import { useNote } from "@/widgets/note/useNoteStore";
+import { NOTE_MAX_LENGTH } from "@/widgets/note/types";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 export function NoteStatus() {
@@ -11,9 +12,17 @@ export function NoteStatus() {
   const words = trimmed.split(/\s+/).length;
   const chars = text.length;
 
+  const atLimit = chars >= NOTE_MAX_LENGTH;
+  const nearLimit = chars >= NOTE_MAX_LENGTH * 0.9;
+
   return (
     <span className={HEADER_LABEL}>
-      {words} {words === 1 ? "word" : "words"} · {chars} {chars === 1 ? "char" : "chars"}
+      {words} {words === 1 ? "word" : "words"} ·{" "}
+      {atLimit
+        ? "limit reached"
+        : nearLimit
+          ? `${chars} / ${NOTE_MAX_LENGTH} chars`
+          : `${chars} ${chars === 1 ? "char" : "chars"}`}
     </span>
   );
 }

@@ -286,8 +286,8 @@ describe("matchStatus", () => {
       events: [event("2", "post", "FT", ["AME", "3"], ["SAN", "0"])],
     });
 
-    expect(matchStatus(live!, now)).toBe("40.1 - 4th");
-    expect(matchStatus(done!, now)).toBe("FT");
+    expect(matchStatus(live!, now, true)).toBe("40.1 - 4th");
+    expect(matchStatus(done!, now, true)).toBe("FT");
   });
 
   it("replaces ESPN's US-timezone kickoff string with a local time", () => {
@@ -298,11 +298,11 @@ describe("matchStatus", () => {
       ],
     });
 
-    const status = matchStatus(match!, now);
+    const status = matchStatus(match!, now, true);
 
     expect(status).not.toContain("EDT");
     expect(status).toBe(
-      start.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }),
+      start.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true }),
     );
   });
 
@@ -312,7 +312,7 @@ describe("matchStatus", () => {
       events: [event("1", "pre", "12:25 PM EDT", ["SD", "0"], ["HOU", "0"], start.toISOString())],
     });
 
-    expect(matchStatus(match!, now)).toBe("in 25m");
+    expect(matchStatus(match!, now, true)).toBe("in 25m");
   });
 
   it("shows a calendar date for a fixture further out than a week", () => {
@@ -323,7 +323,7 @@ describe("matchStatus", () => {
       ],
     });
 
-    const status = matchStatus(match!, now);
+    const status = matchStatus(match!, now, true);
 
     expect(status).toContain(
       start.toLocaleDateString(undefined, { month: "numeric", day: "numeric" }),
@@ -339,7 +339,7 @@ describe("matchStatus", () => {
       ],
     });
 
-    expect(matchStatus(match!, now)).toMatch(/^\w{3}\s/);
+    expect(matchStatus(match!, now, true)).toMatch(/^\w{3}\s/);
   });
 });
 
@@ -595,5 +595,18 @@ describe("fetchScoreboard", () => {
 
     await expect(fetchScoreboard("mlb")).rejects.toThrow();
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("matchStatus honours the global clock setting", () => {
+  it("renders a scheduled kickoff in 12- or 24-hour time", () => {
+    const start = new Date(2026, 7, 7, 18, 30);
+    const [match] = parseScoreboard({
+      events: [event("1", "pre", "6:30 PM EDT", ["SD", "0"], ["HOU", "0"], start.toISOString())],
+    });
+    const now = start.getTime() - 5 * 60 * 60_000;
+
+    expect(matchStatus(match!, now, true)).toMatch(/AM|PM/);
+    expect(matchStatus(match!, now, false)).not.toMatch(/AM|PM/);
   });
 });

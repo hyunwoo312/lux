@@ -88,7 +88,7 @@ function ItemsView({ tab, editing }: { tab: ItemSource & BrowserTabKey; editing:
       )}
       {state.status === "ready" &&
         (state.items.length === 0 ? (
-          <BrowserMessage>Nothing here yet</BrowserMessage>
+          <BrowserMessage>{`No ${TAB_NOUN[tab]} yet`}</BrowserMessage>
         ) : (
           <BrowserList
             items={state.items}

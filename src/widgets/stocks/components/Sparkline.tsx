@@ -1,4 +1,5 @@
 import { useId, useState } from "react";
+import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { cn } from "@/lib/utils";
 import { useElementSize } from "@/hooks/useElementSize";
@@ -29,6 +30,7 @@ export function Sparkline({
   variant = "compact",
   className,
 }: SparklineProps) {
+  const clock24h = useAppSettingsStore((state) => state.clock24h);
   const detail = variant === "detail";
   const gradientId = useId();
   const [ref, { width, height }] = useElementSize<HTMLDivElement>();
@@ -137,7 +139,7 @@ export function Sparkline({
             </span>
             {detail && (timestamps[idx] ?? 0) > 0 ? (
               <span className="text-muted-foreground text-xs tabular-nums">
-                {formatChartTime(timestamps[idx] ?? 0, range)}
+                {formatChartTime(timestamps[idx] ?? 0, range, !clock24h)}
               </span>
             ) : null}
           </div>

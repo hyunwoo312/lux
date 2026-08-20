@@ -25,8 +25,11 @@ export function NewsHeaderActions() {
 function NewsLayoutToggle() {
   const instanceId = useWidgetInstanceId();
   const layout = useNews((d) => d.layout);
+  const loadImages = useNews((d) => d.loadImages);
   const setLayout = useNewsStore((s) => s.setLayout);
   const isList = layout === "list";
+
+  if (!loadImages) return null;
 
   return (
     <ViewToggleButton

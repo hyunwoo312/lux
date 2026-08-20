@@ -67,11 +67,13 @@ export function NewsConfig() {
   const openBehavior = useNews((d) => d.openBehavior);
   const enabledSources = useNews((d) => d.enabledSources);
   const sortByLatest = useNews((d) => d.sortByLatest);
+  const loadImages = useNews((d) => d.loadImages);
   const setRegion = useNewsStore((s) => s.setRegion);
   const setTopic = useNewsStore((s) => s.setTopic);
   const setOpenBehavior = useNewsStore((s) => s.setOpenBehavior);
   const setEnabledSources = useNewsStore((s) => s.setEnabledSources);
   const setSortByLatest = useNewsStore((s) => s.setSortByLatest);
+  const setLoadImages = useNewsStore((s) => s.setLoadImages);
 
   const orderedEnabled = NEWS_SOURCES.filter((source) => enabledSources.includes(source));
 
@@ -111,6 +113,17 @@ export function NewsConfig() {
               value={openBehavior}
               options={OPEN_OPTIONS}
               onChange={(value) => setOpenBehavior(instanceId, value)}
+            />
+          }
+        />
+        <WidgetConfigItem
+          title="Load images"
+          description="Fetch thumbnails from each publisher. Off shows headlines as a plain list."
+          control={
+            <Switch
+              checked={loadImages}
+              onCheckedChange={(checked) => setLoadImages(instanceId, checked === true)}
+              aria-label="Load images"
             />
           }
         />

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { RemoteImage } from "@/components/media/RemoteImage";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Music, Play } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
@@ -19,7 +20,7 @@ const EQ_BARS = [
   { x: 12, duration: 0.85 },
 ];
 
-const MAX_SKIP_STEPS = 20;
+const MAX_SKIP_STEPS = 5;
 
 function PlayingBars({ animate }: { animate: boolean }) {
   return (
@@ -48,7 +49,7 @@ function PlayingBars({ animate }: { animate: boolean }) {
 
 function QueueArtwork({ url }: { url?: string }) {
   return url ? (
-    <img src={url} alt="" className="size-9 shrink-0 rounded-sm object-cover" />
+    <RemoteImage src={url} alt="" className="size-9 shrink-0 rounded-sm object-cover" />
   ) : (
     <span className="bg-foreground/5 grid size-9 shrink-0 place-items-center rounded-sm">
       <Music className="text-muted-foreground size-4" aria-hidden />

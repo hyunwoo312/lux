@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { RemoteImage } from "@/components/media/RemoteImage";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/tooltip";
 import { HeadlineMeta } from "@/widgets/news/components/HeadlineMeta";
@@ -48,12 +49,10 @@ export function HeadlineRow({
       {withThumbnail && (
         <span className="bg-foreground/5 size-11 shrink-0 overflow-hidden rounded-md">
           {hasImage && (
-            <img
+            <RemoteImage
               src={item.image ?? undefined}
               alt=""
               aria-hidden
-              loading="lazy"
-              decoding="async"
               fetchPriority="low"
               onError={() => setImageFailed(true)}
               className="size-full object-cover"

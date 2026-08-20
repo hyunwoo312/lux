@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { RemoteImage } from "@/components/media/RemoteImage";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Check, Heart, ListPlus, Music, Play } from "lucide-react";
 import { ExpandingSearch } from "@/components/ExpandingSearch";
@@ -314,7 +315,7 @@ export function SpotifySearch() {
                           )}
                         >
                           {result.artworkUrl ? (
-                            <img
+                            <RemoteImage
                               src={result.artworkUrl}
                               alt=""
                               className="size-9 shrink-0 rounded-sm object-cover"

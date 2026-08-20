@@ -1,6 +1,5 @@
 import type { Match } from "@/widgets/sports/types";
 
-const TIME_FORMAT: Intl.DateTimeFormatOptions = { hour: "numeric", minute: "2-digit" };
 const DAY_FORMAT: Intl.DateTimeFormatOptions = { weekday: "short" };
 const DATE_FORMAT: Intl.DateTimeFormatOptions = { month: "numeric", day: "numeric" };
 
@@ -15,7 +14,7 @@ function isSameDay(a: Date, b: Date): boolean {
   );
 }
 
-export function matchStatus(match: Match, now: number): string {
+export function matchStatus(match: Match, now: number, hour12: boolean): string {
   if (match.state !== "pre") return match.detail;
 
   const start = new Date(match.startsAt);
@@ -24,7 +23,11 @@ export function matchStatus(match: Match, now: number): string {
   const until = start.getTime() - now;
   if (until > 0 && until <= SOON_MS) return `in ${Math.max(1, Math.round(until / 60_000))}m`;
 
-  const time = start.toLocaleTimeString(undefined, TIME_FORMAT);
+  const time = start.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12,
+  });
   if (isSameDay(start, new Date(now))) return time;
   if (until > 0 && until <= WITHIN_WEEK_MS) {
     return `${start.toLocaleDateString(undefined, DAY_FORMAT)} ${time}`;

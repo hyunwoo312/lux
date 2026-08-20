@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useNow } from "@/hooks/useNow";
 import { IdleTeamRow, MatchRow } from "@/widgets/sports/components/MatchRow";
@@ -29,6 +30,7 @@ export function SportsWidget() {
   const teams = useSports((d) => d.teams);
   const states = useSports((d) => d.states);
   const now = useNow(30_000).getTime();
+  const clock24h = useAppSettingsStore((state) => state.clock24h);
   const reduced = useReducedMotion() ?? false;
 
   const all: Match[] = state.status === "success" ? state.data : [];
@@ -61,7 +63,7 @@ export function SportsWidget() {
           className="flex min-h-0 flex-1 flex-col gap-1 overflow-x-hidden overflow-y-auto"
         >
           {rows.map((match) => (
-            <MatchRow key={match.id} match={match} now={now} />
+            <MatchRow key={match.id} match={match} now={now} hour12={!clock24h} />
           ))}
           {idle.map((abbreviation) => (
             <IdleTeamRow key={abbreviation} abbreviation={abbreviation} />

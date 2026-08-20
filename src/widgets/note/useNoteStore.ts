@@ -29,11 +29,6 @@ const persistedSchema = z.object({
   byInstance: z.record(z.string(), noteDataSchema),
 });
 
-const legacySchema = z.object({
-  text: z.string(),
-  fontSize: z.enum(["sm", "base", "lg"]),
-});
-
 const gatedStorage = createGatedChromeStorage();
 
 function update(
@@ -61,7 +56,7 @@ export const useNoteStore = create<NoteState>()(
       partialize: (state) => ({ byInstance: state.byInstance }),
       migrate: (persisted, version) => {
         if (version >= 2) return persisted;
-        const legacy = legacySchema.safeParse(persisted);
+        const legacy = noteDataSchema.safeParse(persisted);
         return { byInstance: legacy.success ? { note: legacy.data } : {} };
       },
       merge: (persisted, current) => {

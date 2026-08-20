@@ -5,6 +5,8 @@ import { useDashboardStore } from "@/stores/useDashboardStore";
 import { NoteWidget } from "@/widgets/note/NoteWidget";
 import { useNoteStore } from "@/widgets/note/useNoteStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
+import { NoteStatus } from "@/widgets/note/components/NoteStatus";
+import { NOTE_MAX_LENGTH } from "@/widgets/note/types";
 
 const ID = "note-1";
 
@@ -14,6 +16,10 @@ function renderWidget() {
       <NoteWidget />
     </WidgetInstanceContext.Provider>,
   );
+}
+
+function seedNote(id: string, text: string) {
+  useNoteStore.setState({ byInstance: { [id]: { text, fontSize: "base" } } });
 }
 
 function storedText() {
@@ -64,5 +70,42 @@ describe("NoteWidget", () => {
 
     expect(screen.getByLabelText("Note")).toBe(document.activeElement);
     expect(useDashboardStore.getState().lastAddedId).toBeNull();
+  });
+});
+
+describe("the length cap", () => {
+  beforeEach(() => {
+    useNoteStore.setState({ byInstance: {} });
+  });
+
+  it("states the limit in the header instead of showing a bare number", () => {
+    seedNote("note-cap", "x".repeat(NOTE_MAX_LENGTH));
+    render(
+      <WidgetInstanceContext.Provider value="note-cap">
+        <NoteStatus />
+      </WidgetInstanceContext.Provider>,
+    );
+    expect(screen.getByText(/limit reached/)).toBeInTheDocument();
+  });
+
+  it("shows the remaining budget as the note approaches the cap", () => {
+    seedNote("note-near", "x".repeat(Math.ceil(NOTE_MAX_LENGTH * 0.95)));
+    render(
+      <WidgetInstanceContext.Provider value="note-near">
+        <NoteStatus />
+      </WidgetInstanceContext.Provider>,
+    );
+    expect(screen.getByText(new RegExp(`/ ${NOTE_MAX_LENGTH} chars`))).toBeInTheDocument();
+  });
+
+  it("does not clip a note that was already longer than the cap", () => {
+    const oversized = "y".repeat(NOTE_MAX_LENGTH * 2);
+    seedNote("note-legacy", oversized);
+    render(
+      <WidgetInstanceContext.Provider value="note-legacy">
+        <NoteWidget />
+      </WidgetInstanceContext.Provider>,
+    );
+    expect(screen.getByLabelText("Note")).toHaveValue(oversized);
   });
 });

@@ -24,6 +24,7 @@ export function NewsWidget() {
   const sortByLatest = useNews((d) => d.sortByLatest);
   const enabledSources = useNews((d) => d.enabledSources);
   const layout = useNews((d) => d.layout);
+  const loadImages = useNews((d) => d.loadImages);
   const readTitles = useNews((d) => d.readTitles);
   const mutedTerms = useNews((d) => d.mutedTerms);
   const highlightTerms = useNews((d) => d.highlightTerms);
@@ -84,9 +85,9 @@ export function NewsWidget() {
           refresh={refresh}
           isRefreshing={isRefreshing}
           openBehavior={openBehavior}
-          withThumbnail={withThumbnail}
+          withThumbnail={withThumbnail && loadImages}
           withSource={tab === "all"}
-          layout={layout}
+          layout={loadImages ? layout : "list"}
           sortByLatest={sortByLatest}
           searchQuery={query || undefined}
           filterQuery={tab === "google" ? "" : allFilter.trim()}

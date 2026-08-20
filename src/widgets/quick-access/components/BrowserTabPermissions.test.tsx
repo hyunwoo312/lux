@@ -42,7 +42,7 @@ describe("recently closed permissions", () => {
     renderTab();
 
     await waitFor(() => expect(screen.getByText(/read tab details/)).toBeInTheDocument());
-    expect(screen.queryByText("Nothing here yet")).not.toBeInTheDocument();
+    expect(screen.queryByText("No recently closed tabs yet")).not.toBeInTheDocument();
   });
 
   it("does not tell a user who already allowed sessions to turn it on again", async () => {

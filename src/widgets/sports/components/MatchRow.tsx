@@ -117,7 +117,7 @@ function Row({ teams, status, detail, label }: RowProps) {
   );
 }
 
-export function MatchRow({ match, now }: { match: Match; now: number }) {
+export function MatchRow({ match, now, hour12 }: { match: Match; now: number; hour12: boolean }) {
   const live = match.state === "in";
 
   return (
@@ -144,7 +144,7 @@ export function MatchRow({ match, now }: { match: Match; now: number }) {
               live ? "text-live font-medium" : "text-muted-foreground",
             )}
           >
-            {matchStatus(match, now)}
+            {matchStatus(match, now, hour12)}
           </div>
           {live ? <LiveIndicator /> : null}
         </div>

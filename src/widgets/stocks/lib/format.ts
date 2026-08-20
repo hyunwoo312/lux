@@ -45,13 +45,13 @@ export function formatVolume(value: number): string {
   return String(value);
 }
 
-export function formatChartTime(seconds: number, range: StockRange): string {
+export function formatChartTime(seconds: number, range: StockRange, hour12: boolean): string {
   const date = new Date(seconds * 1000);
   const options: Intl.DateTimeFormatOptions =
     range === "1d"
-      ? { hour: "numeric", minute: "2-digit" }
+      ? { hour: "numeric", minute: "2-digit", hour12 }
       : range === "5d"
-        ? { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }
+        ? { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12 }
         : { month: "short", day: "numeric", year: "numeric" };
   return new Intl.DateTimeFormat(undefined, options).format(date);
 }

@@ -41,7 +41,9 @@ export function BookmarksView({ editing }: { editing: boolean }) {
       )}
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
         {isEmpty ? (
-          <BrowserMessage>Nothing here yet</BrowserMessage>
+          <BrowserMessage>
+            {trail.length > 1 ? "This folder is empty" : "No bookmarks yet"}
+          </BrowserMessage>
         ) : (
           <>
             {current.folders.length > 0 && (
