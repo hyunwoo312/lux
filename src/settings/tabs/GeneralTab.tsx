@@ -7,6 +7,7 @@ import { BackgroundSetting } from "@/settings/components/BackgroundSetting";
 import { ResetControl } from "@/settings/components/ResetControl";
 import { SettingsRow } from "@/settings/components/SettingsRow";
 import { SettingsSection } from "@/settings/components/SettingsSection";
+import { StorageSection } from "@/settings/components/StorageSection";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useShortcutsStore } from "@/stores/useShortcutsStore";
 import { useThemeStore } from "@/stores/useThemeStore";
@@ -84,6 +85,8 @@ export function GeneralTab() {
           control={<Switch checked={clock24h} onCheckedChange={setClock24h} />}
         />
       </SettingsSection>
+
+      <StorageSection />
 
       <SettingsSection
         title="Backup"

@@ -42,13 +42,32 @@ export function createAssetId(prefix: string): string {
 const DATABASE_VERSION = 1;
 const STORE_NAME = "assets";
 
+export type AssetUsage = { count: number; bytes: number };
+
 export type AssetStore = {
   save: (asset: StoredAsset) => Promise<void>;
   read: (id: string | null | undefined) => Promise<StoredAsset | null>;
   remove: (id: string | null | undefined) => Promise<void>;
   keys: () => Promise<Set<string>>;
+  usage: () => Promise<AssetUsage>;
   clearMemoryForTest: () => void;
 };
+
+function assetBytes(asset: Pick<StoredAsset, "size" | "frost">): number {
+  return asset.size + (asset.frost?.size ?? 0);
+}
+
+const registry = new Set<AssetStore>();
+
+export async function measureAllAssets(): Promise<AssetUsage> {
+  const results = await Promise.all(
+    [...registry].map((store) => store.usage().catch(() => ({ count: 0, bytes: 0 }))),
+  );
+  return results.reduce(
+    (total, entry) => ({ count: total.count + entry.count, bytes: total.bytes + entry.bytes }),
+    { count: 0, bytes: 0 },
+  );
+}
 
 export function createAssetStore(databaseName: string): AssetStore {
   const memory = new Map<string, StoredAsset>();
@@ -93,7 +112,7 @@ export function createAssetStore(databaseName: string): AssetStore {
     );
   }
 
-  return {
+  const store: AssetStore = {
     async save(asset) {
       if (!isIndexedDbAvailable()) {
         memory.set(asset.id, asset);
@@ -123,10 +142,29 @@ export function createAssetStore(databaseName: string): AssetStore {
       const stored = await runTransaction<IDBValidKey[]>("readonly", (store) => store.getAllKeys());
       return new Set(stored.map((key) => String(key)));
     },
+    async usage() {
+      if (!isIndexedDbAvailable()) {
+        return [...memory.values()].reduce(
+          (total, asset) => ({ count: total.count + 1, bytes: total.bytes + assetBytes(asset) }),
+          { count: 0, bytes: 0 },
+        );
+      }
+      const stored = await runTransaction<StoredAsset[]>(
+        "readonly",
+        (store) => store.getAll() as IDBRequest<StoredAsset[]>,
+      );
+      return stored.reduce(
+        (total, asset) => ({ count: total.count + 1, bytes: total.bytes + assetBytes(asset) }),
+        { count: 0, bytes: 0 },
+      );
+    },
     clearMemoryForTest() {
       memory.clear();
     },
   };
+
+  registry.add(store);
+  return store;
 }
 
 export async function missingAssetIds<T extends { assetId: string }>(
