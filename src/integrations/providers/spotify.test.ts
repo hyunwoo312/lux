@@ -1,9 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { spotifyProvider } from "@/integrations/providers/spotify";
-import {
-  IntegrationReconnectRequiredError,
-  IntegrationTemporaryAuthError,
-} from "@/integrations/errors";
+import { IntegrationReconnectRequiredError } from "@/integrations/errors";
+import { TemporaryAuthError } from "@/lib/net";
 
 const params = {
   clientId: "client-123",
@@ -85,6 +83,6 @@ describe("spotifyProvider.refreshToken", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 503 }));
     await expect(
       spotifyProvider.refreshToken!({ clientId: "client-123", refreshToken: "old-ref" }),
-    ).rejects.toBeInstanceOf(IntegrationTemporaryAuthError);
+    ).rejects.toBeInstanceOf(TemporaryAuthError);
   });
 });

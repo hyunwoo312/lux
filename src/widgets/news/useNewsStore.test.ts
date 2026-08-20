@@ -107,3 +107,30 @@ describe("useNewsStore", () => {
     expect(store().byInstance[ID]).toBeUndefined();
   });
 });
+
+describe("data that predates the loadImages field", () => {
+  it("rehydrates with images enabled so existing users see no change", () => {
+    const legacy = {
+      activeSource: "all",
+      region: "us",
+      topic: "top",
+      layout: "list",
+      googleQuery: "",
+      enabledSources: ["google"],
+      openBehavior: "currentTab",
+      sortByLatest: false,
+      readTitles: [],
+      seenTitles: [],
+      mutedTerms: [],
+      highlightTerms: [],
+    };
+
+    const merged = useNewsStore.persist
+      .getOptions()
+      .merge?.({ byInstance: { legacy } }, useNewsStore.getState()) as
+      | { byInstance?: Record<string, { loadImages?: boolean }> }
+      | undefined;
+
+    expect(merged?.byInstance?.legacy?.loadImages).toBe(true);
+  });
+});

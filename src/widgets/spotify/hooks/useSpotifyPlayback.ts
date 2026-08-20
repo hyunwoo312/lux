@@ -15,9 +15,9 @@ import {
   setSpotifyVolume,
   skipSpotifyNext,
   skipSpotifyPrevious,
-  SpotifyRateLimitError,
   transferSpotifyPlayback,
 } from "@/widgets/spotify/lib/spotify-api";
+import { RateLimitError } from "@/lib/net";
 import {
   SPOTIFY_REPEAT_MODES,
   type SpotifyPendingAction,
@@ -156,7 +156,7 @@ async function refreshPlayback(): Promise<void> {
     void refreshContextName(nextPlayback?.context ?? null);
   } catch (caught) {
     if (requestId !== refreshRequestId) return;
-    if (caught instanceof SpotifyRateLimitError) {
+    if (caught instanceof RateLimitError) {
       rateLimitedUntil = Date.now() + caught.retryAfterMs;
     } else {
       set({ error: caught instanceof Error ? caught.message : "Unable to load Spotify playback" });
@@ -203,7 +203,7 @@ async function loadDevices(): Promise<void> {
   try {
     set({ devices: await getSpotifyDevices() });
   } catch (caught) {
-    if (caught instanceof SpotifyRateLimitError) {
+    if (caught instanceof RateLimitError) {
       rateLimitedUntil = Date.now() + caught.retryAfterMs;
     }
   }
@@ -215,7 +215,7 @@ export async function loadSpotifyQueue(): Promise<void> {
   try {
     set({ queue: await getSpotifyQueue() });
   } catch (caught) {
-    if (caught instanceof SpotifyRateLimitError) {
+    if (caught instanceof RateLimitError) {
       rateLimitedUntil = Date.now() + caught.retryAfterMs;
       set({ queueError: "Spotify is busy — try again in a moment." });
     } else {

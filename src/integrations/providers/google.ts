@@ -1,17 +1,18 @@
+import { z } from "zod";
 import { createRelayProvider } from "@/integrations/providers/relay-provider";
-import { withTimeout } from "@/lib/abort";
+import { ensureOk, withTimeout, parseResponse } from "@/lib/net";
 import type { IntegrationProvider } from "@/integrations/types";
 
 const USERINFO_ENDPOINT = "https://www.googleapis.com/oauth2/v2/userinfo";
 
 const ACCESS_TOKEN_TTL_SECONDS = 3600;
 
-type GoogleUserInfo = {
-  id: string;
-  name?: string;
-  email?: string;
-  picture?: string;
-};
+const googleUserInfoSchema = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+  email: z.string().optional(),
+  picture: z.string().optional(),
+});
 
 export const googleProvider: IntegrationProvider = createRelayProvider({
   id: "google",
@@ -31,11 +32,9 @@ export const googleProvider: IntegrationProvider = createRelayProvider({
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
-    if (!response.ok) {
-      throw new Error("Google profile request failed");
-    }
+    ensureOk(response, "Google profile request failed");
 
-    const payload = (await response.json()) as GoogleUserInfo;
+    const payload = parseResponse("Google profile", googleUserInfoSchema, await response.json());
 
     return {
       providerAccountId: payload.id,

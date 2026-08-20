@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Bell, CheckCheck, Loader2 } from "lucide-react";
 import { formatRelativeTime } from "@/lib/relative-time";
-import { loadErrorMessage } from "@/lib/rate-limit";
+import { loadErrorMessage } from "@/lib/net";
 import { Tooltip } from "@/components/ui/tooltip";
 import { usePolledResource, invalidatePolledResource } from "@/widgets/core/usePolledResource";
 import { usePagedResource } from "@/widgets/core/usePagedResource";

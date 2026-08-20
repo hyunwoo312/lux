@@ -2,6 +2,8 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { invalidatePagedResource, usePagedResource } from "@/widgets/core/usePagedResource";
+import { RateLimitError } from "@/lib/net";
+import { retryDelayMs } from "@/widgets/core/usePolledResource";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -280,5 +282,11 @@ describe("usePagedResource persistence", () => {
 
     await waitFor(() => expect(result.current.state).toEqual({ status: "success", items: [1, 2] }));
     expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("paged resource retry timing", () => {
+  it("uses the same rate-limit-aware delay as the polled resource", () => {
+    expect(retryDelayMs(new RateLimitError(45_000), 3)).toBe(45_000);
   });
 });

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PAGED_CACHE_PREFIX, setLocal } from "@/lib/local-store";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
-import { backoffDelayMs, RETRY_BASE_MS } from "@/widgets/core/usePolledResource";
+import { retryDelayMs } from "@/widgets/core/usePolledResource";
 
 let nextAutoKey = 0;
 const DEFAULT_STALE_MS = 180_000;
@@ -259,6 +259,10 @@ class SharedResource<T> {
         this.config.intervalMs && this.config.intervalMs > 0 ? this.config.intervalMs : undefined,
       getLastRefreshedAt: () => this.snapshot.at,
       refresh: () => this.pollRefresh(),
+      clearBackoff: () => {
+        this.failureCount = 0;
+        this.retryAt = 0;
+      },
     });
   }
 
@@ -322,8 +326,7 @@ class SharedResource<T> {
         if (generation !== this.generation) return;
         const error = caught instanceof Error ? caught : new Error("Request failed");
         this.failureCount += 1;
-        this.retryAt =
-          Date.now() + backoffDelayMs(this.failureCount) + Math.random() * RETRY_BASE_MS;
+        this.retryAt = Date.now() + retryDelayMs(error, this.failureCount);
         this.patch(
           this.snapshot.hasLoaded
             ? { isRefreshing: false, isLoadingMore: false }

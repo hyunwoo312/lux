@@ -1,3 +1,5 @@
+import { isOnline, subscribeOnline } from "@/lib/net";
+
 const MIN_TICK_MS = 1_000;
 
 type ScheduledResource = {
@@ -6,6 +8,7 @@ type ScheduledResource = {
   pollIntervalMs?: number;
   getLastRefreshedAt: () => number;
   refresh: () => void;
+  clearBackoff?: () => void;
 };
 
 class RefreshScheduler {
@@ -13,6 +16,7 @@ class RefreshScheduler {
   private intervalId: number | undefined;
   private tickMs = 0;
   private listening = false;
+  private unsubscribeOnline: (() => void) | null = null;
 
   register(resource: ScheduledResource): () => void {
     this.resources.set(resource.id, resource);
@@ -28,8 +32,15 @@ class RefreshScheduler {
   private readonly wakeFromWindow = () => this.refreshDue({ includeNonPolling: true });
   private readonly wakeFromInterval = () => this.refreshDue({ includeNonPolling: false });
 
+  private readonly wakeFromNetwork = (online: boolean) => {
+    if (!online) return;
+    for (const resource of this.resources.values()) resource.clearBackoff?.();
+    this.refreshDue({ includeNonPolling: true });
+  };
+
   private refreshDue({ includeNonPolling }: { includeNonPolling: boolean }): void {
     if (document.visibilityState !== "visible") return;
+    if (!isOnline()) return;
     const now = Date.now();
     for (const resource of this.resources.values()) {
       if (!includeNonPolling && resource.pollIntervalMs === undefined) continue;
@@ -58,6 +69,7 @@ class RefreshScheduler {
     this.listening = true;
     window.addEventListener("focus", this.wakeFromWindow);
     document.addEventListener("visibilitychange", this.wakeFromWindow);
+    this.unsubscribeOnline = subscribeOnline(this.wakeFromNetwork);
   }
 
   private stopListening(): void {
@@ -65,6 +77,8 @@ class RefreshScheduler {
     this.listening = false;
     window.removeEventListener("focus", this.wakeFromWindow);
     document.removeEventListener("visibilitychange", this.wakeFromWindow);
+    this.unsubscribeOnline?.();
+    this.unsubscribeOnline = null;
     if (this.intervalId !== undefined) {
       window.clearInterval(this.intervalId);
       this.intervalId = undefined;

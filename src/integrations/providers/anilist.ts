@@ -1,5 +1,6 @@
+import { z } from "zod";
 import { IntegrationReconnectRequiredError } from "@/integrations/errors";
-import { withTimeout } from "@/lib/abort";
+import { ensureOk, withTimeout, parseResponse } from "@/lib/net";
 import type {
   AcquireTokenParams,
   IntegrationProvider,
@@ -14,9 +15,19 @@ const CALLBACK_KEY = "lux:anilist-callback";
 
 const VIEWER_QUERY = `query { Viewer { id name avatar { large } } }`;
 
-type ViewerPayload = {
-  data?: { Viewer?: { id: number; name: string; avatar?: { large?: string } } };
-};
+const viewerPayloadSchema = z.object({
+  data: z
+    .object({
+      Viewer: z
+        .object({
+          id: z.number(),
+          name: z.string(),
+          avatar: z.object({ large: z.string().optional() }).nullish(),
+        })
+        .nullish(),
+    })
+    .nullish(),
+});
 
 type AnilistCallback = {
   accessToken?: string;
@@ -152,11 +163,10 @@ export const anilistProvider: IntegrationProvider = {
       signal: withTimeout(),
     });
 
-    if (!response.ok) {
-      throw new Error("AniList profile request failed");
-    }
+    ensureOk(response, "AniList profile request failed");
 
-    const viewer = ((await response.json()) as ViewerPayload).data?.Viewer;
+    const viewer = parseResponse("AniList profile", viewerPayloadSchema, await response.json()).data
+      ?.Viewer;
     if (!viewer) {
       throw new Error("Unexpected AniList profile response");
     }

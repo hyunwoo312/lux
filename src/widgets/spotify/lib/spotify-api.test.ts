@@ -16,10 +16,10 @@ import {
   setSpotifyShuffle,
   setSpotifyVolume,
   skipSpotifyNext,
-  SpotifyRateLimitError,
   startSpotifyPlayback,
   transferSpotifyPlayback,
 } from "@/widgets/spotify/lib/spotify-api";
+import { InvalidResponseError, RateLimitError } from "@/lib/net";
 import type { SpotifySearchResult } from "@/widgets/spotify/types";
 
 const mockFetch = vi.mocked(integrationFetch);
@@ -96,8 +96,8 @@ describe("getSpotifyPlaybackState", () => {
       new Response(null, { status: 429, headers: { "Retry-After": "7" } }),
     );
     const error = await getSpotifyPlaybackState().catch((caught: unknown) => caught);
-    expect(error).toBeInstanceOf(SpotifyRateLimitError);
-    expect((error as SpotifyRateLimitError).retryAfterMs).toBe(7000);
+    expect(error).toBeInstanceOf(RateLimitError);
+    expect((error as RateLimitError).retryAfterMs).toBe(7000);
   });
 });
 
@@ -197,7 +197,7 @@ describe("searchSpotify", () => {
     mockFetch.mockResolvedValue(
       new Response(null, { status: 429, headers: { "Retry-After": "3" } }),
     );
-    await expect(searchSpotify("x")).rejects.toBeInstanceOf(SpotifyRateLimitError);
+    await expect(searchSpotify("x")).rejects.toBeInstanceOf(RateLimitError);
   });
 
   it("returns search results in Spotify's own order without waiting on liked flags", async () => {
@@ -377,7 +377,7 @@ describe("getSpotifyQueue", () => {
     mockFetch.mockResolvedValue(
       new Response(null, { status: 429, headers: { "Retry-After": "4" } }),
     );
-    await expect(getSpotifyQueue()).rejects.toBeInstanceOf(SpotifyRateLimitError);
+    await expect(getSpotifyQueue()).rejects.toBeInstanceOf(RateLimitError);
   });
 });
 
@@ -456,5 +456,17 @@ describe("playback commands", () => {
   it("throws a no-device message on a 404", async () => {
     mockFetch.mockResolvedValue(new Response(null, { status: 404 }));
     await expect(skipSpotifyNext()).rejects.toThrow(/Open Spotify on a device/);
+  });
+});
+
+describe("malformed spotify payloads", () => {
+  it("does not throw when an array field arrives as a string", async () => {
+    mockFetch.mockResolvedValue(new Response(JSON.stringify({ devices: "oops" }), { status: 200 }));
+    await expect(getSpotifyDevices()).resolves.toEqual([]);
+  });
+
+  it("rejects a non-object payload as an invalid response", async () => {
+    mockFetch.mockResolvedValue(new Response(JSON.stringify("nope"), { status: 200 }));
+    await expect(getSpotifyDevices()).rejects.toBeInstanceOf(InvalidResponseError);
   });
 });

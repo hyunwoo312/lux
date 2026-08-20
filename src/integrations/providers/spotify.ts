@@ -1,5 +1,6 @@
+import { z } from "zod";
 import { readSpotifyClientId } from "@/integrations/provider-config";
-import { withTimeout } from "@/lib/abort";
+import { ensureOk, withTimeout, parseResponse } from "@/lib/net";
 import { createPkceProvider } from "@/integrations/providers/pkce-provider";
 import type { IntegrationProvider } from "@/integrations/types";
 
@@ -12,12 +13,12 @@ const SCOPES = [
   "playlist-read-private",
 ];
 
-type SpotifyProfile = {
-  id: string;
-  display_name?: string;
-  email?: string;
-  images?: Array<{ url?: string }>;
-};
+const spotifyProfileSchema = z.object({
+  id: z.string(),
+  display_name: z.string().nullish(),
+  email: z.string().optional(),
+  images: z.array(z.object({ url: z.string().optional() })).optional(),
+});
 
 export const spotifyProvider: IntegrationProvider = createPkceProvider({
   id: "spotify",
@@ -33,11 +34,9 @@ export const spotifyProvider: IntegrationProvider = createPkceProvider({
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
-    if (!response.ok) {
-      throw new Error("Spotify profile request failed");
-    }
+    ensureOk(response, "Spotify profile request failed");
 
-    const payload = (await response.json()) as SpotifyProfile;
+    const payload = parseResponse("Spotify profile", spotifyProfileSchema, await response.json());
 
     return {
       providerAccountId: payload.id,

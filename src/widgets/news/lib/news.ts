@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ensureOk, readCappedText, withTimeout } from "@/lib/net";
 import {
   NEWS_SOURCES,
   type NewsItem,
@@ -265,30 +266,10 @@ export function parseFeed(
     .slice(0, MAX_ITEMS);
 }
 
-type FetchTextResult = { ok: true; text: string } | { ok: false; status?: number; error?: string };
-
-function abortSignal(signal: AbortSignal): Promise<never> {
-  return new Promise((_, reject) => {
-    if (signal.aborted) reject(new DOMException("Aborted", "AbortError"));
-    else
-      signal.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), {
-        once: true,
-      });
-  });
-}
-
 async function fetchText(url: string, signal?: AbortSignal): Promise<string> {
-  const request = chrome.runtime.sendMessage({
-    type: "lux:fetch-text",
-    url,
-  }) as Promise<FetchTextResult | undefined>;
-  const result = await (signal ? Promise.race([request, abortSignal(signal)]) : request);
-  if (!result?.ok) {
-    throw new Error(
-      result?.status ? `News request failed (${result.status})` : "News request failed",
-    );
-  }
-  return result.text;
+  const response = await fetch(url, { signal: withTimeout(signal) });
+  ensureOk(response, `News request failed (${response.status})`);
+  return readCappedText(response);
 }
 
 export async function fetchFeed(

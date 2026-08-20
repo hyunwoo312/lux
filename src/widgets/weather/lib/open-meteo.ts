@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { withTimeout } from "@/lib/abort";
+import { ensureOk, withTimeout } from "@/lib/net";
 import type {
   GeocodeResult,
   WeatherData,
@@ -74,9 +74,7 @@ export async function fetchWeather(
   const response = await fetch(`${FORECAST_ENDPOINT}?${params.toString()}`, {
     signal: withTimeout(signal),
   });
-  if (!response.ok) {
-    throw new Error("Weather request failed");
-  }
+  ensureOk(response, "Weather request failed");
   const parsed = forecastSchema.safeParse(await response.json());
   if (!parsed.success) {
     throw new Error("Unexpected weather response");
@@ -146,9 +144,7 @@ export async function searchPlaces(query: string, signal?: AbortSignal): Promise
   const response = await fetch(`${GEOCODE_ENDPOINT}?${params.toString()}`, {
     signal: withTimeout(signal),
   });
-  if (!response.ok) {
-    throw new Error("Place search failed");
-  }
+  ensureOk(response, "Place search failed");
   const parsed = geocodeSchema.safeParse(await response.json());
   if (!parsed.success) {
     throw new Error("Unexpected place search response");

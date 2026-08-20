@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { loadErrorMessage } from "@/lib/rate-limit";
+import { loadErrorMessage } from "@/lib/net";
 import { useElementSize } from "@/hooks/useElementSize";
 import { usePolledResource } from "@/widgets/core/usePolledResource";
 import { fetchContributions } from "@/widgets/github/lib/github-api";

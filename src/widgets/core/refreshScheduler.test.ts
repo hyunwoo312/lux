@@ -74,3 +74,35 @@ describe("refreshScheduler", () => {
     unregisterSlow();
   });
 });
+
+describe("reconnect clears backoff on every registered resource", () => {
+  it("calls clearBackoff for polled and paged resources alike", () => {
+    const polled = { cleared: 0, refreshed: 0 };
+    const paged = { cleared: 0, refreshed: 0 };
+
+    const unregisterPolled = refreshScheduler.register({
+      id: "polled:test",
+      staleMs: 0,
+      getLastRefreshedAt: () => 0,
+      refresh: () => (polled.refreshed += 1),
+      clearBackoff: () => (polled.cleared += 1),
+    });
+    const unregisterPaged = refreshScheduler.register({
+      id: "paged:test",
+      staleMs: 0,
+      getLastRefreshedAt: () => 0,
+      refresh: () => (paged.refreshed += 1),
+      clearBackoff: () => (paged.cleared += 1),
+    });
+
+    window.dispatchEvent(new Event("online"));
+
+    expect(polled.cleared).toBe(1);
+    expect(paged.cleared).toBe(1);
+    expect(polled.refreshed).toBe(1);
+    expect(paged.refreshed).toBe(1);
+
+    unregisterPolled();
+    unregisterPaged();
+  });
+});

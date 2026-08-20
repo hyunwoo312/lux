@@ -1,9 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRelayProvider } from "@/integrations/providers/relay-provider";
-import {
-  IntegrationReconnectRequiredError,
-  IntegrationTemporaryAuthError,
-} from "@/integrations/errors";
+import { IntegrationReconnectRequiredError } from "@/integrations/errors";
+import { TemporaryAuthError } from "@/lib/net";
 
 const provider = createRelayProvider({
   id: "google",
@@ -121,7 +119,7 @@ describe("createRelayProvider.refreshToken", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 502 }));
     await expect(
       provider.refreshToken!({ clientId: "client-1", refreshToken: "ref1" }),
-    ).rejects.toBeInstanceOf(IntegrationTemporaryAuthError);
+    ).rejects.toBeInstanceOf(TemporaryAuthError);
   });
 });
 

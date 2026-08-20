@@ -1,4 +1,6 @@
+import { z } from "zod";
 import { integrationFetch } from "@/integrations";
+import { ensureOk, parseResponse } from "@/lib/net";
 import { compareEventsByStart } from "@/widgets/calendar/lib/agenda";
 import {
   MAX_CALENDAR_EVENTS,
@@ -165,14 +167,13 @@ async function fetchEventsForCalendar(
       headers: { Prefer: 'outlook.timezone="UTC"' },
     });
 
-    if (!response.ok) {
-      throw new Error(`Outlook calendar events request failed for ${calendarId}`);
-    }
+    ensureOk(response, `Outlook calendar events request failed for ${calendarId}`);
 
-    const payload = (await response.json()) as {
-      value?: GraphEvent[];
-      "@odata.nextLink"?: string;
-    };
+    const payload = parseResponse(
+      "Outlook calendar events",
+      outlookEventsEnvelope,
+      await response.json(),
+    );
 
     events.push(
       ...(payload.value ?? [])
@@ -187,16 +188,27 @@ async function fetchEventsForCalendar(
   return events;
 }
 
+const outlookEventsEnvelope = z.object({
+  value: z.array(z.custom<GraphEvent>()).optional(),
+  "@odata.nextLink": z.string().optional(),
+});
+
+const outlookCalendarsEnvelope = z.object({
+  value: z.array(z.custom<GraphCalendar>()).optional(),
+});
+
 export async function fetchOutlookCalendars(
   selectedCalendarIds: readonly string[] = [],
 ): Promise<ConnectedCalendar[]> {
   const response = await integrationFetch("microsoft", `${API_BASE_URL}/me/calendars`);
 
-  if (!response.ok) {
-    throw new Error("Outlook calendar list request failed");
-  }
+  ensureOk(response, "Outlook calendar list request failed");
 
-  const payload = (await response.json()) as { value?: GraphCalendar[] };
+  const payload = parseResponse(
+    "Outlook calendar list",
+    outlookCalendarsEnvelope,
+    await response.json(),
+  );
 
   return (payload.value ?? [])
     .map((calendar) => normalizeOutlookCalendar(calendar, selectedCalendarIds))

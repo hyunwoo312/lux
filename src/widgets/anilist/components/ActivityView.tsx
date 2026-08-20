@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
-import { loadErrorMessage } from "@/lib/rate-limit";
+import { loadErrorMessage } from "@/lib/net";
 import { usePagedResource } from "@/widgets/core/usePagedResource";
 import {
   fetchActivityPage,

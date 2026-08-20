@@ -24,7 +24,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { loadErrorMessage } from "@/lib/rate-limit";
+import { loadErrorMessage } from "@/lib/net";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { Tooltip } from "@/components/ui/tooltip";
 import { invalidatePolledResource, usePolledResource } from "@/widgets/core/usePolledResource";

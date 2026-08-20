@@ -3,7 +3,7 @@ import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { ConfigSegmented, ConfigSelect } from "@/components/config/WidgetConfig";
-import { loadErrorMessage } from "@/lib/rate-limit";
+import { loadErrorMessage } from "@/lib/net";
 import { useIntegrationStore } from "@/integrations";
 import { useSettingsStore } from "@/settings";
 import { usePolledResource, type PolledResourceState } from "@/widgets/core/usePolledResource";

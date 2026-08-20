@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { integrationFetch } from "@/integrations";
-import { loadErrorMessage, rateLimitError, RateLimitError } from "@/lib/rate-limit";
+import { ensureOk, loadErrorMessage, RateLimitError } from "@/lib/net";
 import {
   buildContributions,
   buildRepoActivity,
@@ -41,15 +41,13 @@ async function graphql(query: string, signal?: AbortSignal): Promise<unknown> {
     body: JSON.stringify({ query }),
     signal,
   });
-  if (!response.ok) {
-    throw rateLimitError(response) ?? new Error("GitHub request failed");
-  }
+  ensureOk(response, "GitHub request failed");
   const body: unknown = await response.json();
   const parsed = graphqlErrorsSchema.safeParse(body);
   if (parsed.success) {
     const { errors } = parsed.data;
     if (errors.some((error) => error.type === "RATE_LIMITED")) {
-      throw new RateLimitError("Rate limited — try again in a moment.");
+      throw new RateLimitError(0);
     }
     throw new Error(errors[0]?.message ?? "GitHub request failed");
   }
@@ -195,9 +193,7 @@ async function fetchNotifications(signal?: AbortSignal): Promise<InboxNotificati
     headers: { Accept: "application/vnd.github+json" },
     signal,
   });
-  if (!response.ok) {
-    throw rateLimitError(response) ?? new Error("GitHub notifications request failed");
-  }
+  ensureOk(response, "GitHub notifications request failed");
   const parsed = notificationsSchema.safeParse(await response.json());
   if (!parsed.success) {
     throw new Error("Unexpected GitHub notifications response");
@@ -392,9 +388,7 @@ export async function markGithubThreadRead(id: string): Promise<void> {
     `${NOTIFICATIONS_ENDPOINT}/threads/${encodeURIComponent(id)}`,
     { method: "PATCH", headers: GITHUB_JSON_HEADERS },
   );
-  if (!response.ok) {
-    throw rateLimitError(response) ?? new Error("GitHub notification update failed");
-  }
+  ensureOk(response, "GitHub notification update failed");
 }
 
 export async function unsubscribeGithubThread(id: string): Promise<void> {
@@ -403,9 +397,7 @@ export async function unsubscribeGithubThread(id: string): Promise<void> {
     `${NOTIFICATIONS_ENDPOINT}/threads/${encodeURIComponent(id)}/subscription`,
     { method: "DELETE", headers: GITHUB_JSON_HEADERS },
   );
-  if (!response.ok) {
-    throw rateLimitError(response) ?? new Error("GitHub unsubscribe failed");
-  }
+  ensureOk(response, "GitHub unsubscribe failed");
 }
 
 export async function markAllGithubNotificationsRead(): Promise<void> {
@@ -414,9 +406,7 @@ export async function markAllGithubNotificationsRead(): Promise<void> {
     headers: { ...GITHUB_JSON_HEADERS, "Content-Type": "application/json" },
     body: JSON.stringify({ read: true }),
   });
-  if (!response.ok) {
-    throw rateLimitError(response) ?? new Error("GitHub notifications update failed");
-  }
+  ensureOk(response, "GitHub notifications update failed");
 }
 
 function sectionErrorMessage(reason: unknown, fallback: string): string {

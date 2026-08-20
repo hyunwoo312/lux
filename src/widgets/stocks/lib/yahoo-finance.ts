@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { withTimeout } from "@/lib/abort";
+import { withTimeout } from "@/lib/net";
 import type { Quote, StockRange, SymbolSearchResult } from "@/widgets/stocks/types";
 
 const HOSTS = ["https://query1.finance.yahoo.com", "https://query2.finance.yahoo.com"];

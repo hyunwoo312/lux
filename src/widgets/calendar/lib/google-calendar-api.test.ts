@@ -204,3 +204,19 @@ describe("buildGoogleEventsUrl", () => {
     expect(url.searchParams.get("timeMin")).toBe("2026-06-01T00:00:00.000Z");
   });
 });
+
+describe("google calendar response validation", () => {
+  it("surfaces a shape-changed envelope as a failed calendar, not a crash", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(JSON.stringify({ items: "not-an-array" }), { status: 200 }),
+    );
+    const result = await fetchGoogleCalendarEvents({
+      calendarIds: ["primary"],
+      timeMin: new Date("2026-08-04T00:00:00Z"),
+      timeMax: new Date("2026-08-05T00:00:00Z"),
+    });
+
+    expect(result.events).toEqual([]);
+    expect(result.failedCalendarIds).toEqual(["primary"]);
+  });
+});

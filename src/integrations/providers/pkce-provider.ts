@@ -1,9 +1,9 @@
+import { z } from "zod";
 import {
-  fetchTokenEndpoint,
   IntegrationReconnectRequiredError,
-  IntegrationTemporaryAuthError,
   isReconnectRequiredStatus,
 } from "@/integrations/errors";
+import { ensureOk, fetchTokenEndpoint, TemporaryAuthError, parseResponse } from "@/lib/net";
 import { buildPkceAuthorizeUrl, parseScopes } from "@/integrations/providers/pkce";
 import type {
   IntegrationProfile,
@@ -12,13 +12,15 @@ import type {
   IntegrationTokenResponse,
 } from "@/integrations/types";
 
-type PkceTokenPayload = {
-  access_token: string;
-  refresh_token?: string;
-  expires_in: number;
-  token_type: string;
-  scope?: string;
-};
+const tokenPayloadSchema = z.object({
+  access_token: z.string(),
+  refresh_token: z.string().optional(),
+  expires_in: z.number(),
+  token_type: z.string(),
+  scope: z.string().optional(),
+});
+
+type PkceTokenPayload = z.infer<typeof tokenPayloadSchema>;
 
 type PkceProviderConfig = {
   id: IntegrationProviderId;
@@ -66,11 +68,9 @@ export function createPkceProvider(config: PkceProviderConfig): IntegrationProvi
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`${config.label} token exchange failed`);
-      }
+      ensureOk(response, `${config.label} token exchange failed`);
 
-      return toTokenResponse((await response.json()) as PkceTokenPayload);
+      return toTokenResponse(parseResponse("token", tokenPayloadSchema, await response.json()));
     },
     refreshToken: async ({ clientId, refreshToken }) => {
       const body = new URLSearchParams({
@@ -92,10 +92,10 @@ export function createPkceProvider(config: PkceProviderConfig): IntegrationProvi
         if (isReconnectRequiredStatus(response.status)) {
           throw new IntegrationReconnectRequiredError(`${config.label} needs to be reconnected`);
         }
-        throw new IntegrationTemporaryAuthError(`${config.label} is temporarily unavailable`);
+        throw new TemporaryAuthError(`${config.label} is temporarily unavailable`);
       }
 
-      const payload = (await response.json()) as PkceTokenPayload;
+      const payload = parseResponse("token", tokenPayloadSchema, await response.json());
       return { ...toTokenResponse(payload), refreshToken: payload.refresh_token ?? refreshToken };
     },
     fetchProfile: config.fetchProfile,

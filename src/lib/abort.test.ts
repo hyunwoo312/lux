@@ -1,4 +1,4 @@
-import { withTimeout } from "@/lib/abort";
+import { withTimeout } from "@/lib/net";
 
 describe("withTimeout", () => {
   it("returns a signal even when the caller has none", () => {

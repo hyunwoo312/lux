@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { withTimeout } from "@/lib/abort";
+import { withTimeout } from "@/lib/net";
 import { useEffect, useState } from "react";
 import {
   Code2,

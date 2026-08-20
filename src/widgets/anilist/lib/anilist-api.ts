@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { withTimeout } from "@/lib/abort";
+import { ensureOk, withTimeout } from "@/lib/net";
 import { integrationFetch } from "@/integrations";
-import { rateLimitError } from "@/lib/rate-limit";
 import { computeBehind, dedupeEntries } from "@/widgets/anilist/lib/current";
 import { buildDiscoverVariables } from "@/widgets/anilist/lib/discover";
 import {
@@ -56,9 +55,7 @@ async function anilistGraphQL(
   const response = authed
     ? await integrationFetch("anilist", ENDPOINT, init)
     : await fetch(ENDPOINT, { ...init, signal: withTimeout(signal) });
-  if (!response.ok) {
-    throw rateLimitError(response) ?? new Error("AniList request failed");
-  }
+  ensureOk(response, "AniList request failed");
   return response.json();
 }
 

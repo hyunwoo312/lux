@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { withTimeout } from "@/lib/abort";
+import { ensureOk, withTimeout } from "@/lib/net";
 import {
   MATCH_STATES,
   type Match,
@@ -210,9 +210,7 @@ async function fetchMatches(
     signal: withTimeout(signal),
   });
 
-  if (!response.ok) {
-    throw new Error("Scores are unavailable right now");
-  }
+  ensureOk(response, "Scores are unavailable right now");
 
   return parse(await response.json());
 }
@@ -284,7 +282,7 @@ export async function fetchTeams(path: string, signal?: AbortSignal): Promise<Te
     signal: withTimeout(signal),
   });
 
-  if (!response.ok) throw new Error("Teams are unavailable right now");
+  ensureOk(response, "Teams are unavailable right now");
   return parseTeams(await response.json());
 }
 

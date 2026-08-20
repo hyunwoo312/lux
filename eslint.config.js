@@ -55,6 +55,15 @@ export default tseslint.config(
     rules: {
       "no-empty": "error",
       "no-restricted-imports": boundaryRule(null),
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            'TSAsExpression:not([typeAnnotation.type="TSUnknownKeyword"]) > AwaitExpression > CallExpression > MemberExpression[property.name="json"]',
+          message:
+            "Validate the response instead of casting it — use parseResponse() with a zod schema (PROJECT_RULES §10).",
+        },
+      ],
       "no-console": ["error", { allow: ["warn", "error"] }],
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",

@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/integrations", () => ({ integrationFetch: vi.fn() }));
 
 import { integrationFetch } from "@/integrations";
-import { RateLimitError } from "@/lib/rate-limit";
+import { RateLimitError } from "@/lib/net";
 import {
   fetchContributions,
   fetchInbox,

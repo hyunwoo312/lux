@@ -22,7 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
-import { loadErrorMessage } from "@/lib/rate-limit";
+import { loadErrorMessage } from "@/lib/net";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ConfigSegmented } from "@/components/config/WidgetConfig";
 import { EASE_OUT_QUINT } from "@/lib/motion";

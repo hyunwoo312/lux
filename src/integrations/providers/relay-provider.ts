@@ -1,9 +1,9 @@
+import { z } from "zod";
 import {
-  fetchTokenEndpoint,
   IntegrationReconnectRequiredError,
-  IntegrationTemporaryAuthError,
   isReconnectRequiredStatus,
 } from "@/integrations/errors";
+import { ensureOk, fetchTokenEndpoint, TemporaryAuthError, parseResponse } from "@/lib/net";
 import { buildPkceAuthorizeUrl, parseScopes } from "@/integrations/providers/pkce";
 import { RELAY_BASE_URL } from "@/lib/links";
 import type {
@@ -13,14 +13,16 @@ import type {
   IntegrationTokenResponse,
 } from "@/integrations/types";
 
-type RelayTokenPayload = {
-  access_token?: string;
-  refresh_token?: string;
-  expires_in?: number;
-  token_type?: string;
-  scope?: string;
-  error?: string;
-};
+const relayTokenSchema = z.object({
+  access_token: z.string().optional(),
+  refresh_token: z.string().optional(),
+  expires_in: z.number().optional(),
+  token_type: z.string().optional(),
+  scope: z.string().optional(),
+  error: z.string().optional(),
+});
+
+type RelayTokenPayload = z.infer<typeof relayTokenSchema>;
 
 type RelayProviderConfig = {
   id: IntegrationProviderId;
@@ -72,11 +74,9 @@ export function createRelayProvider(config: RelayProviderConfig): IntegrationPro
         code_verifier: codeVerifier,
       });
 
-      if (!response.ok) {
-        throw new Error(`${config.label} sign-in could not be completed`);
-      }
+      ensureOk(response, `${config.label} sign-in could not be completed`);
 
-      const payload = (await response.json()) as RelayTokenPayload;
+      const payload = parseResponse("token", relayTokenSchema, await response.json());
       if (payload.error || !payload.access_token) {
         throw new Error(`${config.label} sign-in could not be completed`);
       }
@@ -97,15 +97,15 @@ export function createRelayProvider(config: RelayProviderConfig): IntegrationPro
         if (isReconnectRequiredStatus(response.status)) {
           throw new IntegrationReconnectRequiredError(`${config.label} needs to be reconnected`);
         }
-        throw new IntegrationTemporaryAuthError(`${config.label} is temporarily unavailable`);
+        throw new TemporaryAuthError(`${config.label} is temporarily unavailable`);
       }
 
-      const payload = (await response.json()) as RelayTokenPayload;
+      const payload = parseResponse("token", relayTokenSchema, await response.json());
       if (payload.error) {
         throw new IntegrationReconnectRequiredError(`${config.label} needs to be reconnected`);
       }
       if (!payload.access_token) {
-        throw new IntegrationTemporaryAuthError(`${config.label} is temporarily unavailable`);
+        throw new TemporaryAuthError(`${config.label} is temporarily unavailable`);
       }
       return { ...toTokenResponse(payload), refreshToken: payload.refresh_token ?? refreshToken };
     };

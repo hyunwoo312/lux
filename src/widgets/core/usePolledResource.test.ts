@@ -2,10 +2,13 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  RETRY_BASE_MS,
   backoffDelayMs,
   patchPolledResource,
+  retryDelayMs,
   usePolledResource,
 } from "@/widgets/core/usePolledResource";
+import { RateLimitError } from "@/lib/net";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -238,5 +241,23 @@ describe("usePolledResource persistence", () => {
     await waitFor(() =>
       expect(result.current.state).toEqual({ status: "success", data: { value: 3 } }),
     );
+  });
+});
+
+describe("retryDelayMs", () => {
+  it("honours a rate limit's retryAfterMs instead of the backoff curve", () => {
+    expect(retryDelayMs(new RateLimitError(45_000), 1)).toBe(45_000);
+    expect(retryDelayMs(new RateLimitError(45_000), 5)).toBe(45_000);
+  });
+
+  it("falls back to the jittered curve for ordinary failures", () => {
+    const delay = retryDelayMs(new Error("boom"), 1);
+    expect(delay).toBeGreaterThanOrEqual(backoffDelayMs(1));
+    expect(delay).toBeLessThan(backoffDelayMs(1) + RETRY_BASE_MS);
+  });
+
+  it("ignores a rate limit that carries no wait", () => {
+    const delay = retryDelayMs(new RateLimitError(0), 2);
+    expect(delay).toBeGreaterThanOrEqual(backoffDelayMs(2));
   });
 });

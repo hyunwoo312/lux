@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Tag } from "lucide-react";
-import { loadErrorMessage } from "@/lib/rate-limit";
+import { loadErrorMessage } from "@/lib/net";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { usePolledResource } from "@/widgets/core/usePolledResource";
 import { fetchReleases, parseCachedReleases } from "@/widgets/github/lib/github-api";

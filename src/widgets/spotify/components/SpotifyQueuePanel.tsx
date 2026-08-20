@@ -9,7 +9,8 @@ import {
   useSpotifyPlaybackStore,
 } from "@/widgets/spotify/hooks/useSpotifyPlayback";
 import { dedupeUpNext } from "@/widgets/spotify/lib/queue";
-import { skipSpotifyNext, SpotifyRateLimitError } from "@/widgets/spotify/lib/spotify-api";
+import { skipSpotifyNext } from "@/widgets/spotify/lib/spotify-api";
+import { RateLimitError } from "@/lib/net";
 import type { SpotifyQueueItem } from "@/widgets/spotify/types";
 
 const EQ_BARS = [
@@ -99,7 +100,7 @@ export function SpotifyQueuePanel() {
         requestSpotifyPlaybackRefresh();
       } catch (caught) {
         setPlayError(
-          caught instanceof SpotifyRateLimitError
+          caught instanceof RateLimitError
             ? "Spotify is busy — try again in a moment."
             : caught instanceof Error
               ? caught.message

@@ -1,5 +1,6 @@
+import { z } from "zod";
 import { createRelayProvider } from "@/integrations/providers/relay-provider";
-import { withTimeout } from "@/lib/abort";
+import { ensureOk, withTimeout, parseResponse } from "@/lib/net";
 import type { IntegrationProvider } from "@/integrations/types";
 
 const PROFILE_ENDPOINT = "https://api.github.com/user";
@@ -8,13 +9,13 @@ const SCOPES = ["read:user", "notifications", "repo"];
 
 const NON_EXPIRING_TTL_SECONDS = 100 * 365 * 24 * 60 * 60;
 
-type GitHubProfile = {
-  id: number;
-  login: string;
-  name?: string | null;
-  email?: string | null;
-  avatar_url?: string;
-};
+const githubProfileSchema = z.object({
+  id: z.union([z.string(), z.number()]),
+  login: z.string(),
+  name: z.string().nullish(),
+  email: z.string().nullish(),
+  avatar_url: z.string().optional(),
+});
 
 export const githubProvider: IntegrationProvider = createRelayProvider({
   id: "github",
@@ -33,11 +34,9 @@ export const githubProvider: IntegrationProvider = createRelayProvider({
       },
     });
 
-    if (!response.ok) {
-      throw new Error("GitHub profile request failed");
-    }
+    ensureOk(response, "GitHub profile request failed");
 
-    const payload = (await response.json()) as GitHubProfile;
+    const payload = parseResponse("GitHub profile", githubProfileSchema, await response.json());
 
     return {
       providerAccountId: String(payload.id),

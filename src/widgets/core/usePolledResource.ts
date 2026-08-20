@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { POLLED_CACHE_PREFIX, setLocal } from "@/lib/local-store";
+import { RateLimitError } from "@/lib/net";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 
 let nextAutoKey = 0;
 const DEFAULT_STALE_MS = 180_000;
 export const RETRY_BASE_MS = 60_000;
 const RETRY_MAX_MS = 30 * 60_000;
+
+export function retryDelayMs(error: Error, failureCount: number): number {
+  if (error instanceof RateLimitError && error.retryAfterMs > 0) return error.retryAfterMs;
+  return backoffDelayMs(failureCount) + Math.random() * RETRY_BASE_MS;
+}
 
 export function backoffDelayMs(failureCount: number): number {
   if (failureCount <= 0) return 0;
@@ -254,6 +260,10 @@ class SharedResource<T> {
         this.config.intervalMs && this.config.intervalMs > 0 ? this.config.intervalMs : undefined,
       getLastRefreshedAt: () => this.snapshot.at,
       refresh: () => this.pollRefresh(),
+      clearBackoff: () => {
+        this.failureCount = 0;
+        this.retryAt = 0;
+      },
     });
   }
 

@@ -1,14 +1,22 @@
+import { z } from "zod";
 import { RELAY_BASE_URL } from "@/lib/links";
+import { FEEDBACK_TIMEOUT_MS, parseResponse, withTimeout } from "@/lib/net";
 import type { FeedbackSubmission, SubmitResult } from "@/feedback/types";
 
 const ENDPOINT = `${RELAY_BASE_URL}/feedback/submit`;
-const REQUEST_TIMEOUT_MS = 15_000;
 
 const RETRYABLE_MESSAGE = "Couldn’t reach us just now. Your message is safe — try again.";
 const TERMINAL_MESSAGE = "Something went wrong sending that. Your message is safe.";
 const DISABLED_MESSAGE = "Feedback is paused right now. Please try again later.";
 
-type RelayResponse = { ok?: boolean; id?: string; error?: string; retryable?: boolean };
+const relayResponseSchema = z.object({
+  ok: z.boolean().optional(),
+  id: z.string().optional(),
+  error: z.string().optional(),
+  retryable: z.boolean().optional(),
+});
+
+type RelayResponse = z.infer<typeof relayResponseSchema>;
 
 function failure(retryable: boolean, message: string): SubmitResult {
   return { ok: false, retryable, message };
@@ -24,9 +32,7 @@ export async function submitFeedback(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(submission),
-      signal: signal
-        ? AbortSignal.any([signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)])
-        : AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      signal: withTimeout(signal, FEEDBACK_TIMEOUT_MS),
     });
   } catch {
     return failure(true, RETRYABLE_MESSAGE);
@@ -34,7 +40,7 @@ export async function submitFeedback(
 
   let payload: RelayResponse;
   try {
-    payload = (await response.json()) as RelayResponse;
+    payload = parseResponse("feedback", relayResponseSchema, await response.json());
   } catch {
     payload = {};
   }

@@ -1,4 +1,6 @@
+import { z } from "zod";
 import { integrationFetch } from "@/integrations";
+import { ensureOk, parseResponse } from "@/lib/net";
 import { compareEventsByStart } from "@/widgets/calendar/lib/agenda";
 import {
   MAX_CALENDAR_EVENTS,
@@ -147,14 +149,13 @@ async function fetchEventsForCalendar(
 
     const response = await integrationFetch("google", url);
 
-    if (!response.ok) {
-      throw new Error(`Google calendar events request failed for ${calendarId}`);
-    }
+    ensureOk(response, `Google calendar events request failed for ${calendarId}`);
 
-    const payload = (await response.json()) as {
-      items?: GoogleCalendarEvent[];
-      nextPageToken?: string;
-    };
+    const payload = parseResponse(
+      "Google calendar events",
+      googleEventsEnvelope,
+      await response.json(),
+    );
 
     events.push(
       ...(payload.items ?? [])
@@ -170,16 +171,27 @@ async function fetchEventsForCalendar(
   return events;
 }
 
+const googleEventsEnvelope = z.object({
+  items: z.array(z.custom<GoogleCalendarEvent>()).optional(),
+  nextPageToken: z.string().optional(),
+});
+
+const googleCalendarsEnvelope = z.object({
+  items: z.array(z.custom<GoogleCalendarListEntry>()).optional(),
+});
+
 export async function fetchGoogleCalendars(
   selectedCalendarIds: readonly string[] = [],
 ): Promise<ConnectedCalendar[]> {
   const response = await integrationFetch("google", `${API_BASE_URL}/users/me/calendarList`);
 
-  if (!response.ok) {
-    throw new Error("Google calendar list request failed");
-  }
+  ensureOk(response, "Google calendar list request failed");
 
-  const payload = (await response.json()) as { items?: GoogleCalendarListEntry[] };
+  const payload = parseResponse(
+    "Google calendar list",
+    googleCalendarsEnvelope,
+    await response.json(),
+  );
 
   return (payload.items ?? [])
     .map((calendar) => normalizeGoogleCalendar(calendar, selectedCalendarIds))

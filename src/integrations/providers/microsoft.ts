@@ -1,5 +1,6 @@
+import { z } from "zod";
 import { createRelayProvider } from "@/integrations/providers/relay-provider";
-import { withTimeout } from "@/lib/abort";
+import { ensureOk, withTimeout, parseResponse } from "@/lib/net";
 import type { IntegrationProvider } from "@/integrations/types";
 
 const PROFILE_ENDPOINT = "https://graph.microsoft.com/v1.0/me";
@@ -8,16 +9,16 @@ const SCOPES = ["offline_access", "User.Read", "Calendars.Read"];
 
 const ACCESS_TOKEN_TTL_SECONDS = 3600;
 
-type MicrosoftProfile = {
-  id: string;
-  displayName?: string;
-  mail?: string;
-  userPrincipalName?: string;
-};
-
 function toEmail(value: string | undefined): string | undefined {
   return value && value.includes("@") ? value : undefined;
 }
+
+const microsoftProfileSchema = z.object({
+  id: z.string(),
+  displayName: z.string().optional(),
+  mail: z.string().nullish(),
+  userPrincipalName: z.string().nullish(),
+});
 
 export const microsoftProvider: IntegrationProvider = createRelayProvider({
   id: "microsoft",
@@ -34,17 +35,19 @@ export const microsoftProvider: IntegrationProvider = createRelayProvider({
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
-    if (!response.ok) {
-      throw new Error("Microsoft profile request failed");
-    }
+    ensureOk(response, "Microsoft profile request failed");
 
-    const payload = (await response.json()) as MicrosoftProfile;
+    const payload = parseResponse(
+      "Microsoft profile",
+      microsoftProfileSchema,
+      await response.json(),
+    );
 
     return {
       providerAccountId: payload.id,
       displayName:
         payload.displayName || payload.mail || payload.userPrincipalName || "Outlook account",
-      email: toEmail(payload.mail) ?? toEmail(payload.userPrincipalName),
+      email: toEmail(payload.mail ?? undefined) ?? toEmail(payload.userPrincipalName ?? undefined),
     };
   },
 });
