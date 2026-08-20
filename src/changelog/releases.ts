@@ -1,6 +1,6 @@
 type ChangeType = "added" | "changed" | "fixed";
 
-export const CHANGE_AREAS = [
+const CHANGE_AREAS = [
   "Dashboard",
   "Accounts",
   "Settings",

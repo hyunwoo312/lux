@@ -72,17 +72,9 @@ async function stashAnilistCallback(
   callback: AnilistCallback,
   tabId: number | undefined,
 ): Promise<void> {
-  try {
-    await chrome.storage.session.set({ [ANILIST_CALLBACK_KEY]: callback });
-  } catch {
-    return;
-  }
+  await chrome.storage.session.set({ [ANILIST_CALLBACK_KEY]: callback }).catch(() => undefined);
   if (tabId === undefined) return;
-  try {
-    await chrome.tabs.remove(tabId);
-  } catch {
-    return;
-  }
+  await chrome.tabs.remove(tabId).catch(() => undefined);
 }
 
 async function fetchText(url: string): Promise<FetchTextResult> {

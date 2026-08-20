@@ -7,13 +7,13 @@ import { getLocal, setLocal } from "@/lib/local-store";
 import { getNextSequentialIndex, getRandomIndexExcluding } from "@/lib/media-rotation";
 import { createGatedChromeStorage } from "@/lib/storage";
 
-export const WALLPAPER_MODES = ["single", "multi"] as const;
+const WALLPAPER_MODES = ["single", "multi"] as const;
 export type WallpaperMode = (typeof WALLPAPER_MODES)[number];
 
-export const WALLPAPER_FITS = ["cover", "contain", "fill", "scale-down"] as const;
+const WALLPAPER_FITS = ["cover", "contain", "fill", "scale-down"] as const;
 export type WallpaperFit = (typeof WALLPAPER_FITS)[number];
 
-export const WALLPAPER_ORDERS = ["shuffle", "sequential"] as const;
+const WALLPAPER_ORDERS = ["shuffle", "sequential"] as const;
 export type WallpaperOrder = (typeof WALLPAPER_ORDERS)[number];
 
 export const WALLPAPER_MAX_BYTES = 10 * 1024 * 1024;

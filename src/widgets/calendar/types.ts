@@ -11,7 +11,7 @@ export type CalendarView = (typeof CALENDAR_VIEWS)[number];
 
 export type CalendarMode = "month" | "week";
 
-export const CALENDAR_PROVIDER_IDS = ["google", "microsoft"] as const;
+const CALENDAR_PROVIDER_IDS = ["google", "microsoft"] as const;
 export type CalendarProviderId = (typeof CALENDAR_PROVIDER_IDS)[number];
 
 export type CalendarEventLink = {
@@ -19,7 +19,7 @@ export type CalendarEventLink = {
   sourceUrl?: string;
 };
 
-export const RSVP_STATUSES = ["accepted", "declined", "tentative", "needsAction"] as const;
+const RSVP_STATUSES = ["accepted", "declined", "tentative", "needsAction"] as const;
 export type RsvpStatus = (typeof RSVP_STATUSES)[number];
 
 export const calendarEventSchema = z.object({

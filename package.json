@@ -16,7 +16,7 @@
     "lint": "eslint . --max-warnings 0 --cache --cache-location node_modules/.cache/eslint/",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "test:watch": "vitest",
     "changelog": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/gen-changelog.ts",
     "changelog:check": "npm run changelog -- --check",

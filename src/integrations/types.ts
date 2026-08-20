@@ -1,19 +1,13 @@
 import { z } from "zod";
 
-export const INTEGRATION_PROVIDER_IDS = [
-  "google",
-  "microsoft",
-  "spotify",
-  "github",
-  "anilist",
-] as const;
+const INTEGRATION_PROVIDER_IDS = ["google", "microsoft", "spotify", "github", "anilist"] as const;
 export type IntegrationProviderId = (typeof INTEGRATION_PROVIDER_IDS)[number];
-export const integrationProviderIdSchema = z.enum(INTEGRATION_PROVIDER_IDS);
+const integrationProviderIdSchema = z.enum(INTEGRATION_PROVIDER_IDS);
 
-export const integrationAccountStatusSchema = z.enum(["connected", "needsReconnect"]);
+const integrationAccountStatusSchema = z.enum(["connected", "needsReconnect"]);
 export type IntegrationAccountStatus = z.infer<typeof integrationAccountStatusSchema>;
 
-export const integrationTokenSchema = z.object({
+const integrationTokenSchema = z.object({
   accessToken: z.string().min(1),
   refreshToken: z.string().min(1).optional(),
   expiresAt: z.number().int().positive(),

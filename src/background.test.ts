@@ -1,0 +1,121 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { anilistProvider } from "@/integrations/providers/anilist";
+
+const CALLBACK_KEY = "lux:anilist-callback";
+const STATE = "state-abc";
+
+type MessageListener = (
+  message: unknown,
+  sender: { tab?: { id?: number } },
+  sendResponse: (response?: unknown) => void,
+) => unknown;
+
+function chromeMock() {
+  return globalThis.chrome as unknown as {
+    runtime: { onMessage: { addListener: ReturnType<typeof vi.fn> } };
+    tabs: { remove: ReturnType<typeof vi.fn> };
+    storage: {
+      session: {
+        get: (key: string) => Promise<Record<string, unknown>>;
+        set: ReturnType<typeof vi.fn>;
+        clear: () => void;
+      };
+    };
+  };
+}
+
+async function loadWorker(): Promise<MessageListener> {
+  vi.resetModules();
+  await import("@/background");
+  const listener = chromeMock().runtime.onMessage.addListener.mock.calls.at(-1)?.[0] as
+    | MessageListener
+    | undefined;
+  if (!listener) throw new Error("background.ts registered no onMessage listener");
+  return listener;
+}
+
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+function oauthMessage(overrides: Record<string, unknown> = {}) {
+  return { type: "anilist-oauth", accessToken: "tok", state: STATE, ...overrides };
+}
+
+describe("background worker — AniList callback", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    chromeMock().storage.session.clear();
+  });
+
+  it("stashes the callback and closes the tab it came from", async () => {
+    const listener = await loadWorker();
+    const sendResponse = vi.fn();
+    listener(
+      oauthMessage({ tokenType: "Bearer", expiresIn: "3600" }),
+      { tab: { id: 42 } },
+      sendResponse,
+    );
+    await flush();
+
+    const stored = await chromeMock().storage.session.get(CALLBACK_KEY);
+    expect(stored[CALLBACK_KEY]).toMatchObject({ accessToken: "tok", state: STATE });
+    expect(chromeMock().tabs.remove).toHaveBeenCalledWith(42);
+    expect(sendResponse).toHaveBeenCalledWith({ received: true });
+  });
+
+  it("closes the tab when AniList returns an error instead of a token", async () => {
+    const listener = await loadWorker();
+    listener(
+      { type: "anilist-oauth", error: "access_denied", state: STATE },
+      { tab: { id: 7 } },
+      vi.fn(),
+    );
+    await flush();
+    expect(chromeMock().tabs.remove).toHaveBeenCalledWith(7);
+  });
+
+  it("closes the tab even when the state does not match a live request", async () => {
+    const listener = await loadWorker();
+    listener(oauthMessage({ state: "someone-elses-state" }), { tab: { id: 5 } }, vi.fn());
+    await flush();
+    expect(chromeMock().tabs.remove).toHaveBeenCalledWith(5);
+  });
+
+  it("still closes the tab when the stash write fails", async () => {
+    const listener = await loadWorker();
+    chromeMock().storage.session.set.mockRejectedValueOnce(new Error("quota"));
+    listener(oauthMessage(), { tab: { id: 9 } }, vi.fn());
+    await flush();
+    expect(chromeMock().tabs.remove).toHaveBeenCalledWith(9);
+  });
+
+  it("closes nothing when the sender has no tab", async () => {
+    const listener = await loadWorker();
+    listener(oauthMessage(), {}, vi.fn());
+    await flush();
+    expect(chromeMock().tabs.remove).not.toHaveBeenCalled();
+  });
+
+  it("ignores unrelated message types", async () => {
+    const listener = await loadWorker();
+    listener({ type: "something-else" }, { tab: { id: 3 } }, vi.fn());
+    await flush();
+    expect(chromeMock().tabs.remove).not.toHaveBeenCalled();
+  });
+
+  it("settles a pending acquireToken and closes the tab", async () => {
+    const listener = await loadWorker();
+    const acquire = anilistProvider.acquireToken;
+    if (!acquire) throw new Error("anilistProvider must expose acquireToken");
+
+    const pending = acquire({ clientId: "c", state: STATE, interactive: true } as never);
+    await flush();
+    listener(
+      oauthMessage({ accessToken: "tok-e2e", tokenType: "Bearer", expiresIn: "3600" }),
+      { tab: { id: 1 } },
+      vi.fn(),
+    );
+
+    await expect(pending).resolves.toMatchObject({ accessToken: "tok-e2e", tokenType: "Bearer" });
+    expect(chromeMock().tabs.remove).toHaveBeenCalledWith(1);
+  });
+});
