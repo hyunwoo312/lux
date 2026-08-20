@@ -52,6 +52,7 @@ export function WidgetGrid() {
   const setGeometry = useWidgetDragStore((s) => s.setGeometry);
   const dragging = useWidgetDragStore((s) => s.type !== null);
   const previewType = useWidgetPaletteStore((s) => s.previewType);
+  const paletteOpen = useWidgetPaletteStore((s) => s.open);
   const reduced = useReducedMotion();
   const previewRef = useRef<HTMLDivElement>(null);
   const { width, mounted, containerRef } = useContainerWidth();
@@ -208,10 +209,13 @@ export function WidgetGrid() {
     return { x: spot.x, y: spot.y, w, h, accent: plugin.accent ?? "default" };
   }, [previewType, displayLayout, cols]);
   const previewBottom = previewPlacement ? previewPlacement.y + previewPlacement.h : 0;
+  const previewFloor = useRef(0);
+  if (!paletteOpen) previewFloor.current = 0;
+  else if (previewBottom > previewFloor.current) previewFloor.current = previewBottom;
   const rows = Math.max(
     availableRows,
     previewRows ?? getLayoutBottom(displayLayout),
-    previewBottom,
+    previewFloor.current,
   );
   const workspaceHeight = rows * UNIT;
   const showGrid = editing || showGridLines;

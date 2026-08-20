@@ -1,5 +1,5 @@
-import type { PointerEvent as ReactPointerEvent } from "react";
-import { useMemo, useRef } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
+import { forwardRef, useMemo, useRef } from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import type { Variants } from "motion/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -9,7 +9,7 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { isOverGrid, resolveDrop } from "@/widgets/core/drag";
 import { getAccentVars } from "@/widgets/core/accent";
-import type { WidgetPlugin } from "@/widgets/core/types";
+import { WIDGET_CATEGORIES, WIDGET_CATEGORY_LABELS, type WidgetPlugin } from "@/widgets/core/types";
 import { useWidgetDragStore } from "@/widgets/core/useWidgetDragStore";
 import { useWidgetHighlightStore } from "@/widgets/core/useWidgetHighlightStore";
 import { widgetPlugins } from "@/widgets/registry";
@@ -36,6 +36,80 @@ function commitDrop(plugin: WidgetPlugin, px: number, py: number, ghostW: number
   });
 }
 
+type WidgetCardProps = {
+  plugin: WidgetPlugin;
+  added: boolean;
+  previewed: boolean;
+  variants: Variants;
+  onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => void;
+  onPreview: () => void;
+  onKeyDown: (event: ReactKeyboardEvent<HTMLButtonElement>) => void;
+  onSelect: () => void;
+};
+
+const WidgetRow = forwardRef<HTMLButtonElement, WidgetCardProps>(function WidgetRow(
+  { plugin, added, previewed, variants, onPointerDown, onPreview, onKeyDown, onSelect },
+  ref,
+) {
+  const Icon = plugin.icon;
+  return (
+    <motion.button
+      ref={ref}
+      variants={variants}
+      type="button"
+      onPointerDown={onPointerDown}
+      onMouseEnter={onPreview}
+      onFocus={onPreview}
+      onKeyDown={onKeyDown}
+      onClick={onSelect}
+      className="
+        relative flex cursor-grab touch-none items-start gap-2.5 rounded-md px-2 py-2 text-left
+        outline-none
+        focus-visible:ring-primary/60 focus-visible:ring-2
+      "
+    >
+      {previewed && (
+        <motion.span
+          layoutId="palette-hover"
+          aria-hidden
+          style={getAccentVars(plugin.accent ?? "default")}
+          transition={{ type: "spring", stiffness: 520, damping: 42 }}
+          className="
+            border-primary/60 bg-primary/10 pointer-events-none absolute inset-0 rounded-md border
+          "
+        />
+      )}
+      <span
+        className={cn(
+          `
+            relative mt-0.5 flex size-7 shrink-0 items-center justify-center
+            [&_img]:size-5
+            [&_svg]:size-5
+          `,
+          !plugin.brandIcon && "text-foreground/80",
+        )}
+      >
+        <Icon />
+      </span>
+      <span className="relative flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="flex items-center gap-1.5">
+          <span className="truncate text-sm font-medium">{plugin.name}</span>
+          {added && <Check className="text-muted-foreground/70 size-3 shrink-0" aria-hidden />}
+          {added && <span className="sr-only">Added</span>}
+        </span>
+        <span className="text-muted-foreground/70 text-2xs line-clamp-2 leading-snug">
+          {plugin.description}
+        </span>
+        {plugin.recommended && !added && (
+          <span className="text-primary text-2xs font-semibold tracking-wide uppercase">
+            Recommended
+          </span>
+        )}
+      </span>
+    </motion.button>
+  );
+});
+
 export function WidgetPalette() {
   const open = useWidgetPaletteStore((s) => s.open);
   const setOpen = useWidgetPaletteStore((s) => s.setOpen);
@@ -46,6 +120,7 @@ export function WidgetPalette() {
   const setHighlighted = useWidgetHighlightStore((s) => s.setHighlighted);
   const reduced = useReducedMotion();
   const lastDragEnd = useRef(0);
+  const cardRefs = useRef<(HTMLButtonElement | null)[][]>([]);
   const openRef = useRef(open);
   openRef.current = open;
   const activeTypes = new Set(widgets.map((widget) => widget.type));
@@ -75,11 +150,43 @@ export function WidgetPalette() {
   );
   const itemVariants = useMemo<Variants>(
     () => ({
-      hidden: { opacity: 0, x: reduced ? 0 : -8 },
-      visible: { opacity: 1, x: 0, transition: { duration: 0.14, ease: "easeOut" } },
+      hidden: { opacity: 0, y: reduced ? 0 : -6 },
+      visible: { opacity: 1, y: 0, transition: { duration: 0.14, ease: "easeOut" } },
     }),
     [reduced],
   );
+
+  const groups = useMemo(
+    () =>
+      WIDGET_CATEGORIES.map((category) => ({
+        category,
+        plugins: widgetPlugins.filter((plugin) => plugin.category === category),
+      })).filter((group) => group.plugins.length > 0),
+    [],
+  );
+
+  const focusCell = (column: number, row: number) => {
+    const columnRefs = cardRefs.current[column];
+    if (!columnRefs || columnRefs.length === 0) return;
+    columnRefs[Math.max(0, Math.min(columnRefs.length - 1, row))]?.focus();
+  };
+
+  const handleGridKeyDown = (
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+    column: number,
+    row: number,
+  ) => {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      focusCell(column, row + (event.key === "ArrowDown" ? 1 : -1));
+      return;
+    }
+    if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+      event.preventDefault();
+      const next = column + (event.key === "ArrowRight" ? 1 : -1);
+      focusCell(Math.max(0, Math.min(groups.length - 1, next)), row);
+    }
+  };
 
   const handleAdd = (plugin: WidgetPlugin) => {
     addWidget(plugin.type);
@@ -170,8 +277,9 @@ export function WidgetPalette() {
           <PopoverPrimitive.Portal forceMount>
             <PopoverPrimitive.Content
               forceMount
-              align="end"
+              align="start"
               sideOffset={8}
+              collisionPadding={12}
               className="z-50"
               onOpenAutoFocus={(event) => event.preventDefault()}
               onCloseAutoFocus={(event) => event.preventDefault()}
@@ -182,100 +290,51 @@ export function WidgetPalette() {
                 animate="visible"
                 exit="exit"
                 className="
-                  glass-panel text-popover-foreground w-60 origin-top-right rounded-xl
+                  glass-panel text-popover-foreground w-[40rem] origin-top-left rounded-xl
                   bg-[var(--glass-bg-thick)] p-1.5 outline-none
                 "
               >
-                <div className="px-2 pt-1 pb-1.5">
-                  <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                <div className="px-2 pt-1 pb-2">
+                  <p className="text-muted-foreground/60 text-2xs font-semibold uppercase">
                     Widgets
                   </p>
-                  <p className="text-muted-foreground/60 text-2xs mt-0.5">
+                  <p className="text-muted-foreground mt-1 text-xs">
                     Click to add, or drag onto the grid.
                   </p>
                 </div>
                 <div
-                  className="flex flex-col gap-0.5"
                   onMouseLeave={clearPreviewPlugin}
                   onBlur={(event) => {
                     if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
                       clearPreviewPlugin();
                     }
                   }}
+                  className="grid grid-cols-3 items-start gap-x-2 gap-y-3 px-1 pt-1 pb-1"
                 >
-                  {widgetPlugins.map((plugin) => {
-                    const Icon = plugin.icon;
-                    const added = activeTypes.has(plugin.type);
-                    return (
-                      <Tooltip key={plugin.type} content={plugin.description} side="right" solid>
-                        <motion.button
+                  {groups.map((group, column) => (
+                    <section key={group.category} className="flex min-w-0 flex-col gap-1">
+                      <h3 className="text-foreground/70 px-2 pb-0.5 text-xs font-semibold">
+                        {WIDGET_CATEGORY_LABELS[group.category]}
+                      </h3>
+                      {group.plugins.map((plugin, row) => (
+                        <WidgetRow
+                          key={plugin.type}
+                          ref={(node) => {
+                            cardRefs.current[column] ??= [];
+                            cardRefs.current[column][row] = node;
+                          }}
+                          plugin={plugin}
+                          added={activeTypes.has(plugin.type)}
+                          previewed={previewType === plugin.type}
                           variants={itemVariants}
-                          type="button"
-                          style={getAccentVars(plugin.accent ?? "default")}
                           onPointerDown={(event) => handlePointerDown(event, plugin)}
-                          onMouseEnter={() => previewPlugin(plugin)}
-                          onFocus={() => previewPlugin(plugin)}
-                          onClick={() => handleClick(plugin)}
-                          className="
-                            relative flex cursor-grab touch-none items-center gap-3 rounded-md px-2
-                            py-2 text-left text-sm outline-none
-                          "
-                        >
-                          {previewType === plugin.type && (
-                            <motion.span
-                              layoutId="palette-hover"
-                              aria-hidden
-                              transition={{ type: "spring", stiffness: 520, damping: 42 }}
-                              className="
-                                border-primary/60 bg-primary/10 pointer-events-none absolute inset-0
-                                rounded-md border
-                              "
-                            />
-                          )}
-                          <span
-                            className={cn(
-                              `
-                                relative flex size-8 items-center justify-center
-                                [&_img]:size-6
-                                [&_svg]:size-6
-                              `,
-                              !plugin.brandIcon && "text-foreground/80",
-                            )}
-                          >
-                            <Icon />
-                          </span>
-                          <span className="relative flex min-w-0 flex-1 flex-col">
-                            <span className="flex items-center gap-1.5">
-                              <span className="truncate font-medium">{plugin.name}</span>
-                              {plugin.recommended && !added && (
-                                <span
-                                  className="
-                                    text-primary text-2xs font-semibold tracking-wide uppercase
-                                  "
-                                >
-                                  Recommended
-                                </span>
-                              )}
-                            </span>
-                            <span className="text-muted-foreground truncate text-xs">
-                              {plugin.description}
-                            </span>
-                          </span>
-                          {added && (
-                            <span
-                              className="
-                                text-muted-foreground/70 relative flex shrink-0 items-center gap-1
-                                text-2xs
-                              "
-                            >
-                              <Check className="size-3" aria-hidden />
-                              Added
-                            </span>
-                          )}
-                        </motion.button>
-                      </Tooltip>
-                    );
-                  })}
+                          onPreview={() => previewPlugin(plugin)}
+                          onKeyDown={(event) => handleGridKeyDown(event, column, row)}
+                          onSelect={() => handleClick(plugin)}
+                        />
+                      ))}
+                    </section>
+                  ))}
                 </div>
               </motion.div>
             </PopoverPrimitive.Content>

@@ -10,6 +10,7 @@ import { GithubTabs } from "@/widgets/github/GithubTabs";
 export const githubPlugin: WidgetPlugin = {
   type: "github",
   name: "GitHub",
+  category: "productivity",
   description: "Your contributions, notification inbox and watched releases",
   icon: GitHubServiceIcon,
   brandIcon: true,

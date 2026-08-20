@@ -9,6 +9,7 @@ import { SPORTS_ACCENT } from "@/widgets/sports/types";
 export const sportsPlugin: WidgetPlugin = {
   type: "sports",
   name: "Sports",
+  category: "information",
   description: "Live and upcoming scores for a league you follow",
   icon: Trophy,
   defaultLayout: { w: 6, h: 6, minW: 6, minH: 6, maxW: 12, maxH: 12 },

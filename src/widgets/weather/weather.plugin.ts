@@ -10,6 +10,7 @@ import { WEATHER_ACCENT } from "@/widgets/weather/types";
 export const weatherPlugin: WidgetPlugin = {
   type: "weather",
   name: "Weather",
+  category: "information",
   description: "Current conditions and the days ahead",
   recommended: true,
   icon: CloudSun,

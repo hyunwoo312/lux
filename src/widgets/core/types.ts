@@ -19,6 +19,15 @@ export const WIDGET_TYPES = [
 ] as const;
 export type WidgetType = (typeof WIDGET_TYPES)[number];
 
+export const WIDGET_CATEGORIES = ["productivity", "media", "information"] as const;
+export type WidgetCategory = (typeof WIDGET_CATEGORIES)[number];
+
+export const WIDGET_CATEGORY_LABELS: Record<WidgetCategory, string> = {
+  productivity: "Productivity",
+  media: "Media",
+  information: "Information",
+};
+
 export type WidgetInstance = {
   id: string;
   type: WidgetType;
@@ -37,6 +46,7 @@ export type WidgetLock = {
 export type WidgetPlugin = {
   type: WidgetType;
   name: string;
+  category: WidgetCategory;
   description: string;
   recommended?: boolean;
   icon: WidgetIcon;

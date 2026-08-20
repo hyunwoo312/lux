@@ -10,6 +10,7 @@ import { useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore"
 export const quickAccessPlugin: WidgetPlugin = {
   type: "quickAccess",
   name: "Quick Access",
+  category: "productivity",
   description: "Fast links to the sites you visit most",
   recommended: true,
   icon: MousePointer2,

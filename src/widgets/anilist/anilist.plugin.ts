@@ -9,6 +9,7 @@ import { AnilistTabs } from "@/widgets/anilist/AnilistTabs";
 export const anilistPlugin: WidgetPlugin = {
   type: "anilist",
   name: "AniList",
+  category: "media",
   description: "Track the anime and manga you're following",
   icon: AnilistServiceIcon,
   brandIcon: true,

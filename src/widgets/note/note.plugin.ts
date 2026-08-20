@@ -9,6 +9,7 @@ import { useNoteStore } from "@/widgets/note/useNoteStore";
 export const notePlugin: WidgetPlugin = {
   type: "note",
   name: "Note",
+  category: "productivity",
   description: "A quick scratchpad for jotting things down",
   recommended: true,
   icon: StickyNote,

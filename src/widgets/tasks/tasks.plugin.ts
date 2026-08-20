@@ -9,6 +9,7 @@ import { useTasksStore } from "@/widgets/tasks/useTasksStore";
 export const tasksPlugin: WidgetPlugin = {
   type: "tasks",
   name: "Tasks",
+  category: "productivity",
   description: "A simple to-do list for the day",
   recommended: true,
   icon: ListTodo,
