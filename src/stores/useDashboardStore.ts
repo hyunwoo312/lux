@@ -42,14 +42,29 @@ function starterColumns(): number {
   return gridColumns(contentWidth);
 }
 
+export type PendingRemoval = { instance: WidgetInstance; layoutItem: LayoutItem };
+
+export const UNDO_WINDOW_MS = 8000;
+
+let undoTimer: number | undefined;
+
+function clearUndoTimer(): void {
+  if (undoTimer === undefined) return;
+  clearTimeout(undoTimer);
+  undoTimer = undefined;
+}
+
 type DashboardState = {
   widgets: WidgetInstance[];
   layout: Layout;
   columns: number;
   editing: boolean;
   lastAddedId: string | null;
+  pendingRemoval: PendingRemoval | null;
   addWidget: (type: WidgetType, position?: { x: number; y: number }) => void;
   removeWidget: (id: string) => void;
+  undoRemove: () => void;
+  settlePendingRemoval: () => void;
   setLayout: (layout: Layout) => void;
   setColumns: (columns: number) => void;
   toggleEditing: () => void;
@@ -73,14 +88,20 @@ const layoutItemSchema = z.object({
 
 const widgetInstanceSchema = z.object({ id: z.string(), type: widgetTypeSchema });
 
+const pendingRemovalSchema = z
+  .object({ instance: widgetInstanceSchema, layoutItem: layoutItemSchema })
+  .nullable()
+  .catch(null);
+
 const persistedSchema = z.object({
   widgets: z.array(z.unknown()),
   layout: z.array(layoutItemSchema),
+  pendingRemoval: pendingRemovalSchema.optional(),
 });
 
 export function reconcilePersisted(
   persisted: unknown,
-): { widgets: WidgetInstance[]; layout: Layout } | null {
+): { widgets: WidgetInstance[]; layout: Layout; pendingRemoval: PendingRemoval | null } | null {
   const parsed = persistedSchema.safeParse(persisted);
   if (!parsed.success) return null;
   const widgets = parsed.data.widgets
@@ -89,7 +110,7 @@ export function reconcilePersisted(
     .map((result) => result.data);
   const ids = new Set(widgets.map((widget) => widget.id));
   const layout = parsed.data.layout.filter((item) => ids.has(item.i));
-  return { widgets, layout };
+  return { widgets, layout, pendingRemoval: parsed.data.pendingRemoval ?? null };
 }
 
 function placeLayoutItem(
@@ -125,12 +146,13 @@ const gatedStorage = createGatedChromeStorage();
 
 export const useDashboardStore = create<DashboardState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       widgets: [],
       layout: [],
       columns: DEFAULT_COLUMNS,
       editing: false,
       lastAddedId: null,
+      pendingRemoval: null,
       addWidget: (type, position) =>
         set((state) => {
           const plugin = getWidgetPlugin(type);
@@ -144,11 +166,37 @@ export const useDashboardStore = create<DashboardState>()(
           };
         }),
       removeWidget: (id) => {
-        pruneInstance(id);
-        set((state) => ({
+        get().settlePendingRemoval();
+        const state = get();
+        const instance = state.widgets.find((entry) => entry.id === id);
+        const layoutItem = state.layout.find((entry) => entry.i === id);
+        if (!instance || !layoutItem) return;
+        set({
           widgets: state.widgets.filter((entry) => entry.id !== id),
           layout: state.layout.filter((entry) => entry.i !== id),
-        }));
+          pendingRemoval: { instance, layoutItem },
+        });
+        undoTimer = window.setTimeout(() => get().settlePendingRemoval(), UNDO_WINDOW_MS);
+      },
+      undoRemove: () => {
+        clearUndoTimer();
+        const pending = get().pendingRemoval;
+        if (!pending) return;
+        set((state) => {
+          const spot = findNearestOpenPosition(pending.layoutItem, state.layout, state.columns);
+          return {
+            widgets: [...state.widgets, pending.instance],
+            layout: [...state.layout, { ...pending.layoutItem, x: spot.x, y: spot.y }],
+            pendingRemoval: null,
+          };
+        });
+      },
+      settlePendingRemoval: () => {
+        clearUndoTimer();
+        const pending = get().pendingRemoval;
+        if (!pending) return;
+        pruneInstance(pending.instance.id);
+        set({ pendingRemoval: null });
       },
       setLayout: (layout) => set({ layout }),
       setColumns: (columns) => set({ columns }),
@@ -181,11 +229,13 @@ export const useDashboardStore = create<DashboardState>()(
       version: 1,
       onRehydrateStorage: () => (state) => {
         gatedStorage.open();
+        state?.settlePendingRemoval();
         state?.seedStarterIfFirstRun();
       },
       partialize: (state) => ({
         widgets: state.widgets,
         layout: state.layout,
+        pendingRemoval: state.pendingRemoval,
       }),
       merge: (persisted, current) => {
         const reconciled = reconcilePersisted(persisted);

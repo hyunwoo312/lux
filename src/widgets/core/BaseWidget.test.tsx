@@ -23,9 +23,12 @@ describe("BaseWidget", () => {
     vi.useRealTimers();
   });
 
-  it("removes the widget only after confirming in the dialog", () => {
+  const WARNING = "Your 3 tasks will be deleted.";
+  const warns = () => WARNING;
+
+  it("removes the widget only after confirming when content would be lost", () => {
     const onRemove = vi.fn();
-    render(editingWidget(onRemove));
+    render(editingWidget(onRemove, true, warns));
 
     fireEvent.click(screen.getByRole("button", { name: "Remove Notes" }));
     expect(onRemove).not.toHaveBeenCalled();
@@ -42,7 +45,7 @@ describe("BaseWidget", () => {
 
   it("does not remove the widget when the dialog is cancelled", () => {
     const onRemove = vi.fn();
-    render(editingWidget(onRemove));
+    render(editingWidget(onRemove, true, warns));
 
     fireEvent.click(screen.getByRole("button", { name: "Remove Notes" }));
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
@@ -52,29 +55,38 @@ describe("BaseWidget", () => {
   });
 
   it("shows the widget's removal note in the dialog", () => {
-    render(editingWidget(vi.fn(), true, () => "Your 3 tasks will be deleted."));
+    render(editingWidget(vi.fn(), true, warns));
 
     fireEvent.click(screen.getByRole("button", { name: "Remove Notes" }));
 
-    expect(screen.getByText("Your 3 tasks will be deleted.")).toBeInTheDocument();
+    expect(screen.getByText(WARNING)).toBeInTheDocument();
   });
 
-  it("falls back to the generic removal note", () => {
-    render(editingWidget(vi.fn(), true, () => null));
+  it("removes straight away when the widget has nothing to lose", () => {
+    const onRemove = vi.fn();
+    render(editingWidget(onRemove, true, () => null));
 
     fireEvent.click(screen.getByRole("button", { name: "Remove Notes" }));
 
-    expect(
-      screen.getByText("Its settings will be reset — you can add it back anytime."),
-    ).toBeInTheDocument();
+    expect(onRemove).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("Remove Notes?")).not.toBeInTheDocument();
+  });
+
+  it("removes straight away when the widget declares no note at all", () => {
+    const onRemove = vi.fn();
+    render(editingWidget(onRemove));
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove Notes" }));
+
+    expect(onRemove).toHaveBeenCalledTimes(1);
   });
 
   it("closes the removal dialog when leaving edit mode", () => {
     const onRemove = vi.fn();
-    const { rerender } = render(editingWidget(onRemove));
+    const { rerender } = render(editingWidget(onRemove, true, warns));
 
     fireEvent.click(screen.getByRole("button", { name: "Remove Notes" }));
-    rerender(editingWidget(onRemove, false));
+    rerender(editingWidget(onRemove, false, warns));
 
     expect(screen.queryByText("Remove Notes?")).not.toBeInTheDocument();
     expect(onRemove).not.toHaveBeenCalled();

@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { reconcilePersisted, useDashboardStore } from "@/stores/useDashboardStore";
+import { reconcilePersisted, UNDO_WINDOW_MS, useDashboardStore } from "@/stores/useDashboardStore";
 import { WELCOME_SEEN_KEY } from "@/onboarding";
 import { collides } from "@/widgets/core/layout-engine";
+import { useWidgetSettingsStore } from "@/widgets/core/useWidgetSettingsStore";
 
 const store = () => useDashboardStore.getState();
 
@@ -13,7 +14,9 @@ describe("useDashboardStore", () => {
       columns: 12,
       editing: false,
       lastAddedId: null,
+      pendingRemoval: null,
     });
+    useWidgetSettingsStore.setState({ settings: {} });
   });
 
   it("adds a widget with a matching layout item", () => {
@@ -123,6 +126,127 @@ describe("useDashboardStore", () => {
       store().seedStarterIfFirstRun();
 
       expect(store().widgets).toHaveLength(1);
+    });
+  });
+
+  describe("removing a widget", () => {
+    function addWidgetWithSettings() {
+      store().addWidget("tasks");
+      const id = store().widgets[0]?.id ?? "";
+      useWidgetSettingsStore.getState().setBackground(id, "solid");
+      return id;
+    }
+
+    it("takes the widget off the grid but keeps its content until the window closes", () => {
+      const id = addWidgetWithSettings();
+
+      store().removeWidget(id);
+
+      expect(store().widgets).toHaveLength(0);
+      expect(store().layout).toHaveLength(0);
+      expect(useWidgetSettingsStore.getState().settings[id]?.background).toBe("solid");
+    });
+
+    it("brings the widget back with its content on undo", () => {
+      const id = addWidgetWithSettings();
+      store().removeWidget(id);
+
+      store().undoRemove();
+
+      expect(store().widgets.map((w) => w.id)).toEqual([id]);
+      expect(store().layout.map((l) => l.i)).toEqual([id]);
+      expect(useWidgetSettingsStore.getState().settings[id]?.background).toBe("solid");
+    });
+
+    it("drops the content once the undo window expires", () => {
+      vi.useFakeTimers();
+      const id = addWidgetWithSettings();
+      store().removeWidget(id);
+
+      vi.advanceTimersByTime(UNDO_WINDOW_MS);
+
+      expect(store().pendingRemoval).toBeNull();
+      expect(useWidgetSettingsStore.getState().settings[id]).toBeUndefined();
+      vi.useRealTimers();
+    });
+
+    it("settles the previous removal when a second widget is removed", () => {
+      const first = addWidgetWithSettings();
+      store().addWidget("note");
+      const second = store().widgets[1]?.id ?? "";
+
+      store().removeWidget(first);
+      store().removeWidget(second);
+
+      expect(useWidgetSettingsStore.getState().settings[first]).toBeUndefined();
+      expect(store().pendingRemoval?.instance.id).toBe(second);
+    });
+
+    it("puts the widget back exactly where it was when the space is still free", () => {
+      store().addWidget("tasks");
+      const id = store().widgets[0]?.id ?? "";
+      const before = store().layout.find((l) => l.i === id);
+
+      store().removeWidget(id);
+      store().undoRemove();
+
+      expect(store().layout.find((l) => l.i === id)).toEqual(before);
+    });
+
+    it("does not drop the widget back on top of something that moved in", () => {
+      store().addWidget("tasks");
+      store().addWidget("note");
+      const [removed, other] = store().widgets.map((w) => w.id);
+      const removedItem = store().layout.find((l) => l.i === removed);
+
+      store().removeWidget(removed ?? "");
+      store().setLayout(
+        store().layout.map((l) =>
+          l.i === other ? { ...l, x: removedItem?.x ?? 0, y: removedItem?.y ?? 0 } : l,
+        ),
+      );
+      store().undoRemove();
+
+      const restored = store().layout.find((l) => l.i === removed);
+      const moved = store().layout.find((l) => l.i === other);
+      expect(restored && moved && collides(restored, moved)).toBe(false);
+    });
+
+    it("prunes a removal left pending by a previous page on rehydrate", () => {
+      const id = addWidgetWithSettings();
+      store().removeWidget(id);
+
+      const onRehydrate = useDashboardStore.persist.getOptions().onRehydrateStorage;
+      onRehydrate?.(store())?.(store(), undefined);
+
+      expect(store().pendingRemoval).toBeNull();
+      expect(useWidgetSettingsStore.getState().settings[id]).toBeUndefined();
+      const liveIds = new Set(store().widgets.map((w) => w.id));
+      expect(store().layout.filter((l) => !liveIds.has(l.i))).toEqual([]);
+    });
+  });
+
+  describe("pending removal survives a reload", () => {
+    it("is written by partialize and read back by reconcilePersisted", () => {
+      store().addWidget("tasks");
+      const id = store().widgets[0]?.id ?? "";
+      store().removeWidget(id);
+
+      const partialize = useDashboardStore.persist.getOptions().partialize;
+      const written = JSON.parse(JSON.stringify(partialize?.(store())));
+
+      expect(reconcilePersisted(written)?.pendingRemoval?.instance.id).toBe(id);
+    });
+
+    it("tolerates a malformed pending removal rather than losing the dashboard", () => {
+      const result = reconcilePersisted({
+        widgets: [{ id: "a", type: "note" }],
+        layout: [{ i: "a", x: 0, y: 0, w: 2, h: 2 }],
+        pendingRemoval: "nonsense",
+      });
+
+      expect(result?.widgets).toHaveLength(1);
+      expect(result?.pendingRemoval).toBeNull();
     });
   });
 

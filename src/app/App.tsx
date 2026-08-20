@@ -3,6 +3,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Wallpaper } from "@/app/Wallpaper";
 import { Header } from "@/app/Header";
 import { WidgetDragOverlay } from "@/app/WidgetDragOverlay";
+import { UndoBar } from "@/app/UndoBar";
 import { SettingsDialog } from "@/settings";
 import { Tour, Welcome } from "@/onboarding";
 import { WidgetGrid } from "@/widgets/WidgetGrid";
@@ -43,6 +44,7 @@ export function App() {
           </div>
         </div>
         <WidgetDragOverlay />
+        <UndoBar />
         <SettingsDialog />
         <Welcome />
         <Tour />

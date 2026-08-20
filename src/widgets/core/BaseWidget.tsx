@@ -67,6 +67,17 @@ export function BaseWidget({
   const reduced = useReducedMotion();
   const [showConfig, setShowConfig] = useState(false);
   const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
+  const [removalWarning, setRemovalWarning] = useState<string | null>(null);
+
+  const requestRemove = () => {
+    const warning = removalNote?.() ?? null;
+    if (!warning) {
+      onRemove();
+      return;
+    }
+    setRemovalWarning(warning);
+    setConfirmRemoveOpen(true);
+  };
   const chrome = useMemo(() => ({ openConfig: () => setShowConfig(true) }), []);
 
   useEffect(() => {
@@ -210,7 +221,7 @@ export function BaseWidget({
                       size="icon"
                       className="size-7 rounded-sm [&_svg]:size-4"
                       aria-label={`Remove ${title}`}
-                      onClick={() => setConfirmRemoveOpen(true)}
+                      onClick={requestRemove}
                     >
                       <X />
                     </Button>
@@ -248,10 +259,7 @@ export function BaseWidget({
         open={confirmRemoveOpen}
         onOpenChange={setConfirmRemoveOpen}
         title={`Remove ${title}?`}
-        description={
-          (confirmRemoveOpen && removalNote?.()) ||
-          "Its settings will be reset — you can add it back anytime."
-        }
+        description={removalWarning ?? ""}
         confirmLabel="Remove"
         onConfirm={onRemove}
       />
