@@ -7,17 +7,27 @@ import { useElementSize } from "@/hooks/useElementSize";
 import { usePolledResource, type PolledResourceState } from "@/widgets/core/usePolledResource";
 import { useWeatherSync } from "@/widgets/weather/hooks/useWeatherSync";
 import { forecastVisibility, formatTemperature } from "@/widgets/weather/lib/forecast";
-import { fetchWeather, parseCachedWeather } from "@/widgets/weather/lib/open-meteo";
+import {
+  fetchWeather,
+  parseCachedWeather,
+  weatherCacheKey,
+} from "@/widgets/weather/lib/open-meteo";
 import { WeatherCurrent } from "@/widgets/weather/components/WeatherCurrent";
 import { WeatherForecast } from "@/widgets/weather/components/WeatherForecast";
 import { WeatherIcon } from "@/widgets/weather/components/WeatherIcon";
-import type { WeatherData, WeatherLocation, WeatherUnits } from "@/widgets/weather/types";
+import type {
+  WeatherData,
+  WeatherLocation,
+  WeatherUnits,
+  WeatherWindUnit,
+} from "@/widgets/weather/types";
 
 const REFRESH_MS = 10 * 60 * 1000;
 
 type WeatherCardProps = {
   location: WeatherLocation;
   units: WeatherUnits;
+  windUnit: WeatherWindUnit;
   mode: "compact" | "detailed";
   onSelect?: () => void;
   onRemove: () => void;
@@ -131,14 +141,21 @@ function DetailedWeather({
   );
 }
 
-export function WeatherCard({ location, units, mode, onSelect, onRemove }: WeatherCardProps) {
+export function WeatherCard({
+  location,
+  units,
+  windUnit,
+  mode,
+  onSelect,
+  onRemove,
+}: WeatherCardProps) {
   const fetcher = useCallback(
-    (signal: AbortSignal) => fetchWeather(location, units, signal),
-    [location, units],
+    (signal: AbortSignal) => fetchWeather(location, units, windUnit, signal),
+    [location, units, windUnit],
   );
   const { state, refresh, isRefreshing, lastSyncedAt } = usePolledResource(fetcher, {
     intervalMs: REFRESH_MS,
-    cacheKey: `weather:${location.latitude},${location.longitude},${units}`,
+    cacheKey: weatherCacheKey(location, units, windUnit),
     persist: true,
     parsePersisted: parseCachedWeather,
   });

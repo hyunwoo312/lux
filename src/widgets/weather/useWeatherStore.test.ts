@@ -1,18 +1,42 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { MAX_LOCATIONS, useWeatherStore } from "@/widgets/weather/useWeatherStore";
-import { makeLocationId, type WeatherLocation } from "@/widgets/weather/types";
+import { makeLocationId, WEATHER_METRICS, type WeatherLocation } from "@/widgets/weather/types";
 
 const store = () => useWeatherStore.getState();
 const ID = "weather-1";
 const data = (instanceId: string) => store().byInstance[instanceId];
 
+type WeatherInstance = NonNullable<ReturnType<typeof data>>;
+
+function reloaded() {
+  const { partialize, merge } = useWeatherStore.persist.getOptions();
+  const written = JSON.parse(JSON.stringify(partialize?.(store())));
+  const restored = merge?.(written, store()) as {
+    byInstance: Record<string, WeatherInstance>;
+  };
+  return restored.byInstance[ID];
+}
+
 function city(id: string): WeatherLocation {
   return { id, name: id, latitude: 1, longitude: 2 };
 }
 
+function instance(locations: WeatherLocation[] = []): WeatherInstance {
+  return {
+    locations,
+    units: "metric",
+    windUnit: "auto",
+    forecastDays: "5",
+    rainAlert: "likely",
+    metrics: [...WEATHER_METRICS],
+    selectedId: null,
+    searchOpen: false,
+  };
+}
+
 beforeEach(() => {
   useWeatherStore.setState({
-    byInstance: { [ID]: { locations: [], units: "metric", selectedId: null, searchOpen: false } },
+    byInstance: { [ID]: instance() },
   });
 });
 
@@ -33,6 +57,35 @@ describe("useWeatherStore", () => {
       store().addLocation(ID, city(`c${index}`));
     }
     expect(data(ID)?.locations).toHaveLength(MAX_LOCATIONS);
+  });
+
+  it("shows the city you just added instead of the one already on screen", () => {
+    store().addLocation(ID, city("a"));
+    store().addLocation(ID, city("b"));
+
+    expect(data(ID)?.selectedId).toBe("b");
+  });
+
+  it("remembers the city you were viewing across a reload", () => {
+    store().addLocation(ID, city("a"));
+    store().addLocation(ID, city("b"));
+    store().selectCity(ID, "a");
+
+    expect(reloaded()?.selectedId).toBe("a");
+  });
+
+  it("keeps every reading turned off rather than restoring the defaults", () => {
+    store().setMetrics(ID, []);
+
+    expect(reloaded()?.metrics).toEqual([]);
+  });
+
+  it("comes back to the list when nothing was selected", () => {
+    store().addLocation(ID, city("a"));
+    store().addLocation(ID, city("b"));
+    store().clearSelection(ID);
+
+    expect(reloaded()?.selectedId).toBeNull();
   });
 
   it("removes a location", () => {
@@ -82,8 +135,8 @@ describe("useWeatherStore", () => {
   it("keeps instances independent", () => {
     useWeatherStore.setState({
       byInstance: {
-        a: { locations: [], units: "metric", selectedId: null, searchOpen: false },
-        b: { locations: [], units: "metric", selectedId: null, searchOpen: false },
+        a: instance(),
+        b: instance(),
       },
     });
     store().addLocation("a", city("x"));
@@ -96,7 +149,7 @@ describe("useWeatherStore", () => {
     beforeEach(() => {
       useWeatherStore.setState({
         byInstance: {
-          [ID]: { locations: [city("a")], units: "metric", selectedId: null, searchOpen: false },
+          [ID]: instance([city("a")]),
         },
         syncNonce: {},
         lastSyncAt: {},
@@ -155,7 +208,18 @@ describe("useWeatherStore", () => {
         units: "metric",
       };
 
-      expect(migrate?.(config, 2)).toEqual({ byInstance: { weather: config } });
+      expect(migrate?.(config, 2)).toEqual({
+        byInstance: {
+          weather: {
+            ...config,
+            windUnit: "auto",
+            forecastDays: "5",
+            rainAlert: "likely",
+            metrics: [...WEATHER_METRICS],
+            selectedId: null,
+          },
+        },
+      });
     });
 
     it("passes current-version data through unchanged", () => {

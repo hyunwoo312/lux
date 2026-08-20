@@ -16,9 +16,14 @@ import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlacehol
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
-import { ANILIST_MAX_ITEMS, type AnilistActivity } from "@/widgets/anilist/types";
+import {
+  ACTIVITY_REFRESH_MS,
+  ANILIST_MAX_ITEMS,
+  ANILIST_PAGE_SIZE,
+  type AnilistActivity,
+} from "@/widgets/anilist/types";
 
-const REFRESH_MS = 3 * 60 * 1000;
+const OPEN_STALE_MS = 3 * 60 * 1000;
 const SEEN_DWELL_MS = 2000;
 
 export function ActivityView({
@@ -36,7 +41,7 @@ export function ActivityView({
   const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh, lastSyncedAt } =
     usePagedResource((page, signal) => fetchActivityPage(page, lang, signal), {
       enabled,
-      intervalMs: REFRESH_MS,
+      intervalMs: ACTIVITY_REFRESH_MS,
       maxItems: ANILIST_MAX_ITEMS,
       cacheKey: anilistKeys.activity(userId, lang),
       getKey: (activity) => activity.id,
@@ -58,6 +63,15 @@ export function ActivityView({
   }, []);
 
   const items = state.status === "success" ? state.items : [];
+  const pagedIn = items.length > ANILIST_PAGE_SIZE;
+  const openedRef = useRef(false);
+  useEffect(() => {
+    if (openedRef.current) return;
+    openedRef.current = true;
+    if (pagedIn) return;
+    if (Date.now() - lastSyncedAt >= OPEN_STALE_MS) refresh();
+  }, [pagedIn, lastSyncedAt, refresh]);
+
   const newest = items[0]?.createdAt;
   useEffect(() => {
     if (newest == null) return;

@@ -5,6 +5,15 @@ const store = () => useStocksStore.getState();
 const ID = "stocks-1";
 const symbols = (instanceId: string) => store().byInstance[instanceId]?.symbols;
 
+function reloaded() {
+  const { partialize, merge } = useStocksStore.persist.getOptions();
+  const written = JSON.parse(JSON.stringify(partialize?.(store())));
+  const restored = merge?.(written, store()) as {
+    byInstance: Record<string, { selectedSymbol: string | null }>;
+  };
+  return restored.byInstance[ID];
+}
+
 beforeEach(() => {
   useStocksStore.setState({
     byInstance: {
@@ -27,6 +36,28 @@ describe("useStocksStore", () => {
   it("adds a symbol, normalized to uppercase", () => {
     store().addSymbol(ID, "aapl");
     expect(symbols(ID)).toEqual(["AAPL"]);
+  });
+
+  it("shows the symbol you just added instead of the one already on screen", () => {
+    store().addSymbol(ID, "aapl");
+    store().addSymbol(ID, "msft");
+
+    expect(store().byInstance[ID]?.selectedSymbol).toBe("MSFT");
+  });
+
+  it("remembers the symbol you were viewing across a reload", () => {
+    store().addSymbol(ID, "aapl");
+    store().addSymbol(ID, "msft");
+    store().selectSymbol(ID, "AAPL");
+
+    expect(reloaded()?.selectedSymbol).toBe("AAPL");
+  });
+
+  it("comes back to the list when nothing was selected", () => {
+    store().addSymbol(ID, "aapl");
+    store().clearSelection(ID);
+
+    expect(reloaded()?.selectedSymbol).toBeNull();
   });
 
   it("ignores a blank symbol", () => {

@@ -8,6 +8,7 @@ export type AnilistTab = (typeof ANILIST_TABS)[number];
 export const ANILIST_MAX_ITEMS = 100;
 export const ANILIST_PAGE_SIZE = 20;
 export const ANILIST_MAX_LIBRARY_ITEMS = 2000;
+export const ACTIVITY_REFRESH_MS = 15 * 60 * 1000;
 
 export const MEDIA_FILTERS = ["both", "anime", "manga"] as const;
 export type MediaFilter = (typeof MEDIA_FILTERS)[number];

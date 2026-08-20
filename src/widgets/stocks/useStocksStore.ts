@@ -60,6 +60,7 @@ const dataSchema = z.object({
   showName: z.boolean().default(true),
   showIndices: z.boolean().default(false),
   sort: z.enum(STOCK_SORTS).default("manual"),
+  selectedSymbol: z.string().nullable().default(null),
 });
 
 const persistedSchema = z.object({
@@ -94,6 +95,7 @@ export const useStocksStore = create<StocksState>()(
           return update(state, instanceId, (current) => ({
             ...current,
             symbols: [...current.symbols, normalized],
+            selectedSymbol: normalized,
           }));
         }),
       removeSymbol: (instanceId, symbol) =>
@@ -190,6 +192,7 @@ export const useStocksStore = create<StocksState>()(
               showName: data.showName,
               showIndices: data.showIndices,
               sort: data.sort,
+              selectedSymbol: data.selectedSymbol,
             },
           ]),
         ),
@@ -205,7 +208,7 @@ export const useStocksStore = create<StocksState>()(
             showName: data.showName,
             showIndices: data.showIndices,
             sort: data.sort,
-            selectedSymbol: null,
+            selectedSymbol: data.selectedSymbol,
           };
         }
         return { ...current, byInstance };

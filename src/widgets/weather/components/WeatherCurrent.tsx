@@ -8,7 +8,13 @@ import {
 import { wmoInfo } from "@/widgets/weather/lib/wmo";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { WeatherIcon } from "@/widgets/weather/components/WeatherIcon";
-import type { WeatherData } from "@/widgets/weather/types";
+import { useWeather } from "@/widgets/weather/useWeatherStore";
+import type { WeatherData, WeatherMetric, WeatherRainAlert } from "@/widgets/weather/types";
+
+const RAIN_THRESHOLD: Record<Exclude<WeatherRainAlert, "off">, number> = {
+  chance: 30,
+  likely: 50,
+};
 
 type WeatherCurrentProps = {
   data: WeatherData;
@@ -17,9 +23,21 @@ type WeatherCurrentProps = {
 
 export function WeatherCurrent({ data, name }: WeatherCurrentProps) {
   const clock24h = useAppSettingsStore((s) => s.clock24h);
+  const metrics = useWeather((d) => d.metrics);
+  const rainAlert = useWeather((d) => d.rainAlert);
   const { current, today, hourly, sunrise, sunset, uvIndex, unitLabels } = data;
   const condition = wmoInfo(current.weatherCode, current.isDay);
-  const imminent = findImminentPrecip(hourly, current.time);
+  const imminent =
+    rainAlert === "off"
+      ? null
+      : findImminentPrecip(hourly, current.time, { threshold: RAIN_THRESHOLD[rainAlert] });
+  const visible = metrics.filter((metric) => {
+    if (metric === "uv") return uvIndex !== null;
+    if (metric === "sunrise") return Boolean(sunrise);
+    if (metric === "sunset") return Boolean(sunset);
+    return true;
+  });
+  const shows = (metric: WeatherMetric) => visible.includes(metric);
 
   return (
     <div className="flex flex-col gap-2">
@@ -57,36 +75,44 @@ export function WeatherCurrent({ data, name }: WeatherCurrentProps) {
         </div>
       )}
 
-      <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-        <span>Feels like {formatTemperature(current.apparentTemperature)}</span>
-        <span className="inline-flex items-center gap-1">
-          <Droplets className="size-3.5 shrink-0" aria-hidden />
-          {current.humidity}%
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <Wind className="size-3.5 shrink-0" aria-hidden />
-          {Math.round(current.windSpeed)} {unitLabels.windSpeed}
-          <Navigation
-            className="size-3 shrink-0"
-            style={{ transform: `rotate(${current.windDirection + 180}deg)` }}
-            role="img"
-            aria-label={`from the ${windCardinal(current.windDirection)}`}
-          />
-        </span>
-        {uvIndex !== null && <span>UV {Math.round(uvIndex)}</span>}
-        {sunrise && (
-          <span className="inline-flex items-center gap-1">
-            <Sunrise className="size-3.5 shrink-0" aria-hidden />
-            {formatClock(sunrise, !clock24h)}
-          </span>
-        )}
-        {sunset && (
-          <span className="inline-flex items-center gap-1">
-            <Sunset className="size-3.5 shrink-0" aria-hidden />
-            {formatClock(sunset, !clock24h)}
-          </span>
-        )}
-      </div>
+      {visible.length > 0 && (
+        <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+          {shows("feelsLike") && (
+            <span>Feels like {formatTemperature(current.apparentTemperature)}</span>
+          )}
+          {shows("humidity") && (
+            <span className="inline-flex items-center gap-1">
+              <Droplets className="size-3.5 shrink-0" aria-hidden />
+              {current.humidity}%
+            </span>
+          )}
+          {shows("wind") && (
+            <span className="inline-flex items-center gap-1">
+              <Wind className="size-3.5 shrink-0" aria-hidden />
+              {Math.round(current.windSpeed)} {unitLabels.windSpeed}
+              <Navigation
+                className="size-3 shrink-0"
+                style={{ transform: `rotate(${current.windDirection + 180}deg)` }}
+                role="img"
+                aria-label={`from the ${windCardinal(current.windDirection)}`}
+              />
+            </span>
+          )}
+          {shows("uv") && uvIndex !== null && <span>UV {Math.round(uvIndex)}</span>}
+          {shows("sunrise") && (
+            <span className="inline-flex items-center gap-1">
+              <Sunrise className="size-3.5 shrink-0" aria-hidden />
+              {formatClock(sunrise, !clock24h)}
+            </span>
+          )}
+          {shows("sunset") && (
+            <span className="inline-flex items-center gap-1">
+              <Sunset className="size-3.5 shrink-0" aria-hidden />
+              {formatClock(sunset, !clock24h)}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

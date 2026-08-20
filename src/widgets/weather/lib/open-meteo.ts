@@ -6,9 +6,24 @@ import type {
   WeatherDay,
   WeatherLocation,
   WeatherUnits,
+  WeatherWindUnit,
 } from "@/widgets/weather/types";
 
 const FORECAST_ENDPOINT = "https://api.open-meteo.com/v1/forecast";
+const FORECAST_DAYS = "8";
+
+function windSpeedUnit(units: WeatherUnits, windUnit: WeatherWindUnit): string {
+  if (windUnit !== "auto") return windUnit;
+  return units === "imperial" ? "mph" : "kmh";
+}
+
+export function weatherCacheKey(
+  location: WeatherLocation,
+  units: WeatherUnits,
+  windUnit: WeatherWindUnit,
+): string {
+  return `weather:${location.latitude},${location.longitude},${units},${windSpeedUnit(units, windUnit)}`;
+}
 const GEOCODE_ENDPOINT = "https://geocoding-api.open-meteo.com/v1/search";
 
 const forecastSchema = z.object({
@@ -56,6 +71,7 @@ function buildDays(daily: z.infer<typeof forecastSchema>["daily"]): WeatherDay[]
 export async function fetchWeather(
   location: WeatherLocation,
   units: WeatherUnits,
+  windUnit: WeatherWindUnit,
   signal?: AbortSignal,
 ): Promise<WeatherData> {
   const params = new URLSearchParams({
@@ -66,9 +82,9 @@ export async function fetchWeather(
     hourly: "temperature_2m,weather_code,precipitation_probability,is_day",
     daily: "weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max",
     temperature_unit: units === "imperial" ? "fahrenheit" : "celsius",
-    wind_speed_unit: units === "imperial" ? "mph" : "kmh",
+    wind_speed_unit: windSpeedUnit(units, windUnit),
     timezone: "auto",
-    forecast_days: "7",
+    forecast_days: FORECAST_DAYS,
   });
 
   const response = await fetch(`${FORECAST_ENDPOINT}?${params.toString()}`, {

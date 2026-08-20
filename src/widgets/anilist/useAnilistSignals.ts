@@ -7,7 +7,7 @@ import {
 } from "@/widgets/anilist/lib/anilist-api";
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
-import { ANILIST_MAX_ITEMS } from "@/widgets/anilist/types";
+import { ACTIVITY_REFRESH_MS, ANILIST_MAX_ITEMS } from "@/widgets/anilist/types";
 
 const REFRESH_MS = 3 * 60 * 1000;
 
@@ -19,7 +19,7 @@ export function useAnilistSignals(enabled: boolean, viewerId: number): AnilistSi
 
   const activity = usePagedResource((page, signal) => fetchActivityPage(page, lang, signal), {
     enabled,
-    intervalMs: REFRESH_MS,
+    intervalMs: ACTIVITY_REFRESH_MS,
     maxItems: ANILIST_MAX_ITEMS,
     cacheKey: anilistKeys.activity(viewerId, lang),
     getKey: (item) => item.id,

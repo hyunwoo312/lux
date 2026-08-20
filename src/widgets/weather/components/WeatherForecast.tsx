@@ -1,10 +1,10 @@
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { formatHour, formatTemperature, formatWeekday } from "@/widgets/weather/lib/forecast";
 import { WeatherIcon } from "@/widgets/weather/components/WeatherIcon";
+import { useWeather } from "@/widgets/weather/useWeatherStore";
 import type { WeatherData } from "@/widgets/weather/types";
 
 const HOURLY_COUNT = 48;
-const DAILY_COUNT = 5;
 const HOURLY_PRECIP_MIN = 20;
 
 type WeatherForecastProps = {
@@ -15,10 +15,11 @@ type WeatherForecastProps = {
 
 export function WeatherForecast({ data, showHourly, showDaily }: WeatherForecastProps) {
   const clock24h = useAppSettingsStore((s) => s.clock24h);
+  const forecastDays = useWeather((d) => d.forecastDays);
   const { current, hourly, daily } = data;
   const start = hourly.findIndex((hour) => hour.time > current.time);
   const hours = start === -1 ? [] : hourly.slice(start, start + HOURLY_COUNT);
-  const days = daily.slice(1, 1 + DAILY_COUNT);
+  const days = daily.slice(1, 1 + Number(forecastDays));
 
   return (
     <div className="flex flex-col gap-2">

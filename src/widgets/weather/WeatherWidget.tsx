@@ -14,6 +14,7 @@ export function WeatherWidget() {
   const instanceId = useWidgetInstanceId();
   const locations = useWeather((d) => d.locations);
   const units = useWeather((d) => d.units);
+  const windUnit = useWeather((d) => d.windUnit);
   const selectedId = useWeather((d) => d.selectedId);
   const selectCity = useWeatherStore((s) => s.selectCity);
   const removeLocation = useWeatherStore((s) => s.removeLocation);
@@ -58,6 +59,7 @@ export function WeatherWidget() {
               <WeatherCard
                 location={detail}
                 units={units}
+                windUnit={windUnit}
                 mode="detailed"
                 onRemove={() => removeLocation(instanceId, detail.id)}
               />
@@ -88,6 +90,7 @@ export function WeatherWidget() {
                           <WeatherCard
                             location={location}
                             units={units}
+                            windUnit={windUnit}
                             mode="compact"
                             onSelect={() => selectCity(instanceId, location.id)}
                             onRemove={() => removeLocation(instanceId, location.id)}

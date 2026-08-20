@@ -4,6 +4,25 @@ export const WEATHER_ACCENT: AccentPreset = "cyan";
 
 export type WeatherUnits = "metric" | "imperial";
 
+export const WEATHER_WIND_UNITS = ["auto", "kmh", "ms", "mph", "kn"] as const;
+export type WeatherWindUnit = (typeof WEATHER_WIND_UNITS)[number];
+
+export const WEATHER_FORECAST_DAYS = ["3", "5", "7"] as const;
+export type WeatherForecastDays = (typeof WEATHER_FORECAST_DAYS)[number];
+
+export const WEATHER_RAIN_ALERTS = ["off", "chance", "likely"] as const;
+export type WeatherRainAlert = (typeof WEATHER_RAIN_ALERTS)[number];
+
+export const WEATHER_METRICS = [
+  "feelsLike",
+  "humidity",
+  "wind",
+  "uv",
+  "sunrise",
+  "sunset",
+] as const;
+export type WeatherMetric = (typeof WEATHER_METRICS)[number];
+
 export type WeatherLocation = {
   id: string;
   name: string;
