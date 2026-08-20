@@ -15,7 +15,7 @@ const SLOT = "flex h-12 w-9 shrink-0 items-center justify-center";
 export function FeedThumb({ variant, src, title, color, fallback }: FeedThumbProps) {
   if (!src && fallback) {
     return (
-      <span className={cn(SLOT, "bg-foreground/10 text-muted-foreground rounded")} aria-hidden>
+      <span className={cn(SLOT, "bg-foreground/10 text-muted-foreground rounded-xs")} aria-hidden>
         {fallback}
       </span>
     );

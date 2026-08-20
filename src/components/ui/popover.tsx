@@ -30,7 +30,7 @@ function PopoverContent({
         className={cn(
           `
             bg-popover text-popover-foreground border-border overlay-pop z-50 rounded-lg border
-            shadow-lg outline-none origin-[var(--radix-popover-content-transform-origin)]
+            elev-3 outline-none origin-[var(--radix-popover-content-transform-origin)]
           `,
           className,
         )}

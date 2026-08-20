@@ -6,7 +6,7 @@ import { WidgetErrorBoundary } from "@/widgets/core/WidgetErrorBoundary";
 import { CommonWidgetConfig } from "@/widgets/core/CommonWidgetConfig";
 import { ConnectOverlay } from "@/components/ConnectOverlay";
 import { WidgetConfig } from "@/components/config/WidgetConfig";
-import { getAccentVars } from "@/widgets/core/accent";
+import { accentClass } from "@/widgets/core/accent";
 import type { WidgetInstance } from "@/widgets/core/types";
 import { useWidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
 import { useWidgetHighlightStore } from "@/widgets/core/useWidgetHighlightStore";
@@ -66,7 +66,7 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
 
   return (
     <WidgetInstanceContext.Provider value={instance.id}>
-      <div ref={containerRef} className="relative h-full" style={getAccentVars(accent)}>
+      <div ref={containerRef} className={cn("relative h-full", accentClass(accent))}>
         <div inert={locked} className={cn("h-full", locked && "blur-[3px]")}>
           <BaseWidget
             title={plugin.name}

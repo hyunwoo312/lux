@@ -119,8 +119,8 @@ export function SettingsDialog() {
         <aside
           className={cn(
             `
-              border-border/60 flex shrink-0 flex-col overflow-hidden border-r
-              bg-[var(--glass-bg-thick)] transition-[width] duration-200 ease-out
+              border-border/60 flex shrink-0 flex-col overflow-hidden border-r bg-surface-overlay
+              transition-[width] duration-200 ease-out
             `,
             effectiveCollapsed ? "w-[3.25rem]" : "w-56",
           )}

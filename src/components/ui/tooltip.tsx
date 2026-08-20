@@ -37,7 +37,7 @@ function TooltipBody({ content, side, align, solid }: TooltipBodyProps) {
         collisionPadding={12}
         className={cn(
           `
-            bg-popover text-popover-foreground border-border z-[100] rounded-md border px-2.5 py-1.5
+            bg-popover text-popover-foreground overlay-pop elev-3 z-tooltip rounded-md px-2.5 py-1.5
             text-2xs font-medium
           `,
           solid ? "max-w-[14rem]" : "tracking-wide whitespace-nowrap uppercase",

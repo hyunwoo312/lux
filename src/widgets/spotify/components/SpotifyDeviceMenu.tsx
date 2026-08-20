@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Check, Monitor } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { getAccentVars } from "@/widgets/core/accent";
+import { accentClass } from "@/widgets/core/accent";
 import { SPOTIFY_ACCENT, type SpotifyPlaybackDevice } from "@/widgets/spotify/types";
 
 type SpotifyDeviceMenuProps = {
@@ -45,8 +45,7 @@ export function SpotifyDeviceMenu({
       <PopoverContent
         align="start"
         side="top"
-        className="w-56 p-1.5"
-        style={getAccentVars(SPOTIFY_ACCENT)}
+        className={cn(accentClass(SPOTIFY_ACCENT), "w-56 p-1.5")}
       >
         <div className="flex flex-col gap-0.5">
           {devices.map((device) => {

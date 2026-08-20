@@ -241,7 +241,7 @@ const HeatmapGrid = memo(function HeatmapGrid({
                 <span
                   key={day.date}
                   data-day={dayTitle(day)}
-                  className={cn("rounded-[2px]", LEVEL_CLASS[day.level])}
+                  className={cn("rounded-xs", LEVEL_CLASS[day.level])}
                   style={{ width: CELL, height: CELL }}
                 />
               ))}

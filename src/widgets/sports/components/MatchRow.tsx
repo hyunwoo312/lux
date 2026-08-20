@@ -88,8 +88,8 @@ function Row({ teams, status, detail, label }: RowProps) {
           aria-label={label}
           onClick={() => setOpen((value) => !value)}
           className="
-            hover:bg-foreground/[0.04]
-            focus-visible:bg-foreground/[0.04]
+            hover:bg-foreground/5
+            focus-visible:bg-foreground/5
             flex w-full items-center gap-2 rounded-lg px-2 py-2.5 text-left outline-none
             transition-colors
           "

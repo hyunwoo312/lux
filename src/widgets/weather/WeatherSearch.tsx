@@ -3,7 +3,7 @@ import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Check, ChevronLeft, MapPin } from "lucide-react";
 import { ExpandingSearch } from "@/components/ExpandingSearch";
 import { cn } from "@/lib/utils";
-import { getAccentVars } from "@/widgets/core/accent";
+import { accentClass } from "@/widgets/core/accent";
 import { searchPlaces } from "@/widgets/weather/lib/open-meteo";
 import { MAX_LOCATIONS, useWeather, useWeatherStore } from "@/widgets/weather/useWeatherStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
@@ -141,8 +141,10 @@ export function WeatherSearch() {
       activeDescendantId={hasOptions ? optionId(active) : undefined}
     >
       <div
-        style={getAccentVars(WEATHER_ACCENT)}
-        className="border-input bg-popover w-full overflow-hidden rounded-sm border shadow-md"
+        className={cn(
+          accentClass(WEATHER_ACCENT),
+          "border-input bg-popover w-full overflow-hidden rounded-sm border shadow-md",
+        )}
       >
         <div className="max-h-56 overflow-y-auto p-1">
           {atCap ? (

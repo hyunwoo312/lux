@@ -3,10 +3,12 @@ import { createRoot } from "react-dom/client";
 import { MotionConfig } from "motion/react";
 import { App } from "@/app/App";
 import { AppErrorBoundary } from "@/app/AppErrorBoundary";
-import { applyThemeClass, getStoredTheme } from "@/lib/theme";
+import { applyThemeClass, getStoredMode, resolveTheme } from "@/lib/theme";
+import { applyAccentClass, getStoredAccent } from "@/stores/useAccentStore";
 import "@/styles/globals.css";
 
-applyThemeClass(getStoredTheme());
+applyThemeClass(resolveTheme(getStoredMode()));
+applyAccentClass(getStoredAccent());
 
 const root = document.getElementById("root");
 if (!root) {

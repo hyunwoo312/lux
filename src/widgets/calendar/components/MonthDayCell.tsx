@@ -36,7 +36,7 @@ export function MonthDayCell({ day, children }: MonthDayCellProps) {
         mode === "week" ? selectDay(instanceId, day.date) : focusDay(instanceId, day.date)
       }
       className={cn(
-        "focus-visible:bg-foreground/[0.05]",
+        "focus-visible:bg-foreground/5",
         "relative flex min-w-0 flex-col overflow-hidden rounded-md text-left outline-none",
         "transition-colors",
         day.isToday && "bg-primary/5",

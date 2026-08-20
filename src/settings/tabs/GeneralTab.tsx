@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { ConfigSegmented } from "@/components/config/WidgetConfig";
+import { AccentPicker } from "@/settings/components/AccentPicker";
 import { exportSettings, importSettings } from "@/lib/backup";
 import { BackgroundSetting } from "@/settings/components/BackgroundSetting";
 import { ResetControl } from "@/settings/components/ResetControl";
@@ -10,13 +11,22 @@ import { SettingsSection } from "@/settings/components/SettingsSection";
 import { StorageSection } from "@/settings/components/StorageSection";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useShortcutsStore } from "@/stores/useShortcutsStore";
+import { useAccentStore } from "@/stores/useAccentStore";
 import { useThemeStore } from "@/stores/useThemeStore";
 import { clearWallpaperAssets, useWallpaperStore } from "@/stores/useWallpaperStore";
+import type { ThemeMode } from "@/lib/theme";
+
+const THEME_OPTIONS = [
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+  { value: "system", label: "System" },
+] as const satisfies { value: ThemeMode; label: string }[];
 
 function resetAllSettings() {
   useShortcutsStore.getState().resetAll();
   useAppSettingsStore.getState().reset();
-  useThemeStore.getState().setTheme("dark");
+  useThemeStore.getState().setMode("dark");
+  useAccentStore.getState().reset();
   void clearWallpaperAssets();
   useWallpaperStore.getState().reset();
 }
@@ -26,6 +36,8 @@ export function GeneralTab() {
   const setClock24h = useAppSettingsStore((s) => s.setClock24h);
   const showGridLines = useAppSettingsStore((s) => s.showGridLines);
   const setShowGridLines = useAppSettingsStore((s) => s.setShowGridLines);
+  const themeMode = useThemeStore((s) => s.mode);
+  const setThemeMode = useThemeStore((s) => s.setMode);
   const isThemePersisted = useThemeStore((s) => s.isPersisted);
   const fileRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | undefined>(undefined);
@@ -58,8 +70,15 @@ export function GeneralTab() {
       <SettingsSection title="Appearance" description="Theme and grid for the dashboard.">
         <SettingsRow
           title="Theme"
-          description="Switch between the light and dark glass themes."
-          control={<ThemeToggle />}
+          description="Follow your system setting, or pick light or dark."
+          control={
+            <ConfigSegmented
+              label="Theme"
+              value={themeMode}
+              options={THEME_OPTIONS}
+              onChange={setThemeMode}
+            />
+          }
         >
           {!isThemePersisted && (
             <p className="text-destructive text-xs">
@@ -67,6 +86,11 @@ export function GeneralTab() {
             </p>
           )}
         </SettingsRow>
+        <SettingsRow
+          title="Accent"
+          description="The highlight colour used across Lux."
+          control={<AccentPicker />}
+        />
         <SettingsRow
           title="Grid lines"
           description="Always show the dashboard grid, not only while editing."

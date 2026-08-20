@@ -6,6 +6,7 @@ import { GithubWidget } from "@/widgets/github/GithubWidget";
 import { GithubConfig } from "@/widgets/github/GithubConfig";
 import { GithubHeaderActions } from "@/widgets/github/GithubHeaderActions";
 import { GithubTabs } from "@/widgets/github/GithubTabs";
+import { GITHUB_ACCENT } from "@/widgets/github/types";
 
 export const githubPlugin: WidgetPlugin = {
   type: "github",
@@ -19,7 +20,7 @@ export const githubPlugin: WidgetPlugin = {
   configComponent: GithubConfig,
   statusComponent: GithubTabs,
   headerActionComponent: GithubHeaderActions,
-  accent: "violet",
+  accent: GITHUB_ACCENT,
   useLock: () => {
     const loaded = useIntegrationStore((s) => s.loaded);
     const account = useIntegrationStore(

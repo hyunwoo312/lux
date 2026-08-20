@@ -23,8 +23,8 @@ export function UndoBar() {
           exit={{ opacity: 0, y: reduced ? 0 : 12 }}
           transition={{ duration: reduced ? 0 : 0.22, ease: EASE_OUT_QUINT }}
           className="
-            bg-card text-card-foreground fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2
-            items-center gap-3 rounded-full border py-1.5 pr-1.5 pl-4 shadow-lg
+            bg-card text-card-foreground fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 elev-2
+            items-center gap-3 rounded-full py-1.5 pr-1.5 pl-4
           "
         >
           <span className="text-sm">{name} removed</span>

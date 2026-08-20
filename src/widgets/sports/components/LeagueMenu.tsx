@@ -5,7 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { EASE_OUT_QUINT } from "@/lib/motion";
-import { getAccentVars } from "@/widgets/core/accent";
+import { accentClass } from "@/widgets/core/accent";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { LEAGUES, leagueById } from "@/widgets/sports/lib/leagues";
 import { SPORTS_ACCENT } from "@/widgets/sports/types";
@@ -13,9 +13,9 @@ import { useSports, useSportsStore } from "@/widgets/sports/useSportsStore";
 
 const TRIGGER_CLASS = `
   text-muted-foreground
-  hover:text-foreground hover:bg-foreground/[0.06]
-  focus-visible:text-foreground focus-visible:bg-foreground/[0.06]
-  data-[state=open]:text-foreground data-[state=open]:bg-foreground/[0.06]
+  hover:text-foreground hover:bg-foreground/5
+  focus-visible:text-foreground focus-visible:bg-foreground/5
+  data-[state=open]:text-foreground data-[state=open]:bg-foreground/5
   flex min-w-0 shrink items-center gap-1 rounded-sm px-1.5 py-0.5 text-xs outline-none
   transition-colors
 `;
@@ -55,8 +55,7 @@ export function LeagueMenu() {
       </Tooltip>
       <PopoverContent
         align="start"
-        className="w-auto min-w-40 p-1"
-        style={getAccentVars(SPORTS_ACCENT)}
+        className={cn(accentClass(SPORTS_ACCENT), "w-auto min-w-40 p-1")}
       >
         <div className="flex flex-col">
           {LEAGUES.map((league, index) => {

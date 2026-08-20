@@ -26,7 +26,7 @@ import { loadErrorMessage } from "@/lib/net";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ConfigSegmented } from "@/components/config/WidgetConfig";
 import { EASE_OUT_QUINT } from "@/lib/motion";
-import { getAccentVars } from "@/widgets/core/accent";
+import { accentClass } from "@/widgets/core/accent";
 import { usePolledResource, patchPolledResource } from "@/widgets/core/usePolledResource";
 import {
   fetchList,
@@ -526,9 +526,9 @@ type FilterOption<T extends string> = { value: T; label: string; icon: LucideIco
 
 const FILTER_TRIGGER_CLASS = `
   text-muted-foreground/70
-  hover:text-foreground hover:bg-foreground/[0.06]
-  focus-visible:text-foreground focus-visible:bg-foreground/[0.06]
-  data-[state=open]:text-foreground data-[state=open]:bg-foreground/[0.06]
+  hover:text-foreground hover:bg-foreground/5
+  focus-visible:text-foreground focus-visible:bg-foreground/5
+  data-[state=open]:text-foreground data-[state=open]:bg-foreground/5
   grid size-7 shrink-0 place-items-center rounded-sm outline-none transition-colors
 `;
 
@@ -570,8 +570,7 @@ function FilterMenu<T extends string>({
       </Tooltip>
       <PopoverContent
         align="end"
-        className="w-auto min-w-40 p-1"
-        style={getAccentVars(ANILIST_ACCENT)}
+        className={cn(accentClass(ANILIST_ACCENT), "w-auto min-w-40 p-1")}
       >
         <div className="flex flex-col">
           {options.map((option, index) => {

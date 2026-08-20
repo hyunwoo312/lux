@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { getAccentVars } from "@/widgets/core/accent";
+import { accentClass } from "@/widgets/core/accent";
 import { QUICK_ACCESS_ACCENT } from "@/widgets/quick-access/types";
 import { Favicon } from "@/widgets/quick-access/components/Favicon";
 import { useHistorySuggestions } from "@/widgets/quick-access/hooks/useHistorySuggestions";
@@ -120,15 +120,17 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
           side="bottom"
           onOpenAutoFocus={(event) => event.preventDefault()}
           onCloseAutoFocus={(event) => event.preventDefault()}
-          className="max-h-60 w-[var(--radix-popover-trigger-width)] overflow-y-auto p-1"
-          style={getAccentVars(QUICK_ACCESS_ACCENT)}
+          className={cn(
+            accentClass(QUICK_ACCESS_ACCENT),
+            "max-h-60 w-[var(--radix-popover-trigger-width)] overflow-y-auto p-1",
+          )}
         >
           <ul>
             {matches.map((item, index) => {
               const rowClass = "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left";
               const label = (
                 <>
-                  <Favicon url={item.url} size={16} className="size-4 shrink-0 rounded-[3px]" />
+                  <Favicon url={item.url} size={16} className="size-4 shrink-0 rounded-xs" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm">{item.title}</span>
                     <span className="text-muted-foreground block truncate text-xs">

@@ -1,9 +1,9 @@
-import type { CSSProperties } from "react";
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ACCENT_PRESETS } from "@/widgets/core/accent";
+import { accentClass } from "@/widgets/core/accent";
+import { CALENDAR_ACCENT } from "@/widgets/calendar/types";
 import { ConfigSegmented } from "@/components/config/WidgetConfig";
 import {
   addDays,
@@ -28,12 +28,6 @@ const LOOKAHEAD_OPTIONS = [
 function lookaheadValue(days: number): string {
   return LOOKAHEAD_OPTIONS.some((option) => option.value === String(days)) ? String(days) : "7";
 }
-const ACCENT = ACCENT_PRESETS.orange;
-const ACCENT_STYLE = {
-  "--primary": ACCENT.primary,
-  "--primary-foreground": ACCENT.primaryForeground,
-} as CSSProperties;
-
 const NAV_BUTTON =
   "text-muted-foreground/70 hover:text-foreground absolute size-6 [&_svg]:size-3.5";
 
@@ -125,7 +119,7 @@ export function CalendarRangePicker({ onSelect }: CalendarRangePickerProps) {
   };
 
   return (
-    <div className="flex flex-col gap-3 p-3" style={ACCENT_STYLE}>
+    <div className={cn("flex flex-col gap-3 p-3", accentClass(CALENDAR_ACCENT))}>
       <div className="flex justify-center">
         <ConfigSegmented
           label="Date range"

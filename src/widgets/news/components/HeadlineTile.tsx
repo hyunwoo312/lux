@@ -40,7 +40,7 @@ export function HeadlineTile({
       rel="noreferrer"
       onClick={onRead}
       onAuxClick={onRead}
-      className="group bg-foreground/[0.04] relative block aspect-[2/1] overflow-hidden rounded-lg"
+      className="group bg-foreground/5 relative block aspect-[2/1] overflow-hidden rounded-lg"
     >
       {hasImage ? (
         <RemoteImage

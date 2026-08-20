@@ -28,7 +28,7 @@ export function Welcome() {
       <DialogContent
         dismissOnClickOutside={false}
         onOpenAutoFocus={(event) => event.preventDefault()}
-        className="glass-panel w-[min(28rem,calc(100vw-2rem))] bg-[var(--glass-bg-thick)] p-6"
+        className="glass-panel w-[min(28rem,calc(100vw-2rem))] p-6"
       >
         <div className="flex flex-col">
           <motion.img

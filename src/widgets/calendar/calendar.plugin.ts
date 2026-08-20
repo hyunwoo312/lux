@@ -6,6 +6,7 @@ import { CalendarWidget } from "@/widgets/calendar/CalendarWidget";
 import { CalendarConfig } from "@/widgets/calendar/CalendarConfig";
 import { CalendarHeaderActions } from "@/widgets/calendar/CalendarHeaderActions";
 import { CalendarStatus } from "@/widgets/calendar/CalendarStatus";
+import { CALENDAR_ACCENT } from "@/widgets/calendar/types";
 
 export const calendarPlugin: WidgetPlugin = {
   type: "calendar",
@@ -18,7 +19,7 @@ export const calendarPlugin: WidgetPlugin = {
   configComponent: CalendarConfig,
   statusComponent: CalendarStatus,
   headerActionComponent: CalendarHeaderActions,
-  accent: "orange",
+  accent: CALENDAR_ACCENT,
   useLock: () => {
     const loaded = useIntegrationStore((s) => s.loaded);
     const hasAccount = useIntegrationStore((s) =>

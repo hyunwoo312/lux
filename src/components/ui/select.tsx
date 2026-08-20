@@ -57,7 +57,7 @@ function SelectContent({
         className={cn(
           `
             bg-popover text-popover-foreground border-border overlay-pop relative z-50 max-h-72
-            overflow-hidden rounded-md border p-1 shadow-lg
+            elev-3 overflow-hidden rounded-md p-1
             origin-[var(--radix-select-content-transform-origin)]
           `,
           position === "popper" && "w-[var(--radix-select-trigger-width)]",

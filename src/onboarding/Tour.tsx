@@ -183,9 +183,7 @@ export function Tour() {
         ref={cardRef}
         role="dialog"
         aria-label={current.title}
-        className="
-          glass-panel fixed w-72 rounded-xl bg-[var(--glass-bg-thick)] p-4 text-popover-foreground
-        "
+        className="glass-panel fixed w-72 rounded-xl p-4 text-popover-foreground"
         initial={false}
         animate={{ top: cardTop, left: cardLeft }}
         transition={transition}

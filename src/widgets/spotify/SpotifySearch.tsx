@@ -5,7 +5,7 @@ import { Check, Heart, ListPlus, Music, Play } from "lucide-react";
 import { ExpandingSearch } from "@/components/ExpandingSearch";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { getAccentVars } from "@/widgets/core/accent";
+import { accentClass } from "@/widgets/core/accent";
 import {
   addSpotifyToQueue,
   getMySpotifyPlaylists,
@@ -238,8 +238,10 @@ export function SpotifySearch() {
       className="-ml-1.5"
     >
       <div
-        style={getAccentVars(SPOTIFY_ACCENT)}
-        className="border-input bg-popover w-full overflow-hidden rounded-sm border shadow-md"
+        className={cn(
+          accentClass(SPOTIFY_ACCENT),
+          "border-input bg-popover w-full overflow-hidden rounded-sm border shadow-md",
+        )}
       >
         <div className="max-h-72 overflow-y-auto p-1">
           {devices.length === 0 && (

@@ -162,7 +162,7 @@ export function ConfigSegmented<T extends string>({
       onValueChange={handleChange}
       disabled={disabled}
       aria-label={label}
-      className="bg-foreground/[0.06] max-w-full flex-wrap gap-0.5 rounded-md p-0.5"
+      className="bg-foreground/5 max-w-full flex-wrap gap-0.5 rounded-md p-0.5"
     >
       {options.map((option) => {
         const active = option.value === value;

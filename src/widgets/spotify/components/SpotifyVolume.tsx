@@ -1,7 +1,8 @@
 import { Volume1, Volume2, VolumeX } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
-import { getAccentVars } from "@/widgets/core/accent";
+import { cn } from "@/lib/utils";
+import { accentClass } from "@/widgets/core/accent";
 import { SPOTIFY_ACCENT } from "@/widgets/spotify/types";
 
 type SpotifyVolumeProps = {
@@ -36,8 +37,7 @@ export function SpotifyVolume({ volumePercent, disabled, onChange, onCommit }: S
       <PopoverContent
         align="center"
         side="top"
-        className="w-44 px-3 py-3"
-        style={getAccentVars(SPOTIFY_ACCENT)}
+        className={cn(accentClass(SPOTIFY_ACCENT), "w-44 px-3 py-3")}
       >
         <Slider
           value={[Math.round(volumePercent)]}

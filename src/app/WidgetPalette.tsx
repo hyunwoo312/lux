@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { isOverGrid, resolveDrop } from "@/widgets/core/drag";
-import { getAccentVars } from "@/widgets/core/accent";
+import { accentClass } from "@/widgets/core/accent";
 import { WIDGET_CATEGORIES, WIDGET_CATEGORY_LABELS, type WidgetPlugin } from "@/widgets/core/types";
 import { useWidgetDragStore } from "@/widgets/core/useWidgetDragStore";
 import { useWidgetHighlightStore } from "@/widgets/core/useWidgetHighlightStore";
@@ -72,11 +72,11 @@ const WidgetRow = forwardRef<HTMLButtonElement, WidgetCardProps>(function Widget
         <motion.span
           layoutId="palette-hover"
           aria-hidden
-          style={getAccentVars(plugin.accent ?? "default")}
           transition={{ type: "spring", stiffness: 520, damping: 42 }}
-          className="
-            border-primary/60 bg-primary/10 pointer-events-none absolute inset-0 rounded-md border
-          "
+          className={cn(
+            accentClass(plugin.accent),
+            "border-primary/60 bg-primary/10 pointer-events-none absolute inset-0 rounded-md border",
+          )}
         />
       )}
       <span
@@ -290,8 +290,8 @@ export function WidgetPalette() {
                 animate="visible"
                 exit="exit"
                 className="
-                  glass-panel text-popover-foreground w-[40rem] origin-top-left rounded-xl
-                  bg-[var(--glass-bg-thick)] p-1.5 outline-none
+                  glass-panel text-popover-foreground w-[40rem] origin-top-left rounded-xl p-1.5
+                  outline-none
                 "
               >
                 <div className="px-2 pt-1 pb-2">

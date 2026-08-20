@@ -1,3 +1,7 @@
+import type { AccentPreset } from "@/widgets/core/accent";
+
+export const GITHUB_ACCENT: AccentPreset = "violet";
+
 export const GITHUB_VIEWS = ["contributions", "inbox", "releases"] as const;
 export type GithubView = (typeof GITHUB_VIEWS)[number];
 

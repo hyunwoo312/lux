@@ -5,6 +5,7 @@ import { ImageConfig } from "@/widgets/image/ImageConfig";
 import { ImageStatus } from "@/widgets/image/ImageStatus";
 import { ImageWidget } from "@/widgets/image/ImageWidget";
 import { useImageStore } from "@/widgets/image/useImageStore";
+import { IMAGE_ACCENT } from "@/widgets/image/types";
 
 export const imagePlugin: WidgetPlugin = {
   type: "image",
@@ -17,7 +18,7 @@ export const imagePlugin: WidgetPlugin = {
   configComponent: ImageConfig,
   statusComponent: ImageStatus,
   backdropComponent: ImageBackdrop,
-  accent: "yellow",
+  accent: IMAGE_ACCENT,
   bleed: true,
   useBare: (instanceId) => useImageStore((s) => s.byInstance[instanceId]?.hideFrame ?? false),
   removalNote: (instanceId) => {

@@ -142,7 +142,7 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
       <DialogContent
         className="
           glass-panel flex max-h-[85dvh] w-[min(32rem,calc(100vw-2rem))] flex-col gap-0
-          overflow-hidden bg-[var(--glass-bg-thick)] p-0
+          overflow-hidden p-0
         "
       >
         <header className="border-border/50 flex flex-col gap-1 border-b px-6 py-5">
@@ -292,9 +292,7 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
             <div
               className={cn(
                 "flex flex-col gap-2 rounded-md border p-3 transition-colors",
-                draft.includeDiagnostics
-                  ? "border-primary/30 bg-primary/[0.04]"
-                  : "border-border/50",
+                draft.includeDiagnostics ? "border-primary/30 bg-primary/5" : "border-border/50",
               )}
             >
               <div className="flex items-center gap-3">

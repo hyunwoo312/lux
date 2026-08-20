@@ -26,7 +26,7 @@ function Cell({
       className={cn(
         "px-1 py-0.5 text-center tabular-nums",
         divide && "border-border/60 border-l",
-        current && "bg-foreground/[0.06]",
+        current && "bg-foreground/5",
         total
           ? "text-foreground font-semibold"
           : blank

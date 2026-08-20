@@ -163,7 +163,7 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
                 left: 2,
                 top: 2,
               }}
-              className="bg-foreground/[0.06] pointer-events-none absolute rounded-md"
+              className="bg-foreground/5 pointer-events-none absolute rounded-md"
             />
           )}
         </AnimatePresence>

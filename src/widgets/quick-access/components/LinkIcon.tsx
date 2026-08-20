@@ -21,7 +21,7 @@ export function LinkIcon({
           ease-out
           motion-reduce:transition-none
         `,
-        view === "grid" ? "size-8 rounded-md text-sm" : "size-4 rounded-[4px] text-[0.6rem]",
+        view === "grid" ? "size-8 rounded-md text-sm" : "size-4 rounded-xs text-[0.6rem]",
       )}
     >
       {icon ? (

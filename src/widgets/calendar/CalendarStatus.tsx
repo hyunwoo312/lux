@@ -20,8 +20,8 @@ const STATUS_BUTTON = `
   hover:text-foreground
   focus-visible:text-foreground
   flex size-6 flex-none items-center justify-center rounded-sm outline-none transition-colors
-  hover:bg-foreground/[0.06]
-  focus-visible:bg-foreground/[0.06]
+  hover:bg-foreground/5
+  focus-visible:bg-foreground/5
   [&_svg]:size-4
 `;
 

@@ -39,9 +39,7 @@ export function ConfirmDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showClose={false}
-        className="
-          dialog-pop glass-panel w-[min(22rem,calc(100vw-2rem))] bg-[var(--glass-bg-thick)] p-5
-        "
+        className="dialog-pop glass-panel w-[min(22rem,calc(100vw-2rem))] p-5"
       >
         <div className="flex flex-col gap-4">
           <div className="flex items-start gap-3">

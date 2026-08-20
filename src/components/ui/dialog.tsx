@@ -14,7 +14,7 @@ const DialogOverlay = forwardRef<HTMLDivElement, ComponentProps<typeof DialogPri
       <DialogPrimitive.Overlay
         ref={ref}
         data-slot="dialog-overlay"
-        className={cn("dialog-overlay fixed inset-0 z-50 bg-black/30 backdrop-blur-sm", className)}
+        className={cn("dialog-overlay bg-scrim z-overlay fixed inset-0", className)}
         {...props}
       />
     );
@@ -51,8 +51,8 @@ function DialogContent({
         }}
         className={cn(
           `
-            dialog-content bg-popover text-popover-foreground border-border fixed inset-0 z-50
-            m-auto h-fit rounded-2xl border shadow-xl outline-none
+            dialog-content bg-popover text-popover-foreground z-modal fixed inset-0 m-auto h-fit
+            rounded-2xl outline-none
           `,
           className,
         )}

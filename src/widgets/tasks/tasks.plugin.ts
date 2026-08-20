@@ -5,6 +5,7 @@ import { TasksWidget } from "@/widgets/tasks/TasksWidget";
 import { ClearCompletedButton } from "@/widgets/tasks/components/ClearCompletedButton";
 import { TasksStatus } from "@/widgets/tasks/components/TasksStatus";
 import { useTasksStore } from "@/widgets/tasks/useTasksStore";
+import { TASKS_ACCENT } from "@/widgets/tasks/types";
 
 export const tasksPlugin: WidgetPlugin = {
   type: "tasks",
@@ -18,7 +19,7 @@ export const tasksPlugin: WidgetPlugin = {
   configComponent: TasksConfig,
   statusComponent: TasksStatus,
   headerActionComponent: ClearCompletedButton,
-  accent: "indigo",
+  accent: TASKS_ACCENT,
   removalNote: (instanceId) => {
     const count = useTasksStore.getState().byInstance[instanceId]?.tasks.length ?? 0;
     if (count === 0) return null;

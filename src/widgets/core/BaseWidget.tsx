@@ -8,7 +8,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { POP } from "@/lib/motion";
-import { getAccentVars, type AccentPreset } from "@/widgets/core/accent";
+import { accentClass, type AccentPreset } from "@/widgets/core/accent";
 import type { WidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
 import { WidgetChromeContext } from "@/widgets/core/useWidgetChrome";
 import { FauxGlassBackdrop } from "@/widgets/core/FauxGlassBackdrop";
@@ -90,8 +90,6 @@ export function BaseWidget({
   const chromeHidden = bare && !editing && !showConfig;
   const omitSurface = chromeHidden || (contentBackdrop && showConfig);
 
-  const accentStyle = getAccentVars(accent);
-
   const offset = reduced ? 0 : 12;
   const viewVariants: Variants = {
     initial: (toConfig: boolean) => ({ opacity: 0, x: toConfig ? offset : -offset }),
@@ -108,8 +106,8 @@ export function BaseWidget({
   return (
     <WidgetChromeContext.Provider value={chrome}>
       <div
-        style={accentStyle}
         className={cn(
+          accentClass(accent),
           `
             text-card-foreground relative flex h-full flex-col overflow-hidden rounded-xl
             transition-shadow
@@ -119,23 +117,21 @@ export function BaseWidget({
           editing && `pointer-events-none select-none`,
         )}
       >
-        {!omitSurface && background !== "solid" && (
-          <>
-            {!editing && <FauxGlassBackdrop />}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 z-0 bg-[var(--glass-bg)]"
-            />
-          </>
-        )}
+        {!omitSurface && background !== "solid" && !editing && <FauxGlassBackdrop />}
         {!omitSurface && (
-          <div aria-hidden className="widget-bloom pointer-events-none absolute inset-0 z-0" />
+          <div
+            aria-hidden
+            className={cn(
+              "pointer-events-none absolute inset-0 z-0",
+              highlighted ? "widget-bloom" : "widget-sheen",
+            )}
+          />
         )}
         {backdrop && (
           <div
             className={cn(
               "pointer-events-none absolute inset-0 z-0",
-              showConfig && "scale-[1.02] opacity-80 blur-sm",
+              showConfig && "scale-105 opacity-80 blur-sm",
             )}
           >
             {backdrop}
