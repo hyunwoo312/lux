@@ -50,9 +50,9 @@ function PlayingBars({ animate }: { animate: boolean }) {
 
 function QueueArtwork({ url }: { url?: string }) {
   return url ? (
-    <RemoteImage src={url} alt="" className="size-9 shrink-0 rounded-sm object-cover" />
+    <RemoteImage src={url} alt="" className="size-9 shrink-0 rounded-md object-cover" />
   ) : (
-    <span className="bg-foreground/5 grid size-9 shrink-0 place-items-center rounded-sm">
+    <span className="bg-foreground/5 grid size-9 shrink-0 place-items-center rounded-md">
       <Music className="text-ink-3 size-4" aria-hidden />
     </span>
   );

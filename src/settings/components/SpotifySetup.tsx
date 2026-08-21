@@ -93,7 +93,7 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
             key="backing"
             aria-hidden
             className="
-              absolute inset-0 rounded-xl border border-emerald-500/30 bg-emerald-500/10
+              absolute inset-0 rounded-2xl border border-emerald-500/30 bg-emerald-500/10
               dark:border-emerald-400/30 dark:bg-emerald-500/20
             "
             initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}

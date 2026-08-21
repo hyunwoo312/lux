@@ -289,7 +289,7 @@ export function WidgetPalette() {
                 animate="visible"
                 exit="exit"
                 className="
-                  glass-panel text-popover-foreground w-[40rem] origin-top-left rounded-xl p-1.5
+                  glass-panel text-popover-foreground w-[40rem] origin-top-left rounded-2xl p-1.5
                   outline-none
                 "
               >

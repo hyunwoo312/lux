@@ -55,7 +55,7 @@ function SelectContent({
         className={cn(
           `
             bg-popover text-popover-foreground border-border overlay-pop relative z-50 max-h-72
-            elev-3 overflow-hidden rounded-md p-1
+            elev-3 overflow-hidden rounded-xl p-1
             origin-[var(--radix-select-content-transform-origin)]
           `,
           position === "popper" && "w-[var(--radix-select-trigger-width)]",
@@ -80,7 +80,7 @@ function SelectItem({
       className={cn(
         `
           focus:bg-accent focus:text-accent-foreground
-          relative flex w-full cursor-pointer items-center rounded-sm py-1.5 pr-7 pl-2 text-caption
+          relative flex w-full cursor-pointer items-center rounded-md py-1.5 pr-7 pl-2 text-caption
           outline-none select-none
           data-[disabled]:pointer-events-none data-[disabled]:opacity-50
         `,

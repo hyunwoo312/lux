@@ -106,7 +106,7 @@ export function BaseWidget({
         className={cn(
           accentClass(accent),
           `
-            text-card-foreground relative flex h-full flex-col overflow-hidden rounded-xl
+            text-card-foreground relative flex h-full flex-col overflow-hidden rounded-2xl
             transition-shadow
           `,
           !omitSurface &&

@@ -25,7 +25,7 @@ const DialogOverlay = forwardRef<HTMLDivElement, ComponentProps<typeof DialogPri
 const dialogContentVariants = cva(
   `
     dialog-content bg-popover text-popover-foreground glass-panel z-modal fixed inset-0 m-auto h-fit
-    rounded-2xl outline-none
+    rounded-3xl outline-none
   `,
   {
     variants: {
@@ -88,7 +88,7 @@ function DialogCloseButton({ className }: { className?: string }) {
         `
           text-ink-3
           hover:text-ink hover:bg-accent
-          focus-ring grid size-8 shrink-0 cursor-pointer place-items-center rounded-lg
+          focus-ring grid size-8 shrink-0 cursor-pointer place-items-center rounded-md
           transition-colors
         `,
         className,

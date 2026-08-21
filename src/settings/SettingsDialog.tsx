@@ -194,7 +194,7 @@ export function SettingsDialog() {
                   className="
                     press cursor-pointer text-ink-3
                     hover:bg-accent hover:text-ink
-                    grid size-8 place-items-center rounded-lg
+                    grid size-8 place-items-center rounded-md
                   "
                 >
                   <ChevronLeft

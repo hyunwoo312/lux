@@ -47,7 +47,7 @@ export function HeadlineMeta({
               aria-hidden
               loading="lazy"
               onError={() => setFaviconFailed(true)}
-              className="size-3.5 shrink-0 rounded-sm"
+              className="size-3.5 shrink-0 rounded-xs"
             />
           )}
           <span className="min-w-0 truncate">{item.source}</span>

@@ -106,7 +106,7 @@ export function AboutTab() {
         variants={item}
         className="
           border-border/60 from-primary/10 relative flex flex-col items-center gap-3 overflow-hidden
-          rounded-2xl border bg-gradient-to-br to-transparent px-6 py-8 text-center
+          rounded-xl border bg-gradient-to-br to-transparent px-6 py-8 text-center
         "
       >
         <LogoMark />
@@ -345,7 +345,7 @@ function LogoMark() {
       whileHover={{ y: -5, scale: 1.06 }}
       whileTap={{ scale: 0.92 }}
       transition={SPRING_POP}
-      className="focus-ring relative grid size-16 cursor-pointer place-items-center rounded-2xl"
+      className="focus-ring relative grid size-16 cursor-pointer place-items-center rounded-xl"
     >
       <motion.span
         aria-hidden

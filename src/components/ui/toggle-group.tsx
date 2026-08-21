@@ -12,7 +12,7 @@ const toggleGroupItemVariants = cva(
           text-ink-3
           hover:text-ink
           data-[state=on]:text-primary-foreground
-          relative rounded-md px-2.5 py-1 text-caption font-medium
+          relative rounded-sm px-2.5 py-1 text-caption font-medium
         `,
         chip: `
           inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-caption font-medium

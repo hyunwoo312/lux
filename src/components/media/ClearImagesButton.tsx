@@ -35,7 +35,7 @@ export function ClearImagesButton({
           className="
             focus-ring text-ink-3 border-border/60
             hover:text-destructive hover:border-destructive/40 hover:bg-destructive/10
-            flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md border
+            flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm border
             transition-colors
             disabled:pointer-events-none disabled:opacity-50
             [&_svg]:size-4

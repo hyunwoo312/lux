@@ -313,7 +313,7 @@ function HeadlineFilter({ value, onChange }: { value: string; onChange: (value: 
             press cursor-pointer focus-ring text-ink-3
             hover:text-ink
             absolute top-1/2 right-1.5 flex size-6 -translate-y-1/2 items-center justify-center
-            rounded-md
+            rounded-sm
           "
         >
           <X className="size-4" aria-hidden />
@@ -361,7 +361,7 @@ function GoogleSearch({ query }: { query: string }) {
             press cursor-pointer focus-ring text-ink-3
             hover:text-ink
             absolute top-1/2 right-1.5 flex size-6 -translate-y-1/2 items-center justify-center
-            rounded-md
+            rounded-sm
           "
         >
           <X className="size-4" aria-hidden />

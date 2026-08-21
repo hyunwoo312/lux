@@ -126,7 +126,7 @@ function SortableImage({ item, assetStore, disabled, onRemove }: SortableImagePr
           className="
             press bg-card text-ink-2
             hover:text-destructive
-            absolute top-1 right-1 grid size-5 cursor-pointer place-items-center rounded-md
+            absolute top-1 right-1 grid size-5 cursor-pointer place-items-center rounded-sm
             disabled:pointer-events-none disabled:opacity-50
             [&_svg]:size-3.5
           "

@@ -310,7 +310,7 @@ function PlacementPreview({ placement, ref }: { placement: Placement; ref?: Ref<
       }}
       className={cn(
         accentClass(placement.accent),
-        "border-primary bg-primary/15 pointer-events-none rounded-xl border-2 border-dashed",
+        "border-primary bg-primary/15 pointer-events-none rounded-2xl border-2 border-dashed",
         "shadow-[0_0_22px_-6px_var(--primary)]",
       )}
     />

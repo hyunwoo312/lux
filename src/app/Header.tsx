@@ -109,7 +109,7 @@ export function Header() {
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       <HeaderClock
         className="
-          glass col-start-3 inline-flex items-center justify-self-end self-stretch rounded-md px-3
+          glass col-start-3 inline-flex items-center justify-self-end self-stretch rounded-lg px-3
         "
       />
     </header>

@@ -78,7 +78,7 @@ function MiniMonth({ month, anchorTime, endTime, onSelect }: MiniMonthProps) {
               )}
               <span
                 className={cn(
-                  "relative z-10 flex size-7 items-center justify-center rounded-md text-caption",
+                  "relative z-10 flex size-7 items-center justify-center rounded-sm text-caption",
                   "tabular-nums transition-colors",
                   "focus-ring group- group-",
                   isStart && "bg-primary text-primary-foreground font-semibold",

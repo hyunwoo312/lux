@@ -106,6 +106,21 @@ describe("colour tokens", () => {
     }
   });
 
+  it("the radius scale is monotonic and every rung is perceptibly distinct", () => {
+    const scale = ["xs", "sm", "md", "lg", "xl", "2xl", "3xl"];
+    const px = scale.map((name) => {
+      const raw = rawToken("@theme inline", `radius-${name}`);
+      const rem = raw.startsWith("var(") ? rawToken(":root", "radius") : raw;
+      return Number.parseFloat(rem) * 16;
+    });
+    for (let i = 1; i < px.length; i += 1) {
+      const previous = px[i - 1]!;
+      const current = px[i]!;
+      expect(current).toBeGreaterThan(previous);
+      expect(current - previous).toBeGreaterThanOrEqual(2);
+    }
+  });
+
   it("no hex colour survives in the token layer", () => {
     const withoutMasks = css.replace(/mask-image:[^;]+;/g, "");
     const hexes = withoutMasks.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [];

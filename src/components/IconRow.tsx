@@ -15,7 +15,7 @@ export function IconRow({ icon: Icon, title, action, control, children }: IconRo
     <div className={cn("flex gap-3", control ? "items-center" : "items-start")}>
       <span
         className="
-          bg-primary/10 text-primary grid size-8 shrink-0 place-items-center rounded-lg
+          bg-primary/10 text-primary grid size-8 shrink-0 place-items-center rounded-md
           [&_svg]:size-4
         "
       >
