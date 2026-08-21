@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { encodeToWebp } from "@/lib/image-encode";
 import {
+  MAX_WALLPAPER_IMAGES,
   WALLPAPER_ENCODE_QUALITY,
+  resolveWallpaperSource,
   useWallpaperStore,
   wallpaperAssets,
 } from "@/stores/useWallpaperStore";
@@ -147,5 +149,40 @@ describe("optimizeAssets resilience", () => {
 
     expect(encodeMock).not.toHaveBeenCalled();
     expect(store().items[0]).toMatchObject({ mimeType: "image/jpeg" });
+  });
+});
+
+describe("wallpaper source migration", () => {
+  it("defaults a fresh install to the generated source", () => {
+    expect(useWallpaperStore.getInitialState().source).toBe("generated");
+  });
+
+  it("moves an existing uploader to the custom source rather than the new default", () => {
+    expect(resolveWallpaperSource(undefined, true, "generated")).toBe("custom");
+  });
+
+  it("leaves a user with no images on the default source", () => {
+    expect(resolveWallpaperSource(undefined, false, "generated")).toBe("generated");
+  });
+
+  it("never overrides a source the user has already chosen", () => {
+    expect(resolveWallpaperSource("gallery", true, "generated")).toBe("gallery");
+    expect(resolveWallpaperSource("generated", true, "custom")).toBe("generated");
+  });
+
+  it("clamps generated intensity into the allowed band, on 0.05 steps", () => {
+    const { setGeneratedIntensity } = useWallpaperStore.getState();
+    setGeneratedIntensity(5);
+    expect(useWallpaperStore.getState().generatedIntensity).toBe(1);
+    setGeneratedIntensity(-1);
+    expect(useWallpaperStore.getState().generatedIntensity).toBe(0.2);
+    setGeneratedIntensity(0.63);
+    expect(useWallpaperStore.getState().generatedIntensity).toBe(0.65);
+  });
+
+  it("caps gallery selections at the image limit", () => {
+    const ids = Array.from({ length: 30 }, (_, i) => `wp${i}`);
+    useWallpaperStore.getState().setGalleryItems(ids);
+    expect(useWallpaperStore.getState().galleryItems).toHaveLength(MAX_WALLPAPER_IMAGES);
   });
 });

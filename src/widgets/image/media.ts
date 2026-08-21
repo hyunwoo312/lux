@@ -6,6 +6,7 @@ import {
   type StoredAssetMetadata,
 } from "@/lib/asset-store";
 import { encodeToWebp } from "@/lib/image-encode";
+import { renderThumbnail, THUMB_VERSION } from "@/lib/thumbnail";
 import { IMAGE_ENCODE_QUALITY, IMAGE_MAX_BYTES, IMAGE_MAX_DIMENSION } from "@/widgets/image/types";
 
 export type ImageMediaAsset = StoredAsset;
@@ -40,12 +41,14 @@ export async function saveImageAsset(file: File): Promise<ImageMediaMetadata> {
     quality: IMAGE_ENCODE_QUALITY,
     maxDimension: IMAGE_MAX_DIMENSION,
   });
+  const thumb = await renderThumbnail(blob);
   const asset: ImageMediaAsset = {
     id: createAssetId("image"),
     fileName: file.name || "Image",
     mimeType: blob.type || file.type,
     size: blob.size,
     blob,
+    ...(thumb ? { thumb, thumbVersion: THUMB_VERSION } : {}),
   };
 
   await imageAssetStore.save(asset);

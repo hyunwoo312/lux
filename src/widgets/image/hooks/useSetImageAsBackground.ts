@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createAssetId, type MediaImageItem } from "@/lib/asset-store";
 import { useWallpaperStore, wallpaperAssets } from "@/stores/useWallpaperStore";
-import { imageAssetStore } from "@/widgets/image/media";
+import { readImageAsset } from "@/widgets/image/media";
 import { type ImageItem } from "@/widgets/image/types";
 import { useImage, useImageIndex } from "@/widgets/image/useImageStore";
 
@@ -36,7 +36,7 @@ export function useSetImageAsBackground(): SetImageAsBackground {
     const wallpaper = useWallpaperStore.getState();
     const previousAssetId = wallpaper.single?.assetId ?? null;
     try {
-      const source = await imageAssetStore.read(activeItem.assetId);
+      const source = await readImageAsset(activeItem.assetId);
       if (!source) {
         setStatus("error");
         return;
@@ -55,9 +55,9 @@ export function useSetImageAsBackground(): SetImageAsBackground {
         mimeType: source.mimeType,
         size: source.size,
       };
+      wallpaper.setSource("custom");
       wallpaper.setMode("single");
       wallpaper.setSingle(item);
-      wallpaper.setEnabled(true);
       await wallpaperAssets.remove(previousAssetId).catch(() => undefined);
       setStatus("done");
     } catch {

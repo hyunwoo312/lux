@@ -12,6 +12,7 @@ import { accentClass, type AccentPreset } from "@/widgets/core/accent";
 import type { WidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
 import { WidgetChromeContext } from "@/widgets/core/useWidgetChrome";
 import { FauxGlassBackdrop } from "@/widgets/core/FauxGlassBackdrop";
+import { useWallpaperStore } from "@/stores/useWallpaperStore";
 
 type BaseWidgetProps = {
   title: string;
@@ -65,6 +66,7 @@ export function BaseWidget({
   children,
 }: BaseWidgetProps) {
   const reduced = useReducedMotion();
+  const livePattern = useWallpaperStore((s) => s.source === "generated");
   const [showConfig, setShowConfig] = useState(false);
   const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
   const [removalWarning, setRemovalWarning] = useState<string | null>(null);
@@ -112,12 +114,15 @@ export function BaseWidget({
             text-card-foreground relative flex h-full flex-col overflow-hidden rounded-xl
             transition-shadow
           `,
-          !omitSurface && (background === "solid" ? "glass-solid" : "glass-faux"),
+          !omitSurface &&
+            (background === "solid" ? "glass-solid" : livePattern ? "glass" : "glass-faux"),
           highlighted && "ring-primary/70 shadow-[0_0_22px_-2px_var(--primary)] ring-2",
           editing && `pointer-events-none select-none`,
         )}
       >
-        {!omitSurface && background !== "solid" && !editing && <FauxGlassBackdrop />}
+        {!omitSurface && background !== "solid" && !livePattern && !editing && (
+          <FauxGlassBackdrop />
+        )}
         {!omitSurface && (
           <div
             aria-hidden

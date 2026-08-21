@@ -6,6 +6,7 @@ import { encodeToWebp, isOptimizedMimeType } from "@/lib/image-encode";
 import { getLocal, setLocal } from "@/lib/local-store";
 import { getNextSequentialIndex, getRandomIndexExcluding } from "@/lib/media-rotation";
 import { createGatedChromeStorage } from "@/lib/storage";
+import { GALLERY_WALLPAPERS } from "@/lib/wallpaper-gallery";
 
 const WALLPAPER_MODES = ["single", "multi"] as const;
 export type WallpaperMode = (typeof WALLPAPER_MODES)[number];
@@ -15,6 +16,15 @@ export type WallpaperFit = (typeof WALLPAPER_FITS)[number];
 
 const WALLPAPER_ORDERS = ["shuffle", "sequential"] as const;
 export type WallpaperOrder = (typeof WALLPAPER_ORDERS)[number];
+
+const WALLPAPER_SOURCES = ["generated", "gallery", "custom"] as const;
+export type WallpaperSource = (typeof WALLPAPER_SOURCES)[number];
+
+const GENERATED_STYLES = ["mesh", "aurora", "bloom", "still"] as const;
+export type GeneratedStyle = (typeof GENERATED_STYLES)[number];
+
+export const GENERATED_MIN_INTENSITY = 0.2;
+export const GENERATED_MAX_INTENSITY = 1;
 
 export const WALLPAPER_MAX_BYTES = 10 * 1024 * 1024;
 export const WALLPAPER_ENCODE_QUALITY = 0.9;
@@ -26,8 +36,17 @@ export const WALLPAPER_MAX_BLUR = 24;
 
 export const wallpaperAssets = createAssetStore("lux.wallpaper-media");
 
+const DEFAULT_GALLERY_ID = GALLERY_WALLPAPERS[0]?.id ?? "";
+
 type WallpaperState = {
-  enabled: boolean;
+  source: WallpaperSource;
+  generatedStyle: GeneratedStyle;
+  generatedMotion: boolean;
+  generatedIntensity: number;
+  generatedDensity: number;
+  generatedSpeed: number;
+  gallerySingle: string | null;
+  galleryItems: string[];
   mode: WallpaperMode;
   single: MediaImageItem | null;
   items: MediaImageItem[];
@@ -39,7 +58,14 @@ type WallpaperState = {
   dim: number;
   blur: number;
   currentIndex: number;
-  setEnabled: (enabled: boolean) => void;
+  setSource: (source: WallpaperSource) => void;
+  setGeneratedStyle: (style: GeneratedStyle) => void;
+  setGeneratedMotion: (value: boolean) => void;
+  setGeneratedIntensity: (value: number) => void;
+  setGeneratedDensity: (value: number) => void;
+  setGeneratedSpeed: (value: number) => void;
+  setGallerySingle: (id: string | null) => void;
+  setGalleryItems: (ids: string[]) => void;
   setMode: (mode: WallpaperMode) => void;
   setSingle: (single: MediaImageItem | null) => void;
   setItems: (items: MediaImageItem[]) => void;
@@ -82,6 +108,8 @@ async function reencodeStoredAsset(assetId: string): Promise<AssetEncoding | nul
       blob,
       frost: undefined,
       frostVersion: undefined,
+      thumb: undefined,
+      thumbVersion: undefined,
     });
     return encoding;
   } catch {
@@ -98,7 +126,14 @@ function whenIdle(task: () => void): void {
 }
 
 const DEFAULTS = {
-  enabled: true,
+  source: "generated" as WallpaperSource,
+  generatedStyle: "still" as GeneratedStyle,
+  generatedMotion: true,
+  generatedIntensity: 0.6,
+  generatedDensity: 0.7,
+  generatedSpeed: 0.5,
+  gallerySingle: null as string | null,
+  galleryItems: [] as string[],
   mode: "single" as WallpaperMode,
   single: null as MediaImageItem | null,
   items: [] as MediaImageItem[],
@@ -121,7 +156,14 @@ const itemSchema = z.object({
 
 const persistedSchema = z
   .object({
-    enabled: z.boolean(),
+    source: z.enum(WALLPAPER_SOURCES),
+    generatedStyle: z.enum(GENERATED_STYLES),
+    generatedMotion: z.boolean(),
+    generatedIntensity: z.number(),
+    generatedDensity: z.number(),
+    generatedSpeed: z.number(),
+    gallerySingle: z.string().nullable(),
+    galleryItems: z.array(z.string()).max(MAX_WALLPAPER_IMAGES),
     mode: z.enum(WALLPAPER_MODES),
     single: itemSchema.nullable(),
     items: z.array(itemSchema).max(MAX_WALLPAPER_IMAGES),
@@ -134,6 +176,21 @@ const persistedSchema = z
     blur: z.number(),
   })
   .partial();
+
+export function resolveWallpaperSource(
+  stored: WallpaperSource | undefined,
+  hasOwnImages: boolean,
+  fallback: WallpaperSource,
+): WallpaperSource {
+  if (stored) return stored;
+  return hasOwnImages ? "custom" : fallback;
+}
+
+function clampIntensity(value: number): number {
+  if (!Number.isFinite(value)) return DEFAULTS.generatedIntensity;
+  const stepped = Math.round(value * 20) / 20;
+  return Math.min(GENERATED_MAX_INTENSITY, Math.max(GENERATED_MIN_INTENSITY, stepped));
+}
 
 function clampInterval(seconds: number): number {
   if (!Number.isFinite(seconds)) return 30;
@@ -151,7 +208,23 @@ export const useWallpaperStore = create<WallpaperState>()(
   persist(
     (set, get) => ({
       ...DEFAULTS,
-      setEnabled: (enabled) => set({ enabled }),
+      setSource: (source) =>
+        set((state) => {
+          if (source !== "gallery") return { source };
+          return {
+            source,
+            gallerySingle: state.gallerySingle ?? DEFAULT_GALLERY_ID,
+            galleryItems: state.galleryItems.length ? state.galleryItems : [DEFAULT_GALLERY_ID],
+          };
+        }),
+      setGeneratedStyle: (generatedStyle) => set({ generatedStyle }),
+      setGeneratedMotion: (generatedMotion) => set({ generatedMotion }),
+      setGeneratedIntensity: (value) => set({ generatedIntensity: clampIntensity(value) }),
+      setGeneratedDensity: (value) => set({ generatedDensity: clampIntensity(value) }),
+      setGeneratedSpeed: (value) => set({ generatedSpeed: clampIntensity(value) }),
+      setGallerySingle: (gallerySingle) => set({ gallerySingle }),
+      setGalleryItems: (galleryItems) =>
+        set({ galleryItems: galleryItems.slice(0, MAX_WALLPAPER_IMAGES) }),
       setMode: (mode) => set({ mode }),
       setSingle: (single) => set({ single }),
       setItems: (items) => set({ items: items.slice(0, MAX_WALLPAPER_IMAGES) }),
@@ -220,7 +293,14 @@ export const useWallpaperStore = create<WallpaperState>()(
           .then(() => whenIdle(() => void state.optimizeAssets()));
       },
       partialize: (state) => ({
-        enabled: state.enabled,
+        source: state.source,
+        generatedStyle: state.generatedStyle,
+        generatedMotion: state.generatedMotion,
+        generatedIntensity: state.generatedIntensity,
+        generatedDensity: state.generatedDensity,
+        generatedSpeed: state.generatedSpeed,
+        gallerySingle: state.gallerySingle,
+        galleryItems: state.galleryItems,
         mode: state.mode,
         single: state.single,
         items: state.items,
@@ -235,10 +315,19 @@ export const useWallpaperStore = create<WallpaperState>()(
       merge: (persisted, current) => {
         const parsed = persistedSchema.safeParse(persisted);
         if (!parsed.success) return current;
+        const hasOwnImages = Boolean(parsed.data.single) || (parsed.data.items?.length ?? 0) > 0;
         return {
           ...current,
           ...parsed.data,
+          source: resolveWallpaperSource(parsed.data.source, hasOwnImages, current.source),
           intervalSeconds: clampInterval(parsed.data.intervalSeconds ?? current.intervalSeconds),
+          generatedIntensity: clampIntensity(
+            parsed.data.generatedIntensity ?? current.generatedIntensity,
+          ),
+          generatedDensity: clampIntensity(
+            parsed.data.generatedDensity ?? current.generatedDensity,
+          ),
+          generatedSpeed: clampIntensity(parsed.data.generatedSpeed ?? current.generatedSpeed),
         };
       },
     },
@@ -246,9 +335,6 @@ export const useWallpaperStore = create<WallpaperState>()(
 );
 
 export async function clearWallpaperAssets(): Promise<void> {
-  const { single, items } = useWallpaperStore.getState();
-  const ids = [single?.assetId, ...items.map((item) => item.assetId)].filter((id): id is string =>
-    Boolean(id),
-  );
-  await Promise.all(ids.map((id) => wallpaperAssets.remove(id).catch(() => undefined)));
+  const stored = await wallpaperAssets.keys().catch(() => new Set<string>());
+  await Promise.all([...stored].map((id) => wallpaperAssets.remove(id).catch(() => undefined)));
 }

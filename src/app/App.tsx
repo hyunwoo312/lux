@@ -10,8 +10,8 @@ import { WidgetGrid } from "@/widgets/WidgetGrid";
 import { useGlobalShortcuts } from "@/app/useGlobalShortcuts";
 import { useDisableContextMenu } from "@/app/useDisableContextMenu";
 import { useActiveWallpaper } from "@/app/useActiveWallpaper";
-import { useWallpaperStore } from "@/stores/useWallpaperStore";
 import { FrostImageProvider } from "@/lib/frost-image";
+import { useWallpaperStore } from "@/stores/useWallpaperStore";
 import { takePendingPermissionHighlight } from "@/lib/permissions";
 import { useSettingsStore } from "@/settings";
 import { sweepStaleResourceCaches } from "@/widgets/core/resourceCacheSweep";
@@ -19,8 +19,9 @@ import { sweepStaleResourceCaches } from "@/widgets/core/resourceCacheSweep";
 export function App() {
   useGlobalShortcuts();
   useDisableContextMenu();
-  const wallpaperEnabled = useWallpaperStore((s) => s.enabled);
-  const { imageUrl, frostUrl } = useActiveWallpaper(wallpaperEnabled);
+  const wallpaperSource = useWallpaperStore((s) => s.source);
+  const isPattern = wallpaperSource === "generated";
+  const { imageUrl, frostUrl } = useActiveWallpaper(!isPattern);
 
   useEffect(() => {
     sweepStaleResourceCaches(Date.now());
@@ -43,12 +44,12 @@ export function App() {
             </main>
           </div>
         </div>
-        <WidgetDragOverlay />
-        <UndoBar />
-        <SettingsDialog />
-        <Welcome />
-        <Tour />
       </FrostImageProvider>
+      <WidgetDragOverlay />
+      <UndoBar />
+      <SettingsDialog />
+      <Welcome />
+      <Tour />
     </TooltipProvider>
   );
 }

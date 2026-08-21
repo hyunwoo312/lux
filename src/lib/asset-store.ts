@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { resolveThumb } from "@/lib/thumbnail";
 
 export type StoredAsset = {
   id: string;
@@ -8,6 +9,8 @@ export type StoredAsset = {
   blob: Blob;
   frost?: Blob;
   frostVersion?: number;
+  thumb?: Blob;
+  thumbVersion?: number;
 };
 
 export type StoredAssetMetadata = Omit<StoredAsset, "blob">;
@@ -53,8 +56,8 @@ export type AssetStore = {
   clearMemoryForTest: () => void;
 };
 
-function assetBytes(asset: Pick<StoredAsset, "size" | "frost">): number {
-  return asset.size + (asset.frost?.size ?? 0);
+function assetBytes(asset: Pick<StoredAsset, "size" | "frost" | "thumb">): number {
+  return asset.size + (asset.frost?.size ?? 0) + (asset.thumb?.size ?? 0);
 }
 
 const registry = new Set<AssetStore>();
@@ -177,7 +180,11 @@ export async function missingAssetIds<T extends { assetId: string }>(
   return new Set(ids.filter((id) => !present.has(id)));
 }
 
-export function useAssetObjectUrl(store: AssetStore, assetId: string | null): string | null {
+function useAssetBlobUrl(
+  store: AssetStore,
+  assetId: string | null,
+  pick: (store: AssetStore, asset: StoredAsset) => Promise<Blob> | Blob,
+): string | null {
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -190,9 +197,11 @@ export function useAssetObjectUrl(store: AssetStore, assetId: string | null): st
     setUrl(null);
     void store
       .read(assetId)
-      .then((asset) => {
+      .then(async (asset) => {
         if (!active || !asset) return;
-        objectUrl = URL.createObjectURL(asset.blob);
+        const blob = await pick(store, asset);
+        if (!active) return;
+        objectUrl = URL.createObjectURL(blob);
         setUrl(objectUrl);
       })
       .catch(() => undefined);
@@ -200,7 +209,17 @@ export function useAssetObjectUrl(store: AssetStore, assetId: string | null): st
       active = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [store, assetId]);
+  }, [store, assetId, pick]);
 
   return url;
+}
+
+const pickFull = (_store: AssetStore, asset: StoredAsset): Blob => asset.blob;
+
+export function useAssetObjectUrl(store: AssetStore, assetId: string | null): string | null {
+  return useAssetBlobUrl(store, assetId, pickFull);
+}
+
+export function useAssetThumbUrl(store: AssetStore, assetId: string | null): string | null {
+  return useAssetBlobUrl(store, assetId, resolveThumb);
 }

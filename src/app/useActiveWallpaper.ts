@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { RefObject } from "react";
 import type { MediaImageItem } from "@/lib/asset-store";
 import { resolveFrost } from "@/lib/frost";
+import { ensureGalleryAsset, galleryItemFor } from "@/lib/gallery-asset";
 import {
   getSignature,
   readNewtabQueue,
@@ -26,9 +27,12 @@ function swapObjectUrl(ref: RefObject<string | null>, next: string | null): void
 }
 
 export function useActiveWallpaper(enabled: boolean): ActiveWallpaper {
+  const source = useWallpaperStore((s) => s.source);
   const mode = useWallpaperStore((s) => s.mode);
   const single = useWallpaperStore((s) => s.single);
   const items = useWallpaperStore((s) => s.items);
+  const gallerySingle = useWallpaperStore((s) => s.gallerySingle);
+  const galleryItems = useWallpaperStore((s) => s.galleryItems);
   const rotateOnNewtab = useWallpaperStore((s) => s.rotateOnNewtab);
   const rotateTimed = useWallpaperStore((s) => s.rotateTimed);
   const order = useWallpaperStore((s) => s.order);
@@ -37,10 +41,13 @@ export function useActiveWallpaper(enabled: boolean): ActiveWallpaper {
   const setCurrentIndex = useWallpaperStore((s) => s.setCurrentIndex);
   const advance = useWallpaperStore((s) => s.advance);
 
-  const displayItems = useMemo(
-    () => (mode === "multi" ? items : single ? [single] : []),
-    [mode, items, single],
-  );
+  const displayItems = useMemo(() => {
+    if (source === "gallery") {
+      const ids = mode === "multi" ? galleryItems : gallerySingle ? [gallerySingle] : [];
+      return ids.map(galleryItemFor).filter((item) => item !== null);
+    }
+    return mode === "multi" ? items : single ? [single] : [];
+  }, [source, mode, items, single, galleryItems, gallerySingle]);
   const length = displayItems.length;
   const signature = useMemo(
     () => getSignature(displayItems.map((item) => item.assetId)),
@@ -73,6 +80,8 @@ export function useActiveWallpaper(enabled: boolean): ActiveWallpaper {
   const boundedIndex = length > 0 ? ((currentIndex % length) + length) % length : 0;
   const activeItem = displayItems[boundedIndex] ?? null;
   const activeAssetId = activeItem?.assetId ?? null;
+  const activeGalleryId =
+    source === "gallery" ? (mode === "multi" ? galleryItems[boundedIndex] : gallerySingle) : null;
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [frostUrl, setFrostUrl] = useState<string | null>(null);
@@ -89,6 +98,8 @@ export function useActiveWallpaper(enabled: boolean): ActiveWallpaper {
       return;
     }
     void (async () => {
+      if (activeGalleryId && !(await ensureGalleryAsset(activeGalleryId))) return;
+      if (!active) return;
       const asset = await wallpaperAssets.read(activeAssetId).catch(() => null);
       if (!active || !asset) return;
       const nextUrl = URL.createObjectURL(asset.blob);
@@ -104,7 +115,7 @@ export function useActiveWallpaper(enabled: boolean): ActiveWallpaper {
     return () => {
       active = false;
     };
-  }, [activeAssetId, enabled]);
+  }, [activeAssetId, activeGalleryId, enabled]);
 
   useEffect(
     () => () => {

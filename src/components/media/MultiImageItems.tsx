@@ -8,7 +8,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { ImageIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GRID_MODIFIERS } from "@/lib/dnd";
-import { useAssetObjectUrl, type AssetStore, type MediaImageItem } from "@/lib/asset-store";
+import { useAssetThumbUrl, type AssetStore, type MediaImageItem } from "@/lib/asset-store";
 import { getMetadataLabel } from "@/lib/media-format";
 
 type MultiImageItemsProps = {
@@ -72,7 +72,7 @@ function SortableImage({ item, assetStore, disabled, onRemove }: SortableImagePr
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.assetId,
   });
-  const url = useAssetObjectUrl(assetStore, item.assetId);
+  const url = useAssetThumbUrl(assetStore, item.assetId);
   const meta = getMetadataLabel(item.mimeType, item.size);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
 

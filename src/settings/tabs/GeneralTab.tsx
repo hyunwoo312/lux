@@ -4,7 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { ConfigSegmented } from "@/components/config/WidgetConfig";
 import { AccentPicker } from "@/settings/components/AccentPicker";
 import { exportSettings, importSettings } from "@/lib/backup";
-import { BackgroundSetting } from "@/settings/components/BackgroundSetting";
+import { WallpaperSetting } from "@/settings/components/WallpaperSetting";
 import { ResetControl } from "@/settings/components/ResetControl";
 import { SettingsRow } from "@/settings/components/SettingsRow";
 import { SettingsSection } from "@/settings/components/SettingsSection";
@@ -98,8 +98,8 @@ export function GeneralTab() {
         />
       </SettingsSection>
 
-      <SettingsSection title="Background" description="A custom image behind the dashboard.">
-        <BackgroundSetting />
+      <SettingsSection title="Wallpaper" description="What sits behind the dashboard.">
+        <WallpaperSetting />
       </SettingsSection>
 
       <SettingsSection title="Time" description="How time is shown across widgets.">

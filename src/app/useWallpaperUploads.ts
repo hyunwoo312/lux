@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createAssetId, validateImageFile, type MediaImageItem } from "@/lib/asset-store";
 import { encodeToWebp } from "@/lib/image-encode";
+import { renderThumbnail, THUMB_VERSION } from "@/lib/thumbnail";
 import {
   MAX_WALLPAPER_IMAGES,
   WALLPAPER_ENCODE_QUALITY,
@@ -11,12 +12,14 @@ import {
 
 async function saveWallpaperAsset(file: File): Promise<MediaImageItem> {
   const blob = await encodeToWebp(file, { quality: WALLPAPER_ENCODE_QUALITY });
+  const thumb = await renderThumbnail(blob);
   const asset = {
     id: createAssetId("wallpaper"),
-    fileName: file.name || "Background",
+    fileName: file.name || "Wallpaper",
     mimeType: blob.type || file.type,
     size: blob.size,
     blob,
+    ...(thumb ? { thumb, thumbVersion: THUMB_VERSION } : {}),
   };
   await wallpaperAssets.save(asset);
   return {
