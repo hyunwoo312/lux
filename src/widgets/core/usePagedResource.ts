@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PAGED_CACHE_PREFIX, setLocal } from "@/lib/local-store";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
-import { effectiveCadence, retryDelayMs, type Cadence } from "@/widgets/core/usePolledResource";
+import {
+  effectiveCadence,
+  freshnessOf,
+  notifyFreshness,
+  registerFreshnessSource,
+  retryDelayMs,
+  type Cadence,
+  type Freshness,
+} from "@/widgets/core/usePolledResource";
 
 let nextAutoKey = 0;
 const DEFAULT_STALE_MS = 180_000;
@@ -23,6 +31,7 @@ export type PagedResource<T> = {
   isLoadingMore: boolean;
   isRefreshing: boolean;
   lastSyncedAt: number;
+  freshness: Freshness;
   loadMore: () => void;
   refresh: () => void;
 };
@@ -46,6 +55,8 @@ type Snapshot<T> = {
   isRefreshing: boolean;
   isLoadingMore: boolean;
   at: number;
+  refreshError: Error | undefined;
+  failureCount: number;
 };
 
 function emptySnapshot<T>(): Snapshot<T> {
@@ -58,6 +69,8 @@ function emptySnapshot<T>(): Snapshot<T> {
     isRefreshing: false,
     isLoadingMore: false,
     at: 0,
+    refreshError: undefined,
+    failureCount: 0,
   };
 }
 
@@ -78,6 +91,8 @@ function seedSnapshot<T>(
         isRefreshing: false,
         isLoadingMore: false,
         at: seed.at,
+        refreshError: undefined,
+        failureCount: 0,
       }
     : emptySnapshot<T>();
 }
@@ -200,6 +215,8 @@ class SharedResource<T> {
           isRefreshing: false,
           isLoadingMore: false,
           at: seed.at,
+          refreshError: undefined,
+          failureCount: 0,
         }
       : emptySnapshot<T>();
   }
@@ -286,6 +303,7 @@ class SharedResource<T> {
   private patch(part: Partial<Snapshot<T>>): void {
     this.snapshot = { ...this.snapshot, ...part };
     for (const listener of this.listeners) listener(this.snapshot);
+    notifyFreshness();
   }
 
   private start(): void {
@@ -351,6 +369,8 @@ class SharedResource<T> {
           isRefreshing: false,
           isLoadingMore: false,
           at,
+          refreshError: undefined,
+          failureCount: 0,
         });
       } catch (caught) {
         if (generation !== this.generation) return;
@@ -359,8 +379,19 @@ class SharedResource<T> {
         this.retryAt = Date.now() + retryDelayMs(error, this.failureCount);
         this.patch(
           this.snapshot.hasLoaded
-            ? { isRefreshing: false, isLoadingMore: false }
-            : { error, isRefreshing: false, isLoadingMore: false },
+            ? {
+                isRefreshing: false,
+                isLoadingMore: false,
+                refreshError: error,
+                failureCount: this.failureCount,
+              }
+            : {
+                error,
+                isRefreshing: false,
+                isLoadingMore: false,
+                refreshError: error,
+                failureCount: this.failureCount,
+              },
         );
       } finally {
         this.inFlight = null;
@@ -370,6 +401,14 @@ class SharedResource<T> {
     return promise;
   }
 }
+
+registerFreshnessSource((prefix) => {
+  const candidates: Freshness[] = [];
+  for (const [key, resource] of liveResources) {
+    if (key.startsWith(prefix)) candidates.push(freshnessOf(resource.getSnapshot()));
+  }
+  return candidates;
+});
 
 function acquireResource<T>(
   config: ResourceConfig<T>,
@@ -485,6 +524,7 @@ export function usePagedResource<T>(
     isLoadingMore: snapshot.isLoadingMore,
     isRefreshing: snapshot.isRefreshing,
     lastSyncedAt: snapshot.at,
+    freshness: freshnessOf(snapshot),
     loadMore,
     refresh,
   };

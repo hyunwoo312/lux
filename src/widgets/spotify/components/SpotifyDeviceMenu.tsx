@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ROW } from "@/lib/row";
 import { Check, Monitor } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -58,12 +59,7 @@ export function SpotifyDeviceMenu({
                   setOpen(false);
                   if (device.id !== activeId) onSelect(device);
                 }}
-                className="
-                  press cursor-pointer
-                  hover:bg-accent
-                  flex items-center gap-2 rounded-md px-2 py-1.5 text-left
-                  disabled:pointer-events-none disabled:opacity-50
-                "
+                className={cn(ROW.option, "disabled:pointer-events-none disabled:opacity-50")}
               >
                 <Monitor
                   className={cn("size-4 shrink-0", active ? "text-primary" : `text-ink-3`)}

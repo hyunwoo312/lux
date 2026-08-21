@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { ROW } from "@/lib/row";
 import { Spinner } from "@/components/ui/spinner";
 import type { ReactNode } from "react";
 import {
@@ -401,7 +402,7 @@ function PullRequestRow({ pr, newTab }: { pr: InboxPullRequest; newTab: boolean 
         target={newTab ? "_blank" : undefined}
         rel="noreferrer"
         aria-label={`${pr.title} — ${status}`}
-        className="hover:bg-foreground/5 flex items-center gap-2 rounded-md px-2 py-1.5"
+        className={ROW.item}
       >
         <Icon
           className={cn("size-3.5 shrink-0", pr.isDraft ? "text-ink-3" : "text-ink")}
@@ -462,7 +463,7 @@ function IssueRow({ issue, newTab }: { issue: InboxIssue; newTab: boolean }) {
       href={issue.url}
       target={newTab ? "_blank" : undefined}
       rel="noreferrer"
-      className="hover:bg-foreground/5 flex items-center gap-2 rounded-md px-2 py-1.5"
+      className={ROW.item}
     >
       <Icon className="text-ink-3 size-3.5 shrink-0" aria-hidden />
       <div className="min-w-0 flex-1">
@@ -486,7 +487,7 @@ function NotificationRow({
   const meta = `${notification.repo} · ${notification.reason.replace(/_/g, " ")} · ${formatRelativeTime(notification.updatedAt)}`;
   const pending = actions?.pending[notification.id] ?? false;
   return (
-    <div className="group hover:bg-foreground/5 flex items-center gap-2 rounded-md px-2 py-1.5">
+    <div className={cn(ROW.item, "group")}>
       <a
         href={notification.url}
         target={newTab ? "_blank" : undefined}

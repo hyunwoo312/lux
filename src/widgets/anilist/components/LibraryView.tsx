@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useMemo, useRef, useState, type ReactNode } from "react";
+import { ROW } from "@/lib/row";
 import { Spinner } from "@/components/ui/spinner";
 import {
   Bookmark,
@@ -584,15 +585,7 @@ function FilterMenu<T extends string>({
                   delay: reduced ? 0 : index * 0.025,
                   ease: EASE_OUT,
                 }}
-                className={cn(
-                  "press cursor-pointer",
-                  `
-                    hover:bg-accent
-                    flex items-center gap-2 rounded-sm px-2 py-1.5 text-left text-caption
-                    transition-colors
-                  `,
-                  selected ? "text-primary font-medium" : "text-ink",
-                )}
+                className={cn(ROW.option, selected ? "text-primary font-medium" : "text-ink")}
               >
                 <Icon className="size-3.5 shrink-0 opacity-70" aria-hidden />
                 <span className="flex-1">{option.label}</span>

@@ -1,4 +1,3 @@
-import { useSyncExternalStore } from "react";
 import { usePolledResource } from "@/widgets/core/usePolledResource";
 import {
   fetchFeed,
@@ -11,20 +10,6 @@ import { useNews } from "@/widgets/news/useNewsStore";
 import { NEWS_SOURCES } from "@/widgets/news/types";
 
 const REFRESH_MS = 10 * 60 * 1000;
-
-const failedKeys = new Map<string, boolean>();
-const failureListeners = new Set<() => void>();
-
-function setKeyFailed(cacheKey: string, failed: boolean): void {
-  if ((failedKeys.get(cacheKey) ?? false) === failed) return;
-  failedKeys.set(cacheKey, failed);
-  for (const listener of failureListeners) listener();
-}
-
-function subscribeFailure(onChange: () => void): () => void {
-  failureListeners.add(onChange);
-  return () => failureListeners.delete(onChange);
-}
 
 export function useNewsResource() {
   const activeSource = useNews((d) => d.activeSource);
@@ -51,29 +36,16 @@ export function useNewsResource() {
         : query
           ? fetchSearch(query, region, signal)
           : fetchFeed(tab, region, topic, signal);
-    return run.then(
-      (data) => {
-        setKeyFailed(cacheKey, false);
-        return data;
-      },
-      (error: unknown) => {
-        setKeyFailed(cacheKey, true);
-        throw error;
-      },
-    );
+    return run;
   };
-  const { state, refresh, isRefreshing, lastSyncedAt } = usePolledResource(fetcher, {
+  const { state, refresh, isRefreshing, lastSyncedAt, freshness } = usePolledResource(fetcher, {
     intervalMs: REFRESH_MS,
     cacheKey,
     persist: true,
     parsePersisted: parseCachedNews,
   });
 
-  const refreshFailed = useSyncExternalStore(
-    subscribeFailure,
-    () => failedKeys.get(cacheKey) ?? false,
-  );
-  const isStale = refreshFailed && state.status === "success";
+  const isStale = freshness.status === "failing" && state.status === "success";
 
-  return { state, refresh, isRefreshing, lastSyncedAt, tab, query, isStale };
+  return { state, refresh, isRefreshing, lastSyncedAt, freshness, tab, query, isStale };
 }

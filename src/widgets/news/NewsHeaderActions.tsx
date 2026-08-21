@@ -6,14 +6,16 @@ import { NEWS_SYNC_COOLDOWN_MS, useNews, useNewsStore } from "@/widgets/news/use
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 export function NewsHeaderActions() {
-  const { refresh, isRefreshing, lastSyncedAt } = useNewsResource();
+  const { refresh, isRefreshing, lastSyncedAt, freshness } = useNewsResource();
 
   return (
     <div className="flex items-center gap-0.5">
       <WidgetRefreshButton
+        label="News"
         syncing={isRefreshing}
         lastSyncAt={lastSyncedAt}
         cooldownMs={NEWS_SYNC_COOLDOWN_MS}
+        freshness={freshness}
         onRefresh={refresh}
       />
       <span className="bg-border/50 mx-0.5 h-4 w-px shrink-0" aria-hidden />

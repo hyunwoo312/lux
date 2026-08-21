@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ROW } from "@/lib/row";
 import { Spinner } from "@/components/ui/spinner";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -185,7 +186,7 @@ function DiscoverRow({
       href={media.siteUrl}
       target={newTab ? "_blank" : undefined}
       rel="noreferrer"
-      className="hover:bg-foreground/5 flex items-center gap-2.5 rounded-md px-2 py-1.5"
+      className={ROW.item}
     >
       <MediaCover
         src={media.coverImage}

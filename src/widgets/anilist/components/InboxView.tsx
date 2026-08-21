@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { ROW } from "@/lib/row";
 import { Spinner } from "@/components/ui/spinner";
 import { Bell, CheckCheck } from "lucide-react";
 import { formatRelativeTime } from "@/lib/relative-time";
@@ -170,7 +171,7 @@ function NotificationRow({
   newTab: boolean;
   isUnread: boolean;
 }) {
-  const className = "hover:bg-foreground/5 flex items-center gap-2.5 rounded-md px-2 py-1.5";
+  const className = ROW.item;
   const body = (
     <>
       <FeedThumb

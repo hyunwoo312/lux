@@ -4,7 +4,7 @@ import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { invalidatePagedResource, usePagedResource } from "@/widgets/core/usePagedResource";
 import { RateLimitError } from "@/lib/net";
-import { retryDelayMs } from "@/widgets/core/usePolledResource";
+import { retryDelayMs, useFreshness } from "@/widgets/core/usePolledResource";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -322,5 +322,61 @@ describe("two paged widgets sharing one resource", () => {
       const last = calls[calls.length - 1]?.[0] as { pollIntervalMs?: number };
       expect(last.pollIntervalMs).toBe(60_000);
     });
+  });
+});
+
+describe("paged freshness", () => {
+  it("keeps showing cached pages when a refresh fails, then clears once it succeeds", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [1], hasNextPage: false })
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValue({ items: [1, 2], hasNextPage: false });
+    const { result } = renderHook(() =>
+      usePagedResource(fetcher, { maxItems: 50, getKey: (n: number) => n }),
+    );
+
+    await waitFor(() => expect(result.current.state).toEqual({ status: "success", items: [1] }));
+    expect(result.current.freshness.status).toBe("current");
+
+    await act(async () => {
+      result.current.refresh();
+    });
+
+    await waitFor(() => expect(result.current.freshness.status).toBe("failing"));
+    expect(result.current.state).toEqual({ status: "success", items: [1] });
+
+    await act(async () => {
+      result.current.refresh();
+    });
+
+    await waitFor(() => expect(result.current.freshness.status).toBe("current"));
+    expect(result.current.state).toEqual({ status: "success", items: [1, 2] });
+  });
+
+  it("reports a failing paged resource to a widget watching its key prefix", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [1], hasNextPage: false })
+      .mockRejectedValue(new Error("offline"));
+    const resource = renderHook(() =>
+      usePagedResource(fetcher, {
+        maxItems: 50,
+        getKey: (n: number) => n,
+        cacheKey: "paged-probe:one",
+        intervalMs: 10_000,
+      }),
+    );
+    await waitFor(() => expect(resource.result.current.state.status).toBe("success"));
+
+    const watcher = renderHook(() => useFreshness("paged-probe:"));
+    expect(watcher.result.current.status).toBe("current");
+
+    await act(async () => {
+      resource.result.current.refresh();
+    });
+
+    await waitFor(() => expect(watcher.result.current.status).toBe("failing"));
+    expect(resource.result.current.state.status).toBe("success");
   });
 });

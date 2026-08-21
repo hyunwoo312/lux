@@ -1,4 +1,5 @@
 import { DURATION, EASE_OUT } from "@/lib/motion";
+import { ROW } from "@/lib/row";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Transition } from "motion/react";
@@ -32,7 +33,7 @@ export function DraftTaskRow({ text }: { text: string }) {
       animate={{ opacity: 0.5 }}
       exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
       transition={ROW_TRANSITION}
-      className="flex items-center gap-2.5 rounded-lg px-2 py-1.5"
+      className={ROW.item}
     >
       <span className="border-muted-foreground/40 size-4 shrink-0 rounded-xs border border-dashed" />
       <div className="min-w-0 flex-1">
@@ -121,8 +122,9 @@ export function TaskRow({
       exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
       transition={ROW_TRANSITION}
       className={cn(
-        "group relative flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors",
-        !editing && "hover:bg-foreground/5",
+        ROW.item,
+        "group relative",
+        editing && "hover:bg-transparent",
         sortable && "touch-none",
         sortable && !editing && "cursor-grab active:cursor-grabbing",
         isDragging && "opacity-60",

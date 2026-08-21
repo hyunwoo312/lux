@@ -1,4 +1,5 @@
 import { WidgetRefreshButton } from "@/widgets/core/WidgetRefreshButton";
+import type { Freshness } from "@/widgets/core/usePolledResource";
 import { CALENDAR_SYNC_COOLDOWN_MS } from "@/widgets/calendar/lib/cooldown";
 import { useCalendarConnection } from "@/widgets/calendar/hooks/useCalendarConnection";
 import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
@@ -17,6 +18,8 @@ export function CalendarRefreshButton() {
   const syncing = useCalendar((d) => d.syncing.length > 0);
   const googleSyncedAt = useCalendar((d) => d.google.lastSyncedAt);
   const microsoftSyncedAt = useCalendar((d) => d.microsoft.lastSyncedAt);
+  const googleError = useCalendar((d) => d.google.lastError);
+  const microsoftError = useCalendar((d) => d.microsoft.lastError);
   const sync = useCalendarStore((s) => s.sync);
 
   const connected =
@@ -26,8 +29,16 @@ export function CalendarRefreshButton() {
   const lastSyncAt =
     Math.max(toEpoch(googleSyncedAt) ?? 0, toEpoch(microsoftSyncedAt) ?? 0) || undefined;
 
+  const syncError = googleError ?? microsoftError;
+  const freshness: Freshness =
+    syncError && lastSyncAt !== undefined
+      ? { status: "failing", error: new Error(syncError), failures: 1, since: lastSyncAt }
+      : { status: "current" };
+
   return (
     <WidgetRefreshButton
+      label="Calendar"
+      freshness={freshness}
       syncing={syncing}
       lastSyncAt={lastSyncAt}
       cooldownMs={CALENDAR_SYNC_COOLDOWN_MS}

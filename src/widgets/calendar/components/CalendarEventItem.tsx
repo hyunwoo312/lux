@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { ROW } from "@/lib/row";
 import { Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GoogleCalendarServiceIcon, OutlookServiceIcon } from "@/components/icons/service-icons";
@@ -83,11 +84,7 @@ export function CalendarEventItem({
         delay: reduced ? 0 : Math.min(index, 8) * 0.025,
         layout: { duration: reduced ? 0 : 0.32, ease: EASE_OUT },
       }}
-      className={cn(
-        "group relative flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors",
-        "hover:bg-foreground/5",
-        declined && "opacity-50",
-      )}
+      className={cn(ROW.item, "group relative", declined && "opacity-50")}
     >
       <span
         aria-hidden

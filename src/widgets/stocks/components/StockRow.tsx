@@ -1,4 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { ROW } from "@/lib/row";
 import { cn } from "@/lib/utils";
 import { formatPrice, formatSigned } from "@/widgets/stocks/lib/format";
 import {
@@ -33,12 +34,11 @@ export function StockRow({ symbol, onSelect, onRemove }: StockRowProps) {
         type="button"
         onClick={onSelect}
         aria-label={`Show ${symbol} details`}
-        className="
-          press-row cursor-pointer focus-ring flex w-full items-center gap-2 rounded-lg px-2 py-1.5
-          text-left transition-[padding,background-color] duration-200
-          group-hover:pr-9
-          group-focus-within:pr-9
-        "
+        className={cn(
+          ROW.itemAction,
+          "w-full transition-[padding,background-color] duration-200",
+          "group-hover:pr-9 group-focus-within:pr-9",
+        )}
       >
         <div className={cn("flex shrink-0 flex-col", showName ? "w-24" : "w-16")}>
           <span className="text-ink truncate text-body leading-tight font-semibold">{symbol}</span>

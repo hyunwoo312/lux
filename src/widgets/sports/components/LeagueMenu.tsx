@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ROW } from "@/lib/row";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, ChevronDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -71,15 +72,7 @@ export function LeagueMenu() {
                   delay: reduced ? 0 : index * 0.025,
                   ease: EASE_OUT,
                 }}
-                className={cn(
-                  "press cursor-pointer",
-                  `
-                    hover:bg-accent
-                    flex items-center gap-2 rounded-sm px-2 py-1.5 text-left text-caption
-                    transition-colors
-                  `,
-                  selected ? "text-primary font-medium" : "text-ink",
-                )}
+                className={cn(ROW.option, selected ? "text-primary font-medium" : "text-ink")}
               >
                 <span className="flex-1">{league.label}</span>
                 <Check

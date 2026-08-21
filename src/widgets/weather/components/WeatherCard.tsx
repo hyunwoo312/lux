@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { ROW } from "@/lib/row";
 import { Spinner } from "@/components/ui/spinner";
 import { RetryButton, StateMessage } from "@/components/StateMessage";
 import { Cloud, X } from "lucide-react";
@@ -169,13 +170,7 @@ export function WeatherCard({
   const data = state.status === "success" ? state.data : null;
 
   return (
-    <div
-      className="
-        group
-        hover:bg-foreground/5
-        relative flex items-center rounded-lg px-2 py-1.5 transition-colors
-      "
-    >
+    <div className={cn(ROW.item, "group relative gap-0")}>
       <button
         type="button"
         onClick={onSelect}

@@ -115,9 +115,7 @@ export function BaseWidget({
           editing && `pointer-events-none select-none`,
         )}
       >
-        {!omitSurface && background !== "solid" && !livePattern && !editing && (
-          <FauxGlassBackdrop />
-        )}
+        {!omitSurface && background !== "solid" && !livePattern && <FauxGlassBackdrop />}
         {!omitSurface && (
           <div
             aria-hidden

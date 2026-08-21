@@ -5,7 +5,9 @@ import { motion, useReducedMotion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { formatRelativeTime } from "@/lib/relative-time";
+import { cn } from "@/lib/utils";
 import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
+import type { Freshness } from "@/widgets/core/usePolledResource";
 import { syncCooldownMessage, syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
 
 type WidgetRefreshButtonProps = {
@@ -13,6 +15,8 @@ type WidgetRefreshButtonProps = {
   lastSyncAt: number | undefined;
   updatedAt?: number;
   cooldownMs: number;
+  freshness?: Freshness;
+  label: string;
   onRefresh: () => void;
 };
 
@@ -21,6 +25,8 @@ export function WidgetRefreshButton({
   lastSyncAt,
   updatedAt,
   cooldownMs,
+  freshness,
+  label,
   onRefresh,
 }: WidgetRefreshButtonProps) {
   const reduced = useReducedMotion();
@@ -38,23 +44,30 @@ export function WidgetRefreshButton({
 
   const spinning = syncing && !reduced;
   const disabled = syncing || coolingDown;
+  const failing = freshness?.status === "failing";
+  const staleSince = failing ? formatRelativeTime(freshness.since, now) : null;
+  const staleNotice = staleSince
+    ? `${label} last updated ${staleSince}. Refreshing is failing, retrying automatically.`
+    : null;
 
   return (
     <Tooltip
       content={
-        coolingDown
-          ? syncCooldownMessage(remainingMs)
-          : freshAt !== undefined
-            ? `Updated ${formatRelativeTime(freshAt, now)}`
-            : "Refresh"
+        staleNotice
+          ? staleNotice
+          : coolingDown
+            ? syncCooldownMessage(remainingMs)
+            : freshAt !== undefined
+              ? `Updated ${formatRelativeTime(freshAt, now)}`
+              : "Refresh"
       }
       sticky
     >
       <Button
         variant="ghost"
         size="icon-xs"
-        className={WIDGET_HEADER_ACTION}
-        aria-label="Refresh"
+        className={cn(WIDGET_HEADER_ACTION, failing && "text-warning hover:text-warning")}
+        aria-label={staleNotice ?? "Refresh"}
         disabled={disabled}
         onClick={onRefresh}
       >
@@ -69,6 +82,9 @@ export function WidgetRefreshButton({
         >
           <RefreshCw />
         </motion.span>
+        <span aria-live="polite" className="sr-only">
+          {staleNotice}
+        </span>
       </Button>
     </Tooltip>
   );

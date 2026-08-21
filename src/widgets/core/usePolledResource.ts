@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { POLLED_CACHE_PREFIX, setLocal } from "@/lib/local-store";
 import { RateLimitError } from "@/lib/net";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
@@ -24,10 +24,31 @@ export type PolledResourceState<T> =
   | { status: "empty" }
   | { status: "success"; data: T };
 
+export type Freshness =
+  | { status: "current" }
+  | { status: "failing"; error: Error; failures: number; since: number };
+
+export function freshnessOf(snapshot: {
+  hasLoaded: boolean;
+  refreshError: Error | undefined;
+  failureCount: number;
+  at: number;
+}): Freshness {
+  return snapshot.hasLoaded && snapshot.refreshError
+    ? {
+        status: "failing",
+        error: snapshot.refreshError,
+        failures: snapshot.failureCount,
+        since: snapshot.at,
+      }
+    : { status: "current" };
+}
+
 export type PolledResource<T> = {
   state: PolledResourceState<T>;
   isRefreshing: boolean;
   lastSyncedAt: number;
+  freshness: Freshness;
   refresh: () => void;
 };
 
@@ -50,6 +71,8 @@ type Snapshot<T> = {
   hasLoaded: boolean;
   isRefreshing: boolean;
   at: number;
+  refreshError: Error | undefined;
+  failureCount: number;
 };
 
 const LOADING: Snapshot<never> = {
@@ -58,6 +81,8 @@ const LOADING: Snapshot<never> = {
   hasLoaded: false,
   isRefreshing: false,
   at: 0,
+  refreshError: undefined,
+  failureCount: 0,
 };
 
 function seedSnapshot<T>(
@@ -68,7 +93,15 @@ function seedSnapshot<T>(
 ): Snapshot<T> {
   const seed = enabled && cacheKey ? seededEntry<T>(cacheKey, persist, parsePersisted) : undefined;
   return seed
-    ? { data: seed.data, error: undefined, hasLoaded: true, isRefreshing: false, at: seed.at }
+    ? {
+        data: seed.data,
+        error: undefined,
+        hasLoaded: true,
+        isRefreshing: false,
+        at: seed.at,
+        refreshError: undefined,
+        failureCount: 0,
+      }
     : { ...LOADING };
 }
 
@@ -215,7 +248,15 @@ class SharedResource<T> {
       ? seededEntry<T>(config.cacheKey, config.persist, config.parsePersisted)
       : undefined;
     this.snapshot = seed
-      ? { data: seed.data, error: undefined, hasLoaded: true, isRefreshing: false, at: seed.at }
+      ? {
+          data: seed.data,
+          error: undefined,
+          hasLoaded: true,
+          isRefreshing: false,
+          at: seed.at,
+          refreshError: undefined,
+          failureCount: 0,
+        }
       : { ...LOADING };
   }
 
@@ -304,6 +345,7 @@ class SharedResource<T> {
   private patch(part: Partial<Snapshot<T>>): void {
     this.snapshot = { ...this.snapshot, ...part };
     for (const listener of this.listeners) listener(this.snapshot);
+    notifyFreshness();
   }
 
   private start(): void {
@@ -341,7 +383,15 @@ class SharedResource<T> {
         }
         this.failureCount = 0;
         this.retryAt = 0;
-        this.patch({ data, error: undefined, hasLoaded: true, isRefreshing: false, at });
+        this.patch({
+          data,
+          error: undefined,
+          hasLoaded: true,
+          isRefreshing: false,
+          at,
+          refreshError: undefined,
+          failureCount: 0,
+        });
       } catch (caught) {
         if (generation !== this.generation) return;
         const error = caught instanceof Error ? caught : new Error("Request failed");
@@ -349,7 +399,9 @@ class SharedResource<T> {
         this.retryAt =
           Date.now() + backoffDelayMs(this.failureCount) + Math.random() * RETRY_BASE_MS;
         this.patch(
-          this.snapshot.hasLoaded ? { isRefreshing: false } : { error, isRefreshing: false },
+          this.snapshot.hasLoaded
+            ? { isRefreshing: false, refreshError: error, failureCount: this.failureCount }
+            : { error, isRefreshing: false, refreshError: error, failureCount: this.failureCount },
         );
       } finally {
         this.inFlight = null;
@@ -358,6 +410,62 @@ class SharedResource<T> {
     this.inFlight = promise;
     return promise;
   }
+}
+
+const freshnessListeners = new Set<() => void>();
+const freshnessCache = new Map<string, Freshness>();
+
+export type FreshnessSource = (prefix: string) => Freshness[];
+
+const freshnessSources = new Set<FreshnessSource>();
+
+export function registerFreshnessSource(source: FreshnessSource): void {
+  freshnessSources.add(source);
+}
+
+function sameFreshness(a: Freshness, b: Freshness): boolean {
+  if (a.status !== b.status) return false;
+  if (a.status === "current" || b.status === "current") return true;
+  return a.since === b.since && a.failures === b.failures;
+}
+
+export function notifyFreshness(): void {
+  for (const listener of freshnessListeners) listener();
+}
+
+function subscribeFreshness(onChange: () => void): () => void {
+  freshnessListeners.add(onChange);
+  return () => freshnessListeners.delete(onChange);
+}
+
+function ownFreshness(prefix: string): Freshness[] {
+  const candidates: Freshness[] = [];
+  for (const [key, resource] of liveResources) {
+    if (key.startsWith(prefix)) candidates.push(freshnessOf(resource.getSnapshot()));
+  }
+  return candidates;
+}
+
+export function peekFreshness(prefix: string): Freshness {
+  let worst: Freshness = { status: "current" };
+  for (const source of [ownFreshness, ...freshnessSources]) {
+    for (const candidate of source(prefix)) {
+      if (candidate.status !== "failing") continue;
+      if (worst.status === "current" || candidate.since < worst.since) worst = candidate;
+    }
+  }
+  const cached = freshnessCache.get(prefix);
+  if (cached && sameFreshness(cached, worst)) return cached;
+  freshnessCache.set(prefix, worst);
+  return worst;
+}
+
+export function useFreshness(prefix: string): Freshness {
+  return useSyncExternalStore(
+    subscribeFreshness,
+    () => peekFreshness(prefix),
+    () => peekFreshness(prefix),
+  );
 }
 
 function acquireResource<T>(
@@ -481,5 +589,13 @@ export function usePolledResource<T>(
     state = { status: "success", data: snapshot.data };
   }
 
-  return { state, isRefreshing: snapshot.isRefreshing, lastSyncedAt: snapshot.at, refresh };
+  const freshness = freshnessOf(snapshot);
+
+  return {
+    state,
+    isRefreshing: snapshot.isRefreshing,
+    lastSyncedAt: snapshot.at,
+    freshness,
+    refresh,
+  };
 }

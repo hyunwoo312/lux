@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ROW } from "@/lib/row";
 import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
@@ -156,7 +157,7 @@ function ActivityRow({
   const meta = activity.mediaTitle ? `${activity.mediaTitle} · ${time}` : time;
 
   return (
-    <div className="hover:bg-foreground/5 flex items-center gap-2.5 rounded-md px-2 py-1.5">
+    <div className={ROW.item}>
       <a
         href={activity.siteUrl}
         target={newTab ? "_blank" : undefined}
