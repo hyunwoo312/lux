@@ -32,7 +32,7 @@ export function FeedList<T>({
           <Fragment key={getKey(item)}>{renderItem(item, index)}</Fragment>
         ))}
         {hasMore && (
-          <div ref={sentinelRef} className="text-muted-foreground text-2xs py-2 text-center">
+          <div ref={sentinelRef} className="text-ink-3 text-micro py-2 text-center">
             {isLoadingMore ? "Loading more…" : ""}
           </div>
         )}

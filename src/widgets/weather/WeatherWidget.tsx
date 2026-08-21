@@ -5,7 +5,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
 import { SortableRow } from "@/widgets/core/SortableRow";
 import { WeatherCard } from "@/widgets/weather/components/WeatherCard";
-import { EASE_OUT_QUINT } from "@/lib/motion";
+import { EASE_OUT } from "@/lib/motion";
 import { useWeather, useWeatherStore } from "@/widgets/weather/useWeatherStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
@@ -25,7 +25,7 @@ export function WeatherWidget() {
   const selected = selectedId ? (locations.find((entry) => entry.id === selectedId) ?? null) : null;
   const detail = locations.length === 1 ? (locations[0] ?? null) : selected;
 
-  const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT_QUINT };
+  const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT };
   const offset = reduced ? 0 : "4%";
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -38,11 +38,7 @@ export function WeatherWidget() {
   return (
     <div className="relative h-full overflow-hidden">
       {locations.length === 0 ? (
-        <div
-          className="
-            text-muted-foreground flex h-full items-center justify-center px-2 text-center text-sm
-          "
-        >
+        <div className="text-ink-3 flex h-full items-center justify-center px-2 text-center text-body">
           Search above to add a city.
         </div>
       ) : (

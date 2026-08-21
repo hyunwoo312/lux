@@ -1,7 +1,8 @@
+import { EASE_OUT } from "@/lib/motion";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
-import { WIDGET_HEADER_ACTION } from "@/widgets/core/BaseWidget";
+import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import type { WidgetIcon } from "@/widgets/core/types";
 
 type ViewToggleButtonProps = {
@@ -35,7 +36,7 @@ export function ViewToggleButton({
             initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.6, rotate: -90 }}
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.6, rotate: 90 }}
-            transition={{ duration: reduced ? 0 : 0.18, ease: "easeOut" }}
+            transition={{ duration: reduced ? 0 : 0.18, ease: EASE_OUT }}
           >
             <Icon />
           </motion.span>

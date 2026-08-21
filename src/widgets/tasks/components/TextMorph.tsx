@@ -1,3 +1,4 @@
+import { DURATION, EASE_OUT } from "@/lib/motion";
 import { useMemo } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
@@ -29,7 +30,7 @@ export function TextMorph({ text, className }: TextMorphProps) {
             initial={{ opacity: 0, scale: 0.7 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.7 }}
-            transition={{ duration: 0.12, ease: "easeOut" }}
+            transition={{ duration: DURATION.instant, ease: EASE_OUT }}
             className="inline-block whitespace-pre"
           >
             {char}

@@ -63,8 +63,8 @@ function DialogContent({
           <DialogPrimitive.Close
             aria-label="Close"
             className="
-              text-muted-foreground
-              hover:text-foreground hover:bg-accent
+              text-ink-3
+              hover:text-ink hover:bg-accent
               focus-visible:ring-ring
               absolute top-4 right-4 grid size-8 place-items-center rounded-lg transition-colors
               outline-none
@@ -96,7 +96,7 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn("text-muted-foreground text-sm", className)}
+      className={cn("text-ink-3 text-body", className)}
       {...props}
     />
   );

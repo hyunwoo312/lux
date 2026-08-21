@@ -3,7 +3,7 @@ import { ChevronDown } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { EASE_OUT_EXPO } from "@/lib/motion";
+import { EASE_OUT_STRONG } from "@/lib/motion";
 import {
   CHANGE_TYPE_LABEL,
   CHANGE_TYPE_ORDER,
@@ -36,7 +36,7 @@ export function ChangelogDialog({ open, onOpenChange }: Props) {
       >
         <header className="border-border/50 flex flex-col gap-1 border-b px-6 py-5">
           <DialogTitle className="text-base font-semibold">What&apos;s new</DialogTitle>
-          <DialogDescription className="text-muted-foreground text-sm">
+          <DialogDescription className="text-ink-3 text-body">
             Recent updates to Lux.
           </DialogDescription>
         </header>
@@ -79,20 +79,20 @@ function ReleaseSection({ release, latest }: { release: Release; latest: boolean
           focus-visible:ring-2
         "
       >
-        <h3 className="text-sm font-semibold tabular-nums">v{release.version}</h3>
+        <h3 className="text-body font-semibold tabular-nums">v{release.version}</h3>
         {latest && (
           <span
             className="
-              bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-2xs font-medium
+              bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-micro font-medium
             "
           >
             Latest
           </span>
         )}
-        <span className="text-muted-foreground text-xs">{formatDate(release.date)}</span>
+        <span className="text-ink-3 text-caption">{formatDate(release.date)}</span>
         <ChevronDown
           className={cn(
-            "text-muted-foreground ml-auto size-4 shrink-0 transition-transform duration-200",
+            "text-ink-3 ml-auto size-4 shrink-0 transition-transform duration-200",
             open && "rotate-180",
           )}
         />
@@ -100,29 +100,29 @@ function ReleaseSection({ release, latest }: { release: Release; latest: boolean
       <motion.div
         initial={false}
         animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
-        transition={{ duration: reduced ? 0 : 0.25, ease: EASE_OUT_EXPO }}
+        transition={{ duration: reduced ? 0 : 0.25, ease: EASE_OUT_STRONG }}
         className="overflow-hidden"
       >
         <div className="flex flex-col gap-5 pt-3">
-          <p className="text-muted-foreground text-sm">{release.summary}</p>
+          <p className="text-ink-3 text-body">{release.summary}</p>
           {CHANGE_TYPE_ORDER.map((type) => {
             const items = sortChanges(release.changes.filter((change) => change.type === type));
             if (items.length === 0) return null;
             return (
               <section key={type} className="flex flex-col gap-3">
                 <h4 className="flex items-center gap-2.5">
-                  <span className="text-foreground text-xs font-semibold tracking-widest uppercase">
+                  <span className="text-ink text-caption font-semibold tracking-widest uppercase">
                     {CHANGE_TYPE_LABEL[type]}
                   </span>
                   <span aria-hidden className="bg-border/70 h-px flex-1" />
                 </h4>
                 {groupByArea(items).map(({ area, changes }) => (
                   <div key={area} className="flex flex-col gap-1.5 pl-1">
-                    <h5 className="text-foreground/70 text-xs font-medium">{area}</h5>
+                    <h5 className="text-ink-2 text-caption font-medium">{area}</h5>
                     <ul className="flex flex-col gap-1.5 pl-3">
                       {changes.map((change) => (
-                        <li key={change.text} className="text-foreground/90 flex gap-2 text-sm">
-                          <span aria-hidden className="text-muted-foreground/50 select-none">
+                        <li key={change.text} className="text-ink flex gap-2 text-body">
+                          <span aria-hidden className="text-ink-4 select-none">
                             •
                           </span>
                           <span>{change.text}</span>

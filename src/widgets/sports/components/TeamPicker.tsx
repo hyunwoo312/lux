@@ -47,7 +47,7 @@ export function TeamPicker() {
 
   if (state.status !== "success") {
     return (
-      <span className="text-muted-foreground text-xs">
+      <span className="text-ink-3 text-caption">
         {state.status === "error" ? "Couldn’t load teams." : "Loading teams…"}
       </span>
     );

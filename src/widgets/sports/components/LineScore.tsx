@@ -27,13 +27,7 @@ function Cell({
         "px-1 py-0.5 text-center tabular-nums",
         divide && "border-border/60 border-l",
         current && "bg-foreground/5",
-        total
-          ? "text-foreground font-semibold"
-          : blank
-            ? "text-muted-foreground/40"
-            : dim
-              ? "text-muted-foreground"
-              : "text-foreground",
+        total ? "text-ink font-semibold" : blank ? "text-ink-4" : dim ? "text-ink-3" : "text-ink",
       )}
     >
       {children}
@@ -58,10 +52,7 @@ function TeamRow({
     <tr>
       <th
         scope="row"
-        className={cn(
-          "py-0.5 pr-1 text-left font-medium",
-          dim ? "text-muted-foreground" : "text-foreground",
-        )}
+        className={cn("py-0.5 pr-1 text-left font-medium", dim ? "text-ink-3" : "text-ink")}
       >
         {team.abbreviation}
       </th>
@@ -91,9 +82,9 @@ export function LineScore({ match }: { match: Match }) {
 
   return (
     <div className="-mx-1 overflow-x-auto px-1">
-      <table className="text-2xs w-full border-collapse">
+      <table className="text-micro w-full border-collapse">
         <thead>
-          <tr className="text-muted-foreground/70 border-border/50 border-b">
+          <tr className="text-ink-4 border-border/50 border-b">
             <th scope="col" className="sr-only">
               Team
             </th>
@@ -103,7 +94,7 @@ export function LineScore({ match }: { match: Match }) {
                 scope="col"
                 className={cn(
                   "px-1 py-0.5 text-center font-normal",
-                  index === currentPeriod && "text-foreground font-medium",
+                  index === currentPeriod && "text-ink font-medium",
                 )}
               >
                 {label}
@@ -114,7 +105,7 @@ export function LineScore({ match }: { match: Match }) {
                 key={label}
                 scope="col"
                 className={cn(
-                  "text-muted-foreground px-1 py-0.5 text-center font-medium",
+                  "text-ink-3 px-1 py-0.5 text-center font-medium",
                   index === 0 && "border-border/60 border-l",
                 )}
               >

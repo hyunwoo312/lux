@@ -9,9 +9,9 @@ import type {
 } from "@/widgets/spotify/types";
 
 const CONTROL_BUTTON = `
-  text-muted-foreground inline-flex size-8 items-center justify-center rounded-full
+  text-ink-3 inline-flex size-8 items-center justify-center rounded-full
   transition-colors
-  hover:text-foreground
+  hover:text-ink
   focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none
   disabled:pointer-events-none disabled:opacity-40
 `;

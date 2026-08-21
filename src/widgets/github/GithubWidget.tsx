@@ -6,7 +6,7 @@ import { ContributionsView } from "@/widgets/github/components/ContributionsView
 import { InboxView } from "@/widgets/github/components/InboxView";
 import { ReleasesView } from "@/widgets/github/components/ReleasesView";
 import { GithubSignedOutPreview } from "@/widgets/github/components/GithubSignedOutPreview";
-import { EASE_OUT_QUINT } from "@/lib/motion";
+import { EASE_OUT } from "@/lib/motion";
 import type { GithubView } from "@/widgets/github/types";
 
 function ActiveView({
@@ -43,7 +43,7 @@ export function GithubWidget() {
     return <GithubSignedOutPreview />;
   }
 
-  const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT_QUINT };
+  const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT };
 
   return (
     <div className="relative h-full min-h-0">
@@ -56,7 +56,7 @@ export function GithubWidget() {
           exit={{ opacity: 0 }}
           transition={transition}
         >
-          <ActiveView view={view} enabled={Boolean(connected)} showPrivate={showPrivate} />
+          <ActiveView view={view} enabled={connected} showPrivate={showPrivate} />
         </motion.div>
       </AnimatePresence>
     </div>

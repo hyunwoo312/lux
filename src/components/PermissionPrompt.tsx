@@ -25,13 +25,13 @@ export function PermissionPrompt({
           py-2
         "
       >
-        <Lock className="text-muted-foreground/60 size-4 shrink-0" aria-hidden />
-        <span className="text-muted-foreground min-w-0 flex-1 text-xs">{message}</span>
+        <Lock className="text-ink-4 size-4 shrink-0" aria-hidden />
+        <span className="text-ink-3 min-w-0 flex-1 text-caption">{message}</span>
         <button
           type="button"
           onClick={enable}
           className="
-            text-foreground shrink-0 text-xs font-semibold underline-offset-2
+            text-ink shrink-0 text-caption font-semibold underline-offset-2
             hover:underline
           "
         >
@@ -41,9 +41,9 @@ export function PermissionPrompt({
           type="button"
           onClick={onOpenSettings}
           className="
-            text-muted-foreground
-            hover:text-foreground
-            shrink-0 text-xs underline-offset-2
+            text-ink-3
+            hover:text-ink
+            shrink-0 text-caption underline-offset-2
             hover:underline
           "
         >
@@ -55,8 +55,8 @@ export function PermissionPrompt({
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2.5 px-4 text-center">
-      <Lock className="text-muted-foreground/60 size-6" aria-hidden />
-      <p className="text-muted-foreground max-w-[34ch] text-sm text-balance">{message}</p>
+      <Lock className="text-ink-4 size-6" aria-hidden />
+      <p className="text-ink-3 max-w-[34ch] text-body text-balance">{message}</p>
       <div className="flex items-center gap-2">
         <Button size="sm" onClick={enable}>
           Enable

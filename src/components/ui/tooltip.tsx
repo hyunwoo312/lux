@@ -38,7 +38,7 @@ function TooltipBody({ content, side, align, solid }: TooltipBodyProps) {
         className={cn(
           `
             bg-popover text-popover-foreground overlay-pop elev-3 z-tooltip rounded-md px-2.5 py-1.5
-            text-2xs font-medium
+            text-micro font-medium
           `,
           solid ? "max-w-[14rem]" : "tracking-wide whitespace-nowrap uppercase",
         )}

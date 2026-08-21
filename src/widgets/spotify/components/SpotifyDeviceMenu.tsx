@@ -33,9 +33,8 @@ export function SpotifyDeviceMenu({
         aria-label="Choose playback device"
         disabled={disabled}
         className="
-          text-muted-foreground inline-flex size-8 items-center justify-center rounded-full
-          transition-colors
-          hover:text-foreground
+          text-ink-3 inline-flex size-8 items-center justify-center rounded-full transition-colors
+          hover:text-ink
           focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none
           disabled:pointer-events-none disabled:opacity-40
         "
@@ -66,17 +65,12 @@ export function SpotifyDeviceMenu({
                 "
               >
                 <Monitor
-                  className={cn(
-                    "size-4 shrink-0",
-                    active ? "text-primary" : `text-muted-foreground`,
-                  )}
+                  className={cn("size-4 shrink-0", active ? "text-primary" : `text-ink-3`)}
                   aria-hidden
                 />
                 <span className="flex min-w-0 flex-col">
-                  <span className="truncate text-sm leading-none font-medium">{device.name}</span>
-                  <span className="text-muted-foreground text-2xs mt-0.5 truncate">
-                    {device.type}
-                  </span>
+                  <span className="truncate text-body leading-none font-medium">{device.name}</span>
+                  <span className="text-ink-3 text-micro mt-0.5 truncate">{device.type}</span>
                 </span>
                 {active && <Check className="text-primary ml-auto size-3.5 shrink-0" aria-hidden />}
               </button>

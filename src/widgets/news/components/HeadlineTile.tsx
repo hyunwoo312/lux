@@ -58,7 +58,7 @@ export function HeadlineTile({
           )}
         />
       ) : (
-        <PlaceholderIcon className="text-muted-foreground/40 absolute top-3 right-3 size-5" />
+        <PlaceholderIcon className="text-ink-4 absolute top-3 right-3 size-5" />
       )}
       <span
         className="
@@ -68,7 +68,7 @@ export function HeadlineTile({
       >
         <span
           className={cn(
-            "group-hover:text-primary line-clamp-2 text-xs leading-snug font-medium",
+            "group-hover:text-primary line-clamp-2 text-caption leading-snug font-medium",
             isRead ? "text-white/60" : "text-white",
           )}
         >

@@ -21,7 +21,7 @@ export function LinkIcon({
           ease-out
           motion-reduce:transition-none
         `,
-        view === "grid" ? "size-8 rounded-md text-sm" : "size-4 rounded-xs text-[0.6rem]",
+        view === "grid" ? "size-8 rounded-md text-body" : "size-4 rounded-xs text-micro",
       )}
     >
       {icon ? (
@@ -29,7 +29,7 @@ export function LinkIcon({
           aria-hidden
           className={cn(
             "bg-foreground/5 flex size-full items-center justify-center leading-none",
-            view === "grid" ? "text-lg" : "text-[0.7rem]",
+            view === "grid" ? "text-lg" : "text-micro",
           )}
         >
           {icon}

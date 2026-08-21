@@ -27,7 +27,7 @@ export function HelpTab() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SettingsSection title="Getting started" description="Everything here works with a click.">
+      <SettingsSection title="Getting started">
         <HelpItem icon={MousePointerClick} title="Use the toolbar">
           The controls in the top-right corner let you switch light/dark, add a widget with{" "}
           <Key>+</Key>, edit your layout with the pencil, and open settings with the gear.
@@ -44,15 +44,12 @@ export function HelpTab() {
         </Button>
       </SettingsSection>
 
-      <SettingsSection
-        title="Keyboard shortcuts"
-        description="Prefer the keyboard? These speed things up."
-      >
+      <SettingsSection title="Keyboard shortcuts">
         {PREVIEW_SHORTCUTS.map((definition, index) => (
           <ShortcutRow key={definition.id} label={definition.label} list={bindings[index] ?? []} />
         ))}
         {SHORTCUT_DEFINITIONS.length > PREVIEW_SHORTCUTS.length && (
-          <span aria-hidden className="text-foreground -my-1 text-sm leading-none tracking-widest">
+          <span aria-hidden className="text-ink -my-1 text-body leading-none tracking-widest">
             …
           </span>
         )}
@@ -78,7 +75,7 @@ export function HelpTab() {
       </SettingsSection>
 
       <SettingsSection title="More help">
-        <p className="text-muted-foreground text-sm">
+        <p className="text-ink-3 text-body">
           Browse the source or report an issue on{" "}
           <a
             href={`${REPO_URL}/issues`}
@@ -115,14 +112,14 @@ function HelpItem({
 function ShortcutRow({ label, list }: { label: string; list: Shortcut[] }) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <span className="text-sm">{label}</span>
+      <span className="text-body">{label}</span>
       <Keys list={list} />
     </div>
   );
 }
 
 function Keys({ list }: { list: Shortcut[] }) {
-  if (list.length === 0) return <span className="text-muted-foreground text-xs">Unset</span>;
+  if (list.length === 0) return <span className="text-ink-3 text-caption">Unset</span>;
   return (
     <span className="inline-flex items-center gap-1.5">
       {list.map((shortcut) => (
@@ -136,7 +133,7 @@ function Key({ children }: { children: ReactNode }) {
   return (
     <kbd
       className="
-        border-border/60 bg-card text-foreground rounded border px-1.5 py-0.5 text-xs font-medium
+        border-border/60 bg-card text-ink rounded border px-1.5 py-0.5 text-caption font-medium
       "
     >
       {children}
@@ -147,8 +144,8 @@ function Key({ children }: { children: ReactNode }) {
 function Faq({ question, children }: { question: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-foreground text-sm font-medium">{question}</span>
-      <p className="text-muted-foreground pl-3 text-xs leading-relaxed">{children}</p>
+      <span className="text-ink text-body font-medium">{question}</span>
+      <p className="text-ink-3 pl-3 text-caption leading-relaxed">{children}</p>
     </div>
   );
 }
@@ -158,7 +155,7 @@ function LinkButton({ onClick, children }: { onClick: () => void; children: Reac
     <button
       type="button"
       onClick={onClick}
-      className="text-primary w-fit text-xs font-medium hover:underline"
+      className="text-primary w-fit text-caption font-medium hover:underline"
     >
       {children}
     </button>

@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { POP } from "@/lib/motion";
+import { DURATION, EASE_OUT, POP } from "@/lib/motion";
 import { accentClass, type AccentPreset } from "@/widgets/core/accent";
 import type { WidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
+import { HEADER_LABEL, WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { WidgetChromeContext } from "@/widgets/core/useWidgetChrome";
 import { FauxGlassBackdrop } from "@/widgets/core/FauxGlassBackdrop";
 import { useWallpaperStore } from "@/stores/useWallpaperStore";
@@ -37,16 +38,10 @@ const spin = {
   initial: { opacity: 0, scale: 0.5, rotate: -90 },
   animate: { opacity: 1, scale: 1, rotate: 0 },
   exit: { opacity: 0, scale: 0.5, rotate: 90 },
-  transition: { duration: 0.2, ease: "easeOut" },
+  transition: { duration: DURATION.base, ease: EASE_OUT },
 } as const;
 
-const swapTransition: Transition = { duration: 0.18, ease: "easeOut" };
-export const HEADER_LABEL =
-  "text-muted-foreground block truncate text-xs font-medium tracking-wide uppercase";
-
-export const WIDGET_HEADER_ACTION =
-  "text-muted-foreground/60 hover:text-foreground size-7 rounded-sm [&_svg]:size-4";
-
+const swapTransition: Transition = { duration: DURATION.fast, ease: EASE_OUT };
 export function BaseWidget({
   title,
   editing,
@@ -176,8 +171,8 @@ export function BaseWidget({
                   key="size"
                   {...POP}
                   className="
-                    bg-foreground text-background rounded-md px-1.5 py-0.5 text-xs font-semibold
-                    tabular-nums shadow-md
+                    bg-foreground text-background rounded-md px-1.5 py-0.5 text-caption
+                    font-semibold tabular-nums shadow-md
                   "
                 >
                   {size.w} × {size.h}

@@ -53,7 +53,7 @@ function RemoveButton({
       }}
       className={cn(
         `
-          text-muted-foreground/60
+          text-ink-4
           hover:text-destructive
           grid size-7 shrink-0 place-items-center transition
           [&_svg]:size-4
@@ -110,7 +110,7 @@ function DetailedWeather({
       {!data ? (
         state.status === "error" ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 px-2 text-center">
-            <p className="text-muted-foreground text-sm">Couldn’t load the weather.</p>
+            <p className="text-ink-3 text-body">Couldn’t load the weather.</p>
             <Button size="sm" variant="outline" onClick={onRetry} disabled={refreshing}>
               {refreshing ? (
                 <>
@@ -200,20 +200,20 @@ export function WeatherCard({
             <WeatherIcon
               code={data.current.weatherCode}
               isDay={data.current.isDay}
-              className="text-foreground size-6"
+              className="text-ink size-6"
             />
           ) : state.status === "error" ? (
-            <Cloud className="text-muted-foreground/50 size-5" aria-hidden />
+            <Cloud className="text-ink-4 size-5" aria-hidden />
           ) : (
-            <Loader2 className="text-muted-foreground/50 size-4 animate-spin" aria-hidden />
+            <Loader2 className="text-ink-4 size-4 animate-spin" aria-hidden />
           )}
         </span>
-        <span className="text-foreground w-10 shrink-0 text-lg font-semibold tabular-nums">
+        <span className="text-ink w-10 shrink-0 text-lg font-semibold tabular-nums">
           {data ? formatTemperature(data.current.temperature) : "—"}
         </span>
-        <span className="min-w-0 flex-1 truncate text-sm">{location.name}</span>
+        <span className="min-w-0 flex-1 truncate text-body">{location.name}</span>
         {data && (
-          <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
+          <span className="text-ink-3 shrink-0 text-caption tabular-nums">
             {formatTemperature(data.today.max)} / {formatTemperature(data.today.min)}
           </span>
         )}

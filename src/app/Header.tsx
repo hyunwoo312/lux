@@ -44,7 +44,7 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
-            className={cn("size-10 [&_svg]:size-5", editing && "bg-accent text-foreground")}
+            className={cn("size-10 [&_svg]:size-5", editing && "bg-accent text-ink")}
             aria-label={editing ? "Done editing layout" : "Edit layout"}
             onClick={toggleEditing}
           >
@@ -133,13 +133,11 @@ function HeaderClock({ className }: { className?: string }) {
   const dayPeriod = parts.find((part) => part.type === "dayPeriod")?.value;
 
   return (
-    <span
-      className={cn("text-foreground text-2xl font-semibold tracking-wide tabular-nums", className)}
-    >
+    <span className={cn("text-ink text-2xl font-semibold tracking-wide tabular-nums", className)}>
       {hour}
       <span className="mx-0.5">:</span>
       {minute}
-      {dayPeriod ? <span className="text-muted-foreground ml-1">{dayPeriod}</span> : null}
+      {dayPeriod ? <span className="text-ink-3 ml-1">{dayPeriod}</span> : null}
     </span>
   );
 }

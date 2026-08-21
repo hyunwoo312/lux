@@ -4,7 +4,7 @@ import { Eraser } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { POP } from "@/lib/motion";
-import { WIDGET_HEADER_ACTION } from "@/widgets/core/BaseWidget";
+import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { getTaskData, useTasks, useTasksStore } from "@/widgets/tasks/useTasksStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import type { Task } from "@/widgets/tasks/types";
@@ -46,7 +46,11 @@ export function ClearCompletedButton() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-primary hover:text-primary h-7 rounded-sm px-2 text-xs font-semibold"
+              className="
+                text-primary
+                hover:text-primary
+                h-7 rounded-sm px-2 text-caption font-semibold
+              "
               onClick={handleUndo}
             >
               Undo

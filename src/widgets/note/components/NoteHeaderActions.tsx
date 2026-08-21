@@ -4,7 +4,7 @@ import { Check, Copy, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { POP } from "@/lib/motion";
-import { WIDGET_HEADER_ACTION } from "@/widgets/core/BaseWidget";
+import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { getNoteData, useNote } from "@/widgets/note/useNoteStore";
 

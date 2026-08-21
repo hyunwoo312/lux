@@ -1,3 +1,4 @@
+import { EASE_STANDARD } from "@/lib/motion";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Heart } from "lucide-react";
 import { SpotifyServiceIcon } from "@/components/icons/service-icons";
@@ -50,7 +51,7 @@ export function SpotifyPlayer({ controller, playback, view, timeDisplayMode }: S
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: reduced ? 0 : 0.5, ease: "easeInOut" }}
+                transition={{ duration: reduced ? 0 : 0.5, ease: EASE_STANDARD }}
                 className="aspect-square max-h-full max-w-full rounded-lg object-cover shadow-md"
               />
             ) : (
@@ -59,7 +60,7 @@ export function SpotifyPlayer({ controller, playback, view, timeDisplayMode }: S
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: reduced ? 0 : 0.5, ease: "easeInOut" }}
+                transition={{ duration: reduced ? 0 : 0.5, ease: EASE_STANDARD }}
                 className="
                   bg-foreground/5 flex aspect-square h-full max-h-40 items-center justify-center
                   rounded-lg
@@ -76,7 +77,7 @@ export function SpotifyPlayer({ controller, playback, view, timeDisplayMode }: S
         <div className="flex min-w-0 items-center gap-1.5">
           <SpotifyMarquee
             label={playback.track.title}
-            className="min-w-0 flex-1 text-sm font-semibold"
+            className="min-w-0 flex-1 text-body font-semibold"
           />
           {controller.isTrackLiked && (
             <span
@@ -88,9 +89,9 @@ export function SpotifyPlayer({ controller, playback, view, timeDisplayMode }: S
             </span>
           )}
         </div>
-        <p className="text-muted-foreground truncate text-xs">{playback.track.artist}</p>
+        <p className="text-ink-3 truncate text-caption">{playback.track.artist}</p>
         {view !== "compact" && (
-          <p className="text-muted-foreground/70 truncate text-2xs">
+          <p className="text-ink-4 truncate text-micro">
             {controller.contextName
               ? `${playback.track.album} · from ${controller.contextName}`
               : playback.track.album}

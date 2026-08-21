@@ -17,7 +17,7 @@ import { useSettingsStore } from "@/settings";
 import { cn } from "@/lib/utils";
 import { GRID_MODIFIERS, VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
 import { openUrl } from "@/lib/open-url";
-import { EASE_IN_OUT } from "@/lib/motion";
+import { DURATION, EASE_OUT, EASE_STANDARD } from "@/lib/motion";
 import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
 import { LinkForm } from "@/widgets/quick-access/components/LinkForm";
 import { SortablePin } from "@/widgets/quick-access/components/SortablePin";
@@ -34,11 +34,11 @@ import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 type FormState = { mode: "add" } | { mode: "edit"; link: QuickLink };
 
-const MORPH: Transition = { duration: 0.32, ease: EASE_IN_OUT };
+const MORPH: Transition = { duration: DURATION.slow, ease: EASE_STANDARD };
 
 function SectionHeader({ children }: { children: string }) {
   return (
-    <span className="text-muted-foreground/70 text-2xs px-1 font-semibold tracking-wider uppercase">
+    <span className="text-ink-4 text-micro px-1 font-semibold tracking-wider uppercase">
       {children}
     </span>
   );
@@ -100,7 +100,7 @@ export function HomeTab({ editing }: { editing: boolean }) {
       <motion.div
         ref={scrollRef}
         animate={{ x: form ? "-12%" : 0, opacity: form ? 0 : 1 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
+        transition={{ duration: DURATION.base, ease: EASE_OUT }}
         className={cn("h-full overflow-x-hidden overflow-y-auto", form && "pointer-events-none")}
       >
         <DndContext
@@ -138,8 +138,8 @@ export function HomeTab({ editing }: { editing: boolean }) {
                       aria-label="Add link"
                       className={cn(
                         `
-                          text-muted-foreground/60
-                          hover:text-foreground hover:border-foreground/40
+                          text-ink-4
+                          hover:text-ink hover:border-foreground/40
                           border-border/60 w-full cursor-pointer border border-dashed
                           transition-colors
                         `,
@@ -152,12 +152,12 @@ export function HomeTab({ editing }: { editing: boolean }) {
                           <span className="grid size-8 place-items-center [&_svg]:size-5">
                             <Plus />
                           </span>
-                          <span className="w-full truncate text-center text-xs">Add</span>
+                          <span className="w-full truncate text-center text-caption">Add</span>
                         </>
                       ) : (
                         <>
                           <Plus />
-                          <span className="text-sm">Add link</span>
+                          <span className="text-body">Add link</span>
                         </>
                       )}
                     </button>

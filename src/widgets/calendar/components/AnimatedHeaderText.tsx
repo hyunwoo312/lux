@@ -1,3 +1,4 @@
+import { DURATION, EASE_OUT } from "@/lib/motion";
 import type { Variants } from "motion/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -41,7 +42,7 @@ export function AnimatedHeaderText({ text, className }: AnimatedHeaderTextProps)
               key={`${index}-${char}`}
               className="inline-block whitespace-pre"
               variants={character}
-              transition={{ duration: 0.2, ease: "easeOut" }}
+              transition={{ duration: DURATION.base, ease: EASE_OUT }}
             >
               {char}
             </motion.span>

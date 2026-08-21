@@ -28,8 +28,7 @@ const LOOKAHEAD_OPTIONS = [
 function lookaheadValue(days: number): string {
   return LOOKAHEAD_OPTIONS.some((option) => option.value === String(days)) ? String(days) : "7";
 }
-const NAV_BUTTON =
-  "text-muted-foreground/70 hover:text-foreground absolute size-6 [&_svg]:size-3.5";
+const NAV_BUTTON = "text-ink-4 hover:text-ink absolute size-6 [&_svg]:size-3.5";
 
 type MiniMonthProps = {
   month: Date;
@@ -42,9 +41,9 @@ function MiniMonth({ month, anchorTime, endTime, onSelect }: MiniMonthProps) {
   const monthIndex = month.getMonth();
   return (
     <div className="w-52">
-      <div className="text-muted-foreground/60 mb-1 grid grid-cols-7">
+      <div className="text-ink-4 mb-1 grid grid-cols-7">
         {WEEKDAYS.map((weekday, index) => (
-          <span key={index} className="text-2xs text-center font-semibold">
+          <span key={index} className="text-micro text-center font-semibold">
             {weekday}
           </span>
         ))}
@@ -76,13 +75,13 @@ function MiniMonth({ month, anchorTime, endTime, onSelect }: MiniMonthProps) {
               )}
               <span
                 className={cn(
-                  "relative z-10 flex size-7 items-center justify-center rounded-md text-xs",
+                  "relative z-10 flex size-7 items-center justify-center rounded-md text-caption",
                   "tabular-nums transition-colors",
                   "group-focus-visible:ring-foreground/30 group-focus-visible:ring-2",
                   isStart && "bg-primary text-primary-foreground font-semibold",
                   !isStart && "group-hover:bg-foreground/10",
-                  !isStart && inMonth && "text-foreground",
-                  !isStart && !inMonth && "text-muted-foreground/40",
+                  !isStart && inMonth && "text-ink",
+                  !isStart && !inMonth && "text-ink-4",
                 )}
               >
                 {day.getDate()}
@@ -139,12 +138,12 @@ export function CalendarRangePicker({ onSelect }: CalendarRangePickerProps) {
           >
             <ChevronLeft />
           </Button>
-          <span className="text-foreground text-xs font-semibold">
+          <span className="text-ink text-caption font-semibold">
             {monthTitleFormatter.format(viewMonth)}
           </span>
         </div>
         <div className="relative flex w-52 items-center justify-center">
-          <span className="text-foreground text-xs font-semibold">
+          <span className="text-ink text-caption font-semibold">
             {monthTitleFormatter.format(nextMonth)}
           </span>
           <Button

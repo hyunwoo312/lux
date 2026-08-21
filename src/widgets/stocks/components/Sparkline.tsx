@@ -134,11 +134,11 @@ export function Sparkline({
               bg-card flex flex-col items-center rounded px-1.5 py-0.5 leading-tight shadow-sm
             "
           >
-            <span className="text-foreground text-xs font-medium tabular-nums">
+            <span className="text-ink text-caption font-medium tabular-nums">
               {formatPrice(series[idx] ?? 0, currency, priceHint)}
             </span>
             {detail && (timestamps[idx] ?? 0) > 0 ? (
-              <span className="text-muted-foreground text-xs tabular-nums">
+              <span className="text-ink-3 text-caption tabular-nums">
                 {formatChartTime(timestamps[idx] ?? 0, range, !clock24h)}
               </span>
             ) : null}

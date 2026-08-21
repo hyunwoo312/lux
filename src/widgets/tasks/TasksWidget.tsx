@@ -1,3 +1,4 @@
+import { DURATION, EASE_OUT } from "@/lib/motion";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from "motion/react";
@@ -76,7 +77,10 @@ export function TasksWidget() {
     const allDoneNow = after.length > 0 && after.every((task) => task.done);
     const allDoneBefore = before.length > 0 && before.every((task) => task.done);
     if (!reduced && allDoneNow && !allDoneBefore) {
-      donePulse.start({ scale: [1, 1.015, 1], transition: { duration: 0.32, ease: "easeOut" } });
+      donePulse.start({
+        scale: [1, 1.015, 1],
+        transition: { duration: DURATION.slow, ease: EASE_OUT },
+      });
     }
   };
 
@@ -89,7 +93,10 @@ export function TasksWidget() {
     setNewTitle("");
     setDraftId(crypto.randomUUID());
     if (!reduced) {
-      pulse.start({ scale: [1, 1.015, 1], transition: { duration: 0.2, ease: "easeOut" } });
+      pulse.start({
+        scale: [1, 1.015, 1],
+        transition: { duration: DURATION.base, ease: EASE_OUT },
+      });
     }
   };
 
@@ -114,16 +121,16 @@ export function TasksWidget() {
             aria-label="Add a task"
             className="
               border-border/70 bg-background/60
-              placeholder:text-muted-foreground/50
+              placeholder:text-ink-4
               focus-visible:border-ring
-              relative w-full rounded-lg border px-3 py-2 text-sm outline-none
+              relative w-full rounded-lg border px-3 py-2 text-body outline-none
             "
           />
           {!reduced && <BorderTrail active={focused} />}
         </div>
       </form>
       {showEmpty ? (
-        <div className="text-muted-foreground/60 flex flex-1 items-center justify-center text-sm">
+        <div className="text-ink-4 flex flex-1 items-center justify-center text-body">
           No tasks yet
         </div>
       ) : (

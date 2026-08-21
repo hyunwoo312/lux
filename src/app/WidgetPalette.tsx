@@ -1,3 +1,4 @@
+import { DURATION, EASE_IN, EASE_OUT, SPRING_CRISP } from "@/lib/motion";
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
 import { forwardRef, useMemo, useRef } from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
@@ -72,7 +73,7 @@ const WidgetRow = forwardRef<HTMLButtonElement, WidgetCardProps>(function Widget
         <motion.span
           layoutId="palette-hover"
           aria-hidden
-          transition={{ type: "spring", stiffness: 520, damping: 42 }}
+          transition={SPRING_CRISP}
           className={cn(
             accentClass(plugin.accent),
             "border-primary/60 bg-primary/10 pointer-events-none absolute inset-0 rounded-md border",
@@ -86,22 +87,22 @@ const WidgetRow = forwardRef<HTMLButtonElement, WidgetCardProps>(function Widget
             [&_img]:size-5
             [&_svg]:size-5
           `,
-          !plugin.brandIcon && "text-foreground/80",
+          !plugin.brandIcon && "text-ink-2",
         )}
       >
         <Icon />
       </span>
       <span className="relative flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex items-center gap-1.5">
-          <span className="truncate text-sm font-medium">{plugin.name}</span>
-          {added && <Check className="text-muted-foreground/70 size-3 shrink-0" aria-hidden />}
+          <span className="truncate text-body font-medium">{plugin.name}</span>
+          {added && <Check className="text-ink-4 size-3 shrink-0" aria-hidden />}
           {added && <span className="sr-only">Added</span>}
         </span>
-        <span className="text-muted-foreground/70 text-2xs line-clamp-2 leading-snug">
+        <span className="text-ink-4 text-micro line-clamp-2 leading-snug">
           {plugin.description}
         </span>
         {plugin.recommended && !added && (
-          <span className="text-primary text-2xs font-semibold tracking-wide uppercase">
+          <span className="text-primary text-micro font-semibold tracking-wide uppercase">
             Recommended
           </span>
         )}
@@ -137,13 +138,18 @@ export function WidgetPalette() {
         opacity: 1,
         scale: 1,
         y: 0,
-        transition: { duration: 0.16, ease: "easeOut", staggerChildren: 0.03, delayChildren: 0.02 },
+        transition: {
+          duration: DURATION.fast,
+          ease: EASE_OUT,
+          staggerChildren: 0.03,
+          delayChildren: 0.02,
+        },
       },
       exit: {
         opacity: 0,
         scale: reduced ? 1 : 0.96,
         y: reduced ? 0 : -6,
-        transition: { duration: 0.12, ease: "easeIn" },
+        transition: { duration: DURATION.instant, ease: EASE_IN },
       },
     }),
     [reduced],
@@ -151,7 +157,7 @@ export function WidgetPalette() {
   const itemVariants = useMemo<Variants>(
     () => ({
       hidden: { opacity: 0, y: reduced ? 0 : -6 },
-      visible: { opacity: 1, y: 0, transition: { duration: 0.14, ease: "easeOut" } },
+      visible: { opacity: 1, y: 0, transition: { duration: DURATION.fast, ease: EASE_OUT } },
     }),
     [reduced],
   );
@@ -264,7 +270,7 @@ export function WidgetPalette() {
           >
             <motion.span
               animate={{ rotate: open ? 45 : 0 }}
-              transition={{ duration: reduced ? 0 : 0.2, ease: "easeOut" }}
+              transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
               className="grid place-items-center"
             >
               <Plus />
@@ -295,10 +301,8 @@ export function WidgetPalette() {
                 "
               >
                 <div className="px-2 pt-1 pb-2">
-                  <p className="text-muted-foreground/60 text-2xs font-semibold uppercase">
-                    Widgets
-                  </p>
-                  <p className="text-muted-foreground mt-1 text-xs">
+                  <p className="text-ink-4 text-micro font-semibold uppercase">Widgets</p>
+                  <p className="text-ink-3 mt-1 text-caption">
                     Click to add, or drag onto the grid.
                   </p>
                 </div>
@@ -313,7 +317,7 @@ export function WidgetPalette() {
                 >
                   {groups.map((group, column) => (
                     <section key={group.category} className="flex min-w-0 flex-col gap-1">
-                      <h3 className="text-foreground/70 px-2 pb-0.5 text-xs font-semibold">
+                      <h3 className="text-ink-2 px-2 pb-0.5 text-caption font-semibold">
                         {WIDGET_CATEGORY_LABELS[group.category]}
                       </h3>
                       {group.plugins.map((plugin, row) => (

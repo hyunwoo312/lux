@@ -86,7 +86,7 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-      <span className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+      <span className="text-ink-3 text-caption font-semibold tracking-wide uppercase">
         {initial ? "Edit link" : "Add link"}
       </span>
       <Popover
@@ -132,8 +132,8 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
                 <>
                   <Favicon url={item.url} size={16} className="size-4 shrink-0 rounded-xs" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm">{item.title}</span>
-                    <span className="text-muted-foreground block truncate text-xs">
+                    <span className="block truncate text-body">{item.title}</span>
+                    <span className="text-ink-3 block truncate text-caption">
                       {hostnameOf(item.url)}
                     </span>
                   </span>
@@ -182,7 +182,7 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
         />
       </div>
       {error && (
-        <p role="alert" className="text-destructive text-xs">
+        <p role="alert" className="text-destructive text-caption">
           {error}
         </p>
       )}

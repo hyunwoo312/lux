@@ -1,10 +1,9 @@
 import { useId, useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { EASE_OUT_QUINT } from "@/lib/motion";
+import { DURATION, EASE_OUT, rowVariants } from "@/lib/motion";
 import { COLUMN } from "@/widgets/sports/lib/columns";
 import { useChangeFlash } from "@/widgets/sports/hooks/useChangeFlash";
-import { rowVariants } from "@/widgets/sports/lib/motion";
 import { LiveIndicator } from "@/widgets/sports/components/LiveIndicator";
 import { TeamLogo } from "@/widgets/sports/components/TeamLogo";
 import { MatchDetail } from "@/widgets/sports/components/MatchDetail";
@@ -22,19 +21,19 @@ function TeamSide({ team, state, side }: TeamSideProps) {
   const reduced = useReducedMotion() ?? false;
 
   const name = (
-    <span className={cn(COLUMN.name, align, dim ? "text-muted-foreground" : "text-foreground")}>
+    <span className={cn(COLUMN.name, align, dim ? "text-ink-3" : "text-ink")}>
       {team.abbreviation}
     </span>
   );
   const score = (
     <motion.span
       animate={scored && !reduced ? { scale: [1, 1.18, 1] } : { scale: 1 }}
-      transition={{ duration: 0.45, ease: EASE_OUT_QUINT }}
+      transition={{ duration: DURATION.slow, ease: EASE_OUT }}
       className={cn(
         COLUMN.score,
         align,
         "rounded transition-colors duration-300",
-        dim ? "text-muted-foreground" : "text-foreground font-semibold",
+        dim ? "text-ink-3" : "text-ink font-semibold",
         scored && "bg-primary/15 text-primary",
       )}
     >
@@ -107,7 +106,7 @@ function Row({ teams, status, detail, label }: RowProps) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT_QUINT }}
+            transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
           >
             {detail}
           </motion.div>
@@ -125,10 +124,7 @@ export function MatchRow({ match, now, hour12 }: { match: Match; now: number; ho
       teams={
         <>
           <TeamSide team={match.away} state={match.state} side="away" />
-          <span
-            aria-hidden
-            className={cn(COLUMN.separator, "text-muted-foreground/40 text-center text-xs")}
-          >
+          <span aria-hidden className={cn(COLUMN.separator, "text-ink-4 text-center text-caption")}>
             –
           </span>
           <TeamSide team={match.home} state={match.state} side="home" />
@@ -140,8 +136,8 @@ export function MatchRow({ match, now, hour12 }: { match: Match; now: number; ho
         <div className="min-w-0">
           <div
             className={cn(
-              "text-2xs truncate text-right tabular-nums",
-              live ? "text-live font-medium" : "text-muted-foreground",
+              "text-micro truncate text-right tabular-nums",
+              live ? "text-live font-medium" : "text-ink-3",
             )}
           >
             {matchStatus(match, now, hour12)}
@@ -159,16 +155,12 @@ export function IdleTeamRow({ abbreviation }: { abbreviation: string }) {
       teams={
         <>
           <TeamLogo className={COLUMN.logo} />
-          <span className={cn(COLUMN.name, "text-muted-foreground text-right")}>
-            {abbreviation}
-          </span>
+          <span className={cn(COLUMN.name, "text-ink-3 text-right")}>{abbreviation}</span>
           <span className={COLUMN.score} />
           <span className={COLUMN.separator} />
         </>
       }
-      status={
-        <div className="text-muted-foreground/60 text-2xs min-w-0 truncate text-right">No game</div>
-      }
+      status={<div className="text-ink-4 text-micro min-w-0 truncate text-right">No game</div>}
     />
   );
 }

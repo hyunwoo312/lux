@@ -1,3 +1,4 @@
+import { EASE_OUT } from "@/lib/motion";
 import type { ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { CalendarClock, ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
@@ -8,8 +9,7 @@ import { CalendarViewToggle } from "@/widgets/calendar/CalendarViewToggle";
 import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
-const NAV_BUTTON =
-  "text-muted-foreground/60 hover:text-foreground size-6 rounded-sm [&_svg]:size-3.5";
+const NAV_BUTTON = "text-ink-4 hover:text-ink size-6 rounded-sm [&_svg]:size-3.5";
 
 function NavButton({
   label,
@@ -52,7 +52,7 @@ function CollapsingNavButton({
       initial={reduced ? { opacity: 0 } : { opacity: 0, width: 0 }}
       animate={reduced ? { opacity: 1 } : { opacity: 1, width: "auto" }}
       exit={reduced ? { opacity: 0 } : { opacity: 0, width: 0 }}
-      transition={{ duration: reduced ? 0 : 0.18, ease: "easeOut" }}
+      transition={{ duration: reduced ? 0 : 0.18, ease: EASE_OUT }}
     >
       <NavButton label={label} onClick={onClick}>
         {children}

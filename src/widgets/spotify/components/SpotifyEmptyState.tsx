@@ -19,8 +19,8 @@ export function SpotifyEmptyState({ title, message, action, extra }: SpotifyEmpt
   return (
     <div className="flex h-full min-h-0 flex-col items-center justify-center gap-2 px-4 text-center">
       <SpotifyServiceIcon className="size-6" />
-      <strong className="text-sm font-semibold">{title}</strong>
-      <span className="text-muted-foreground text-xs leading-snug text-balance">{message}</span>
+      <strong className="text-body font-semibold">{title}</strong>
+      <span className="text-ink-3 text-caption leading-snug text-balance">{message}</span>
       {(action || extra) && (
         <div className="flex items-center gap-2">
           {action && (

@@ -111,14 +111,14 @@ export function ActivityView({
       loadMore={loadMore}
       header={
         <div className="flex items-center justify-between gap-2 px-1">
-          <span className="text-muted-foreground text-2xs font-semibold tracking-wide uppercase">
+          <span className="text-ink-3 text-micro font-semibold tracking-wide uppercase">
             Following
           </span>
           {newCount > 0 && (
             <span
               className="
-                bg-primary text-primary-foreground text-2xs rounded-full px-1.5 py-0.5 font-semibold
-                tabular-nums
+                bg-primary text-primary-foreground text-micro rounded-full px-1.5 py-0.5
+                font-semibold tabular-nums
               "
             >
               {newCount} new
@@ -180,12 +180,12 @@ function ActivityRow({
           <FeedThumb variant="avatar" src={activity.userAvatar} title={activity.userName} />
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-foreground line-clamp-2 text-xs leading-snug">
+          <p className="text-ink line-clamp-2 text-caption leading-snug">
             <span className="font-medium">{activity.userName}</span>
             {activity.kind === "text" ? ":" : ""}{" "}
-            <span className="text-muted-foreground">{activity.text}</span>
+            <span className="text-ink-3">{activity.text}</span>
           </p>
-          <p className="text-muted-foreground text-2xs flex items-center gap-1">
+          <p className="text-ink-3 text-micro flex items-center gap-1">
             {isNew && <span className="bg-primary size-1.5 shrink-0 rounded-full" aria-hidden />}
             <span className="truncate">{meta}</span>
           </p>
@@ -204,8 +204,8 @@ function LikeButton({ liked, onToggle }: { liked: boolean; onToggle: () => void 
       aria-pressed={liked}
       aria-label={liked ? "Unlike" : "Like"}
       className="
-        text-muted-foreground
-        hover:text-foreground
+        text-ink-3
+        hover:text-ink
         flex size-7 shrink-0 items-center justify-center rounded-sm
       "
     >

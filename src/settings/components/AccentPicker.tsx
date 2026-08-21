@@ -1,3 +1,4 @@
+import { SPRING_CRISP, SPRING_POP } from "@/lib/motion";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useAccentStore } from "@/stores/useAccentStore";
@@ -28,25 +29,21 @@ export function AccentPicker() {
             onClick={() => setAccent(name)}
             whileHover={reduced ? undefined : { scale: 1.12 }}
             whileTap={reduced ? undefined : { scale: 0.9 }}
-            transition={{ type: "spring", stiffness: 420, damping: 20 }}
+            transition={SPRING_POP}
             className={cn(accentClass(name), SWATCH)}
           >
             {selected && (
               <motion.span
                 layoutId="accent-ring"
                 aria-hidden
-                transition={
-                  reduced ? { duration: 0 } : { type: "spring", stiffness: 520, damping: 38 }
-                }
+                transition={reduced ? { duration: 0 } : SPRING_CRISP}
                 className="border-foreground/80 absolute inset-0 rounded-full border-2"
               />
             )}
             <motion.span
               aria-hidden
               animate={{ scale: selected ? 0.78 : 1 }}
-              transition={
-                reduced ? { duration: 0 } : { type: "spring", stiffness: 520, damping: 32 }
-              }
+              transition={reduced ? { duration: 0 } : SPRING_CRISP}
               className={DOT}
             />
           </motion.button>

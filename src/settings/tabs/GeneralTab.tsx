@@ -67,7 +67,7 @@ export function GeneralTab() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SettingsSection title="Appearance" description="Theme and grid for the dashboard.">
+      <SettingsSection title="Appearance">
         <SettingsRow
           title="Theme"
           description="Follow your system setting, or pick light or dark."
@@ -81,7 +81,7 @@ export function GeneralTab() {
           }
         >
           {!isThemePersisted && (
-            <p className="text-destructive text-xs">
+            <p className="text-destructive text-caption">
               Browser storage is full, so this theme won’t be remembered in new tabs.
             </p>
           )}
@@ -98,11 +98,11 @@ export function GeneralTab() {
         />
       </SettingsSection>
 
-      <SettingsSection title="Wallpaper" description="What sits behind the dashboard.">
+      <SettingsSection title="Wallpaper">
         <WallpaperSetting />
       </SettingsSection>
 
-      <SettingsSection title="Time" description="How time is shown across widgets.">
+      <SettingsSection title="Time">
         <SettingsRow
           title="24-hour time"
           description="Use a 24-hour clock instead of AM/PM."
@@ -112,10 +112,7 @@ export function GeneralTab() {
 
       <StorageSection />
 
-      <SettingsSection
-        title="Backup"
-        description="Save or load all settings as a file. Connected accounts are excluded."
-      >
+      <SettingsSection title="Backup">
         <SettingsRow
           title="Backup & restore"
           control={
@@ -148,11 +145,11 @@ export function GeneralTab() {
           }
         >
           {pendingImport && (
-            <p className="text-muted-foreground text-xs">
+            <p className="text-ink-3 text-caption">
               Replace all settings with “{pendingImport.name}”? This reloads the page.
             </p>
           )}
-          {importError && <p className="text-destructive text-xs">{importError}</p>}
+          {importError && <p className="text-destructive text-caption">{importError}</p>}
         </SettingsRow>
       </SettingsSection>
 

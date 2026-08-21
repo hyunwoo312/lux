@@ -119,10 +119,7 @@ export function AccountsTab() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SettingsSection
-        title="Accounts"
-        description="Services used by your widgets. Your data and tokens stay in this browser."
-      >
+      <SettingsSection title="Accounts">
         {PROVIDERS.map((provider) => {
           const account = accounts.find((entry) => entry.providerId === provider.id);
           const busy = pending[provider.id];
@@ -154,10 +151,10 @@ export function AccountsTab() {
                 />
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{provider.label}</span>
+                    <span className="text-body font-medium">{provider.label}</span>
                     <StatusBadge status={status} />
                   </div>
-                  <span className="text-muted-foreground truncate text-xs">{subline}</span>
+                  <span className="text-ink-3 truncate text-caption">{subline}</span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {account ? (
@@ -196,7 +193,7 @@ export function AccountsTab() {
                   )}
                 </div>
               </div>
-              {error && <p className="text-destructive text-xs">{error}</p>}
+              {error && <p className="text-destructive text-caption">{error}</p>}
               {isSpotify && spotifyClientIdLoaded && (
                 <SpotifySetup
                   clientId={spotifyClientId}
@@ -207,7 +204,7 @@ export function AccountsTab() {
             </div>
           );
         })}
-        <p className="text-muted-foreground text-xs">
+        <p className="text-ink-3 text-caption">
           Google, Outlook, and GitHub sign-in goes through a stateless Lux relay that stores
           nothing. Spotify and AniList connect directly.
         </p>
@@ -248,9 +245,9 @@ function StatusBadge({ status }: { status?: "connected" | "needsReconnect" }) {
       ? "text-emerald-400"
       : status === "needsReconnect"
         ? "text-warning"
-        : "text-muted-foreground";
+        : "text-ink-3";
   return (
-    <span className={cn("inline-flex items-center gap-1 text-[0.7rem] font-medium", tone)}>
+    <span className={cn("inline-flex items-center gap-1 text-micro font-medium", tone)}>
       <span className="size-1.5 rounded-full bg-current" />
       {label}
     </span>

@@ -36,7 +36,7 @@ export function HeadlineMeta({
   if (!showSource && !timeLabel && !isRead && !alsoInLabel) return null;
 
   return (
-    <span className={cn("text-muted-foreground flex items-center gap-1.5 text-xs", className)}>
+    <span className={cn("text-ink-3 flex items-center gap-1.5 text-caption", className)}>
       {isRead && <Check className="size-3 shrink-0" aria-label="Read" />}
       {showSource && (
         <>

@@ -1,3 +1,4 @@
+import { SPRING_CRISP } from "@/lib/motion";
 import type { MouseEvent } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -6,7 +7,6 @@ import { MonthDayCell } from "@/widgets/calendar/components/MonthDayCell";
 import { getEventColor, getReadableTextColor } from "@/widgets/calendar/lib/colors";
 import { getEventTitle } from "@/widgets/calendar/lib/agenda";
 import { getDateKey } from "@/widgets/calendar/lib/dates";
-import { SLIDE_SPRING } from "@/widgets/calendar/lib/motion";
 import type { EventSegment, MonthWeek as MonthWeekData } from "@/widgets/calendar/lib/month-layout";
 import type { CalendarEvent } from "@/widgets/calendar/types";
 import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
@@ -50,7 +50,10 @@ function EventBar({
         aria-label={getEventTitle(segment.event)}
         onClick={handleClick}
         className={cn(
-          "pointer-events-auto absolute flex items-center overflow-hidden px-1 text-2xs font-medium",
+          `
+            pointer-events-auto absolute flex items-center overflow-hidden px-1 text-micro
+            font-medium
+          `,
           segment.continuesLeft ? "rounded-l-none" : "rounded-l-[3px]",
           segment.continuesRight ? "rounded-r-none" : "rounded-r-[3px]",
         )}
@@ -75,11 +78,11 @@ function TimedChip({ event, color }: { event: CalendarEvent; color: string }) {
   return (
     <Tooltip content={getEventTitle(event)} solid side="top">
       <span
-        className="flex items-center gap-1 truncate px-1 text-2xs"
+        className="flex items-center gap-1 truncate px-1 text-micro"
         style={{ height: `${EVENT_ROW_HEIGHT}px` }}
       >
         <span className="size-1.5 flex-none rounded-full" style={{ backgroundColor: color }} />
-        <span className="text-foreground/80 truncate">{getEventTitle(event)}</span>
+        <span className="text-ink-2 truncate">{getEventTitle(event)}</span>
       </span>
     </Tooltip>
   );
@@ -123,7 +126,7 @@ function DayBottom({
       ))}
       {wantsMore && moreCount > 0 && (
         <span
-          className="text-muted-foreground px-1 text-2xs font-medium"
+          className="text-ink-3 px-1 text-micro font-medium"
           style={{ height: `${EVENT_ROW_HEIGHT}px` }}
         >
           +{moreCount} more
@@ -204,7 +207,7 @@ export function MonthWeek({
           animate={{ opacity: 1, x: selectedCol * cellWidth }}
           transition={{
             opacity: { duration: reduced ? 0 : 0.2 },
-            x: reduced ? { duration: 0 } : SLIDE_SPRING,
+            x: reduced ? { duration: 0 } : SPRING_CRISP,
           }}
           style={{ width: Math.max(0, cellWidth - 4), left: 2, top: 2, bottom: 2 }}
           className="border-primary pointer-events-none absolute rounded-md border-2"

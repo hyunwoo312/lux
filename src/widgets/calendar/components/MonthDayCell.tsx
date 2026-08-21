@@ -45,9 +45,9 @@ export function MonthDayCell({ day, children }: MonthDayCellProps) {
       <span className="flex h-[22px] items-center justify-center">
         <span
           className={cn(
-            "grid size-[18px] place-items-center rounded-full text-xs tabular-nums",
+            "grid size-[18px] place-items-center rounded-full text-caption tabular-nums",
             day.isToday && "bg-primary text-primary-foreground font-semibold",
-            !day.isToday && (day.inCurrentMonth ? "text-foreground" : "text-muted-foreground/40"),
+            !day.isToday && (day.inCurrentMonth ? "text-ink" : "text-ink-4"),
             !day.isToday && isSelected && "font-semibold",
           )}
         >

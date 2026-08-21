@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { EASE_OUT_QUINT } from "@/lib/motion";
+import { EASE_OUT } from "@/lib/motion";
 import { CWS_REVIEW_URL } from "@/lib/links";
 import { openUrl } from "@/lib/open-url";
 import { useDashboardStore } from "@/stores/useDashboardStore";
@@ -147,7 +147,7 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
       >
         <header className="border-border/50 flex flex-col gap-1 border-b px-6 py-5">
           <DialogTitle className="text-base font-semibold">Send feedback</DialogTitle>
-          <DialogDescription className="text-muted-foreground text-sm">
+          <DialogDescription className="text-ink-3 text-body">
             Bugs, ideas, or anything else — it goes straight to the developer.
           </DialogDescription>
         </header>
@@ -157,7 +157,7 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
         ) : (
           <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 py-5">
             <div className="flex flex-col gap-2">
-              <span id={categoryLabelId} className="text-muted-foreground text-xs font-medium">
+              <span id={categoryLabelId} className="text-ink-3 text-caption font-medium">
                 What kind of feedback?
               </span>
               <div
@@ -197,13 +197,13 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
                       className={cn(
                         `
                           focus-visible:ring-ring
-                          rounded-full border px-3 py-1.5 text-xs font-medium outline-none
+                          rounded-full border px-3 py-1.5 text-caption font-medium outline-none
                           transition-colors
                           focus-visible:ring-2
                         `,
                         active
-                          ? "border-primary/40 bg-primary/10 text-foreground"
-                          : "border-border text-muted-foreground hover:bg-accent/60",
+                          ? "border-primary/40 bg-primary/10 text-ink"
+                          : "border-border text-ink-3 hover:bg-accent/60",
                       )}
                     >
                       {CATEGORY_LABEL[category]}
@@ -214,7 +214,7 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="feedback-message" className="text-xs font-medium">
+              <label htmlFor="feedback-message" className="text-caption font-medium">
                 Your message
               </label>
               <textarea
@@ -232,14 +232,14 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
                 placeholder={CATEGORY_PLACEHOLDER[draft.category]}
                 className="
                   border-border bg-background/40
-                  placeholder:text-muted-foreground/60
+                  placeholder:text-ink-4
                   focus-visible:border-primary/50
-                  w-full resize-none rounded-md border px-3 py-2 text-sm outline-none
+                  w-full resize-none rounded-md border px-3 py-2 text-body outline-none
                   transition-colors
                 "
               />
               <div className="flex items-center justify-between gap-3">
-                <span className="text-muted-foreground/70 min-w-0 text-xs">
+                <span className="text-ink-4 min-w-0 text-caption">
                   {tooLong
                     ? "That's a little long — trim it down a touch."
                     : tooShort
@@ -249,8 +249,8 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
                 <span
                   aria-hidden
                   className={cn(
-                    "shrink-0 text-xs tabular-nums",
-                    tooLong ? "text-destructive" : "text-muted-foreground/50",
+                    "shrink-0 text-caption tabular-nums",
+                    tooLong ? "text-destructive" : "text-ink-4",
                   )}
                 >
                   {trimmed.length} / {MESSAGE_MAX}
@@ -259,8 +259,8 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="feedback-contact" className="text-xs font-medium">
-                Email <span className="text-muted-foreground font-normal">(optional)</span>
+              <label htmlFor="feedback-contact" className="text-caption font-medium">
+                Email <span className="text-ink-3 font-normal">(optional)</span>
               </label>
               <input
                 id="feedback-contact"
@@ -274,8 +274,8 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
                 className={cn(
                   `
                     bg-background/40
-                    placeholder:text-muted-foreground/60
-                    w-full rounded-md border px-3 py-2 text-sm outline-none transition-colors
+                    placeholder:text-ink-4
+                    w-full rounded-md border px-3 py-2 text-body outline-none transition-colors
                   `,
                   contactInvalid
                     ? "border-destructive/60"
@@ -283,7 +283,7 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
                 )}
               />
               {contactInvalid && (
-                <p id={contactErrorId} className="text-destructive text-xs">
+                <p id={contactErrorId} className="text-destructive text-caption">
                   That doesn't look like an email address — check it, or leave it empty.
                 </p>
               )}
@@ -297,10 +297,10 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
             >
               <div className="flex items-center gap-3">
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <label htmlFor="feedback-diagnostics" className="text-xs font-medium">
+                  <label htmlFor="feedback-diagnostics" className="text-caption font-medium">
                     Include diagnostics
                   </label>
-                  <p className="text-muted-foreground/70 text-xs">
+                  <p className="text-ink-4 text-caption">
                     Your Lux version, browser, and which widgets and accounts you use — never their
                     contents.
                   </p>
@@ -318,16 +318,16 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
                 aria-expanded={showDiagnostics}
                 aria-controls={diagnosticsId}
                 className="
-                  text-muted-foreground
-                  hover:text-foreground
-                  flex items-center gap-1 self-start text-xs transition-colors
+                  text-ink-3
+                  hover:text-ink
+                  flex items-center gap-1 self-start text-caption transition-colors
                 "
               >
                 {showDiagnostics ? "Hide" : "View"} what would be sent
                 <motion.span
                   className="flex"
                   animate={{ rotate: showDiagnostics ? 180 : 0 }}
-                  transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT_QUINT }}
+                  transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
                 >
                   <ChevronDown className="size-3" aria-hidden />
                 </motion.span>
@@ -341,12 +341,11 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: reduced ? 0 : 0.24, ease: EASE_OUT_QUINT }}
+                    transition={{ duration: reduced ? 0 : 0.24, ease: EASE_OUT }}
                   >
                     <pre
                       className="
-                        bg-background/50 text-muted-foreground max-h-40 overflow-auto rounded p-2
-                        text-[11px]
+                        bg-background/50 text-ink-3 max-h-40 overflow-auto rounded p-2 text-micro
                       "
                     >
                       {describeDiagnostics(diagnostics)}
@@ -357,7 +356,7 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
             </div>
 
             {status.kind === "error" && (
-              <p role="alert" className="text-destructive text-xs">
+              <p role="alert" className="text-destructive text-caption">
                 {status.message}
               </p>
             )}
@@ -370,15 +369,15 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
               type="button"
               onClick={() => openUrl(CWS_REVIEW_URL, "newTab")}
               className="
-                text-muted-foreground
-                hover:text-foreground
-                flex items-center gap-1.5 text-xs transition-colors
+                text-ink-3
+                hover:text-ink
+                flex items-center gap-1.5 text-caption transition-colors
               "
             >
               <Star className="size-3.5" aria-hidden />
               Rate Lux
             </button>
-            <span aria-hidden className="text-muted-foreground/50 ml-auto hidden text-xs sm:block">
+            <span aria-hidden className="text-ink-4 ml-auto hidden text-caption sm:block">
               {sendShortcut}
             </span>
             <Button
@@ -423,22 +422,22 @@ function SentPanel({
       <motion.div
         initial={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: reduced ? 0 : 0.24, ease: EASE_OUT_QUINT }}
+        transition={{ duration: reduced ? 0 : 0.24, ease: EASE_OUT }}
         className="flex flex-col items-center gap-3 px-6 py-10 text-center"
       >
         <span className="bg-primary/10 text-primary grid size-11 place-items-center rounded-full">
           <Check className="size-5" aria-hidden />
         </span>
         <div className="flex flex-col items-center gap-1.5">
-          <p className="text-sm font-medium">Thank you — that's been sent.</p>
+          <p className="text-body font-medium">Thank you — that's been sent.</p>
           <button
             type="button"
             onClick={copy}
             aria-label={`Copy reference ${id}`}
             className="
-              text-muted-foreground
-              hover:text-foreground
-              flex items-center gap-1.5 text-xs transition-colors
+              text-ink-3
+              hover:text-ink
+              flex items-center gap-1.5 text-caption transition-colors
             "
           >
             Reference <span className="font-mono">{id}</span>
@@ -449,7 +448,7 @@ function SentPanel({
             )}
           </button>
         </div>
-        <p className="text-muted-foreground/70 max-w-xs text-xs">
+        <p className="text-ink-4 max-w-xs text-caption">
           Every message is read. If you left an email, expect a reply when there's something worth
           saying.
         </p>

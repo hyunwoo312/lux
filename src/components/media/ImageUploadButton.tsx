@@ -33,9 +33,9 @@ export function ImageUploadButton({
       onClick={() => inputRef.current?.click()}
       className="
         border-border/60 bg-background/30
-        hover:border-foreground/40 hover:text-foreground
-        text-muted-foreground relative flex w-full items-center gap-3 rounded-lg border
-        border-dashed px-3 py-2.5 text-left transition-colors outline-none
+        hover:border-foreground/40 hover:text-ink
+        text-ink-3 relative flex w-full items-center gap-3 rounded-lg border border-dashed px-3
+        py-2.5 text-left transition-colors outline-none
         disabled:cursor-default disabled:opacity-60
       "
     >
@@ -48,8 +48,8 @@ export function ImageUploadButton({
         <Upload aria-hidden />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <strong className="text-foreground text-sm font-medium">{title}</strong>
-        <span className="text-muted-foreground truncate text-xs">{description}</span>
+        <strong className="text-ink text-body font-medium">{title}</strong>
+        <span className="text-ink-3 truncate text-caption">{description}</span>
       </span>
       <input
         ref={inputRef}

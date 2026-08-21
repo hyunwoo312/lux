@@ -63,10 +63,10 @@ export function Stats({ data }: { data: ContributionsData }) {
   return (
     <div className="flex items-end justify-between gap-2 px-1">
       <div className="flex flex-col">
-        <span className="text-foreground text-lg font-semibold tabular-nums">
+        <span className="text-ink text-lg font-semibold tabular-nums">
           {data.total.toLocaleString()}
         </span>
-        <span className="text-muted-foreground text-2xs">
+        <span className="text-ink-3 text-micro">
           {data.dailyAverage === undefined
             ? "contributions in the last year"
             : `contributions in the last year · ${data.dailyAverage.toFixed(1)} / day`}
@@ -101,14 +101,14 @@ function Stat({
     <div className="flex flex-col items-end">
       <span
         className={cn(
-          "inline-flex items-center gap-1 text-sm font-semibold tabular-nums",
-          accent ? "text-primary" : "text-foreground",
+          "inline-flex items-center gap-1 text-body font-semibold tabular-nums",
+          accent ? "text-primary" : "text-ink",
         )}
       >
         {icon}
         {value}
       </span>
-      <span className="text-muted-foreground text-2xs">{label}</span>
+      <span className="text-ink-3 text-micro">{label}</span>
     </div>
   );
 }
@@ -169,9 +169,8 @@ export function Heatmap({ weeks, size }: { weeks: ContributionDay[][]; size: Ele
         createPortal(
           <div
             className="
-              border-border bg-card text-foreground pointer-events-none fixed z-[100]
-              -translate-x-1/2 -translate-y-full rounded-md border px-2 py-1 text-xs
-              whitespace-nowrap shadow-md
+              border-border bg-card text-ink pointer-events-none fixed z-[100] -translate-x-1/2
+              -translate-y-full rounded-md border px-2 py-1 text-caption whitespace-nowrap shadow-md
             "
             style={{ left: tip.x, top: tip.y - 6 }}
           >
@@ -208,8 +207,7 @@ const HeatmapGrid = memo(function HeatmapGrid({
                 {months[index] && (
                   <span
                     className="
-                      text-muted-foreground absolute top-0 left-0 text-[9px] leading-none
-                      whitespace-nowrap
+                      text-ink-3 absolute top-0 left-0 text-micro leading-none whitespace-nowrap
                     "
                   >
                     {months[index]}
@@ -225,9 +223,7 @@ const HeatmapGrid = memo(function HeatmapGrid({
           {WEEKDAYS.map((weekday) => (
             <span
               key={weekday.id}
-              className="
-                text-muted-foreground flex items-center justify-end text-[9px] leading-none
-              "
+              className="text-ink-3 flex items-center justify-end text-micro leading-none"
               style={{ height: CELL }}
             >
               {weekday.label}

@@ -68,10 +68,10 @@ export function CalendarListView({ events, colors, enabled, status }: CalendarLi
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto pr-0.5">
-      {freeUntil && <p className="text-muted-foreground pl-1 text-2xs font-medium">{freeUntil}</p>}
+      {freeUntil && <p className="text-ink-3 pl-1 text-micro font-medium">{freeUntil}</p>}
       {multiDayEvents.length > 0 && (
         <section className="flex flex-col gap-1.5">
-          <h4 className="text-muted-foreground text-2xs pl-1 font-bold tracking-wider uppercase">
+          <h4 className="text-ink-3 text-micro pl-1 font-bold tracking-wider uppercase">
             Multi-day
           </h4>
           {multiDayEvents.map((event, index) => (
@@ -90,7 +90,7 @@ export function CalendarListView({ events, colors, enabled, status }: CalendarLi
       )}
       {groups.map((group) => (
         <section key={group.id} className="flex flex-col gap-1.5">
-          <h4 className="text-muted-foreground/70 text-2xs pl-1 font-bold tracking-wider uppercase">
+          <h4 className="text-ink-4 text-micro pl-1 font-bold tracking-wider uppercase">
             {group.label}
           </h4>
           {group.events.map((event, index) => (

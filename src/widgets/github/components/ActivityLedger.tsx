@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+import { TYPE } from "@/lib/type";
 import { CircleDot, Eye, GitCommitHorizontal, GitPullRequest, type LucideIcon } from "lucide-react";
 import type { ContributionTotals, RepoActivity } from "@/widgets/github/types";
 
@@ -21,11 +23,7 @@ export function ActivityLedger({ activity, totals, login, newTab }: ActivityLedg
   return (
     <div className="flex h-full flex-col gap-1.5">
       {totals && (
-        <div
-          className="
-            text-muted-foreground text-2xs flex flex-wrap items-center gap-x-3 gap-y-0.5 px-1
-          "
-        >
+        <div className="text-ink-3 text-micro flex flex-wrap items-center gap-x-3 gap-y-0.5 px-1">
           {TYPE_TOTALS.map(({ key, icon: Icon, label }) =>
             totals[key] > 0 ? (
               <span key={key} className="inline-flex items-center gap-1 tabular-nums" title={label}>
@@ -67,14 +65,14 @@ function RepoRow({
       className="hover:bg-foreground/5 flex flex-col gap-1 rounded-md px-1.5 py-1"
     >
       <div className="flex items-center gap-2">
-        <span className="text-foreground min-w-0 flex-1 truncate text-xs">{repo.repo}</span>
-        <span className="text-muted-foreground text-2xs flex shrink-0 items-center gap-1.5 tabular-nums">
+        <span className="text-ink min-w-0 flex-1 truncate text-caption">{repo.repo}</span>
+        <span className={cn(TYPE.rowMeta, "flex shrink-0 items-center gap-1.5 tabular-nums")}>
           <Mix icon={GitCommitHorizontal} value={repo.commits} />
           <Mix icon={GitPullRequest} value={repo.prs} />
           <Mix icon={CircleDot} value={repo.issues} />
           <Mix icon={Eye} value={repo.reviews} />
         </span>
-        <span className="text-foreground shrink-0 text-xs font-semibold tabular-nums">
+        <span className="text-ink shrink-0 text-caption font-semibold tabular-nums">
           {repo.total.toLocaleString()}
         </span>
       </div>

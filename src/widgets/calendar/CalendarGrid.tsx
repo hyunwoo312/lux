@@ -12,8 +12,7 @@ import {
 import { getEventsByDate } from "@/widgets/calendar/lib/agenda";
 import { addDays, getDateKey, getMonthGridDays, startOfDay } from "@/widgets/calendar/lib/dates";
 import { computeMonthLayout } from "@/widgets/calendar/lib/month-layout";
-import { SLIDE_SPRING } from "@/widgets/calendar/lib/motion";
-import { EASE_OUT_QUINT } from "@/lib/motion";
+import { EASE_OUT, SPRING_CRISP } from "@/lib/motion";
 import { useCalendar } from "@/widgets/calendar/useCalendarStore";
 import type { DisplayCalendarEvent } from "@/widgets/calendar/types";
 
@@ -81,7 +80,7 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
   }, [mode, selectedDay, selectedKey, layout, events, todayKey]);
   const dayEvents = selectedKey ? (eventsByDate.get(selectedKey) ?? []) : [];
 
-  const transition = { duration: reduced ? 0 : 0.5, ease: EASE_OUT_QUINT } as const;
+  const transition = { duration: reduced ? 0 : 0.5, ease: EASE_OUT } as const;
   const verticalSlide: Variants = {
     enter: (dir: number) => ({ y: reduced ? "0%" : `${dir * 100}%`, opacity: reduced ? 0 : 1 }),
     center: { y: "0%", opacity: 1 },
@@ -95,9 +94,9 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div aria-hidden className="text-muted-foreground/60 grid grid-cols-7 pb-1">
+      <div aria-hidden className="text-ink-4 grid grid-cols-7 pb-1">
         {WEEKDAYS.map((weekday, index) => (
-          <span key={index} className="text-2xs text-center font-semibold">
+          <span key={index} className="text-micro text-center font-semibold">
             {weekday}
           </span>
         ))}
@@ -154,8 +153,8 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
               exit={{ opacity: 0 }}
               transition={{
                 opacity: { duration: reduced ? 0 : 0.15 },
-                x: reduced ? { duration: 0 } : SLIDE_SPRING,
-                y: reduced ? { duration: 0 } : SLIDE_SPRING,
+                x: reduced ? { duration: 0 } : SPRING_CRISP,
+                y: reduced ? { duration: 0 } : SPRING_CRISP,
               }}
               style={{
                 width: Math.max(0, cellWidth - 4),

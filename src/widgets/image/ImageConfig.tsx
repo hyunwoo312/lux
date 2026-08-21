@@ -167,7 +167,7 @@ export function ImageConfig() {
           />
         )}
         {hasImages && <ImageDetailsEditor />}
-        {error && <p className="text-destructive text-xs">{error}</p>}
+        {error && <p className="text-destructive text-caption">{error}</p>}
       </WidgetConfigGroup>
 
       {isMulti && (

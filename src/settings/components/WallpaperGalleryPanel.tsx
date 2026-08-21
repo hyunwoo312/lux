@@ -1,3 +1,4 @@
+import { SPRING_POP } from "@/lib/motion";
 import { Check } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -58,7 +59,7 @@ export function WallpaperGalleryPanel() {
               onClick={() => toggle(wallpaper.id)}
               whileHover={reduced || isDisabled ? undefined : { scale: 1.04 }}
               whileTap={reduced || isDisabled ? undefined : { scale: 0.96 }}
-              transition={{ type: "spring", stiffness: 420, damping: 20 }}
+              transition={SPRING_POP}
               className={cn(
                 TILE,
                 isSelected && "ring-primary ring-2",
@@ -69,7 +70,7 @@ export function WallpaperGalleryPanel() {
               {isSelected && (
                 <span className={BADGE}>
                   {isMulti ? (
-                    <span className="text-2xs leading-none font-semibold tabular-nums">
+                    <span className="text-micro leading-none font-semibold tabular-nums">
                       {selected.indexOf(wallpaper.id) + 1}
                     </span>
                   ) : (

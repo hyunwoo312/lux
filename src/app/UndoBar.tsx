@@ -1,7 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { EASE_OUT_QUINT } from "@/lib/motion";
+import { EASE_OUT } from "@/lib/motion";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { getWidgetPlugin } from "@/widgets/registry";
 
@@ -21,13 +21,13 @@ export function UndoBar() {
           initial={{ opacity: 0, y: reduced ? 0 : 12 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: reduced ? 0 : 12 }}
-          transition={{ duration: reduced ? 0 : 0.22, ease: EASE_OUT_QUINT }}
+          transition={{ duration: reduced ? 0 : 0.22, ease: EASE_OUT }}
           className="
             bg-card text-card-foreground fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 elev-2
             items-center gap-3 rounded-full py-1.5 pr-1.5 pl-4
           "
         >
-          <span className="text-sm">{name} removed</span>
+          <span className="text-body">{name} removed</span>
           <Button size="sm" variant="ghost" className="rounded-full" onClick={undoRemove}>
             Undo
           </Button>

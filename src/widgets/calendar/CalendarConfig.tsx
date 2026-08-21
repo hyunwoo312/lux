@@ -131,11 +131,11 @@ function CalendarProviderConfig({
               spinning={isSyncing}
             />
             {lastSyncedLabel && (
-              <span className="text-muted-foreground/70 text-2xs ml-auto">{lastSyncedLabel}</span>
+              <span className="text-ink-4 text-micro ml-auto">{lastSyncedLabel}</span>
             )}
           </div>
 
-          {error && <p className="text-destructive text-2xs">{error}</p>}
+          {error && <p className="text-destructive text-micro">{error}</p>}
 
           {settings.calendars.length > 0 && (
             <div className="flex flex-col gap-3">
@@ -165,7 +165,7 @@ function CalendarProviderConfig({
             </div>
           )}
 
-          {providerNote && <p className="text-muted-foreground/70 text-2xs">{providerNote}</p>}
+          {providerNote && <p className="text-ink-4 text-micro">{providerNote}</p>}
         </div>
       </WidgetConfigItem>
     </WidgetConfigGroup>

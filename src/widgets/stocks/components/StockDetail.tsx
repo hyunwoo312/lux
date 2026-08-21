@@ -34,8 +34,8 @@ function formatRange(
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <dt className="text-muted-foreground text-xs">{label}</dt>
-      <dd className="text-foreground truncate text-sm tabular-nums">{value}</dd>
+      <dt className="text-ink-3 text-caption">{label}</dt>
+      <dd className="text-ink truncate text-body tabular-nums">{value}</dd>
     </div>
   );
 }
@@ -92,18 +92,18 @@ function DetailBody({ data, range }: { data: Quote; range: StockRange }) {
     <div className="flex h-full flex-col gap-3 overflow-y-auto">
       <div className="pr-16">
         <div className="flex items-baseline gap-2">
-          <span className="text-foreground text-lg leading-tight font-semibold">{data.symbol}</span>
-          <span className="text-muted-foreground min-w-0 truncate text-sm">{data.name}</span>
+          <span className="text-ink text-lg leading-tight font-semibold">{data.symbol}</span>
+          <span className="text-ink-3 min-w-0 truncate text-body">{data.name}</span>
         </div>
         <div className="mt-1 flex items-baseline gap-2">
-          <span className="text-foreground text-2xl font-semibold tabular-nums">
+          <span className="text-ink text-2xl font-semibold tabular-nums">
             {formatPrice(data.price, data.currency, data.priceHint)}
           </span>
-          <span className={cn("text-sm tabular-nums", tone)}>
+          <span className={cn("text-body tabular-nums", tone)}>
             {formatSigned(change)} ({formatSigned(percent)}%)
           </span>
         </div>
-        <div className="text-muted-foreground mt-1 flex items-center gap-1.5 text-xs">
+        <div className="text-ink-3 mt-1 flex items-center gap-1.5 text-caption">
           {market === "open" ? (
             <>
               <span className="bg-primary size-1.5 rounded-full" />
@@ -122,11 +122,11 @@ function DetailBody({ data, range }: { data: Quote; range: StockRange }) {
           ) : null}
         </div>
         {extended ? (
-          <div className="mt-1 flex items-baseline gap-1.5 text-xs">
-            <span className="text-muted-foreground">
+          <div className="mt-1 flex items-baseline gap-1.5 text-caption">
+            <span className="text-ink-3">
               {extended.kind === "pre" ? "Pre-market" : "After hours"}
             </span>
-            <span className="text-foreground tabular-nums">
+            <span className="text-ink tabular-nums">
               {formatPrice(extended.price, data.currency, data.priceHint)}
             </span>
             <span className={cn("tabular-nums", changeTone(extended.change))}>
@@ -150,8 +150,8 @@ function DetailBody({ data, range }: { data: Quote; range: StockRange }) {
 
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
         <div className="col-span-2 flex flex-col gap-0.5">
-          <dt className="text-muted-foreground text-xs">Day range</dt>
-          <dd className="text-foreground text-sm tabular-nums">
+          <dt className="text-ink-3 text-caption">Day range</dt>
+          <dd className="text-ink text-body tabular-nums">
             {formatRange(data.dayLow, data.dayHigh, data.currency, data.priceHint)}
           </dd>
           {data.dayLow != null && data.dayHigh != null ? (
@@ -189,8 +189,8 @@ export function StockDetail({ symbol, onRemove }: StockDetailProps) {
         disabled={isRefreshing}
         aria-label={`Refresh ${symbol}`}
         className="
-          text-muted-foreground/60
-          hover:text-foreground
+          text-ink-4
+          hover:text-ink
           absolute top-0 right-8 z-10 grid size-7 place-items-center transition
           [&_svg]:size-4
         "
@@ -206,7 +206,7 @@ export function StockDetail({ symbol, onRemove }: StockDetailProps) {
         <DetailBody data={data} range={range} />
       ) : state.status === "error" ? (
         <div className="flex h-full flex-col items-center justify-center gap-3 px-2 text-center">
-          <p className="text-muted-foreground text-sm">Couldn’t load {symbol}.</p>
+          <p className="text-ink-3 text-body">Couldn’t load {symbol}.</p>
           <Button size="sm" variant="outline" onClick={refresh} disabled={isRefreshing}>
             {isRefreshing ? (
               <>

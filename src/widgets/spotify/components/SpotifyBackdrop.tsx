@@ -1,3 +1,4 @@
+import { EASE_STANDARD } from "@/lib/motion";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useSpotify } from "@/widgets/spotify/useSpotifyStore";
 import { useSpotifyPlaybackStore } from "@/widgets/spotify/hooks/useSpotifyPlayback";
@@ -20,7 +21,7 @@ export function SpotifyBackdrop() {
           initial={{ opacity: reduced ? 1 : 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: reduced ? 0 : 0.6, ease: "easeInOut" }}
+          transition={{ duration: reduced ? 0 : 0.6, ease: EASE_STANDARD }}
           className="
             absolute inset-0 size-full scale-110 object-cover blur-xl saturate-[1.75] brightness-110
           "

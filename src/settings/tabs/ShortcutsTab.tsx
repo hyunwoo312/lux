@@ -15,7 +15,7 @@ import {
   type ShortcutAction,
 } from "@/stores/useShortcutsStore";
 import { CustomizeRow } from "@/settings/tabs/shortcuts/shared";
-import { LAYOUT_TRANSITION, SLIDE_TRANSITION } from "@/settings/tabs/shortcuts/transitions";
+import { DURATION, EASE_OUT_STRONG, SPRING_CRISP } from "@/lib/motion";
 import { AddShortcutControl, ShortcutDisplay } from "@/settings/tabs/shortcuts/ShortcutRow";
 
 function sameBindings(a: Shortcut[], b: Shortcut[]): boolean {
@@ -53,12 +53,7 @@ export function ShortcutsTab() {
   return (
     <div className="flex flex-col gap-6">
       <div className="relative">
-        <Search
-          className="
-            text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4
-            -translate-y-1/2
-          "
-        />
+        <Search className="text-ink-3 pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -71,7 +66,6 @@ export function ShortcutsTab() {
       {visibleShortcuts.length > 0 ? (
         <SettingsSection
           title="Shortcuts"
-          description="Click a shortcut to rebind it, or add a second. Up to two per action."
           action={
             SHORTCUT_DEFINITIONS.some(
               (definition) =>
@@ -80,7 +74,7 @@ export function ShortcutsTab() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-muted-foreground hover:text-foreground h-7 gap-1.5 text-xs"
+                className="text-ink-3 hover:text-ink h-7 gap-1.5 text-caption"
                 onClick={resetAll}
               >
                 <RotateCcw className="size-3.5" />
@@ -102,7 +96,7 @@ export function ShortcutsTab() {
               return (
                 <div key={action.id} className="flex flex-col gap-1">
                   <CustomizeRow
-                    icon={<Icon className="text-muted-foreground size-6 shrink-0" />}
+                    icon={<Icon className="text-ink-3 size-6 shrink-0" />}
                     name={action.label}
                     description={action.description}
                   >
@@ -114,7 +108,7 @@ export function ShortcutsTab() {
                           initial={reduced ? false : { opacity: 0, scale: 0.8 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.8 }}
-                          transition={LAYOUT_TRANSITION}
+                          transition={SPRING_CRISP}
                         >
                           <Tooltip content="Reset to default" solid>
                             <Button
@@ -133,7 +127,7 @@ export function ShortcutsTab() {
                     <LayoutGroup>
                       <motion.div
                         layout
-                        transition={LAYOUT_TRANSITION}
+                        transition={SPRING_CRISP}
                         className="flex items-center gap-1.5"
                       >
                         {bindings.map((binding, slot) => (
@@ -163,8 +157,8 @@ export function ShortcutsTab() {
                         initial={reduced ? false : { opacity: 0, y: -4 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={reduced ? { opacity: 0 } : { opacity: 0, y: -4 }}
-                        transition={SLIDE_TRANSITION}
-                        className="text-destructive flex items-center gap-1.5 pl-9 text-xs"
+                        transition={{ duration: DURATION.fast, ease: EASE_OUT_STRONG }}
+                        className="text-destructive flex items-center gap-1.5 pl-9 text-caption"
                       >
                         <TriangleAlert className="size-3.5 shrink-0" aria-hidden />
                         Also used by {conflict.label}
@@ -177,9 +171,7 @@ export function ShortcutsTab() {
           </div>
         </SettingsSection>
       ) : (
-        <p className="text-muted-foreground py-8 text-center text-sm">
-          No shortcuts match “{query}”.
-        </p>
+        <p className="text-ink-3 py-8 text-center text-body">No shortcuts match “{query}”.</p>
       )}
     </div>
   );

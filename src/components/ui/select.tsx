@@ -23,9 +23,9 @@ function SelectTrigger({
         `
           border-input bg-background/60 ring-offset-background
           focus-visible:border-ring focus-visible:ring-ring/30
-          data-[placeholder]:text-muted-foreground
-          flex h-8 w-full items-center justify-between gap-2 rounded-md border px-2.5 py-1 text-xs
-          whitespace-nowrap transition-colors outline-none
+          data-[placeholder]:text-ink-3
+          flex h-8 w-full items-center justify-between gap-2 rounded-md border px-2.5 py-1
+          text-caption whitespace-nowrap transition-colors outline-none
           focus-visible:ring-2
           disabled:cursor-not-allowed disabled:opacity-50
           [&_svg]:size-3.5 [&_svg]:shrink-0
@@ -82,7 +82,7 @@ function SelectItem({
       className={cn(
         `
           focus:bg-accent focus:text-accent-foreground
-          relative flex w-full cursor-pointer items-center rounded-sm py-1.5 pr-7 pl-2 text-xs
+          relative flex w-full cursor-pointer items-center rounded-sm py-1.5 pr-7 pl-2 text-caption
           outline-none select-none
           data-[disabled]:pointer-events-none data-[disabled]:opacity-50
         `,

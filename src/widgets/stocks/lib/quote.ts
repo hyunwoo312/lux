@@ -16,7 +16,7 @@ export function deriveChange(quote: Quote, reference: number): { change: number;
 }
 
 export function changeTone(change: number): string {
-  return change > 0 ? "text-primary" : change < 0 ? "text-destructive" : "text-muted-foreground";
+  return change > 0 ? "text-primary" : change < 0 ? "text-destructive" : "text-ink-3";
 }
 
 type MarketState = "open" | "closed" | "unknown";

@@ -18,8 +18,8 @@ export function QuickItem({ url, title, view, icon, trailingPad }: QuickItemProp
         className={cn(
           "truncate",
           view === "grid"
-            ? "w-full text-center text-xs"
-            : "min-w-0 flex-1 text-sm transition-[padding] duration-200",
+            ? "w-full text-center text-caption"
+            : "min-w-0 flex-1 text-body transition-[padding] duration-200",
           trailingPad,
         )}
       >

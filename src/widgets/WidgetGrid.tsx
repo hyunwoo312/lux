@@ -231,7 +231,7 @@ export function WidgetGrid() {
       {widgets.length === 0 ? (
         <div
           style={{ minHeight: workspaceHeight }}
-          className="text-muted-foreground/60 grid place-items-center text-sm"
+          className="text-ink-4 grid place-items-center text-body"
         >
           {previewPlacement && mounted ? (
             <div className="relative" style={{ width: gw, height: workspaceHeight }}>

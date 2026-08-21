@@ -1,4 +1,4 @@
-import { HEADER_LABEL } from "@/widgets/core/BaseWidget";
+import { HEADER_LABEL } from "@/widgets/core/chromeStyles";
 import { useTasks } from "@/widgets/tasks/useTasksStore";
 
 export function TasksStatus() {

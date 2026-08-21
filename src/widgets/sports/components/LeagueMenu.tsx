@@ -4,7 +4,7 @@ import { Check, ChevronDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { EASE_OUT_QUINT } from "@/lib/motion";
+import { EASE_OUT } from "@/lib/motion";
 import { accentClass } from "@/widgets/core/accent";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { LEAGUES, leagueById } from "@/widgets/sports/lib/leagues";
@@ -12,11 +12,11 @@ import { SPORTS_ACCENT } from "@/widgets/sports/types";
 import { useSports, useSportsStore } from "@/widgets/sports/useSportsStore";
 
 const TRIGGER_CLASS = `
-  text-muted-foreground
-  hover:text-foreground hover:bg-foreground/5
-  focus-visible:text-foreground focus-visible:bg-foreground/5
-  data-[state=open]:text-foreground data-[state=open]:bg-foreground/5
-  flex min-w-0 shrink items-center gap-1 rounded-sm px-1.5 py-0.5 text-xs outline-none
+  text-ink-3
+  hover:text-ink hover:bg-foreground/5
+  focus-visible:text-ink focus-visible:bg-foreground/5
+  data-[state=open]:text-ink data-[state=open]:bg-foreground/5
+  flex min-w-0 shrink items-center gap-1 rounded-sm px-1.5 py-0.5 text-caption outline-none
   transition-colors
 `;
 
@@ -39,7 +39,7 @@ export function LeagueMenu() {
               initial={reduced ? { opacity: 0 } : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={reduced ? { opacity: 0 } : { opacity: 0, y: -6 }}
-              transition={{ duration: reduced ? 0 : 0.18, ease: EASE_OUT_QUINT }}
+              transition={{ duration: reduced ? 0 : 0.18, ease: EASE_OUT }}
             >
               {active?.label}
             </motion.span>
@@ -47,7 +47,7 @@ export function LeagueMenu() {
           <motion.span
             className="flex shrink-0"
             animate={{ rotate: open ? 180 : 0 }}
-            transition={{ duration: reduced ? 0 : 0.18, ease: EASE_OUT_QUINT }}
+            transition={{ duration: reduced ? 0 : 0.18, ease: EASE_OUT }}
           >
             <ChevronDown className="size-3" aria-hidden />
           </motion.span>
@@ -73,15 +73,15 @@ export function LeagueMenu() {
                 transition={{
                   duration: reduced ? 0 : 0.16,
                   delay: reduced ? 0 : index * 0.025,
-                  ease: EASE_OUT_QUINT,
+                  ease: EASE_OUT,
                 }}
                 className={cn(
                   `
                     hover:bg-accent
-                    flex items-center gap-2 rounded-sm px-2 py-1.5 text-left text-xs
+                    flex items-center gap-2 rounded-sm px-2 py-1.5 text-left text-caption
                     transition-colors
                   `,
-                  selected ? "text-primary font-medium" : "text-foreground",
+                  selected ? "text-primary font-medium" : "text-ink",
                 )}
               >
                 <span className="flex-1">{league.label}</span>

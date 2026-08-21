@@ -1,3 +1,4 @@
+import { DURATION, EASE_STANDARD } from "@/lib/motion";
 import { AnimatePresence, motion, useReducedMotion, type TargetAndTransition } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useActiveImage } from "@/widgets/image/hooks/useActiveImage";
@@ -60,8 +61,8 @@ export function ImageBackdrop() {
     return (
       <div
         className={cn(`
-          text-muted-foreground flex h-full w-full items-center justify-center p-4 text-center
-          text-xs
+          text-ink-3 flex h-full w-full items-center justify-center p-4 text-center
+          text-caption
         `)}
       >
         {loadError}
@@ -76,7 +77,7 @@ export function ImageBackdrop() {
   const enterTransition =
     effectiveTransition === "none"
       ? { duration: 0 }
-      : { duration: 0.4, ease: "easeInOut" as const };
+      : { duration: DURATION.slow, ease: EASE_STANDARD };
 
   const panning = kenBurns && !reduced;
   const frame = KEN_BURNS[activeIndex % KEN_BURNS.length] ?? KEN_BURNS_FALLBACK;
@@ -107,7 +108,7 @@ export function ImageBackdrop() {
               panning
                 ? {
                     duration: KEN_BURNS_DURATION,
-                    ease: "easeInOut",
+                    ease: EASE_STANDARD,
                     repeat: Infinity,
                     repeatType: "reverse",
                   }
@@ -126,7 +127,7 @@ export function ImageBackdrop() {
           <span
             className={cn(`
               bg-card text-card-foreground border-border/60 line-clamp-2 max-w-full rounded-md
-              border px-2.5 py-1 text-center text-xs font-medium shadow-sm
+              border px-2.5 py-1 text-center text-caption font-medium shadow-sm
             `)}
           >
             {caption}

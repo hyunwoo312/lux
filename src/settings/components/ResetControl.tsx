@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { EASE_OUT_EXPO } from "@/lib/motion";
+import { DURATION, EASE_OUT_STRONG, SPRING_POP } from "@/lib/motion";
 
 type Phase = "idle" | "confirm" | "done";
 
@@ -41,7 +41,7 @@ export function ResetControl({
         initial: { opacity: 0, y: 4 },
         animate: { opacity: 1, y: 0 },
         exit: { opacity: 0, y: -4 },
-        transition: { duration: 0.18, ease: EASE_OUT_EXPO },
+        transition: { duration: DURATION.fast, ease: EASE_OUT_STRONG },
       };
 
   return (
@@ -52,7 +52,7 @@ export function ResetControl({
             <Button
               size="sm"
               variant="ghost"
-              className={cn("text-muted-foreground", PRESS)}
+              className={cn("text-ink-3", PRESS)}
               onClick={() => setPhase("confirm")}
             >
               {label}
@@ -66,7 +66,7 @@ export function ResetControl({
             className="flex flex-wrap items-center justify-end gap-2"
             {...motionProps}
           >
-            <span className="text-muted-foreground text-xs">{confirmMessage}</span>
+            <span className="text-ink-3 text-caption">{confirmMessage}</span>
             <Button
               size="sm"
               variant="ghost"
@@ -84,13 +84,13 @@ export function ResetControl({
         {phase === "done" && (
           <motion.div
             key="done"
-            className="text-primary flex items-center gap-1.5 px-3 text-xs font-medium"
+            className="text-primary flex items-center gap-1.5 px-3 text-caption font-medium"
             {...motionProps}
           >
             <motion.span
               initial={reduced ? false : { scale: 0, rotate: -25 }}
               animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: "spring", stiffness: 500, damping: 16 }}
+              transition={SPRING_POP}
             >
               <Check className="size-4" />
             </motion.span>

@@ -16,7 +16,7 @@ import {
 import { motion, useAnimationControls, useReducedMotion, type Variants } from "motion/react";
 import { z } from "zod";
 import { IconRow } from "@/components/IconRow";
-import { EASE_OUT_EXPO } from "@/lib/motion";
+import { DURATION, EASE_OUT, EASE_OUT_STRONG, EASE_STANDARD, SPRING_POP } from "@/lib/motion";
 import { read, write } from "@/lib/storage";
 import { SettingsSection } from "@/settings/components/SettingsSection";
 import { useSettingsStore } from "@/settings/useSettingsStore";
@@ -55,7 +55,7 @@ const container: Variants = {
 };
 const item: Variants = {
   hidden: { opacity: 0, y: 8 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: EASE_OUT_EXPO } },
+  show: { opacity: 1, y: 0, transition: { duration: DURATION.slow, ease: EASE_OUT_STRONG } },
 };
 
 function useGithubStars(): number | null {
@@ -112,11 +112,11 @@ export function AboutTab() {
         <LogoMark />
 
         <div className="flex flex-col items-center gap-1">
-          <h2 className="font-display text-2xl font-semibold tracking-tight">Lux</h2>
-          <p className="text-muted-foreground text-sm">A new tab worth opening.</p>
+          <h2 className="text-2xl font-semibold tracking-tight">Lux</h2>
+          <p className="text-ink-3 text-body">A new tab worth opening.</p>
         </div>
 
-        <p className="text-muted-foreground/70 max-w-xs text-xs text-balance">{DESCRIPTION}</p>
+        <p className="text-ink-4 max-w-xs text-caption text-balance">{DESCRIPTION}</p>
 
         <div className="flex flex-wrap items-center justify-center gap-2.5">
           <a
@@ -124,9 +124,9 @@ export function AboutTab() {
             target="_blank"
             rel="noopener noreferrer"
             className="
-              text-muted-foreground
-              hover:text-foreground
-              inline-flex items-center gap-1.5 text-xs transition-colors
+              text-ink-3
+              hover:text-ink
+              inline-flex items-center gap-1.5 text-caption transition-colors
             "
           >
             <GithubMark className="size-4" />
@@ -144,9 +144,9 @@ export function AboutTab() {
             target="_blank"
             rel="noopener noreferrer"
             className="
-              border-border/60 bg-card/60 text-muted-foreground
-              hover:text-foreground
-              rounded-full border px-2 py-0.5 text-2xs font-medium tabular-nums transition-colors
+              border-border/60 bg-card/60 text-ink-3
+              hover:text-ink
+              rounded-full border px-2 py-0.5 text-micro font-medium tabular-nums transition-colors
             "
           >
             v{version}
@@ -156,9 +156,9 @@ export function AboutTab() {
             target="_blank"
             rel="noopener noreferrer"
             className="
-              text-foreground
+              text-ink
               hover:bg-accent
-              inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium
+              inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-caption font-medium
               transition-colors
             "
           >
@@ -170,9 +170,9 @@ export function AboutTab() {
             target="_blank"
             rel="noopener noreferrer"
             className="
-              text-foreground
+              text-ink
               hover:bg-accent
-              inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium
+              inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-caption font-medium
               transition-colors
             "
           >
@@ -184,9 +184,9 @@ export function AboutTab() {
             target="_blank"
             rel="noopener noreferrer"
             className="
-              text-foreground
+              text-ink
               hover:bg-accent
-              inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium
+              inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-caption font-medium
               transition-colors
             "
           >
@@ -199,14 +199,13 @@ export function AboutTab() {
       <motion.div variants={item}>
         <SettingsSection
           title="Privacy"
-          description="Everything runs on your device — and the code is yours to check."
           action={
             <a
               href={PRIVACY_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="
-                text-primary inline-flex items-center gap-1 text-xs font-medium
+                text-primary inline-flex items-center gap-1 text-caption font-medium
                 hover:underline
               "
             >
@@ -238,7 +237,7 @@ export function AboutTab() {
               <button
                 type="button"
                 onClick={() => setTab("accounts")}
-                className="text-primary w-fit text-xs font-medium hover:underline"
+                className="text-primary w-fit text-caption font-medium hover:underline"
               >
                 Manage in Accounts &amp; Permissions
               </button>
@@ -257,7 +256,7 @@ export function AboutTab() {
               <button
                 type="button"
                 onClick={() => setTab("general")}
-                className="text-primary w-fit text-xs font-medium hover:underline"
+                className="text-primary w-fit text-caption font-medium hover:underline"
               >
                 Back up or reset in General
               </button>
@@ -266,13 +265,13 @@ export function AboutTab() {
         </SettingsSection>
       </motion.div>
 
-      <motion.p variants={item} className="text-muted-foreground/70 text-center text-xs">
+      <motion.p variants={item} className="text-ink-4 text-center text-caption">
         Made by{" "}
         <a
           href={AUTHOR_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-foreground underline transition-colors"
+          className="hover:text-ink underline transition-colors"
         >
           Hyun
         </a>
@@ -281,7 +280,7 @@ export function AboutTab() {
           href={`${REPO_URL}/issues`}
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-foreground underline transition-colors"
+          className="hover:text-ink underline transition-colors"
         >
           issue
         </a>
@@ -290,7 +289,7 @@ export function AboutTab() {
           href={KOFI_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-foreground underline transition-colors"
+          className="hover:text-ink underline transition-colors"
         >
           Ko-fi
         </a>
@@ -328,7 +327,7 @@ function LogoMark() {
     void glow.start({
       opacity: [0.5, 0],
       scale: [0.5, 1.9],
-      transition: { duration: 0.7, ease: "easeOut" },
+      transition: { duration: 0.7, ease: EASE_OUT },
     });
   }
 
@@ -339,7 +338,7 @@ function LogoMark() {
       onClick={celebrate}
       whileHover={{ y: -5, scale: 1.06 }}
       whileTap={{ scale: 0.92 }}
-      transition={{ type: "spring", stiffness: 380, damping: 16 }}
+      transition={SPRING_POP}
       className="
         focus-visible:ring-primary/50
         relative grid size-16 place-items-center rounded-2xl outline-none
@@ -363,7 +362,7 @@ function LogoMark() {
             }}
             initial={{ x: "-130%" }}
             animate={{ x: "130%" }}
-            transition={{ duration: 1.8, repeat: Infinity, repeatDelay: 3.5, ease: "easeInOut" }}
+            transition={{ duration: 1.8, repeat: Infinity, repeatDelay: 3.5, ease: EASE_STANDARD }}
           />
         </span>
       </motion.span>

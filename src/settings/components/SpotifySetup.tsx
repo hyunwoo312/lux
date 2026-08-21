@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, Copy, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { EASE_OUT_QUINT } from "@/lib/motion";
+import { DURATION, EASE_OUT } from "@/lib/motion";
 
 const SPOTIFY_DASHBOARD_URL = "https://developer.spotify.com/dashboard";
 const SPOTIFY_POLICY_URL =
@@ -57,7 +57,7 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
   const isSaved = trimmed === (clientId ?? "");
   const formatInvalid = trimmed.length > 0 && !/^[0-9a-f]{32}$/i.test(trimmed);
   const canSave = trimmed.length > 0 && !isSaved && !formatInvalid && status === "idle";
-  const transition = reduced ? { duration: 0 } : { duration: 0.32, ease: EASE_OUT_QUINT };
+  const transition = reduced ? { duration: 0 } : { duration: DURATION.slow, ease: EASE_OUT };
 
   async function handleSave() {
     if (!canSave) return;
@@ -119,7 +119,7 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
           type="button"
           onClick={() => setOpen((prev) => !prev)}
           aria-expanded={open}
-          className="text-foreground flex items-center gap-2 text-sm font-semibold"
+          className="text-ink flex items-center gap-2 text-body font-semibold"
         >
           <SetupTriangle open={open} transition={transition} />
           How to set up Spotify
@@ -136,7 +136,7 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
               className="overflow-hidden"
             >
               <div className="flex flex-col gap-3 pt-3">
-                <p className="text-muted-foreground text-xs leading-relaxed">
+                <p className="text-ink-3 text-caption leading-relaxed">
                   Spotify limits third-party Web API access, so Lux connects through your own
                   Spotify Developer app instead of a shared one.{" "}
                   <a
@@ -160,19 +160,19 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
                         aria-hidden
                         className="
                           grid size-[1.375rem] place-items-center rounded-full border
-                          border-emerald-500/40 bg-emerald-500/15 text-[0.66rem] font-bold
+                          border-emerald-500/40 bg-emerald-500/15 text-micro font-bold
                           text-emerald-700
                           dark:border-emerald-300/40 dark:bg-emerald-400/15 dark:text-emerald-200
                         "
                       >
                         {index + 1}
                       </span>
-                      <span className="text-foreground/85 text-xs leading-relaxed">{step}</span>
+                      <span className="text-ink-2 text-caption leading-relaxed">{step}</span>
                     </li>
                   ))}
                 </ol>
 
-                <p className="text-muted-foreground text-2xs">
+                <p className="text-ink-3 text-micro">
                   Leave the client secret empty — browser extensions use public PKCE OAuth.
                 </p>
 
@@ -182,7 +182,7 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
                       <code
                         className="
                           border-border bg-background/40 min-w-0 flex-1 truncate rounded-lg border
-                          px-3 py-2 text-xs
+                          px-3 py-2 text-caption
                         "
                       >
                         {redirectUri}
@@ -202,7 +202,7 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
                       </Button>
                     </div>
                   ) : (
-                    <p className="text-muted-foreground text-xs">
+                    <p className="text-ink-3 text-caption">
                       Available once Lux is installed as an extension.
                     </p>
                   )}
@@ -217,10 +217,10 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
                       spellCheck={false}
                       autoComplete="off"
                       className="
-                        border-border bg-background/40 text-foreground
-                        placeholder:text-muted-foreground/60
+                        border-border bg-background/40 text-ink
+                        placeholder:text-ink-4
                         focus-visible:border-emerald-500 focus-visible:ring-emerald-500/40
-                        min-w-0 flex-1 rounded-lg border px-3 py-2 text-sm outline-none
+                        min-w-0 flex-1 rounded-lg border px-3 py-2 text-body outline-none
                         focus-visible:ring-2
                       "
                     />
@@ -234,11 +234,11 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
                     />
                   </div>
                   {formatInvalid ? (
-                    <p className="text-2xs text-warning">
+                    <p className="text-micro text-warning">
                       A Spotify Client ID is 32 characters (letters and numbers).
                     </p>
                   ) : isSaved && clientId ? (
-                    <p className="text-muted-foreground text-2xs inline-flex items-center gap-1">
+                    <p className="text-ink-3 text-micro inline-flex items-center gap-1">
                       <Check className="size-3 text-emerald-600 dark:text-emerald-300" />
                       Saved
                     </p>
@@ -258,7 +258,7 @@ function SetupTriangle({
   transition,
 }: {
   open: boolean;
-  transition: { duration: number; ease?: typeof EASE_OUT_QUINT };
+  transition: { duration: number; ease?: typeof EASE_OUT };
 }) {
   return (
     <motion.svg
@@ -288,7 +288,7 @@ function SaveButton({
   showSaved: boolean;
   onSave: () => void;
   reduced: boolean | null;
-  transition: { duration: number; ease?: typeof EASE_OUT_QUINT };
+  transition: { duration: number; ease?: typeof EASE_OUT };
 }) {
   const bare = status !== "idle";
   const content: ReactNode =
@@ -313,7 +313,7 @@ function SaveButton({
       className={cn(
         `
           relative inline-flex h-8 shrink-0 cursor-pointer items-center justify-center
-          overflow-hidden rounded-md text-sm font-medium outline-none transition-colors
+          overflow-hidden rounded-md text-body font-medium outline-none transition-colors
           focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2
           focus-visible:ring-offset-background
           disabled:pointer-events-none
@@ -352,14 +352,16 @@ function DrawnCheck({ reduced }: { reduced: boolean | null }) {
       strokeLinejoin="round"
       initial={reduced ? false : { scale: 0.6 }}
       animate={{ scale: 1 }}
-      transition={reduced ? { duration: 0 } : { duration: 0.22, ease: "easeOut" }}
+      transition={reduced ? { duration: 0 } : { duration: DURATION.base, ease: EASE_OUT }}
     >
       <motion.path
         d="M5 12.5l4.5 4.5L19 7"
         initial={reduced ? { pathLength: 1 } : { pathLength: 0 }}
         animate={{ pathLength: 1 }}
         transition={
-          reduced ? { duration: 0 } : { duration: 0.3, ease: [0.65, 0, 0.35, 1], delay: 0.06 }
+          reduced
+            ? { duration: 0 }
+            : { duration: DURATION.slow, ease: [0.65, 0, 0.35, 1], delay: 0.06 }
         }
       />
     </motion.svg>
@@ -370,7 +372,7 @@ function DrawnCross({ reduced }: { reduced: boolean | null }) {
   const draw = (delay: number) => ({
     initial: reduced ? { pathLength: 1 } : { pathLength: 0 },
     animate: { pathLength: 1 },
-    transition: reduced ? { duration: 0 } : { duration: 0.16, ease: "easeOut" as const, delay },
+    transition: reduced ? { duration: 0 } : { duration: DURATION.fast, ease: EASE_OUT, delay },
   });
   return (
     <motion.svg
@@ -382,7 +384,7 @@ function DrawnCross({ reduced }: { reduced: boolean | null }) {
       strokeLinecap="round"
       initial={reduced ? false : { scale: 0.6 }}
       animate={{ scale: 1 }}
-      transition={reduced ? { duration: 0 } : { duration: 0.22, ease: "easeOut" }}
+      transition={reduced ? { duration: 0 } : { duration: DURATION.base, ease: EASE_OUT }}
     >
       <motion.path d="M7 7l10 10" {...draw(0.04)} />
       <motion.path d="M17 7l-10 10" {...draw(0.16)} />
@@ -393,9 +395,7 @@ function DrawnCross({ reduced }: { reduced: boolean | null }) {
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-muted-foreground text-2xs font-semibold tracking-wider uppercase">
-        {label}
-      </span>
+      <span className="text-ink-3 text-micro font-semibold tracking-wider uppercase">{label}</span>
       {children}
     </div>
   );

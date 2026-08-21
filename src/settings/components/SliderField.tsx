@@ -35,7 +35,7 @@ export function SliderField({
           onValueChange={([next]) => next !== undefined && onChange(next)}
           aria-label={label}
         />
-        <span className="text-sm font-medium tabular-nums">{display}</span>
+        <span className="text-body font-medium tabular-nums">{display}</span>
       </div>
     );
   }
@@ -43,8 +43,8 @@ export function SliderField({
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       <div className="flex items-center justify-between">
-        <span className="text-sm">{label}</span>
-        <span className="text-sm font-medium tabular-nums">{display}</span>
+        <span className="text-body">{label}</span>
+        <span className="text-body font-medium tabular-nums">{display}</span>
       </div>
       <Slider
         value={[value]}

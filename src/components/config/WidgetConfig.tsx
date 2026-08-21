@@ -1,3 +1,4 @@
+import { SPRING_CRISP } from "@/lib/motion";
 import type { ComponentType, ReactNode } from "react";
 import { useId } from "react";
 import { motion } from "motion/react";
@@ -24,9 +25,7 @@ export function WidgetConfigGroup({ label, children }: { label: string; children
   return (
     <section className="flex flex-col gap-3">
       <Separator className="mb-1.5" />
-      <span className="text-muted-foreground text-2xs font-semibold tracking-wider uppercase">
-        {label}
-      </span>
+      <span className="text-ink-3 text-micro font-semibold tracking-wider uppercase">{label}</span>
       <div className="flex flex-col gap-3.5">{children}</div>
     </section>
   );
@@ -42,10 +41,8 @@ type ConfigItemProps = {
 function ConfigText({ title, description }: { title: string; description?: string }) {
   return (
     <div className="flex min-w-0 grow basis-24 flex-col gap-1">
-      <span className="text-sm leading-none font-medium">{title}</span>
-      {description && (
-        <span className="text-muted-foreground text-xs leading-snug">{description}</span>
-      )}
+      <span className="text-body leading-none font-medium">{title}</span>
+      {description && <span className="text-ink-3 text-caption leading-snug">{description}</span>}
     </div>
   );
 }
@@ -171,14 +168,14 @@ export function ConfigSegmented<T extends string>({
             key={option.value}
             value={option.value}
             className={cn(
-              "relative rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-              active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+              "relative rounded-md px-2.5 py-1 text-caption font-medium transition-colors",
+              active ? "text-primary-foreground" : "text-ink-3 hover:text-ink",
             )}
           >
             {active && (
               <motion.span
                 layoutId={layoutId}
-                transition={{ type: "spring", stiffness: 520, damping: 40 }}
+                transition={SPRING_CRISP}
                 className="bg-primary absolute inset-0 rounded-sm"
               />
             )}
@@ -227,15 +224,15 @@ export function ConfigMultiToggle<T extends string>({
             disabled={atCap && !active}
             className={cn(
               `
-                inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium
-                transition-colors
+                inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-caption
+                font-medium transition-colors
                 disabled:opacity-40
                 [&_img]:size-4
                 [&_svg]:size-4
               `,
               active
-                ? "border-primary/40 bg-primary/10 text-foreground"
-                : "border-border text-muted-foreground hover:bg-accent/60",
+                ? "border-primary/40 bg-primary/10 text-ink"
+                : "border-border text-ink-3 hover:bg-accent/60",
             )}
           >
             {Icon && <Icon className="shrink-0 object-contain" />}

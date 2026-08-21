@@ -67,7 +67,7 @@ export function ReleaseList({
         <ReleaseRow key={release.repo} release={release} newTab={newTab} />
       ))}
       {data.watchedCount > data.watchedScanned && (
-        <p className="text-muted-foreground/70 text-2xs shrink-0 px-2 py-1">
+        <p className="text-ink-4 text-micro shrink-0 px-2 py-1">
           Showing the {data.watchedScanned} most recently pushed of {data.watchedCount} watched
           repositories.
         </p>
@@ -87,21 +87,17 @@ function ReleaseRow({ release, newTab }: { release: Release; newTab: boolean }) 
       rel="noreferrer"
       className="hover:bg-foreground/5 flex shrink-0 items-center gap-2 rounded-md px-2 py-1.5"
     >
-      <Tag className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
+      <Tag className="text-ink-3 size-3.5 shrink-0" aria-hidden />
       <div className="min-w-0 flex-1">
-        <p className="text-foreground truncate text-xs font-medium">{release.repo}</p>
-        <p className="text-muted-foreground text-2xs truncate">{detail}</p>
+        <p className="text-ink truncate text-caption font-medium">{release.repo}</p>
+        <p className="text-ink-3 text-micro truncate">{detail}</p>
       </div>
       {release.isPrerelease && (
-        <span
-          className="
-            border-border text-muted-foreground text-2xs shrink-0 rounded border px-1 py-px
-          "
-        >
+        <span className="border-border text-ink-3 text-micro shrink-0 rounded border px-1 py-px">
           Pre-release
         </span>
       )}
-      <span className="text-muted-foreground text-2xs shrink-0 tabular-nums">
+      <span className="text-ink-3 text-micro shrink-0 tabular-nums">
         {formatRelativeTime(release.publishedAt)}
       </span>
     </a>

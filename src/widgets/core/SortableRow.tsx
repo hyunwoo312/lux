@@ -1,10 +1,11 @@
+import { DURATION, EASE_OUT } from "@/lib/motion";
 import type { CSSProperties, ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 
-const ROW_TRANSITION = { duration: 0.2, ease: "easeOut" } as const;
+const ROW_TRANSITION = { duration: DURATION.base, ease: EASE_OUT } as const;
 
 export function SortableRow({
   id,

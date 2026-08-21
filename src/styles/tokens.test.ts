@@ -48,7 +48,7 @@ const THEMES = [
 describe("colour tokens", () => {
   it.each(THEMES)("$name ink ladder stays legible on card and background", ({ name, root }) => {
     const surfaces = SURFACES[name];
-    for (const rung of ["ink-2", "ink-4"] as const) {
+    for (const rung of ["ink", "ink-2", "ink-3", "ink-4"] as const) {
       const ink = token(root, rung);
       expect(contrastRatio(ink, surfaces.card)).toBeGreaterThanOrEqual(AA_TEXT);
       expect(contrastRatio(ink, surfaces.background)).toBeGreaterThanOrEqual(AA_TEXT);

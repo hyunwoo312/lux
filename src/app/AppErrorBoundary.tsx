@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+import { TYPE } from "@/lib/type";
 import { Component, useState, type ReactNode } from "react";
 import { Check, Copy, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -53,7 +55,7 @@ function CrashCard({ message }: { message: string }) {
           <h1 className="text-base font-semibold">Lux hit an error</h1>
         </div>
 
-        <p className="text-muted-foreground mt-2 text-sm">
+        <p className="text-ink-3 mt-2 text-body">
           The page stopped before it could finish loading. Everything you have saved is still on
           this device, and nothing has been sent anywhere.
         </p>
@@ -81,13 +83,13 @@ function CrashCard({ message }: { message: string }) {
           )}
         </div>
 
-        <p className="text-muted-foreground mt-2 text-xs">
+        <p className="text-ink-3 mt-2 text-caption">
           {confirmingReset
             ? "This clears where your widgets sit on the grid. Their content is kept."
             : "Reload first. Reset only if the page keeps failing."}
         </p>
 
-        {actionError && <p className="text-destructive mt-2 text-xs">{actionError}</p>}
+        {actionError && <p className="text-destructive mt-2 text-caption">{actionError}</p>}
 
         <CrashDetail message={message} />
       </div>
@@ -109,7 +111,7 @@ function CrashDetail({ message }: { message: string }) {
   return (
     <div className="mt-4 border-t pt-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-muted-foreground text-2xs font-medium tracking-wide uppercase">
+        <span className="text-ink-3 text-micro font-medium tracking-wide uppercase">
           What went wrong
         </span>
         <Button size="sm" variant="ghost" onClick={copyMessage} aria-label="Copy error message">
@@ -117,11 +119,13 @@ function CrashDetail({ message }: { message: string }) {
           {copied ? "Copied" : "Copy"}
         </Button>
       </div>
-      <pre className="text-muted-foreground mt-1 max-h-32 overflow-auto text-xs whitespace-pre-wrap">
+      <pre className={cn(TYPE.rowSubtitle, "mt-1 max-h-32 overflow-auto whitespace-pre-wrap")}>
         {message}
       </pre>
       {failed && (
-        <p className="text-destructive mt-1 text-xs">Couldn't copy — select the text instead.</p>
+        <p className="text-destructive mt-1 text-caption">
+          Couldn't copy — select the text instead.
+        </p>
       )}
     </div>
   );

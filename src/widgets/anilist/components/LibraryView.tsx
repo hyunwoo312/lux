@@ -21,11 +21,12 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { TYPE } from "@/lib/type";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { loadErrorMessage } from "@/lib/net";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ConfigSegmented } from "@/components/config/WidgetConfig";
-import { EASE_OUT_QUINT } from "@/lib/motion";
+import { EASE_OUT } from "@/lib/motion";
 import { accentClass } from "@/widgets/core/accent";
 import { usePolledResource, patchPolledResource } from "@/widgets/core/usePolledResource";
 import {
@@ -158,7 +159,7 @@ export function LibraryView({ enabled, userId, newTab }: LibraryViewProps) {
             initial={reduced ? { opacity: 0 } : { opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, y: -4 }}
-            transition={{ duration: reduced ? 0 : 0.16, ease: EASE_OUT_QUINT }}
+            transition={{ duration: reduced ? 0 : 0.16, ease: EASE_OUT }}
           >
             {state.status === "loading" ? (
               <AnilistPlaceholder>Loading your list…</AnilistPlaceholder>
@@ -326,7 +327,7 @@ function ListBody({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {writeError && (
-        <p role="status" className="text-muted-foreground text-2xs shrink-0 px-2 py-1 text-center">
+        <p role="status" className="text-ink-3 text-micro shrink-0 px-2 py-1 text-center">
           {writeError}
         </p>
       )}
@@ -376,11 +377,7 @@ function LibraryRows({
       {grouped
         ? groups.map((group) => (
             <section key={group.key} className="flex flex-col gap-1">
-              <h4
-                className="
-                  text-muted-foreground/70 text-2xs px-1 pt-1 font-bold tracking-wider uppercase
-                "
-              >
+              <h4 className="text-ink-4 text-micro px-1 pt-1 font-bold tracking-wider uppercase">
                 {group.label}
               </h4>
               {group.entries.map((entry) => (
@@ -392,7 +389,7 @@ function LibraryRows({
             <Fragment key={`${entry.kind}-${entry.id}`}>{renderRow(entry)}</Fragment>
           ))}
       {entries.length > LIBRARY_PAGE_SIZE && (
-        <div ref={sentinelRef} className="text-muted-foreground/70 text-2xs py-2 text-center">
+        <div ref={sentinelRef} className="text-ink-4 text-micro py-2 text-center">
           {hasMore ? `Showing ${visible.length} of ${entries.length}` : `${entries.length} titles`}
         </div>
       )}
@@ -448,11 +445,11 @@ function CurrentRow({
         />
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1.5">
-            <p className="text-foreground min-w-0 truncate text-xs font-medium">{entry.title}</p>
+            <p className="text-ink min-w-0 truncate text-caption font-medium">{entry.title}</p>
             {entry.behind != null && entry.behind > 0 && (
               <span
                 className="
-                  bg-primary text-primary-foreground text-2xs shrink-0 rounded-full px-1.5 py-0.5
+                  bg-primary text-primary-foreground text-micro shrink-0 rounded-full px-1.5 py-0.5
                   font-semibold tabular-nums
                 "
               >
@@ -460,7 +457,7 @@ function CurrentRow({
               </span>
             )}
           </div>
-          <p className="text-muted-foreground text-2xs flex items-center gap-1.5">
+          <p className="text-ink-3 text-micro flex items-center gap-1.5">
             <span className="tabular-nums">{progressLabel(entry)}</span>
             {entry.nextEpisode ? (
               <AiringBadge
@@ -475,7 +472,7 @@ function CurrentRow({
       </a>
       <div className="flex shrink-0 items-center gap-1.5">
         {pending ? (
-          <span className="text-muted-foreground flex size-6 items-center justify-center">
+          <span className="text-ink-3 flex size-6 items-center justify-center">
             <Loader2 className="size-3.5 animate-spin" aria-hidden />
           </span>
         ) : !inProgress ? (
@@ -512,7 +509,7 @@ function CurrentRow({
           )
         )}
         {scoreText != null && (
-          <span className="text-muted-foreground inline-flex items-center gap-0.5 text-2xs tabular-nums">
+          <span className={cn(TYPE.rowMeta, "inline-flex items-center gap-0.5 tabular-nums")}>
             {showScoreIcon && <Star className="size-2.5" aria-hidden />}
             {scoreText}
           </span>
@@ -525,10 +522,10 @@ function CurrentRow({
 type FilterOption<T extends string> = { value: T; label: string; icon: LucideIcon };
 
 const FILTER_TRIGGER_CLASS = `
-  text-muted-foreground/70
-  hover:text-foreground hover:bg-foreground/5
-  focus-visible:text-foreground focus-visible:bg-foreground/5
-  data-[state=open]:text-foreground data-[state=open]:bg-foreground/5
+  text-ink-4
+  hover:text-ink hover:bg-foreground/5
+  focus-visible:text-ink focus-visible:bg-foreground/5
+  data-[state=open]:text-ink data-[state=open]:bg-foreground/5
   grid size-7 shrink-0 place-items-center rounded-sm outline-none transition-colors
 `;
 
@@ -561,7 +558,7 @@ function FilterMenu<T extends string>({
               initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.5, rotate: -20 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
               exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.5, rotate: 20 }}
-              transition={{ duration: reduced ? 0 : 0.18, ease: EASE_OUT_QUINT }}
+              transition={{ duration: reduced ? 0 : 0.18, ease: EASE_OUT }}
             >
               <ActiveIcon className="size-3.5" aria-hidden />
             </motion.span>
@@ -589,15 +586,15 @@ function FilterMenu<T extends string>({
                 transition={{
                   duration: reduced ? 0 : 0.16,
                   delay: reduced ? 0 : index * 0.025,
-                  ease: EASE_OUT_QUINT,
+                  ease: EASE_OUT,
                 }}
                 className={cn(
                   `
                     hover:bg-accent
-                    flex items-center gap-2 rounded-sm px-2 py-1.5 text-left text-xs
+                    flex items-center gap-2 rounded-sm px-2 py-1.5 text-left text-caption
                     transition-colors
                   `,
-                  selected ? "text-primary font-medium" : "text-foreground",
+                  selected ? "text-primary font-medium" : "text-ink",
                 )}
               >
                 <Icon className="size-3.5 shrink-0 opacity-70" aria-hidden />
@@ -635,11 +632,7 @@ function StepButton({
       onClick={onClick}
       aria-label={label}
       className={cn(
-        `
-          text-muted-foreground
-          hover:text-foreground
-          flex size-6 shrink-0 items-center justify-center rounded-sm
-        `,
+        `text-ink-3 hover:text-ink flex size-6 shrink-0 items-center justify-center rounded-sm`,
         className,
       )}
     >
@@ -652,12 +645,7 @@ function AiringBadge({ airingAt, episode }: { airingAt: number; episode: number 
   const now = Date.now();
   const soon = airingAt - Math.floor(now / 1000) <= DAY_SECONDS;
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-0.5",
-        soon ? "text-primary" : "text-muted-foreground",
-      )}
-    >
+    <span className={cn("inline-flex items-center gap-0.5", soon ? "text-primary" : "text-ink-3")}>
       <Clock className="size-2.5" aria-hidden />
       Ep {episode} in {formatAiringIn(airingAt, now)}
     </span>

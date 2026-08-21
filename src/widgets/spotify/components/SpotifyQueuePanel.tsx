@@ -1,3 +1,4 @@
+import { EASE_OUT } from "@/lib/motion";
 import { useEffect, useMemo, useState } from "react";
 import { RemoteImage } from "@/components/media/RemoteImage";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -52,7 +53,7 @@ function QueueArtwork({ url }: { url?: string }) {
     <RemoteImage src={url} alt="" className="size-9 shrink-0 rounded-sm object-cover" />
   ) : (
     <span className="bg-foreground/5 grid size-9 shrink-0 place-items-center rounded-sm">
-      <Music className="text-muted-foreground size-4" aria-hidden />
+      <Music className="text-ink-3 size-4" aria-hidden />
     </span>
   );
 }
@@ -120,30 +121,26 @@ export function SpotifyQueuePanel() {
           <span className="sr-only">Now playing</span>
           <QueueArtwork url={now.artworkUrl} />
           <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-foreground truncate text-sm leading-tight font-medium">
+            <span className="text-ink truncate text-body leading-tight font-medium">
               {now.title}
             </span>
-            <span className="text-muted-foreground truncate text-xs leading-tight">
-              {now.artist}
-            </span>
+            <span className="text-ink-3 truncate text-caption leading-tight">{now.artist}</span>
           </span>
           <PlayingBars animate={now.isPlaying && !reduced} />
         </div>
       )}
 
       <div className="flex min-h-0 flex-1 flex-col gap-1.5">
-        <p className="text-muted-foreground text-2xs font-medium tracking-wide uppercase">
-          Up next
-        </p>
-        {playError && <p className="text-muted-foreground text-2xs">{playError}</p>}
+        <p className="text-ink-3 text-micro font-medium tracking-wide uppercase">Up next</p>
+        {playError && <p className="text-ink-3 text-micro">{playError}</p>}
         {queueError && upNext.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-            <p className="text-muted-foreground text-xs">{queueError}</p>
+            <p className="text-ink-3 text-caption">{queueError}</p>
             <button
               type="button"
               onClick={() => void loadSpotifyQueue()}
               className="
-                text-primary rounded-sm text-xs font-medium
+                text-primary rounded-sm text-caption font-medium
                 hover:underline
                 focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none
               "
@@ -152,15 +149,11 @@ export function SpotifyQueuePanel() {
             </button>
           </div>
         ) : queueLoading && upNext.length === 0 ? (
-          <p className="text-muted-foreground flex flex-1 items-center justify-center text-xs">
+          <p className="text-ink-3 flex flex-1 items-center justify-center text-caption">
             Loading queue…
           </p>
         ) : upNext.length === 0 ? (
-          <p
-            className="
-              text-muted-foreground flex flex-1 items-center justify-center text-center text-xs
-            "
-          >
+          <p className="text-ink-3 flex flex-1 items-center justify-center text-center text-caption">
             Nothing queued.
           </p>
         ) : (
@@ -173,7 +166,7 @@ export function SpotifyQueuePanel() {
                   initial={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={reduced ? { opacity: 0 } : { opacity: 0, x: -8 }}
-                  transition={{ duration: reduced ? 0 : 0.2, ease: "easeOut" }}
+                  transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
                 >
                   <button
                     type="button"
@@ -193,16 +186,16 @@ export function SpotifyQueuePanel() {
                   >
                     <QueueArtwork url={item.artworkUrl} />
                     <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="text-foreground truncate text-sm leading-tight">
+                      <span className="text-ink truncate text-body leading-tight">
                         {item.title}
                       </span>
-                      <span className="text-muted-foreground truncate text-xs leading-tight">
+                      <span className="text-ink-3 truncate text-caption leading-tight">
                         {item.subtitle}
                       </span>
                     </span>
                     <Play
                       className="
-                        text-muted-foreground size-3.5 shrink-0 opacity-0 transition-opacity
+                        text-ink-3 size-3.5 shrink-0 opacity-0 transition-opacity
                         group-hover:opacity-100
                       "
                       aria-hidden

@@ -245,8 +245,8 @@ function TermsEditor({
             <li
               key={term}
               className="
-                border-border text-muted-foreground flex items-center gap-1 rounded-full border
-                px-2.5 py-1 text-xs font-medium
+                border-border text-ink-3 flex items-center gap-1 rounded-full border px-2.5 py-1
+                text-caption font-medium
               "
             >
               {term}
@@ -255,7 +255,7 @@ function TermsEditor({
                 onClick={() => onRemove(term)}
                 aria-label={removeLabel(term)}
                 className="
-                  hover:text-foreground
+                  hover:text-ink
                   focus-visible:ring-ring/40
                   rounded-full outline-none
                   focus-visible:ring-2

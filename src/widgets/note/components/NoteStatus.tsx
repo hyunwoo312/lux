@@ -1,4 +1,4 @@
-import { HEADER_LABEL } from "@/widgets/core/BaseWidget";
+import { HEADER_LABEL } from "@/widgets/core/chromeStyles";
 import { useNote } from "@/widgets/note/useNoteStore";
 import { NOTE_MAX_LENGTH } from "@/widgets/note/types";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";

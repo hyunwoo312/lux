@@ -11,7 +11,7 @@ import { useCalendarConnection } from "@/widgets/calendar/hooks/useCalendarConne
 import { dedupeCalendarEvents } from "@/widgets/calendar/lib/agenda";
 import { buildCalendarColorMap } from "@/widgets/calendar/lib/colors";
 import { useCalendar } from "@/widgets/calendar/useCalendarStore";
-import { EASE_OUT_QUINT } from "@/lib/motion";
+import { EASE_OUT } from "@/lib/motion";
 
 export function CalendarWidget() {
   const reduced = useReducedMotion();
@@ -68,7 +68,7 @@ export function CalendarWidget() {
   }
 
   const slide = !reduced && mode === "month";
-  const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT_QUINT };
+  const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT };
 
   return (
     <LayoutGroup>
@@ -110,13 +110,13 @@ export function CalendarWidget() {
               z-20 flex items-center gap-2 rounded-md border px-2.5 py-1.5
             "
           >
-            <span className="min-w-0 flex-1 truncate text-2xs">{syncError}</span>
+            <span className="min-w-0 flex-1 truncate text-micro">{syncError}</span>
             <button
               type="button"
               onClick={openConfig}
               className="
-                text-2xs
-                hover:text-foreground
+                text-micro
+                hover:text-ink
                 flex-none font-semibold underline-offset-2
                 hover:underline
               "

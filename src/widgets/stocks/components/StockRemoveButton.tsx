@@ -20,12 +20,7 @@ export function StockRemoveButton({
         onRemove();
       }}
       className={cn(
-        `
-          text-muted-foreground/60
-          hover:text-destructive
-          grid size-7 place-items-center transition
-          [&_svg]:size-4
-        `,
+        `text-ink-4 hover:text-destructive grid size-7 place-items-center transition [&_svg]:size-4`,
         className,
       )}
     >

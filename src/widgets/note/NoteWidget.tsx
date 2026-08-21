@@ -8,7 +8,7 @@ import { useNote, useNoteStore } from "@/widgets/note/useNoteStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 const FONT_SIZE_CLASS: Record<NoteFontSize, string> = {
-  sm: "text-sm",
+  sm: "text-body",
   base: "text-base",
   lg: "text-lg",
 };
@@ -69,7 +69,7 @@ export function NoteWidget() {
       className={cn(
         `
           block h-full w-full resize-none bg-transparent leading-relaxed outline-none
-          placeholder:text-muted-foreground/50
+          placeholder:text-ink-4
         `,
         FONT_SIZE_CLASS[fontSize],
       )}

@@ -4,7 +4,7 @@ import { HardDrive, Images, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { EASE_OUT_QUINT } from "@/lib/motion";
+import { EASE_OUT } from "@/lib/motion";
 import {
   clearResourceCaches,
   formatBytes,
@@ -30,8 +30,8 @@ function Meter({ usage }: { usage: StorageUsage }) {
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between gap-3">
-        <span className="text-foreground text-sm font-medium">Browser storage</span>
-        <span className="text-muted-foreground text-xs tabular-nums">
+        <span className="text-ink text-body font-medium">Browser storage</span>
+        <span className="text-ink-3 text-caption tabular-nums">
           {`${formatBytes(usage.localBytes)} of ~${formatBytes(LOCAL_STORAGE_CAP_BYTES)}`}
         </span>
       </div>
@@ -59,7 +59,7 @@ function Meter({ usage }: { usage: StorageUsage }) {
           style={{ width: `${pct(other)}%` }}
         />
       </div>
-      <p className="text-muted-foreground text-xs">
+      <p className="text-ink-3 text-caption">
         {`${formatBytes(usage.localCacheBytes)} cached data · ${formatBytes(other)} preferences`}
       </p>
     </div>
@@ -87,19 +87,17 @@ function Tile({
       animate={{ y: 0 }}
       transition={{
         duration: reduced ? 0 : 0.28,
-        ease: EASE_OUT_QUINT,
+        ease: EASE_OUT,
         delay: reduced ? 0 : delay,
       }}
       className="border-border/60 flex flex-col gap-1 rounded-lg border p-3"
     >
-      <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
+      <span className="text-ink-3 flex items-center gap-1.5 text-caption">
         <Icon className="size-3.5 shrink-0" aria-hidden />
         {label}
       </span>
-      <span className="text-foreground text-lg leading-none font-semibold tabular-nums">
-        {value}
-      </span>
-      <span className="text-muted-foreground text-2xs">{detail}</span>
+      <span className="text-ink text-lg leading-none font-semibold tabular-nums">{value}</span>
+      <span className="text-ink-3 text-micro">{detail}</span>
     </motion.div>
   );
 }
@@ -135,7 +133,6 @@ export function StorageSection() {
   return (
     <SettingsSection
       title="Storage"
-      description="What Lux keeps on this device. None of it leaves your browser."
       action={
         usage && (
           <Button
@@ -152,7 +149,7 @@ export function StorageSection() {
     >
       <AnimatePresence mode="wait" initial={false}>
         {failed ? (
-          <p key="error" className="text-muted-foreground text-xs">
+          <p key="error" className="text-ink-3 text-caption">
             Storage usage couldn't be measured.
           </p>
         ) : !usage ? (
@@ -194,7 +191,7 @@ export function StorageSection() {
                 reduced={reduced}
               />
             </div>
-            <p className="text-muted-foreground text-xs">
+            <p className="text-ink-3 text-caption">
               Clearing the cache removes only data your widgets can fetch again — notes, tasks and
               links stay. To remove pictures, use Background above.
             </p>

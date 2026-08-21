@@ -20,8 +20,8 @@ export function AnilistProfileLink() {
         rel="noreferrer"
         aria-label="Open AniList profile"
         className="
-          text-muted-foreground/60
-          hover:text-foreground
+          text-ink-4
+          hover:text-ink
           inline-flex size-7 items-center justify-center rounded-sm
         "
       >

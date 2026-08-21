@@ -107,7 +107,7 @@ function CustomUploadPanel() {
           onReorder={setItems}
         />
       )}
-      {error && <p className="text-destructive text-xs">{error}</p>}
+      {error && <p className="text-destructive text-caption">{error}</p>}
     </SettingsRow>
   );
 }

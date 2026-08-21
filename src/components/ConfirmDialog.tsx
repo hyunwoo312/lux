@@ -1,3 +1,4 @@
+import { SPRING_POP } from "@/lib/motion";
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { Trash2 } from "lucide-react";
@@ -51,11 +52,7 @@ export function ConfirmDialog({
               "
               initial={reduced ? false : { scale: 0.4, rotate: -16, opacity: 0 }}
               animate={{ scale: 1, rotate: 0, opacity: 1 }}
-              transition={
-                reduced
-                  ? { duration: 0 }
-                  : { type: "spring", stiffness: 420, damping: 18, delay: 0.05 }
-              }
+              transition={reduced ? { duration: 0 } : { ...SPRING_POP, delay: 0.05 }}
             >
               <Trash2 className="size-5" />
             </motion.span>

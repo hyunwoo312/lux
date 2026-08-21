@@ -90,19 +90,15 @@ function Breadcrumb({
         const isCurrent = index === trail.length - 1;
         return (
           <span key={folder.id} className="flex min-w-0 items-center gap-0.5">
-            {index > 0 && (
-              <ChevronRight className="text-muted-foreground/40 size-3 shrink-0" aria-hidden />
-            )}
+            {index > 0 && <ChevronRight className="text-ink-4 size-3 shrink-0" aria-hidden />}
             <button
               type="button"
               onClick={() => onNavigate(index)}
               aria-current={isCurrent ? "page" : undefined}
               disabled={isCurrent}
               className={cn(
-                "text-2xs max-w-28 truncate rounded-sm px-1 py-0.5",
-                isCurrent
-                  ? "text-foreground font-semibold"
-                  : "text-muted-foreground hover:text-foreground cursor-pointer",
+                "text-micro max-w-28 truncate rounded-sm px-1 py-0.5",
+                isCurrent ? "text-ink font-semibold" : "text-ink-3 hover:text-ink cursor-pointer",
               )}
             >
               {folder.title}
@@ -134,7 +130,7 @@ function FolderTile({
       >
         <span
           className={cn(
-            "text-muted-foreground grid shrink-0 place-items-center",
+            "text-ink-3 grid shrink-0 place-items-center",
             view === "grid" ? "size-8 [&_svg]:size-5" : "size-4 [&_svg]:size-4",
           )}
         >
@@ -143,13 +139,13 @@ function FolderTile({
         <span
           className={cn(
             "truncate",
-            view === "grid" ? "w-full text-center text-xs" : "min-w-0 flex-1 text-sm",
+            view === "grid" ? "w-full text-center text-caption" : "min-w-0 flex-1 text-body",
           )}
         >
           {folder.title}
         </span>
         {view === "list" && (
-          <span className="text-muted-foreground/60 text-2xs shrink-0 tabular-nums">{count}</span>
+          <span className="text-ink-4 text-micro shrink-0 tabular-nums">{count}</span>
         )}
       </button>
     </li>

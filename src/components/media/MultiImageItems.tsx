@@ -109,7 +109,7 @@ function SortableImage({ item, assetStore, disabled, onRemove }: SortableImagePr
         {url ? (
           <img src={url} alt={item.fileName} className="size-full object-cover" />
         ) : (
-          <div className="text-muted-foreground/40 grid size-full place-items-center [&_svg]:size-5">
+          <div className="text-ink-4 grid size-full place-items-center [&_svg]:size-5">
             <ImageIcon aria-hidden />
           </div>
         )}
@@ -124,7 +124,7 @@ function SortableImage({ item, assetStore, disabled, onRemove }: SortableImagePr
             onRemove();
           }}
           className="
-            bg-card text-foreground/80
+            bg-card text-ink-2
             hover:text-destructive
             absolute top-1 right-1 grid size-5 cursor-pointer place-items-center rounded-md
             transition-colors
@@ -142,11 +142,12 @@ function SortableImage({ item, assetStore, disabled, onRemove }: SortableImagePr
             style={{ left: cursor.x + 4, top: cursor.y + 4 }}
             className="
               bg-popover text-popover-foreground border-border pointer-events-none fixed z-[100]
-              flex max-w-[14rem] flex-col gap-0.5 rounded-md border px-2.5 py-1.5 text-2xs shadow-lg
+              flex max-w-[14rem] flex-col gap-0.5 rounded-md border px-2.5 py-1.5 text-micro
+              shadow-lg
             "
           >
             <span className="font-medium break-words">{item.fileName}</span>
-            {meta && <span className="text-muted-foreground">{meta}</span>}
+            {meta && <span className="text-ink-3">{meta}</span>}
           </div>,
           document.body,
         )}

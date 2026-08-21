@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { GoogleCalendarServiceIcon, OutlookServiceIcon } from "@/components/icons/service-icons";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
-import { EASE_OUT_QUINT } from "@/lib/motion";
+import { EASE_OUT } from "@/lib/motion";
 import {
   formatEventRelativeTime,
   formatEventTime,
@@ -81,7 +81,7 @@ export function CalendarEventItem({
       transition={{
         duration: reduced ? 0 : 0.16,
         delay: reduced ? 0 : Math.min(index, 8) * 0.025,
-        layout: { duration: reduced ? 0 : 0.32, ease: EASE_OUT_QUINT },
+        layout: { duration: reduced ? 0 : 0.32, ease: EASE_OUT },
       }}
       className={cn(
         "group relative flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors",
@@ -94,7 +94,7 @@ export function CalendarEventItem({
         className="size-2 flex-none rounded-full"
         style={{ backgroundColor: color }}
       />
-      <span className="text-muted-foreground w-12 flex-none text-2xs font-semibold tabular-nums">
+      <span className="text-ink-3 w-12 flex-none text-micro font-semibold tabular-nums">
         {timeLabel ?? formatEventTime(event, !clock24h)}
       </span>
       <span
@@ -102,10 +102,7 @@ export function CalendarEventItem({
       >
         <span className="flex min-w-0 items-baseline gap-1.5">
           <span
-            className={cn(
-              "text-foreground truncate text-sm font-medium",
-              declined && "line-through",
-            )}
+            className={cn("text-ink truncate text-body font-medium", declined && "line-through")}
           >
             {title}
           </span>
@@ -119,15 +116,13 @@ export function CalendarEventItem({
             </Tooltip>
           )}
         </span>
-        {event.location && (
-          <span className="text-muted-foreground truncate text-2xs">{event.location}</span>
-        )}
+        {event.location && <span className="text-ink-3 truncate text-micro">{event.location}</span>}
       </span>
       {relative && !pinActions && (
         <span
           className={cn(
             `
-              text-primary pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-2xs
+              text-primary pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-micro
               font-semibold tabular-nums
             `,
             actionCount > 0 &&

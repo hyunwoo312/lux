@@ -1,3 +1,4 @@
+import { DURATION, EASE_OUT, SPRING_CRISP } from "@/lib/motion";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -69,7 +70,7 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
           return (
             <span
               key={tab.value}
-              className="flex items-center px-1.5 py-1 text-xs font-medium [&_svg]:size-3.5"
+              className="flex items-center px-1.5 py-1 text-caption font-medium [&_svg]:size-3.5"
             >
               <Icon />
               <span className="pl-1.5">{tab.label}</span>
@@ -86,7 +87,7 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
             x: indicator.x + UNDERLINE_INSET,
             width: Math.max(0, indicator.width - UNDERLINE_INSET * 2),
           }}
-          transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 550, damping: 45 }}
+          transition={reduced ? { duration: 0 } : SPRING_CRISP}
         />
       )}
       {tabs.map((tab) => {
@@ -106,11 +107,11 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
             onClick={() => onSelect(tab.value)}
             className={cn(
               `
-                relative flex cursor-pointer items-center rounded-md px-1.5 py-1 text-xs font-medium
-                transition-colors
+                relative flex cursor-pointer items-center rounded-md px-1.5 py-1 text-caption
+                font-medium transition-colors
                 [&_svg]:size-3.5
               `,
-              isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+              isActive ? "text-ink" : "text-ink-3 hover:text-ink",
             )}
           >
             {tab.badge ? (
@@ -118,7 +119,7 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
                 aria-hidden
                 className="
                   bg-primary text-primary-foreground absolute -top-1 -right-0.5 flex h-3.5 min-w-3.5
-                  items-center justify-center rounded-full px-1 text-[9px] leading-none
+                  items-center justify-center rounded-full px-1 text-micro leading-none
                   font-semibold tabular-nums
                 "
               >
@@ -133,7 +134,7 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
                   initial={{ width: 0, opacity: 0 }}
                   animate={{ width: "auto", opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  transition={{ duration: DURATION.base, ease: EASE_OUT }}
                   className="overflow-hidden whitespace-nowrap"
                 >
                   <span className="pl-1.5">{tab.label}</span>

@@ -14,7 +14,7 @@ export function ConnectOverlay({ message, actionLabel, onAction }: ConnectOverla
         text-center
       "
     >
-      <p className="text-foreground text-sm font-medium">{message}</p>
+      <p className="text-ink text-body font-medium">{message}</p>
       <Button size="sm" onClick={onAction}>
         {actionLabel}
       </Button>

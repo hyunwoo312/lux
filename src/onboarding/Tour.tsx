@@ -1,3 +1,4 @@
+import { SPRING_SOFT } from "@/lib/motion";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { Button } from "@/components/ui/button";
@@ -129,9 +130,7 @@ export function Tour() {
     }
   }
 
-  const transition = reduced
-    ? { duration: 0 }
-    : { type: "spring" as const, stiffness: 300, damping: 30 };
+  const transition = reduced ? { duration: 0 } : SPRING_SOFT;
 
   return (
     <motion.div
@@ -189,19 +188,19 @@ export function Tour() {
         transition={transition}
       >
         <div className="flex items-center justify-between gap-2">
-          <span className="text-muted-foreground text-2xs font-medium tracking-wide tabular-nums">
+          <span className="text-ink-3 text-micro font-medium tracking-wide tabular-nums">
             {step + 1} of {STEPS.length}
           </span>
           <button
             type="button"
             onClick={stop}
-            className="text-muted-foreground hover:text-foreground text-xs font-medium"
+            className="text-ink-3 hover:text-ink text-caption font-medium"
           >
             Skip
           </button>
         </div>
-        <h3 className="mt-1.5 text-sm font-semibold">{current.title}</h3>
-        <p className="text-muted-foreground mt-1 text-xs leading-relaxed">{current.body}</p>
+        <h3 className="mt-1.5 text-body font-semibold">{current.title}</h3>
+        <p className="text-ink-3 mt-1 text-caption leading-relaxed">{current.body}</p>
         <div className="mt-3 flex items-center justify-between gap-2">
           <Button variant="ghost" size="sm" onClick={() => (step === 0 ? backToWelcome() : prev())}>
             Back

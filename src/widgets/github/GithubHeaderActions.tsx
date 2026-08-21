@@ -1,3 +1,4 @@
+import { EASE_OUT } from "@/lib/motion";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useIntegrationStore } from "@/integrations";
 import { GithubProfileLink } from "@/widgets/github/GithubProfileLink";
@@ -20,7 +21,7 @@ export function GithubHeaderActions() {
             initial={reduced ? { opacity: 0 } : { opacity: 0, width: 0 }}
             animate={reduced ? { opacity: 1 } : { opacity: 1, width: "auto" }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, width: 0 }}
-            transition={{ duration: reduced ? 0 : 0.18, ease: "easeOut" }}
+            transition={{ duration: reduced ? 0 : 0.18, ease: EASE_OUT }}
           >
             <GithubRefreshButton />
           </motion.div>

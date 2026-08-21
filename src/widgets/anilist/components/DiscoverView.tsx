@@ -98,7 +98,7 @@ export function DiscoverView() {
           <Button
             size="sm"
             variant="ghost"
-            className="h-6 px-2 text-xs"
+            className="h-6 px-2 text-caption"
             onClick={() => useSettingsStore.getState().openSettings("accounts")}
           >
             {needsReconnect ? "Reconnect AniList" : "Connect AniList"}
@@ -106,7 +106,7 @@ export function DiscoverView() {
         )}
       </div>
       {!connected && (
-        <span className="text-muted-foreground text-2xs px-1 font-semibold tracking-wide uppercase">
+        <span className="text-ink-3 text-micro px-1 font-semibold tracking-wide uppercase">
           {discoverFeedLabel(feed, type)}
         </span>
       )}
@@ -195,22 +195,21 @@ function DiscoverRow({
       />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex min-w-0 items-center gap-1.5">
-          <p className="text-foreground truncate text-xs font-medium">{media.title}</p>
+          <p className="text-ink truncate text-caption font-medium">{media.title}</p>
           {listStatus && (
             <span
               className="
-                border-border text-muted-foreground text-2xs shrink-0 rounded-full border px-1.5
-                py-px
+                border-border text-ink-3 text-micro shrink-0 rounded-full border px-1.5 py-px
               "
             >
               {LIST_STATUS_LABEL[listStatus] ?? "On list"}
             </span>
           )}
         </div>
-        <p className="text-muted-foreground truncate text-2xs">{describeMedia(media)}</p>
+        <p className="text-ink-3 truncate text-micro">{describeMedia(media)}</p>
       </div>
       {media.averageScore !== undefined && (
-        <span className="text-muted-foreground text-2xs shrink-0 font-semibold tabular-nums">
+        <span className="text-ink-3 text-micro shrink-0 font-semibold tabular-nums">
           {media.averageScore}%
         </span>
       )}
@@ -225,9 +224,8 @@ function DiscoverRow({
               onAdd();
             }}
             className="
-              text-muted-foreground/70 grid size-6 shrink-0 place-items-center rounded-sm
-              transition-colors
-              hover:text-foreground
+              text-ink-4 grid size-6 shrink-0 place-items-center rounded-sm transition-colors
+              hover:text-ink
               focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none
               disabled:pointer-events-none disabled:opacity-50
             "

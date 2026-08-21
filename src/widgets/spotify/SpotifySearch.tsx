@@ -245,7 +245,7 @@ export function SpotifySearch() {
       >
         <div className="max-h-72 overflow-y-auto p-1">
           {devices.length === 0 && (
-            <p className="border-border/60 text-muted-foreground border-b px-2 py-2 text-xs">
+            <p className="border-border/60 text-ink-3 border-b px-2 py-2 text-caption">
               Open Spotify on a device to start playback.
             </p>
           )}
@@ -255,7 +255,7 @@ export function SpotifySearch() {
                 border-border/60 flex flex-wrap items-center gap-1 border-b px-2 pt-1.5 pb-2
               "
             >
-              <span className="text-muted-foreground text-2xs mr-0.5">Play on</span>
+              <span className="text-ink-3 text-micro mr-0.5">Play on</span>
               {devices.map((device) => (
                 <button
                   key={device.id}
@@ -263,9 +263,9 @@ export function SpotifySearch() {
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => setTargetDeviceId(device.id)}
                   className="
-                    border-border text-muted-foreground rounded-full border px-2 py-0.5 text-2xs
+                    border-border text-ink-3 rounded-full border px-2 py-0.5 text-micro
                     transition-colors
-                    hover:text-foreground hover:border-foreground/40
+                    hover:text-ink hover:border-foreground/40
                     focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none
                   "
                 >
@@ -275,13 +275,13 @@ export function SpotifySearch() {
             </div>
           )}
           {error ? (
-            <p className="text-muted-foreground px-2 py-2 text-xs">{error}</p>
+            <p className="text-ink-3 px-2 py-2 text-caption">{error}</p>
           ) : isSearch && searching && rows.length === 0 ? (
-            <p className="text-muted-foreground px-2 py-2 text-xs">Searching…</p>
+            <p className="text-ink-3 px-2 py-2 text-caption">Searching…</p>
           ) : isSearch && rows.length === 0 ? (
-            <p className="text-muted-foreground px-2 py-2 text-xs">No matching results.</p>
+            <p className="text-ink-3 px-2 py-2 text-caption">No matching results.</p>
           ) : rows.length === 0 ? (
-            <p className="text-muted-foreground px-2 py-2 text-xs">
+            <p className="text-ink-3 px-2 py-2 text-caption">
               {playlistsLoading
                 ? "Loading your playlists…"
                 : "Search songs, albums, and playlists."}
@@ -292,8 +292,7 @@ export function SpotifySearch() {
                 <li key={group.key}>
                   <p
                     className="
-                      text-muted-foreground px-2 pt-2 pb-1 text-2xs font-medium tracking-wide
-                      uppercase
+                      text-ink-3 px-2 pt-2 pb-1 text-micro font-medium tracking-wide uppercase
                     "
                   >
                     {group.label}
@@ -328,14 +327,14 @@ export function SpotifySearch() {
                                 bg-foreground/5 grid size-9 shrink-0 place-items-center rounded-sm
                               "
                             >
-                              <Music className="text-muted-foreground size-4" aria-hidden />
+                              <Music className="text-ink-3 size-4" aria-hidden />
                             </span>
                           )}
                           <span className="flex min-w-0 flex-1 flex-col">
-                            <span className="text-foreground truncate text-sm leading-tight">
+                            <span className="text-ink truncate text-body leading-tight">
                               {result.title}
                             </span>
-                            <span className="text-muted-foreground truncate text-xs leading-tight">
+                            <span className="text-ink-3 truncate text-caption leading-tight">
                               {result.subtitle}
                             </span>
                           </span>
@@ -371,7 +370,7 @@ export function SpotifySearch() {
                                   `,
                                   queuedIds.has(result.id)
                                     ? "text-primary"
-                                    : "text-muted-foreground/70 hover:text-foreground",
+                                    : "text-ink-4 hover:text-ink",
                                   queueingId === result.id && "opacity-50",
                                 )}
                               >

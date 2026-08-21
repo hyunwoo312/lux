@@ -150,7 +150,7 @@ export function ExpandingSearch({
                   duration-300
                   [&_svg]:size-4
                 `,
-                open ? "text-primary" : hovered ? "text-foreground" : "text-muted-foreground/60",
+                open ? "text-primary" : hovered ? "text-ink" : "text-ink-4",
               )}
             >
               <Search aria-hidden />
@@ -173,8 +173,8 @@ export function ExpandingSearch({
               aria-hidden={!open}
               tabIndex={open ? 0 : -1}
               className={cn(
-                "placeholder:text-muted-foreground/60 text-foreground",
-                "relative h-full min-w-0 flex-1 bg-transparent text-sm outline-none",
+                "placeholder:text-ink-4 text-ink",
+                "relative h-full min-w-0 flex-1 bg-transparent text-body outline-none",
                 !open && "pointer-events-none",
               )}
             />
@@ -189,8 +189,8 @@ export function ExpandingSearch({
               transition={contentIn(0.16)}
               className={cn(
                 `
-                  text-muted-foreground/60
-                  hover:text-foreground hover:bg-foreground/5
+                  text-ink-4
+                  hover:text-ink hover:bg-foreground/5
                   relative mr-1 grid size-6 shrink-0 place-items-center rounded-sm
                   [&_svg]:size-3.5
                 `,

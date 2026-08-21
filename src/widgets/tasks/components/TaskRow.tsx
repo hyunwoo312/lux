@@ -1,3 +1,4 @@
+import { DURATION, EASE_OUT } from "@/lib/motion";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Transition } from "motion/react";
@@ -20,7 +21,7 @@ type TaskRowProps = {
   onRemove: () => void;
 };
 
-const ROW_TRANSITION: Transition = { duration: 0.2, ease: "easeOut" };
+const ROW_TRANSITION: Transition = { duration: DURATION.base, ease: EASE_OUT };
 
 export function DraftTaskRow({ text }: { text: string }) {
   const reduced = useReducedMotion();
@@ -37,7 +38,7 @@ export function DraftTaskRow({ text }: { text: string }) {
       <div className="min-w-0 flex-1">
         <TextMorph
           text={text}
-          className="text-muted-foreground block overflow-hidden text-sm whitespace-nowrap"
+          className="text-ink-3 block overflow-hidden text-body whitespace-nowrap"
         />
       </div>
     </motion.li>
@@ -149,7 +150,7 @@ export function TaskRow({
             onKeyDown={handleKeyDown}
             onBlur={commit}
             aria-label="Edit task"
-            className="w-full bg-transparent text-sm outline-none"
+            className="w-full bg-transparent text-body outline-none"
           />
         ) : (
           <Tooltip content={task.title} disabled={!truncated} side="top" align="start" solid>
@@ -161,8 +162,8 @@ export function TaskRow({
                   if (revealActive) setRevealActive(false);
                 }}
                 className={cn(
-                  "block truncate text-sm",
-                  task.done && "text-muted-foreground",
+                  "block truncate text-body",
+                  task.done && "text-ink-3",
                   revealActive && "task-reveal",
                 )}
               >
@@ -176,7 +177,7 @@ export function TaskRow({
                 "
                 initial={false}
                 animate={{ scaleX: task.done ? 1 : 0 }}
-                transition={{ duration: reduced ? 0 : 0.22, ease: "easeOut" }}
+                transition={{ duration: reduced ? 0 : 0.22, ease: EASE_OUT }}
               />
             </span>
           </Tooltip>
@@ -199,8 +200,8 @@ export function TaskRow({
             onClick={() => setEditing(true)}
             aria-label={`Edit ${task.title}`}
             className="
-              text-muted-foreground/50
-              hover:text-foreground
+              text-ink-4
+              hover:text-ink
               cursor-pointer p-0.5 transition-colors
               [&_svg]:size-3.5
             "
@@ -215,7 +216,7 @@ export function TaskRow({
             onClick={onRemove}
             aria-label={`Delete ${task.title}`}
             className="
-              text-muted-foreground/50
+              text-ink-4
               hover:text-destructive
               cursor-pointer p-0.5 transition-colors
               [&_svg]:size-3.5

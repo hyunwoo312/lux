@@ -1,3 +1,4 @@
+import { EASE_OUT } from "@/lib/motion";
 import { type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useSettingsStore } from "@/settings";
@@ -103,7 +104,7 @@ export function SpotifyWidget() {
           initial={reduced ? { opacity: 0 } : { opacity: 0, x: queueView ? 16 : -16 }}
           animate={{ opacity: 1, x: 0 }}
           exit={reduced ? { opacity: 0 } : { opacity: 0, x: queueView ? 16 : -16 }}
-          transition={{ duration: reduced ? 0 : 0.2, ease: "easeOut" }}
+          transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
           className="h-full min-h-0"
         >
           {queueView ? (

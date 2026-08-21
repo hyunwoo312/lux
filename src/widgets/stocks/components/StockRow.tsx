@@ -42,13 +42,9 @@ export function StockRow({ symbol, onSelect, onRemove }: StockRowProps) {
         "
       >
         <div className={cn("flex shrink-0 flex-col", showName ? "w-24" : "w-16")}>
-          <span className="text-foreground truncate text-sm leading-tight font-semibold">
-            {symbol}
-          </span>
+          <span className="text-ink truncate text-body leading-tight font-semibold">{symbol}</span>
           {showName && data?.name ? (
-            <span className="text-muted-foreground truncate text-xs leading-tight">
-              {data.name}
-            </span>
+            <span className="text-ink-3 truncate text-caption leading-tight">{data.name}</span>
           ) : null}
         </div>
 
@@ -74,25 +70,26 @@ export function StockRow({ symbol, onSelect, onRemove }: StockRowProps) {
         <div className="flex shrink-0 flex-col items-end">
           {data ? (
             <>
-              <span className="text-foreground text-sm leading-tight font-semibold tabular-nums">
+              <span className="text-ink text-body leading-tight font-semibold tabular-nums">
                 {formatPrice(data.price, data.currency, data.priceHint)}
               </span>
-              <span className={cn("text-xs leading-tight tabular-nums", tone)}>
+              <span className={cn("text-caption leading-tight tabular-nums", tone)}>
                 {formatSigned(change)} ({formatSigned(percent)}%)
               </span>
               {extended ? (
                 <span
-                  className={cn("text-xs leading-tight tabular-nums", changeTone(extended.change))}
+                  className={cn(
+                    "text-caption leading-tight tabular-nums",
+                    changeTone(extended.change),
+                  )}
                 >
-                  <span className="text-muted-foreground">
-                    {extended.kind === "pre" ? "Pre" : "AH"}{" "}
-                  </span>
+                  <span className="text-ink-3">{extended.kind === "pre" ? "Pre" : "AH"} </span>
                   {formatSigned(extended.percent)}%
                 </span>
               ) : null}
             </>
           ) : state.status === "error" ? (
-            <span className="text-muted-foreground text-xs">Unavailable</span>
+            <span className="text-ink-3 text-caption">Unavailable</span>
           ) : (
             <Skeleton className="h-4 w-16" />
           )}

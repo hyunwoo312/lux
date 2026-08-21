@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { EASE_OUT_EXPO } from "@/lib/motion";
+import { TYPE } from "@/lib/type";
+import { EASE_OUT_STRONG, SPRING_CRISP } from "@/lib/motion";
 import { AboutTab } from "@/settings/tabs/AboutTab";
 import { AccountsTab } from "@/settings/tabs/AccountsTab";
 import { GeneralTab } from "@/settings/tabs/GeneralTab";
@@ -93,7 +94,7 @@ export function SettingsDialog() {
   );
 
   const transition = useMemo<Transition>(
-    () => ({ duration: reduced ? 0 : 0.3, ease: EASE_OUT_EXPO }),
+    () => ({ duration: reduced ? 0 : 0.3, ease: EASE_OUT_STRONG }),
     [reduced],
   );
 
@@ -135,7 +136,7 @@ export function SettingsDialog() {
             />
             <DialogTitle
               className={cn(
-                "text-sm font-semibold whitespace-nowrap transition-opacity duration-200",
+                "text-body font-semibold whitespace-nowrap transition-opacity duration-200",
                 effectiveCollapsed ? "opacity-0" : "opacity-100",
               )}
             >
@@ -158,19 +159,17 @@ export function SettingsDialog() {
                   onClick={() => setTab(id)}
                   className={cn(
                     `
-                      relative flex w-full items-center rounded-lg px-2 py-2 text-sm
+                      relative flex w-full items-center rounded-lg px-2 py-2 text-body
                       whitespace-nowrap
                     `,
-                    isActive ? "text-foreground" : "text-muted-foreground hover:bg-accent/50",
+                    isActive ? "text-ink" : "text-ink-3 hover:bg-accent/50",
                   )}
                 >
                   {isActive && (
                     <motion.span
                       layoutId="settings-active-tab"
                       className="bg-accent absolute inset-0 rounded-lg"
-                      transition={
-                        reduced ? { duration: 0 } : { type: "spring", stiffness: 480, damping: 40 }
-                      }
+                      transition={reduced ? { duration: 0 } : SPRING_CRISP}
                     />
                   )}
                   <span className="relative z-10 flex items-center gap-4">
@@ -202,7 +201,7 @@ export function SettingsDialog() {
             {!effectiveCollapsed && (
               <div className="flex items-center gap-4 pl-2">
                 <img src="/logo.svg" alt="" className="size-5 object-contain" />
-                <span className="text-sm font-medium">Lux</span>
+                <span className="text-body font-medium">Lux</span>
               </div>
             )}
             {isNarrow ? (
@@ -214,8 +213,8 @@ export function SettingsDialog() {
                   onClick={toggleSidebar}
                   aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
                   className="
-                    text-muted-foreground
-                    hover:bg-accent hover:text-foreground
+                    text-ink-3
+                    hover:bg-accent hover:text-ink
                     grid size-8 place-items-center rounded-lg transition-colors
                   "
                 >
@@ -251,8 +250,8 @@ export function SettingsDialog() {
               >
                 <ActiveIcon className="text-primary size-5 shrink-0" />
                 <div className="flex flex-col gap-0.5">
-                  <h2 className="text-base font-semibold">{active.label}</h2>
-                  <p className="text-muted-foreground text-sm">{active.description}</p>
+                  <h2 className={TYPE.heading}>{active.label}</h2>
+                  <p className="text-ink-3 text-body">{active.description}</p>
                 </div>
               </motion.div>
             </AnimatePresence>

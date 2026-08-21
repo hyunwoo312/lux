@@ -25,9 +25,8 @@ export function SpotifyVolume({ volumePercent, disabled, onChange, onCommit }: S
         aria-label={`Adjust volume, currently ${Math.round(volumePercent)} percent`}
         disabled={disabled}
         className="
-          text-muted-foreground inline-flex size-8 items-center justify-center rounded-full
-          transition-colors
-          hover:text-foreground
+          text-ink-3 inline-flex size-8 items-center justify-center rounded-full transition-colors
+          hover:text-ink
           focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none
           disabled:pointer-events-none disabled:opacity-40
         "

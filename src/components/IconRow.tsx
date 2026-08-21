@@ -22,8 +22,8 @@ export function IconRow({ icon: Icon, title, action, control, children }: IconRo
         <Icon aria-hidden />
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="text-sm font-medium">{title}</span>
-        <span className="text-muted-foreground text-xs leading-relaxed">{children}</span>
+        <span className="text-body font-medium">{title}</span>
+        <span className="text-ink-3 text-caption leading-relaxed">{children}</span>
         {action}
       </div>
       {control && <div className="shrink-0">{control}</div>}

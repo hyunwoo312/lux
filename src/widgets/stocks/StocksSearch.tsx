@@ -125,9 +125,9 @@ export function StocksSearch() {
         type="button"
         onClick={() => clearSelection(instanceId)}
         className="
-          text-muted-foreground
-          hover:text-foreground
-          inline-flex items-center gap-0.5 text-xs font-medium tracking-wide uppercase
+          text-ink-3
+          hover:text-ink
+          inline-flex items-center gap-0.5 text-caption font-medium tracking-wide uppercase
           transition-colors
         "
       >
@@ -158,15 +158,15 @@ export function StocksSearch() {
       >
         <div className="max-h-56 overflow-y-auto p-1">
           {atCap ? (
-            <p className="text-muted-foreground px-2 py-2 text-xs">
+            <p className="text-ink-3 px-2 py-2 text-caption">
               Remove a symbol to add another (max {MAX_SYMBOLS}).
             </p>
           ) : error ? (
-            <p className="text-muted-foreground px-2 py-2 text-xs">{error}</p>
+            <p className="text-ink-3 px-2 py-2 text-caption">{error}</p>
           ) : searching && results.length === 0 ? (
-            <p className="text-muted-foreground px-2 py-2 text-xs">Searching…</p>
+            <p className="text-ink-3 px-2 py-2 text-caption">Searching…</p>
           ) : results.length === 0 ? (
-            <p className="text-muted-foreground px-2 py-2 text-xs">No matching symbols.</p>
+            <p className="text-ink-3 px-2 py-2 text-caption">No matching symbols.</p>
           ) : (
             <ul
               role="listbox"
@@ -189,7 +189,7 @@ export function StocksSearch() {
                       onClick={() => pick(result)}
                       className={cn(
                         `
-                          flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm
+                          flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-body
                           transition-colors
                         `,
                         index === active && !added
@@ -198,14 +198,12 @@ export function StocksSearch() {
                         added && "opacity-60",
                       )}
                     >
-                      <TrendingUp className="text-muted-foreground size-4 shrink-0" aria-hidden />
+                      <TrendingUp className="text-ink-3 size-4 shrink-0" aria-hidden />
                       <span className="shrink-0 font-medium">{result.symbol}</span>
-                      <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
+                      <span className="text-ink-3 min-w-0 flex-1 truncate text-caption">
                         {result.name}
                       </span>
-                      {added && (
-                        <Check className="text-muted-foreground size-4 shrink-0" aria-hidden />
-                      )}
+                      {added && <Check className="text-ink-3 size-4 shrink-0" aria-hidden />}
                     </button>
                   </li>
                 );

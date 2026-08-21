@@ -3,7 +3,7 @@ import type { DragEndEvent } from "@dnd-kit/core";
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
-import { EASE_OUT_QUINT } from "@/lib/motion";
+import { EASE_OUT } from "@/lib/motion";
 import { peekPolledResource } from "@/widgets/core/usePolledResource";
 import { SortableRow } from "@/widgets/core/SortableRow";
 import { StockRow } from "@/widgets/stocks/components/StockRow";
@@ -53,7 +53,7 @@ export function StocksWidget() {
         ? selectedSymbol
         : null;
 
-  const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT_QUINT };
+  const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT };
   const offset = reduced ? 0 : "4%";
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -70,7 +70,7 @@ export function StocksWidget() {
         {symbols.length === 0 ? (
           <div
             className="
-              text-muted-foreground flex h-full items-center justify-center px-2 text-center text-sm
+              text-ink-3 flex h-full items-center justify-center px-2 text-center text-body
             "
           >
             Search above to add a symbol.

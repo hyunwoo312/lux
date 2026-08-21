@@ -1,3 +1,4 @@
+import { EASE_STANDARD } from "@/lib/motion";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { GeneratedWallpaper } from "@/app/wallpaper/GeneratedWallpaper";
@@ -32,7 +33,7 @@ export function Wallpaper({ imageUrl }: { imageUrl: string | null }) {
             initial={{ opacity: reduced ? 1 : 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: reduced ? 0 : 0.5, ease: "easeInOut" }}
+            transition={{ duration: reduced ? 0 : 0.5, ease: EASE_STANDARD }}
             className={cn("absolute inset-0 h-full w-full", FIT_CLASS[fit])}
             style={blur > 0 ? { filter: `blur(${blur}px)`, transform: "scale(1.06)" } : undefined}
           />

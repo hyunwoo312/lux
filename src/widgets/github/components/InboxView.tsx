@@ -278,17 +278,15 @@ function SectionError({
   return (
     <div className="flex flex-col gap-0.5">
       <div className="flex items-center gap-1.5 px-2">
-        <h3 className="text-muted-foreground text-2xs font-semibold tracking-wide uppercase">
-          {title}
-        </h3>
+        <h3 className="text-ink-3 text-micro font-semibold tracking-wide uppercase">{title}</h3>
         {onRetry && (
           <button
             type="button"
             onClick={onRetry}
             className="
-              text-muted-foreground
-              hover:text-foreground
-              text-2xs ml-auto flex items-center gap-1 rounded-sm
+              text-ink-3
+              hover:text-ink
+              text-micro ml-auto flex items-center gap-1 rounded-sm
             "
           >
             <RotateCw className="size-3" aria-hidden />
@@ -296,7 +294,7 @@ function SectionError({
           </button>
         )}
       </div>
-      <p className="text-muted-foreground/80 flex items-center gap-1.5 px-2 py-1 text-xs">
+      <p className="text-ink-3 flex items-center gap-1.5 px-2 py-1 text-caption">
         <AlertCircle className="size-3.5 shrink-0" aria-hidden />
         {message}
       </p>
@@ -318,10 +316,8 @@ function Section({
   return (
     <div className="flex flex-col gap-0.5">
       <div className="flex items-center gap-1.5 px-2">
-        <h3 className="text-muted-foreground text-2xs font-semibold tracking-wide uppercase">
-          {title}
-        </h3>
-        <span className="text-muted-foreground/50 text-2xs tabular-nums">{count}</span>
+        <h3 className="text-ink-3 text-micro font-semibold tracking-wide uppercase">{title}</h3>
+        <span className="text-ink-4 text-micro tabular-nums">{count}</span>
         {action && <div className="ml-auto">{action}</div>}
       </div>
       {children}
@@ -338,8 +334,8 @@ function MarkAllReadButton({ marking, onClick }: { marking: boolean; onClick: ()
         disabled={marking}
         aria-label="Mark all notifications read"
         className="
-          text-muted-foreground
-          hover:text-foreground
+          text-ink-3
+          hover:text-ink
           flex size-6 items-center justify-center rounded-sm
           disabled:opacity-50
         "
@@ -369,8 +365,8 @@ function NotificationActionButton({
       aria-label={label}
       onClick={onClick}
       className="
-        text-muted-foreground
-        hover:text-foreground
+        text-ink-3
+        hover:text-ink
         flex size-6 shrink-0 items-center justify-center rounded-sm
       "
     >
@@ -408,15 +404,12 @@ function PullRequestRow({ pr, newTab }: { pr: InboxPullRequest; newTab: boolean 
         className="hover:bg-foreground/5 flex items-center gap-2 rounded-md px-2 py-1.5"
       >
         <Icon
-          className={cn(
-            "size-3.5 shrink-0",
-            pr.isDraft ? "text-muted-foreground" : "text-foreground",
-          )}
+          className={cn("size-3.5 shrink-0", pr.isDraft ? "text-ink-3" : "text-ink")}
           aria-hidden
         />
         <div className="min-w-0 flex-1">
-          <p className="text-foreground truncate text-xs font-medium">{pr.title}</p>
-          <p className="text-muted-foreground text-2xs truncate">{meta}</p>
+          <p className="text-ink truncate text-caption font-medium">{pr.title}</p>
+          <p className="text-ink-3 text-micro truncate">{meta}</p>
         </div>
         <ReviewBadge review={pr.review} />
         <span className={cn("size-2 shrink-0 rounded-full", CI_CLASS[pr.ci])} aria-hidden />
@@ -428,9 +421,9 @@ function PullRequestRow({ pr, newTab }: { pr: InboxPullRequest; newTab: boolean 
 function PullRequestStatus({ pr }: { pr: InboxPullRequest }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-foreground/90 max-w-[12rem] truncate font-medium">{pr.title}</span>
+      <span className="text-ink max-w-[12rem] truncate font-medium">{pr.title}</span>
       {pr.isDraft && (
-        <span className="text-muted-foreground inline-flex items-center gap-1.5">
+        <span className="text-ink-3 inline-flex items-center gap-1.5">
           <GitPullRequestDraft className="size-3" aria-hidden />
           Draft
         </span>
@@ -445,7 +438,7 @@ function PullRequestStatus({ pr }: { pr: InboxPullRequest }) {
           {REVIEW_LABEL[pr.review]}
         </span>
       )}
-      <span className="text-muted-foreground">
+      <span className="text-ink-3">
         {pr.repo} #{pr.number} · {formatRelativeTime(pr.updatedAt)}
       </span>
     </div>
@@ -458,7 +451,7 @@ function ReviewBadge({ review }: { review: PullRequestReview }) {
     return <CheckCircle2 className="size-3 shrink-0 text-emerald-500" aria-hidden />;
   if (review === "changesRequested")
     return <XCircle className="text-destructive size-3 shrink-0" aria-hidden />;
-  return <CircleDot className="text-muted-foreground size-3 shrink-0" aria-hidden />;
+  return <CircleDot className="text-ink-3 size-3 shrink-0" aria-hidden />;
 }
 
 function IssueRow({ issue, newTab }: { issue: InboxIssue; newTab: boolean }) {
@@ -471,10 +464,10 @@ function IssueRow({ issue, newTab }: { issue: InboxIssue; newTab: boolean }) {
       rel="noreferrer"
       className="hover:bg-foreground/5 flex items-center gap-2 rounded-md px-2 py-1.5"
     >
-      <Icon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
+      <Icon className="text-ink-3 size-3.5 shrink-0" aria-hidden />
       <div className="min-w-0 flex-1">
-        <p className="text-foreground truncate text-xs font-medium">{issue.title}</p>
-        <p className="text-muted-foreground text-2xs truncate">{meta}</p>
+        <p className="text-ink truncate text-caption font-medium">{issue.title}</p>
+        <p className="text-ink-3 text-micro truncate">{meta}</p>
       </div>
     </a>
   );
@@ -500,15 +493,15 @@ function NotificationRow({
         rel="noreferrer"
         className="flex min-w-0 flex-1 items-center gap-2"
       >
-        <Icon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
+        <Icon className="text-ink-3 size-3.5 shrink-0" aria-hidden />
         <div className="min-w-0 flex-1">
-          <p className="text-foreground truncate text-xs font-medium">{notification.title}</p>
-          <p className="text-muted-foreground text-2xs truncate">{meta}</p>
+          <p className="text-ink truncate text-caption font-medium">{notification.title}</p>
+          <p className="text-ink-3 text-micro truncate">{meta}</p>
         </div>
       </a>
       {actions &&
         (pending ? (
-          <span className="text-muted-foreground flex size-6 shrink-0 items-center justify-center">
+          <span className="text-ink-3 flex size-6 shrink-0 items-center justify-center">
             <Loader2 className="size-3.5 animate-spin" aria-hidden />
           </span>
         ) : (

@@ -20,11 +20,11 @@ function IndexCell({ symbol, label }: { symbol: string; label: string }) {
 
   return (
     <li className="flex min-w-0 items-baseline gap-1.5">
-      <span className="text-muted-foreground truncate text-2xs">{label}</span>
+      <span className="text-ink-3 truncate text-micro">{label}</span>
       <span
         className={cn(
-          "text-2xs shrink-0 tabular-nums",
-          change ? changeTone(change.change) : "text-muted-foreground/50",
+          "text-micro shrink-0 tabular-nums",
+          change ? changeTone(change.change) : "text-ink-4",
         )}
       >
         {change ? `${formatSigned(change.percent)}%` : "—"}

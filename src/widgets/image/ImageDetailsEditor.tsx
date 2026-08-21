@@ -84,7 +84,7 @@ function ImageDetailRow({ item, focalEnabled, onCaption, onFocal }: ImageDetailR
       style={focalEnabled ? { objectPosition: `${focal.x * 100}% ${focal.y * 100}%` } : undefined}
     />
   ) : (
-    <div className="text-muted-foreground/40 grid size-full place-items-center [&_svg]:size-4">
+    <div className="text-ink-4 grid size-full place-items-center [&_svg]:size-4">
       <ImageIcon aria-hidden />
     </div>
   );
@@ -126,12 +126,10 @@ function ImageDetailRow({ item, focalEnabled, onCaption, onFocal }: ImageDetailR
           onChange={(event) => onCaption(event.target.value)}
           placeholder="Add a caption"
           aria-label={`Caption for ${item.fileName}`}
-          className="text-xs"
+          className="text-caption"
         />
         {focalEnabled && (
-          <span className="text-muted-foreground text-2xs">
-            Click the thumbnail to set the focal point
-          </span>
+          <span className="text-ink-3 text-micro">Click the thumbnail to set the focal point</span>
         )}
       </div>
     </div>

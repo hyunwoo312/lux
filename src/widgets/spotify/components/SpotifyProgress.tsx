@@ -31,7 +31,7 @@ export function SpotifyProgress({
         onValueChange={(values) => onChange(values[0] ?? 0)}
         onValueCommit={onCommit}
       />
-      <div className="text-muted-foreground flex justify-between text-2xs tabular-nums">
+      <div className="text-ink-3 flex justify-between text-micro tabular-nums">
         <span>{leftLabel}</span>
         <span>{rightLabel}</span>
       </div>

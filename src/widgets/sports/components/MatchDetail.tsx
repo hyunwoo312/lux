@@ -19,7 +19,7 @@ function TeamStat({ value, side }: { value: string | undefined; side: "away" | "
       <span
         className={cn(
           COLUMN.name,
-          "text-muted-foreground text-2xs font-normal",
+          "text-ink-3 text-micro font-normal",
           home ? "text-left" : "text-right",
         )}
       >
@@ -51,12 +51,10 @@ function PersonRow({ logo, label, name, detail }: DetailPerson) {
   return (
     <div className="flex items-center gap-1.5">
       <TeamLogo src={logo} className="size-3" />
-      <span className="text-2xs text-foreground min-w-0 shrink truncate font-medium">{name}</span>
-      {label ? (
-        <span className="text-muted-foreground/60 text-2xs shrink-0 font-medium">{label}</span>
-      ) : null}
+      <span className="text-micro text-ink min-w-0 shrink truncate font-medium">{name}</span>
+      {label ? <span className="text-ink-4 text-micro shrink-0 font-medium">{label}</span> : null}
       {detail ? (
-        <span className="text-2xs text-muted-foreground ml-auto min-w-0 truncate tabular-nums">
+        <span className="text-micro text-ink-3 ml-auto min-w-0 truncate tabular-nums">
           {detail}
         </span>
       ) : null}
@@ -101,7 +99,7 @@ export function MatchDetail({ match }: { match: Match }) {
 
       {people.length > 0 ? (
         <Section>
-          <p className="text-muted-foreground/60 text-2xs mb-1.5 font-medium uppercase">
+          <p className="text-ink-4 text-micro mb-1.5 font-medium uppercase">
             {match.state === "pre" ? "Probable starters" : "Top performers"}
           </p>
           <div className="flex flex-col gap-1">
@@ -122,8 +120,8 @@ export function MatchDetail({ match }: { match: Match }) {
             <span
               aria-hidden
               className={cn(
-                "text-2xs rounded font-semibold tabular-nums transition-colors duration-300",
-                countChanged ? "bg-primary/15 text-primary" : "text-foreground",
+                "text-micro rounded font-semibold tabular-nums transition-colors duration-300",
+                countChanged ? "bg-primary/15 text-primary" : "text-ink",
               )}
             >
               {situation.balls}–{situation.strikes}
@@ -138,22 +136,20 @@ export function MatchDetail({ match }: { match: Match }) {
       ) : null}
 
       {situation?.lastPlay ? (
-        <p className="text-muted-foreground/80 text-2xs truncate text-center italic">
-          {situation.lastPlay}
-        </p>
+        <p className="text-ink-3 text-micro truncate text-center italic">{situation.lastPlay}</p>
       ) : null}
 
       {meta || match.link ? (
         <div className="border-border/50 flex items-center gap-2 border-t pt-2">
-          <span className="text-muted-foreground/70 text-2xs min-w-0 flex-1 truncate">{meta}</span>
+          <span className="text-ink-4 text-micro min-w-0 flex-1 truncate">{meta}</span>
           {match.link ? (
             <button
               type="button"
               onClick={() => openUrl(match.link ?? "", "newTab")}
               className="
-                text-muted-foreground
+                text-ink-3
                 hover:text-primary
-                text-2xs flex shrink-0 items-center gap-1 transition-colors
+                text-micro flex shrink-0 items-center gap-1 transition-colors
               "
             >
               ESPN

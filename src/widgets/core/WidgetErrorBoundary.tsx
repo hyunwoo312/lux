@@ -27,10 +27,8 @@ export class WidgetErrorBoundary extends Component<
 
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2.5 px-4 text-center">
-        <TriangleAlert className="text-muted-foreground/60 size-6" aria-hidden />
-        <p className="text-muted-foreground max-w-[34ch] text-sm text-balance">
-          This widget hit an error.
-        </p>
+        <TriangleAlert className="text-ink-4 size-6" aria-hidden />
+        <p className="text-ink-3 max-w-[34ch] text-body text-balance">This widget hit an error.</p>
         <Button size="sm" variant="ghost" onClick={this.reset}>
           Reload
         </Button>

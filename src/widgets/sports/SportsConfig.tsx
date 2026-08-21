@@ -76,11 +76,7 @@ export function SportsConfig() {
               href="https://www.espn.com/"
               target="_blank"
               rel="noreferrer"
-              className="
-                text-muted-foreground
-                hover:text-foreground
-                text-xs underline underline-offset-2
-              "
+              className="text-ink-3 hover:text-ink text-caption underline underline-offset-2"
             >
               ESPN
             </a>

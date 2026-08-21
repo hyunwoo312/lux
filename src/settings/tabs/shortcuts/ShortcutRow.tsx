@@ -13,7 +13,7 @@ import {
   type Shortcut,
 } from "@/lib/shortcuts";
 import { ClearButton } from "@/settings/tabs/shortcuts/shared";
-import { LAYOUT_TRANSITION, SLIDE_TRANSITION } from "@/settings/tabs/shortcuts/transitions";
+import { DURATION, EASE_OUT_STRONG, SPRING_CRISP } from "@/lib/motion";
 
 const NO_MODIFIERS: ModifierState = { mod: false, shift: false, alt: false };
 
@@ -71,12 +71,12 @@ function useShortcutRecorder(onCommit: (shortcut: Shortcut) => void) {
 }
 
 function KeyText({ children }: { children: ReactNode }) {
-  return <kbd className="text-foreground font-sans text-xs font-semibold">{children}</kbd>;
+  return <kbd className="text-ink font-sans text-caption font-semibold">{children}</kbd>;
 }
 
 function MiniPlus() {
   return (
-    <span aria-hidden className="text-muted-foreground text-sm px-0.5 font-semibold">
+    <span aria-hidden className="text-ink-3 text-body px-0.5 font-semibold">
       +
     </span>
   );
@@ -102,8 +102,8 @@ function RecorderBody({
       {heldParts.length === 0 ? (
         <span
           className={cn(
-            "text-2xs whitespace-nowrap",
-            invalid ? "text-destructive" : "text-muted-foreground",
+            "text-micro whitespace-nowrap",
+            invalid ? "text-destructive" : "text-ink-3",
           )}
         >
           press any keys
@@ -118,7 +118,7 @@ function RecorderBody({
               initial={reduced ? false : { opacity: 0, x: -6 }}
               animate={{ opacity: 1, x: 0 }}
               exit={reduced ? { opacity: 0 } : { opacity: 0, x: -6 }}
-              transition={SLIDE_TRANSITION}
+              transition={{ duration: DURATION.fast, ease: EASE_OUT_STRONG }}
             >
               <KeyText>{part}</KeyText>
               <MiniPlus />
@@ -147,7 +147,7 @@ export function ShortcutDisplay({
   return (
     <motion.span
       layout
-      transition={LAYOUT_TRANSITION}
+      transition={SPRING_CRISP}
       className={cn(
         "group inline-flex items-center rounded-sm transition-colors",
         !recording &&
@@ -176,7 +176,7 @@ export function ShortcutDisplay({
             className="flex items-center gap-1"
             initial={reduced ? false : { opacity: 0, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={LAYOUT_TRANSITION}
+            transition={SPRING_CRISP}
           >
             {shortcutKeyParts(value).map((part, index) => (
               <Fragment key={index}>
@@ -215,7 +215,7 @@ export function AddShortcutControl({
         type="button"
         onBlur={stop}
         layoutId={reduced ? undefined : layoutId}
-        transition={reduced ? { duration: 0 } : LAYOUT_TRANSITION}
+        transition={reduced ? { duration: 0 } : SPRING_CRISP}
         aria-label={`Recording new ${label} shortcut`}
         className="rounded-md outline-none"
       >
@@ -230,11 +230,11 @@ export function AddShortcutControl({
         type="button"
         onClick={start}
         layoutId={reduced ? undefined : layoutId}
-        transition={reduced ? { duration: 0 } : LAYOUT_TRANSITION}
+        transition={reduced ? { duration: 0 } : SPRING_CRISP}
         aria-label={`Add ${label} shortcut`}
         className="
-          text-muted-foreground
-          hover:bg-accent hover:text-foreground
+          text-ink-3
+          hover:bg-accent hover:text-ink
           focus-visible:ring-ring
           flex size-8 items-center justify-center rounded-md outline-none transition-colors
           focus-visible:ring-2

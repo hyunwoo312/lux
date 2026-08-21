@@ -1,3 +1,4 @@
+import { DURATION, EASE_OUT } from "@/lib/motion";
 import type { ChangeEvent, DragEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -121,8 +122,8 @@ export function ImageWidget({ editing }: WidgetContentProps) {
             onClick={openPicker}
             className={cn(
               `
-                text-muted-foreground/70
-                hover:text-foreground hover:border-foreground/40
+                text-ink-4
+                hover:text-ink hover:border-foreground/40
                 focus-visible:ring-ring
                 border-border/60 flex h-full w-full cursor-pointer flex-col items-center
                 justify-center gap-2 rounded-lg border border-dashed p-4 text-center
@@ -130,12 +131,12 @@ export function ImageWidget({ editing }: WidgetContentProps) {
                 focus-visible:ring-2
                 disabled:cursor-default disabled:opacity-60
               `,
-              dragging && "border-primary text-foreground",
+              dragging && "border-primary text-ink",
             )}
           >
             <ImageIcon className="size-7" aria-hidden />
-            <strong className="text-sm font-semibold">{addLabel}</strong>
-            <span className="text-muted-foreground text-xs">
+            <strong className="text-body font-semibold">{addLabel}</strong>
+            <span className="text-ink-3 text-caption">
               Upload PNG, JPG, WebP, or GIF up to 5 MB.
             </span>
           </button>
@@ -148,12 +149,12 @@ export function ImageWidget({ editing }: WidgetContentProps) {
             initial={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
+            transition={{ duration: DURATION.fast, ease: EASE_OUT }}
             role="status"
             className="
-              border-border bg-background/95 text-foreground pointer-events-none absolute bottom-3
-              left-1/2 z-10 max-w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-md border px-2.5
-              py-1.5 text-center text-xs shadow-md
+              border-border bg-background/95 text-ink pointer-events-none absolute bottom-3 left-1/2
+              z-10 max-w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-md border px-2.5 py-1.5
+              text-center text-caption shadow-md
             "
           >
             {error}

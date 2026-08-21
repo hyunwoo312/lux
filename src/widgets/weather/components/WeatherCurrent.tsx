@@ -1,4 +1,6 @@
 import { Droplets, Navigation, Sunrise, Sunset, Umbrella, Wind } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { TYPE } from "@/lib/type";
 import {
   findImminentPrecip,
   formatClock,
@@ -41,22 +43,22 @@ export function WeatherCurrent({ data, name }: WeatherCurrentProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-foreground truncate pr-8 text-sm font-medium">{name}</span>
+      <span className="text-ink truncate pr-8 text-body font-medium">{name}</span>
       <div className="flex items-center gap-3">
         <WeatherIcon
           code={current.weatherCode}
           isDay={current.isDay}
-          className="text-foreground size-12"
+          className="text-ink size-12"
         />
         <div className="flex min-w-0 flex-col">
-          <span className="text-foreground text-4xl leading-none font-semibold tabular-nums">
+          <span className={cn(TYPE.display, "text-ink")}>
             {formatTemperature(current.temperature)}
           </span>
-          <span className="text-muted-foreground truncate text-sm">{condition.label}</span>
+          <span className="text-ink-3 truncate text-body">{condition.label}</span>
         </div>
-        <div className="ml-auto flex flex-col items-end gap-0.5 text-sm tabular-nums">
-          <span className="text-foreground">H {formatTemperature(today.max)}</span>
-          <span className="text-muted-foreground">L {formatTemperature(today.min)}</span>
+        <div className="ml-auto flex flex-col items-end gap-0.5 text-body tabular-nums">
+          <span className="text-ink">H {formatTemperature(today.max)}</span>
+          <span className="text-ink-3">L {formatTemperature(today.min)}</span>
         </div>
       </div>
 
@@ -64,7 +66,7 @@ export function WeatherCurrent({ data, name }: WeatherCurrentProps) {
         <div
           className="
             bg-primary text-primary-foreground inline-flex w-fit items-center gap-1.5 rounded-full
-            px-2.5 py-1 text-xs font-medium
+            px-2.5 py-1 text-caption font-medium
           "
         >
           <Umbrella className="size-3.5 shrink-0" aria-hidden />
@@ -76,7 +78,7 @@ export function WeatherCurrent({ data, name }: WeatherCurrentProps) {
       )}
 
       {visible.length > 0 && (
-        <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+        <div className="text-ink-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-caption">
           {shows("feelsLike") && (
             <span>Feels like {formatTemperature(current.apparentTemperature)}</span>
           )}

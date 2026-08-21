@@ -124,12 +124,9 @@ export function PermissionsSection() {
   };
 
   return (
-    <SettingsSection
-      title="Permissions"
-      description="Optional permissions power extra features and can be turned off anytime. Required ones keep the dashboard working."
-    >
+    <SettingsSection title="Permissions">
       {!available && (
-        <p className="text-muted-foreground text-xs">
+        <p className="text-ink-3 text-caption">
           Permission controls are available once Lux is installed as an extension.
         </p>
       )}
@@ -169,7 +166,7 @@ function SubLabel({ children }: { children: ReactNode }) {
   return (
     <span
       className="
-        text-muted-foreground/70 text-2xs mt-2 px-0.5 font-semibold tracking-wider uppercase
+        text-ink-4 text-micro mt-2 px-0.5 font-semibold tracking-wider uppercase
         first:mt-0
       "
     >
@@ -204,25 +201,21 @@ function PermissionRow({
         highlighted && "bg-primary/10 ring-primary/40 ring-2",
       )}
     >
-      <Icon className="text-muted-foreground size-6 shrink-0" />
+      <Icon className="text-ink-3 size-6 shrink-0" />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex items-center gap-1.5">
-          <span className="text-sm font-medium">{permission.name}</span>
-          <span
-            className="
-              bg-muted/70 text-muted-foreground/80 rounded px-1 py-px text-[0.6rem] font-medium
-            "
-          >
+          <span className="text-body font-medium">{permission.name}</span>
+          <span className="bg-muted/70 text-ink-3 rounded px-1 py-px text-micro font-medium">
             {permission.usedBy}
           </span>
         </span>
-        <span className="text-muted-foreground text-xs">{permission.description}</span>
+        <span className="text-ink-3 text-caption">{permission.description}</span>
       </div>
       {required ? (
         <span
           className="
-            border-border/60 text-muted-foreground/80 text-2xs shrink-0 rounded-full border px-2
-            py-0.5 font-medium
+            border-border/60 text-ink-3 text-micro shrink-0 rounded-full border px-2 py-0.5
+            font-medium
           "
         >
           Required

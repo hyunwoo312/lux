@@ -1,3 +1,4 @@
+import { SPRING_POP } from "@/lib/motion";
 import { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { Trash2 } from "lucide-react";
@@ -30,9 +31,9 @@ export function ClearImagesButton({
           aria-label={label}
           whileHover={reduced ? undefined : { scale: 1.08 }}
           whileTap={reduced ? undefined : { scale: 0.9 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          transition={SPRING_POP}
           className="
-            text-muted-foreground border-border/60
+            text-ink-3 border-border/60
             hover:text-destructive hover:border-destructive/40 hover:bg-destructive/10
             focus-visible:ring-destructive/40
             flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md border

@@ -30,8 +30,8 @@ export function MediaCover({ src, title, color, className }: MediaCoverProps) {
       style={color ? { backgroundColor: `${color}33` } : undefined}
       className={cn(
         `
-          bg-foreground/10 text-foreground/70 flex shrink-0 items-center justify-center rounded
-          text-xs font-semibold
+          bg-foreground/10 text-ink-2 flex shrink-0 items-center justify-center rounded text-caption
+          font-semibold
         `,
         className,
       )}

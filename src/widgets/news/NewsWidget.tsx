@@ -151,7 +151,7 @@ function NewsContent({
   if (state.status === "error") {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 px-2 text-center">
-        <p className="text-muted-foreground text-sm">Couldn’t load the news.</p>
+        <p className="text-ink-3 text-body">Couldn’t load the news.</p>
         <Button size="sm" variant="outline" onClick={refresh} disabled={isRefreshing}>
           {isRefreshing ? (
             <>
@@ -193,11 +193,7 @@ function NewsContent({
 
   if (state.status === "empty") {
     return (
-      <div
-        className="
-          text-muted-foreground flex h-full items-center justify-center px-4 text-center text-sm
-        "
-      >
+      <div className="text-ink-3 flex h-full items-center justify-center px-4 text-center text-body">
         {searchQuery ? `No results for “${searchQuery}”` : "No headlines right now."}
       </div>
     );
@@ -213,11 +209,7 @@ function NewsContent({
 
   if (visible.length === 0) {
     return (
-      <div
-        className="
-          text-muted-foreground flex h-full items-center justify-center px-4 text-center text-sm
-        "
-      >
+      <div className="text-ink-3 flex h-full items-center justify-center px-4 text-center text-body">
         All current headlines match your muted keywords.
       </div>
     );
@@ -234,11 +226,7 @@ function NewsContent({
 
   if (matched.length === 0) {
     return (
-      <div
-        className="
-          text-muted-foreground flex h-full items-center justify-center px-4 text-center text-sm
-        "
-      >
+      <div className="text-ink-3 flex h-full items-center justify-center px-4 text-center text-body">
         {`No matches for “${filterQuery}”`}
       </div>
     );
@@ -292,13 +280,13 @@ function NewsContent({
   return (
     <div className="flex h-full flex-col">
       {isStale && (
-        <div className="text-muted-foreground flex items-center gap-1.5 px-2 pb-1.5 text-xs">
+        <div className="text-ink-3 flex items-center gap-1.5 px-2 pb-1.5 text-caption">
           <WifiOff className="size-3 shrink-0" aria-hidden />
           Offline · updated {formatRelativeTime(lastSyncedAt, now)}
         </div>
       )}
       {newCount > 0 && (
-        <div className="text-muted-foreground flex items-center gap-1.5 px-2 pb-1.5 text-xs">
+        <div className="text-ink-3 flex items-center gap-1.5 px-2 pb-1.5 text-caption">
           <span className="bg-primary size-1.5 rounded-full" aria-hidden />
           {newCount} new since your last visit
         </div>
@@ -312,10 +300,7 @@ function HeadlineFilter({ value, onChange }: { value: string; onChange: (value: 
   return (
     <div className="relative shrink-0">
       <Search
-        className="
-          text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4
-          -translate-y-1/2
-        "
+        className="text-ink-3 pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2"
         aria-hidden
       />
       <Input
@@ -332,8 +317,8 @@ function HeadlineFilter({ value, onChange }: { value: string; onChange: (value: 
           onClick={() => onChange("")}
           aria-label="Clear filter"
           className="
-            text-muted-foreground
-            hover:text-foreground
+            text-ink-3
+            hover:text-ink
             focus-visible:ring-ring/40
             absolute top-1/2 right-1.5 flex size-6 -translate-y-1/2 items-center justify-center
             rounded-md outline-none
@@ -365,10 +350,7 @@ function GoogleSearch({ query }: { query: string }) {
   return (
     <form onSubmit={submit} className="relative shrink-0">
       <Search
-        className="
-          text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4
-          -translate-y-1/2
-        "
+        className="text-ink-3 pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2"
         aria-hidden
       />
       <Input
@@ -385,8 +367,8 @@ function GoogleSearch({ query }: { query: string }) {
           onClick={clear}
           aria-label="Clear search"
           className="
-            text-muted-foreground
-            hover:text-foreground
+            text-ink-3
+            hover:text-ink
             focus-visible:ring-ring/40
             absolute top-1/2 right-1.5 flex size-6 -translate-y-1/2 items-center justify-center
             rounded-md outline-none

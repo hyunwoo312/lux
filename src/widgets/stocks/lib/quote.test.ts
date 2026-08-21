@@ -63,7 +63,7 @@ describe("changeTone", () => {
   it("maps direction to a token class", () => {
     expect(changeTone(1)).toBe("text-primary");
     expect(changeTone(-1)).toBe("text-destructive");
-    expect(changeTone(0)).toBe("text-muted-foreground");
+    expect(changeTone(0)).toBe("text-ink-3");
   });
 });
 

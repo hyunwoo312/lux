@@ -63,8 +63,8 @@ export function HeadlineRow({
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span
           className={cn(
-            "group-hover:text-primary line-clamp-2 text-sm leading-snug",
-            isRead ? "text-muted-foreground" : "text-foreground",
+            "group-hover:text-primary line-clamp-2 text-body leading-snug",
+            isRead ? "text-ink-3" : "text-ink",
           )}
         >
           {isNew && (
@@ -81,8 +81,8 @@ export function HeadlineRow({
         {item.dek && (
           <span
             className={cn(
-              "line-clamp-1 text-xs leading-snug",
-              isRead ? "text-muted-foreground/70" : "text-muted-foreground",
+              "line-clamp-1 text-caption leading-snug",
+              isRead ? "text-ink-4" : "text-ink-3",
             )}
           >
             {item.dek}

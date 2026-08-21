@@ -1,3 +1,4 @@
+import { SPRING_POP } from "@/lib/motion";
 import type { ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import type { LucideIcon } from "lucide-react";
@@ -33,10 +34,10 @@ export function IconActionButton({
         aria-label={label}
         whileHover={interactive ? { scale: 1.18 } : undefined}
         whileTap={interactive ? { scale: 0.82 } : undefined}
-        transition={{ type: "spring", stiffness: 420, damping: 16 }}
+        transition={SPRING_POP}
         className="
-          text-muted-foreground
-          hover:text-foreground
+          text-ink-3
+          hover:text-ink
           inline-flex size-8 items-center justify-center rounded-md outline-none transition-colors
           focus-visible:ring-ring focus-visible:ring-2
           disabled:pointer-events-none disabled:opacity-40

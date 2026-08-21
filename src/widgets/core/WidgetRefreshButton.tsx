@@ -1,10 +1,11 @@
+import { DURATION } from "@/lib/motion";
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { formatRelativeTime } from "@/lib/relative-time";
-import { WIDGET_HEADER_ACTION } from "@/widgets/core/BaseWidget";
+import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { syncCooldownMessage, syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
 
 type WidgetRefreshButtonProps = {
@@ -61,7 +62,9 @@ export function WidgetRefreshButton({
           className="inline-flex"
           animate={{ rotate: spinning ? 360 : 0 }}
           transition={
-            spinning ? { repeat: Infinity, ease: "linear", duration: 0.8 } : { duration: 0.2 }
+            spinning
+              ? { repeat: Infinity, ease: "linear", duration: 0.8 }
+              : { duration: DURATION.base }
           }
         >
           <RefreshCw />
