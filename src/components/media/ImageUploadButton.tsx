@@ -32,10 +32,10 @@ export function ImageUploadButton({
       disabled={disabled}
       onClick={() => inputRef.current?.click()}
       className="
-        border-border/60 bg-background/30
+        press-row transition-colors border-border/60 bg-background/30
         hover:border-foreground/40 hover:text-ink
-        text-ink-3 relative flex w-full items-center gap-3 rounded-lg border border-dashed px-3
-        py-2.5 text-left transition-colors outline-none
+        text-ink-3 focus-ring relative flex w-full cursor-pointer items-center gap-3 rounded-lg
+        border border-dashed px-3 py-2.5 text-left
         disabled:cursor-default disabled:opacity-60
       "
     >

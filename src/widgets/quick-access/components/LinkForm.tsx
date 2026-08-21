@@ -122,7 +122,7 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
           onCloseAutoFocus={(event) => event.preventDefault()}
           className={cn(
             accentClass(QUICK_ACCESS_ACCENT),
-            "max-h-60 w-[var(--radix-popover-trigger-width)] overflow-y-auto p-1",
+            "max-h-60 w-[var(--radix-popover-trigger-width)] overflow-y-auto",
           )}
         >
           <ul>
@@ -152,6 +152,7 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => choose(item)}
                       className={cn(
+                        "press cursor-pointer",
                         rowClass,
                         index === activeIndex ? "bg-accent" : "hover:bg-accent/60",
                       )}
@@ -187,12 +188,10 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
         </p>
       )}
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+        <Button type="button" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" size="sm">
-          Save
-        </Button>
+        <Button type="submit">Save</Button>
       </div>
     </form>
   );

@@ -36,13 +36,12 @@ export function ClearButton({ onClear, label }: { onClear: () => void; label: st
       onClick={onClear}
       aria-label={`Clear ${label}`}
       className="
-        text-ink-4
+        cursor-pointer focus-ring text-ink-4
         hover:text-destructive
-        focus-visible:ring-ring
-        ml-1 grid size-4 shrink-0 scale-90 place-items-center rounded opacity-0 outline-none
+        ml-1 grid size-4 shrink-0 scale-90 place-items-center rounded opacity-0
         transition-[opacity,transform]
         group-hover:scale-100 group-hover:opacity-100
-        focus-visible:scale-100 focus-visible:opacity-100 focus-visible:ring-2
+        focus-visible:scale-100 focus-visible:opacity-100
       "
     >
       <X className="size-3.5" aria-hidden />

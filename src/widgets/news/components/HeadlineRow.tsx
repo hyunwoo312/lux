@@ -40,7 +40,7 @@ export function HeadlineRow({
       onClick={onRead}
       onAuxClick={onRead}
       className="
-        group
+        focus-ring group
         hover:bg-foreground/5
         focus-visible:bg-foreground/5
         flex items-start gap-2.5 rounded-lg px-2 py-1.5 transition-colors

@@ -60,7 +60,7 @@ export function NoteHeaderActions() {
       <Tooltip content={copied ? "Copied" : "Copy note"} sticky>
         <Button
           variant="ghost"
-          size="icon"
+          size="icon-xs"
           className={WIDGET_HEADER_ACTION}
           aria-label="Copy note"
           onClick={() => void handleCopy()}
@@ -81,7 +81,7 @@ export function NoteHeaderActions() {
       <Tooltip content="Download as .txt" sticky>
         <Button
           variant="ghost"
-          size="icon"
+          size="icon-xs"
           className={WIDGET_HEADER_ACTION}
           aria-label="Download note as a text file"
           onClick={handleDownload}

@@ -120,10 +120,9 @@ export function TasksWidget() {
             placeholder="Add a task…"
             aria-label="Add a task"
             className="
-              border-border/70 bg-background/60
+              focus-ring border-border/70 bg-background/60
               placeholder:text-ink-4
-              focus-visible:border-ring
-              relative w-full rounded-lg border px-3 py-2 text-body outline-none
+              relative w-full rounded-lg border px-3 py-2 text-body
             "
           />
           {!reduced && <BorderTrail active={focused} />}
@@ -146,7 +145,9 @@ export function TasksWidget() {
           >
             <motion.ul
               animate={donePulse}
-              className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-x-hidden overflow-y-auto"
+              className="
+                flex min-h-0 flex-1 flex-col gap-0.5 overflow-x-hidden scroll-fade overflow-y-auto
+              "
             >
               <AnimatePresence initial={false} mode="popLayout">
                 {ordered.map((task) => (

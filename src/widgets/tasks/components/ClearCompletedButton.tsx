@@ -45,12 +45,8 @@ export function ClearCompletedButton() {
           >
             <Button
               variant="ghost"
-              size="sm"
-              className="
-                text-primary
-                hover:text-primary
-                h-7 rounded-sm px-2 text-caption font-semibold
-              "
+              size="xs"
+              className="text-primary hover:text-primary font-semibold"
               onClick={handleUndo}
             >
               Undo
@@ -62,7 +58,7 @@ export function ClearCompletedButton() {
           <Tooltip content="Clear completed" sticky>
             <Button
               variant="ghost"
-              size="icon"
+              size="icon-xs"
               className={WIDGET_HEADER_ACTION}
               aria-label="Clear completed tasks"
               onClick={handleClear}

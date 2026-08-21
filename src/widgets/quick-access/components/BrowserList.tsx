@@ -79,7 +79,11 @@ export function BrowserList({
         const pinned = pinnedUrls.has(keyOf(item.url));
         return (
           <motion.li key={item.id} layout={animateLayout} className="group relative">
-            <button type="button" onClick={() => onOpen(item)} className={qaTileClass(view)}>
+            <button
+              type="button"
+              onClick={() => onOpen(item)}
+              className={cn("press cursor-pointer", qaTileClass(view))}
+            >
               <QuickItem
                 url={item.url}
                 title={item.title}

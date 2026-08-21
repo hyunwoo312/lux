@@ -8,12 +8,10 @@ import type {
   SpotifyPlaybackState,
 } from "@/widgets/spotify/types";
 
-const CONTROL_BUTTON = `
-  text-ink-3 inline-flex size-8 items-center justify-center rounded-full
-  transition-colors
-  hover:text-ink
-  focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none
-  disabled:pointer-events-none disabled:opacity-40
+const CONTROL_BUTTON = `focus-ring text-ink-3 inline-flex size-8 items-center justify-center rounded-full
+ transition-colors
+ hover:text-ink
+ disabled:pointer-events-none disabled:opacity-40
 `;
 
 type SpotifyControlsProps = {
@@ -72,7 +70,11 @@ export function SpotifyControls({
           aria-pressed={playback.shuffle}
           disabled={pendingActions.has("shuffle")}
           onClick={onToggleShuffle}
-          className={cn(CONTROL_BUTTON, playback.shuffle && "text-primary hover:text-primary")}
+          className={cn(
+            "press cursor-pointer",
+            CONTROL_BUTTON,
+            playback.shuffle && "text-primary hover:text-primary",
+          )}
         >
           <Shuffle className="size-4" aria-hidden />
         </button>
@@ -81,7 +83,7 @@ export function SpotifyControls({
           aria-label={canRestart ? "Restart track" : "Previous track"}
           disabled={pendingActions.has("previous")}
           onClick={onPrevious}
-          className={CONTROL_BUTTON}
+          className={cn("press cursor-pointer", CONTROL_BUTTON)}
         >
           <SkipBack className="size-4" aria-hidden />
         </button>
@@ -91,10 +93,9 @@ export function SpotifyControls({
           disabled={pendingActions.has("playback")}
           onClick={onTogglePlayback}
           className="
-            bg-primary text-primary-foreground inline-flex size-10 items-center justify-center
-            rounded-full transition-transform
+            press cursor-pointer focus-ring bg-primary text-primary-foreground inline-flex size-10
+            items-center justify-center rounded-full
             hover:scale-105
-            focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none
             disabled:pointer-events-none disabled:opacity-50
           "
         >
@@ -109,7 +110,7 @@ export function SpotifyControls({
           aria-label="Next track"
           disabled={pendingActions.has("next")}
           onClick={onNext}
-          className={CONTROL_BUTTON}
+          className={cn("press cursor-pointer", CONTROL_BUTTON)}
         >
           <SkipForward className="size-4" aria-hidden />
         </button>
@@ -120,6 +121,7 @@ export function SpotifyControls({
           disabled={pendingActions.has("repeat")}
           onClick={onCycleRepeat}
           className={cn(
+            "press cursor-pointer",
             CONTROL_BUTTON,
             playback.repeatMode !== "off" && "text-primary hover:text-primary",
           )}

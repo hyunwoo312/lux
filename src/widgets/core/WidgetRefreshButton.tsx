@@ -52,7 +52,7 @@ export function WidgetRefreshButton({
     >
       <Button
         variant="ghost"
-        size="icon"
+        size="icon-xs"
         className={WIDGET_HEADER_ACTION}
         aria-label="Refresh"
         disabled={disabled}

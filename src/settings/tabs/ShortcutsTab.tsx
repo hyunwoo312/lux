@@ -59,7 +59,8 @@ export function ShortcutsTab() {
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search shortcuts"
           spellCheck={false}
-          className="h-9 rounded-lg pl-9"
+          size="lg"
+          className="rounded-lg pl-9"
         />
       </div>
 
@@ -73,8 +74,8 @@ export function ShortcutsTab() {
             ) ? (
               <Button
                 variant="ghost"
-                size="sm"
-                className="text-ink-3 hover:text-ink h-7 gap-1.5 text-caption"
+                size="xs"
+                className="text-ink-3 hover:text-ink gap-1.5"
                 onClick={resetAll}
               >
                 <RotateCcw className="size-3.5" />
@@ -114,7 +115,6 @@ export function ShortcutsTab() {
                             <Button
                               size="icon"
                               variant="ghost"
-                              className="size-8"
                               aria-label={`Reset ${action.label} shortcut`}
                               onClick={() => resetShortcut(action.id)}
                             >

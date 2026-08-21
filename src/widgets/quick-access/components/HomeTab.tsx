@@ -101,7 +101,10 @@ export function HomeTab({ editing }: { editing: boolean }) {
         ref={scrollRef}
         animate={{ x: form ? "-12%" : 0, opacity: form ? 0 : 1 }}
         transition={{ duration: DURATION.base, ease: EASE_OUT }}
-        className={cn("h-full overflow-x-hidden overflow-y-auto", form && "pointer-events-none")}
+        className={cn(
+          "h-full overflow-x-hidden scroll-fade overflow-y-auto",
+          form && "pointer-events-none",
+        )}
       >
         <DndContext
           sensors={sensors}
@@ -137,6 +140,7 @@ export function HomeTab({ editing }: { editing: boolean }) {
                       onClick={() => setForm({ mode: "add" })}
                       aria-label="Add link"
                       className={cn(
+                        "press-row transition-colors",
                         `
                           text-ink-4
                           hover:text-ink hover:border-foreground/40

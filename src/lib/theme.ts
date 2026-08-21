@@ -48,7 +48,23 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export type WipeOrigin = { x: number; y: number };
+type WipeOrigin = { x: number; y: number };
+
+const WIPE_BASE_MS = 800;
+const WIPE_MIN_MS = 680;
+const WIPE_MAX_MS = 1000;
+
+function triggerOrigin(): WipeOrigin {
+  const rect = document.activeElement?.getBoundingClientRect();
+  if (rect && rect.width > 0 && rect.height > 0) {
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  }
+  return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+}
+
+function swallowStrayPointer(event: Event): void {
+  if (event.target === document.documentElement) event.stopPropagation();
+}
 
 function setWipeOrigin(origin: WipeOrigin): void {
   const { innerWidth: width, innerHeight: height } = window;
@@ -56,28 +72,36 @@ function setWipeOrigin(origin: WipeOrigin): void {
     Math.max(origin.x, width - origin.x),
     Math.max(origin.y, height - origin.y),
   );
+  const centreRadius = Math.hypot(width, height) / 2;
+  const duration = Math.min(
+    WIPE_MAX_MS,
+    Math.max(WIPE_MIN_MS, WIPE_BASE_MS * Math.sqrt(radius / centreRadius)),
+  );
   const root = document.documentElement;
   root.style.setProperty("--wipe-x", `${origin.x}px`);
   root.style.setProperty("--wipe-y", `${origin.y}px`);
   root.style.setProperty("--wipe-radius", `${Math.ceil(radius)}px`);
+  root.style.setProperty("--wipe-duration", `${Math.round(duration)}ms`);
 }
 
-export function transitionThemeClass(theme: ResolvedTheme, origin?: WipeOrigin): void {
+export function transitionThemeClass(theme: ResolvedTheme): void {
   const doc = document as DocumentWithViewTransition;
   if (!doc.startViewTransition || prefersReducedMotion()) {
     applyThemeClass(theme);
     return;
   }
-  setWipeOrigin(origin ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 });
+  setWipeOrigin(triggerOrigin());
   activeTransition?.skipTransition?.();
   const root = document.documentElement;
   const generation = ++transitionGeneration;
   root.classList.add(WIPE_MARKER);
   const transition = doc.startViewTransition(() => applyThemeClass(theme));
   activeTransition = transition;
+  document.addEventListener("pointerdown", swallowStrayPointer, true);
   const done = () => {
     if (generation !== transitionGeneration) return;
     activeTransition = null;
+    document.removeEventListener("pointerdown", swallowStrayPointer, true);
     root.classList.remove(WIPE_MARKER);
   };
   if (transition.finished) {
@@ -87,11 +111,11 @@ export function transitionThemeClass(theme: ResolvedTheme, origin?: WipeOrigin):
   }
 }
 
-export function applyTheme(mode: ThemeMode, animate: boolean, origin?: WipeOrigin): boolean {
+export function applyTheme(mode: ThemeMode, animate: boolean): boolean {
   const isPersisted = setLocal(THEME_STORAGE_KEY, mode);
   const theme = resolveTheme(mode);
   if (animate) {
-    transitionThemeClass(theme, origin);
+    transitionThemeClass(theme);
   } else {
     applyThemeClass(theme);
   }

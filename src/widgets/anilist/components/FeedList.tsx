@@ -27,7 +27,10 @@ export function FeedList<T>({
   return (
     <div className="flex h-full flex-col gap-2 p-1">
       {header}
-      <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+      <div
+        ref={scrollRef}
+        className="flex min-h-0 flex-1 flex-col gap-1 scroll-fade overflow-y-auto"
+      >
         {items.map((item, index) => (
           <Fragment key={getKey(item)}>{renderItem(item, index)}</Fragment>
         ))}

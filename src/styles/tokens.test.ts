@@ -6,6 +6,8 @@ import { join } from "node:path";
 const css = readFileSync(fileURLToPath(new URL("./globals.css", import.meta.url)), "utf8");
 import { contrastRatio, isInSrgbGamut, parseOklch, type Oklch } from "@/lib/contrast";
 import { ACCENT_PRESETS } from "@/widgets/core/accent";
+import { cn } from "@/lib/utils";
+import { TYPE_SCALE } from "@/lib/type";
 
 const AA_TEXT = 4.5;
 const AA_UI = 3;
@@ -84,6 +86,19 @@ describe("colour tokens", () => {
     }
   });
 
+  it.each(THEMES)("$name accent reads as an icon on the active-nav tint", ({ name, prefix }) => {
+    const surface = token(name === "light" ? ":root" : ".dark", "surface-overlay");
+    for (const accent of ACCENT_PRESETS) {
+      const primary = token(`${prefix}.accent-${accent}`, "primary");
+      const tint = {
+        l: primary.l * 0.12 + surface.l * 0.88,
+        c: primary.c * 0.12 + surface.c * 0.88,
+        h: primary.h,
+      };
+      expect(contrastRatio(primary, tint)).toBeGreaterThanOrEqual(AA_UI);
+    }
+  });
+
   it("every accent preset has a matching block in both themes", () => {
     for (const accent of ACCENT_PRESETS) {
       expect(() => block(`.accent-${accent}`)).not.toThrow();
@@ -92,7 +107,8 @@ describe("colour tokens", () => {
   });
 
   it("no hex colour survives in the token layer", () => {
-    const hexes = css.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [];
+    const withoutMasks = css.replace(/mask-image:[^;]+;/g, "");
+    const hexes = withoutMasks.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [];
     expect(hexes).toEqual([]);
   });
 
@@ -165,5 +181,47 @@ describe("colour tokens", () => {
     walk(srcRoot);
     const missing = [...used].filter((name) => !css.includes(`--z-index-${name}:`));
     expect(missing).toEqual([]);
+  });
+
+  it("focus is expressed only through the shared utility", () => {
+    const srcRoot = fileURLToPath(new URL("..", import.meta.url));
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir)) {
+        const full = join(dir, entry);
+        if (statSync(full).isDirectory()) walk(full);
+        else if (/\.tsx?$/.test(entry) && !entry.includes(".test.")) {
+          const body = readFileSync(full, "utf8");
+          for (const m of body.matchAll(/\bfocus-visible:(?:ring|outline|border)-[^\s"'`,)]*/g)) {
+            offenders.push(`${full.slice(srcRoot.length)}: ${m[0]}`);
+          }
+        }
+      }
+    };
+    walk(srcRoot);
+    expect(offenders).toEqual([]);
+  });
+
+  it("tailwind-merge knows every font-size in the type scale", () => {
+    const declared = new Set<string>();
+    for (const m of css.matchAll(/--text-([a-z-]+):/g)) {
+      const name = m[1];
+      if (name && !name.endsWith("--line-height")) declared.add(name);
+    }
+    expect([...declared].sort()).toEqual([...TYPE_SCALE].sort());
+  });
+
+  it("a type recipe keeps both its size and its ink", () => {
+    expect(cn("text-caption", "text-ink-3")).toBe("text-caption text-ink-3");
+    expect(cn("text-body text-ink-2")).toBe("text-body text-ink-2");
+    expect(cn("text-body", "text-caption")).toBe("text-caption");
+    expect(cn("text-ink-3", "text-ink")).toBe("text-ink");
+  });
+
+  it("the focus utility resolves a gap colour in both themes", () => {
+    expect(css).toContain("@utility focus-ring");
+    for (const { root } of THEMES) {
+      expect(rawToken(root, "focus-gap")).toMatch(/^oklch\(/);
+    }
   });
 });

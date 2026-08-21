@@ -33,12 +33,10 @@ export function ClearImagesButton({
           whileTap={reduced ? undefined : { scale: 0.9 }}
           transition={SPRING_POP}
           className="
-            text-ink-3 border-border/60
+            focus-ring text-ink-3 border-border/60
             hover:text-destructive hover:border-destructive/40 hover:bg-destructive/10
-            focus-visible:ring-destructive/40
             flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md border
-            transition-colors outline-none
-            focus-visible:ring-2
+            transition-colors
             disabled:pointer-events-none disabled:opacity-50
             [&_svg]:size-4
           "

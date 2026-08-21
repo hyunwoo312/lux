@@ -145,6 +145,7 @@ export function ExpandingSearch({
               tabIndex={open ? -1 : 0}
               onClick={() => onOpenChange(true)}
               className={cn(
+                "press cursor-pointer",
                 `
                   relative grid size-7 shrink-0 place-items-center rounded-sm transition-colors
                   duration-300
@@ -188,6 +189,7 @@ export function ExpandingSearch({
               animate={{ opacity: open ? 1 : 0, scale: open ? 1 : 0.6 }}
               transition={contentIn(0.16)}
               className={cn(
+                "press cursor-pointer",
                 `
                   text-ink-4
                   hover:text-ink hover:bg-foreground/5
@@ -207,7 +209,8 @@ export function ExpandingSearch({
         sideOffset={4}
         onOpenAutoFocus={(event) => event.preventDefault()}
         onCloseAutoFocus={(event) => event.preventDefault()}
-        className="w-[var(--radix-popover-trigger-width)] border-0 bg-transparent p-0 shadow-none"
+        padding="none"
+        className="w-[var(--radix-popover-trigger-width)] border-0 bg-transparent shadow-none"
       >
         {children}
       </PopoverContent>

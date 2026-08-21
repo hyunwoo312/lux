@@ -254,12 +254,7 @@ function TermsEditor({
                 type="button"
                 onClick={() => onRemove(term)}
                 aria-label={removeLabel(term)}
-                className="
-                  hover:text-ink
-                  focus-visible:ring-ring/40
-                  rounded-full outline-none
-                  focus-visible:ring-2
-                "
+                className="press cursor-pointer focus-ring hover:text-ink rounded-full"
               >
                 <X className="size-3" aria-hidden />
               </button>

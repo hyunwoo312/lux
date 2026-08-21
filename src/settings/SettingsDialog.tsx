@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AnimatePresence,
   motion,
@@ -8,11 +8,16 @@ import {
   type Variants,
 } from "motion/react";
 import { ChevronLeft, Settings } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogCloseButton,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { TYPE } from "@/lib/type";
 import { EASE_OUT_STRONG, SPRING_CRISP } from "@/lib/motion";
 import { AboutTab } from "@/settings/tabs/AboutTab";
 import { AccountsTab } from "@/settings/tabs/AccountsTab";
@@ -30,8 +35,6 @@ const TAB_COMPONENTS: Record<SettingsTab, ComponentType> = {
   about: AboutTab,
 };
 
-const FADE = "2.75rem";
-
 export function SettingsDialog() {
   const open = useSettingsStore((s) => s.open);
   const tab = useSettingsStore((s) => s.tab);
@@ -42,9 +45,6 @@ export function SettingsDialog() {
   const reduced = useReducedMotion();
 
   const [isNarrow, setIsNarrow] = useState(false);
-  const [mask, setMask] = useState<string | undefined>(undefined);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const query = window.matchMedia("(max-width: 640px)");
     const update = () => setIsNarrow(query.matches);
@@ -52,27 +52,6 @@ export function SettingsDialog() {
     query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);
   }, []);
-
-  const updateMask = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const up = el.scrollTop > 2;
-    const down = el.scrollTop + el.clientHeight < el.scrollHeight - 2;
-    if (!up && !down) {
-      setMask(undefined);
-      return;
-    }
-    const top = up ? `transparent 0, black ${FADE}` : "black 0";
-    const bottom = down ? `black calc(100% - ${FADE}), transparent 100%` : "black 100%";
-    setMask(`linear-gradient(to bottom, ${top}, ${bottom})`);
-  }, []);
-
-  useEffect(() => {
-    updateMask();
-    const onResize = () => updateMask();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [updateMask, tab, open]);
 
   const tabIndex = SETTINGS_TABS.indexOf(tab);
   const prevIndexRef = useRef(tabIndex);
@@ -100,8 +79,8 @@ export function SettingsDialog() {
 
   const effectiveCollapsed = isNarrow || collapsed;
   const active = SETTINGS_TAB_META[tab];
-  const ActiveTab = TAB_COMPONENTS[tab];
   const ActiveIcon = active.icon;
+  const ActiveTab = TAB_COMPONENTS[tab];
 
   return (
     <Dialog
@@ -111,11 +90,10 @@ export function SettingsDialog() {
       }}
     >
       <DialogContent
+        showClose={false}
         onOpenAutoFocus={(event) => event.preventDefault()}
-        className="
-          glass-panel flex h-[80dvh] w-[min(52rem,calc(100vw-2rem))] gap-0 overflow-hidden
-          bg-transparent p-0
-        "
+        layout="flush"
+        className="h-[80dvh] w-[min(52rem,calc(100vw-2rem))] flex-row bg-transparent"
       >
         <aside
           className={cn(
@@ -158,6 +136,7 @@ export function SettingsDialog() {
                   type="button"
                   onClick={() => setTab(id)}
                   className={cn(
+                    "press-row transition-colors cursor-pointer",
                     `
                       relative flex w-full items-center rounded-lg px-2 py-2 text-body
                       whitespace-nowrap
@@ -168,12 +147,12 @@ export function SettingsDialog() {
                   {isActive && (
                     <motion.span
                       layoutId="settings-active-tab"
-                      className="bg-accent absolute inset-0 rounded-lg"
+                      className="bg-primary/12 ring-primary/25 absolute inset-0 rounded-lg ring-1"
                       transition={reduced ? { duration: 0 } : SPRING_CRISP}
                     />
                   )}
                   <span className="relative z-10 flex items-center gap-4">
-                    <Icon className="size-5 shrink-0" />
+                    <Icon className={cn("size-5 shrink-0", isActive && "text-primary")} />
                     <span className={cn(isActive && "font-medium")}>{label}</span>
                   </span>
                 </button>
@@ -213,9 +192,9 @@ export function SettingsDialog() {
                   onClick={toggleSidebar}
                   aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
                   className="
-                    text-ink-3
+                    press cursor-pointer text-ink-3
                     hover:bg-accent hover:text-ink
-                    grid size-8 place-items-center rounded-lg transition-colors
+                    grid size-8 place-items-center rounded-lg
                   "
                 >
                   <ChevronLeft
@@ -231,37 +210,29 @@ export function SettingsDialog() {
         </aside>
 
         <div className="bg-popover/90 flex min-w-0 flex-1 flex-col">
-          <header
-            className="
-              border-border/60 relative flex h-[4.25rem] shrink-0 items-center overflow-hidden
-              border-b px-6
-            "
-          >
-            <AnimatePresence mode="popLayout" custom={direction} initial={false}>
-              <motion.div
-                key={tab}
-                custom={direction}
-                variants={carouselVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={transition}
-                className="flex items-center gap-3"
-              >
-                <ActiveIcon className="text-primary size-5 shrink-0" />
-                <div className="flex flex-col gap-0.5">
-                  <h2 className={TYPE.heading}>{active.label}</h2>
-                  <p className="text-ink-3 text-body">{active.description}</p>
-                </div>
-              </motion.div>
-            </AnimatePresence>
+          <header className="border-border/60 flex h-12 shrink-0 items-center gap-3 border-b pr-4 pl-6">
+            <div className="relative min-w-0 flex-1 overflow-hidden">
+              <AnimatePresence mode="popLayout" custom={direction} initial={false}>
+                <motion.div
+                  key={tab}
+                  custom={direction}
+                  variants={carouselVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={transition}
+                  className="flex min-w-0 items-center gap-2.5"
+                >
+                  <ActiveIcon className="text-ink-3 size-4 shrink-0" aria-hidden />
+                  <h2 className="text-body font-semibold whitespace-nowrap">{active.label}</h2>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+            <DialogCloseButton />
           </header>
           <div
-            ref={scrollRef}
-            onScroll={updateMask}
-            style={mask ? { maskImage: mask, WebkitMaskImage: mask } : undefined}
             className="
-              relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-6 py-5
+              relative min-h-0 flex-1 overflow-x-hidden scroll-fade overflow-y-auto px-6 py-5
               [&_section:first-child>:first-child]:hidden
             "
           >
@@ -272,7 +243,6 @@ export function SettingsDialog() {
                 variants={carouselVariants}
                 transition={transition}
                 defer={!reduced && direction !== 0}
-                onSettled={updateMask}
               >
                 <ActiveTab />
               </SlidingPane>
@@ -289,23 +259,11 @@ type SlidingPaneProps = {
   variants: Variants;
   transition: Transition;
   defer: boolean;
-  onSettled: () => void;
   children: ReactNode;
 };
 
-function SlidingPane({
-  direction,
-  variants,
-  transition,
-  defer,
-  onSettled,
-  children,
-}: SlidingPaneProps) {
+function SlidingPane({ direction, variants, transition, defer, children }: SlidingPaneProps) {
   const [settled, setSettled] = useState(!defer);
-
-  useEffect(() => {
-    if (settled) onSettled();
-  }, [settled, onSettled]);
 
   return (
     <motion.div

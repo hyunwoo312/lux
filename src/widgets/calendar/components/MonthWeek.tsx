@@ -50,6 +50,7 @@ function EventBar({
         aria-label={getEventTitle(segment.event)}
         onClick={handleClick}
         className={cn(
+          "press cursor-pointer",
           `
             pointer-events-auto absolute flex items-center overflow-hidden px-1 text-micro
             font-medium

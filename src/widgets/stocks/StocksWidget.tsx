@@ -91,7 +91,7 @@ export function StocksWidget() {
             ) : (
               <motion.div
                 key="list"
-                className="absolute inset-0 overflow-x-hidden overflow-y-auto"
+                className="absolute inset-0 overflow-x-hidden scroll-fade overflow-y-auto"
                 initial={{ opacity: 0, y: offset }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: offset }}

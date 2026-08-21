@@ -1,6 +1,7 @@
 import { useCallback } from "react";
-import { Cloud, Loader2, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { RetryButton, StateMessage } from "@/components/StateMessage";
+import { Cloud, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useElementSize } from "@/hooks/useElementSize";
@@ -52,6 +53,7 @@ function RemoveButton({
         onRemove();
       }}
       className={cn(
+        "press cursor-pointer",
         `
           text-ink-4
           hover:text-destructive
@@ -109,19 +111,10 @@ function DetailedWeather({
       <RemoveButton name={name} onRemove={onRemove} className="absolute top-0 right-0 z-10" />
       {!data ? (
         state.status === "error" ? (
-          <div className="flex h-full flex-col items-center justify-center gap-3 px-2 text-center">
-            <p className="text-ink-3 text-body">Couldn’t load the weather.</p>
-            <Button size="sm" variant="outline" onClick={onRetry} disabled={refreshing}>
-              {refreshing ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" aria-hidden />
-                  Retrying…
-                </>
-              ) : (
-                "Retry"
-              )}
-            </Button>
-          </div>
+          <StateMessage
+            message="Couldn’t load the weather."
+            action={<RetryButton onRetry={onRetry} retrying={refreshing} />}
+          />
         ) : (
           <DetailSkeleton />
         )
@@ -131,7 +124,7 @@ function DetailedWeather({
             <WeatherCurrent data={data} name={name} />
           </div>
           {(showHourly || showDaily) && (
-            <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="min-h-0 flex-1 scroll-fade overflow-y-auto">
               <WeatherForecast data={data} showHourly={showHourly} showDaily={showDaily} />
             </div>
           )}
@@ -187,11 +180,10 @@ export function WeatherCard({
         type="button"
         onClick={onSelect}
         className="
-          flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left outline-none
-          transition-[padding] duration-200
+          press-row cursor-pointer focus-ring flex min-w-0 flex-1 items-center gap-3 rounded-lg
+          text-left transition-[padding,background-color] duration-200
           group-hover:pr-9
           group-focus-within:pr-9
-          focus-visible:ring-foreground/30 focus-visible:ring-2 focus-visible:ring-inset
         "
         aria-label={`Show ${location.name} forecast`}
       >
@@ -205,7 +197,7 @@ export function WeatherCard({
           ) : state.status === "error" ? (
             <Cloud className="text-ink-4 size-5" aria-hidden />
           ) : (
-            <Loader2 className="text-ink-4 size-4 animate-spin" aria-hidden />
+            <Spinner className="text-ink-4" />
           )}
         </span>
         <span className="text-ink w-10 shrink-0 text-lg font-semibold tabular-nums">

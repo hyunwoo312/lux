@@ -1,7 +1,7 @@
 import type { FormEvent } from "react";
+import { RetryButton, StateMessage } from "@/components/StateMessage";
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Search, WifiOff, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search, WifiOff, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatRelativeTime } from "@/lib/relative-time";
@@ -150,19 +150,10 @@ function NewsContent({
 }: NewsContentProps) {
   if (state.status === "error") {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 px-2 text-center">
-        <p className="text-ink-3 text-body">Couldn’t load the news.</p>
-        <Button size="sm" variant="outline" onClick={refresh} disabled={isRefreshing}>
-          {isRefreshing ? (
-            <>
-              <Loader2 className="size-4 animate-spin" aria-hidden />
-              Retrying…
-            </>
-          ) : (
-            "Retry"
-          )}
-        </Button>
-      </div>
+      <StateMessage
+        message="Couldn’t load the news."
+        action={<RetryButton onRetry={refresh} retrying={isRefreshing} />}
+      />
     );
   }
 
@@ -241,7 +232,9 @@ function NewsContent({
 
   const list =
     layout === "tiles" ? (
-      <ul className={`${TILE_GRID_CLASS} min-h-0 flex-1 content-start overflow-y-auto p-0.5`}>
+      <ul
+        className={`${TILE_GRID_CLASS} min-h-0 flex-1 content-start scroll-fade overflow-y-auto p-0.5`}
+      >
         {items.map(({ item, titleKey }) => (
           <li key={item.id} className="min-w-0">
             <HeadlineTile
@@ -258,7 +251,7 @@ function NewsContent({
         ))}
       </ul>
     ) : (
-      <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
+      <ul className="flex min-h-0 flex-1 flex-col gap-0.5 scroll-fade overflow-y-auto">
         {items.map(({ item, titleKey }) => (
           <li key={item.id}>
             <HeadlineRow
@@ -317,12 +310,10 @@ function HeadlineFilter({ value, onChange }: { value: string; onChange: (value: 
           onClick={() => onChange("")}
           aria-label="Clear filter"
           className="
-            text-ink-3
+            press cursor-pointer focus-ring text-ink-3
             hover:text-ink
-            focus-visible:ring-ring/40
             absolute top-1/2 right-1.5 flex size-6 -translate-y-1/2 items-center justify-center
-            rounded-md outline-none
-            focus-visible:ring-2
+            rounded-md
           "
         >
           <X className="size-4" aria-hidden />
@@ -367,12 +358,10 @@ function GoogleSearch({ query }: { query: string }) {
           onClick={clear}
           aria-label="Clear search"
           className="
-            text-ink-3
+            press cursor-pointer focus-ring text-ink-3
             hover:text-ink
-            focus-visible:ring-ring/40
             absolute top-1/2 right-1.5 flex size-6 -translate-y-1/2 items-center justify-center
-            rounded-md outline-none
-            focus-visible:ring-2
+            rounded-md
           "
         >
           <X className="size-4" aria-hidden />

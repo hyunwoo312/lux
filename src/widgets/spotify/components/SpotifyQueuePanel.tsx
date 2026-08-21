@@ -140,9 +140,8 @@ export function SpotifyQueuePanel() {
               type="button"
               onClick={() => void loadSpotifyQueue()}
               className="
-                text-primary rounded-sm text-caption font-medium
+                press cursor-pointer focus-ring text-primary rounded-sm text-caption font-medium
                 hover:underline
-                focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none
               "
             >
               Retry
@@ -157,7 +156,7 @@ export function SpotifyQueuePanel() {
             Nothing queued.
           </p>
         ) : (
-          <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
+          <ul className="flex min-h-0 flex-1 flex-col gap-0.5 scroll-fade overflow-y-auto">
             <AnimatePresence initial={false}>
               {upNext.map((item) => (
                 <motion.li
@@ -174,11 +173,11 @@ export function SpotifyQueuePanel() {
                     disabled={skippingUri !== null}
                     aria-label={`Play ${item.title}`}
                     className={cn(
+                      "press-row transition-colors cursor-pointer",
                       `
-                        group flex w-full items-center gap-2.5 rounded-sm px-1 py-1 text-left
-                        transition-colors
+                        focus-ring group flex w-full items-center gap-2.5 rounded-sm px-1 py-1
+                        text-left transition-colors
                         hover:bg-accent/60
-                        focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none
                         disabled:pointer-events-none
                       `,
                       skippingUri === item.uri && "opacity-60",

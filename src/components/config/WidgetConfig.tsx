@@ -1,6 +1,6 @@
 import { SPRING_CRISP } from "@/lib/motion";
 import type { ComponentType, ReactNode } from "react";
-import { useId } from "react";
+import { useId, useRef } from "react";
 import { motion } from "motion/react";
 import {
   Select,
@@ -135,7 +135,7 @@ export function ConfigSelect<T extends string>({
 type SegmentedProps<T extends string> = {
   value: T;
   options: ConfigOption<T>[];
-  onChange: (value: T) => void;
+  onChange: (value: T, origin?: { x: number; y: number }) => void;
   disabled?: boolean;
   label: string;
 };
@@ -148,9 +148,10 @@ export function ConfigSegmented<T extends string>({
   label,
 }: SegmentedProps<T>) {
   const layoutId = useId();
+  const origin = useRef<{ x: number; y: number } | undefined>(undefined);
   const handleChange = (next: string) => {
     const match = options.find((option) => option.value === next);
-    if (match) onChange(match.value);
+    if (match) onChange(match.value, origin.current);
   };
   return (
     <ToggleGroup
@@ -167,10 +168,11 @@ export function ConfigSegmented<T extends string>({
           <ToggleGroupItem
             key={option.value}
             value={option.value}
-            className={cn(
-              "relative rounded-md px-2.5 py-1 text-caption font-medium transition-colors",
-              active ? "text-primary-foreground" : "text-ink-3 hover:text-ink",
-            )}
+            variant="segmented"
+            onClick={(event) => {
+              const rect = event.currentTarget.getBoundingClientRect();
+              origin.current = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+            }}
           >
             {active && (
               <motion.span
@@ -222,14 +224,8 @@ export function ConfigMultiToggle<T extends string>({
             key={option.value}
             value={option.value}
             disabled={atCap && !active}
+            variant="chip"
             className={cn(
-              `
-                inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-caption
-                font-medium transition-colors
-                disabled:opacity-40
-                [&_img]:size-4
-                [&_svg]:size-4
-              `,
               active
                 ? "border-primary/40 bg-primary/10 text-ink"
                 : "border-border text-ink-3 hover:bg-accent/60",

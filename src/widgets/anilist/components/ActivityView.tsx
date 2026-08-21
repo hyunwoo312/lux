@@ -204,7 +204,7 @@ function LikeButton({ liked, onToggle }: { liked: boolean; onToggle: () => void 
       aria-pressed={liked}
       aria-label={liked ? "Unlike" : "Like"}
       className="
-        text-ink-3
+        press cursor-pointer text-ink-3
         hover:text-ink
         flex size-7 shrink-0 items-center justify-center rounded-sm
       "

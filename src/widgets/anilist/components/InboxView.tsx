@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Bell, CheckCheck, Loader2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
+import { Bell, CheckCheck } from "lucide-react";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { loadErrorMessage } from "@/lib/net";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -141,14 +142,14 @@ function InboxHeader({
               disabled={marking}
               aria-label="Mark all notifications read"
               className="
-                text-ink-3
+                press cursor-pointer text-ink-3
                 hover:text-ink
                 flex size-6 items-center justify-center rounded-sm
                 disabled:opacity-50
               "
             >
               {marking ? (
-                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                <Spinner className="size-3.5" />
               ) : (
                 <CheckCheck className="size-3.5" aria-hidden />
               )}

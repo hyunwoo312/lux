@@ -1,6 +1,7 @@
 import type { ComponentProps } from "react";
 import { forwardRef } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,14 +22,34 @@ const DialogOverlay = forwardRef<HTMLDivElement, ComponentProps<typeof DialogPri
   },
 );
 
-type DialogContentProps = ComponentProps<typeof DialogPrimitive.Content> & {
-  showClose?: boolean;
-  dismissOnClickOutside?: boolean;
-};
+const dialogContentVariants = cva(
+  `
+    dialog-content bg-popover text-popover-foreground glass-panel z-modal fixed inset-0 m-auto h-fit
+    rounded-2xl outline-none
+  `,
+  {
+    variants: {
+      layout: {
+        padded: "",
+        flush: "flex flex-col gap-0 overflow-hidden p-0",
+      },
+    },
+    defaultVariants: {
+      layout: "padded",
+    },
+  },
+);
+
+type DialogContentProps = ComponentProps<typeof DialogPrimitive.Content> &
+  VariantProps<typeof dialogContentVariants> & {
+    showClose?: boolean;
+    dismissOnClickOutside?: boolean;
+  };
 
 function DialogContent({
   className,
   children,
+  layout,
   showClose = true,
   dismissOnClickOutside = true,
   onInteractOutside,
@@ -49,33 +70,32 @@ function DialogContent({
           event.preventDefault();
           onInteractOutside?.(event);
         }}
-        className={cn(
-          `
-            dialog-content bg-popover text-popover-foreground z-modal fixed inset-0 m-auto h-fit
-            rounded-2xl outline-none
-          `,
-          className,
-        )}
+        className={cn(dialogContentVariants({ layout, className }))}
         {...props}
       >
         {children}
-        {showClose && (
-          <DialogPrimitive.Close
-            aria-label="Close"
-            className="
-              text-ink-3
-              hover:text-ink hover:bg-accent
-              focus-visible:ring-ring
-              absolute top-4 right-4 grid size-8 place-items-center rounded-lg transition-colors
-              outline-none
-              focus-visible:ring-2
-            "
-          >
-            <X className="size-4" />
-          </DialogPrimitive.Close>
-        )}
+        {showClose && <DialogCloseButton className="absolute top-4 right-4" />}
       </DialogPrimitive.Content>
     </DialogPrimitive.Portal>
+  );
+}
+
+function DialogCloseButton({ className }: { className?: string }) {
+  return (
+    <DialogPrimitive.Close
+      aria-label="Close"
+      className={cn(
+        `
+          text-ink-3
+          hover:text-ink hover:bg-accent
+          focus-ring grid size-8 shrink-0 cursor-pointer place-items-center rounded-lg
+          transition-colors
+        `,
+        className,
+      )}
+    >
+      <X className="size-4" />
+    </DialogPrimitive.Close>
   );
 }
 
@@ -102,4 +122,4 @@ function DialogDescription({
   );
 }
 
-export { Dialog, DialogContent, DialogTitle, DialogDescription };
+export { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogTitle };

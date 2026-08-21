@@ -56,7 +56,9 @@ export function SportsWidget() {
           variants={listVariants(reduced)}
           initial="hidden"
           animate="show"
-          className="flex min-h-0 flex-1 flex-col gap-1 overflow-x-hidden overflow-y-auto"
+          className="
+            flex min-h-0 flex-1 flex-col gap-1 overflow-x-hidden scroll-fade overflow-y-auto
+          "
         >
           {rows.map((match) => (
             <MatchRow key={match.id} match={match} now={now} hour12={!clock24h} />

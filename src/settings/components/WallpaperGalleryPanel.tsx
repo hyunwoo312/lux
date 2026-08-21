@@ -10,7 +10,7 @@ const BADGE =
   "bg-primary text-primary-foreground absolute top-1 right-1 grid size-4 place-items-center rounded-full";
 
 const TILE =
-  "border-edge-3 focus-visible:ring-ring/70 relative aspect-video cursor-pointer overflow-hidden rounded-md border focus-visible:ring-2 focus-visible:outline-none";
+  "focus-ring border-edge-3 relative aspect-video cursor-pointer overflow-hidden rounded-md border";
 
 export function WallpaperGalleryPanel() {
   const mode = useWallpaperStore((s) => s.mode);

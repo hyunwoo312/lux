@@ -43,8 +43,8 @@ export function Header() {
         <Tooltip content={editing ? "Done" : "Edit mode"} sticky>
           <Button
             variant="ghost"
-            size="icon"
-            className={cn("size-10 [&_svg]:size-5", editing && "bg-accent text-ink")}
+            size="icon-lg"
+            className={cn(editing && "bg-accent text-ink")}
             aria-label={editing ? "Done editing layout" : "Edit layout"}
             onClick={toggleEditing}
           >
@@ -68,8 +68,7 @@ export function Header() {
           <Button
             data-tour="settings"
             variant="ghost"
-            size="icon"
-            className="size-10 [&_svg]:size-5"
+            size="icon-lg"
             aria-label="Settings"
             onClick={() => openSettings()}
           >
@@ -80,8 +79,8 @@ export function Header() {
         <Tooltip content="What's new">
           <Button
             variant="ghost"
-            size="icon"
-            className="relative size-10 [&_svg]:size-5"
+            size="icon-lg"
+            className="relative"
             aria-label={hasUnseenRelease ? "What's new — update available" : "What's new"}
             onClick={() => setChangelogOpen(true)}
           >
@@ -97,8 +96,7 @@ export function Header() {
         <Tooltip content="Send feedback">
           <Button
             variant="ghost"
-            size="icon"
-            className="size-10 [&_svg]:size-5"
+            size="icon-lg"
             aria-label="Send feedback"
             onClick={() => setFeedbackOpen(true)}
           >

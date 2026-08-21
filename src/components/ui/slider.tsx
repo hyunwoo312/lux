@@ -21,9 +21,10 @@ function Slider({ className, ...props }: ComponentProps<typeof SliderPrimitive.R
       <SliderPrimitive.Thumb
         data-slot="slider-thumb"
         className="
-          bg-primary block size-3.5 shrink-0 rounded-full shadow-sm transition-[box-shadow]
-          hover:ring-primary/30 hover:ring-4
-          focus-visible:ring-primary/40 focus-visible:ring-4 focus-visible:outline-none
+          border-primary focus-ring block size-4 shrink-0 cursor-grab rounded-full border-2 bg-white
+          shadow-[var(--elev-1)] transition-transform
+          hover:scale-110
+          active:cursor-grabbing active:scale-105
           disabled:pointer-events-none
         "
       />

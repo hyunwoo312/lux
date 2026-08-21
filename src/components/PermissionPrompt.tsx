@@ -1,4 +1,5 @@
 import { Lock } from "lucide-react";
+import { StateMessage } from "@/components/StateMessage";
 import { Button } from "@/components/ui/button";
 import { setPermissionsGranted } from "@/lib/permissions";
 
@@ -31,7 +32,7 @@ export function PermissionPrompt({
           type="button"
           onClick={enable}
           className="
-            text-ink shrink-0 text-caption font-semibold underline-offset-2
+            press cursor-pointer text-ink shrink-0 text-caption font-semibold underline-offset-2
             hover:underline
           "
         >
@@ -41,7 +42,7 @@ export function PermissionPrompt({
           type="button"
           onClick={onOpenSettings}
           className="
-            text-ink-3
+            press cursor-pointer text-ink-3
             hover:text-ink
             shrink-0 text-caption underline-offset-2
             hover:underline
@@ -54,17 +55,17 @@ export function PermissionPrompt({
   }
 
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-2.5 px-4 text-center">
-      <Lock className="text-ink-4 size-6" aria-hidden />
-      <p className="text-ink-3 max-w-[34ch] text-body text-balance">{message}</p>
-      <div className="flex items-center gap-2">
-        <Button size="sm" onClick={enable}>
-          Enable
-        </Button>
-        <Button size="sm" variant="ghost" onClick={onOpenSettings}>
-          Open settings
-        </Button>
-      </div>
-    </div>
+    <StateMessage
+      icon={Lock}
+      message={message}
+      action={
+        <div className="flex items-center gap-2">
+          <Button onClick={enable}>Enable</Button>
+          <Button variant="ghost" onClick={onOpenSettings}>
+            Open settings
+          </Button>
+        </div>
+      }
+    />
   );
 }

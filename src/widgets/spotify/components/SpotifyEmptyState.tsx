@@ -24,7 +24,7 @@ export function SpotifyEmptyState({ title, message, action, extra }: SpotifyEmpt
       {(action || extra) && (
         <div className="flex items-center gap-2">
           {action && (
-            <Button size="sm" onClick={action.onClick} disabled={action.disabled}>
+            <Button onClick={action.onClick} disabled={action.disabled}>
               {action.label}
             </Button>
           )}

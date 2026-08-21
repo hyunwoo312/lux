@@ -194,7 +194,7 @@ export function Tour() {
           <button
             type="button"
             onClick={stop}
-            className="text-ink-3 hover:text-ink text-caption font-medium"
+            className="press cursor-pointer text-ink-3 hover:text-ink text-caption font-medium"
           >
             Skip
           </button>
@@ -202,12 +202,10 @@ export function Tour() {
         <h3 className="mt-1.5 text-body font-semibold">{current.title}</h3>
         <p className="text-ink-3 mt-1 text-caption leading-relaxed">{current.body}</p>
         <div className="mt-3 flex items-center justify-between gap-2">
-          <Button variant="ghost" size="sm" onClick={() => (step === 0 ? backToWelcome() : prev())}>
+          <Button variant="ghost" onClick={() => (step === 0 ? backToWelcome() : prev())}>
             Back
           </Button>
-          <Button size="sm" onClick={() => (isLast ? stop() : next())}>
-            {isLast ? "Done" : "Next"}
-          </Button>
+          <Button onClick={() => (isLast ? stop() : next())}>{isLast ? "Done" : "Next"}</Button>
         </div>
       </motion.div>
     </motion.div>

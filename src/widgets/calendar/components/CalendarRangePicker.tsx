@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { accentClass } from "@/widgets/core/accent";
+import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { CALENDAR_ACCENT } from "@/widgets/calendar/types";
 import { ConfigSegmented } from "@/components/config/WidgetConfig";
 import {
@@ -28,7 +29,7 @@ const LOOKAHEAD_OPTIONS = [
 function lookaheadValue(days: number): string {
   return LOOKAHEAD_OPTIONS.some((option) => option.value === String(days)) ? String(days) : "7";
 }
-const NAV_BUTTON = "text-ink-4 hover:text-ink absolute size-6 [&_svg]:size-3.5";
+const NAV_BUTTON = cn(WIDGET_HEADER_ACTION, "absolute");
 
 type MiniMonthProps = {
   month: Date;
@@ -61,7 +62,9 @@ function MiniMonth({ month, anchorTime, endTime, onSelect }: MiniMonthProps) {
               key={getDateKey(day)}
               type="button"
               onClick={() => onSelect(day)}
-              className="group relative flex h-8 items-center justify-center outline-none"
+              className="
+                press focus-ring group relative flex h-8 cursor-pointer items-center justify-center
+              "
             >
               {inRange && (
                 <span
@@ -77,7 +80,7 @@ function MiniMonth({ month, anchorTime, endTime, onSelect }: MiniMonthProps) {
                 className={cn(
                   "relative z-10 flex size-7 items-center justify-center rounded-md text-caption",
                   "tabular-nums transition-colors",
-                  "group-focus-visible:ring-foreground/30 group-focus-visible:ring-2",
+                  "focus-ring group- group-",
                   isStart && "bg-primary text-primary-foreground font-semibold",
                   !isStart && "group-hover:bg-foreground/10",
                   !isStart && inMonth && "text-ink",
@@ -131,7 +134,7 @@ export function CalendarRangePicker({ onSelect }: CalendarRangePickerProps) {
         <div className="relative flex w-52 items-center justify-center">
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-xs"
             className={cn(NAV_BUTTON, "left-0")}
             aria-label="Previous month"
             onClick={() => setViewMonth((current) => getMonthOffset(current, -1))}
@@ -148,7 +151,7 @@ export function CalendarRangePicker({ onSelect }: CalendarRangePickerProps) {
           </span>
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-xs"
             className={cn(NAV_BUTTON, "right-0")}
             aria-label="Next month"
             onClick={() => setViewMonth((current) => getMonthOffset(current, 1))}

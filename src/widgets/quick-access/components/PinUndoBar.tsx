@@ -1,4 +1,4 @@
-import { EASE_OUT } from "@/lib/motion";
+import { DURATION, EASE_OUT } from "@/lib/motion";
 import { useEffect } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
@@ -25,10 +25,10 @@ export function PinUndoBar() {
         <motion.div
           key="undo"
           role="status"
-          initial={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
+          initial={reduced ? { opacity: 0 } : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
-          transition={{ duration: reduced ? 0 : 0.18, ease: EASE_OUT }}
+          exit={reduced ? { opacity: 0 } : { opacity: 0, y: 12 }}
+          transition={{ duration: reduced ? 0 : DURATION.fast, ease: EASE_OUT }}
           className="
             bg-popover border-border/60 absolute inset-x-2 bottom-2 z-10 flex items-center gap-2
             rounded-lg border px-2.5 py-1.5 shadow-lg
@@ -40,7 +40,7 @@ export function PinUndoBar() {
           <button
             type="button"
             onClick={() => undoRemove(instanceId)}
-            className="text-primary shrink-0 cursor-pointer text-caption font-semibold"
+            className="press text-primary shrink-0 cursor-pointer text-caption font-semibold"
           >
             Undo
           </button>

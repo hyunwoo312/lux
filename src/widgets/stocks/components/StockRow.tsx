@@ -34,11 +34,10 @@ export function StockRow({ symbol, onSelect, onRemove }: StockRowProps) {
         onClick={onSelect}
         aria-label={`Show ${symbol} details`}
         className="
-          flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left outline-none
-          transition-[padding] duration-200
+          press-row cursor-pointer focus-ring flex w-full items-center gap-2 rounded-lg px-2 py-1.5
+          text-left transition-[padding,background-color] duration-200
           group-hover:pr-9
           group-focus-within:pr-9
-          focus-visible:ring-foreground/30 focus-visible:ring-2 focus-visible:ring-inset
         "
       >
         <div className={cn("flex shrink-0 flex-col", showName ? "w-24" : "w-16")}>

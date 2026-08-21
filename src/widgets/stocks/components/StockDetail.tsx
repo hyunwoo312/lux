@@ -1,6 +1,6 @@
-import { Loader2, RotateCw } from "lucide-react";
+import { RotateCw } from "lucide-react";
+import { RetryButton, StateMessage } from "@/components/StateMessage";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
@@ -89,7 +89,7 @@ function DetailBody({ data, range }: { data: Quote; range: StockRange }) {
       : null;
 
   return (
-    <div className="flex h-full flex-col gap-3 overflow-y-auto">
+    <div className="flex h-full flex-col gap-3 scroll-fade overflow-y-auto">
       <div className="pr-16">
         <div className="flex items-baseline gap-2">
           <span className="text-ink text-lg leading-tight font-semibold">{data.symbol}</span>
@@ -189,9 +189,9 @@ export function StockDetail({ symbol, onRemove }: StockDetailProps) {
         disabled={isRefreshing}
         aria-label={`Refresh ${symbol}`}
         className="
-          text-ink-4
+          press cursor-pointer text-ink-4
           hover:text-ink
-          absolute top-0 right-8 z-10 grid size-7 place-items-center transition
+          absolute top-0 right-8 z-10 grid size-7 place-items-center
           [&_svg]:size-4
         "
       >
@@ -205,19 +205,10 @@ export function StockDetail({ symbol, onRemove }: StockDetailProps) {
       {data ? (
         <DetailBody data={data} range={range} />
       ) : state.status === "error" ? (
-        <div className="flex h-full flex-col items-center justify-center gap-3 px-2 text-center">
-          <p className="text-ink-3 text-body">Couldn’t load {symbol}.</p>
-          <Button size="sm" variant="outline" onClick={refresh} disabled={isRefreshing}>
-            {isRefreshing ? (
-              <>
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-                Retrying…
-              </>
-            ) : (
-              "Retry"
-            )}
-          </Button>
-        </div>
+        <StateMessage
+          message={`Couldn’t load ${symbol}.`}
+          action={<RetryButton onRetry={refresh} retrying={isRefreshing} />}
+        />
       ) : (
         <DetailSkeleton />
       )}

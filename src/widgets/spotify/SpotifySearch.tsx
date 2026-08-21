@@ -263,10 +263,9 @@ export function SpotifySearch() {
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => setTargetDeviceId(device.id)}
                   className="
-                    border-border text-ink-3 rounded-full border px-2 py-0.5 text-micro
-                    transition-colors
+                    press cursor-pointer focus-ring border-border text-ink-3 rounded-full border
+                    px-2 py-0.5 text-micro
                     hover:text-ink hover:border-foreground/40
-                    focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none
                   "
                 >
                   {device.name}
@@ -361,11 +360,10 @@ export function SpotifySearch() {
                                   addToQueue(result);
                                 }}
                                 className={cn(
+                                  "press cursor-pointer",
                                   `
-                                    grid size-6 shrink-0 place-items-center rounded-sm
+                                    focus-ring grid size-6 shrink-0 place-items-center rounded-sm
                                     transition-colors
-                                    focus-visible:ring-ring focus-visible:ring-2
-                                    focus-visible:outline-none
                                     disabled:pointer-events-none
                                   `,
                                   queuedIds.has(result.id)

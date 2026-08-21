@@ -31,7 +31,7 @@ const HOVER_PR: Record<number, string> = {
 };
 
 const ACTION_BUTTON =
-  "flex size-7 items-center justify-center rounded-md outline-none focus-visible:ring-foreground/30 focus-visible:ring-2";
+  "focus-ring flex size-7 cursor-pointer items-center justify-center rounded-md";
 
 function openUrl(url: string) {
   window.open(url, "_blank", "noopener,noreferrer");

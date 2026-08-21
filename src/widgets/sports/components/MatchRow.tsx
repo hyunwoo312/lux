@@ -87,10 +87,10 @@ function Row({ teams, status, detail, label }: RowProps) {
           aria-label={label}
           onClick={() => setOpen((value) => !value)}
           className="
+            press-row transition-colors cursor-pointer focus-ring
             hover:bg-foreground/5
             focus-visible:bg-foreground/5
-            flex w-full items-center gap-2 rounded-lg px-2 py-2.5 text-left outline-none
-            transition-colors
+            flex w-full items-center gap-2 rounded-lg px-2 py-2.5 text-left
           "
         >
           {body}

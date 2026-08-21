@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Spinner } from "@/components/ui/spinner";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Check, Copy, ExternalLink, Loader2 } from "lucide-react";
+import { Check, Copy, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { DURATION, EASE_OUT } from "@/lib/motion";
@@ -119,7 +120,7 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
           type="button"
           onClick={() => setOpen((prev) => !prev)}
           aria-expanded={open}
-          className="text-ink flex items-center gap-2 text-body font-semibold"
+          className="press cursor-pointer text-ink flex items-center gap-2 text-body font-semibold"
         >
           <SetupTriangle open={open} transition={transition} />
           How to set up Spotify
@@ -190,7 +191,6 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
                       <Button
                         size="icon"
                         variant="outline"
-                        className="size-9 shrink-0"
                         aria-label="Copy redirect URI"
                         onClick={handleCopy}
                       >
@@ -217,11 +217,9 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
                       spellCheck={false}
                       autoComplete="off"
                       className="
-                        border-border bg-background/40 text-ink
+                        focus-ring border-border bg-background/40 text-ink
                         placeholder:text-ink-4
-                        focus-visible:border-emerald-500 focus-visible:ring-emerald-500/40
-                        min-w-0 flex-1 rounded-lg border px-3 py-2 text-body outline-none
-                        focus-visible:ring-2
+                        min-w-0 flex-1 rounded-lg border px-3 py-2 text-body
                       "
                     />
                     <SaveButton
@@ -293,7 +291,7 @@ function SaveButton({
   const bare = status !== "idle";
   const content: ReactNode =
     status === "saving" ? (
-      <Loader2 className="animate-spin text-emerald-600 dark:text-emerald-300" />
+      <Spinner className="text-emerald-600 dark:text-emerald-300" />
     ) : status === "success" ? (
       <DrawnCheck reduced={reduced} />
     ) : status === "error" ? (
@@ -311,11 +309,10 @@ function SaveButton({
       animate={{ width: bare ? 32 : 80 }}
       transition={transition}
       className={cn(
+        "press",
         `
-          relative inline-flex h-8 shrink-0 cursor-pointer items-center justify-center
-          overflow-hidden rounded-md text-body font-medium outline-none transition-colors
-          focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2
-          focus-visible:ring-offset-background
+          focus-ring relative inline-flex h-8 shrink-0 cursor-pointer items-center justify-center
+          overflow-hidden rounded-md text-body font-medium transition-colors
           disabled:pointer-events-none
           [&_svg]:size-4 [&_svg]:shrink-0
         `,

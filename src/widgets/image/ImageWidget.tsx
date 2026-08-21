@@ -105,11 +105,8 @@ export function ImageWidget({ editing }: WidgetContentProps) {
           onClick={handleImageClick}
           aria-label={clickAdvances ? "Next image" : "Replace image"}
           className={cn(
-            `
-              focus-visible:ring-ring
-              h-full w-full cursor-pointer outline-none transition-colors
-              focus-visible:ring-2 focus-visible:ring-inset
-            `,
+            "press-row transition-colors",
+            `focus-ring h-full w-full cursor-pointer transition-colors`,
             disabled && "cursor-default",
             dragging && "ring-primary bg-black/10 ring-2 ring-inset",
           )}
@@ -121,14 +118,13 @@ export function ImageWidget({ editing }: WidgetContentProps) {
             disabled={disabled}
             onClick={openPicker}
             className={cn(
+              "press-row transition-colors",
               `
-                text-ink-4
+                focus-ring text-ink-4
                 hover:text-ink hover:border-foreground/40
-                focus-visible:ring-ring
                 border-border/60 flex h-full w-full cursor-pointer flex-col items-center
                 justify-center gap-2 rounded-lg border border-dashed p-4 text-center
-                transition-colors outline-none
-                focus-visible:ring-2
+                transition-colors
                 disabled:cursor-default disabled:opacity-60
               `,
               dragging && "border-primary text-ink",

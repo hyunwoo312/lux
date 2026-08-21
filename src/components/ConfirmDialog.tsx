@@ -38,10 +38,7 @@ export function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        showClose={false}
-        className="dialog-pop glass-panel w-[min(22rem,calc(100vw-2rem))] p-5"
-      >
+      <DialogContent showClose={false} className="dialog-pop w-[min(22rem,calc(100vw-2rem))] p-5">
         <div className="flex flex-col gap-4">
           <div className="flex items-start gap-3">
             <motion.span
@@ -62,17 +59,14 @@ export function ConfirmDialog({
             </div>
           </div>
           <div className="flex items-center justify-end gap-2">
-            <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            <Button size="lg" variant="ghost" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button
+              size="lg"
               variant="destructive"
               disabled={!armed}
-              className="
-                transition-all
-                hover:shadow-[0_0_16px_-4px_var(--destructive)]
-                motion-safe:active:scale-95
-              "
+              className="transition-[box-shadow] hover:shadow-[0_0_16px_-4px_var(--destructive)]"
               onClick={() => {
                 onOpenChange(false);
                 onConfirm();

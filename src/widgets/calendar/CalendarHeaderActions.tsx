@@ -7,9 +7,8 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { CalendarRefreshButton } from "@/widgets/calendar/CalendarRefreshButton";
 import { CalendarViewToggle } from "@/widgets/calendar/CalendarViewToggle";
 import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-
-const NAV_BUTTON = "text-ink-4 hover:text-ink size-6 rounded-sm [&_svg]:size-3.5";
 
 function NavButton({
   label,
@@ -24,8 +23,8 @@ function NavButton({
     <Tooltip content={label}>
       <Button
         variant="ghost"
-        size="icon"
-        className={NAV_BUTTON}
+        size="icon-xs"
+        className={WIDGET_HEADER_ACTION}
         aria-label={label}
         onClick={onClick}
       >

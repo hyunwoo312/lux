@@ -36,10 +36,9 @@ export function IconActionButton({
         whileTap={interactive ? { scale: 0.82 } : undefined}
         transition={SPRING_POP}
         className="
-          text-ink-3
+          focus-ring cursor-pointer text-ink-3
           hover:text-ink
-          inline-flex size-8 items-center justify-center rounded-md outline-none transition-colors
-          focus-visible:ring-ring focus-visible:ring-2
+          inline-flex size-8 items-center justify-center rounded-md transition-colors
           disabled:pointer-events-none disabled:opacity-40
           [&_svg]:size-4 [&_svg]:shrink-0
         "

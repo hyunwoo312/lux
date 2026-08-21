@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { Spinner } from "@/components/ui/spinner";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Check, ChevronDown, Copy, Loader2, Star } from "lucide-react";
+import { Check, ChevronDown, Copy, Star } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -139,12 +140,7 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="
-          glass-panel flex max-h-[85dvh] w-[min(32rem,calc(100vw-2rem))] flex-col gap-0
-          overflow-hidden p-0
-        "
-      >
+      <DialogContent layout="flush" className="max-h-[85dvh] w-[min(32rem,calc(100vw-2rem))]">
         <header className="border-border/50 flex flex-col gap-1 border-b px-6 py-5">
           <DialogTitle className="text-base font-semibold">Send feedback</DialogTitle>
           <DialogDescription className="text-ink-3 text-body">
@@ -155,7 +151,7 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
         {status.kind === "sent" ? (
           <SentPanel id={status.id} reduced={reduced} onClose={() => onOpenChange(false)} />
         ) : (
-          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 py-5">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 scroll-fade overflow-y-auto px-6 py-5">
             <div className="flex flex-col gap-2">
               <span id={categoryLabelId} className="text-ink-3 text-caption font-medium">
                 What kind of feedback?
@@ -195,12 +191,8 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
                         categoryRefs.current[category] = node;
                       }}
                       className={cn(
-                        `
-                          focus-visible:ring-ring
-                          rounded-full border px-3 py-1.5 text-caption font-medium outline-none
-                          transition-colors
-                          focus-visible:ring-2
-                        `,
+                        "press cursor-pointer",
+                        `focus-ring rounded-full border px-3 py-1.5 text-caption font-medium`,
                         active
                           ? "border-primary/40 bg-primary/10 text-ink"
                           : "border-border text-ink-3 hover:bg-accent/60",
@@ -231,11 +223,9 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
                 }}
                 placeholder={CATEGORY_PLACEHOLDER[draft.category]}
                 className="
-                  border-border bg-background/40
+                  focus-ring border-border bg-background/40
                   placeholder:text-ink-4
-                  focus-visible:border-primary/50
-                  w-full resize-none rounded-md border px-3 py-2 text-body outline-none
-                  transition-colors
+                  w-full resize-none rounded-md border px-3 py-2 text-body transition-colors
                 "
               />
               <div className="flex items-center justify-between gap-3">
@@ -275,11 +265,9 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
                   `
                     bg-background/40
                     placeholder:text-ink-4
-                    w-full rounded-md border px-3 py-2 text-body outline-none transition-colors
+                    focus-ring w-full rounded-md border px-3 py-2 text-body transition-colors
                   `,
-                  contactInvalid
-                    ? "border-destructive/60"
-                    : "border-border focus-visible:border-primary/50",
+                  contactInvalid ? "border-destructive/60" : "border-border",
                 )}
               />
               {contactInvalid && (
@@ -291,7 +279,7 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
 
             <div
               className={cn(
-                "flex flex-col gap-2 rounded-md border p-3 transition-colors",
+                "flex flex-col gap-2 rounded-md border p-3",
                 draft.includeDiagnostics ? "border-primary/30 bg-primary/5" : "border-border/50",
               )}
             >
@@ -318,9 +306,9 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
                 aria-expanded={showDiagnostics}
                 aria-controls={diagnosticsId}
                 className="
-                  text-ink-3
+                  press cursor-pointer text-ink-3
                   hover:text-ink
-                  flex items-center gap-1 self-start text-caption transition-colors
+                  flex items-center gap-1 self-start text-caption
                 "
               >
                 {showDiagnostics ? "Hide" : "View"} what would be sent
@@ -369,9 +357,9 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
               type="button"
               onClick={() => openUrl(CWS_REVIEW_URL, "newTab")}
               className="
-                text-ink-3
+                press cursor-pointer text-ink-3
                 hover:text-ink
-                flex items-center gap-1.5 text-caption transition-colors
+                flex items-center gap-1.5 text-caption
               "
             >
               <Star className="size-3.5" aria-hidden />
@@ -381,16 +369,13 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
               {sendShortcut}
             </span>
             <Button
+              size="lg"
               type="button"
               onClick={() => void send()}
               disabled={!canSend}
               className="min-w-24"
             >
-              {status.kind === "sending" ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-              ) : (
-                "Send"
-              )}
+              {status.kind === "sending" ? <Spinner /> : "Send"}
             </Button>
           </footer>
         )}
@@ -435,9 +420,9 @@ function SentPanel({
             onClick={copy}
             aria-label={`Copy reference ${id}`}
             className="
-              text-ink-3
+              press cursor-pointer text-ink-3
               hover:text-ink
-              flex items-center gap-1.5 text-caption transition-colors
+              flex items-center gap-1.5 text-caption
             "
           >
             Reference <span className="font-mono">{id}</span>
@@ -453,13 +438,11 @@ function SentPanel({
           saying.
         </p>
         <div className="mt-1 flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => openUrl(CWS_REVIEW_URL, "newTab")}>
+          <Button variant="outline" onClick={() => openUrl(CWS_REVIEW_URL, "newTab")}>
             <Star className="size-3.5" aria-hidden />
             Rate Lux
           </Button>
-          <Button size="sm" onClick={onClose}>
-            Done
-          </Button>
+          <Button onClick={onClose}>Done</Button>
         </div>
       </motion.div>
     </AnimatePresence>

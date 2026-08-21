@@ -135,12 +135,7 @@ export function StorageSection() {
       title="Storage"
       action={
         usage && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={clearCache}
-            disabled={!usage.localCacheBytes}
-          >
+          <Button variant="outline" onClick={clearCache} disabled={!usage.localCacheBytes}>
             <RefreshCw aria-hidden />
             Clear cache
           </Button>

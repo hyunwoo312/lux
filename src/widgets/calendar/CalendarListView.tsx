@@ -67,7 +67,7 @@ export function CalendarListView({ events, colors, enabled, status }: CalendarLi
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto pr-0.5">
+    <div className="flex h-full min-h-0 flex-col gap-3 scroll-fade overflow-y-auto pr-0.5">
       {freeUntil && <p className="text-ink-3 pl-1 text-micro font-medium">{freeUntil}</p>}
       {multiDayEvents.length > 0 && (
         <section className="flex flex-col gap-1.5">

@@ -11,13 +11,12 @@ import { LEAGUES, leagueById } from "@/widgets/sports/lib/leagues";
 import { SPORTS_ACCENT } from "@/widgets/sports/types";
 import { useSports, useSportsStore } from "@/widgets/sports/useSportsStore";
 
-const TRIGGER_CLASS = `
-  text-ink-3
-  hover:text-ink hover:bg-foreground/5
-  focus-visible:text-ink focus-visible:bg-foreground/5
-  data-[state=open]:text-ink data-[state=open]:bg-foreground/5
-  flex min-w-0 shrink items-center gap-1 rounded-sm px-1.5 py-0.5 text-caption outline-none
-  transition-colors
+const TRIGGER_CLASS = `focus-ring text-ink-3
+ hover:text-ink hover:bg-foreground/5
+ focus-visible:text-ink focus-visible:bg-foreground/5
+ data-[state=open]:text-ink data-[state=open]:bg-foreground/5
+ flex min-w-0 shrink items-center gap-1 rounded-sm px-1.5 py-0.5 text-caption 
+ transition-colors
 `;
 
 export function LeagueMenu() {
@@ -53,10 +52,7 @@ export function LeagueMenu() {
           </motion.span>
         </PopoverTrigger>
       </Tooltip>
-      <PopoverContent
-        align="start"
-        className={cn(accentClass(SPORTS_ACCENT), "w-auto min-w-40 p-1")}
-      >
+      <PopoverContent align="start" className={cn(accentClass(SPORTS_ACCENT), "w-auto min-w-40")}>
         <div className="flex flex-col">
           {LEAGUES.map((league, index) => {
             const selected = league.id === leagueId;
@@ -76,6 +72,7 @@ export function LeagueMenu() {
                   ease: EASE_OUT,
                 }}
                 className={cn(
+                  "press cursor-pointer",
                   `
                     hover:bg-accent
                     flex items-center gap-2 rounded-sm px-2 py-1.5 text-left text-caption

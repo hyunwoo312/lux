@@ -25,7 +25,7 @@ export function OpenAllPinsButton() {
     <Tooltip content={label} sticky>
       <Button
         variant="ghost"
-        size="icon"
+        size="icon-xs"
         className={WIDGET_HEADER_ACTION}
         aria-label={label}
         onClick={handleOpenAll}

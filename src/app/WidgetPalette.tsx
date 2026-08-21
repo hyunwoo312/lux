@@ -64,9 +64,8 @@ const WidgetRow = forwardRef<HTMLButtonElement, WidgetCardProps>(function Widget
       onKeyDown={onKeyDown}
       onClick={onSelect}
       className="
-        relative flex cursor-grab touch-none items-start gap-2.5 rounded-md px-2 py-2 text-left
-        outline-none
-        focus-visible:ring-primary/60 focus-visible:ring-2
+        press cursor-pointer focus-ring relative flex cursor-grab touch-none items-start gap-2.5
+        rounded-md px-2 py-2 text-left
       "
     >
       {previewed && (
@@ -261,13 +260,7 @@ export function WidgetPalette() {
     <PopoverPrimitive.Root open={open} onOpenChange={handleOpenChange}>
       <Tooltip content="Add widget" disabled={open}>
         <PopoverPrimitive.Trigger asChild>
-          <Button
-            data-tour="add-widget"
-            variant="ghost"
-            size="icon"
-            className="size-10 [&_svg]:size-5"
-            aria-label="Add widget"
-          >
+          <Button data-tour="add-widget" variant="ghost" size="icon-lg" aria-label="Add widget">
             <motion.span
               animate={{ rotate: open ? 45 : 0 }}
               transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}

@@ -81,7 +81,7 @@ function ItemsView({ tab, editing }: { tab: ItemSource & BrowserTabKey; editing:
   const scrollRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div ref={scrollRef} className="h-full overflow-x-hidden overflow-y-auto">
+    <div ref={scrollRef} className="h-full overflow-x-hidden scroll-fade overflow-y-auto">
       {state.status === "loading" && <BrowserMessage>{`Loading ${TAB_NOUN[tab]}…`}</BrowserMessage>}
       {state.status === "error" && (
         <BrowserMessage>{`Couldn’t load ${TAB_NOUN[tab]}`}</BrowserMessage>

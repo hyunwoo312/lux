@@ -28,19 +28,14 @@ export function ChangelogDialog({ open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="
-          glass-panel flex max-h-[80dvh] w-[min(34rem,calc(100vw-2rem))] flex-col gap-0
-          overflow-hidden p-0
-        "
-      >
+      <DialogContent layout="flush" className="max-h-[80dvh] w-[min(34rem,calc(100vw-2rem))]">
         <header className="border-border/50 flex flex-col gap-1 border-b px-6 py-5">
           <DialogTitle className="text-base font-semibold">What&apos;s new</DialogTitle>
           <DialogDescription className="text-ink-3 text-body">
             Recent updates to Lux.
           </DialogDescription>
         </header>
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-2">
+        <div className="flex min-h-0 flex-1 flex-col scroll-fade overflow-y-auto px-6 py-2">
           {RELEASES.map((release, index) => (
             <ReleaseSection key={release.version} release={release} latest={index === 0} />
           ))}
@@ -73,10 +68,9 @@ function ReleaseSection({ release, latest }: { release: Release; latest: boolean
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         className="
+          press-row transition-colors cursor-pointer focus-ring
           hover:bg-foreground/5
-          focus-visible:ring-ring
-          -mx-2 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left outline-none
-          focus-visible:ring-2
+          -mx-2 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left
         "
       >
         <h3 className="text-body font-semibold tabular-nums">v{release.version}</h3>

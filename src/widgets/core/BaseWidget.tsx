@@ -188,7 +188,7 @@ export function BaseWidget({
                   <Tooltip content={showConfig ? "Done" : "Settings"} sticky>
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="icon-xs"
                       className={WIDGET_HEADER_ACTION}
                       aria-label={showConfig ? `Close ${title} settings` : `${title} settings`}
                       aria-pressed={showConfig}
@@ -214,8 +214,8 @@ export function BaseWidget({
                   <Tooltip content={`Remove ${title}`}>
                     <Button
                       variant="ghost"
-                      size="icon"
-                      className="size-7 rounded-sm [&_svg]:size-4"
+                      size="icon-xs"
+                      className={WIDGET_HEADER_ACTION}
                       aria-label={`Remove ${title}`}
                       onClick={requestRemove}
                     >
@@ -240,10 +240,10 @@ export function BaseWidget({
               className={cn(
                 "h-full",
                 showConfig
-                  ? "overflow-x-hidden overflow-y-auto px-4 pb-3"
+                  ? "scroll-fade overflow-x-hidden overflow-y-auto px-4 pb-3"
                   : bleed
                     ? "overflow-hidden"
-                    : "overflow-auto px-4 pb-3",
+                    : "scroll-fade overflow-auto px-4 pb-3",
               )}
             >
               {showConfig ? config : children}

@@ -164,7 +164,8 @@ export function ShortcutDisplay({
             : `${label}, currently ${formatShortcut(value)}. Click to change.`
         }
         className={cn(
-          "flex items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "press cursor-pointer",
+          "focus-ring flex items-center rounded-md ",
           !recording && "gap-1",
         )}
       >
@@ -217,7 +218,7 @@ export function AddShortcutControl({
         layoutId={reduced ? undefined : layoutId}
         transition={reduced ? { duration: 0 } : SPRING_CRISP}
         aria-label={`Recording new ${label} shortcut`}
-        className="rounded-md outline-none"
+        className="press cursor-pointer rounded-md outline-none"
       >
         <RecorderBody held={held} invalid={invalid} reduced={reduced} />
       </motion.button>
@@ -233,11 +234,9 @@ export function AddShortcutControl({
         transition={reduced ? { duration: 0 } : SPRING_CRISP}
         aria-label={`Add ${label} shortcut`}
         className="
-          text-ink-3
+          press cursor-pointer focus-ring text-ink-3
           hover:bg-accent hover:text-ink
-          focus-visible:ring-ring
-          flex size-8 items-center justify-center rounded-md outline-none transition-colors
-          focus-visible:ring-2
+          flex size-8 items-center justify-center rounded-md
         "
       >
         <Plus className="size-4" aria-hidden />

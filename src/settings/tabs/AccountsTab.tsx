@@ -161,7 +161,6 @@ export function AccountsTab() {
                     <>
                       {status === "needsReconnect" && (
                         <Button
-                          size="sm"
                           variant="ghost"
                           className="text-warning hover:text-warning"
                           disabled={Boolean(busy)}
@@ -171,9 +170,7 @@ export function AccountsTab() {
                         </Button>
                       )}
                       <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive hover:text-destructive"
+                        variant="ghost-destructive"
                         disabled={Boolean(busy)}
                         onClick={() => setConfirmDisconnect(provider.id)}
                       >
@@ -182,7 +179,6 @@ export function AccountsTab() {
                     </>
                   ) : (
                     <Button
-                      size="sm"
                       variant="secondary"
                       className={cn(isSpotify && SPOTIFY_BUTTON_ACCENT)}
                       disabled={Boolean(busy) || connectDisabled}

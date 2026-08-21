@@ -118,19 +118,19 @@ export function GeneralTab() {
           control={
             pendingImport ? (
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="destructive" onClick={() => void confirmImport()}>
+                <Button variant="destructive" onClick={() => void confirmImport()}>
                   Replace
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => setPendingImport(null)}>
+                <Button variant="ghost" onClick={() => setPendingImport(null)}>
                   Cancel
                 </Button>
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" onClick={() => void exportSettings()}>
+                <Button variant="outline" onClick={() => void exportSettings()}>
                   Export
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
+                <Button variant="outline" onClick={() => fileRef.current?.click()}>
                   Import
                 </Button>
                 <input

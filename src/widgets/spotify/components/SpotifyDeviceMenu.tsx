@@ -33,9 +33,9 @@ export function SpotifyDeviceMenu({
         aria-label="Choose playback device"
         disabled={disabled}
         className="
-          text-ink-3 inline-flex size-8 items-center justify-center rounded-full transition-colors
+          focus-ring text-ink-3 inline-flex size-8 items-center justify-center rounded-full
+          transition-colors
           hover:text-ink
-          focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none
           disabled:pointer-events-none disabled:opacity-40
         "
       >
@@ -59,8 +59,9 @@ export function SpotifyDeviceMenu({
                   if (device.id !== activeId) onSelect(device);
                 }}
                 className="
+                  press cursor-pointer
                   hover:bg-accent
-                  flex items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors
+                  flex items-center gap-2 rounded-md px-2 py-1.5 text-left
                   disabled:pointer-events-none disabled:opacity-50
                 "
               >

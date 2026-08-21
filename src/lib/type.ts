@@ -1,3 +1,15 @@
+export const TYPE_SCALE = [
+  "micro",
+  "caption",
+  "body",
+  "body-lg",
+  "title",
+  "heading",
+  "display-sm",
+  "display",
+  "display-lg",
+] as const;
+
 export const TYPE = {
   display: "text-display font-semibold tracking-[-0.025em] tabular-nums slashed-zero",
 

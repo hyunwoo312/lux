@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { DURATION, EASE_OUT_STRONG, SPRING_POP } from "@/lib/motion";
 
 type Phase = "idle" | "confirm" | "done";
@@ -15,8 +14,6 @@ type Props = {
 };
 
 const DONE_MS = 1500;
-const PRESS = "transition-transform motion-safe:active:scale-95";
-
 export function ResetControl({
   onReset,
   label = "Reset to defaults",
@@ -49,12 +46,7 @@ export function ResetControl({
       <AnimatePresence mode="wait" initial={false}>
         {phase === "idle" && (
           <motion.div key="idle" {...motionProps}>
-            <Button
-              size="sm"
-              variant="ghost"
-              className={cn("text-ink-3", PRESS)}
-              onClick={() => setPhase("confirm")}
-            >
+            <Button variant="ghost" className="text-ink-3" onClick={() => setPhase("confirm")}>
               {label}
             </Button>
           </motion.div>
@@ -67,15 +59,10 @@ export function ResetControl({
             {...motionProps}
           >
             <span className="text-ink-3 text-caption">{confirmMessage}</span>
-            <Button
-              size="sm"
-              variant="ghost"
-              className={cn("text-destructive hover:text-destructive", PRESS)}
-              onClick={confirm}
-            >
+            <Button variant="ghost-destructive" onClick={confirm}>
               Reset
             </Button>
-            <Button size="sm" variant="ghost" className={PRESS} onClick={() => setPhase("idle")}>
+            <Button variant="ghost" onClick={() => setPhase("idle")}>
               Cancel
             </Button>
           </motion.div>

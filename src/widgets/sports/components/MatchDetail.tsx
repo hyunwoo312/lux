@@ -147,9 +147,9 @@ export function MatchDetail({ match }: { match: Match }) {
               type="button"
               onClick={() => openUrl(match.link ?? "", "newTab")}
               className="
-                text-ink-3
+                press cursor-pointer text-ink-3
                 hover:text-primary
-                text-micro flex shrink-0 items-center gap-1 transition-colors
+                text-micro flex shrink-0 items-center gap-1
               "
             >
               ESPN

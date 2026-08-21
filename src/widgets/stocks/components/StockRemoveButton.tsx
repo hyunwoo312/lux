@@ -20,6 +20,7 @@ export function StockRemoveButton({
         onRemove();
       }}
       className={cn(
+        "press cursor-pointer",
         `text-ink-4 hover:text-destructive grid size-7 place-items-center transition [&_svg]:size-4`,
         className,
       )}

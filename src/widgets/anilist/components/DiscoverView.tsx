@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Loader2, Plus } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { ConfigSegmented, ConfigSelect } from "@/components/config/WidgetConfig";
@@ -96,9 +97,8 @@ export function DiscoverView() {
           />
         ) : (
           <Button
-            size="sm"
             variant="ghost"
-            className="h-6 px-2 text-caption"
+            size="xs"
             onClick={() => useSettingsStore.getState().openSettings("accounts")}
           >
             {needsReconnect ? "Reconnect AniList" : "Connect AniList"}
@@ -149,7 +149,7 @@ function DiscoverBody({
     return <AnilistPlaceholder>Nothing to show here right now.</AnilistPlaceholder>;
 
   return (
-    <div className="flex h-full flex-col gap-1 overflow-y-auto">
+    <div className="flex h-full flex-col gap-1 scroll-fade overflow-y-auto">
       {state.data.map((media) => (
         <DiscoverRow
           key={media.id}
@@ -224,17 +224,13 @@ function DiscoverRow({
               onAdd();
             }}
             className="
-              text-ink-4 grid size-6 shrink-0 place-items-center rounded-sm transition-colors
+              press cursor-pointer focus-ring text-ink-4 grid size-6 shrink-0 place-items-center
+              rounded-sm
               hover:text-ink
-              focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none
               disabled:pointer-events-none disabled:opacity-50
             "
           >
-            {pending ? (
-              <Loader2 className="size-3.5 animate-spin" aria-hidden />
-            ) : (
-              <Plus className="size-3.5" aria-hidden />
-            )}
+            {pending ? <Spinner className="size-3.5" /> : <Plus className="size-3.5" aria-hidden />}
           </button>
         </Tooltip>
       )}

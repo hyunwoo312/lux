@@ -277,7 +277,6 @@ export function ImageConfig() {
             control={
               <Button
                 variant="outline"
-                size="sm"
                 disabled={!canSet || backgroundStatus === "saving"}
                 onClick={() => void setAsBackground()}
               >

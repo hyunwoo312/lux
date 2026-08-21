@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowLeft, CalendarRange } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import { AnimatedHeaderText } from "@/widgets/calendar/components/AnimatedHeaderText";
 import { CalendarRangePicker } from "@/widgets/calendar/components/CalendarRangePicker";
 import { addDays } from "@/widgets/calendar/lib/dates";
@@ -16,14 +17,13 @@ const monthDayFormatter = new Intl.DateTimeFormat(undefined, { month: "short", d
 const dayFormatter = new Intl.DateTimeFormat(undefined, { day: "numeric" });
 
 const DATE_LABEL = "text-ink text-base font-semibold";
-const STATUS_BUTTON = `
-  text-ink-4
-  hover:text-ink
-  focus-visible:text-ink
-  flex size-6 flex-none items-center justify-center rounded-sm outline-none transition-colors
-  hover:bg-foreground/5
-  focus-visible:bg-foreground/5
-  [&_svg]:size-4
+const STATUS_BUTTON = `focus-ring text-ink-4
+ hover:text-ink
+ focus-visible:text-ink
+ flex size-6 flex-none items-center justify-center rounded-sm transition-colors
+ hover:bg-foreground/5
+ focus-visible:bg-foreground/5
+ [&_svg]:size-4
 `;
 
 function formatRange(start: Date, end: Date): string {
@@ -69,7 +69,7 @@ export function CalendarStatus() {
               <CalendarRange />
             </PopoverTrigger>
           </Tooltip>
-          <PopoverContent align="start" className="w-auto p-0">
+          <PopoverContent align="start" padding="none" className="w-auto">
             <CalendarRangePicker onSelect={() => setOpen(false)} />
           </PopoverContent>
         </Popover>
@@ -89,7 +89,7 @@ export function CalendarStatus() {
               <button
                 type="button"
                 aria-label="Back to month"
-                className={STATUS_BUTTON}
+                className={cn("press cursor-pointer", STATUS_BUTTON)}
                 onClick={() => exitWeek(instanceId)}
               >
                 <ArrowLeft />

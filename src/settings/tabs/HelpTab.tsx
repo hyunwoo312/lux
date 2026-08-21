@@ -38,7 +38,7 @@ export function HelpTab() {
             Open Accounts &amp; Permissions
           </LinkButton>
         </HelpItem>
-        <Button variant="outline" size="sm" className="w-fit gap-2" onClick={takeTour}>
+        <Button variant="outline" className="w-fit gap-2" onClick={takeTour}>
           <Compass className="size-4" />
           Take the guided tour
         </Button>
@@ -155,7 +155,7 @@ function LinkButton({ onClick, children }: { onClick: () => void; children: Reac
     <button
       type="button"
       onClick={onClick}
-      className="text-primary w-fit text-caption font-medium hover:underline"
+      className="press cursor-pointer text-primary w-fit text-caption font-medium hover:underline"
     >
       {children}
     </button>

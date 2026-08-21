@@ -115,7 +115,7 @@ export function CalendarWidget() {
               type="button"
               onClick={openConfig}
               className="
-                text-micro
+                press cursor-pointer text-micro
                 hover:text-ink
                 flex-none font-semibold underline-offset-2
                 hover:underline

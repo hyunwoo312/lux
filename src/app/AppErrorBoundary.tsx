@@ -61,23 +61,23 @@ function CrashCard({ message }: { message: string }) {
         </p>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          <Button size="sm" autoFocus onClick={() => window.location.reload()}>
+          <Button autoFocus onClick={() => window.location.reload()}>
             Reload
           </Button>
-          <Button size="sm" variant="outline" onClick={exportBackup}>
+          <Button variant="outline" onClick={exportBackup}>
             Export backup
           </Button>
           {confirmingReset ? (
             <>
-              <Button size="sm" variant="destructive" onClick={resetLayout}>
+              <Button variant="destructive" onClick={resetLayout}>
                 Reset layout
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setConfirmingReset(false)}>
+              <Button variant="ghost" onClick={() => setConfirmingReset(false)}>
                 Cancel
               </Button>
             </>
           ) : (
-            <Button size="sm" variant="ghost" onClick={() => setConfirmingReset(true)}>
+            <Button variant="ghost" onClick={() => setConfirmingReset(true)}>
               Reset layout
             </Button>
           )}
@@ -114,7 +114,7 @@ function CrashDetail({ message }: { message: string }) {
         <span className="text-ink-3 text-micro font-medium tracking-wide uppercase">
           What went wrong
         </span>
-        <Button size="sm" variant="ghost" onClick={copyMessage} aria-label="Copy error message">
+        <Button variant="ghost" onClick={copyMessage} aria-label="Copy error message">
           {copied ? <Check aria-hidden /> : <Copy aria-hidden />}
           {copied ? "Copied" : "Copy"}
         </Button>

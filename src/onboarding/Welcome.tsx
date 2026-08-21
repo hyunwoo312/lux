@@ -28,7 +28,7 @@ export function Welcome() {
       <DialogContent
         dismissOnClickOutside={false}
         onOpenAutoFocus={(event) => event.preventDefault()}
-        className="glass-panel w-[min(28rem,calc(100vw-2rem))] p-6"
+        className="w-[min(28rem,calc(100vw-2rem))] p-6"
       >
         <div className="flex flex-col">
           <motion.img
@@ -105,10 +105,12 @@ export function Welcome() {
                 <span className="text-ink-3">Customize</span>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" onClick={closeWelcome}>
+                <Button size="lg" variant="ghost" onClick={closeWelcome}>
                   Skip
                 </Button>
-                <Button onClick={startTour}>Take a tour</Button>
+                <Button size="lg" onClick={startTour}>
+                  Take a tour
+                </Button>
               </div>
             </motion.div>
           </motion.div>

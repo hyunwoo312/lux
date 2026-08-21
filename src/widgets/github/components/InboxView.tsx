@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Spinner } from "@/components/ui/spinner";
 import type { ReactNode } from "react";
 import {
   AlertCircle,
@@ -13,7 +14,6 @@ import {
   GitMerge,
   GitPullRequest,
   GitPullRequestDraft,
-  Loader2,
   Mail,
   MessageSquare,
   RotateCw,
@@ -207,7 +207,7 @@ export function InboxList({
   }
 
   return (
-    <div className="flex h-full flex-col gap-3 overflow-y-auto p-1">
+    <div className="scroll-fade flex h-full flex-col gap-3 overflow-y-auto p-1">
       {reviewRequests.length > 0 && (
         <Section title="Review requests" count={reviewRequests.length}>
           {reviewRequests.map((pr) => (
@@ -284,7 +284,7 @@ function SectionError({
             type="button"
             onClick={onRetry}
             className="
-              text-ink-3
+              press cursor-pointer text-ink-3
               hover:text-ink
               text-micro ml-auto flex items-center gap-1 rounded-sm
             "
@@ -334,14 +334,14 @@ function MarkAllReadButton({ marking, onClick }: { marking: boolean; onClick: ()
         disabled={marking}
         aria-label="Mark all notifications read"
         className="
-          text-ink-3
+          press cursor-pointer text-ink-3
           hover:text-ink
           flex size-6 items-center justify-center rounded-sm
           disabled:opacity-50
         "
       >
         {marking ? (
-          <Loader2 className="size-3.5 animate-spin" aria-hidden />
+          <Spinner className="size-3.5" />
         ) : (
           <CheckCheck className="size-3.5" aria-hidden />
         )}
@@ -365,7 +365,7 @@ function NotificationActionButton({
       aria-label={label}
       onClick={onClick}
       className="
-        text-ink-3
+        press cursor-pointer text-ink-3
         hover:text-ink
         flex size-6 shrink-0 items-center justify-center rounded-sm
       "
@@ -502,7 +502,7 @@ function NotificationRow({
       {actions &&
         (pending ? (
           <span className="text-ink-3 flex size-6 shrink-0 items-center justify-center">
-            <Loader2 className="size-3.5 animate-spin" aria-hidden />
+            <Spinner className="size-3.5" />
           </span>
         ) : (
           <div

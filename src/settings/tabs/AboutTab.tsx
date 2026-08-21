@@ -237,7 +237,10 @@ export function AboutTab() {
               <button
                 type="button"
                 onClick={() => setTab("accounts")}
-                className="text-primary w-fit text-caption font-medium hover:underline"
+                className="
+                  press cursor-pointer text-primary w-fit text-caption font-medium
+                  hover:underline
+                "
               >
                 Manage in Accounts &amp; Permissions
               </button>
@@ -256,7 +259,10 @@ export function AboutTab() {
               <button
                 type="button"
                 onClick={() => setTab("general")}
-                className="text-primary w-fit text-caption font-medium hover:underline"
+                className="
+                  press cursor-pointer text-primary w-fit text-caption font-medium
+                  hover:underline
+                "
               >
                 Back up or reset in General
               </button>
@@ -339,11 +345,7 @@ function LogoMark() {
       whileHover={{ y: -5, scale: 1.06 }}
       whileTap={{ scale: 0.92 }}
       transition={SPRING_POP}
-      className="
-        focus-visible:ring-primary/50
-        relative grid size-16 place-items-center rounded-2xl outline-none
-        focus-visible:ring-2
-      "
+      className="focus-ring relative grid size-16 cursor-pointer place-items-center rounded-2xl"
     >
       <motion.span
         aria-hidden

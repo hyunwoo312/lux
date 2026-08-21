@@ -62,7 +62,7 @@ export function ReleaseList({
   }
 
   return (
-    <div className="flex h-full flex-col gap-0.5 overflow-y-auto p-1">
+    <div className="flex h-full flex-col gap-0.5 scroll-fade overflow-y-auto p-1">
       {releases.map((release) => (
         <ReleaseRow key={release.repo} release={release} newTab={newTab} />
       ))}

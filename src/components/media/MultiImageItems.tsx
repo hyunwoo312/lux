@@ -100,8 +100,8 @@ function SortableImage({ item, assetStore, disabled, onRemove }: SortableImagePr
         onPointerLeave={() => setCursor(null)}
         className={cn(
           `
-            border-border/50 bg-foreground/5 relative aspect-square cursor-grab touch-none
-            overflow-hidden rounded-lg border outline-none
+            border-border/50 bg-foreground/5 focus-ring relative aspect-square cursor-grab
+            touch-none overflow-hidden rounded-lg border
           `,
           isDragging && "opacity-50",
         )}
@@ -124,10 +124,9 @@ function SortableImage({ item, assetStore, disabled, onRemove }: SortableImagePr
             onRemove();
           }}
           className="
-            bg-card text-ink-2
+            press bg-card text-ink-2
             hover:text-destructive
             absolute top-1 right-1 grid size-5 cursor-pointer place-items-center rounded-md
-            transition-colors
             disabled:pointer-events-none disabled:opacity-50
             [&_svg]:size-3.5
           "

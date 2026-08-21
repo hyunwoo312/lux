@@ -39,7 +39,7 @@ export function BookmarksView({ editing }: { editing: boolean }) {
       {trail.length > 1 && (
         <Breadcrumb trail={trail} onNavigate={(depth) => setPath(reachedPath.slice(0, depth))} />
       )}
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-x-hidden scroll-fade overflow-y-auto">
         {isEmpty ? (
           <BrowserMessage>
             {trail.length > 1 ? "This folder is empty" : "No bookmarks yet"}
@@ -97,6 +97,7 @@ function Breadcrumb({
               aria-current={isCurrent ? "page" : undefined}
               disabled={isCurrent}
               className={cn(
+                "press",
                 "text-micro max-w-28 truncate rounded-sm px-1 py-0.5",
                 isCurrent ? "text-ink font-semibold" : "text-ink-3 hover:text-ink cursor-pointer",
               )}
@@ -126,7 +127,7 @@ function FolderTile({
         type="button"
         onClick={onOpen}
         aria-label={`Open folder ${folder.title}`}
-        className={qaTileClass(view)}
+        className={cn("press cursor-pointer", qaTileClass(view))}
       >
         <span
           className={cn(

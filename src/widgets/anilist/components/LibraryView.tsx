@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useMemo, useRef, useState, type ReactNode } from "react";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Bookmark,
   CalendarClock,
@@ -10,7 +11,6 @@ import {
   Flame,
   History,
   Library,
-  Loader2,
   Minus,
   PauseCircle,
   PlayCircle,
@@ -373,7 +373,7 @@ function LibraryRows({
   const groups = useMemo(() => (grouped ? groupByAiringDay(visible) : []), [grouped, visible]);
 
   return (
-    <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+    <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col gap-1 scroll-fade overflow-y-auto">
       {grouped
         ? groups.map((group) => (
             <section key={group.key} className="flex flex-col gap-1">
@@ -473,7 +473,7 @@ function CurrentRow({
       <div className="flex shrink-0 items-center gap-1.5">
         {pending ? (
           <span className="text-ink-3 flex size-6 items-center justify-center">
-            <Loader2 className="size-3.5 animate-spin" aria-hidden />
+            <Spinner className="size-3.5" />
           </span>
         ) : !inProgress ? (
           <StepButton
@@ -521,12 +521,11 @@ function CurrentRow({
 
 type FilterOption<T extends string> = { value: T; label: string; icon: LucideIcon };
 
-const FILTER_TRIGGER_CLASS = `
-  text-ink-4
-  hover:text-ink hover:bg-foreground/5
-  focus-visible:text-ink focus-visible:bg-foreground/5
-  data-[state=open]:text-ink data-[state=open]:bg-foreground/5
-  grid size-7 shrink-0 place-items-center rounded-sm outline-none transition-colors
+const FILTER_TRIGGER_CLASS = `focus-ring text-ink-4
+ hover:text-ink hover:bg-foreground/5
+ focus-visible:text-ink focus-visible:bg-foreground/5
+ data-[state=open]:text-ink data-[state=open]:bg-foreground/5
+ grid size-7 shrink-0 place-items-center rounded-sm transition-colors
 `;
 
 function FilterMenu<T extends string>({
@@ -565,10 +564,7 @@ function FilterMenu<T extends string>({
           </AnimatePresence>
         </PopoverTrigger>
       </Tooltip>
-      <PopoverContent
-        align="end"
-        className={cn(accentClass(ANILIST_ACCENT), "w-auto min-w-40 p-1")}
-      >
+      <PopoverContent align="end" className={cn(accentClass(ANILIST_ACCENT), "w-auto min-w-40")}>
         <div className="flex flex-col">
           {options.map((option, index) => {
             const Icon = option.icon;
@@ -589,6 +585,7 @@ function FilterMenu<T extends string>({
                   ease: EASE_OUT,
                 }}
                 className={cn(
+                  "press cursor-pointer",
                   `
                     hover:bg-accent
                     flex items-center gap-2 rounded-sm px-2 py-1.5 text-left text-caption
@@ -632,6 +629,7 @@ function StepButton({
       onClick={onClick}
       aria-label={label}
       className={cn(
+        "press cursor-pointer",
         `text-ink-3 hover:text-ink flex size-6 shrink-0 items-center justify-center rounded-sm`,
         className,
       )}
