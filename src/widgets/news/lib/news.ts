@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { tolerantArray } from "@/lib/persist";
 import { ensureOk, readCappedText, withTimeout } from "@/lib/net";
 import {
   NEWS_SOURCES,
@@ -255,7 +256,7 @@ export function parseFeed(
         publishedAt: Number.isNaN(parsed) ? null : parsed,
         image: imageFromNode(node),
         dek: cleanDek(dekRaw, cleanTitle),
-        alsoIn: [],
+        related: [],
       };
     })
     .filter((item) => {
@@ -293,6 +294,17 @@ export async function fetchSearch(
 
 const MAX_MERGED_ITEMS = 50;
 
+export function compactTime(time: number, now: number): string {
+  const minutes = Math.round((now - time) / 60_000);
+  if (minutes < 1) return "now";
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.round(hours / 24);
+  if (days < 7) return `${days}d`;
+  return `${Math.round(days / 7)}w`;
+}
+
 export function normalizeTitle(title: string): string {
   return title
     .toLowerCase()
@@ -300,7 +312,7 @@ export function normalizeTitle(title: string): string {
     .trim();
 }
 
-type Cluster = { rep: NewsItem; sources: string[] };
+type Cluster = { rep: NewsItem; members: NewsItem[] };
 
 export function mergeFeeds(feeds: NewsItem[][]): NewsItem[] {
   const byTitle = new Map<string, Cluster>();
@@ -308,16 +320,30 @@ export function mergeFeeds(feeds: NewsItem[][]): NewsItem[] {
     const key = normalizeTitle(item.title);
     const cluster = byTitle.get(key);
     if (!cluster) {
-      byTitle.set(key, { rep: item, sources: [item.source] });
+      byTitle.set(key, { rep: item, members: [item] });
       continue;
     }
-    if (!cluster.sources.includes(item.source)) cluster.sources.push(item.source);
+    if (!cluster.members.some((member) => member.source === item.source)) {
+      cluster.members.push(item);
+    }
     if (!cluster.rep.image && item.image) cluster.rep = item;
   }
   return [...byTitle.values()]
-    .map(({ rep, sources }) => ({ ...rep, alsoIn: sources.filter((name) => name !== rep.source) }))
+    .map(({ rep, members }) => {
+      const others = members.filter((member) => member.source !== rep.source);
+      return {
+        ...rep,
+        related: others.map((member) => ({ source: member.source, link: member.link })),
+      };
+    })
     .sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0))
     .slice(0, MAX_MERGED_ITEMS);
+}
+
+const failedSources = new Map<string, NewsSource[]>();
+
+export function readFailedSources(cacheKey: string): NewsSource[] {
+  return failedSources.get(cacheKey) ?? [];
 }
 
 export async function fetchMergedFeeds(
@@ -325,6 +351,7 @@ export async function fetchMergedFeeds(
   region: NewsRegion,
   topic: NewsTopic,
   signal?: AbortSignal,
+  cacheKey?: string,
 ): Promise<NewsItem[]> {
   const results = await Promise.allSettled(
     sources.map((source) => fetchFeed(source, region, topic, signal)),
@@ -332,6 +359,11 @@ export async function fetchMergedFeeds(
   const loaded = results.filter(
     (result): result is PromiseFulfilledResult<NewsItem[]> => result.status === "fulfilled",
   );
+  if (cacheKey) {
+    const missing = sources.filter((_, index) => results[index]?.status === "rejected");
+    if (missing.length > 0) failedSources.set(cacheKey, missing);
+    else failedSources.delete(cacheKey);
+  }
   if (loaded.length === 0) {
     const first = results[0];
     throw first?.status === "rejected" && first.reason instanceof Error
@@ -353,10 +385,10 @@ const itemSchema = z.object({
   publishedAt: z.number().nullable(),
   image: httpUrlSchema.nullable().default(null),
   dek: z.string().nullable().default(null).catch(null),
-  alsoIn: z.array(z.string()).default([]).catch([]),
+  related: tolerantArray(z.object({ source: z.string(), link: httpUrlSchema })),
 });
 
 export function parseCachedNews(raw: unknown): NewsItem[] | null {
-  const result = z.array(itemSchema).safeParse(raw);
-  return result.success ? result.data : null;
+  const result = tolerantArray(itemSchema).safeParse(raw);
+  return result.success && result.data.length > 0 ? result.data : null;
 }

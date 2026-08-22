@@ -69,6 +69,13 @@ export const ENDPOINTS: readonly Endpoint[] = [
     access: "host-permission",
   },
   {
+    host: "https://trends.google.com/*",
+    usedBy: "widgets/news",
+    reason:
+      "Google's own RSS export of Trending Now for the News widget's Trending tab (cookieless)",
+    access: "host-permission",
+  },
+  {
     host: "https://news.google.com/*",
     usedBy: "widgets/news",
     reason: "Google News RSS, including topic and search feeds",

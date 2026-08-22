@@ -33,7 +33,7 @@ function item(id: string, title: string, image: string | null = null): NewsItem 
     publishedAt: null,
     image,
     dek: null,
-    alsoIn: [],
+    related: [],
   };
 }
 
@@ -47,6 +47,8 @@ function seed(
   useNewsStore.setState({
     byInstance: {
       [instanceId]: {
+        view: "news",
+        trendRegion: "US",
         activeSource,
         region,
         topic: "top",
@@ -60,6 +62,7 @@ function seed(
         seenTitles,
         mutedTerms: [],
         highlightTerms: [],
+        bookmarks: [],
       },
     },
   });
@@ -163,6 +166,8 @@ describe("NewsWidget", () => {
     useNewsStore.setState({
       byInstance: {
         "news-sort": {
+          view: "news",
+          trendRegion: "US",
           activeSource: "nyt",
           region: "uk",
           topic: "top",
@@ -176,6 +181,7 @@ describe("NewsWidget", () => {
           seenTitles: [],
           mutedTerms: [],
           highlightTerms: [],
+          bookmarks: [],
         },
       },
     });
@@ -230,6 +236,7 @@ describe("NewsWidget", () => {
       "us",
       "top",
       expect.anything(),
+      expect.any(String),
     );
   });
 
@@ -434,7 +441,7 @@ describe("news image loading", () => {
     const { container } = renderWidget("news-img-tiles");
 
     await screen.findByText("Pictured");
-    expect(container.querySelector("img")).toBeNull();
+    expect(container.querySelector('img[src^="https://img.test"]')).toBeNull();
   });
 });
 
@@ -447,5 +454,51 @@ describe("remote images carry a no-referrer policy", () => {
     await screen.findByText("Pictured");
     const image = container.querySelector('img[src="https://img.test/a.jpg"]');
     expect(image?.getAttribute("referrerpolicy")).toBe("no-referrer");
+  });
+});
+
+describe("saved headlines", () => {
+  it("keeps the saved toggle reachable in every tab", async () => {
+    fetchFeedMock.mockResolvedValue([item("a", "First headline")]);
+    seed("news-saved-1", "bbc");
+    renderWidget("news-saved-1");
+
+    expect(await screen.findByText("First headline")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /saved headlines/i })).toBeInTheDocument();
+  });
+
+  it("saves a headline from its bookmark and shows it in the saved view", async () => {
+    fetchFeedMock.mockResolvedValue([item("a", "First headline")]);
+    seed("news-saved-2", "bbc");
+    renderWidget("news-saved-2");
+
+    fireEvent.click(await screen.findByRole("button", { name: /save “First headline”/i }));
+    expect(useNewsStore.getState().byInstance["news-saved-2"]?.bookmarks).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: /saved headlines/i }));
+    expect(screen.getByRole("list", { name: "Saved headlines" })).toBeInTheDocument();
+    expect(screen.getByText("First headline")).toBeInTheDocument();
+  });
+
+  it("says the saved view is empty rather than showing a blank panel", async () => {
+    fetchFeedMock.mockResolvedValue([item("a", "First headline")]);
+    seed("news-saved-3", "bbc");
+    renderWidget("news-saved-3");
+
+    await screen.findByText("First headline");
+    fireEvent.click(screen.getByRole("button", { name: /saved headlines/i }));
+    expect(screen.getByText(/Nothing saved yet/i)).toBeInTheDocument();
+  });
+
+  it("removes a headline from the saved view", async () => {
+    fetchFeedMock.mockResolvedValue([item("a", "First headline")]);
+    seed("news-saved-4", "bbc");
+    renderWidget("news-saved-4");
+
+    fireEvent.click(await screen.findByRole("button", { name: /save “First headline”/i }));
+    fireEvent.click(screen.getByRole("button", { name: /saved headlines/i }));
+    fireEvent.click(screen.getByRole("button", { name: /remove “First headline”/i }));
+
+    expect(useNewsStore.getState().byInstance["news-saved-4"]?.bookmarks).toHaveLength(0);
   });
 });

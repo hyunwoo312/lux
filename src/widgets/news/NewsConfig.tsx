@@ -12,6 +12,7 @@ import {
 } from "@/components/config/WidgetConfig";
 import type { OpenBehavior } from "@/lib/open-url";
 import { sourceTab } from "@/widgets/news/lib/news";
+import { TREND_REGIONS, type TrendRegion } from "@/widgets/news/lib/trend-regions";
 import { SOURCE_ICONS } from "@/widgets/news/components/sourceIcons";
 import {
   NEWS_REGIONS,
@@ -60,6 +61,10 @@ const OPEN_OPTIONS: { value: OpenBehavior; label: string }[] = [
   { value: "newTab", label: "New tab" },
 ];
 
+const TREND_REGION_OPTIONS: { value: TrendRegion; label: string }[] = TREND_REGIONS.map(
+  (entry) => ({ value: entry.code as TrendRegion, label: entry.label }),
+);
+
 export function NewsConfig() {
   const instanceId = useWidgetInstanceId();
   const region = useNews((d) => d.region);
@@ -68,6 +73,8 @@ export function NewsConfig() {
   const enabledSources = useNews((d) => d.enabledSources);
   const sortByLatest = useNews((d) => d.sortByLatest);
   const loadImages = useNews((d) => d.loadImages);
+  const trendRegion = useNews((d) => d.trendRegion);
+  const setTrendRegion = useNewsStore((s) => s.setTrendRegion);
   const setRegion = useNewsStore((s) => s.setRegion);
   const setTopic = useNewsStore((s) => s.setTopic);
   const setOpenBehavior = useNewsStore((s) => s.setOpenBehavior);
@@ -153,6 +160,21 @@ export function NewsConfig() {
         >
           <HighlightTermsEditor />
         </WidgetConfigItem>
+      </WidgetConfigGroup>
+
+      <WidgetConfigGroup label="Trending">
+        <WidgetConfigItem
+          title="Region"
+          description="Which country's trending searches the Trending tab shows"
+          control={
+            <ConfigSelect
+              label="Trending region"
+              value={trendRegion}
+              options={TREND_REGION_OPTIONS}
+              onChange={(value) => setTrendRegion(instanceId, value)}
+            />
+          }
+        />
       </WidgetConfigGroup>
 
       <WidgetConfigGroup label="Sources">

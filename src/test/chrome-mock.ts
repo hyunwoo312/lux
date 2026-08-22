@@ -79,6 +79,7 @@ function createChromeMock() {
           "sessions",
           "tabs",
           "topSites",
+          "search",
         ],
         origins: [] as string[],
       })),
@@ -101,6 +102,9 @@ function createChromeMock() {
     },
     topSites: {
       get: vi.fn(async () => []),
+    },
+    search: {
+      query: vi.fn(async () => undefined),
     },
   };
 }

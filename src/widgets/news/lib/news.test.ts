@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 import {
+  compactTime,
   feedUrl,
   mergeFeeds,
   parseCachedNews,
@@ -201,7 +202,7 @@ function mergedItem(id: string, overrides: Partial<NewsItem> = {}): NewsItem {
     publishedAt: null,
     image: null,
     dek: null,
-    alsoIn: [],
+    related: [],
     ...overrides,
   };
 }
@@ -229,7 +230,7 @@ describe("mergeFeeds", () => {
     expect(merged[0]?.id).toBe("b");
   });
 
-  it("records the other covering sources on the representative as alsoIn", () => {
+  it("records every other covering source on the representative", () => {
     const merged = mergeFeeds([
       [mergedItem("g", { title: "Big story", source: "Google News" })],
       [
@@ -243,12 +244,12 @@ describe("mergeFeeds", () => {
     ]);
     expect(merged).toHaveLength(1);
     expect(merged[0]?.source).toBe("BBC News");
-    expect(merged[0]?.alsoIn).toEqual(["Google News", "NPR"]);
+    expect(merged[0]?.related.map((entry) => entry.source)).toEqual(["Google News", "NPR"]);
   });
 
-  it("leaves alsoIn empty when a headline has a single source", () => {
+  it("records nothing when a headline has a single source", () => {
     const merged = mergeFeeds([[mergedItem("a", { source: "NPR" })]]);
-    expect(merged[0]?.alsoIn).toEqual([]);
+    expect(merged[0]?.related).toEqual([]);
   });
 });
 
@@ -286,7 +287,7 @@ describe("parseCachedNews", () => {
         publishedAt: null,
         image: null,
         dek: null,
-        alsoIn: [],
+        related: [],
       },
     ];
     expect(parseCachedNews(valid)).toEqual(valid);
@@ -306,7 +307,7 @@ describe("parseCachedNews", () => {
         publishedAt: 1782849601000,
         image: "https://example.com/b.jpg",
         dek: "A short summary of the story.",
-        alsoIn: ["BBC", "NPR"],
+        related: [{ source: "NPR", link: "https://npr.org/b" }],
       },
     ];
 
@@ -333,5 +334,76 @@ describe("parseCachedNews", () => {
       { id: "a", title: "t", link: "https://x.test", source: "s", publishedAt: null },
     ]);
     expect(cached?.[0]?.image).toBeNull();
+  });
+});
+
+describe("mergeFeeds clustering", () => {
+  const from = (source: string, link: string, title: string): NewsItem => ({
+    id: link,
+    title,
+    link,
+    source,
+    sourceKey: null,
+    sourceUrl: null,
+    publishedAt: 1,
+    image: null,
+    dek: null,
+    related: [],
+  });
+
+  it("keeps a link back to each other source running the same story", () => {
+    const merged = mergeFeeds([
+      [from("BBC News", "https://bbc/x", "Same story")],
+      [from("NPR", "https://npr/x", "Same story")],
+      [from("Guardian", "https://guardian/x", "Same  story")],
+    ]);
+
+    expect(merged).toHaveLength(1);
+    expect(merged[0]?.related.map((entry) => entry.source)).toEqual(["NPR", "Guardian"]);
+    expect(merged[0]?.related.map((entry) => entry.link)).toEqual([
+      "https://npr/x",
+      "https://guardian/x",
+    ]);
+  });
+
+  it("leaves a story carried by one source with nothing to expand", () => {
+    const merged = mergeFeeds([[from("BBC News", "https://bbc/y", "Only here")]]);
+    expect(merged[0]?.related).toEqual([]);
+  });
+
+  it("does not list the same source twice when a feed repeats a story", () => {
+    const merged = mergeFeeds([
+      [
+        from("BBC News", "https://bbc/x", "Same story"),
+        from("BBC News", "https://bbc/x2", "Same story"),
+      ],
+      [from("NPR", "https://npr/x", "Same story")],
+    ]);
+    expect(merged[0]?.related).toHaveLength(1);
+  });
+});
+
+describe("compactTime", () => {
+  const NOW = Date.parse("2026-08-23T12:00:00.000Z");
+  const ago = (ms: number) => compactTime(NOW - ms, NOW);
+
+  it("drops the word 'ago' so a tile caption keeps its width for the headline", () => {
+    expect(ago(2 * 60 * 60 * 1000)).toBe("2h");
+  });
+
+  it("says 'now' rather than a zero", () => {
+    expect(ago(0)).toBe("now");
+  });
+
+  it("steps through minutes, hours, days and weeks", () => {
+    expect(ago(5 * 60 * 1000)).toBe("5m");
+    expect(ago(3 * 24 * 60 * 60 * 1000)).toBe("3d");
+    expect(ago(21 * 24 * 60 * 60 * 1000)).toBe("3w");
+  });
+
+  it("never exceeds three characters, so the reserved corner stays small", () => {
+    for (const ms of [0, 6e4, 36e5, 864e5, 6048e5, 31536e6]) {
+      expect(ago(ms).length).toBeLessThanOrEqual(3);
+    }
   });
 });

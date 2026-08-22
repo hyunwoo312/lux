@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { RemoteImage } from "@/components/media/RemoteImage";
 import { cn } from "@/lib/utils";
-import { Tooltip } from "@/components/ui/tooltip";
+import { ROW } from "@/lib/row";
+import { BookmarkButton } from "@/widgets/news/components/BookmarkButton";
 import { HeadlineMeta } from "@/widgets/news/components/HeadlineMeta";
-import { HighlightedTitle } from "@/widgets/news/components/HighlightedTitle";
+import { HeadlineTitle } from "@/widgets/news/components/HeadlineTitle";
 import type { OpenBehavior } from "@/lib/open-url";
 import type { NewsItem } from "@/widgets/news/types";
 
@@ -15,8 +16,10 @@ export function HeadlineRow({
   withSource,
   isRead,
   isNew,
+  isSaved,
   highlightTerms,
   onRead,
+  onToggleSaved,
 }: {
   item: NewsItem;
   now: number;
@@ -25,26 +28,22 @@ export function HeadlineRow({
   withSource: boolean;
   isRead: boolean;
   isNew: boolean;
+  isSaved: boolean;
   highlightTerms: string[];
   onRead: () => void;
+  onToggleSaved: () => void;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
-
   const hasImage = item.image !== null && !imageFailed;
 
-  const row = (
+  return (
     <a
       href={item.link}
       target={openBehavior === "newTab" ? "_blank" : undefined}
       rel="noreferrer"
       onClick={onRead}
       onAuxClick={onRead}
-      className="
-        focus-ring group
-        hover:bg-foreground/5
-        focus-visible:bg-foreground/5
-        flex items-start gap-2.5 rounded-lg px-2 py-1.5 transition-colors
-      "
+      className={cn(ROW.itemAction, "group items-start")}
     >
       {withThumbnail && (
         <span className="bg-foreground/5 size-11 shrink-0 overflow-hidden rounded-md">
@@ -61,23 +60,15 @@ export function HeadlineRow({
         </span>
       )}
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span
+        <HeadlineTitle
+          title={item.title}
+          terms={highlightTerms}
+          isNew={isNew}
           className={cn(
-            "group-hover:text-primary line-clamp-2 text-body leading-snug",
+            "group-hover:text-primary text-body leading-snug",
             isRead ? "text-ink-3" : "text-ink",
           )}
-        >
-          {isNew && (
-            <>
-              <span
-                className="bg-primary mr-1.5 mb-px inline-block size-1.5 rounded-full"
-                aria-hidden
-              />
-              <span className="sr-only">New</span>
-            </>
-          )}
-          <HighlightedTitle title={item.title} terms={highlightTerms} />
-        </span>
+        />
         {item.dek && (
           <span
             className={cn(
@@ -88,14 +79,20 @@ export function HeadlineRow({
             {item.dek}
           </span>
         )}
-        <HeadlineMeta item={item} now={now} withSource={withSource} isRead={isRead} />
+        <HeadlineMeta
+          item={item}
+          now={now}
+          withSource={withSource}
+          isRead={isRead}
+          openBehavior={openBehavior}
+        />
       </span>
+      <BookmarkButton
+        title={item.title}
+        saved={isSaved}
+        onToggle={onToggleSaved}
+        className="self-center"
+      />
     </a>
-  );
-
-  return (
-    <Tooltip content={item.title} side="bottom" solid>
-      {row}
-    </Tooltip>
   );
 }

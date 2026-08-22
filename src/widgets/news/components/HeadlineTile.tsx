@@ -2,101 +2,100 @@ import { useState } from "react";
 import { RemoteImage } from "@/components/media/RemoteImage";
 import { Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Tooltip } from "@/components/ui/tooltip";
-import { HeadlineMeta } from "@/widgets/news/components/HeadlineMeta";
-import { HighlightedTitle } from "@/widgets/news/components/HighlightedTitle";
+import { BookmarkButton } from "@/widgets/news/components/BookmarkButton";
+import { HeadlineTitle } from "@/widgets/news/components/HeadlineTitle";
 import { SOURCE_ICONS } from "@/widgets/news/components/sourceIcons";
+import { compactTime } from "@/widgets/news/lib/news";
 import type { OpenBehavior } from "@/lib/open-url";
 import type { NewsItem } from "@/widgets/news/types";
+
+const CAPTION = `
+  art-scrim absolute inset-x-0 bottom-0 block h-[calc(2lh+0.5rem)] px-2 py-1 text-caption
+  leading-snug font-medium
+`;
 
 export function HeadlineTile({
   item,
   now,
   openBehavior,
-  withSource,
   isRead,
   isNew,
+  isSaved,
   highlightTerms,
   onRead,
+  onToggleSaved,
 }: {
   item: NewsItem;
   now: number;
   openBehavior: OpenBehavior;
-  withSource: boolean;
   isRead: boolean;
   isNew: boolean;
+  isSaved: boolean;
   highlightTerms: string[];
   onRead: () => void;
+  onToggleSaved: () => void;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
 
   const hasImage = item.image !== null && !imageFailed;
-  const PlaceholderIcon = item.sourceKey ? SOURCE_ICONS[item.sourceKey] : Newspaper;
+  const SourceIcon = item.sourceKey ? SOURCE_ICONS[item.sourceKey] : Newspaper;
+  const timeLabel = item.publishedAt !== null ? compactTime(item.publishedAt, now) : null;
 
-  const tile = (
+  const caption = (
+    <span className={CAPTION}>
+      <HeadlineTitle
+        title={item.title}
+        terms={highlightTerms}
+        isNew={isNew}
+        className={cn(isRead ? "text-white/65" : "text-white", timeLabel && "pr-8")}
+      />
+      {timeLabel && (
+        <span className="text-micro absolute right-2 bottom-1 text-white/65 tabular-nums">
+          {timeLabel}
+        </span>
+      )}
+    </span>
+  );
+
+  return (
     <a
       href={item.link}
       target={openBehavior === "newTab" ? "_blank" : undefined}
       rel="noreferrer"
       onClick={onRead}
       onAuxClick={onRead}
-      className="group bg-foreground/5 relative block aspect-[2/1] overflow-hidden rounded-lg"
+      className="
+        press focus-ring group bg-foreground/5 relative block aspect-[16/9] overflow-hidden
+        rounded-lg
+      "
     >
-      {hasImage ? (
+      {hasImage && (
         <RemoteImage
           src={item.image ?? undefined}
           alt=""
           aria-hidden
           onError={() => setImageFailed(true)}
-          className={cn(
-            `
-              absolute inset-0 size-full object-cover transition-transform duration-300
-              group-hover:scale-105
-              motion-reduce:transition-none
-            `,
-            isRead && "opacity-50",
-          )}
+          className="
+            absolute inset-0 size-full object-cover transition-transform duration-300
+            group-hover:scale-105
+            motion-reduce:transition-none
+          "
         />
-      ) : (
-        <PlaceholderIcon className="text-ink-4 absolute top-3 right-3 size-5" />
       )}
-      <span
-        className="
-          absolute inset-x-0 bottom-0 flex flex-col gap-0.5 bg-gradient-to-t from-black/75
-          to-black/40 px-2 py-1.5 backdrop-blur-[2px]
-        "
-      >
-        <span
-          className={cn(
-            "group-hover:text-primary line-clamp-2 text-caption leading-snug font-medium",
-            isRead ? "text-white/60" : "text-white",
-          )}
-        >
-          {isNew && (
-            <>
-              <span
-                className="bg-primary mr-1.5 mb-px inline-block size-1.5 rounded-full"
-                aria-hidden
-              />
-              <span className="sr-only">New</span>
-            </>
-          )}
-          <HighlightedTitle title={item.title} terms={highlightTerms} />
-        </span>
-        <HeadlineMeta
-          item={item}
-          now={now}
-          withSource={withSource}
-          isRead={isRead}
-          className="text-white/65"
-        />
-      </span>
+      <SourceIcon
+        className={cn(
+          "absolute top-2 left-2 size-4",
+          hasImage ? "text-white drop-shadow-md" : "text-ink-3",
+        )}
+      />
+      <BookmarkButton
+        title={item.title}
+        saved={isSaved}
+        onToggle={onToggleSaved}
+        onArt={hasImage}
+        className="absolute top-1 right-1 size-6"
+      />
+      {caption}
     </a>
-  );
-
-  return (
-    <Tooltip content={item.title} side="bottom" solid>
-      {tile}
-    </Tooltip>
   );
 }

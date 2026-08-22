@@ -3,27 +3,23 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { faviconUrl } from "@/lib/favicon";
 import { formatRelativeTime } from "@/lib/relative-time";
+import { RelatedStories } from "@/widgets/news/components/RelatedStories";
+import type { OpenBehavior } from "@/lib/open-url";
 import type { NewsItem } from "@/widgets/news/types";
-
-function formatAlsoIn(alsoIn: string[]): string | null {
-  if (alsoIn.length === 0) return null;
-  const [first] = alsoIn;
-  if (!first) return null;
-  const extra = alsoIn.length - 1;
-  return extra > 0 ? `also on ${first} +${extra}` : `also on ${first}`;
-}
 
 export function HeadlineMeta({
   item,
   now,
   withSource,
   isRead,
+  openBehavior,
   className,
 }: {
   item: NewsItem;
   now: number;
   withSource: boolean;
   isRead: boolean;
+  openBehavior: OpenBehavior;
   className?: string;
 }) {
   const [faviconFailed, setFaviconFailed] = useState(false);
@@ -31,9 +27,9 @@ export function HeadlineMeta({
   const showSource = item.sourceUrl !== null || withSource;
   const favicon = item.sourceUrl ? faviconUrl(item.sourceUrl, 32) : null;
   const timeLabel = item.publishedAt !== null ? formatRelativeTime(item.publishedAt, now) : null;
-  const alsoInLabel = formatAlsoIn(item.alsoIn);
+  const related = item.related;
 
-  if (!showSource && !timeLabel && !isRead && !alsoInLabel) return null;
+  if (!showSource && !timeLabel && !isRead && related.length === 0) return null;
 
   return (
     <span className={cn("text-ink-3 flex items-center gap-1.5 text-caption", className)}>
@@ -55,10 +51,10 @@ export function HeadlineMeta({
       )}
       {showSource && timeLabel && <span aria-hidden>·</span>}
       {timeLabel && <span className="shrink-0 tabular-nums">{timeLabel}</span>}
-      {alsoInLabel && (
+      {related.length > 0 && (
         <>
           <span aria-hidden>·</span>
-          <span className="min-w-0 truncate">{alsoInLabel}</span>
+          <RelatedStories title={item.title} related={related} openBehavior={openBehavior} />
         </>
       )}
     </span>

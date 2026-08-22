@@ -1,5 +1,5 @@
 import { DURATION, EASE_OUT, SPRING_CRISP } from "@/lib/motion";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import type { WidgetIcon } from "@/widgets/core/types";
@@ -9,6 +9,7 @@ export type WidgetTab<T extends string> = {
   label: string;
   icon: WidgetIcon;
   badge?: number;
+  separated?: boolean;
 };
 
 type WidgetTabsProps<T extends string> = {
@@ -68,12 +69,12 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
-            <span
-              key={tab.value}
-              className="flex items-center px-1.5 py-1 text-caption font-medium [&_svg]:size-3.5"
-            >
-              <Icon />
-              <span className="pl-1.5">{tab.label}</span>
+            <span key={tab.value} className="flex items-center">
+              {tab.separated && <span className="mx-1 w-px" />}
+              <span className="flex items-center px-1.5 py-1 text-caption font-medium [&_svg]:size-3.5">
+                <Icon />
+                <span className="pl-1.5">{tab.label}</span>
+              </span>
             </span>
           );
         })}
@@ -94,55 +95,59 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
         const isActive = tab.value === value;
         const Icon = tab.icon;
         return (
-          <button
-            key={tab.value}
-            ref={(el) => {
-              if (el) buttons.current.set(tab.value, el);
-              else buttons.current.delete(tab.value);
-            }}
-            type="button"
-            role="tab"
-            aria-selected={isActive}
-            aria-label={tab.badge ? `${tab.label} (${tab.badge})` : tab.label}
-            onClick={() => onSelect(tab.value)}
-            className={cn(
-              "press",
-              `
-                relative flex cursor-pointer items-center rounded-md px-1.5 py-1 text-caption
-                font-medium transition-colors
-                [&_svg]:size-3.5
-              `,
-              isActive ? "text-ink" : "text-ink-3 hover:text-ink",
+          <Fragment key={tab.value}>
+            {tab.separated && (
+              <span className="bg-border/60 mx-1 h-3.5 w-px shrink-0" aria-hidden />
             )}
-          >
-            {tab.badge ? (
-              <span
-                aria-hidden
-                className="
-                  bg-primary text-primary-foreground absolute -top-1 -right-0.5 flex h-3.5 min-w-3.5
-                  items-center justify-center rounded-full px-1 text-micro leading-none
-                  font-semibold tabular-nums
-                "
-              >
-                {tab.badge > 9 ? "9+" : tab.badge}
-              </span>
-            ) : null}
-            <Icon />
-            <AnimatePresence initial={false}>
-              {(isActive || wide) && (
-                <motion.span
-                  key="label"
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: "auto", opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: DURATION.base, ease: EASE_OUT }}
-                  className="overflow-hidden whitespace-nowrap"
-                >
-                  <span className="pl-1.5">{tab.label}</span>
-                </motion.span>
+            <button
+              ref={(el) => {
+                if (el) buttons.current.set(tab.value, el);
+                else buttons.current.delete(tab.value);
+              }}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-label={tab.badge ? `${tab.label} (${tab.badge})` : tab.label}
+              onClick={() => onSelect(tab.value)}
+              className={cn(
+                "press",
+                `
+                  relative flex cursor-pointer items-center rounded-md px-1.5 py-1 text-caption
+                  font-medium transition-colors
+                  [&_svg]:size-3.5
+                `,
+                isActive ? "text-ink" : "text-ink-3 hover:text-ink",
               )}
-            </AnimatePresence>
-          </button>
+            >
+              {tab.badge ? (
+                <span
+                  aria-hidden
+                  className="
+                    bg-primary text-primary-foreground absolute -top-1 -right-0.5 flex h-3.5
+                    min-w-3.5 items-center justify-center rounded-full px-1 text-micro leading-none
+                    font-semibold tabular-nums
+                  "
+                >
+                  {tab.badge > 9 ? "9+" : tab.badge}
+                </span>
+              ) : null}
+              <Icon />
+              <AnimatePresence initial={false}>
+                {(isActive || wide) && (
+                  <motion.span
+                    key="label"
+                    initial={{ width: 0, opacity: 0 }}
+                    animate={{ width: "auto", opacity: 1 }}
+                    exit={{ width: 0, opacity: 0 }}
+                    transition={{ duration: DURATION.base, ease: EASE_OUT }}
+                    className="overflow-hidden whitespace-nowrap"
+                  >
+                    <span className="pl-1.5">{tab.label}</span>
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </button>
+          </Fragment>
         );
       })}
     </div>

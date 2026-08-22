@@ -1,7 +1,14 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
+import {
+  DEFAULT_REGION,
+  TREND_REGION_CODES,
+  type TrendRegion,
+} from "@/widgets/news/lib/trend-regions";
+import type { RankMap } from "@/widgets/news/lib/trend-movement";
 import { createGatedChromeStorage } from "@/lib/storage";
+import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
@@ -11,11 +18,16 @@ import {
   NEWS_REGIONS,
   NEWS_SOURCES,
   NEWS_TABS,
+  NEWS_VIEWS,
   NEWS_TOPICS,
+  MAX_BOOKMARKS,
+  type Bookmark,
+  type NewsItem,
   type NewsLayout,
   type NewsRegion,
   type NewsSource,
   type NewsTab,
+  type NewsView,
   type NewsTopic,
 } from "@/widgets/news/types";
 
@@ -33,6 +45,8 @@ function appendCapped(existing: string[], added: string[], cap: number): string[
 }
 
 type NewsData = {
+  view: NewsView;
+  trendRegion: TrendRegion;
   activeSource: NewsTab;
   region: NewsRegion;
   topic: NewsTopic;
@@ -46,10 +60,17 @@ type NewsData = {
   seenTitles: string[];
   mutedTerms: string[];
   highlightTerms: string[];
+  bookmarks: Bookmark[];
 };
+
+type TrendSnapshot = { takenAt: number; ranks: RankMap; previous: RankMap };
 
 type NewsState = {
   byInstance: Record<string, NewsData>;
+  trendSnapshots: Record<string, TrendSnapshot>;
+  setView: (instanceId: string, view: NewsView) => void;
+  setTrendRegion: (instanceId: string, region: TrendRegion) => void;
+  rememberTrendSnapshot: (region: string, ranks: RankMap, takenAt: number) => void;
   setActiveSource: (instanceId: string, source: NewsTab) => void;
   setRegion: (instanceId: string, region: NewsRegion) => void;
   setTopic: (instanceId: string, topic: NewsTopic) => void;
@@ -65,10 +86,13 @@ type NewsState = {
   removeMutedTerm: (instanceId: string, term: string) => void;
   addHighlightTerm: (instanceId: string, term: string) => void;
   removeHighlightTerm: (instanceId: string, term: string) => void;
+  toggleBookmark: (instanceId: string, item: NewsItem) => boolean;
   removeInstance: (instanceId: string) => void;
 };
 
 const DEFAULT_DATA: NewsData = {
+  view: "news",
+  trendRegion: DEFAULT_REGION,
   activeSource: "all",
   region: "us",
   topic: "top",
@@ -82,36 +106,64 @@ const DEFAULT_DATA: NewsData = {
   seenTitles: [],
   mutedTerms: [],
   highlightTerms: [],
+  bookmarks: [],
 };
 
 function isNewsSource(value: string): value is NewsSource {
   return (NEWS_SOURCES as readonly string[]).includes(value);
 }
 
+const relatedSchema = z.object({ source: z.string(), link: z.string() });
+
+const bookmarkSchema = z.object({
+  item: z.object({
+    id: z.string(),
+    title: z.string(),
+    link: z.string(),
+    source: z.string(),
+    sourceKey: z.enum(NEWS_SOURCES).nullable().catch(null),
+    sourceUrl: z.string().nullable().catch(null),
+    publishedAt: z.number().nullable().catch(null),
+    image: z.string().nullable().catch(null),
+    dek: z.string().nullable().catch(null),
+    related: tolerantArray(relatedSchema),
+  }),
+  savedAt: z.number().catch(0),
+});
+
+const rankSchema = tolerantRecord(z.number());
+
+const snapshotSchema = z.object({
+  takenAt: z.number().catch(0),
+  ranks: rankSchema,
+  previous: rankSchema,
+});
+
 const dataSchema = z.object({
-  activeSource: z.enum(NEWS_TABS).default("all").catch("all"),
-  region: z.enum(NEWS_REGIONS).default("us"),
-  topic: z.enum(NEWS_TOPICS).default("top").catch("top"),
-  layout: z.enum(NEWS_LAYOUTS).default("list"),
-  googleQuery: z.string().default(""),
-  enabledSources: z
-    .array(z.string())
-    .default(DEFAULT_ENABLED_SOURCES)
-    .transform((sources) => {
-      const valid = sources.filter(isNewsSource);
-      return valid.length > 0 ? valid : DEFAULT_ENABLED_SOURCES;
-    }),
-  openBehavior: z.enum(["currentTab", "newTab"]).default("currentTab"),
-  loadImages: z.boolean().default(true),
-  sortByLatest: z.boolean().default(true),
-  readTitles: z.array(z.string()).default([]),
-  seenTitles: z.array(z.string()).default([]),
-  mutedTerms: z.array(z.string()).default([]),
-  highlightTerms: z.array(z.string()).default([]),
+  view: z.enum(NEWS_VIEWS).catch("news"),
+  trendRegion: z.enum(TREND_REGION_CODES).catch(DEFAULT_REGION),
+  activeSource: z.enum(NEWS_TABS).catch("all"),
+  region: z.enum(NEWS_REGIONS).catch("us"),
+  topic: z.enum(NEWS_TOPICS).catch("top"),
+  layout: z.enum(NEWS_LAYOUTS).catch("list"),
+  googleQuery: z.string().catch(""),
+  enabledSources: tolerantArray(z.string()).transform((sources) => {
+    const valid = sources.filter(isNewsSource);
+    return valid.length > 0 ? valid : DEFAULT_ENABLED_SOURCES;
+  }),
+  openBehavior: z.enum(["currentTab", "newTab"]).catch("currentTab"),
+  loadImages: z.boolean().catch(true),
+  sortByLatest: z.boolean().catch(true),
+  readTitles: tolerantArray(z.string()),
+  seenTitles: tolerantArray(z.string()),
+  mutedTerms: tolerantArray(z.string()),
+  highlightTerms: tolerantArray(z.string()),
+  bookmarks: tolerantArray(bookmarkSchema),
 });
 
 const persistedSchema = z.object({
-  byInstance: z.record(z.string(), dataSchema),
+  byInstance: tolerantRecord(dataSchema),
+  trendSnapshots: tolerantRecord(snapshotSchema),
 });
 
 const gatedStorage = createGatedChromeStorage();
@@ -142,10 +194,32 @@ function removeTerm(field: TermField, term: string) {
   });
 }
 
+const MAX_REMEMBERED_REGIONS = 6;
+
+function trimSnapshots(snapshots: Record<string, TrendSnapshot>): Record<string, TrendSnapshot> {
+  const entries = Object.entries(snapshots).sort((a, b) => b[1].takenAt - a[1].takenAt);
+  return Object.fromEntries(entries.slice(0, MAX_REMEMBERED_REGIONS));
+}
+
 export const useNewsStore = create<NewsState>()(
   persist(
     (set, get) => ({
       byInstance: {},
+      trendSnapshots: {},
+      setView: (instanceId, view) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, view }))),
+      setTrendRegion: (instanceId, trendRegion) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, trendRegion }))),
+      rememberTrendSnapshot: (region, ranks, takenAt) =>
+        set((state) => {
+          const current = state.trendSnapshots[region];
+          if (current && takenAt <= current.takenAt) return state;
+          const next = {
+            ...state.trendSnapshots,
+            [region]: { takenAt, ranks, previous: current?.ranks ?? {} },
+          };
+          return { trendSnapshots: trimSnapshots(next) };
+        }),
       setActiveSource: (instanceId, activeSource) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, activeSource }))),
       setRegion: (instanceId, region) =>
@@ -197,6 +271,20 @@ export const useNewsStore = create<NewsState>()(
         set((state) => update(state, instanceId, addTerm("highlightTerms", term))),
       removeHighlightTerm: (instanceId, term) =>
         set((state) => update(state, instanceId, removeTerm("highlightTerms", term))),
+      toggleBookmark: (instanceId, item) => {
+        const bookmarks = get().byInstance[instanceId]?.bookmarks ?? [];
+        const saved = bookmarks.some((entry) => entry.item.link === item.link);
+        if (!saved && bookmarks.length >= MAX_BOOKMARKS) return false;
+        set((state) =>
+          update(state, instanceId, (data) => ({
+            ...data,
+            bookmarks: saved
+              ? data.bookmarks.filter((entry) => entry.item.link !== item.link)
+              : [{ item, savedAt: Date.now() }, ...data.bookmarks],
+          })),
+        );
+        return true;
+      },
       removeInstance: (instanceId) =>
         set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
     }),
@@ -205,12 +293,16 @@ export const useNewsStore = create<NewsState>()(
       storage: gatedStorage,
       version: 1,
       onRehydrateStorage: () => () => gatedStorage.open(),
-      partialize: (state) => ({ byInstance: state.byInstance }),
-      merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(persisted);
-        if (!parsed.success) return current;
-        return { ...current, byInstance: parsed.data.byInstance };
-      },
+      partialize: (state) => ({
+        byInstance: state.byInstance,
+        trendSnapshots: state.trendSnapshots,
+      }),
+      merge: (persisted, current) =>
+        mergePersisted("widget:news", persistedSchema, persisted, current, (parsed) => ({
+          ...current,
+          byInstance: parsed.byInstance,
+          trendSnapshots: trimSnapshots(parsed.trendSnapshots),
+        })),
     },
   ),
 );

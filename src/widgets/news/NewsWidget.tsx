@@ -1,24 +1,25 @@
-import type { FormEvent } from "react";
-import { RetryButton, StateMessage } from "@/components/StateMessage";
 import { useEffect, useMemo, useState } from "react";
-import { Search, WifiOff, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { formatRelativeTime } from "@/lib/relative-time";
-import type { PolledResourceState } from "@/widgets/core/usePolledResource";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { panelVariants } from "@/lib/motion";
 import { hasThumbnails, normalizeTitle } from "@/widgets/news/lib/news";
-import { HeadlineRow } from "@/widgets/news/components/HeadlineRow";
-import { HeadlineTile } from "@/widgets/news/components/HeadlineTile";
+import { GoogleSearch, HeadlineFilter } from "@/widgets/news/components/HeadlineSearch";
+import { NewsContent } from "@/widgets/news/components/NewsContent";
+import { NewsSourceBar } from "@/widgets/news/components/NewsSourceBar";
+import { TrendingContent } from "@/widgets/news/components/TrendingContent";
+import { TrendingRegion } from "@/widgets/news/components/TrendingRegion";
+import { SavedList, SavedToggle } from "@/widgets/news/components/SavedList";
 import { useNewsResource } from "@/widgets/news/hooks/useNewsResource";
 import { useNews, useNewsStore } from "@/widgets/news/useNewsStore";
 import { useNow } from "@/hooks/useNow";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import type { NewsItem, NewsLayout } from "@/widgets/news/types";
-import type { OpenBehavior } from "@/lib/open-url";
+import { MAX_BOOKMARKS, type NewsItem } from "@/widgets/news/types";
 
 export function NewsWidget() {
   const instanceId = useWidgetInstanceId();
-  const { state, refresh, isRefreshing, tab, query, isStale, lastSyncedAt } = useNewsResource();
+  const reduced = useReducedMotion() ?? false;
+  const view = useNews((d) => d.view);
+  const { state, refresh, isRefreshing, tab, query, isStale, lastSyncedAt, missingSources } =
+    useNewsResource(view === "news");
   const openBehavior = useNews((d) => d.openBehavior);
   const googleQuery = useNews((d) => d.googleQuery);
   const sortByLatest = useNews((d) => d.sortByLatest);
@@ -60,6 +61,18 @@ export function NewsWidget() {
   }, [hydrated, items, instanceId, markSeen]);
 
   const [allFilter, setAllFilter] = useState("");
+  const [showSaved, setShowSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const bookmarks = useNews((d) => d.bookmarks);
+  const toggleBookmark = useNewsStore((s) => s.toggleBookmark);
+  const savedLinks = useMemo(() => new Set(bookmarks.map((entry) => entry.item.link)), [bookmarks]);
+  const onToggleSaved = (item: NewsItem) => {
+    if (toggleBookmark(instanceId, item)) {
+      setSaveError(null);
+      return;
+    }
+    setSaveError(`Saved list is full — ${MAX_BOOKMARKS} items max.`);
+  };
 
   const readSet = useMemo(() => new Set(readTitles), [readTitles]);
   const newTitles = useMemo(() => {
@@ -73,300 +86,85 @@ export function NewsWidget() {
   const now = useNow().getTime();
 
   return (
-    <div className="flex h-full flex-col gap-2">
-      {tab === "google" ? (
-        <GoogleSearch query={googleQuery} />
-      ) : (
-        <HeadlineFilter value={allFilter} onChange={setAllFilter} />
-      )}
-      <div className="min-h-0 flex-1">
-        <NewsContent
-          state={state}
-          refresh={refresh}
-          isRefreshing={isRefreshing}
-          openBehavior={openBehavior}
-          withThumbnail={withThumbnail && loadImages}
-          withSource={tab === "all"}
-          layout={loadImages ? layout : "list"}
-          sortByLatest={sortByLatest}
-          searchQuery={query || undefined}
-          filterQuery={tab === "google" ? "" : allFilter.trim()}
-          now={now}
-          isStale={isStale}
-          lastSyncedAt={lastSyncedAt}
-          readTitles={readSet}
-          newTitles={newTitles}
-          mutedTerms={mutedTerms}
-          highlightTerms={highlightTerms}
-          onRead={(title) => markRead(instanceId, title)}
-        />
-      </div>
-    </div>
-  );
-}
-
-type NewsContentProps = {
-  state: PolledResourceState<NewsItem[]>;
-  refresh: () => void;
-  isRefreshing: boolean;
-  openBehavior: OpenBehavior;
-  withThumbnail: boolean;
-  withSource: boolean;
-  layout: NewsLayout;
-  sortByLatest: boolean;
-  searchQuery: string | undefined;
-  filterQuery: string;
-  now: number;
-  isStale: boolean;
-  lastSyncedAt: number;
-  readTitles: Set<string>;
-  newTitles: Set<string>;
-  mutedTerms: string[];
-  highlightTerms: string[];
-  onRead: (title: string) => void;
-};
-
-const TILE_GRID_CLASS = "grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-1.5";
-
-function NewsContent({
-  state,
-  refresh,
-  isRefreshing,
-  openBehavior,
-  withThumbnail,
-  withSource,
-  layout,
-  sortByLatest,
-  searchQuery,
-  filterQuery,
-  now,
-  isStale,
-  lastSyncedAt,
-  readTitles,
-  newTitles,
-  mutedTerms,
-  highlightTerms,
-  onRead,
-}: NewsContentProps) {
-  if (state.status === "error") {
-    return (
-      <StateMessage
-        message="Couldn’t load the news."
-        action={<RetryButton onRetry={refresh} retrying={isRefreshing} />}
-      />
-    );
-  }
-
-  if (state.status === "loading") {
-    if (layout === "tiles") {
-      return (
-        <div className={`${TILE_GRID_CLASS} p-0.5`}>
-          {Array.from({ length: 6 }, (_, index) => (
-            <Skeleton key={index} className="aspect-[2/1] w-full rounded-lg" />
-          ))}
-        </div>
-      );
-    }
-    return (
-      <div className="flex flex-col gap-2 p-2">
-        {Array.from({ length: 6 }, (_, index) => (
-          <div key={index} className="flex items-start gap-2.5">
-            {withThumbnail && <Skeleton className="size-11 shrink-0 rounded-md" />}
-            <div className="flex flex-1 flex-col gap-1.5">
-              <Skeleton className="h-3.5 w-full" />
-              <Skeleton className="h-3 w-24" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (state.status === "empty") {
-    return (
-      <div className="text-ink-3 flex h-full items-center justify-center px-4 text-center text-body">
-        {searchQuery ? `No results for “${searchQuery}”` : "No headlines right now."}
-      </div>
-    );
-  }
-
-  const lowerTerms = mutedTerms.map((term) => term.toLowerCase());
-  const visible =
-    lowerTerms.length > 0
-      ? state.data.filter(
-          (entry) => !lowerTerms.some((term) => entry.title.toLowerCase().includes(term)),
-        )
-      : state.data;
-
-  if (visible.length === 0) {
-    return (
-      <div className="text-ink-3 flex h-full items-center justify-center px-4 text-center text-body">
-        All current headlines match your muted keywords.
-      </div>
-    );
-  }
-
-  const lowerFilter = filterQuery.toLowerCase();
-  const matched = lowerFilter
-    ? visible.filter(
-        (entry) =>
-          entry.title.toLowerCase().includes(lowerFilter) ||
-          entry.source.toLowerCase().includes(lowerFilter),
-      )
-    : visible;
-
-  if (matched.length === 0) {
-    return (
-      <div className="text-ink-3 flex h-full items-center justify-center px-4 text-center text-body">
-        {`No matches for “${filterQuery}”`}
-      </div>
-    );
-  }
-
-  const sorted = sortByLatest
-    ? [...matched].sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0))
-    : matched;
-  const items = sorted.map((item) => ({ item, titleKey: normalizeTitle(item.title) }));
-  const isNew = (titleKey: string) => newTitles.has(titleKey) && !readTitles.has(titleKey);
-  const newCount = items.reduce((count, entry) => count + (isNew(entry.titleKey) ? 1 : 0), 0);
-
-  const list =
-    layout === "tiles" ? (
-      <ul
-        className={`${TILE_GRID_CLASS} min-h-0 flex-1 content-start scroll-fade overflow-y-auto p-0.5`}
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={view}
+        variants={panelVariants(reduced)}
+        initial="hidden"
+        animate="show"
+        exit="exit"
+        className="flex h-full flex-col gap-2"
       >
-        {items.map(({ item, titleKey }) => (
-          <li key={item.id} className="min-w-0">
-            <HeadlineTile
-              item={item}
-              now={now}
-              openBehavior={openBehavior}
-              withSource={withSource}
-              isRead={readTitles.has(titleKey)}
-              isNew={isNew(titleKey)}
-              highlightTerms={highlightTerms}
-              onRead={() => onRead(titleKey)}
-            />
-          </li>
-        ))}
-      </ul>
-    ) : (
-      <ul className="flex min-h-0 flex-1 flex-col gap-0.5 scroll-fade overflow-y-auto">
-        {items.map(({ item, titleKey }) => (
-          <li key={item.id}>
-            <HeadlineRow
-              item={item}
-              now={now}
-              openBehavior={openBehavior}
-              withThumbnail={withThumbnail}
-              withSource={withSource}
-              isRead={readTitles.has(titleKey)}
-              isNew={isNew(titleKey)}
-              highlightTerms={highlightTerms}
-              onRead={() => onRead(titleKey)}
-            />
-          </li>
-        ))}
-      </ul>
-    );
-
-  return (
-    <div className="flex h-full flex-col">
-      {isStale && (
-        <div className="text-ink-3 flex items-center gap-1.5 px-2 pb-1.5 text-caption">
-          <WifiOff className="size-3 shrink-0" aria-hidden />
-          Offline · updated {formatRelativeTime(lastSyncedAt, now)}
-        </div>
-      )}
-      {newCount > 0 && (
-        <div className="text-ink-3 flex items-center gap-1.5 px-2 pb-1.5 text-caption">
-          <span className="bg-primary size-1.5 rounded-full" aria-hidden />
-          {newCount} new since your last visit
-        </div>
-      )}
-      {list}
-    </div>
-  );
-}
-
-function HeadlineFilter({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-  return (
-    <div className="relative shrink-0">
-      <Search
-        className="text-ink-3 pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2"
-        aria-hidden
-      />
-      <Input
-        type="search"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder="Filter headlines and sources…"
-        aria-label="Filter headlines and sources"
-        className="[&::-webkit-search-cancel-button]:hidden px-8"
-      />
-      {value && (
-        <button
-          type="button"
-          onClick={() => onChange("")}
-          aria-label="Clear filter"
-          className="
-            press cursor-pointer focus-ring text-ink-3
-            hover:text-ink
-            absolute top-1/2 right-1.5 flex size-6 -translate-y-1/2 items-center justify-center
-            rounded-sm
-          "
-        >
-          <X className="size-4" aria-hidden />
-        </button>
-      )}
-    </div>
-  );
-}
-
-function GoogleSearch({ query }: { query: string }) {
-  const instanceId = useWidgetInstanceId();
-  const setGoogleQuery = useNewsStore((s) => s.setGoogleQuery);
-  const [value, setValue] = useState(query);
-
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    setGoogleQuery(instanceId, value.trim());
-  };
-
-  const clear = () => {
-    setValue("");
-    setGoogleQuery(instanceId, "");
-  };
-
-  return (
-    <form onSubmit={submit} className="relative shrink-0">
-      <Search
-        className="text-ink-3 pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2"
-        aria-hidden
-      />
-      <Input
-        type="search"
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        placeholder="Search Google News…"
-        aria-label="Search Google News"
-        className="[&::-webkit-search-cancel-button]:hidden px-8"
-      />
-      {query && (
-        <button
-          type="button"
-          onClick={clear}
-          aria-label="Clear search"
-          className="
-            press cursor-pointer focus-ring text-ink-3
-            hover:text-ink
-            absolute top-1/2 right-1.5 flex size-6 -translate-y-1/2 items-center justify-center
-            rounded-sm
-          "
-        >
-          <X className="size-4" aria-hidden />
-        </button>
-      )}
-    </form>
+        {view === "trending" ? (
+          <>
+            <div className="shrink-0">
+              <TrendingRegion />
+            </div>
+            <div className="min-h-0 flex-1">
+              <TrendingContent layout={layout} />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <div className="min-w-0 flex-1">
+                {tab === "google" ? (
+                  <GoogleSearch query={googleQuery} />
+                ) : (
+                  <HeadlineFilter value={allFilter} onChange={setAllFilter} />
+                )}
+              </div>
+              <SavedToggle
+                count={bookmarks.length}
+                active={showSaved}
+                onToggle={() => setShowSaved((value) => !value)}
+              />
+            </div>
+            <NewsSourceBar />
+            {saveError && (
+              <p role="status" className="text-ink-3 shrink-0 px-2 text-caption">
+                {saveError}
+              </p>
+            )}
+            <div className="min-h-0 flex-1">
+              {showSaved ? (
+                <SavedList
+                  bookmarks={bookmarks}
+                  filterQuery={tab === "google" ? "" : allFilter.trim()}
+                  now={now}
+                  openBehavior={openBehavior}
+                  highlightTerms={highlightTerms}
+                  onToggleSaved={onToggleSaved}
+                />
+              ) : (
+                <NewsContent
+                  state={state}
+                  refresh={refresh}
+                  isRefreshing={isRefreshing}
+                  openBehavior={openBehavior}
+                  withThumbnail={withThumbnail && loadImages}
+                  withSource={tab === "all"}
+                  layout={loadImages && withThumbnail ? layout : "list"}
+                  sortByLatest={sortByLatest}
+                  searchQuery={query || undefined}
+                  filterQuery={tab === "google" ? "" : allFilter.trim()}
+                  now={now}
+                  isStale={isStale}
+                  lastSyncedAt={lastSyncedAt}
+                  missingSources={missingSources}
+                  readTitles={readSet}
+                  newTitles={newTitles}
+                  mutedTerms={mutedTerms}
+                  highlightTerms={highlightTerms}
+                  onRead={(title) => markRead(instanceId, title)}
+                  savedLinks={savedLinks}
+                  onToggleSaved={onToggleSaved}
+                />
+              )}
+            </div>
+          </>
+        )}
+      </motion.div>
+    </AnimatePresence>
   );
 }
