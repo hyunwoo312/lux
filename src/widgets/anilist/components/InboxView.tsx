@@ -1,163 +1,80 @@
-import { useCallback, useEffect, useState } from "react";
 import { ROW } from "@/lib/row";
-import { Spinner } from "@/components/ui/spinner";
-import { Bell, CheckCheck } from "lucide-react";
+import { Bell } from "lucide-react";
 import { formatRelativeTime } from "@/lib/relative-time";
-import { loadErrorMessage } from "@/lib/net";
-import { Tooltip } from "@/components/ui/tooltip";
-import { usePolledResource, invalidatePolledResource } from "@/widgets/core/usePolledResource";
 import { usePagedResource } from "@/widgets/core/usePagedResource";
-import {
-  fetchInboxPage,
-  fetchUnreadCount,
-  markAllNotificationsRead,
-  parseCachedInbox,
-} from "@/widgets/anilist/lib/anilist-api";
+import { fetchInboxPage } from "@/widgets/anilist/lib/api/feed";
+import { parseCachedInbox } from "@/widgets/anilist/lib/api/cache";
+import { AnilistStaleNotice } from "@/widgets/anilist/components/AnilistStaleNotice";
+import { loadFailureMessage } from "@/widgets/anilist/lib/load-failure";
 import { FeedList } from "@/widgets/anilist/components/FeedList";
 import { FeedThumb } from "@/widgets/anilist/components/FeedThumb";
 import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
+import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { useAnilist } from "@/widgets/anilist/useAnilistStore";
-import { ANILIST_MAX_ITEMS, type AnilistNotification } from "@/widgets/anilist/types";
-
-const REFRESH_MS = 3 * 60 * 1000;
+import {
+  ANILIST_MAX_ITEMS,
+  ANILIST_REFRESH_MS,
+  type AnilistNotification,
+} from "@/widgets/anilist/types";
 
 export function InboxView({
   enabled,
   userId,
   newTab,
+  unreadCount,
 }: {
   enabled: boolean;
   userId: number;
   newTab: boolean;
+  unreadCount: number;
 }) {
   const lang = useAnilist((d) => d.titleLanguage);
-  const unread = usePolledResource(fetchUnreadCount, {
+  const {
+    state,
+    hasMore,
+    isLoadingMore,
+    isRefreshing,
+    loadMore,
+    refresh,
+    lastSyncedAt,
+    freshness,
+  } = usePagedResource((page, signal) => fetchInboxPage(page, lang, signal), {
     enabled,
-    intervalMs: REFRESH_MS,
-    cacheKey: anilistKeys.unread(userId),
+    intervalMs: ANILIST_REFRESH_MS,
+    maxItems: ANILIST_MAX_ITEMS,
+    cacheKey: anilistKeys.inbox(userId, lang),
+    getKey: (notification) => notification.id,
     persist: true,
-    parsePersisted: (raw) => (typeof raw === "number" ? raw : null),
+    parsePersisted: parseCachedInbox,
   });
-  const unreadRefresh = unread.refresh;
-  const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh, lastSyncedAt } =
-    usePagedResource((page, signal) => fetchInboxPage(page, lang, signal), {
-      enabled,
-      intervalMs: REFRESH_MS,
-      maxItems: ANILIST_MAX_ITEMS,
-      cacheKey: anilistKeys.inbox(userId, lang),
-      getKey: (notification) => notification.id,
-      persist: true,
-      parsePersisted: parseCachedInbox,
-    });
-  const refreshAll = useCallback(() => {
-    refresh();
-    unreadRefresh();
-  }, [refresh, unreadRefresh]);
-  useAnilistSync(refreshAll, isRefreshing, lastSyncedAt);
+  useAnilistSync(refresh, isRefreshing, lastSyncedAt);
 
-  const [unreadOverride, setUnreadOverride] = useState<number | null>(null);
-  const [marking, setMarking] = useState(false);
-  const liveUnread = unread.state.status === "success" ? unread.state.data : 0;
-
-  const markRead = useCallback(() => {
-    setMarking(true);
-    setUnreadOverride(0);
-    markAllNotificationsRead().then(
-      () => {
-        setMarking(false);
-        invalidatePolledResource(anilistKeys.unread(userId));
-        unreadRefresh();
-      },
-      () => {
-        setMarking(false);
-        setUnreadOverride(null);
-      },
-    );
-  }, [unreadRefresh, userId]);
-
-  useEffect(() => {
-    if (unreadOverride !== null && liveUnread === 0) setUnreadOverride(null);
-  }, [unreadOverride, liveUnread]);
-
-  if (state.status === "loading") return <AnilistPlaceholder>Loading inbox…</AnilistPlaceholder>;
+  if (state.status === "loading") return <AnilistSkeleton variant="list" label="Loading inbox…" />;
   if (state.status === "error")
-    return (
-      <AnilistPlaceholder>
-        {loadErrorMessage(state.error, "Couldn’t load your inbox.")}
-      </AnilistPlaceholder>
-    );
+    return <AnilistPlaceholder>{loadFailureMessage(state.error, "your inbox")}</AnilistPlaceholder>;
   if (state.status === "empty")
     return <AnilistPlaceholder>Inbox zero — nothing waiting.</AnilistPlaceholder>;
 
-  const unreadCount = unreadOverride ?? liveUnread;
-
   return (
-    <FeedList
-      items={state.items}
-      getKey={(notification) => notification.id}
-      hasMore={hasMore}
-      isLoadingMore={isLoadingMore}
-      loadMore={loadMore}
-      header={<InboxHeader unreadCount={unreadCount} marking={marking} onMarkRead={markRead} />}
-      renderItem={(notification, index) => (
-        <NotificationRow
-          notification={notification}
-          newTab={newTab}
-          isUnread={index < unreadCount}
-        />
-      )}
-    />
-  );
-}
-
-function InboxHeader({
-  unreadCount,
-  marking,
-  onMarkRead,
-}: {
-  unreadCount: number;
-  marking: boolean;
-  onMarkRead: () => void;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-2 px-1">
-      <span className="text-ink-3 text-micro font-semibold tracking-wide uppercase">
-        Notifications
-      </span>
-      {unreadCount > 0 && (
-        <div className="flex items-center gap-1.5">
-          <span
-            className="
-              bg-primary text-primary-foreground text-micro rounded-full px-1.5 py-0.5 font-semibold
-              tabular-nums
-            "
-          >
-            {unreadCount} unread
-          </span>
-          <Tooltip content="Mark all read" solid>
-            <button
-              type="button"
-              onClick={onMarkRead}
-              disabled={marking}
-              aria-label="Mark all notifications read"
-              className="
-                press cursor-pointer text-ink-3
-                hover:text-ink
-                flex size-6 items-center justify-center rounded-sm
-                disabled:opacity-50
-              "
-            >
-              {marking ? (
-                <Spinner className="size-3.5" />
-              ) : (
-                <CheckCheck className="size-3.5" aria-hidden />
-              )}
-            </button>
-          </Tooltip>
-        </div>
-      )}
+    <div className="flex h-full min-h-0 flex-col">
+      <AnilistStaleNotice freshness={freshness} />
+      <FeedList
+        label="Notifications"
+        items={state.items}
+        getKey={(notification) => notification.id}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        loadMore={loadMore}
+        renderItem={(notification, index) => (
+          <NotificationRow
+            notification={notification}
+            newTab={newTab}
+            isUnread={index < unreadCount}
+          />
+        )}
+      />
     </div>
   );
 }
@@ -171,7 +88,7 @@ function NotificationRow({
   newTab: boolean;
   isUnread: boolean;
 }) {
-  const className = ROW.item;
+  const className = notification.url ? ROW.itemAction : ROW.item;
   const body = (
     <>
       <FeedThumb

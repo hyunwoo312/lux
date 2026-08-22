@@ -1,19 +1,16 @@
 import { usePagedResource } from "@/widgets/core/usePagedResource";
 import { usePolledResource } from "@/widgets/core/usePolledResource";
-import {
-  fetchActivityPage,
-  fetchUnreadCount,
-  parseCachedActivity,
-} from "@/widgets/anilist/lib/anilist-api";
+import { fetchActivityPage, fetchUnreadCount } from "@/widgets/anilist/lib/api/feed";
+import { parseCachedActivity } from "@/widgets/anilist/lib/api/cache";
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
-import { ACTIVITY_REFRESH_MS, ANILIST_MAX_ITEMS } from "@/widgets/anilist/types";
+import {
+  ACTIVITY_REFRESH_MS,
+  ANILIST_MAX_ITEMS,
+  ANILIST_REFRESH_MS,
+} from "@/widgets/anilist/types";
 
-const REFRESH_MS = 3 * 60 * 1000;
-
-export type AnilistSignals = { activityNew: number; inboxUnread: number };
-
-export function useAnilistSignals(enabled: boolean, viewerId: number): AnilistSignals {
+export function useActivityUnseenCount(enabled: boolean, viewerId: number): number {
   const lang = useAnilist((d) => d.titleLanguage);
   const lastSeen = useAnilistStore((s) => s.lastSeenActivityAt ?? 0);
 
@@ -26,17 +23,23 @@ export function useAnilistSignals(enabled: boolean, viewerId: number): AnilistSi
     persist: true,
     parsePersisted: parseCachedActivity,
   });
+
+  if (activity.state.status !== "success") return 0;
+  return activity.state.items.filter((item) => item.createdAt > lastSeen).length;
+}
+
+export type UnreadSignal = { count: number; refresh: () => void };
+
+export function useUnreadCount(enabled: boolean, viewerId: number): UnreadSignal {
   const unread = usePolledResource(fetchUnreadCount, {
     enabled,
-    intervalMs: REFRESH_MS,
+    intervalMs: ANILIST_REFRESH_MS,
     cacheKey: anilistKeys.unread(viewerId),
     persist: true,
     parsePersisted: (raw) => (typeof raw === "number" ? raw : null),
   });
-
-  const activityItems = activity.state.status === "success" ? activity.state.items : [];
   return {
-    activityNew: activityItems.filter((item) => item.createdAt > lastSeen).length,
-    inboxUnread: unread.state.status === "success" ? unread.state.data : 0,
+    count: unread.state.status === "success" ? unread.state.data : 0,
+    refresh: unread.refresh,
   };
 }

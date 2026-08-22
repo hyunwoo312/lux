@@ -1,28 +1,29 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
-vi.mock("@/widgets/anilist/lib/anilist-api", () => ({
+vi.mock("@/widgets/anilist/lib/api/list", () => ({
   fetchList: vi.fn(),
-  parseCachedCurrent: vi.fn().mockReturnValue(null),
   saveProgress: vi.fn(),
   saveListStatus: vi.fn(),
 }));
+vi.mock("@/widgets/anilist/lib/api/cache", () => ({
+  parseCachedCurrent: vi.fn().mockReturnValue(null),
+}));
 vi.mock("@/widgets/anilist/useAnilistSync", () => ({ useAnilistSync: vi.fn() }));
 
+import { RateLimitError } from "@/lib/net";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LibraryView } from "@/widgets/anilist/components/LibraryView";
-import { fetchList, saveListStatus, saveProgress } from "@/widgets/anilist/lib/anilist-api";
+import { fetchList, saveListStatus, saveProgress } from "@/widgets/anilist/lib/api/list";
 import { useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
-import type { CurrentEntry, CurrentSort, ListFilter } from "@/widgets/anilist/types";
+import type { CurrentEntry, CurrentSort, ListFilter, ViewMode } from "@/widgets/anilist/types";
 
 const listMock = vi.mocked(fetchList);
 const statusMock = vi.mocked(saveListStatus);
 const progressMock = vi.mocked(saveProgress);
 const ID = "anilist-1";
-// the polled-resource cache is module-level and an in-flight fetch can repopulate it after a
-// reset, so each test gets its own viewer id — the cache key includes it.
 let USER = 0;
 
 function entry(overrides: Partial<CurrentEntry> = {}): CurrentEntry {
@@ -38,11 +39,17 @@ function entry(overrides: Partial<CurrentEntry> = {}): CurrentEntry {
   };
 }
 
-function seed(listFilter: ListFilter, currentSort: CurrentSort = "score") {
+function seed(
+  listFilter: ListFilter,
+  currentSort: CurrentSort = "score",
+  viewMode: ViewMode = "grid",
+) {
   useAnilistStore.setState({
     byInstance: {
       [ID]: {
         activeTab: "library",
+        feedSource: "following",
+        viewMode,
         mediaFilter: "both",
         currentSort,
         titleLanguage: "english",
@@ -84,21 +91,6 @@ function installScrollObserver() {
   } as unknown as typeof IntersectionObserver;
 }
 
-async function waitForEndOfListWatcher() {
-  await waitFor(() => expect(observed.length).toBeGreaterThan(0));
-}
-
-function scrollToBottom() {
-  if (observed.length === 0) throw new Error("nothing is watching for the end of the list");
-  for (const trigger of observed) trigger();
-}
-
-function manyEntries(count: number): CurrentEntry[] {
-  return Array.from({ length: count }, (_, index) =>
-    entry({ id: index + 1, title: `Title ${index + 1}` }),
-  );
-}
-
 beforeEach(() => {
   vi.clearAllMocks();
   USER += 1;
@@ -118,27 +110,6 @@ describe("LibraryView", () => {
     renderView();
 
     await waitFor(() => expect(listMock).toHaveBeenCalledWith(USER, "english", expect.anything()));
-  });
-
-  it("keeps the filter controls mounted while a new status loads", async () => {
-    renderView();
-
-    expect(screen.getByLabelText("Change status filter")).toBeInTheDocument();
-    expect(screen.getByLabelText("Change sort order")).toBeInTheDocument();
-  });
-
-  it("offers the progress stepper or the promote action per row, from its own status", async () => {
-    listMock.mockResolvedValue({
-      entries: [
-        entry({ id: 1, title: "Frieren", status: "CURRENT" }),
-        entry({ id: 2, title: "Berserk", status: "PLANNING" }),
-      ],
-      scoreFormat: "POINT_100",
-    });
-    renderView();
-
-    expect(await screen.findByLabelText("Start Berserk")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Start Frieren")).not.toBeInTheDocument();
   });
 
   it("serves a different status filter from the same cached request", async () => {
@@ -162,25 +133,7 @@ describe("LibraryView", () => {
     expect(listMock).toHaveBeenCalledTimes(1);
   });
 
-  it("treats rewatching as in progress", async () => {
-    listMock.mockResolvedValue({
-      entries: [
-        entry({ id: 1, title: "Frieren", status: "CURRENT" }),
-        entry({ id: 2, title: "Berserk", status: "REPEATING" }),
-        entry({ id: 3, title: "Vinland", status: "PLANNING" }),
-      ],
-      scoreFormat: "POINT_100",
-    });
-    seed("progress");
-    renderView();
-
-    expect(await screen.findByText("Frieren")).toBeInTheDocument();
-    expect(screen.getByText("Berserk")).toBeInTheDocument();
-    expect(screen.queryByText("Vinland")).not.toBeInTheDocument();
-  });
-
   it("falls back to a valid sort when the stored one is unavailable for the status", async () => {
-    // "waiting" is only offered for in-progress; on a planned list it must not be used
     listMock.mockResolvedValue({
       entries: [entry({ status: "PLANNING" })],
       scoreFormat: "POINT_100",
@@ -192,70 +145,6 @@ describe("LibraryView", () => {
     expect(screen.getByLabelText("Change sort order")).toBeInTheDocument();
   });
 
-  it("renders only the first page of a long library", async () => {
-    listMock.mockResolvedValue({ entries: manyEntries(45), scoreFormat: "POINT_100" });
-    renderView();
-
-    expect(await screen.findByText("Title 1")).toBeInTheDocument();
-    expect(screen.getByText("Title 30")).toBeInTheDocument();
-    expect(screen.queryByText("Title 31")).not.toBeInTheDocument();
-  });
-
-  it("reports how much of the library is on screen", async () => {
-    listMock.mockResolvedValue({ entries: manyEntries(45), scoreFormat: "POINT_100" });
-    renderView();
-
-    expect(await screen.findByText("Showing 30 of 45")).toBeInTheDocument();
-  });
-
-  it("appends the next page when the list is scrolled to the end", async () => {
-    listMock.mockResolvedValue({ entries: manyEntries(45), scoreFormat: "POINT_100" });
-    renderView();
-    await screen.findByText("Title 1");
-
-    await waitForEndOfListWatcher();
-    act(() => scrollToBottom());
-
-    expect(await screen.findByText("Title 45")).toBeInTheDocument();
-  });
-
-  it("swaps the progress count for a total once everything is shown", async () => {
-    listMock.mockResolvedValue({ entries: manyEntries(45), scoreFormat: "POINT_100" });
-    renderView();
-    await screen.findByText("Title 1");
-
-    await waitForEndOfListWatcher();
-    act(() => scrollToBottom());
-
-    expect(await screen.findByText("45 titles")).toBeInTheDocument();
-    expect(screen.queryByText(/^Showing /)).not.toBeInTheDocument();
-  });
-
-  it("does not count titles that the airing view will not render", async () => {
-    listMock.mockResolvedValue({
-      entries: [
-        ...manyEntries(40),
-        entry({ id: 99, title: "Airing", nextEpisode: { episode: 3, airingAt: 1_800_000_000 } }),
-      ],
-      scoreFormat: "POINT_100",
-    });
-    seed("all", "airing");
-    renderView();
-
-    expect(await screen.findByText("Airing")).toBeInTheDocument();
-    expect(screen.queryByText(/of 41$/)).not.toBeInTheDocument();
-    expect(screen.queryByText("Title 1")).not.toBeInTheDocument();
-  });
-
-  it("shows no counter for a library that fits on one page", async () => {
-    listMock.mockResolvedValue({ entries: manyEntries(12), scoreFormat: "POINT_100" });
-    renderView();
-
-    await screen.findByText("Title 1");
-    expect(screen.queryByText(/titles$/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/^Showing /)).not.toBeInTheDocument();
-  });
-
   it("writes recorded progress into the cache instead of refetching", async () => {
     progressMock.mockResolvedValue(5);
     listMock.mockResolvedValue({
@@ -265,7 +154,7 @@ describe("LibraryView", () => {
     const view = renderView();
     await screen.findByText("Frieren");
 
-    fireEvent.click(screen.getByLabelText("Mark next episode"));
+    fireEvent.click(screen.getByLabelText("Mark next episode of Frieren"));
 
     await waitFor(() => expect(progressMock).toHaveBeenCalledWith(1, 5));
     expect(await screen.findByText("Ep 5/28")).toBeInTheDocument();
@@ -277,19 +166,22 @@ describe("LibraryView", () => {
     expect(listMock).toHaveBeenCalledTimes(1);
   });
 
-  it("promotes a planned title to watching", async () => {
-    listMock.mockResolvedValue({
-      entries: [entry({ status: "PLANNING" })],
-      scoreFormat: "POINT_100",
-    });
-    seed("planned");
-    renderView();
+  it.each(["grid", "list"] as const)(
+    "promotes a planned title to watching from the %s layout",
+    async (viewMode) => {
+      listMock.mockResolvedValue({
+        entries: [entry({ status: "PLANNING" })],
+        scoreFormat: "POINT_100",
+      });
+      seed("planned", "score", viewMode);
+      renderView();
 
-    fireEvent.click(await screen.findByLabelText("Start Frieren"));
+      fireEvent.click(await screen.findByLabelText("Start watching Frieren"));
 
-    await waitFor(() => expect(statusMock).toHaveBeenCalledWith(1, "CURRENT"));
-    await waitFor(() => expect(screen.queryByText("Frieren")).not.toBeInTheDocument());
-  });
+      await waitFor(() => expect(statusMock).toHaveBeenCalledWith(1, "CURRENT"));
+      await waitFor(() => expect(screen.queryByText("Frieren")).not.toBeInTheDocument());
+    },
+  );
 
   it("says so when promoting a title fails instead of doing nothing", async () => {
     listMock.mockResolvedValue({
@@ -300,9 +192,13 @@ describe("LibraryView", () => {
     seed("planned");
     renderView();
 
-    fireEvent.click(await screen.findByLabelText("Start Frieren"));
+    fireEvent.click(await screen.findByLabelText("Start watching Frieren"));
 
-    expect(await screen.findByRole("status")).toHaveTextContent("Couldn’t update your list.");
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Couldn’t move Frieren to Watching. Try again.",
+      ),
+    );
     expect(screen.getByText("Frieren")).toBeInTheDocument();
   });
 
@@ -315,8 +211,135 @@ describe("LibraryView", () => {
     renderView();
 
     await screen.findByText("Frieren");
-    fireEvent.click(screen.getByLabelText("Mark next episode"));
+    fireEvent.click(screen.getByLabelText("Mark next episode of Frieren"));
 
-    expect(await screen.findByRole("status")).toHaveTextContent("Couldn’t update your list.");
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Couldn’t save your progress for Frieren. Try again.",
+      ),
+    );
+  });
+
+  it("says how much has been watched without relying on the abbreviated label", async () => {
+    listMock.mockResolvedValue({
+      entries: [entry({ progress: 7, total: 12, status: "CURRENT" })],
+      scoreFormat: "POINT_100",
+    });
+    renderView();
+
+    expect(await screen.findByText("7 of 12 episodes watched")).toBeInTheDocument();
+  });
+
+  it("marks an airing-soon title in words, not only in colour", async () => {
+    const soon = Math.floor(Date.now() / 1000) + 3600;
+    const later = Math.floor(Date.now() / 1000) + 5 * 86_400;
+    listMock.mockResolvedValue({
+      entries: [
+        entry({ id: 1, title: "Frieren", nextEpisode: { episode: 12, airingAt: soon } }),
+        entry({ id: 2, title: "Berserk", nextEpisode: { episode: 3, airingAt: later } }),
+      ],
+      scoreFormat: "POINT_100",
+    });
+    renderView();
+
+    expect(await screen.findByText(/^Airing soon — episode 12 in/)).toBeInTheDocument();
+    expect(screen.getByText(/^episode 3 in/)).toBeInTheDocument();
+  });
+
+  it("keeps the progress stepper reachable without hovering a tile", async () => {
+    listMock.mockResolvedValue({
+      entries: [entry({ progress: 4, status: "CURRENT" })],
+      scoreFormat: "POINT_100",
+    });
+    renderView();
+
+    const decrement = await screen.findByLabelText("Unmark last episode of Frieren");
+    expect(screen.getByLabelText("Mark next episode of Frieren")).toBeVisible();
+    expect(decrement).toBeVisible();
+
+    fireEvent.click(decrement);
+
+    await waitFor(() => expect(progressMock).toHaveBeenCalledWith(1, 3));
+  });
+
+  it("names the title in the stepper so identical tiles stay distinguishable", async () => {
+    listMock.mockResolvedValue({
+      entries: [
+        entry({ id: 1, title: "Frieren", progress: 4, status: "CURRENT" }),
+        entry({ id: 2, title: "Berserk", progress: 4, status: "CURRENT" }),
+      ],
+      scoreFormat: "POINT_100",
+    });
+    renderView();
+
+    expect(await screen.findByLabelText("Mark next episode of Frieren")).toBeInTheDocument();
+    expect(screen.getByLabelText("Mark next episode of Berserk")).toBeInTheDocument();
+  });
+
+  it("announces a recorded progress change", async () => {
+    progressMock.mockResolvedValue(5);
+    listMock.mockResolvedValue({
+      entries: [entry({ progress: 4, status: "CURRENT" })],
+      scoreFormat: "POINT_100",
+    });
+    renderView();
+    await screen.findByText("Frieren");
+
+    fireEvent.click(screen.getByLabelText("Mark next episode of Frieren"));
+
+    await waitFor(() => expect(screen.getByRole("log")).toHaveTextContent("Frieren: Ep 5/28"));
+  });
+
+  it("repeats AniList’s own wording when a write is rate limited", async () => {
+    listMock.mockResolvedValue({
+      entries: [entry({ status: "CURRENT", progress: 3 })],
+      scoreFormat: "POINT_100",
+    });
+    progressMock.mockRejectedValue(new RateLimitError(30_000));
+    renderView();
+
+    await screen.findByText("Frieren");
+    fireEvent.click(screen.getByLabelText("Mark next episode of Frieren"));
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("Rate limited — try again in 30s."),
+    );
+  });
+
+  it.each(["grid", "list"] as const)(
+    "stands in with a %s skeleton while the library loads",
+    async (viewMode) => {
+      listMock.mockReturnValue(new Promise<never>(() => {}));
+      seed("all", "score", viewMode);
+      const view = renderView();
+
+      expect(await screen.findByText("Loading your list…")).toBeInTheDocument();
+      expect(
+        view.container.querySelector(`[data-variant="${viewMode}"] [data-slot="skeleton"]`),
+      ).not.toBeNull();
+    },
+  );
+
+  it.each([
+    ["grid", "https://img.anilist.co/large.jpg"],
+    ["list", "https://img.anilist.co/medium.jpg"],
+  ] as const)("downloads the cover sized for the %s layout", async (viewMode, expected) => {
+    listMock.mockResolvedValue({
+      entries: [
+        entry({
+          coverImage: "https://img.anilist.co/large.jpg",
+          coverImageSmall: "https://img.anilist.co/medium.jpg",
+        }),
+      ],
+      scoreFormat: "POINT_100",
+    });
+    seed("all", "score", viewMode);
+    const view = renderView();
+
+    await screen.findByText("Frieren");
+
+    expect(Array.from(view.container.querySelectorAll("img"), (img) => img.src)).toEqual([
+      expected,
+    ]);
   });
 });

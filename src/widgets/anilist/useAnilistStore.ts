@@ -13,6 +13,8 @@ import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import {
   ANILIST_TABS,
   CURRENT_SORTS,
+  FEED_SOURCES,
+  VIEW_MODES,
   LIST_FILTERS,
   type ListFilter,
   DISCOVER_FEEDS,
@@ -23,6 +25,8 @@ import {
   TITLE_LANGUAGES,
   type AnilistTab,
   type CurrentSort,
+  type FeedSource,
+  type ViewMode,
   type MediaFilter,
   type TitleLanguage,
 } from "@/widgets/anilist/types";
@@ -33,6 +37,8 @@ type SyncResult = { ok: boolean; remainingMs: number };
 
 type AnilistData = {
   activeTab: AnilistTab;
+  feedSource: FeedSource;
+  viewMode: ViewMode;
   mediaFilter: MediaFilter;
   currentSort: CurrentSort;
   listFilter: ListFilter;
@@ -50,6 +56,8 @@ type AnilistStoreState = {
   lastSyncAt?: number;
   dataSyncedAt?: number;
   setActiveTab: (instanceId: string, activeTab: AnilistTab) => void;
+  setFeedSource: (instanceId: string, feedSource: FeedSource) => void;
+  setViewMode: (instanceId: string, viewMode: ViewMode) => void;
   setMediaFilter: (instanceId: string, mediaFilter: MediaFilter) => void;
   setCurrentSort: (instanceId: string, currentSort: CurrentSort) => void;
   setListFilter: (instanceId: string, listFilter: ListFilter) => void;
@@ -61,11 +69,13 @@ type AnilistStoreState = {
   setLastSeenActivity: (createdAt: number) => void;
   setSyncing: (syncing: boolean) => void;
   reportSynced: (at: number) => void;
-  requestSync: (titleLanguage: TitleLanguage, viewerId: number) => SyncResult;
+  requestSync: (instanceId: string, viewerId: number) => SyncResult;
 };
 
 const DEFAULT_DATA: AnilistData = {
-  activeTab: "activity",
+  activeTab: "feed",
+  feedSource: "following",
+  viewMode: "grid",
   mediaFilter: "both",
   currentSort: "score",
   listFilter: "all",
@@ -76,44 +86,82 @@ const DEFAULT_DATA: AnilistData = {
 };
 
 const configSchema = z.object({
-  activeTab: z.enum(ANILIST_TABS).default("activity"),
-  mediaFilter: z.enum(MEDIA_FILTERS).default("both"),
-  currentSort: z.enum(CURRENT_SORTS).default("score"),
-  listFilter: z.enum(LIST_FILTERS).default("all"),
-  titleLanguage: z.enum(TITLE_LANGUAGES).default("english"),
-  openBehavior: z.enum(["currentTab", "newTab"]).default("currentTab"),
-  discoverFeed: z.enum(DISCOVER_FEEDS).default("trending"),
-  discoverType: z.enum(DISCOVER_TYPES).default("anime"),
+  activeTab: z.enum(ANILIST_TABS).catch("feed"),
+  feedSource: z.enum(FEED_SOURCES).catch("following"),
+  viewMode: z.enum(VIEW_MODES).catch("grid"),
+  mediaFilter: z.enum(MEDIA_FILTERS).catch("both"),
+  currentSort: z.enum(CURRENT_SORTS).catch("score"),
+  listFilter: z.enum(LIST_FILTERS).catch("all"),
+  titleLanguage: z.enum(TITLE_LANGUAGES).catch("english"),
+  openBehavior: z.enum(["currentTab", "newTab"]).catch("currentTab"),
+  discoverFeed: z.enum(DISCOVER_FEEDS).catch("trending"),
+  discoverType: z.enum(DISCOVER_TYPES).catch("anime"),
 });
 
 const legacySchema = configSchema.extend({
   lastSeenActivityAt: z.number().optional(),
 });
 
+const byInstanceSchema = z
+  .unknown()
+  .transform((raw) => {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+    const parsed: Record<string, AnilistData> = {};
+    for (const [instanceId, value] of Object.entries(raw)) {
+      const entry = configSchema.safeParse(value);
+      if (entry.success) parsed[instanceId] = entry.data;
+    }
+    return parsed;
+  })
+  .default({});
+
 const persistedSchema = z.object({
-  byInstance: z.record(z.string(), configSchema),
-  lastSeenActivityAt: z.number().optional(),
+  byInstance: byInstanceSchema,
+  lastSeenActivityAt: z.number().optional().catch(undefined),
 });
 
-function mergeLibraryTab(persisted: unknown): unknown {
+const LEGACY_TAB_REMAP: Record<string, { activeTab: AnilistTab; feedSource?: FeedSource }> = {
+  activity: { activeTab: "feed", feedSource: "following" },
+  inbox: { activeTab: "feed", feedSource: "notifications" },
+  current: { activeTab: "library" },
+  planning: { activeTab: "library" },
+};
+
+function normaliseConfig(value: unknown): unknown {
+  if (!value || typeof value !== "object") return value;
+  const data = value as Record<string, unknown>;
+  const remap = typeof data.activeTab === "string" ? LEGACY_TAB_REMAP[data.activeTab] : undefined;
+  if (!remap) return data;
+  return { ...data, ...remap, feedSource: data.feedSource ?? remap.feedSource };
+}
+
+function normalisePersisted(persisted: unknown): unknown {
   if (!persisted || typeof persisted !== "object") return persisted;
-  const raw = persisted as { byInstance?: Record<string, { activeTab?: unknown }> };
-  if (!raw.byInstance) return persisted;
-  const entries = Object.entries(raw.byInstance);
-  if (
-    !entries.some(([, data]) => data?.activeTab === "current" || data?.activeTab === "planning")
-  ) {
-    return persisted;
-  }
+  const raw = persisted as { byInstance?: unknown };
+  if (!raw.byInstance || typeof raw.byInstance !== "object") return raw;
   const byInstance = Object.fromEntries(
-    entries.map(([id, data]) => [
-      id,
-      data?.activeTab === "current" || data?.activeTab === "planning"
-        ? { ...data, activeTab: "library" }
-        : data,
+    Object.entries(raw.byInstance as Record<string, unknown>).map(([instanceId, value]) => [
+      instanceId,
+      normaliseConfig(value),
     ]),
   );
   return { ...raw, byInstance };
+}
+
+const LEGACY_KEYS = [
+  "activeTab",
+  "defaultTab",
+  "view",
+  "librarySort",
+  "currentSort",
+  "titleLanguage",
+  "mediaFilter",
+  "openBehavior",
+] as const;
+
+function looksLikeLegacySingleton(persisted: unknown): boolean {
+  if (!persisted || typeof persisted !== "object") return false;
+  return LEGACY_KEYS.some((key) => key in persisted);
 }
 
 function migrateLegacyFields(persisted: unknown): unknown {
@@ -126,11 +174,10 @@ function migrateLegacyFields(persisted: unknown): unknown {
       raw.activeTab = raw.view === "inbox" ? "inbox" : "current";
     }
   }
-  if (raw.activeTab === "current" || raw.activeTab === "planning") raw.activeTab = "library";
   if (raw.currentSort === undefined && typeof raw.librarySort === "string") {
     raw.currentSort = raw.librarySort;
   }
-  return raw;
+  return normaliseConfig(raw);
 }
 
 const gatedStorage = createGatedChromeStorage();
@@ -154,6 +201,10 @@ export const useAnilistStore = create<AnilistStoreState>()(
       dataSyncedAt: undefined,
       setActiveTab: (instanceId, activeTab) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, activeTab }))),
+      setFeedSource: (instanceId, feedSource) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, feedSource }))),
+      setViewMode: (instanceId, viewMode) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, viewMode }))),
       setMediaFilter: (instanceId, mediaFilter) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, mediaFilter }))),
       setListFilter: (instanceId, listFilter) =>
@@ -178,11 +229,14 @@ export const useAnilistStore = create<AnilistStoreState>()(
       reportSynced: (at) => {
         if (at > (get().dataSyncedAt ?? 0)) set({ dataSyncedAt: at });
       },
-      requestSync: (titleLanguage, viewerId) => {
+      requestSync: (instanceId, viewerId) => {
         const remainingMs = syncCooldownRemainingMs(get().lastSyncAt, ANILIST_SYNC_COOLDOWN_MS);
         if (remainingMs > 0) {
           return { ok: false, remainingMs };
         }
+        const { titleLanguage, discoverFeed, discoverType } =
+          get().byInstance[instanceId] ?? DEFAULT_DATA;
+        invalidatePolledResource(anilistKeys.discover(titleLanguage, discoverFeed, discoverType));
         invalidatePolledResource(anilistKeys.library(viewerId, titleLanguage));
         invalidatePolledResource(anilistKeys.unread(viewerId));
         invalidatePagedResource(anilistKeys.activity(viewerId, titleLanguage));
@@ -200,32 +254,28 @@ export const useAnilistStore = create<AnilistStoreState>()(
         byInstance: state.byInstance,
         lastSeenActivityAt: state.lastSeenActivityAt,
       }),
-      migrate: (persisted, version) => {
-        if (version >= 5) return mergeLibraryTab(persisted);
+      migrate: (persisted) => {
+        const normalised = normalisePersisted(persisted);
+        if (
+          normalised &&
+          typeof normalised === "object" &&
+          "byInstance" in normalised &&
+          typeof (normalised as { byInstance?: unknown }).byInstance === "object"
+        ) {
+          return normalised;
+        }
+        if (!looksLikeLegacySingleton(persisted)) return { byInstance: {} };
         const legacy = legacySchema.safeParse(migrateLegacyFields(persisted));
         if (!legacy.success) return { byInstance: {} };
         const { lastSeenActivityAt, ...config } = legacy.data;
         return { byInstance: { anilist: config }, lastSeenActivityAt };
       },
       merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(persisted);
+        const parsed = persistedSchema.safeParse(normalisePersisted(persisted));
         if (!parsed.success) return current;
-        const byInstance: Record<string, AnilistData> = {};
-        for (const [id, data] of Object.entries(parsed.data.byInstance)) {
-          byInstance[id] = {
-            activeTab: data.activeTab,
-            mediaFilter: data.mediaFilter,
-            currentSort: data.currentSort,
-            listFilter: data.listFilter,
-            discoverFeed: data.discoverFeed,
-            discoverType: data.discoverType,
-            titleLanguage: data.titleLanguage,
-            openBehavior: data.openBehavior,
-          };
-        }
         return {
           ...current,
-          byInstance,
+          byInstance: parsed.data.byInstance,
           lastSeenActivityAt: parsed.data.lastSeenActivityAt,
         };
       },

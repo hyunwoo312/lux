@@ -3,11 +3,10 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useIntegrationStore } from "@/integrations";
 import { useAnilist } from "@/widgets/anilist/useAnilistStore";
 import { LibraryView } from "@/widgets/anilist/components/LibraryView";
-import { ActivityView } from "@/widgets/anilist/components/ActivityView";
-import { InboxView } from "@/widgets/anilist/components/InboxView";
+import { FeedView } from "@/widgets/anilist/components/FeedView";
 import { DiscoverView } from "@/widgets/anilist/components/DiscoverView";
 import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
-import { EASE_OUT } from "@/lib/motion";
+import { DURATION, EASE_OUT } from "@/lib/motion";
 
 export function AnilistWidget() {
   const reduced = useReducedMotion();
@@ -29,7 +28,7 @@ export function AnilistWidget() {
   if (!connected) return <DiscoverView />;
 
   const userId = Number(account.providerAccountId);
-  const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT };
+  const transition = { duration: reduced ? 0 : DURATION.fast, ease: EASE_OUT };
 
   return (
     <div className="relative h-full min-h-0">
@@ -44,12 +43,10 @@ export function AnilistWidget() {
         >
           {activeTab === "library" ? (
             <LibraryView enabled={connected} userId={userId} newTab={newTab} />
-          ) : activeTab === "activity" ? (
-            <ActivityView enabled={connected} userId={userId} newTab={newTab} />
           ) : activeTab === "discover" ? (
             <DiscoverView />
           ) : (
-            <InboxView enabled={connected} userId={userId} newTab={newTab} />
+            <FeedView enabled={connected} userId={userId} newTab={newTab} />
           )}
         </motion.div>
       </AnimatePresence>

@@ -4,39 +4,57 @@ import { cn } from "@/lib/utils";
 
 type MediaCoverProps = {
   src?: string;
+  srcSmall?: string;
+  size?: "thumb" | "full";
   title: string;
   color?: string;
   className?: string;
 };
 
-export function MediaCover({ src, title, color, className }: MediaCoverProps) {
+export function MediaCover({
+  src,
+  srcSmall,
+  size = "full",
+  title,
+  color,
+  className,
+}: MediaCoverProps) {
+  const [loaded, setLoaded] = useState(false);
   const [broken, setBroken] = useState(false);
-
-  if (src && !broken) {
-    return (
-      <RemoteImage
-        src={src}
-        alt=""
-        aria-hidden
-        onError={() => setBroken(true)}
-        className={cn("shrink-0 rounded object-cover", className)}
-      />
-    );
-  }
+  const showArt = Boolean(src) && !broken;
+  const resolved = size === "thumb" ? (srcSmall ?? src) : (src ?? srcSmall);
 
   return (
     <span
-      aria-hidden
-      style={color ? { backgroundColor: `${color}33` } : undefined}
+      style={color ? { backgroundColor: showArt ? color : `${color}33` } : undefined}
       className={cn(
-        `
-          bg-foreground/10 text-ink-2 flex shrink-0 items-center justify-center rounded text-caption
-          font-semibold
-        `,
+        "bg-foreground/10 @container relative block shrink-0 overflow-hidden rounded-lg",
         className,
       )}
     >
-      {title.slice(0, 1).toUpperCase()}
+      {resolved && !broken ? (
+        <RemoteImage
+          src={resolved}
+          alt=""
+          aria-hidden
+          onLoad={() => setLoaded(true)}
+          onError={() => setBroken(true)}
+          className={cn(
+            `size-full object-cover transition-opacity duration-300 motion-reduce:transition-none`,
+            loaded ? "opacity-100" : "opacity-0",
+          )}
+        />
+      ) : (
+        <span
+          aria-hidden
+          className="
+            text-ink-2 absolute inset-0 grid place-items-center text-[38cqw] leading-none
+            font-semibold
+          "
+        >
+          {title.slice(0, 1).toUpperCase()}
+        </span>
+      )}
     </span>
   );
 }

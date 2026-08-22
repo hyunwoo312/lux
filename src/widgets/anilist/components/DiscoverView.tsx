@@ -1,54 +1,76 @@
-import { useState } from "react";
-import { ROW } from "@/lib/row";
-import { Spinner } from "@/components/ui/spinner";
-import { Plus } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Tooltip } from "@/components/ui/tooltip";
 import { ConfigSegmented, ConfigSelect } from "@/components/config/WidgetConfig";
-import { loadErrorMessage } from "@/lib/net";
 import { useIntegrationStore } from "@/integrations";
 import { useSettingsStore } from "@/settings";
-import { usePolledResource, type PolledResourceState } from "@/widgets/core/usePolledResource";
 import {
-  fetchDiscover,
-  parseCachedDiscover,
-  saveListStatus,
-} from "@/widgets/anilist/lib/anilist-api";
+  usePolledResource,
+  type Freshness,
+  type PolledResourceState,
+} from "@/widgets/core/usePolledResource";
+import { saveListStatus } from "@/widgets/anilist/lib/api/list";
+import { fetchDiscover } from "@/widgets/anilist/lib/api/discover";
+import { parseCachedDiscover } from "@/widgets/anilist/lib/api/cache";
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
-import { MediaCover } from "@/widgets/anilist/components/MediaCover";
+import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
+import { loadFailureMessage, writeFailureMessage } from "@/widgets/anilist/lib/load-failure";
+import { AnilistWriteNotice } from "@/widgets/anilist/components/AnilistWriteNotice";
+import { cn } from "@/lib/utils";
+import { COVER_GRID } from "@/widgets/anilist/components/coverGrid";
+import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
 import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
+import { AnilistStaleNotice } from "@/widgets/anilist/components/AnilistStaleNotice";
+import { DiscoverRow } from "@/widgets/anilist/components/discover/DiscoverRow";
+import { DiscoverSearchBar } from "@/widgets/anilist/components/discover/DiscoverSearchBar";
+import { DiscoverTile } from "@/widgets/anilist/components/discover/DiscoverTile";
+import {
+  useDiscoverSearch,
+  type DiscoverSearchState,
+} from "@/widgets/anilist/components/discover/useDiscoverSearch";
 import { discoverFeedLabel } from "@/widgets/anilist/lib/discover";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import type {
-  DiscoverFeed,
-  DiscoverMedia,
-  DiscoverType,
-  ListStatus,
-} from "@/widgets/anilist/types";
-
-const FEED_OPTIONS: { value: DiscoverFeed; label: string }[] = [
-  { value: "trending", label: "Trending" },
-  { value: "season", label: "Popular now" },
-  { value: "top", label: "Top rated" },
-  { value: "upcoming", label: "Upcoming" },
-];
+import { DISCOVER_FEEDS, DISCOVER_REFRESH_MS } from "@/widgets/anilist/types";
+import type { DiscoverMedia, DiscoverType, ListStatus, ViewMode } from "@/widgets/anilist/types";
 
 const TYPE_OPTIONS: { value: DiscoverType; label: string }[] = [
   { value: "anime", label: "Anime" },
   { value: "manga", label: "Manga" },
 ];
 
-const LIST_STATUS_LABEL: Record<string, string> = {
-  CURRENT: "Watching",
-  PLANNING: "Planned",
-  COMPLETED: "Completed",
-  DROPPED: "Dropped",
-  PAUSED: "Paused",
-  REPEATING: "Rewatching",
+type PlanningAdds = {
+  statusOf: (media: DiscoverMedia) => ListStatus | undefined;
+  isPending: (media: DiscoverMedia) => boolean;
+  writeError: string | null;
+  add: (media: DiscoverMedia) => void;
 };
 
-const REFRESH_MS = 30 * 60 * 1000;
+function usePlanningAdds(): PlanningAdds {
+  const [added, setAdded] = useState<Record<number, ListStatus>>({});
+  const [pending, setPending] = useState<Record<number, boolean>>({});
+  const [writeError, setWriteError] = useState<string | null>(null);
+
+  const add = (media: DiscoverMedia) => {
+    if (pending[media.id]) return;
+    setPending((prev) => ({ ...prev, [media.id]: true }));
+    setWriteError(null);
+    saveListStatus(media.id, "PLANNING")
+      .then((status) => setAdded((prev) => ({ ...prev, [media.id]: status })))
+      .catch((error: unknown) =>
+        setWriteError(
+          writeFailureMessage(error, `Couldn’t add ${media.title} to Planning. Try again.`),
+        ),
+      )
+      .finally(() => setPending((prev) => ({ ...prev, [media.id]: false })));
+  };
+
+  return {
+    statusOf: (media) => added[media.id] ?? media.listStatus,
+    isPending: (media) => pending[media.id] ?? false,
+    writeError,
+    add,
+  };
+}
 
 export function DiscoverView() {
   const account = useIntegrationStore(
@@ -59,26 +81,42 @@ export function DiscoverView() {
   const lang = useAnilist((d) => d.titleLanguage);
   const feed = useAnilist((d) => d.discoverFeed);
   const type = useAnilist((d) => d.discoverType);
+  const viewMode = useAnilist((d) => d.viewMode);
+  const feedOptions = useMemo(
+    () => DISCOVER_FEEDS.map((value) => ({ value, label: discoverFeedLabel(value, type) })),
+    [type],
+  );
   const setFeed = useAnilistStore((s) => s.setDiscoverFeed);
   const setType = useAnilistStore((s) => s.setDiscoverType);
 
+  const [query, setQuery] = useState("");
+  const trimmedQuery = query.trim();
+  const isSearching = trimmedQuery.length > 0;
+
   const connected = account?.status === "connected";
   const needsReconnect = account?.status === "needsReconnect";
+  const connectLabel = needsReconnect ? "Reconnect AniList" : "Connect AniList";
+  const openAccounts = () => useSettingsStore.getState().openSettings("accounts");
 
-  const { state } = usePolledResource(
+  const adds = usePlanningAdds();
+  const search = useDiscoverSearch(query, lang, type, connected);
+
+  const { state, freshness, isRefreshing, refresh, lastSyncedAt } = usePolledResource(
     (signal) => fetchDiscover(lang, feed, type, connected, signal),
     {
       enabled: true,
-      intervalMs: REFRESH_MS,
+      intervalMs: DISCOVER_REFRESH_MS,
       cacheKey: anilistKeys.discover(lang, feed, type),
       isEmpty: (data) => data.length === 0,
       persist: true,
       parsePersisted: parseCachedDiscover,
     },
   );
+  useAnilistSync(refresh, isRefreshing, lastSyncedAt);
 
   return (
     <div className="flex h-full flex-col gap-2 p-1">
+      <DiscoverSearchBar value={query} onChange={setQuery} kind={type} />
       <div className="flex min-w-0 items-center justify-between gap-2 px-1">
         <div className="shrink-0">
           <ConfigSegmented
@@ -88,161 +126,185 @@ export function DiscoverView() {
             onChange={(value) => setType(instanceId, value)}
           />
         </div>
-        {connected ? (
+        {isSearching ? (
+          <span className="text-ink-4 text-micro truncate font-semibold tracking-wide uppercase">
+            Search results
+          </span>
+        ) : connected ? (
           <ConfigSelect
             label="Discover feed"
             value={feed}
-            options={FEED_OPTIONS}
+            options={feedOptions}
             onChange={(value) => setFeed(instanceId, value)}
             triggerClassName="w-auto"
           />
         ) : (
-          <Button
-            variant="ghost"
-            size="xs"
-            onClick={() => useSettingsStore.getState().openSettings("accounts")}
-          >
-            {needsReconnect ? "Reconnect AniList" : "Connect AniList"}
-          </Button>
+          <span className="text-ink-4 text-micro truncate font-semibold tracking-wide uppercase">
+            {discoverFeedLabel(feed, type)}
+          </span>
+        )}
+      </div>
+      <div className="min-h-0 flex-1">
+        {isSearching ? (
+          <SearchBody
+            state={search}
+            query={trimmedQuery}
+            viewMode={viewMode}
+            newTab={newTab}
+            connected={connected}
+            adds={adds}
+          />
+        ) : (
+          <DiscoverBody
+            state={state}
+            freshness={freshness}
+            viewMode={viewMode}
+            newTab={newTab}
+            connected={connected}
+            adds={adds}
+          />
         )}
       </div>
       {!connected && (
-        <span className="text-ink-3 text-micro px-1 font-semibold tracking-wide uppercase">
-          {discoverFeedLabel(feed, type)}
-        </span>
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 px-1">
+          <p className="text-ink-3 text-micro min-w-0">
+            {needsReconnect
+              ? "Your AniList sign-in expired — reconnect to get your library and feed back."
+              : "Connect for your library, progress tracking, your feed and notifications."}
+          </p>
+          <Button variant="outline" size="xs" onClick={openAccounts}>
+            {connectLabel}
+          </Button>
+        </div>
       )}
-      <div className="min-h-0 flex-1">
-        <DiscoverBody state={state} newTab={newTab} connected={connected} />
-      </div>
+    </div>
+  );
+}
+
+function SearchBody({
+  state,
+  query,
+  viewMode,
+  newTab,
+  connected,
+  adds,
+}: {
+  state: DiscoverSearchState;
+  query: string;
+  viewMode: ViewMode;
+  newTab: boolean;
+  connected: boolean;
+  adds: PlanningAdds;
+}) {
+  if (state.status === "idle" || state.status === "loading")
+    return <AnilistSkeleton variant={viewMode} label="Searching…" />;
+  if (state.status === "error") return <AnilistPlaceholder>{state.message}</AnilistPlaceholder>;
+  if (state.status === "empty")
+    return <AnilistPlaceholder>No results for “{query}”.</AnilistPlaceholder>;
+
+  return (
+    <div className="flex h-full flex-col">
+      <AnilistWriteNotice message={adds.writeError ?? ""} />
+      <DiscoverList
+        label="Search results"
+        media={state.data}
+        viewMode={viewMode}
+        newTab={newTab}
+        connected={connected}
+        adds={adds}
+      />
     </div>
   );
 }
 
 function DiscoverBody({
   state,
+  freshness,
+  viewMode,
   newTab,
   connected,
+  adds,
 }: {
   state: PolledResourceState<DiscoverMedia[]>;
+  freshness: Freshness;
+  viewMode: ViewMode;
   newTab: boolean;
   connected: boolean;
+  adds: PlanningAdds;
 }) {
-  const [added, setAdded] = useState<Record<number, ListStatus>>({});
-  const [pending, setPending] = useState<Record<number, boolean>>({});
-
-  const addToPlanning = (media: DiscoverMedia) => {
-    if (pending[media.id]) return;
-    setPending((prev) => ({ ...prev, [media.id]: true }));
-    saveListStatus(media.id, "PLANNING")
-      .then((status) => setAdded((prev) => ({ ...prev, [media.id]: status })))
-      .catch(() => undefined)
-      .finally(() => setPending((prev) => ({ ...prev, [media.id]: false })));
-  };
-
-  if (state.status === "loading") return <AnilistPlaceholder>Loading titles…</AnilistPlaceholder>;
+  if (state.status === "loading")
+    return <AnilistSkeleton variant={viewMode} label="Loading titles…" />;
   if (state.status === "error")
     return (
-      <AnilistPlaceholder>
-        {loadErrorMessage(state.error, "Couldn’t load titles.")}
-      </AnilistPlaceholder>
+      <AnilistPlaceholder>{loadFailureMessage(state.error, "trending titles")}</AnilistPlaceholder>
     );
   if (state.status === "empty")
     return <AnilistPlaceholder>Nothing to show here right now.</AnilistPlaceholder>;
 
   return (
-    <div className="flex h-full flex-col gap-1 scroll-fade overflow-y-auto">
-      {state.data.map((media) => (
-        <DiscoverRow
-          key={media.id}
-          media={media}
-          newTab={newTab}
-          listStatus={added[media.id] ?? media.listStatus}
-          canAdd={connected}
-          pending={pending[media.id] ?? false}
-          onAdd={() => addToPlanning(media)}
-        />
-      ))}
+    <div className="flex h-full flex-col">
+      <AnilistStaleNotice freshness={freshness} />
+      <AnilistWriteNotice message={adds.writeError ?? ""} />
+      <DiscoverList
+        label="Discover"
+        media={state.data}
+        viewMode={viewMode}
+        newTab={newTab}
+        connected={connected}
+        adds={adds}
+      />
     </div>
   );
 }
 
-function DiscoverRow({
+function DiscoverList({
+  label,
   media,
+  viewMode,
   newTab,
-  listStatus,
-  canAdd,
-  pending,
-  onAdd,
+  connected,
+  adds,
 }: {
-  media: DiscoverMedia;
+  label: string;
+  media: DiscoverMedia[];
+  viewMode: ViewMode;
   newTab: boolean;
-  listStatus?: ListStatus;
-  canAdd: boolean;
-  pending: boolean;
-  onAdd: () => void;
+  connected: boolean;
+  adds: PlanningAdds;
 }) {
-  return (
-    <a
-      href={media.siteUrl}
-      target={newTab ? "_blank" : undefined}
-      rel="noreferrer"
-      className={ROW.item}
-    >
-      <MediaCover
-        src={media.coverImage}
-        title={media.title}
-        color={media.coverColor}
-        className="h-12 w-9"
-      />
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <div className="flex min-w-0 items-center gap-1.5">
-          <p className="text-ink truncate text-caption font-medium">{media.title}</p>
-          {listStatus && (
-            <span
-              className="
-                border-border text-ink-3 text-micro shrink-0 rounded-full border px-1.5 py-px
-              "
-            >
-              {LIST_STATUS_LABEL[listStatus] ?? "On list"}
-            </span>
-          )}
-        </div>
-        <p className="text-ink-3 truncate text-micro">{describeMedia(media)}</p>
-      </div>
-      {media.averageScore !== undefined && (
-        <span className="text-ink-3 text-micro shrink-0 font-semibold tabular-nums">
-          {media.averageScore}%
-        </span>
-      )}
-      {canAdd && !listStatus && (
-        <Tooltip content="Add to Planning">
-          <button
-            type="button"
-            aria-label={`Add ${media.title} to Planning`}
-            disabled={pending}
-            onClick={(event) => {
-              event.preventDefault();
-              onAdd();
-            }}
-            className="
-              press cursor-pointer focus-ring text-ink-4 grid size-6 shrink-0 place-items-center
-              rounded-sm
-              hover:text-ink
-              disabled:pointer-events-none disabled:opacity-50
-            "
-          >
-            {pending ? <Spinner className="size-3.5" /> : <Plus className="size-3.5" aria-hidden />}
-          </button>
-        </Tooltip>
-      )}
-    </a>
-  );
-}
+  const list = viewMode === "list";
 
-function describeMedia(media: DiscoverMedia): string {
-  const parts: string[] = [];
-  if (media.format) parts.push(media.format.replace(/_/g, " "));
-  if (media.episodes) parts.push(`${media.episodes} ep`);
-  if (media.genres?.length) parts.push(media.genres.join(" · "));
-  return parts.join(" — ");
+  return (
+    <ul
+      aria-label={label}
+      className={cn(
+        "scroll-fade min-h-0 flex-1 overflow-y-auto py-1",
+        list ? "flex flex-col gap-0.5 px-1" : cn(COVER_GRID, "content-start px-1.5"),
+      )}
+    >
+      {media.map((entry) =>
+        list ? (
+          <DiscoverRow
+            key={entry.id}
+            media={entry}
+            newTab={newTab}
+            listStatus={adds.statusOf(entry)}
+            canAdd={connected}
+            pending={adds.isPending(entry)}
+            onAdd={() => adds.add(entry)}
+          />
+        ) : (
+          <DiscoverTile
+            key={entry.id}
+            media={entry}
+            newTab={newTab}
+            listStatus={adds.statusOf(entry)}
+            canAdd={connected}
+            pending={adds.isPending(entry)}
+            onAdd={() => adds.add(entry)}
+          />
+        ),
+      )}
+    </ul>
+  );
 }

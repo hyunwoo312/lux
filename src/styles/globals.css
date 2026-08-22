@@ -552,6 +552,12 @@
   box-shadow: var(--elev-1), var(--rim);
 }
 
+@utility art-scrim {
+  background-color: oklch(0 0 0 / 0.6);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  border-top: 1px solid oklch(1 0 0 / 0.12);
+}
+
 @utility frost-layer {
   opacity: calc(1 - var(--glass-opacity));
 }

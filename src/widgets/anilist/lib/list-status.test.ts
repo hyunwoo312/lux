@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   emptyListMessage,
   listFilterLabel,
+  listStatusLabel,
   matchesListFilter,
 } from "@/widgets/anilist/lib/list-status";
 
@@ -45,5 +46,22 @@ describe("listFilterLabel", () => {
 describe("emptyListMessage", () => {
   it("points planned users at Discover", () => {
     expect(emptyListMessage("planned")).toMatch(/Discover/);
+  });
+});
+
+describe("listStatusLabel", () => {
+  it("reads manga rather than watching it", () => {
+    expect(listStatusLabel("CURRENT", "manga")).toBe("Reading");
+    expect(listStatusLabel("REPEATING", "manga")).toBe("Rereading");
+  });
+
+  it("keeps watching for anime", () => {
+    expect(listStatusLabel("CURRENT", "anime")).toBe("Watching");
+    expect(listStatusLabel("REPEATING", "anime")).toBe("Rewatching");
+  });
+
+  it("uses one word for the statuses that do not depend on the medium", () => {
+    expect(listStatusLabel("COMPLETED", "manga")).toBe("Completed");
+    expect(listStatusLabel("PLANNING", "anime")).toBe("Planned");
   });
 });

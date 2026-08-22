@@ -3,29 +3,28 @@ import { ROW } from "@/lib/row";
 import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
-import { loadErrorMessage } from "@/lib/net";
 import { usePagedResource } from "@/widgets/core/usePagedResource";
-import {
-  fetchActivityPage,
-  parseCachedActivity,
-  toggleActivityLike,
-} from "@/widgets/anilist/lib/anilist-api";
+import { fetchActivityPage, toggleActivityLike } from "@/widgets/anilist/lib/api/feed";
+import { parseCachedActivity } from "@/widgets/anilist/lib/api/cache";
+import { AnilistStaleNotice } from "@/widgets/anilist/components/AnilistStaleNotice";
+import { loadFailureMessage, writeFailureMessage } from "@/widgets/anilist/lib/load-failure";
 import { FeedList } from "@/widgets/anilist/components/FeedList";
 import { FeedThumb } from "@/widgets/anilist/components/FeedThumb";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
+import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
+import { AnilistWriteNotice } from "@/widgets/anilist/components/AnilistWriteNotice";
 import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import {
+  ACTIVITY_OPEN_STALE_MS,
   ACTIVITY_REFRESH_MS,
+  ACTIVITY_SEEN_DWELL_MS,
   ANILIST_MAX_ITEMS,
   ANILIST_PAGE_SIZE,
   type AnilistActivity,
 } from "@/widgets/anilist/types";
-
-const OPEN_STALE_MS = 3 * 60 * 1000;
-const SEEN_DWELL_MS = 2000;
 
 export function ActivityView({
   enabled,
@@ -39,27 +38,40 @@ export function ActivityView({
   const setLastSeen = useAnilistStore((s) => s.setLastSeenActivity);
   const lang = useAnilist((d) => d.titleLanguage);
   const seenRef = useRef(useAnilistStore.getState().lastSeenActivityAt ?? 0);
-  const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh, lastSyncedAt } =
-    usePagedResource((page, signal) => fetchActivityPage(page, lang, signal), {
-      enabled,
-      intervalMs: ACTIVITY_REFRESH_MS,
-      maxItems: ANILIST_MAX_ITEMS,
-      cacheKey: anilistKeys.activity(userId, lang),
-      getKey: (activity) => activity.id,
-      persist: true,
-      parsePersisted: parseCachedActivity,
-    });
+  const {
+    state,
+    hasMore,
+    isLoadingMore,
+    isRefreshing,
+    loadMore,
+    refresh,
+    lastSyncedAt,
+    freshness,
+  } = usePagedResource((page, signal) => fetchActivityPage(page, lang, signal), {
+    enabled,
+    intervalMs: ACTIVITY_REFRESH_MS,
+    maxItems: ANILIST_MAX_ITEMS,
+    cacheKey: anilistKeys.activity(userId, lang),
+    getKey: (activity) => activity.id,
+    persist: true,
+    parsePersisted: parseCachedActivity,
+  });
   useAnilistSync(refresh, isRefreshing, lastSyncedAt);
 
   const [likes, setLikes] = useState<Record<number, boolean>>({});
+  const [likeError, setLikeError] = useState("");
   const likesRef = useRef(likes);
   likesRef.current = likes;
   const toggleLike = useCallback((activity: AnilistActivity) => {
     const current = likesRef.current[activity.id] ?? activity.isLiked;
     setLikes((prev) => ({ ...prev, [activity.id]: !current }));
+    setLikeError("");
     toggleActivityLike(activity.id).then(
       (isLiked) => setLikes((prev) => ({ ...prev, [activity.id]: isLiked })),
-      () => setLikes((prev) => ({ ...prev, [activity.id]: current })),
+      (error: Error) => {
+        setLikes((prev) => ({ ...prev, [activity.id]: current }));
+        setLikeError(writeFailureMessage(error, "Couldn’t update your like. Try again."));
+      },
     );
   }, []);
 
@@ -70,7 +82,7 @@ export function ActivityView({
     if (openedRef.current) return;
     openedRef.current = true;
     if (pagedIn) return;
-    if (Date.now() - lastSyncedAt >= OPEN_STALE_MS) refresh();
+    if (Date.now() - lastSyncedAt >= ACTIVITY_OPEN_STALE_MS) refresh();
   }, [pagedIn, lastSyncedAt, refresh]);
 
   const newest = items[0]?.createdAt;
@@ -80,7 +92,7 @@ export function ActivityView({
     const arm = () => {
       window.clearTimeout(timer);
       if (document.visibilityState !== "visible") return;
-      timer = window.setTimeout(() => setLastSeen(newest), SEEN_DWELL_MS);
+      timer = window.setTimeout(() => setLastSeen(newest), ACTIVITY_SEEN_DWELL_MS);
     };
     arm();
     document.addEventListener("visibilitychange", arm);
@@ -90,53 +102,37 @@ export function ActivityView({
     };
   }, [newest, setLastSeen]);
 
-  if (state.status === "loading") return <AnilistPlaceholder>Loading activity…</AnilistPlaceholder>;
+  if (state.status === "loading")
+    return <AnilistSkeleton variant="list" label="Loading activity…" />;
   if (state.status === "error")
-    return (
-      <AnilistPlaceholder>
-        {loadErrorMessage(state.error, "Couldn’t load your feed.")}
-      </AnilistPlaceholder>
-    );
+    return <AnilistPlaceholder>{loadFailureMessage(state.error, "your feed")}</AnilistPlaceholder>;
   if (state.status === "empty")
     return <AnilistPlaceholder>No recent activity from people you follow.</AnilistPlaceholder>;
 
   const seen = seenRef.current;
-  const newCount = items.filter((activity) => activity.createdAt > seen).length;
 
   return (
-    <FeedList
-      items={items}
-      getKey={(activity) => activity.id}
-      hasMore={hasMore}
-      isLoadingMore={isLoadingMore}
-      loadMore={loadMore}
-      header={
-        <div className="flex items-center justify-between gap-2 px-1">
-          <span className="text-ink-3 text-micro font-semibold tracking-wide uppercase">
-            Following
-          </span>
-          {newCount > 0 && (
-            <span
-              className="
-                bg-primary text-primary-foreground text-micro rounded-full px-1.5 py-0.5
-                font-semibold tabular-nums
-              "
-            >
-              {newCount} new
-            </span>
-          )}
-        </div>
-      }
-      renderItem={(activity) => (
-        <ActivityRow
-          activity={activity}
-          newTab={newTab}
-          isNew={activity.createdAt > seen}
-          liked={likes[activity.id] ?? activity.isLiked}
-          onToggleLike={() => toggleLike(activity)}
-        />
-      )}
-    />
+    <div className="flex h-full min-h-0 flex-col">
+      <AnilistStaleNotice freshness={freshness} />
+      <AnilistWriteNotice message={likeError} />
+      <FeedList
+        label="Recent activity"
+        items={items}
+        getKey={(activity) => activity.id}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        loadMore={loadMore}
+        renderItem={(activity) => (
+          <ActivityRow
+            activity={activity}
+            newTab={newTab}
+            isNew={activity.createdAt > seen}
+            liked={likes[activity.id] ?? activity.isLiked}
+            onToggleLike={() => toggleLike(activity)}
+          />
+        )}
+      />
+    </div>
   );
 }
 
@@ -157,19 +153,19 @@ function ActivityRow({
   const meta = activity.mediaTitle ? `${activity.mediaTitle} · ${time}` : time;
 
   return (
-    <div className={ROW.item}>
+    <div className="flex items-center gap-1">
       <a
         href={activity.siteUrl}
         target={newTab ? "_blank" : undefined}
         rel="noreferrer"
-        className="flex min-w-0 flex-1 items-center gap-2.5"
+        className={cn(ROW.itemAction, "min-w-0 flex-1")}
       >
         {activity.coverImage ? (
           <span className="relative h-12 w-9 shrink-0 overflow-visible">
             <MediaCover
               src={activity.coverImage}
               title={activity.mediaTitle ?? activity.text}
-              className="h-12 w-9"
+              className="h-12 w-9 rounded-md"
             />
             <MediaCover
               src={activity.userAvatar}
@@ -205,12 +201,12 @@ function LikeButton({ liked, onToggle }: { liked: boolean; onToggle: () => void 
       aria-pressed={liked}
       aria-label={liked ? "Unlike" : "Like"}
       className="
-        press cursor-pointer text-ink-3
+        press focus-ring cursor-pointer text-ink-3
         hover:text-ink
         flex size-7 shrink-0 items-center justify-center rounded-sm
       "
     >
-      <Heart className={cn("size-4", liked && "fill-primary text-primary")} />
+      <Heart className={cn("size-4", liked && "fill-primary text-primary")} aria-hidden />
     </button>
   );
 }

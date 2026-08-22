@@ -10,11 +10,16 @@ import { useSettingsStore } from "@/settings";
 import type { OpenBehavior } from "@/lib/open-url";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import type { TitleLanguage } from "@/widgets/anilist/types";
+import type { TitleLanguage, ViewMode } from "@/widgets/anilist/types";
 
 const OPEN_OPTIONS: { value: OpenBehavior; label: string }[] = [
   { value: "currentTab", label: "This tab" },
   { value: "newTab", label: "New tab" },
+];
+
+const VIEW_OPTIONS: { value: ViewMode; label: string }[] = [
+  { value: "grid", label: "Grid" },
+  { value: "list", label: "List" },
 ];
 
 const TITLE_OPTIONS: { value: TitleLanguage; label: string }[] = [
@@ -32,6 +37,8 @@ export function AnilistConfig() {
   const setTitleLanguage = useAnilistStore((s) => s.setTitleLanguage);
   const openBehavior = useAnilist((d) => d.openBehavior);
   const setOpenBehavior = useAnilistStore((s) => s.setOpenBehavior);
+  const viewMode = useAnilist((d) => d.viewMode);
+  const setViewMode = useAnilistStore((s) => s.setViewMode);
 
   const accountDescription = account
     ? account.status === "needsReconnect"
@@ -66,6 +73,18 @@ export function AnilistConfig() {
               value={openBehavior}
               options={OPEN_OPTIONS}
               onChange={(value) => setOpenBehavior(instanceId, value)}
+            />
+          }
+        />
+        <WidgetConfigItem
+          title="Layout"
+          description="Cover grid or compact list, in Library and Discover"
+          control={
+            <ConfigSegmented
+              label="Layout"
+              value={viewMode}
+              options={VIEW_OPTIONS}
+              onChange={(value) => setViewMode(instanceId, value)}
             />
           }
         />

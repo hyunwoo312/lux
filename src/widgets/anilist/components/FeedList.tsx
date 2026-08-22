@@ -1,45 +1,44 @@
-import { Fragment, useRef, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 
 type FeedListProps<T> = {
+  label: string;
   items: T[];
   getKey: (item: T) => string | number;
   renderItem: (item: T, index: number) => ReactNode;
   hasMore: boolean;
   isLoadingMore: boolean;
   loadMore: () => void;
-  header?: ReactNode;
 };
 
 export function FeedList<T>({
+  label,
   items,
   getKey,
   renderItem,
   hasMore,
   isLoadingMore,
   loadMore,
-  header,
 }: FeedListProps<T>) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   useInfiniteScroll(scrollRef, sentinelRef, hasMore, loadMore);
 
   return (
-    <div className="flex h-full flex-col gap-2 p-1">
-      {header}
-      <div
-        ref={scrollRef}
-        className="flex min-h-0 flex-1 flex-col gap-1 scroll-fade overflow-y-auto"
-      >
+    <div
+      ref={scrollRef}
+      className="flex h-full min-h-0 flex-col gap-1 scroll-fade overflow-y-auto px-1.5"
+    >
+      <ul aria-label={label} className="flex flex-col gap-1">
         {items.map((item, index) => (
-          <Fragment key={getKey(item)}>{renderItem(item, index)}</Fragment>
+          <li key={getKey(item)}>{renderItem(item, index)}</li>
         ))}
-        {hasMore && (
-          <div ref={sentinelRef} className="text-ink-3 text-micro py-2 text-center">
-            {isLoadingMore ? "Loading more…" : ""}
-          </div>
-        )}
-      </div>
+      </ul>
+      {hasMore && (
+        <div ref={sentinelRef} className="text-ink-3 text-micro py-2 text-center">
+          {isLoadingMore ? "Loading more…" : ""}
+        </div>
+      )}
     </div>
   );
 }

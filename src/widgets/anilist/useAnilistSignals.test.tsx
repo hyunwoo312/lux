@@ -2,23 +2,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render } from "@testing-library/react";
 
-vi.mock("@/widgets/anilist/lib/anilist-api", () => ({
+vi.mock("@/widgets/anilist/lib/api/feed", () => ({
   fetchActivityPage: vi.fn(),
   fetchUnreadCount: vi.fn(),
-  parseCachedActivity: vi.fn(),
   toggleActivityLike: vi.fn(),
 }));
+vi.mock("@/widgets/anilist/lib/api/cache", () => ({ parseCachedActivity: vi.fn() }));
 vi.mock("@/widgets/anilist/useAnilistSync", () => ({ useAnilistSync: vi.fn() }));
 
 import { PAGED_CACHE_PREFIX } from "@/lib/local-store";
 import { ActivityView } from "@/widgets/anilist/components/ActivityView";
-import {
-  fetchActivityPage,
-  fetchUnreadCount,
-  parseCachedActivity,
-} from "@/widgets/anilist/lib/anilist-api";
+import { fetchActivityPage, fetchUnreadCount } from "@/widgets/anilist/lib/api/feed";
+import { parseCachedActivity } from "@/widgets/anilist/lib/api/cache";
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
-import { useAnilistSignals } from "@/widgets/anilist/useAnilistSignals";
+import { useActivityUnseenCount } from "@/widgets/anilist/useAnilistSignals";
 import { useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import {
@@ -63,7 +60,7 @@ function seedCache(ageMs: number, pages = 1): void {
 }
 
 function Badge() {
-  useAnilistSignals(true, USER);
+  useActivityUnseenCount(true, USER);
   return null;
 }
 
@@ -86,7 +83,9 @@ beforeEach(() => {
   useAnilistStore.setState({
     byInstance: {
       [ID]: {
-        activeTab: "activity",
+        activeTab: "feed",
+        feedSource: "following",
+        viewMode: "grid",
         mediaFilter: "both",
         currentSort: "score",
         titleLanguage: "english",

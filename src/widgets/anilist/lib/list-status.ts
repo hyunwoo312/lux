@@ -1,4 +1,4 @@
-import type { ListFilter, ListStatus, MediaFilter } from "@/widgets/anilist/types";
+import type { ListFilter, ListStatus, MediaFilter, MediaKind } from "@/widgets/anilist/types";
 
 const FILTER_STATUSES: Record<Exclude<ListFilter, "all">, ListStatus[]> = {
   progress: ["CURRENT", "REPEATING"],
@@ -15,6 +15,15 @@ export function isInProgressStatus(status: ListStatus): boolean {
 export function matchesListFilter(filter: ListFilter, status: ListStatus | undefined): boolean {
   if (filter === "all") return true;
   return status != null && FILTER_STATUSES[filter].includes(status);
+}
+
+export function listStatusLabel(status: ListStatus, kind: MediaKind): string {
+  const reading = kind === "manga";
+  if (status === "CURRENT") return reading ? "Reading" : "Watching";
+  if (status === "REPEATING") return reading ? "Rereading" : "Rewatching";
+  return { PLANNING: "Planned", COMPLETED: "Completed", DROPPED: "Dropped", PAUSED: "Paused" }[
+    status
+  ];
 }
 
 export function listFilterLabel(filter: ListFilter, media: MediaFilter): string {

@@ -1,11 +1,8 @@
 import { useIntegrationStore } from "@/integrations";
 import { WidgetRefreshButton } from "@/widgets/core/WidgetRefreshButton";
 import { useFreshness } from "@/widgets/core/usePolledResource";
-import {
-  ANILIST_SYNC_COOLDOWN_MS,
-  useAnilist,
-  useAnilistStore,
-} from "@/widgets/anilist/useAnilistStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
+import { ANILIST_SYNC_COOLDOWN_MS, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 
 export function AnilistRefreshButton() {
   const freshness = useFreshness("anilist:");
@@ -13,7 +10,7 @@ export function AnilistRefreshButton() {
   const lastSyncAt = useAnilistStore((s) => s.lastSyncAt);
   const dataSyncedAt = useAnilistStore((s) => s.dataSyncedAt);
   const requestSync = useAnilistStore((s) => s.requestSync);
-  const titleLanguage = useAnilist((d) => d.titleLanguage);
+  const instanceId = useWidgetInstanceId();
   const viewerId = useIntegrationStore((s) =>
     Number(s.accounts.find((entry) => entry.providerId === "anilist")?.providerAccountId),
   );
@@ -26,7 +23,7 @@ export function AnilistRefreshButton() {
       updatedAt={dataSyncedAt}
       freshness={freshness}
       cooldownMs={ANILIST_SYNC_COOLDOWN_MS}
-      onRefresh={() => requestSync(titleLanguage, viewerId)}
+      onRefresh={() => requestSync(instanceId, viewerId)}
     />
   );
 }
