@@ -1,11 +1,10 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIntegrationStore } from "@/integrations";
-import { GithubTabs } from "@/widgets/github/GithubTabs";
 import { GithubWidget } from "@/widgets/github/GithubWidget";
-import { useGithubStore } from "@/widgets/github/useGithubStore";
+import { useGithubStore, type GithubData } from "@/widgets/github/useGithubStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import type { GithubView } from "@/widgets/github/types";
 
@@ -13,7 +12,16 @@ const ID = "github-1";
 
 function patchView(view: GithubView) {
   useGithubStore.setState({
-    byInstance: { [ID]: { view, showPrivate: true, openBehavior: "currentTab" } },
+    byInstance: {
+      [ID]: {
+        view,
+        showPrivate: true,
+        showDrafts: true,
+        inboxFilter: "all",
+        collapsedRepos: [],
+        openBehavior: "currentTab",
+      },
+    },
   });
 }
 
@@ -38,53 +46,38 @@ describe("GithubWidget signed-out preview", () => {
 
     expect(screen.getByText(/contributions in the last year/)).toBeInTheDocument();
   });
-
-  it("previews the inbox with sample data when signed out", () => {
-    patchView("inbox");
-    renderWidget();
-
-    expect(screen.getByText("Review requests")).toBeInTheDocument();
-  });
-
-  it("previews watched releases with sample data when signed out", () => {
-    patchView("releases");
-    renderWidget();
-
-    expect(screen.getByText("acme/api")).toBeInTheDocument();
-    expect(screen.getByText("Pre-release")).toBeInTheDocument();
-  });
 });
 
-describe("GithubTabs", () => {
-  it("switches the widget to any of the three views in one click", () => {
-    render(
-      <WidgetInstanceContext.Provider value={ID}>
-        <TooltipProvider>
-          <GithubTabs />
-          <GithubWidget />
-        </TooltipProvider>
-      </WidgetInstanceContext.Provider>,
-    );
+describe("inbox filtering and collapse", () => {
+  function patchInbox(patch: Partial<GithubData> = {}) {
+    useGithubStore.setState({
+      byInstance: {
+        [ID]: {
+          view: "inbox",
+          showPrivate: true,
+          showDrafts: true,
+          inboxFilter: "all",
+          collapsedRepos: [],
+          openBehavior: "currentTab",
+          ...patch,
+        },
+      },
+    });
+  }
 
-    fireEvent.click(screen.getByRole("tab", { name: "Releases" }));
-    expect(screen.getByText("acme/cli")).toBeInTheDocument();
+  it("keeps the filter control reachable while filtered", () => {
+    patchInbox({ inboxFilter: "notifications" });
+    renderWidget();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Inbox" }));
-    expect(screen.getByText("Review requests")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("tab", { name: "Contributions" }));
-    expect(screen.getByText(/contributions in the last year/)).toBeInTheDocument();
+    expect(screen.getByRole("radiogroup", { name: "Filter the inbox" })).toBeInTheDocument();
+    expect(screen.queryByText("Fix flaky auth integration test")).not.toBeInTheDocument();
   });
 
-  it("marks only the active view as selected", () => {
-    patchView("releases");
-    render(
-      <WidgetInstanceContext.Provider value={ID}>
-        <GithubTabs />
-      </WidgetInstanceContext.Provider>,
-    );
+  it("drops draft pull requests when drafts are hidden", () => {
+    patchInbox({ showDrafts: false });
+    renderWidget();
 
-    expect(screen.getByRole("tab", { name: "Releases" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("tab", { name: "Inbox" })).toHaveAttribute("aria-selected", "false");
+    expect(screen.queryByText("WIP: refactor grid layout engine")).not.toBeInTheDocument();
+    expect(screen.getByText("Fix flaky auth integration test")).toBeInTheDocument();
   });
 });

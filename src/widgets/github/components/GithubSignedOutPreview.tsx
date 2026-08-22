@@ -1,8 +1,10 @@
 import { useElementSize } from "@/hooks/useElementSize";
-import { Heatmap, Stats } from "@/widgets/github/components/ContributionsChart";
-import { InboxList } from "@/widgets/github/components/InboxView";
+import { Heatmap, HeatmapLegend } from "@/widgets/github/components/ContributionsChart";
+import { Stats } from "@/widgets/github/components/contributions/ContributionsStats";
+import { InboxList } from "@/widgets/github/components/inbox/InboxList";
 import { ReleaseList } from "@/widgets/github/components/ReleasesView";
 import { buildContributions } from "@/widgets/github/lib/contributions";
+import { heatmapMetrics, localDayKey } from "@/widgets/github/lib/heatmap";
 import { useGithub } from "@/widgets/github/useGithubStore";
 import type {
   ContributionDay,
@@ -176,11 +178,19 @@ const SAMPLE_RELEASES: ReleasesData = {
 
 function SampleContributions() {
   const [ref, size] = useElementSize<HTMLDivElement>();
+  const metrics = heatmapMetrics(size.width);
+
   return (
     <div className="flex h-full flex-col gap-3 p-1">
-      <Stats data={SAMPLE_CONTRIBUTIONS} />
+      <Stats data={SAMPLE_CONTRIBUTIONS} total={SAMPLE_CONTRIBUTIONS.total} weeks={metrics.weeks} />
       <div ref={ref} className="min-h-0 flex-1 overflow-hidden">
-        <Heatmap weeks={SAMPLE_CONTRIBUTIONS.weeks} size={size} />
+        <Heatmap
+          weeks={SAMPLE_CONTRIBUTIONS.weeks}
+          metrics={metrics}
+          total={SAMPLE_CONTRIBUTIONS.total}
+          todayKey={localDayKey(new Date())}
+        />
+        <HeatmapLegend metrics={metrics} />
       </div>
     </div>
   );

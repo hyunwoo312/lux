@@ -3,6 +3,16 @@ import type { AccentPreset } from "@/widgets/core/accent";
 export const GITHUB_ACCENT: AccentPreset = "violet";
 
 export const GITHUB_VIEWS = ["contributions", "inbox", "releases"] as const;
+
+export const INBOX_FILTERS = ["all", "reviews", "issues", "notifications"] as const;
+export type InboxFilter = (typeof INBOX_FILTERS)[number];
+
+export const INBOX_CACHE_KEY = "github:inbox";
+export const CONTRIBUTIONS_CACHE_KEY = "github:contributions";
+export const RELEASES_CACHE_KEY = "github:releases";
+
+export const INBOX_REFRESH_MS = 3 * 60 * 1000;
+export const SLOW_REFRESH_MS = 30 * 60 * 1000;
 export type GithubView = (typeof GITHUB_VIEWS)[number];
 
 export type ContributionLevel = 0 | 1 | 2 | 3 | 4;
@@ -31,6 +41,8 @@ export type ContributionTotals = {
   reviews: number;
 };
 
+export type DateRange = { from: string; to: string };
+
 export type ContributionsData = {
   weeks: ContributionDay[][];
   total: number;
@@ -41,6 +53,8 @@ export type ContributionsData = {
   activity?: RepoActivity[];
   bestDay?: ContributionDay;
   dailyAverage?: number;
+  currentStreakRange?: DateRange;
+  longestStreakRange?: DateRange;
 };
 
 export type InboxNotification = {

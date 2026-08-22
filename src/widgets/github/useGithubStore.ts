@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
+import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
@@ -8,30 +9,48 @@ import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import type { OpenBehavior } from "@/lib/open-url";
 import { invalidatePolledResource } from "@/widgets/core/usePolledResource";
 import { syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
-import { GITHUB_VIEWS, type ContributionsData, type GithubView } from "@/widgets/github/types";
+import {
+  CONTRIBUTIONS_CACHE_KEY,
+  GITHUB_VIEWS,
+  INBOX_CACHE_KEY,
+  INBOX_FILTERS,
+  RELEASES_CACHE_KEY,
+  type GithubView,
+  type InboxFilter,
+} from "@/widgets/github/types";
 
 export const GITHUB_SYNC_COOLDOWN_MS = 10_000;
 
+const CACHE_KEYS = [CONTRIBUTIONS_CACHE_KEY, INBOX_CACHE_KEY, RELEASES_CACHE_KEY] as const;
+
 type SyncResult = { ok: boolean; remainingMs: number };
 
-type GithubData = {
+export type GithubData = {
   view: GithubView;
   showPrivate: boolean;
+  showDrafts: boolean;
+  inboxFilter: InboxFilter;
+  collapsedRepos: string[];
   openBehavior: OpenBehavior;
 };
 
 type GithubStoreState = {
   byInstance: Record<string, GithubData>;
-  contributions?: ContributionsData;
+  login?: string;
+  lastSeenReleaseAt?: string;
   syncNonce: number;
   syncing: boolean;
   lastSyncAt?: number;
   dataSyncedAt?: number;
   setView: (instanceId: string, view: GithubView) => void;
   setShowPrivate: (instanceId: string, showPrivate: boolean) => void;
+  setShowDrafts: (instanceId: string, showDrafts: boolean) => void;
+  setInboxFilter: (instanceId: string, inboxFilter: InboxFilter) => void;
+  toggleRepoCollapsed: (instanceId: string, repo: string) => void;
   setOpenBehavior: (instanceId: string, openBehavior: OpenBehavior) => void;
   removeInstance: (instanceId: string) => void;
-  setContributions: (contributions: ContributionsData) => void;
+  setLogin: (login: string | undefined) => void;
+  markReleasesSeen: (publishedAt: string | undefined) => void;
   setSyncing: (syncing: boolean) => void;
   reportSynced: (at: number) => void;
   requestSync: () => SyncResult;
@@ -40,57 +59,33 @@ type GithubStoreState = {
 const DEFAULT_DATA: GithubData = {
   view: "contributions",
   showPrivate: true,
+  showDrafts: true,
+  inboxFilter: "all",
+  collapsedRepos: [],
   openBehavior: "currentTab",
 };
 
-const contributionDaySchema = z.object({
-  date: z.string(),
-  count: z.number(),
-  level: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
-});
-
-const repoActivitySchema = z.object({
-  repo: z.string(),
-  url: z.string(),
-  isPrivate: z.boolean(),
-  commits: z.number(),
-  prs: z.number(),
-  issues: z.number(),
-  reviews: z.number(),
-  total: z.number(),
-});
-
-const contributionsDataSchema = z.object({
-  weeks: z.array(z.array(contributionDaySchema)),
-  total: z.number(),
-  currentStreak: z.number(),
-  longestStreak: z.number(),
-  login: z.string().optional(),
-  totals: z
-    .object({
-      commits: z.number(),
-      prs: z.number(),
-      issues: z.number(),
-      reviews: z.number(),
-    })
-    .optional(),
-  activity: z.array(repoActivitySchema).optional(),
-  bestDay: contributionDaySchema.optional(),
-  dailyAverage: z.number().optional(),
-});
-
 const configSchema = z.object({
-  view: z.enum(GITHUB_VIEWS).default("contributions"),
-  showPrivate: z.boolean().default(true),
-  openBehavior: z.enum(["currentTab", "newTab"]).default("currentTab"),
+  view: z.enum(GITHUB_VIEWS).catch("contributions"),
+  showPrivate: z.boolean().catch(true),
+  showDrafts: z.boolean().catch(true),
+  inboxFilter: z.enum(INBOX_FILTERS).catch("all"),
+  collapsedRepos: tolerantArray(z.string()),
+  openBehavior: z.enum(["currentTab", "newTab"]).catch("currentTab"),
 });
-
-const legacySchema = configSchema.extend({ contributions: contributionsDataSchema.optional() });
 
 const persistedSchema = z.object({
-  byInstance: z.record(z.string(), configSchema),
-  contributions: contributionsDataSchema.optional(),
+  byInstance: tolerantRecord(configSchema),
+  login: z.string().optional().catch(undefined),
+  lastSeenReleaseAt: z.string().optional().catch(undefined),
 });
+
+const LEGACY_KEYS = ["view", "showPrivate", "openBehavior", "contributions"] as const;
+
+function looksLikeLegacySingleton(persisted: unknown): boolean {
+  if (!persisted || typeof persisted !== "object") return false;
+  return LEGACY_KEYS.some((key) => key in persisted);
+}
 
 const gatedStorage = createGatedChromeStorage();
 
@@ -106,7 +101,8 @@ export const useGithubStore = create<GithubStoreState>()(
   persist(
     (set, get) => ({
       byInstance: {},
-      contributions: undefined,
+      login: undefined,
+      lastSeenReleaseAt: undefined,
       syncNonce: 0,
       syncing: false,
       lastSyncAt: undefined,
@@ -115,11 +111,33 @@ export const useGithubStore = create<GithubStoreState>()(
         set((state) => update(state, instanceId, (data) => ({ ...data, view }))),
       setShowPrivate: (instanceId, showPrivate) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, showPrivate }))),
+      setShowDrafts: (instanceId, showDrafts) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, showDrafts }))),
+      setInboxFilter: (instanceId, inboxFilter) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, inboxFilter }))),
+      toggleRepoCollapsed: (instanceId, repo) =>
+        set((state) =>
+          update(state, instanceId, (data) => ({
+            ...data,
+            collapsedRepos: data.collapsedRepos.includes(repo)
+              ? data.collapsedRepos.filter((entry) => entry !== repo)
+              : [...data.collapsedRepos, repo],
+          })),
+        ),
       setOpenBehavior: (instanceId, openBehavior) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, openBehavior }))),
       removeInstance: (instanceId) =>
         set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
-      setContributions: (contributions) => set({ contributions }),
+      setLogin: (login) => {
+        if (login !== get().login) set({ login });
+      },
+      markReleasesSeen: (publishedAt) => {
+        if (!publishedAt) return;
+        const seen = get().lastSeenReleaseAt;
+        if (!seen || Date.parse(publishedAt) > Date.parse(seen)) {
+          set({ lastSeenReleaseAt: publishedAt });
+        }
+      },
       setSyncing: (syncing) => set({ syncing }),
       reportSynced: (at) => {
         if (at > (get().dataSyncedAt ?? 0)) set({ dataSyncedAt: at });
@@ -129,9 +147,7 @@ export const useGithubStore = create<GithubStoreState>()(
         if (remainingMs > 0) {
           return { ok: false, remainingMs };
         }
-        invalidatePolledResource("github:contributions");
-        invalidatePolledResource("github:inbox");
-        invalidatePolledResource("github:releases");
+        for (const key of CACHE_KEYS) invalidatePolledResource(key);
         set({ syncNonce: get().syncNonce + 1, lastSyncAt: Date.now() });
         return { ok: true, remainingMs: 0 };
       },
@@ -143,36 +159,22 @@ export const useGithubStore = create<GithubStoreState>()(
       onRehydrateStorage: () => () => gatedStorage.open(),
       partialize: (state) => ({
         byInstance: state.byInstance,
-        contributions: state.contributions,
+        login: state.login,
+        lastSeenReleaseAt: state.lastSeenReleaseAt,
       }),
       migrate: (persisted, version) => {
         if (version >= 2) return persisted;
-        const legacy = legacySchema.safeParse(persisted);
-        if (!legacy.success) return { byInstance: {} };
-        return {
-          byInstance: {
-            github: {
-              view: legacy.data.view,
-              showPrivate: legacy.data.showPrivate,
-              openBehavior: legacy.data.openBehavior,
-            },
-          },
-          contributions: legacy.data.contributions,
-        };
+        if (!looksLikeLegacySingleton(persisted)) return { byInstance: {} };
+        const legacy = configSchema.safeParse(persisted);
+        return { byInstance: legacy.success ? { github: legacy.data } : {} };
       },
-      merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(persisted);
-        if (!parsed.success) return current;
-        const byInstance: Record<string, GithubData> = {};
-        for (const [id, data] of Object.entries(parsed.data.byInstance)) {
-          byInstance[id] = {
-            view: data.view,
-            showPrivate: data.showPrivate,
-            openBehavior: data.openBehavior,
-          };
-        }
-        return { ...current, byInstance, contributions: parsed.data.contributions };
-      },
+      merge: (persisted, current) =>
+        mergePersisted("widget:github", persistedSchema, persisted, current, (parsed) => ({
+          ...current,
+          byInstance: parsed.byInstance,
+          login: parsed.login,
+          lastSeenReleaseAt: parsed.lastSeenReleaseAt,
+        })),
     },
   ),
 );

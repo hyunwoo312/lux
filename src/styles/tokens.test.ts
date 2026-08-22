@@ -4,7 +4,16 @@ import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 
 const css = readFileSync(fileURLToPath(new URL("./globals.css", import.meta.url)), "utf8");
-import { contrastRatio, isInSrgbGamut, parseOklch, type Oklch } from "@/lib/contrast";
+import {
+  compositeOver,
+  contrastOfRgb,
+  contrastRatio,
+  isInSrgbGamut,
+  mixOklch,
+  parseOklch,
+  toLinearRgb,
+  type Oklch,
+} from "@/lib/contrast";
 import { ACCENT_PRESETS } from "@/widgets/core/accent";
 import { cn } from "@/lib/utils";
 import { TYPE_SCALE } from "@/lib/type";
@@ -103,6 +112,33 @@ describe("colour tokens", () => {
     for (const accent of ACCENT_PRESETS) {
       expect(() => block(`.accent-${accent}`)).not.toThrow();
       expect(() => block(`.dark .accent-${accent}`)).not.toThrow();
+    }
+  });
+
+  it("the contribution heatmap ramp is perceptible at every step in both themes", () => {
+    const ALPHAS = [0.36, 0.6, 0.82];
+    const MIN_STEP = 1.35;
+    const MIN_RAMP = 6.5;
+
+    for (const theme of THEMES) {
+      const surface = SURFACES[theme.name].card;
+      const foreground = token(theme.root, "foreground");
+      const primary = token(`${theme.prefix}.accent-violet`, "primary");
+      const bg = toLinearRgb(surface);
+
+      const levels = [
+        compositeOver(toLinearRgb(foreground), 0.08, bg),
+        ...ALPHAS.map((alpha) => compositeOver(toLinearRgb(primary), alpha, bg)),
+        toLinearRgb(mixOklch(primary, foreground, 0.62)),
+      ];
+
+      for (let index = 0; index < levels.length - 1; index += 1) {
+        const step = contrastOfRgb(levels[index]!, levels[index + 1]!);
+        expect(step, `${theme.name} heat-${index} to heat-${index + 1}`).toBeGreaterThan(MIN_STEP);
+      }
+      expect(contrastOfRgb(levels[0]!, levels[4]!), `${theme.name} full ramp`).toBeGreaterThan(
+        MIN_RAMP,
+      );
     }
   });
 

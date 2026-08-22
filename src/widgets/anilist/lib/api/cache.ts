@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { tolerantArray } from "@/lib/persist";
 import { DEFAULT_SCORE_FORMAT, HEX_COLOR } from "@/widgets/anilist/lib/api/client";
 import {
   LIST_STATUSES,
@@ -10,19 +11,6 @@ import {
 } from "@/widgets/anilist/types";
 
 const coverColorSchema = z.string().regex(HEX_COLOR).optional().catch(undefined);
-
-function tolerantArray<T>(entrySchema: z.ZodType<T>) {
-  return z
-    .unknown()
-    .transform((raw): T[] => {
-      if (!Array.isArray(raw)) return [];
-      return raw.flatMap((entry) => {
-        const parsed = entrySchema.safeParse(entry);
-        return parsed.success ? [parsed.data] : [];
-      });
-    })
-    .default([]);
-}
 
 const currentEntrySchema = z.object({
   id: z.number(),

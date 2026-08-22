@@ -4,16 +4,15 @@ vi.mock("@/integrations", () => ({ integrationFetch: vi.fn() }));
 
 import { integrationFetch } from "@/integrations";
 import { RateLimitError } from "@/lib/net";
+import { fetchContributions } from "@/widgets/github/lib/api/contributions";
 import {
-  fetchContributions,
   fetchInbox,
-  fetchReleases,
   markAllGithubNotificationsRead,
   markGithubThreadRead,
   parseCachedInbox,
-  parseCachedReleases,
   unsubscribeGithubThread,
-} from "@/widgets/github/lib/github-api";
+} from "@/widgets/github/lib/api/inbox";
+import { fetchReleases, parseCachedReleases } from "@/widgets/github/lib/api/releases";
 
 const mockFetch = vi.mocked(integrationFetch);
 

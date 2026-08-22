@@ -138,6 +138,7 @@ type SegmentedProps<T extends string> = {
   onChange: (value: T, origin?: { x: number; y: number }) => void;
   disabled?: boolean;
   label: string;
+  fit?: "wrap" | "line";
 };
 
 export function ConfigSegmented<T extends string>({
@@ -146,7 +147,9 @@ export function ConfigSegmented<T extends string>({
   onChange,
   disabled = false,
   label,
+  fit = "wrap",
 }: SegmentedProps<T>) {
+  const oneLine = fit === "line";
   const layoutId = useId();
   const origin = useRef<{ x: number; y: number } | undefined>(undefined);
   const handleChange = (next: string) => {
@@ -160,7 +163,10 @@ export function ConfigSegmented<T extends string>({
       onValueChange={handleChange}
       disabled={disabled}
       aria-label={label}
-      className="bg-foreground/5 max-w-full flex-wrap gap-0.5 rounded-md p-0.5"
+      className={cn(
+        "bg-foreground/5 max-w-full gap-0.5 rounded-md p-0.5",
+        oneLine ? "flex w-full min-w-0 flex-nowrap" : "flex-wrap",
+      )}
     >
       {options.map((option) => {
         const active = option.value === value;
@@ -169,6 +175,7 @@ export function ConfigSegmented<T extends string>({
             key={option.value}
             value={option.value}
             variant="segmented"
+            className={cn(oneLine && (active ? "shrink-0" : "min-w-0 flex-1"))}
             onClick={(event) => {
               const rect = event.currentTarget.getBoundingClientRect();
               origin.current = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
@@ -181,7 +188,9 @@ export function ConfigSegmented<T extends string>({
                 className="bg-primary absolute inset-0 rounded-sm"
               />
             )}
-            <span className="relative z-10">{option.label}</span>
+            <span className={cn("relative z-10", oneLine && !active && "block truncate")}>
+              {option.label}
+            </span>
           </ToggleGroupItem>
         );
       })}

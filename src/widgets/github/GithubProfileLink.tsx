@@ -3,7 +3,7 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
 
 export function GithubProfileLink() {
-  const login = useGithubStore((s) => s.contributions?.login);
+  const login = useGithubStore((s) => s.login);
   const newTab = useGithub((d) => d.openBehavior === "newTab");
 
   if (!login) {

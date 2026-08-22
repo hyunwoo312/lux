@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { loadErrorMessage } from "@/lib/net";
+import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
@@ -158,21 +159,6 @@ function createDefaultData(): CalendarData {
 
 const DEFAULT_DATA = createDefaultData();
 
-function tolerantArray<T>(schema: z.ZodType<T>) {
-  return z
-    .unknown()
-    .transform((raw) => {
-      if (!Array.isArray(raw)) return [] as T[];
-      const kept: T[] = [];
-      for (const entry of raw) {
-        const parsed = schema.safeParse(entry);
-        if (parsed.success) kept.push(parsed.data);
-      }
-      return kept;
-    })
-    .default([] as T[]);
-}
-
 const providerSettingsSchema = z.object({
   calendars: tolerantArray(connectedCalendarSchema),
   enabledCalendarIds: tolerantArray(z.string()),
@@ -194,21 +180,8 @@ const configSchema = z.object({
   refreshIntervalHours: z.number().catch(6),
 });
 
-const byInstanceSchema = z
-  .unknown()
-  .transform((raw) => {
-    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
-    const parsed: Record<string, z.infer<typeof configSchema>> = {};
-    for (const [instanceId, value] of Object.entries(raw)) {
-      const entry = configSchema.safeParse(normaliseConfig(value));
-      if (entry.success) parsed[instanceId] = entry.data;
-    }
-    return parsed;
-  })
-  .default({});
-
 const persistedSchema = z.object({
-  byInstance: byInstanceSchema,
+  byInstance: tolerantRecord(configSchema, normaliseConfig),
 });
 
 const LEGACY_KEYS = [
@@ -609,21 +582,20 @@ export const useCalendarStore = create<CalendarState>()(
         const legacy = configSchema.safeParse(normaliseConfig(persisted));
         return { byInstance: legacy.success ? { calendar: legacy.data } : {} };
       },
-      merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(persisted);
-        if (!parsed.success) return current;
-        const byInstance: Record<string, CalendarData> = {};
-        for (const [id, config] of Object.entries(parsed.data.byInstance)) {
-          byInstance[id] = {
-            ...config,
-            events: capCalendarEvents(config.events),
-            lookaheadDays: clampLookahead(config.lookaheadDays),
-            refreshIntervalHours: clampRefreshInterval(config.refreshIntervalHours),
-            ...freshNav(),
-          };
-        }
-        return { ...current, byInstance };
-      },
+      merge: (persisted, current) =>
+        mergePersisted("widget:calendar", persistedSchema, persisted, current, (parsed) => {
+          const byInstance: Record<string, CalendarData> = {};
+          for (const [id, config] of Object.entries(parsed.byInstance)) {
+            byInstance[id] = {
+              ...config,
+              events: capCalendarEvents(config.events),
+              lookaheadDays: clampLookahead(config.lookaheadDays),
+              refreshIntervalHours: clampRefreshInterval(config.refreshIntervalHours),
+              ...freshNav(),
+            };
+          }
+          return { ...current, byInstance };
+        }),
     },
   ),
 );

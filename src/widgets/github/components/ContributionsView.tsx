@@ -1,43 +1,56 @@
 import { useEffect, useMemo } from "react";
-import { loadErrorMessage } from "@/lib/net";
 import { useElementSize } from "@/hooks/useElementSize";
 import { usePolledResource } from "@/widgets/core/usePolledResource";
-import { fetchContributions } from "@/widgets/github/lib/github-api";
-import { ActivityLedger } from "@/widgets/github/components/ActivityLedger";
-import { GithubPlaceholder } from "@/widgets/github/components/GithubPlaceholder";
 import {
-  GRID_H,
-  Heatmap,
-  MONTH_ROW_H,
-  Stats,
-} from "@/widgets/github/components/ContributionsChart";
+  fetchContributions,
+  parseCachedContributions,
+} from "@/widgets/github/lib/api/contributions";
+import { ActivityLedger } from "@/widgets/github/components/ActivityLedger";
+import { GithubNotice } from "@/widgets/github/components/GithubNotice";
+import { GithubStaleNotice } from "@/widgets/github/components/GithubStaleNotice";
+import { Heatmap, HeatmapLegend } from "@/widgets/github/components/ContributionsChart";
+import { Stats } from "@/widgets/github/components/contributions/ContributionsStats";
+import { heatmapHeight, heatmapMetrics, localDayKey } from "@/widgets/github/lib/heatmap";
+import { visibleItems } from "@/widgets/github/lib/visibility";
 import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
 import { useGithubSync } from "@/widgets/github/useGithubSync";
+import {
+  CONTRIBUTIONS_CACHE_KEY,
+  SLOW_REFRESH_MS,
+  type ContributionDay,
+} from "@/widgets/github/types";
 
-const REFRESH_MS = 30 * 60 * 1000;
 const LEDGER_MIN = 72;
+
+function sumCounts(weeks: ContributionDay[][]): number {
+  return weeks.reduce((total, week) => week.reduce((inner, day) => inner + day.count, total), 0);
+}
 
 export function ContributionsView({ enabled }: { enabled: boolean }) {
   const [ref, size] = useElementSize<HTMLDivElement>();
-  const persisted = useGithubStore((s) => s.contributions);
-  const setContributions = useGithubStore((s) => s.setContributions);
+  const setLogin = useGithubStore((s) => s.setLogin);
   const showPrivate = useGithub((d) => d.showPrivate);
   const newTab = useGithub((d) => d.openBehavior === "newTab");
-  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledResource(fetchContributions, {
-    enabled,
-    intervalMs: REFRESH_MS,
-    cacheKey: "github:contributions",
-  });
+  const { state, freshness, isRefreshing, refresh, lastSyncedAt } = usePolledResource(
+    fetchContributions,
+    {
+      enabled,
+      intervalMs: SLOW_REFRESH_MS,
+      cacheKey: CONTRIBUTIONS_CACHE_KEY,
+      persist: true,
+      parsePersisted: parseCachedContributions,
+    },
+  );
   useGithubSync(refresh, isRefreshing, lastSyncedAt);
 
-  const liveData = state.status === "success" ? state.data : null;
+  const data = state.status === "success" ? state.data : null;
+  const login = data?.login;
   useEffect(() => {
-    if (liveData) setContributions(liveData);
-  }, [liveData, setContributions]);
+    if (login) setLogin(login);
+  }, [login, setLogin]);
 
-  const data = liveData ?? (state.status === "empty" ? null : persisted);
   const ledgerActivity = useMemo(
-    () => (data?.activity ?? []).filter((entry) => showPrivate || !entry.isPrivate),
+    () => visibleItems(data?.activity ?? [], showPrivate),
     [data?.activity, showPrivate],
   );
   const ledgerTotals = useMemo(() => {
@@ -53,27 +66,34 @@ export function ContributionsView({ enabled }: { enabled: boolean }) {
     );
   }, [showPrivate, data?.totals, ledgerActivity]);
 
-  if (state.status === "empty" && !liveData)
-    return <GithubPlaceholder>No contributions yet.</GithubPlaceholder>;
-
-  if (!data) {
-    return state.status === "error" ? (
-      <GithubPlaceholder>
-        {loadErrorMessage(state.error, "Couldn’t load contributions.")}
-      </GithubPlaceholder>
-    ) : (
-      <GithubPlaceholder>Loading contributions…</GithubPlaceholder>
+  if (state.status === "loading") return <GithubNotice>Loading contributions…</GithubNotice>;
+  if (state.status === "error")
+    return (
+      <GithubNotice error={state.error} fallback="Couldn’t load contributions." onRetry={refresh} />
     );
-  }
+  if (!data) return <GithubNotice>No contributions yet.</GithubNotice>;
 
-  const showLedger = size.height >= GRID_H + MONTH_ROW_H + LEDGER_MIN && ledgerActivity.length > 0;
+  const metrics = heatmapMetrics(size.width);
+  const todayKey = localDayKey(new Date());
+  const shownWeeks = data.weeks.slice(-metrics.weeks);
+  const shownTotal = metrics.weeks >= data.weeks.length ? data.total : sumCounts(shownWeeks);
+  const showLedger =
+    size.height >= heatmapHeight(metrics) + LEDGER_MIN && ledgerActivity.length > 0;
 
   return (
     <div className="flex h-full flex-col gap-3 p-1">
-      <Stats data={data} />
+      <Stats data={data} total={shownTotal} weeks={metrics.weeks} />
       <div ref={ref} className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
         <div className="shrink-0">
-          <Heatmap weeks={data.weeks} size={size} />
+          <Heatmap
+            weeks={data.weeks}
+            metrics={metrics}
+            total={shownTotal}
+            todayKey={todayKey}
+            login={data.login}
+            newTab={newTab}
+          />
+          <HeatmapLegend metrics={metrics} />
         </div>
         {showLedger && (
           <div className="border-border/50 min-h-0 flex-1 border-t pt-2">
@@ -86,6 +106,7 @@ export function ContributionsView({ enabled }: { enabled: boolean }) {
           </div>
         )}
       </div>
+      <GithubStaleNotice freshness={freshness} />
     </div>
   );
 }

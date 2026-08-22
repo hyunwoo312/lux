@@ -21,6 +21,11 @@ const PRIVACY_OPTIONS: { value: "all" | "public"; label: string }[] = [
   { value: "public", label: "Public only" },
 ];
 
+const DRAFT_OPTIONS: { value: "show" | "hide"; label: string }[] = [
+  { value: "show", label: "Show" },
+  { value: "hide", label: "Hide" },
+];
+
 export function GithubConfig() {
   const account = useIntegrationStore(
     (s) => s.accounts.find((entry) => entry.providerId === "github") ?? null,
@@ -30,6 +35,8 @@ export function GithubConfig() {
   const setShowPrivate = useGithubStore((s) => s.setShowPrivate);
   const openBehavior = useGithub((d) => d.openBehavior);
   const setOpenBehavior = useGithubStore((s) => s.setOpenBehavior);
+  const showDrafts = useGithub((d) => d.showDrafts);
+  const setShowDrafts = useGithubStore((s) => s.setShowDrafts);
 
   const accountDescription = account
     ? account.status === "needsReconnect"
@@ -69,13 +76,25 @@ export function GithubConfig() {
         />
         <WidgetConfigItem
           title="Repositories"
-          description="Include items from private repositories"
+          description="Show items from private repositories in this widget"
           control={
             <ConfigSegmented
               label="Repository visibility"
               value={showPrivate ? "all" : "public"}
               options={PRIVACY_OPTIONS}
               onChange={(value) => setShowPrivate(instanceId, value === "all")}
+            />
+          }
+        />
+        <WidgetConfigItem
+          title="Draft pull requests"
+          description="Drafts rarely need action — hide them to keep the inbox tight"
+          control={
+            <ConfigSegmented
+              label="Draft pull requests"
+              value={showDrafts ? "show" : "hide"}
+              options={DRAFT_OPTIONS}
+              onChange={(value) => setShowDrafts(instanceId, value === "show")}
             />
           }
         />

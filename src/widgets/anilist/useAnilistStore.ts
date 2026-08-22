@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
+import { mergePersisted, tolerantRecord } from "@/lib/persist";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
@@ -102,21 +103,8 @@ const legacySchema = configSchema.extend({
   lastSeenActivityAt: z.number().optional(),
 });
 
-const byInstanceSchema = z
-  .unknown()
-  .transform((raw) => {
-    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
-    const parsed: Record<string, AnilistData> = {};
-    for (const [instanceId, value] of Object.entries(raw)) {
-      const entry = configSchema.safeParse(value);
-      if (entry.success) parsed[instanceId] = entry.data;
-    }
-    return parsed;
-  })
-  .default({});
-
 const persistedSchema = z.object({
-  byInstance: byInstanceSchema,
+  byInstance: tolerantRecord(configSchema),
   lastSeenActivityAt: z.number().optional().catch(undefined),
 });
 
@@ -270,15 +258,18 @@ export const useAnilistStore = create<AnilistStoreState>()(
         const { lastSeenActivityAt, ...config } = legacy.data;
         return { byInstance: { anilist: config }, lastSeenActivityAt };
       },
-      merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(normalisePersisted(persisted));
-        if (!parsed.success) return current;
-        return {
-          ...current,
-          byInstance: parsed.data.byInstance,
-          lastSeenActivityAt: parsed.data.lastSeenActivityAt,
-        };
-      },
+      merge: (persisted, current) =>
+        mergePersisted(
+          "widget:anilist",
+          persistedSchema,
+          normalisePersisted(persisted),
+          current,
+          (parsed) => ({
+            ...current,
+            byInstance: parsed.byInstance,
+            lastSeenActivityAt: parsed.lastSeenActivityAt,
+          }),
+        ),
     },
   ),
 );

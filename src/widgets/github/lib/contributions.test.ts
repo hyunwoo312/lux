@@ -33,7 +33,29 @@ describe("computeStreaks", () => {
   });
 
   it("returns zero streaks with no activity", () => {
-    expect(computeStreaks([day("d1", 0), day("d2", 0)])).toEqual({ current: 0, longest: 0 });
+    expect(computeStreaks([day("d1", 0), day("d2", 0)])).toEqual({
+      current: 0,
+      longest: 0,
+      currentRange: undefined,
+      longestRange: undefined,
+    });
+  });
+
+  it("names the days each streak covers", () => {
+    const days = [
+      day("2026-01-01", 1),
+      day("2026-01-02", 1),
+      day("2026-01-03", 0),
+      day("2026-01-04", 1),
+    ];
+    const streaks = computeStreaks(days);
+
+    expect(streaks.longestRange).toEqual({ from: "2026-01-01", to: "2026-01-02" });
+    expect(streaks.currentRange).toEqual({ from: "2026-01-04", to: "2026-01-04" });
+  });
+
+  it("has no range to report when there is no streak", () => {
+    expect(computeStreaks([day("d1", 0)]).currentRange).toBeUndefined();
   });
 });
 
@@ -48,6 +70,8 @@ describe("buildContributions", () => {
       total: 3,
       currentStreak: 1,
       longestStreak: 2,
+      currentStreakRange: { from: "d4", to: "d4" },
+      longestStreakRange: { from: "d1", to: "d2" },
       bestDay: day("d1", 1),
       dailyAverage: 0.75,
     });

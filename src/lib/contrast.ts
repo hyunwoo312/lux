@@ -52,3 +52,37 @@ export function contrastRatio(a: Oklch, b: Oklch): number {
   const lb = relativeLuminance(b);
   return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
 }
+
+export type LinearRgb = [number, number, number];
+
+export function toLinearRgb(color: Oklch): LinearRgb {
+  return oklchToLinearRgb(color) as LinearRgb;
+}
+
+export function compositeOver(fg: LinearRgb, alpha: number, bg: LinearRgb): LinearRgb {
+  return fg.map((channel, index) =>
+    decode(encode(channel) * alpha + encode(bg[index] ?? 0) * (1 - alpha)),
+  ) as LinearRgb;
+}
+
+export function mixOklch(a: Oklch, b: Oklch, weightA: number): Oklch {
+  const ax = a.c * Math.cos((a.h * Math.PI) / 180);
+  const ay = a.c * Math.sin((a.h * Math.PI) / 180);
+  const bx = b.c * Math.cos((b.h * Math.PI) / 180);
+  const by = b.c * Math.sin((b.h * Math.PI) / 180);
+  const x = ax * weightA + bx * (1 - weightA);
+  const y = ay * weightA + by * (1 - weightA);
+  return {
+    l: a.l * weightA + b.l * (1 - weightA),
+    c: Math.hypot(x, y),
+    h: (Math.atan2(y, x) * 180) / Math.PI,
+  };
+}
+
+export function contrastOfRgb(a: LinearRgb, b: LinearRgb): number {
+  const luminance = (rgb: LinearRgb) =>
+    0.2126 * (rgb[0] ?? 0) + 0.7152 * (rgb[1] ?? 0) + 0.0722 * (rgb[2] ?? 0);
+  const la = luminance(a);
+  const lb = luminance(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}

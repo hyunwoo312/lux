@@ -41,16 +41,6 @@ describe("ReleaseList", () => {
     );
   });
 
-  it("marks a pre-release and leaves a stable release unmarked", () => {
-    renderList(
-      data({
-        releases: [release({ repo: "o/stable" }), release({ repo: "o/beta", isPrerelease: true })],
-      }),
-    );
-
-    expect(screen.getAllByText("Pre-release")).toHaveLength(1);
-  });
-
   it("explains that private releases are hidden rather than reading as empty", () => {
     renderList(data({ releases: [release({ isPrivate: true })] }), false);
 

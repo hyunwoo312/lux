@@ -1,70 +1,95 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Tag } from "lucide-react";
-import { loadErrorMessage } from "@/lib/net";
+import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { usePolledResource } from "@/widgets/core/usePolledResource";
-import { fetchReleases, parseCachedReleases } from "@/widgets/github/lib/github-api";
-import { GithubPlaceholder } from "@/widgets/github/components/GithubPlaceholder";
-import { useGithub } from "@/widgets/github/useGithubStore";
+import { fetchReleases, parseCachedReleases } from "@/widgets/github/lib/api/releases";
+import { GithubNotice } from "@/widgets/github/components/GithubNotice";
+import { GithubStaleNotice } from "@/widgets/github/components/GithubStaleNotice";
+import { isUnseen, newestPublishedAt } from "@/widgets/github/lib/releases-unseen";
+import { visibleItems } from "@/widgets/github/lib/visibility";
+import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
 import { useGithubSync } from "@/widgets/github/useGithubSync";
-import type { Release, ReleasesData } from "@/widgets/github/types";
-
-const REFRESH_MS = 30 * 60 * 1000;
-const RELEASES_CACHE_KEY = "github:releases";
+import {
+  RELEASES_CACHE_KEY,
+  SLOW_REFRESH_MS,
+  type Release,
+  type ReleasesData,
+} from "@/widgets/github/types";
 
 export function ReleasesView({ enabled, showPrivate }: { enabled: boolean; showPrivate: boolean }) {
   const newTab = useGithub((d) => d.openBehavior === "newTab");
-  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledResource(fetchReleases, {
-    enabled,
-    intervalMs: REFRESH_MS,
-    isEmpty: (data) => data.watchedCount === 0,
-    cacheKey: RELEASES_CACHE_KEY,
-    persist: true,
-    parsePersisted: parseCachedReleases,
-  });
+  const { state, freshness, isRefreshing, refresh, lastSyncedAt } = usePolledResource(
+    fetchReleases,
+    {
+      enabled,
+      intervalMs: SLOW_REFRESH_MS,
+      isEmpty: (data) => data.watchedCount === 0,
+      cacheKey: RELEASES_CACHE_KEY,
+      persist: true,
+      parsePersisted: parseCachedReleases,
+    },
+  );
   useGithubSync(refresh, isRefreshing, lastSyncedAt);
 
-  if (state.status === "loading") return <GithubPlaceholder>Loading releases…</GithubPlaceholder>;
+  if (state.status === "loading") return <GithubNotice>Loading releases…</GithubNotice>;
   if (state.status === "error")
     return (
-      <GithubPlaceholder>
-        {loadErrorMessage(state.error, "Couldn’t load releases.")}
-      </GithubPlaceholder>
+      <GithubNotice error={state.error} fallback="Couldn’t load releases." onRetry={refresh} />
     );
   if (state.status === "empty")
-    return <GithubPlaceholder>Watch a repository to follow its releases.</GithubPlaceholder>;
+    return <GithubNotice>Watch a repository to follow its releases.</GithubNotice>;
 
-  return <ReleaseList data={state.data} showPrivate={showPrivate} newTab={newTab} />;
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <ReleaseList data={state.data} showPrivate={showPrivate} newTab={newTab} markSeen />
+      <GithubStaleNotice freshness={freshness} />
+    </div>
+  );
 }
 
 export function ReleaseList({
   data,
   showPrivate,
   newTab,
+  markSeen = false,
 }: {
   data: ReleasesData;
   showPrivate: boolean;
   newTab: boolean;
+  markSeen?: boolean;
 }) {
+  const lastSeenAt = useGithubStore((s) => s.lastSeenReleaseAt);
+  const markReleasesSeen = useGithubStore((s) => s.markReleasesSeen);
   const releases = useMemo(
-    () => data.releases.filter((release) => showPrivate || !release.isPrivate),
+    () => visibleItems(data.releases, showPrivate),
     [data.releases, showPrivate],
   );
+  const newest = newestPublishedAt(releases);
+
+  useEffect(() => {
+    if (markSeen) markReleasesSeen(newest);
+  }, [markSeen, newest, markReleasesSeen]);
 
   if (releases.length === 0) {
     return (
-      <GithubPlaceholder>
+      <GithubNotice>
         {data.releases.length > 0
           ? "The only releases are from private repositories, which this widget hides."
           : "None of the repositories you watch have published a release."}
-      </GithubPlaceholder>
+      </GithubNotice>
     );
   }
 
   return (
-    <div className="flex h-full flex-col gap-0.5 scroll-fade overflow-y-auto p-1">
+    <div className="scroll-fade flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto p-1">
       {releases.map((release) => (
-        <ReleaseRow key={release.repo} release={release} newTab={newTab} />
+        <ReleaseRow
+          key={release.repo}
+          release={release}
+          newTab={newTab}
+          unseen={isUnseen(release, lastSeenAt)}
+        />
       ))}
       {data.watchedCount > data.watchedScanned && (
         <p className="text-ink-4 text-micro shrink-0 px-2 py-1">
@@ -76,7 +101,15 @@ export function ReleaseList({
   );
 }
 
-function ReleaseRow({ release, newTab }: { release: Release; newTab: boolean }) {
+function ReleaseRow({
+  release,
+  newTab,
+  unseen,
+}: {
+  release: Release;
+  newTab: boolean;
+  unseen: boolean;
+}) {
   const detail =
     release.name === release.tagName ? release.name : `${release.tagName} · ${release.name}`;
 
@@ -87,9 +120,20 @@ function ReleaseRow({ release, newTab }: { release: Release; newTab: boolean }) 
       rel="noreferrer"
       className="hover:bg-foreground/5 flex shrink-0 items-center gap-2 rounded-md px-2 py-1.5"
     >
-      <Tag className="text-ink-3 size-3.5 shrink-0" aria-hidden />
+      <span className="relative flex size-3.5 shrink-0 items-center justify-center">
+        <Tag className={cn("size-3.5", unseen ? "text-primary" : "text-ink-3")} aria-hidden />
+        {unseen && (
+          <span
+            aria-hidden
+            className="bg-primary absolute -top-0.5 -right-0.5 size-1.5 rounded-full"
+          />
+        )}
+      </span>
       <div className="min-w-0 flex-1">
-        <p className="text-ink truncate text-caption font-medium">{release.repo}</p>
+        <p className="text-ink truncate text-caption font-medium">
+          {release.repo}
+          {unseen && <span className="sr-only"> — new since you last looked</span>}
+        </p>
         <p className="text-ink-3 text-micro truncate">{detail}</p>
       </div>
       {release.isPrerelease && (

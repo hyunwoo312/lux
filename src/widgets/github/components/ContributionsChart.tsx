@@ -1,25 +1,19 @@
 import { memo, useState } from "react";
-import type { MouseEvent, ReactNode } from "react";
+import type { MouseEvent } from "react";
 import { createPortal } from "react-dom";
-import { Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ElementSize } from "@/hooks/useElementSize";
-import type { ContributionDay, ContributionsData } from "@/widgets/github/types";
+import {
+  heatmapWidth,
+  LEGEND_H,
+  MONTH_ROW_H,
+  WEEKDAY_W,
+  windowLabel,
+  type HeatmapMetrics,
+} from "@/widgets/github/lib/heatmap";
+import type { ContributionDay } from "@/widgets/github/types";
 
-const CELL = 11;
-const GAP = 3;
-const COLUMN = CELL + GAP;
-const WEEKDAY_W = 22;
-export const MONTH_ROW_H = 14;
-export const GRID_H = 7 * CELL + 6 * GAP;
-
-const LEVEL_CLASS = [
-  "bg-foreground/10",
-  "bg-primary/30",
-  "bg-primary/50",
-  "bg-primary/75",
-  "bg-primary",
-];
+const LEVEL_CLASS = ["heat-0", "heat-1", "heat-2", "heat-3", "heat-4"];
+const LEGEND_SWATCH = 9;
 
 const MONTHS_SHORT = [
   "Jan",
@@ -59,60 +53,6 @@ const WEEKDAYS = [
   { id: "sat", label: "" },
 ];
 
-export function Stats({ data }: { data: ContributionsData }) {
-  return (
-    <div className="flex items-end justify-between gap-2 px-1">
-      <div className="flex flex-col">
-        <span className="text-ink text-lg font-semibold tabular-nums">
-          {data.total.toLocaleString()}
-        </span>
-        <span className="text-ink-3 text-micro">
-          {data.dailyAverage === undefined
-            ? "contributions in the last year"
-            : `contributions in the last year · ${data.dailyAverage.toFixed(1)} / day`}
-        </span>
-      </div>
-      <div className="flex items-center gap-3">
-        <Stat
-          label="Current"
-          value={data.currentStreak}
-          accent
-          icon={<Flame className="size-3" />}
-        />
-        <Stat label="Longest" value={data.longestStreak} />
-        {data.bestDay && <Stat label="Best" value={data.bestDay.count} />}
-      </div>
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  accent,
-  icon,
-}: {
-  label: string;
-  value: number;
-  accent?: boolean;
-  icon?: ReactNode;
-}) {
-  return (
-    <div className="flex flex-col items-end">
-      <span
-        className={cn(
-          "inline-flex items-center gap-1 text-body font-semibold tabular-nums",
-          accent ? "text-primary" : "text-ink",
-        )}
-      >
-        {icon}
-        {value}
-      </span>
-      <span className="text-ink-3 text-micro">{label}</span>
-    </div>
-  );
-}
-
 function monthLabelsFor(weeks: ContributionDay[][]): (string | null)[] {
   const labels: (string | null)[] = [];
   let lastMonth = -1;
@@ -137,19 +77,34 @@ function monthLabelsFor(weeks: ContributionDay[][]): (string | null)[] {
   return labels;
 }
 
-function dayTitle(day: ContributionDay): string {
+function dayTitle(day: ContributionDay, todayKey: string): string {
   const monthName = MONTHS_FULL[Number(day.date.slice(5, 7)) - 1] ?? "";
   const dayNum = Number(day.date.slice(8, 10));
   const amount =
     day.count === 0
       ? "No contributions"
       : `${day.count} ${day.count === 1 ? "contribution" : "contributions"}`;
-  return `${amount} on ${monthName} ${dayNum}.`;
+  const when = day.date === todayKey ? "today" : `on ${monthName} ${dayNum}`;
+  return `${amount} ${when}.`;
 }
 
 type Tip = { text: string; x: number; y: number };
 
-export function Heatmap({ weeks, size }: { weeks: ContributionDay[][]; size: ElementSize }) {
+export function Heatmap({
+  weeks,
+  metrics,
+  total,
+  todayKey,
+  login,
+  newTab,
+}: {
+  weeks: ContributionDay[][];
+  metrics: HeatmapMetrics;
+  total: number;
+  todayKey: string;
+  login?: string;
+  newTab?: boolean;
+}) {
   const [tip, setTip] = useState<Tip | null>(null);
 
   const handleOver = (event: MouseEvent<HTMLDivElement>) => {
@@ -162,17 +117,32 @@ export function Heatmap({ weeks, size }: { weeks: ContributionDay[][]; size: Ele
     setTip({ text: cell.dataset.day ?? "", x: rect.left + rect.width / 2, y: rect.top });
   };
 
+  const grid = <HeatmapGrid weeks={weeks} metrics={metrics} total={total} todayKey={todayKey} />;
+
   return (
     <div onMouseOver={handleOver} onMouseLeave={() => setTip(null)}>
-      <HeatmapGrid weeks={weeks} size={size} />
+      {login ? (
+        <a
+          href={`https://github.com/${encodeURIComponent(login)}?tab=overview`}
+          target={newTab ? "_blank" : undefined}
+          rel="noreferrer"
+          aria-label={`Open ${login}'s contribution activity on GitHub`}
+          className="focus-ring block w-fit rounded-md"
+        >
+          {grid}
+        </a>
+      ) : (
+        grid
+      )}
       {tip &&
         createPortal(
           <div
             className="
-              border-border bg-card text-ink pointer-events-none fixed z-[100] -translate-x-1/2
-              -translate-y-full rounded-md border px-2 py-1 text-caption whitespace-nowrap shadow-md
+              bg-popover text-popover-foreground elev-3 z-tooltip pointer-events-none fixed
+              -translate-x-1/2 -translate-y-full rounded-md px-2.5 py-1.5 text-micro font-medium
+              whitespace-nowrap
             "
-            style={{ left: tip.x, top: tip.y - 6 }}
+            style={{ left: tip.x, top: tip.y - 8 }}
           >
             {tip.text}
           </div>,
@@ -182,28 +152,55 @@ export function Heatmap({ weeks, size }: { weeks: ContributionDay[][]; size: Ele
   );
 }
 
+export function HeatmapLegend({ metrics }: { metrics: HeatmapMetrics }) {
+  return (
+    <div
+      className="text-ink-4 flex items-center justify-end text-micro"
+      style={{ gap: metrics.gap, height: LEGEND_H, width: heatmapWidth(metrics) }}
+    >
+      <span>Less</span>
+      {LEVEL_CLASS.map((level) => (
+        <span
+          key={level}
+          aria-hidden
+          className={cn("rounded-[2px]", level)}
+          style={{ width: LEGEND_SWATCH, height: LEGEND_SWATCH }}
+        />
+      ))}
+      <span>More</span>
+    </div>
+  );
+}
+
 const HeatmapGrid = memo(function HeatmapGrid({
   weeks,
-  size,
+  metrics,
+  total,
+  todayKey,
 }: {
   weeks: ContributionDay[][];
-  size: ElementSize;
+  metrics: HeatmapMetrics;
+  total: number;
+  todayKey: string;
 }) {
-  const available = size.width - WEEKDAY_W - GAP;
-  const maxWeeks =
-    size.width > 0 ? Math.max(1, Math.floor((available + GAP) / COLUMN)) : weeks.length;
-  const shown = weeks.slice(-maxWeeks);
-  const showMonths = size.height >= GRID_H + MONTH_ROW_H;
+  const { cell, gap, showWeekdays } = metrics;
+  const shown = weeks.slice(-metrics.weeks);
+  const showMonths = showWeekdays;
   const months = showMonths ? monthLabelsFor(shown) : [];
 
   return (
-    <div className="flex flex-col" style={{ gap: GAP }}>
+    <div
+      role="img"
+      aria-label={`Contribution heatmap: ${total.toLocaleString()} ${windowLabel(shown.length)}`}
+      className="flex flex-col"
+      style={{ gap }}
+    >
       {showMonths && (
-        <div className="flex" style={{ gap: GAP, height: MONTH_ROW_H }}>
+        <div className="flex" style={{ gap, height: MONTH_ROW_H }}>
           <div style={{ width: WEEKDAY_W }} />
-          <div className="flex" style={{ gap: GAP }}>
+          <div className="flex" style={{ gap }}>
             {shown.map((week, index) => (
-              <div key={week[0]?.date ?? index} className="relative" style={{ width: CELL }}>
+              <div key={week[0]?.date ?? index} className="relative" style={{ width: cell }}>
                 {months[index] && (
                   <span
                     className="
@@ -218,27 +215,33 @@ const HeatmapGrid = memo(function HeatmapGrid({
           </div>
         </div>
       )}
-      <div className="flex" style={{ gap: GAP }}>
-        <div className="flex flex-col" style={{ width: WEEKDAY_W, gap: GAP }}>
-          {WEEKDAYS.map((weekday) => (
-            <span
-              key={weekday.id}
-              className="text-ink-3 flex items-center justify-end text-micro leading-none"
-              style={{ height: CELL }}
-            >
-              {weekday.label}
-            </span>
-          ))}
-        </div>
-        <div className="flex" style={{ gap: GAP }}>
+      <div className="flex" style={{ gap }}>
+        {showWeekdays && (
+          <div className="flex flex-col" style={{ width: WEEKDAY_W, gap }}>
+            {WEEKDAYS.map((weekday) => (
+              <span
+                key={weekday.id}
+                className="text-ink-3 flex items-center justify-end text-micro leading-none"
+                style={{ height: cell }}
+              >
+                {weekday.label}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="flex" style={{ gap }}>
           {shown.map((week, index) => (
-            <div key={week[0]?.date ?? index} className="flex flex-col" style={{ gap: GAP }}>
+            <div key={week[0]?.date ?? index} className="flex flex-col" style={{ gap }}>
               {week.map((day) => (
                 <span
                   key={day.date}
-                  data-day={dayTitle(day)}
-                  className={cn("rounded-xs", LEVEL_CLASS[day.level])}
-                  style={{ width: CELL, height: CELL }}
+                  data-day={dayTitle(day, todayKey)}
+                  className={cn(
+                    "rounded-[2px]",
+                    LEVEL_CLASS[day.level],
+                    day.date === todayKey && "ring-ink-2 ring-1",
+                  )}
+                  style={{ width: cell, height: cell }}
                 />
               ))}
             </div>

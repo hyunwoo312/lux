@@ -552,6 +552,26 @@
   box-shadow: var(--elev-1), var(--rim);
 }
 
+@utility heat-0 {
+  background-color: color-mix(in oklab, var(--foreground) 8%, transparent);
+}
+
+@utility heat-1 {
+  background-color: color-mix(in oklab, var(--primary) 36%, transparent);
+}
+
+@utility heat-2 {
+  background-color: color-mix(in oklab, var(--primary) 60%, transparent);
+}
+
+@utility heat-3 {
+  background-color: color-mix(in oklab, var(--primary) 82%, transparent);
+}
+
+@utility heat-4 {
+  background-color: color-mix(in oklab, var(--primary) 62%, var(--foreground));
+}
+
 @utility art-scrim {
   background-color: oklch(0 0 0 / 0.6);
   backdrop-filter: blur(var(--glass-blur)) saturate(140%);
