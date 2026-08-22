@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
+import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
@@ -29,6 +30,8 @@ type QuickAccessData = {
   openBehavior: OpenBehavior;
   view: QuickAccessView;
   showTopSites: boolean;
+  showOpenTabs: boolean;
+  showRecentlyClosed: boolean;
 };
 
 type QuickAccessState = {
@@ -51,6 +54,8 @@ type QuickAccessState = {
   setOpenBehavior: (instanceId: string, openBehavior: OpenBehavior) => void;
   setView: (instanceId: string, view: QuickAccessView) => void;
   setShowTopSites: (instanceId: string, showTopSites: boolean) => void;
+  setShowOpenTabs: (instanceId: string, showOpenTabs: boolean) => void;
+  setShowRecentlyClosed: (instanceId: string, showRecentlyClosed: boolean) => void;
   removeInstance: (instanceId: string) => void;
 };
 
@@ -60,6 +65,8 @@ const DEFAULT_DATA: QuickAccessData = {
   openBehavior: "currentTab",
   view: "grid",
   showTopSites: true,
+  showOpenTabs: false,
+  showRecentlyClosed: false,
 };
 
 const linkSchema = z.object({
@@ -69,17 +76,35 @@ const linkSchema = z.object({
   icon: z.string().optional(),
 });
 
+const RETIRED_TABS: Record<string, QuickAccessTab> = { recentlyClosed: "home" };
+
+function normaliseData(value: unknown): unknown {
+  if (!value || typeof value !== "object") return value;
+  const data = value as Record<string, unknown>;
+  const retired = typeof data.activeTab === "string" ? RETIRED_TABS[data.activeTab] : undefined;
+  return retired ? { ...data, activeTab: retired, showRecentlyClosed: true } : data;
+}
+
 const dataSchema = z.object({
-  links: z.array(linkSchema),
-  activeTab: z.enum(["home", "bookmarks", "recentlyClosed", "history"]),
-  openBehavior: z.enum(["currentTab", "newTab"]),
-  view: z.enum(["grid", "list"]),
-  showTopSites: z.boolean().default(true),
+  links: tolerantArray(linkSchema),
+  activeTab: z.enum(["home", "bookmarks", "history"]).catch("home"),
+  openBehavior: z.enum(["currentTab", "newTab"]).catch("currentTab"),
+  view: z.enum(["grid", "list"]).catch("grid"),
+  showTopSites: z.boolean().catch(true),
+  showOpenTabs: z.boolean().catch(false),
+  showRecentlyClosed: z.boolean().catch(false),
 });
 
 const persistedSchema = z.object({
-  byInstance: z.record(z.string(), dataSchema),
+  byInstance: tolerantRecord(dataSchema, normaliseData),
 });
+
+const LEGACY_KEYS = ["links", "activeTab", "openBehavior", "view", "showTopSites"] as const;
+
+function looksLikeLegacySingleton(persisted: unknown): boolean {
+  if (!persisted || typeof persisted !== "object") return false;
+  return LEGACY_KEYS.some((key) => key in persisted);
+}
 
 const gatedStorage = createGatedChromeStorage();
 
@@ -200,6 +225,10 @@ export const useQuickAccessStore = create<QuickAccessState>()(
         set((state) => update(state, instanceId, (data) => ({ ...data, view }))),
       setShowTopSites: (instanceId, showTopSites) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, showTopSites }))),
+      setShowOpenTabs: (instanceId, showOpenTabs) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, showOpenTabs }))),
+      setShowRecentlyClosed: (instanceId, showRecentlyClosed) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, showRecentlyClosed }))),
       removeInstance: (instanceId) =>
         set((state) => ({
           byInstance: dropInstance(state.byInstance, instanceId),
@@ -214,14 +243,15 @@ export const useQuickAccessStore = create<QuickAccessState>()(
       partialize: (state) => ({ byInstance: state.byInstance }),
       migrate: (persisted, version) => {
         if (version >= 2) return persisted;
+        if (!looksLikeLegacySingleton(persisted)) return { byInstance: {} };
         const legacy = dataSchema.safeParse(persisted);
         return { byInstance: legacy.success ? { quickAccess: legacy.data } : {} };
       },
-      merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(persisted);
-        if (!parsed.success) return current;
-        return { ...current, byInstance: parsed.data.byInstance };
-      },
+      merge: (persisted, current) =>
+        mergePersisted("widget:quickAccess", persistedSchema, persisted, current, (parsed) => ({
+          ...current,
+          byInstance: parsed.byInstance,
+        })),
     },
   ),
 );

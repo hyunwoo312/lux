@@ -17,6 +17,8 @@ function seed() {
         openBehavior: "currentTab",
         view: "list",
         showTopSites: false,
+        showOpenTabs: false,
+        showRecentlyClosed: false,
       },
     },
   });
@@ -71,17 +73,6 @@ describe("HomeTab add form", () => {
     expect(screen.getByText("example.com")).toBeInTheDocument();
   });
 
-  it("keeps only the first grapheme typed into the icon field", () => {
-    renderTab();
-    openAddForm();
-
-    fireEvent.change(screen.getByLabelText("Link icon"), { target: { value: "ab" } });
-
-    expect(screen.getByLabelText("Link icon")).toHaveValue("a");
-  });
-});
-
-describe("HomeTab remove", () => {
   it("offers an undo that puts the pin back", () => {
     renderTab();
 
@@ -106,6 +97,8 @@ describe("HomeTab remove", () => {
           openBehavior: "currentTab",
           view: "list",
           showTopSites: false,
+          showOpenTabs: false,
+          showRecentlyClosed: false,
         },
       },
     });
@@ -116,5 +109,29 @@ describe("HomeTab remove", () => {
 
     const titles = screen.getAllByText(/^(One|Two|Three)$/).map((node) => node.textContent);
     expect(titles).toEqual(["One", "Two", "Three"]);
+  });
+});
+
+describe("pins as real links", () => {
+  it("renders a pin as an anchor carrying its url", () => {
+    seed();
+    renderTab();
+    expect(screen.getByRole("link", { name: /GitHub/ })).toHaveAttribute(
+      "href",
+      "https://github.com/",
+    );
+  });
+
+  it("does not let a drag start a navigation", () => {
+    seed();
+    renderTab();
+    expect(screen.getByRole("link", { name: /GitHub/ })).toHaveAttribute("draggable", "false");
+  });
+
+  it("keeps edit and remove out of the anchor, so they are not nested interactives", () => {
+    seed();
+    renderTab();
+    const link = screen.getByRole("link", { name: /GitHub/ });
+    expect(link.querySelector("button")).toBeNull();
   });
 });

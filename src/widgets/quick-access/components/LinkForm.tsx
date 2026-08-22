@@ -9,7 +9,6 @@ import { accentClass } from "@/widgets/core/accent";
 import { QUICK_ACCESS_ACCENT } from "@/widgets/quick-access/types";
 import { Favicon } from "@/widgets/quick-access/components/Favicon";
 import { useHistorySuggestions } from "@/widgets/quick-access/hooks/useHistorySuggestions";
-import { firstGrapheme } from "@/widgets/quick-access/lib/icon";
 import { hostnameOf, keyOf } from "@/widgets/quick-access/lib/url";
 import type { LinkResult, QuickLink } from "@/widgets/quick-access/types";
 
@@ -23,7 +22,6 @@ type LinkFormProps = {
 export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormProps) {
   const [url, setUrl] = useState(initial?.url ?? "");
   const [title, setTitle] = useState(initial?.title ?? "");
-  const [icon, setIcon] = useState(initial?.icon ?? "");
   const [error, setError] = useState("");
   const [focused, setFocused] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -55,7 +53,7 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const result = onSubmit(title, url, icon);
+    const result = onSubmit(title, url, initial?.icon ?? "");
     if (result === "ok") return;
     setError(
       result === "duplicate"
@@ -166,22 +164,12 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
           </ul>
         </PopoverContent>
       </Popover>
-      <div className="flex items-center gap-2">
-        <Input
-          value={icon}
-          onChange={(event) => setIcon(firstGrapheme(event.target.value))}
-          onFocus={(event) => event.target.select()}
-          placeholder="🔖"
-          aria-label="Link icon"
-          className="w-12 shrink-0 text-center"
-        />
-        <Input
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-          placeholder="Title (optional)"
-          aria-label="Link title"
-        />
-      </div>
+      <Input
+        value={title}
+        onChange={(event) => setTitle(event.target.value)}
+        placeholder="Title (optional)"
+        aria-label="Link title"
+      />
       {error && (
         <p role="alert" className="text-destructive text-caption">
           {error}

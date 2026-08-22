@@ -1,6 +1,7 @@
 import type { ComponentType, ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import {
+  AppWindow,
   Bookmark,
   Clock,
   Database,
@@ -56,6 +57,15 @@ const PERMISSIONS: PermissionItem[] = [
       "Lists recently closed tabs in Quick Access. Chrome only reveals their titles and addresses to extensions that can read tab details, so this asks for both.",
     usedBy: "Quick Access",
     icon: Clock,
+    required: false,
+  },
+  {
+    id: "tabs",
+    name: "Open tabs",
+    description:
+      "Lists your open tabs in Quick Access so you can switch to, close or mute one. Lux never injects into a tab or follows what you browse.",
+    usedBy: "Quick Access",
+    icon: AppWindow,
     required: false,
   },
   {

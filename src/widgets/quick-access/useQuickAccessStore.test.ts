@@ -14,6 +14,8 @@ describe("useQuickAccessStore", () => {
           openBehavior: "currentTab",
           view: "grid",
           showTopSites: true,
+          showOpenTabs: false,
+          showRecentlyClosed: false,
         },
       },
     });
@@ -137,6 +139,8 @@ describe("useQuickAccessStore", () => {
       openBehavior: "currentTab" as const,
       view: "grid" as const,
       showTopSites: true,
+      showOpenTabs: false,
+      showRecentlyClosed: false,
     };
     useQuickAccessStore.setState({ byInstance: { a: { ...empty }, b: { ...empty } } });
 
@@ -166,6 +170,8 @@ describe("useQuickAccessStore", () => {
             openBehavior: "newTab",
             view: "list",
             showTopSites: true,
+            showOpenTabs: false,
+            showRecentlyClosed: false,
           },
         },
       });
@@ -184,10 +190,89 @@ describe("useQuickAccessStore", () => {
             openBehavior: "currentTab",
             view: "grid",
             showTopSites: true,
+            showOpenTabs: false,
+            showRecentlyClosed: false,
           },
         },
       };
       expect(migrate?.(persisted, 2)).toBe(persisted);
+    });
+  });
+
+  describe("merge tolerance", () => {
+    const merge = useQuickAccessStore.persist.getOptions().merge;
+    const mergeInto = (persisted: unknown) =>
+      merge?.(persisted, { ...useQuickAccessStore.getState(), byInstance: {} }) as ReturnType<
+        typeof useQuickAccessStore.getState
+      >;
+
+    const pin = { id: "a", title: "A", url: "https://a.test/" };
+    const stored = {
+      links: [pin],
+      activeTab: "home",
+      openBehavior: "newTab",
+      view: "list",
+      showTopSites: false,
+      showOpenTabs: false,
+      showRecentlyClosed: false,
+    };
+
+    it("keeps the other widgets when one of them is unreadable", () => {
+      const merged = mergeInto({ byInstance: { a: stored, b: 5, c: stored } });
+      expect(Object.keys(merged.byInstance)).toEqual(["a", "c"]);
+    });
+
+    it("keeps the pins when one setting is unreadable", () => {
+      const merged = mergeInto({ byInstance: { a: { ...stored, view: "nonsense" } } });
+
+      expect(merged.byInstance["a"]?.view).toBe("grid");
+      expect(merged.byInstance["a"]?.links).toHaveLength(1);
+    });
+
+    it("keeps the pins when a setting is missing entirely", () => {
+      const merged = mergeInto({
+        byInstance: { a: { links: [pin], openBehavior: "newTab", view: "list" } },
+      });
+      expect(merged.byInstance["a"]?.links).toHaveLength(1);
+    });
+
+    it("drops only the unreadable pin, never the whole row of them", () => {
+      const merged = mergeInto({ byInstance: { a: { ...stored, links: [pin, 7, pin] } } });
+      expect(merged.byInstance["a"]?.links).toHaveLength(2);
+    });
+
+    it("does not invent a widget out of a blob with nothing recognisable in it", () => {
+      const migrate = useQuickAccessStore.persist.getOptions().migrate;
+      expect(migrate?.({}, 1)).toEqual({ byInstance: {} });
+      expect(migrate?.({ somethingElse: 1 }, 1)).toEqual({ byInstance: {} });
+    });
+
+    it("starts empty rather than throwing on a blob with no widgets at all", () => {
+      expect(mergeInto({}).byInstance).toEqual({});
+      expect(mergeInto({ byInstance: null }).byInstance).toEqual({});
+    });
+
+    it("moves a widget parked on the retired Recent tab onto Home, with the section turned on", () => {
+      const merged = mergeInto({
+        byInstance: { a: { ...stored, activeTab: "recentlyClosed" } },
+      });
+
+      expect(merged.byInstance["a"]?.activeTab).toBe("home");
+      expect(merged.byInstance["a"]?.showRecentlyClosed).toBe(true);
+    });
+
+    it("leaves a widget on a tab that still exists alone", () => {
+      const merged = mergeInto({ byInstance: { a: { ...stored, activeTab: "history" } } });
+
+      expect(merged.byInstance["a"]?.activeTab).toBe("history");
+      expect(merged.byInstance["a"]?.showRecentlyClosed).toBe(false);
+    });
+
+    it("defaults the two new sections off for a widget saved before they existed", () => {
+      const merged = mergeInto({ byInstance: { a: stored } });
+
+      expect(merged.byInstance["a"]?.showOpenTabs).toBe(false);
+      expect(merged.byInstance["a"]?.showRecentlyClosed).toBe(false);
     });
   });
 });

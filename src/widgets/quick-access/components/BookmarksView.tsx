@@ -6,6 +6,8 @@ import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
 import { useBookmarkTree } from "@/widgets/quick-access/hooks/useBrowserItems";
 import { useItemActions } from "@/widgets/quick-access/hooks/useItemActions";
 import { resolveFolderTrail } from "@/widgets/quick-access/browser";
+import { QuickSearch } from "@/widgets/quick-access/components/QuickSearch";
+import { searchBookmarks } from "@/widgets/quick-access/lib/search";
 import {
   QA_GRID_CONTAINER,
   QA_LIST_CONTAINER,
@@ -17,8 +19,9 @@ import { useQuickAccess } from "@/widgets/quick-access/useQuickAccessStore";
 export function BookmarksView({ editing }: { editing: boolean }) {
   const state = useBookmarkTree();
   const view = useQuickAccess((d) => d.view);
-  const { pinnedUrls, open, togglePin } = useItemActions();
+  const { pinnedUrls, openBehavior, open, togglePin } = useItemActions();
   const [path, setPath] = useState<string[]>([]);
+  const [query, setQuery] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const folderId = path[path.length - 1] ?? "";
 
@@ -33,14 +36,32 @@ export function BookmarksView({ editing }: { editing: boolean }) {
   const current = trail[trail.length - 1] ?? state.root;
   const reachedPath = trail.slice(1).map((folder) => folder.id);
   const isEmpty = current.folders.length === 0 && current.items.length === 0;
+  const searching = query.trim().length > 0;
+  const found = searching ? searchBookmarks(state.root, query) : [];
 
   return (
     <div className="flex h-full flex-col">
-      {trail.length > 1 && (
+      <QuickSearch value={query} onChange={setQuery} label="Search bookmarks" />
+      {!searching && trail.length > 1 && (
         <Breadcrumb trail={trail} onNavigate={(depth) => setPath(reachedPath.slice(0, depth))} />
       )}
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-x-hidden scroll-fade overflow-y-auto">
-        {isEmpty ? (
+        {searching ? (
+          found.length === 0 ? (
+            <BrowserMessage>{`No bookmarks match “${query.trim()}”`}</BrowserMessage>
+          ) : (
+            <BrowserList
+              items={found}
+              view={view}
+              animateLayout={!editing}
+              pinnedUrls={pinnedUrls}
+              scrollRef={scrollRef}
+              openBehavior={openBehavior}
+              onOpen={open}
+              onTogglePin={togglePin}
+            />
+          )
+        ) : isEmpty ? (
           <BrowserMessage>
             {trail.length > 1 ? "This folder is empty" : "No bookmarks yet"}
           </BrowserMessage>
@@ -66,6 +87,7 @@ export function BookmarksView({ editing }: { editing: boolean }) {
                 animateLayout={!editing}
                 pinnedUrls={pinnedUrls}
                 scrollRef={scrollRef}
+                openBehavior={openBehavior}
                 onOpen={open}
                 onTogglePin={togglePin}
               />

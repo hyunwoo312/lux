@@ -1,9 +1,9 @@
 import {
-  historyToItem,
   resolveFolderTrail,
   restoreSession,
   searchHistory,
   sessionToItem,
+  tabToItem,
   toBookmarkFolder,
 } from "@/widgets/quick-access/browser";
 
@@ -82,18 +82,6 @@ describe("sessionToItem", () => {
   });
 });
 
-describe("historyToItem", () => {
-  it("uses url as title when title is missing", () => {
-    expect(
-      historyToItem({ id: "h1", url: "https://x.com/" } as chrome.history.HistoryItem),
-    ).toEqual({
-      id: "h1",
-      title: "https://x.com/",
-      url: "https://x.com/",
-    });
-  });
-});
-
 describe("searchHistory", () => {
   it("dedupes by url, drops non-http entries, and caps the limit", async () => {
     const chromeRef = (globalThis as unknown as { chrome: typeof chrome }).chrome;
@@ -127,5 +115,30 @@ describe("restoreSession", () => {
     }) as unknown as typeof chrome.sessions.restore;
 
     await expect(restoreSession("gone")).resolves.toBe(false);
+  });
+});
+
+describe("tabToItem", () => {
+  const tab = (over: Partial<chrome.tabs.Tab> = {}) =>
+    ({ id: 7, windowId: 2, url: "https://a.test/", title: "A", ...over }) as chrome.tabs.Tab;
+
+  it("carries the tab and window ids so a row can switch to it", () => {
+    const item = tabToItem(tab());
+    expect(item?.tabId).toBe(7);
+    expect(item?.windowId).toBe(2);
+  });
+
+  it("falls back to the address when a tab has no title yet", () => {
+    expect(tabToItem(tab({ title: "  " }))?.title).toBe("https://a.test/");
+  });
+
+  it("reports audio state so a noisy tab can be found and muted", () => {
+    expect(tabToItem(tab({ audible: true }))?.audible).toBe(true);
+    expect(tabToItem(tab({ mutedInfo: { muted: true } }))?.muted).toBe(true);
+  });
+
+  it("skips a tab with no id or no address, which cannot be acted on", () => {
+    expect(tabToItem(tab({ id: undefined }))).toBeNull();
+    expect(tabToItem(tab({ url: "" }))).toBeNull();
   });
 });

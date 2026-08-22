@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { PermissionPrompt } from "@/components/PermissionPrompt";
 import { useGrantedPermissions } from "@/hooks/usePermission";
 import { isPermissionsManageable } from "@/lib/permissions";
@@ -8,13 +8,15 @@ import { BookmarksView } from "@/widgets/quick-access/components/BookmarksView";
 import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
 import { useBrowserItems } from "@/widgets/quick-access/hooks/useBrowserItems";
 import { useItemActions } from "@/widgets/quick-access/hooks/useItemActions";
+import { useHistorySearch } from "@/widgets/quick-access/hooks/useHistorySearch";
+import { QuickSearch } from "@/widgets/quick-access/components/QuickSearch";
+import { filterItems } from "@/widgets/quick-access/lib/search";
 import type { ItemSource, QuickAccessTab } from "@/widgets/quick-access/types";
 import { useQuickAccess } from "@/widgets/quick-access/useQuickAccessStore";
 
 type BrowserTabKey = Exclude<QuickAccessTab, "home">;
 
 const TAB_NOUN: Record<Exclude<BrowserTabKey, "bookmarks">, string> = {
-  recentlyClosed: "recently closed tabs",
   history: "recent sites",
 };
 
@@ -31,14 +33,6 @@ const TAB_GATE: Record<
     permissions: ["bookmarks"],
     highlight: "bookmarks",
     message: "Turn on the Bookmarks permission to browse your bookmarks here.",
-  },
-  recentlyClosed: {
-    permissions: ["sessions", "tabs"],
-    highlight: "sessions",
-    message:
-      "Turn on the Recently closed tabs permission to list them here. Enabling it reloads this tab.",
-    partlyGrantedMessage:
-      "Chrome only reveals closed tabs’ titles to extensions that can read tab details. Enable that to list them here — it reloads this tab.",
   },
   history: {
     permissions: ["history"],
@@ -77,29 +71,49 @@ export function BrowserTab({ tab, editing }: BrowserTabProps) {
 function ItemsView({ tab, editing }: { tab: ItemSource & BrowserTabKey; editing: boolean }) {
   const state = useBrowserItems(tab);
   const view = useQuickAccess((d) => d.view);
-  const { pinnedUrls, open, togglePin } = useItemActions();
+  const { pinnedUrls, openBehavior, open, togglePin } = useItemActions();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [query, setQuery] = useState("");
+  const searched = useHistorySearch(tab === "history" ? query : "");
+
+  const items =
+    state.status === "ready"
+      ? tab === "history" && query.trim()
+        ? (searched ?? [])
+        : filterItems(state.items, query)
+      : [];
+  const searching = tab === "history" && Boolean(query.trim()) && searched === null;
 
   return (
-    <div ref={scrollRef} className="h-full overflow-x-hidden scroll-fade overflow-y-auto">
-      {state.status === "loading" && <BrowserMessage>{`Loading ${TAB_NOUN[tab]}…`}</BrowserMessage>}
-      {state.status === "error" && (
-        <BrowserMessage>{`Couldn’t load ${TAB_NOUN[tab]}`}</BrowserMessage>
-      )}
-      {state.status === "ready" &&
-        (state.items.length === 0 ? (
-          <BrowserMessage>{`No ${TAB_NOUN[tab]} yet`}</BrowserMessage>
-        ) : (
-          <BrowserList
-            items={state.items}
-            view={view}
-            animateLayout={!editing}
-            pinnedUrls={pinnedUrls}
-            scrollRef={scrollRef}
-            onOpen={open}
-            onTogglePin={togglePin}
-          />
-        ))}
+    <div className="flex h-full flex-col">
+      <QuickSearch value={query} onChange={setQuery} label={`Search ${TAB_NOUN[tab]}`} />
+      <div ref={scrollRef} className="scroll-fade min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+        {state.status === "loading" && (
+          <BrowserMessage>{`Loading ${TAB_NOUN[tab]}…`}</BrowserMessage>
+        )}
+        {state.status === "error" && (
+          <BrowserMessage>{`Couldn’t load ${TAB_NOUN[tab]}`}</BrowserMessage>
+        )}
+        {state.status === "ready" &&
+          (searching ? (
+            <BrowserMessage>Searching…</BrowserMessage>
+          ) : items.length === 0 ? (
+            <BrowserMessage>
+              {query.trim() ? `No matches for “${query.trim()}”` : `No ${TAB_NOUN[tab]} yet`}
+            </BrowserMessage>
+          ) : (
+            <BrowserList
+              items={items}
+              view={view}
+              animateLayout={!editing}
+              pinnedUrls={pinnedUrls}
+              scrollRef={scrollRef}
+              openBehavior={openBehavior}
+              onOpen={open}
+              onTogglePin={togglePin}
+            />
+          ))}
+      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import type { CSSProperties, KeyboardEvent } from "react";
+import type { CSSProperties } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Pencil, X } from "lucide-react";
@@ -6,17 +6,18 @@ import { cn } from "@/lib/utils";
 import { ItemActionButton } from "@/widgets/quick-access/components/ItemActionButton";
 import { QuickItem } from "@/widgets/quick-access/components/QuickItem";
 import { QA_REVEAL, qaTileClass } from "@/widgets/quick-access/lib/itemStyles";
-import type { QuickAccessView, QuickLink } from "@/widgets/quick-access/types";
+import { QuickLinkAnchor } from "@/widgets/quick-access/components/QuickLinkAnchor";
+import type { OpenBehavior, QuickAccessView, QuickLink } from "@/widgets/quick-access/types";
 
 type SortablePinProps = {
   link: QuickLink;
   view: QuickAccessView;
-  onOpen: (url: string) => void;
+  openBehavior: OpenBehavior;
   onEdit: () => void;
   onRemove: () => void;
 };
 
-export function SortablePin({ link, view, onOpen, onEdit, onRemove }: SortablePinProps) {
+export function SortablePin({ link, view, openBehavior, onEdit, onRemove }: SortablePinProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: link.id,
   });
@@ -26,38 +27,31 @@ export function SortablePin({ link, view, onOpen, onEdit, onRemove }: SortablePi
     transition,
     zIndex: isDragging ? 1 : undefined,
   };
-  const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      onOpen(link.url);
-    }
-  };
-
   return (
-    <li
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      onClick={() => onOpen(link.url)}
-      onKeyDown={handleKeyDown}
-      className={cn("focus-ring group relative ", qaTileClass(view), isDragging && "opacity-50")}
-    >
-      <QuickItem
+    <li ref={setNodeRef} style={style} className={cn("group relative", isDragging && "opacity-50")}>
+      <QuickLinkAnchor
         url={link.url}
         title={link.title}
-        view={view}
-        icon={link.icon}
-        trailingPad={view === "list" ? "group-hover:pr-12 group-focus-within:pr-12" : undefined}
-      />
+        openBehavior={openBehavior}
+        onClick={(event) => {
+          if (isDragging) event.preventDefault();
+        }}
+        className={cn("focus-ring", qaTileClass(view))}
+        {...attributes}
+        {...listeners}
+      >
+        <QuickItem
+          url={link.url}
+          title={link.title}
+          view={view}
+          icon={link.icon}
+          trailingPad={view === "list" ? "group-hover:pr-12 group-focus-within:pr-12" : undefined}
+        />
+      </QuickLinkAnchor>
       {view === "grid" ? (
         <>
           <div className={cn("absolute top-1 left-1", QA_REVEAL)}>
-            <ItemActionButton
-              label={`Edit ${link.title}`}
-              onClick={onEdit}
-              className="bg-card rounded-md p-1"
-            >
+            <ItemActionButton label={`Edit ${link.title}`} onClick={onEdit}>
               <Pencil />
             </ItemActionButton>
           </div>
@@ -65,7 +59,7 @@ export function SortablePin({ link, view, onOpen, onEdit, onRemove }: SortablePi
             <ItemActionButton
               label={`Remove ${link.title}`}
               onClick={onRemove}
-              className="bg-card rounded-md p-1 hover:text-destructive"
+              className="hover:text-destructive"
             >
               <X />
             </ItemActionButton>

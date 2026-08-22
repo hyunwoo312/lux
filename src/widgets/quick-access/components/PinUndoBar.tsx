@@ -30,8 +30,8 @@ export function PinUndoBar() {
           exit={reduced ? { opacity: 0 } : { opacity: 0, y: 12 }}
           transition={{ duration: reduced ? 0 : DURATION.fast, ease: EASE_OUT }}
           className="
-            bg-popover border-border/60 absolute inset-x-2 bottom-2 z-10 flex items-center gap-2
-            rounded-lg border px-2.5 py-1.5 shadow-lg
+            border-input bg-background/60 absolute inset-x-2 bottom-2 z-10 flex items-center gap-2
+            rounded-lg border px-2.5 py-1.5 shadow-lg backdrop-blur-sm
           "
         >
           <span className="text-ink-3 min-w-0 flex-1 truncate text-caption">

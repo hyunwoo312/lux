@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { Favicon } from "@/widgets/quick-access/components/Favicon";
 import type { QuickAccessView } from "@/widgets/quick-access/types";
 
-const FAVICON_SIZE = 32;
+const FAVICON_SIZE: Record<QuickAccessView, number> = { grid: 64, list: 32 };
 
 export function LinkIcon({
   url,
@@ -35,7 +35,7 @@ export function LinkIcon({
           {icon}
         </span>
       ) : (
-        <Favicon url={url} size={FAVICON_SIZE} className="size-full" />
+        <Favicon url={url} size={FAVICON_SIZE[view]} className="size-full" />
       )}
     </span>
   );

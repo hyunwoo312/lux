@@ -25,7 +25,7 @@ export function ItemActionButton({ label, onClick, className, children }: ItemAc
       }}
       aria-label={label}
       className={cn(
-        "text-ink-4 hover:text-ink cursor-pointer p-0.5 transition-colors",
+        "text-ink-2 hover:text-ink cursor-pointer p-0.5 drop-shadow-sm transition-colors",
         "[&_svg]:size-3.5",
         className,
       )}

@@ -1,10 +1,12 @@
 import { useEffect, useMemo } from "react";
-import { usePolledResource } from "@/widgets/core/usePolledResource";
+import { invalidatePolledResource, usePolledResource } from "@/widgets/core/usePolledResource";
 import {
   fetchBookmarkTree,
   fetchHistory,
+  fetchOpenTabs,
   fetchRecentlyClosed,
   fetchTopSites,
+  watchTabs,
 } from "@/widgets/quick-access/browser";
 import type { BookmarkFolder, BrowserItem, ItemSource } from "@/widgets/quick-access/types";
 
@@ -22,6 +24,7 @@ const FETCHERS: Record<ItemSource, () => Promise<BrowserItem[]>> = {
   recentlyClosed: fetchRecentlyClosed,
   history: fetchHistory,
   topSites: fetchTopSites,
+  openTabs: fetchOpenTabs,
 };
 
 const REFRESH_MS = 60_000;
@@ -58,6 +61,30 @@ export function useBookmarkTree(enabled = true): BookmarkTreeState {
 
   return useMemo(() => {
     if (state.status === "success") return { status: "ready", root: state.data };
+    if (state.status === "error") return { status: "error" };
+    return { status: "loading" };
+  }, [state]);
+}
+
+export function useOpenTabs(enabled: boolean): BrowserState {
+  const { state, refresh } = usePolledResource(fetchOpenTabs, {
+    enabled,
+    intervalMs: REFRESH_MS,
+    cacheKey: "quickAccess:openTabs",
+  });
+  useRefreshOnMount(refresh, enabled);
+
+  useEffect(() => {
+    if (!enabled) return;
+    return watchTabs(() => {
+      invalidatePolledResource("quickAccess:openTabs");
+      refresh();
+    });
+  }, [enabled, refresh]);
+
+  return useMemo(() => {
+    if (state.status === "success") return { status: "ready", items: state.data };
+    if (state.status === "empty") return { status: "ready", items: [] };
     if (state.status === "error") return { status: "error" };
     return { status: "loading" };
   }, [state]);

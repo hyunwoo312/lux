@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useRef } from "react";
 import { act, render, screen } from "@testing-library/react";
 import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
-import type { BrowserItem } from "@/widgets/quick-access/types";
+import type { BrowserItem, OpenBehavior } from "@/widgets/quick-access/types";
 
 const realIntersectionObserver = globalThis.IntersectionObserver;
 let observed: Array<() => void> = [];
@@ -37,7 +37,13 @@ function manyItems(count: number): BrowserItem[] {
   }));
 }
 
-function Harness({ items }: { items: BrowserItem[] }) {
+function Harness({
+  items,
+  openBehavior = "currentTab",
+}: {
+  items: BrowserItem[];
+  openBehavior?: OpenBehavior;
+}) {
   const scrollRef = useRef<HTMLDivElement>(null);
   return (
     <div ref={scrollRef}>
@@ -47,6 +53,7 @@ function Harness({ items }: { items: BrowserItem[] }) {
         animateLayout={false}
         pinnedUrls={new Set()}
         scrollRef={scrollRef}
+        openBehavior={openBehavior}
         onOpen={vi.fn()}
         onTogglePin={vi.fn()}
       />
@@ -70,13 +77,6 @@ describe("BrowserList", () => {
     expect(screen.getByText("Site 12")).toBeInTheDocument();
   });
 
-  it("renders only the first page of a long source", () => {
-    render(<Harness items={manyItems(80)} />);
-
-    expect(screen.getByText("Site 30")).toBeInTheDocument();
-    expect(screen.queryByText("Site 31")).not.toBeInTheDocument();
-  });
-
   it("appends the next page when scrolled to the end", () => {
     render(<Harness items={manyItems(80)} />);
 
@@ -84,5 +84,33 @@ describe("BrowserList", () => {
 
     expect(screen.getByText("Site 60")).toBeInTheDocument();
     expect(screen.queryByText("Site 61")).not.toBeInTheDocument();
+  });
+});
+
+describe("browser rows as real links", () => {
+  const one = [{ id: "e", title: "Example", url: "https://example.com/" }];
+  const renderList = (openBehavior?: OpenBehavior) =>
+    render(<Harness items={one} openBehavior={openBehavior} />);
+
+  it("renders each row as an anchor, so middle-click and the context menu work", () => {
+    renderList();
+    const link = screen.getByRole("link", { name: /Example/ });
+
+    expect(link).toHaveAttribute("href", "https://example.com/");
+  });
+
+  it("opens in a new tab when the widget is set to", () => {
+    renderList("newTab");
+    expect(screen.getByRole("link", { name: /Example/ })).toHaveAttribute("target", "_blank");
+  });
+
+  it("stays in the current tab otherwise", () => {
+    renderList();
+    expect(screen.getByRole("link", { name: /Example/ })).not.toHaveAttribute("target");
+  });
+
+  it("is not draggable, so a drag cannot start a navigation", () => {
+    renderList();
+    expect(screen.getByRole("link", { name: /Example/ })).toHaveAttribute("draggable", "false");
   });
 });

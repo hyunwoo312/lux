@@ -28,6 +28,8 @@ function seed(urls: string[], activeTab: QuickAccessTab = "home") {
         openBehavior: "currentTab",
         activeTab,
         showTopSites: false,
+        showOpenTabs: false,
+        showRecentlyClosed: false,
       },
     },
   });

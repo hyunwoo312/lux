@@ -98,6 +98,63 @@ export async function searchHistory(
   return items;
 }
 
+export function tabToItem(tab: chrome.tabs.Tab): BrowserItem | null {
+  if (tab.id === undefined || !tab.url) return null;
+  return {
+    id: `tab-${tab.id}`,
+    title: tab.title?.trim() || tab.url,
+    url: tab.url,
+    tabId: tab.id,
+    windowId: tab.windowId,
+    audible: tab.audible === true,
+    muted: tab.mutedInfo?.muted === true,
+  };
+}
+
+export async function fetchOpenTabs(): Promise<BrowserItem[]> {
+  if (typeof chrome === "undefined" || !chrome.tabs?.query) return [];
+  const [tabs, current] = await Promise.all([
+    chrome.tabs.query({}),
+    chrome.tabs.getCurrent().catch(() => undefined),
+  ]);
+  return tabs
+    .filter((tab) => tab.id !== current?.id)
+    .map(tabToItem)
+    .filter((item): item is BrowserItem => item !== null);
+}
+
+export async function focusTab(tabId: number, windowId: number): Promise<void> {
+  if (typeof chrome === "undefined" || !chrome.tabs?.update) return;
+  await chrome.tabs.update(tabId, { active: true }).catch(() => undefined);
+  await chrome.windows?.update(windowId, { focused: true }).catch(() => undefined);
+}
+
+export async function closeTab(tabId: number): Promise<void> {
+  if (typeof chrome === "undefined" || !chrome.tabs?.remove) return;
+  await chrome.tabs.remove(tabId).catch(() => undefined);
+}
+
+export async function setTabMuted(tabId: number, muted: boolean): Promise<void> {
+  if (typeof chrome === "undefined" || !chrome.tabs?.update) return;
+  await chrome.tabs.update(tabId, { muted }).catch(() => undefined);
+}
+
+export function watchTabs(onChange: () => void): () => void {
+  const events = [
+    chrome?.tabs?.onCreated,
+    chrome?.tabs?.onRemoved,
+    chrome?.tabs?.onUpdated,
+    chrome?.tabs?.onMoved,
+  ].filter(Boolean) as {
+    addListener: (fn: () => void) => void;
+    removeListener: (fn: () => void) => void;
+  }[];
+  for (const event of events) event.addListener(onChange);
+  return () => {
+    for (const event of events) event.removeListener(onChange);
+  };
+}
+
 export async function fetchTopSites(): Promise<BrowserItem[]> {
   if (typeof chrome === "undefined" || !chrome.topSites?.get) return [];
   const sites = await chrome.topSites.get();

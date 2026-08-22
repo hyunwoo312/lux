@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIntegrationStore } from "@/integrations";
@@ -98,8 +98,16 @@ function multiDayEvent(): CalendarEvent {
 }
 
 beforeEach(() => {
+  const midMorning = new Date();
+  midMorning.setHours(9, 0, 0, 0);
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  vi.setSystemTime(midMorning);
   useIntegrationStore.setState({ accounts: [], loaded: true });
   useCalendarStore.setState({ byInstance: { [ID]: baseData() } });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("CalendarWidget", () => {

@@ -19,6 +19,10 @@ export function QuickAccessConfig() {
   const showTopSites = useQuickAccess((d) => d.showTopSites);
   const setOpenBehavior = useQuickAccessStore((s) => s.setOpenBehavior);
   const setShowTopSites = useQuickAccessStore((s) => s.setShowTopSites);
+  const showOpenTabs = useQuickAccess((d) => d.showOpenTabs);
+  const setShowOpenTabs = useQuickAccessStore((s) => s.setShowOpenTabs);
+  const showRecentlyClosed = useQuickAccess((d) => d.showRecentlyClosed);
+  const setShowRecentlyClosed = useQuickAccessStore((s) => s.setShowRecentlyClosed);
 
   return (
     <WidgetConfigGroup label="Quick access">
@@ -42,6 +46,28 @@ export function QuickAccessConfig() {
             checked={showTopSites}
             onCheckedChange={(checked) => setShowTopSites(instanceId, checked === true)}
             aria-label="Show top sites"
+          />
+        }
+      />
+      <WidgetConfigItem
+        title="Open tabs"
+        description="List and manage your open tabs on the Home tab"
+        control={
+          <Switch
+            checked={showOpenTabs}
+            onCheckedChange={(checked) => setShowOpenTabs(instanceId, checked === true)}
+            aria-label="Show open tabs"
+          />
+        }
+      />
+      <WidgetConfigItem
+        title="Recently closed"
+        description="Reopen tabs you just closed from the Home tab"
+        control={
+          <Switch
+            checked={showRecentlyClosed}
+            onCheckedChange={(checked) => setShowRecentlyClosed(instanceId, checked === true)}
+            aria-label="Show recently closed tabs"
           />
         }
       />
