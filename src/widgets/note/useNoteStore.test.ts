@@ -71,4 +71,38 @@ describe("notes that predate the length cap", () => {
 
     expect(migrated.byInstance?.note?.text).toBe("hello");
   });
+
+  describe("merge tolerance", () => {
+    const merge = useNoteStore.persist.getOptions().merge;
+    const mergeInto = (persisted: unknown) =>
+      merge?.(persisted, { ...useNoteStore.getState(), byInstance: {} }) as ReturnType<
+        typeof useNoteStore.getState
+      >;
+
+    it("keeps the other notes when one of them is unreadable", () => {
+      const merged = mergeInto({
+        byInstance: { a: { text: "keep me", fontSize: "lg" }, b: 5 },
+      });
+
+      expect(Object.keys(merged.byInstance)).toEqual(["a"]);
+      expect(merged.byInstance["a"]?.text).toBe("keep me");
+    });
+
+    it("keeps the note's text when only its font size is unreadable", () => {
+      const merged = mergeInto({ byInstance: { a: { text: "keep me", fontSize: "huge" } } });
+
+      expect(merged.byInstance["a"]?.text).toBe("keep me");
+      expect(merged.byInstance["a"]?.fontSize).toBe("base");
+    });
+
+    it("keeps the note's text when the font size is missing entirely", () => {
+      const merged = mergeInto({ byInstance: { a: { text: "keep me" } } });
+      expect(merged.byInstance["a"]?.text).toBe("keep me");
+    });
+
+    it("starts empty rather than throwing on a blob with no notes at all", () => {
+      expect(mergeInto({}).byInstance).toEqual({});
+      expect(mergeInto({ byInstance: null }).byInstance).toEqual({});
+    });
+  });
 });

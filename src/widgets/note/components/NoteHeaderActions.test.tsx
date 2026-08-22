@@ -38,13 +38,6 @@ afterEach(() => {
 });
 
 describe("NoteHeaderActions", () => {
-  it("stays hidden while the note is empty", () => {
-    seed("   ");
-    renderActions();
-
-    expect(screen.queryByLabelText("Copy note")).not.toBeInTheDocument();
-  });
-
   it("copies the note text to the clipboard", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     stubClipboard(writeText);

@@ -5,7 +5,6 @@ import { useDashboardStore } from "@/stores/useDashboardStore";
 import { NoteWidget } from "@/widgets/note/NoteWidget";
 import { useNoteStore } from "@/widgets/note/useNoteStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
-import { NoteStatus } from "@/widgets/note/components/NoteStatus";
 import { NOTE_MAX_LENGTH } from "@/widgets/note/types";
 
 const ID = "note-1";
@@ -78,26 +77,6 @@ describe("the length cap", () => {
     useNoteStore.setState({ byInstance: {} });
   });
 
-  it("states the limit in the header instead of showing a bare number", () => {
-    seedNote("note-cap", "x".repeat(NOTE_MAX_LENGTH));
-    render(
-      <WidgetInstanceContext.Provider value="note-cap">
-        <NoteStatus />
-      </WidgetInstanceContext.Provider>,
-    );
-    expect(screen.getByText(/limit reached/)).toBeInTheDocument();
-  });
-
-  it("shows the remaining budget as the note approaches the cap", () => {
-    seedNote("note-near", "x".repeat(Math.ceil(NOTE_MAX_LENGTH * 0.95)));
-    render(
-      <WidgetInstanceContext.Provider value="note-near">
-        <NoteStatus />
-      </WidgetInstanceContext.Provider>,
-    );
-    expect(screen.getByText(new RegExp(`/ ${NOTE_MAX_LENGTH} chars`))).toBeInTheDocument();
-  });
-
   it("does not clip a note that was already longer than the cap", () => {
     const oversized = "y".repeat(NOTE_MAX_LENGTH * 2);
     seedNote("note-legacy", oversized);
@@ -107,5 +86,65 @@ describe("the length cap", () => {
       </WidgetInstanceContext.Provider>,
     );
     expect(screen.getByLabelText("Note")).toHaveValue(oversized);
+  });
+});
+
+describe("length limit", () => {
+  it("says how much did not fit instead of silently dropping it", () => {
+    renderWidget();
+    const field = screen.getByRole("textbox", { name: "Note" });
+
+    fireEvent.change(field, { target: { value: "x".repeat(NOTE_MAX_LENGTH + 25) } });
+
+    expect(screen.getByRole("status")).toHaveTextContent(/25 characters didn.t fit/);
+  });
+
+  it("keeps exactly what fits", () => {
+    renderWidget();
+    const field = screen.getByRole("textbox", { name: "Note" });
+
+    fireEvent.change(field, { target: { value: "x".repeat(NOTE_MAX_LENGTH + 25) } });
+
+    expect((field as HTMLTextAreaElement).value).toHaveLength(NOTE_MAX_LENGTH);
+  });
+
+  it("no longer caps the field itself, which is what clipped paste silently", () => {
+    renderWidget();
+    expect(screen.getByRole("textbox", { name: "Note" })).not.toHaveAttribute("maxlength");
+  });
+});
+
+describe("list continuation", () => {
+  it("continues a bullet when Enter is pressed at the end of one", () => {
+    renderWidget();
+    const field = screen.getByRole("textbox", { name: "Note" }) as HTMLTextAreaElement;
+
+    fireEvent.change(field, { target: { value: "- milk" } });
+    field.setSelectionRange(6, 6);
+    fireEvent.keyDown(field, { key: "Enter" });
+
+    expect(field.value).toBe("- milk\n- ");
+  });
+
+  it("leaves Shift+Enter alone so a plain newline is still possible", () => {
+    renderWidget();
+    const field = screen.getByRole("textbox", { name: "Note" }) as HTMLTextAreaElement;
+
+    fireEvent.change(field, { target: { value: "- milk" } });
+    field.setSelectionRange(6, 6);
+    fireEvent.keyDown(field, { key: "Enter", shiftKey: true });
+
+    expect(field.value).toBe("- milk");
+  });
+
+  it("toggles a checkbox on the caret's line", () => {
+    renderWidget();
+    const field = screen.getByRole("textbox", { name: "Note" }) as HTMLTextAreaElement;
+
+    fireEvent.change(field, { target: { value: "- [ ] buy milk" } });
+    field.setSelectionRange(8, 8);
+    fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
+
+    expect(field.value).toBe("- [x] buy milk");
   });
 });

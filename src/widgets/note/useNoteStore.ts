@@ -2,9 +2,10 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
+import { mergePersisted, tolerantRecord } from "@/lib/persist";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
-import type { NoteFontSize } from "@/widgets/note/types";
+import { NOTE_FONT_SIZES, type NoteFontSize } from "@/widgets/note/types";
 
 type NoteData = {
   text: string;
@@ -22,11 +23,11 @@ const DEFAULT_NOTE: NoteData = { text: "", fontSize: "base" };
 
 const noteDataSchema = z.object({
   text: z.string(),
-  fontSize: z.enum(["sm", "base", "lg"]),
+  fontSize: z.enum(NOTE_FONT_SIZES).catch("base"),
 });
 
 const persistedSchema = z.object({
-  byInstance: z.record(z.string(), noteDataSchema),
+  byInstance: tolerantRecord(noteDataSchema),
 });
 
 const gatedStorage = createGatedChromeStorage();
@@ -59,11 +60,11 @@ export const useNoteStore = create<NoteState>()(
         const legacy = noteDataSchema.safeParse(persisted);
         return { byInstance: legacy.success ? { note: legacy.data } : {} };
       },
-      merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(persisted);
-        if (!parsed.success) return current;
-        return { ...current, byInstance: parsed.data.byInstance };
-      },
+      merge: (persisted, current) =>
+        mergePersisted("widget:note", persistedSchema, persisted, current, (parsed) => ({
+          ...current,
+          byInstance: parsed.byInstance,
+        })),
     },
   ),
 );
