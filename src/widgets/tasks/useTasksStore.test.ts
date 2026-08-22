@@ -136,4 +136,55 @@ describe("useTasksStore", () => {
       expect(migrate?.(persisted, 2)).toBe(persisted);
     });
   });
+
+  describe("merge tolerance", () => {
+    const merge = useTasksStore.persist.getOptions().merge;
+    const mergeInto = (persisted: unknown) =>
+      merge?.(persisted, { ...useTasksStore.getState(), byInstance: {} }) as ReturnType<
+        typeof useTasksStore.getState
+      >;
+    const task = (id: string, title: string) => ({ id, title, done: false, createdAt: 1000 });
+
+    it("keeps the other tasks when one entry in the list is unreadable", () => {
+      const merged = mergeInto({
+        byInstance: { a: { tasks: [task("1", "buy milk"), 5, task("2", "call mum")] } },
+      });
+
+      expect(merged.byInstance["a"]?.tasks.map((entry) => entry.title)).toEqual([
+        "buy milk",
+        "call mum",
+      ]);
+    });
+
+    it("keeps a task whose title is intact but whose flags are not", () => {
+      const merged = mergeInto({
+        byInstance: { a: { tasks: [{ id: "1", title: "buy milk", done: "yes", createdAt: "x" }] } },
+      });
+
+      expect(merged.byInstance["a"]?.tasks[0]?.title).toBe("buy milk");
+      expect(merged.byInstance["a"]?.tasks[0]?.done).toBe(false);
+    });
+
+    it("keeps one list's tasks when another instance is unreadable", () => {
+      const merged = mergeInto({
+        byInstance: { a: { tasks: [task("1", "buy milk")] }, b: 5 },
+      });
+
+      expect(Object.keys(merged.byInstance)).toEqual(["a"]);
+    });
+
+    it("keeps the tasks when only a display preference is unreadable", () => {
+      const merged = mergeInto({
+        byInstance: { a: { tasks: [task("1", "buy milk")], completedPosition: "sideways" } },
+      });
+
+      expect(merged.byInstance["a"]?.tasks).toHaveLength(1);
+      expect(merged.byInstance["a"]?.completedPosition).toBe("bottom");
+    });
+
+    it("starts empty rather than throwing on a blob with no lists at all", () => {
+      expect(mergeInto({}).byInstance).toEqual({});
+      expect(mergeInto({ byInstance: null }).byInstance).toEqual({});
+    });
+  });
 });

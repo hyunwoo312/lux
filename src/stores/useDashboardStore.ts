@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import type { Layout, LayoutItem } from "react-grid-layout";
+import { mergePersisted, tolerantArray } from "@/lib/persist";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { getLocal } from "@/lib/local-store";
 import { WELCOME_SEEN_KEY } from "@/onboarding";
@@ -94,23 +95,36 @@ const pendingRemovalSchema = z
   .catch(null);
 
 const persistedSchema = z.object({
-  widgets: z.array(z.unknown()),
-  layout: z.array(layoutItemSchema),
+  widgets: tolerantArray(widgetInstanceSchema),
+  layout: tolerantArray(layoutItemSchema),
   pendingRemoval: pendingRemovalSchema.optional(),
 });
 
-export function reconcilePersisted(
-  persisted: unknown,
-): { widgets: WidgetInstance[]; layout: Layout; pendingRemoval: PendingRemoval | null } | null {
-  const parsed = persistedSchema.safeParse(persisted);
-  if (!parsed.success) return null;
-  const widgets = parsed.data.widgets
-    .map((widget) => widgetInstanceSchema.safeParse(widget))
-    .filter((result) => result.success)
-    .map((result) => result.data);
+type ReconciledDashboard = {
+  widgets: WidgetInstance[];
+  layout: Layout;
+  pendingRemoval: PendingRemoval | null;
+};
+
+function reconcile(parsed: z.infer<typeof persistedSchema>): ReconciledDashboard {
+  const { widgets } = parsed;
   const ids = new Set(widgets.map((widget) => widget.id));
-  const layout = parsed.data.layout.filter((item) => ids.has(item.i));
-  return { widgets, layout, pendingRemoval: parsed.data.pendingRemoval ?? null };
+  const layout = parsed.layout.filter((item) => ids.has(item.i));
+  const placed = new Set(layout.map((item) => item.i));
+
+  for (const widget of widgets) {
+    if (placed.has(widget.id)) continue;
+    const plugin = getWidgetPlugin(widget.type);
+    if (!plugin) continue;
+    layout.push(placeLayoutItem(layout, DEFAULT_COLUMNS, widget.id, plugin, undefined));
+  }
+
+  return { widgets, layout, pendingRemoval: parsed.pendingRemoval ?? null };
+}
+
+export function reconcilePersisted(persisted: unknown): ReconciledDashboard | null {
+  const parsed = persistedSchema.safeParse(persisted);
+  return parsed.success ? reconcile(parsed.data) : null;
 }
 
 function placeLayoutItem(
@@ -237,11 +251,11 @@ export const useDashboardStore = create<DashboardState>()(
         layout: state.layout,
         pendingRemoval: state.pendingRemoval,
       }),
-      merge: (persisted, current) => {
-        const reconciled = reconcilePersisted(persisted);
-        if (!reconciled) return current;
-        return { ...current, ...reconciled };
-      },
+      merge: (persisted, current) =>
+        mergePersisted("dashboard", persistedSchema, persisted, current, (parsed) => ({
+          ...current,
+          ...reconcile(parsed),
+        })),
     },
   ),
 );

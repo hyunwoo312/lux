@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
+import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
@@ -39,20 +40,26 @@ const DEFAULT_TASKS: TaskData = {
 const taskSchema = z.object({
   id: z.string(),
   title: z.string(),
-  done: z.boolean(),
-  createdAt: z.number(),
+  done: z.boolean().catch(false),
+  createdAt: z.number().catch(0),
 });
 
 const dataSchema = z.object({
-  tasks: z.array(taskSchema),
-  autoSort: z.boolean(),
-  completedPosition: z.enum(["top", "bottom"]),
-  removeOnCompletion: z.boolean().default(false),
+  tasks: tolerantArray(taskSchema),
+  autoSort: z.boolean().catch(false),
+  completedPosition: z.enum(["top", "bottom"]).catch("bottom"),
+  removeOnCompletion: z.boolean().catch(false),
 });
 
-const persistedSchema = z.object({
-  byInstance: z.record(z.string(), dataSchema),
-});
+const persistedSchema = z.object({ byInstance: tolerantRecord(dataSchema) });
+
+function looksLikeLegacySingleton(value: unknown): boolean {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    Array.isArray((value as { tasks?: unknown }).tasks)
+  );
+}
 
 const gatedStorage = createGatedChromeStorage();
 
@@ -144,22 +151,22 @@ export const useTasksStore = create<TasksState>()(
       partialize: (state) => ({ byInstance: state.byInstance }),
       migrate: (persisted, version) => {
         if (version >= 2) return persisted;
+        if (!looksLikeLegacySingleton(persisted)) return { byInstance: {} };
         const legacy = dataSchema.safeParse(persisted);
         return { byInstance: legacy.success ? { tasks: legacy.data } : {} };
       },
-      merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(persisted);
-        if (!parsed.success) return current;
-        const byInstance = Object.fromEntries(
-          Object.entries(parsed.data.byInstance).map(([id, data]) => [
-            id,
-            data.removeOnCompletion
-              ? { ...data, tasks: data.tasks.filter((task) => !task.done) }
-              : data,
-          ]),
-        );
-        return { ...current, byInstance };
-      },
+      merge: (persisted, current) =>
+        mergePersisted("widget:tasks", persistedSchema, persisted, current, (parsed) => ({
+          ...current,
+          byInstance: Object.fromEntries(
+            Object.entries(parsed.byInstance).map(([id, data]) => [
+              id,
+              data.removeOnCompletion
+                ? { ...data, tasks: data.tasks.filter((task) => !task.done) }
+                : data,
+            ]),
+          ),
+        })),
     },
   ),
 );

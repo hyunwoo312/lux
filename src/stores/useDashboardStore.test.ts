@@ -267,8 +267,45 @@ describe("useDashboardStore", () => {
       expect(result?.layout.map((item) => item.i)).toEqual(["note-1"]);
     });
 
-    it("returns null when the persisted shape is not a dashboard", () => {
-      expect(reconcilePersisted({ widgets: "nope" })).toBeNull();
+    it("returns null only when the blob is not an object at all", () => {
+      expect(reconcilePersisted("nonsense")).toBeNull();
+      expect(reconcilePersisted({ widgets: "nope" })).toEqual({
+        widgets: [],
+        layout: [],
+        pendingRemoval: null,
+      });
+    });
+
+    it("keeps every other widget when one layout entry is unreadable", () => {
+      const result = reconcilePersisted({
+        widgets: [
+          { id: "note-1", type: "note" },
+          { id: "tasks-1", type: "tasks" },
+        ],
+        layout: [
+          { i: "note-1", x: 3, y: 2, w: 4, h: 4 },
+          { i: "tasks-1", x: "four", y: 0, w: 4, h: 4 },
+        ],
+      });
+
+      expect(result?.widgets.map((widget) => widget.id)).toEqual(["note-1", "tasks-1"]);
+      expect(result?.layout.find((item) => item.i === "note-1")).toMatchObject({ x: 3, y: 2 });
+    });
+
+    it("re-places a widget whose layout entry was lost rather than hiding it", () => {
+      const result = reconcilePersisted({
+        widgets: [{ id: "note-1", type: "note" }],
+        layout: [],
+      });
+
+      expect(result?.layout.map((item) => item.i)).toEqual(["note-1"]);
+    });
+
+    it("survives a blob with no layout at all", () => {
+      const result = reconcilePersisted({ widgets: [{ id: "note-1", type: "note" }] });
+
+      expect(result?.widgets).toHaveLength(1);
+      expect(result?.layout).toHaveLength(1);
     });
   });
 });
