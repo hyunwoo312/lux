@@ -1,7 +1,8 @@
 import { SPRING_CRISP } from "@/lib/motion";
 import type { ComponentType, ReactNode } from "react";
-import { useId, useRef } from "react";
+import { useId, useRef, useState } from "react";
 import { motion } from "motion/react";
+import { ChevronRight } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -28,6 +29,43 @@ export function WidgetConfigGroup({ label, children }: { label: string; children
       <span className="text-ink-3 text-micro font-semibold tracking-wider uppercase">{label}</span>
       <div className="flex flex-col gap-3.5">{children}</div>
     </section>
+  );
+}
+
+export function WidgetConfigDisclosure({
+  title,
+  description,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  description?: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        className="press focus-ring flex cursor-pointer items-center gap-1.5 rounded-md text-left"
+      >
+        <ChevronRight
+          aria-hidden
+          className={cn("text-ink-3 size-3.5 shrink-0 transition-transform", open && "rotate-90")}
+        />
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-body leading-none font-medium">{title}</span>
+          {description && (
+            <span className="text-ink-3 text-caption leading-snug">{description}</span>
+          )}
+        </span>
+      </button>
+      {open && children}
+    </div>
   );
 }
 

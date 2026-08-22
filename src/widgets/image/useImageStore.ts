@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
+import { tolerantArray, tolerantRecord } from "@/lib/persist";
 import { missingAssetIds } from "@/lib/asset-store";
 import {
   clearNewtabQueue,
@@ -50,6 +51,7 @@ type ImageItemUpdate = Partial<Pick<ImageItem, "caption" | "focal">>;
 type ImageState = {
   byInstance: Record<string, ImageConfig>;
   indices: Record<string, number>;
+  unreadable: boolean;
   setMode: (instanceId: string, mode: ImageMode) => void;
   setSingle: (instanceId: string, single: ImageItem | null) => void;
   setItems: (instanceId: string, items: ImageItem[]) => void;
@@ -67,10 +69,12 @@ type ImageState = {
   setCurrentIndex: (instanceId: string, index: number) => void;
   advanceImage: (instanceId: string) => void;
   sanitizeAssets: () => Promise<void>;
+  forgetOrphanedAssets: () => Promise<void>;
+  discardUnreadable: () => void;
   removeInstance: (instanceId: string) => void;
 };
 
-const DEFAULT_CONFIG: ImageConfig = {
+export const DEFAULT_IMAGE_CONFIG: ImageConfig = {
   mode: "single",
   single: null,
   items: [],
@@ -96,28 +100,44 @@ const itemSchema = z.object({
 });
 
 const configSchema = z.object({
-  mode: z.enum(IMAGE_MODES).default("single"),
-  single: itemSchema.nullable().default(null),
-  items: z.array(itemSchema).max(MAX_MULTI_IMAGES).default([]),
-  rotateOnNewtab: z.boolean().default(true),
-  rotateTimed: z.boolean().default(false),
-  rotateOnClick: z.boolean().default(false),
-  intervalSeconds: z.number().default(30),
-  order: z.enum(IMAGE_ORDER_MODES).default("shuffle"),
-  fit: z.enum(IMAGE_FIT_MODES).default("cover"),
-  brightness: z.enum(IMAGE_BRIGHTNESS_MODES).default("normal"),
-  hideFrame: z.boolean().default(false),
-  transition: z.enum(IMAGE_TRANSITIONS).default("crossfade"),
-  kenBurns: z.boolean().default(false),
+  mode: z.enum(IMAGE_MODES).catch("single"),
+  single: itemSchema.nullable().catch(null),
+  items: tolerantArray(itemSchema),
+  rotateOnNewtab: z.boolean().catch(true),
+  rotateTimed: z.boolean().catch(false),
+  rotateOnClick: z.boolean().catch(false),
+  intervalSeconds: z.number().catch(30),
+  order: z.enum(IMAGE_ORDER_MODES).catch("shuffle"),
+  fit: z.enum(IMAGE_FIT_MODES).catch("cover"),
+  brightness: z.enum(IMAGE_BRIGHTNESS_MODES).catch("normal"),
+  hideFrame: z.boolean().catch(false),
+  transition: z.enum(IMAGE_TRANSITIONS).catch("crossfade"),
+  kenBurns: z.boolean().catch(false),
 });
 
 const persistedSchema = z.object({
-  byInstance: z.record(z.string(), configSchema),
+  byInstance: tolerantRecord(configSchema),
 });
+
+const LEGACY_KEYS = ["mode", "single", "items", "fit", "brightness", "hideFrame"] as const;
+
+function looksLikeLegacySingleton(persisted: unknown): boolean {
+  if (!persisted || typeof persisted !== "object") return false;
+  return LEGACY_KEYS.some((key) => key in persisted);
+}
 
 function clampInterval(seconds: number): number {
   if (!Number.isFinite(seconds)) return 30;
   return Math.min(MAX_INTERVAL_SECONDS, Math.max(MIN_INTERVAL_SECONDS, Math.round(seconds)));
+}
+
+export function referencedAssetIds(byInstance: Record<string, ImageConfig>): Set<string> {
+  const ids = new Set<string>();
+  for (const config of Object.values(byInstance)) {
+    if (config.single) ids.add(config.single.assetId);
+    for (const item of config.items) ids.add(item.assetId);
+  }
+  return ids;
 }
 
 function normalizeIndex(index: number, length: number): number {
@@ -132,7 +152,7 @@ function update(
   instanceId: string,
   fn: (config: ImageConfig) => ImageConfig,
 ): Pick<ImageState, "byInstance"> {
-  return { byInstance: patchInstance(state.byInstance, instanceId, DEFAULT_CONFIG, fn) };
+  return { byInstance: patchInstance(state.byInstance, instanceId, DEFAULT_IMAGE_CONFIG, fn) };
 }
 
 export const useImageStore = create<ImageState>()(
@@ -140,6 +160,7 @@ export const useImageStore = create<ImageState>()(
     (set, get) => ({
       byInstance: {},
       indices: {},
+      unreadable: false,
       setMode: (instanceId, mode) =>
         set((state) => update(state, instanceId, (config) => ({ ...config, mode }))),
       setSingle: (instanceId, single) =>
@@ -192,7 +213,7 @@ export const useImageStore = create<ImageState>()(
         set((state) => ({ indices: { ...state.indices, [instanceId]: index } })),
       advanceImage: (instanceId) =>
         set((state) => {
-          const config = state.byInstance[instanceId] ?? DEFAULT_CONFIG;
+          const config = state.byInstance[instanceId] ?? DEFAULT_IMAGE_CONFIG;
           const length = config.items.length;
           if (config.mode !== "multi" || length < 2) return state;
           const current = normalizeIndex(state.indices[instanceId] ?? 0, length);
@@ -220,6 +241,20 @@ export const useImageStore = create<ImageState>()(
           return { byInstance };
         });
       },
+      discardUnreadable: () => {
+        if (!get().unreadable) return;
+        set({ unreadable: false });
+        gatedStorage.open();
+      },
+      forgetOrphanedAssets: async () => {
+        if (get().unreadable) return;
+        const stored = await imageAssetStore.keys().catch(() => null);
+        if (!stored) return;
+        const referenced = referencedAssetIds(get().byInstance);
+        for (const assetId of stored) {
+          if (!referenced.has(assetId)) await deleteImageAsset(assetId).catch(() => undefined);
+        }
+      },
       removeInstance: (instanceId) => {
         const config = get().byInstance[instanceId];
         if (config) {
@@ -241,23 +276,32 @@ export const useImageStore = create<ImageState>()(
       storage: gatedStorage,
       version: 3,
       onRehydrateStorage: () => (state) => {
+        if (state?.unreadable) return;
         gatedStorage.open();
-        void state?.sanitizeAssets();
+        void state?.sanitizeAssets().then(() => state.forgetOrphanedAssets());
       },
       partialize: (state) => ({ byInstance: state.byInstance }),
       migrate: (persisted, version) => {
         if (version >= 2) return persisted;
+        if (!looksLikeLegacySingleton(persisted)) return { byInstance: {} };
         const legacy = configSchema.safeParse(persisted);
         return { byInstance: legacy.success ? { image: legacy.data } : {} };
       },
       merge: (persisted, current) => {
         const parsed = persistedSchema.safeParse(persisted);
-        if (!parsed.success) return current;
+        if (!parsed.success) {
+          console.warn("Refusing to overwrite unreadable image data");
+          return { ...current, unreadable: true };
+        }
         const byInstance: Record<string, ImageConfig> = {};
         for (const [id, config] of Object.entries(parsed.data.byInstance)) {
-          byInstance[id] = { ...config, intervalSeconds: clampInterval(config.intervalSeconds) };
+          byInstance[id] = {
+            ...config,
+            items: config.items.slice(0, MAX_MULTI_IMAGES),
+            intervalSeconds: clampInterval(config.intervalSeconds),
+          };
         }
-        return { ...current, byInstance };
+        return { ...current, byInstance, unreadable: false };
       },
     },
   ),
@@ -265,7 +309,7 @@ export const useImageStore = create<ImageState>()(
 
 registerInstanceCleanup((instanceId) => useImageStore.getState().removeInstance(instanceId));
 
-export const useImage = createInstanceSelector(useImageStore, DEFAULT_CONFIG);
+export const useImage = createInstanceSelector(useImageStore, DEFAULT_IMAGE_CONFIG);
 
 export function useImageIndex(): number {
   const id = useWidgetInstanceId();

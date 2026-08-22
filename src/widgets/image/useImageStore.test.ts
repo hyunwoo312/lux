@@ -1,5 +1,5 @@
 import { MAX_MULTI_IMAGES, type ImageItem } from "@/widgets/image/types";
-import { useImageStore } from "@/widgets/image/useImageStore";
+import { DEFAULT_IMAGE_CONFIG, useImageStore } from "@/widgets/image/useImageStore";
 
 const store = () => useImageStore.getState();
 const ID = "image-1";
@@ -9,21 +9,7 @@ function makeItem(id: string): ImageItem {
   return { assetId: id, fileName: `${id}.png`, mimeType: "image/png", size: 1024 };
 }
 
-const base = {
-  mode: "single" as const,
-  single: null,
-  items: [] as ImageItem[],
-  rotateOnNewtab: true,
-  rotateTimed: false,
-  rotateOnClick: false,
-  intervalSeconds: 30,
-  order: "shuffle" as const,
-  fit: "cover" as const,
-  brightness: "normal" as const,
-  hideFrame: false,
-  transition: "crossfade" as const,
-  kenBurns: false,
-};
+const base = DEFAULT_IMAGE_CONFIG;
 
 describe("useImageStore", () => {
   beforeEach(() => {
@@ -155,13 +141,85 @@ describe("useImageStore", () => {
       expect(migrate?.(legacy, 1)).toEqual({ byInstance: { image: legacy } });
     });
 
-    it("drops unrecognized legacy data", () => {
-      expect(migrate?.({ mode: "bogus" }, 1)).toEqual({ byInstance: {} });
+    it("does not invent a widget out of a blob with nothing recognisable in it", () => {
+      expect(migrate?.({}, 1)).toEqual({ byInstance: {} });
+      expect(migrate?.({ somethingElse: 1 }, 1)).toEqual({ byInstance: {} });
+      expect(migrate?.("nonsense", 1)).toEqual({ byInstance: {} });
+    });
+
+    it("keeps the uploaded images when one legacy setting is unreadable", () => {
+      const migrated = migrate?.({ mode: "bogus", items: [makeItem("a1")] }, 1) as {
+        byInstance: Record<string, { mode: string; items: unknown[] }>;
+      };
+
+      expect(migrated.byInstance["image"]?.mode).toBe("single");
+      expect(migrated.byInstance["image"]?.items).toHaveLength(1);
     });
 
     it("passes current-version data through unchanged", () => {
       const persisted = { byInstance: { [ID]: { ...base } } };
       expect(migrate?.(persisted, 2)).toBe(persisted);
+    });
+  });
+
+  describe("merge", () => {
+    const merge = useImageStore.persist.getOptions().merge;
+    const mergeInto = (persisted: unknown) =>
+      merge?.(persisted, {
+        ...useImageStore.getState(),
+        byInstance: {},
+        unreadable: false,
+      }) as ReturnType<typeof useImageStore.getState>;
+
+    const stored = { ...base, mode: "multi" as const, items: [makeItem("a1")] };
+
+    it("keeps the other widgets when one of them is unreadable", () => {
+      const merged = mergeInto({ byInstance: { a: stored, b: "junk", c: stored } });
+      expect(Object.keys(merged.byInstance)).toEqual(["a", "c"]);
+    });
+
+    it("keeps the uploaded images when one appearance setting is unreadable", () => {
+      const merged = mergeInto({ byInstance: { a: { ...stored, fit: "nonsense" } } });
+
+      expect(merged.byInstance["a"]?.fit).toBe("cover");
+      expect(merged.byInstance["a"]?.items).toHaveLength(1);
+    });
+
+    it("drops only the unreadable image from the pool", () => {
+      const merged = mergeInto({
+        byInstance: { a: { ...stored, items: [makeItem("a1"), { assetId: 5 }] } },
+      });
+
+      expect(merged.byInstance["a"]?.items).toHaveLength(1);
+    });
+
+    it("caps an oversized pool on read instead of discarding the widget", () => {
+      const many = Array.from({ length: MAX_MULTI_IMAGES + 2 }, (_, index) =>
+        makeItem(`a${index}`),
+      );
+      const merged = mergeInto({ byInstance: { a: { ...stored, items: many } } });
+
+      expect(merged.byInstance["a"]?.items).toHaveLength(MAX_MULTI_IMAGES);
+    });
+
+    it("refuses to overwrite data it cannot read at all", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const merged = mergeInto("not-an-object");
+
+      expect(merged.unreadable).toBe(true);
+      expect(merged.byInstance).toEqual({});
+      expect(warn).toHaveBeenCalled();
+      warn.mockRestore();
+    });
+
+    it("clears the refusal once the data reads cleanly again", () => {
+      expect(mergeInto({ byInstance: { a: stored } }).unreadable).toBe(false);
+    });
+
+    it("starts empty rather than throwing on a blob with no widgets at all", () => {
+      expect(mergeInto({}).byInstance).toEqual({});
+      expect(mergeInto({ byInstance: null }).byInstance).toEqual({});
+      expect(mergeInto({ byInstance: [] }).byInstance).toEqual({});
     });
   });
 });

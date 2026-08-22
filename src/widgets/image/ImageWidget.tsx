@@ -2,11 +2,12 @@ import { DURATION, EASE_OUT } from "@/lib/motion";
 import type { ChangeEvent, DragEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ImageIcon } from "lucide-react";
+import { AlertTriangle, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ImageNotice } from "@/widgets/image/components/ImageNotice";
 import type { WidgetContentProps } from "@/widgets/core/types";
 import { useImageUploads } from "@/widgets/image/hooks/useImageUploads";
-import { IMAGE_MIME_TYPES, MAX_MULTI_IMAGES } from "@/widgets/image/types";
+import { IMAGE_MIME_TYPES } from "@/widgets/image/types";
 import { useImage, useImageStore } from "@/widgets/image/useImageStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
@@ -16,6 +17,8 @@ function getDroppedFiles(transfer: DataTransfer): File[] {
 
 export function ImageWidget({ editing }: WidgetContentProps) {
   const instanceId = useWidgetInstanceId();
+  const unreadable = useImageStore((s) => s.unreadable);
+  const discardUnreadable = useImageStore((s) => s.discardUnreadable);
   const mode = useImage((c) => c.mode);
   const single = useImage((c) => c.single);
   const items = useImage((c) => c.items);
@@ -28,8 +31,7 @@ export function ImageWidget({ editing }: WidgetContentProps) {
   const [dragging, setDragging] = useState(false);
 
   const hasImage = mode === "multi" ? items.length > 0 : Boolean(single);
-  const atCapacity = mode === "multi" && items.length >= MAX_MULTI_IMAGES;
-  const clickAdvances = mode === "multi" && rotateOnClick;
+  const clickAdvances = mode === "multi" && rotateOnClick && items.length > 1;
   const disabled = editing || saving;
   const addLabel = mode === "multi" ? "Add images" : "Add image";
 
@@ -44,16 +46,8 @@ export function ImageWidget({ editing }: WidgetContentProps) {
   };
 
   const handleImageClick = () => {
-    if (editing) return;
-    if (clickAdvances) {
-      advanceImage(instanceId);
-      return;
-    }
-    if (atCapacity) {
-      setError(`Image pool is full — ${MAX_MULTI_IMAGES} images max.`);
-      return;
-    }
-    openPicker();
+    if (editing || !clickAdvances) return;
+    advanceImage(instanceId);
   };
 
   const onInputChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -80,6 +74,24 @@ export function ImageWidget({ editing }: WidgetContentProps) {
     handleFiles(getDroppedFiles(event.dataTransfer));
   };
 
+  if (unreadable) {
+    return (
+      <ImageNotice icon={AlertTriangle} tone="text-warning">
+        <p>Your saved images could not be read, so nothing is being overwritten.</p>
+        <button
+          type="button"
+          onClick={discardUnreadable}
+          className="
+            press focus-ring text-ink-2 bg-foreground/5 cursor-pointer rounded-md px-2 py-1
+            hover:bg-foreground/10 hover:text-ink
+          "
+        >
+          Start fresh
+        </button>
+      </ImageNotice>
+    );
+  }
+
   return (
     <div
       className="relative h-full w-full"
@@ -99,18 +111,27 @@ export function ImageWidget({ editing }: WidgetContentProps) {
       />
 
       {hasImage ? (
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={handleImageClick}
-          aria-label={clickAdvances ? "Next image" : "Replace image"}
-          className={cn(
-            "press-row transition-colors",
-            `focus-ring h-full w-full cursor-pointer transition-colors`,
-            disabled && "cursor-default",
-            dragging && "ring-primary bg-black/10 ring-2 ring-inset",
-          )}
-        />
+        clickAdvances ? (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={handleImageClick}
+            aria-label="Next image"
+            className={cn(
+              "press-row focus-ring h-full w-full cursor-pointer transition-colors",
+              disabled && "cursor-default",
+              dragging && "ring-primary bg-black/10 ring-2 ring-inset",
+            )}
+          />
+        ) : (
+          <div
+            aria-hidden
+            className={cn(
+              "h-full w-full transition-colors",
+              dragging && "ring-primary bg-black/10 ring-2 ring-inset",
+            )}
+          />
+        )
       ) : (
         <div className="h-full w-full p-3">
           <button

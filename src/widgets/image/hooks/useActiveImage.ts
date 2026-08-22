@@ -1,18 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { imageNewtabQueueKey, readImageAsset } from "@/widgets/image/media";
+import { useEffect, useMemo, useRef } from "react";
+import { imageNewtabQueueKey } from "@/widgets/image/media";
 import {
   getSignature,
   readNewtabQueue,
   selectNewtabIndex,
   writeNewtabQueue,
 } from "@/lib/media-rotation";
+import { useImageSource } from "@/widgets/image/hooks/useImageSource";
 import type { ImageItem } from "@/widgets/image/types";
 import { useImage, useImageIndex, useImageStore } from "@/widgets/image/useImageStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 type ActiveImage = {
   activeItem: ImageItem | null;
-  activeIndex: number;
+  thumbUrl: string | null;
   imageUrl: string | null;
   loadError: string | null;
 };
@@ -75,54 +76,7 @@ export function useActiveImage(): ActiveImage {
 
   const boundedIndex = length > 0 ? ((currentIndex % length) + length) % length : 0;
   const activeItem = displayItems[boundedIndex] ?? null;
-  const activeAssetId = activeItem?.assetId ?? null;
+  const { thumbUrl, fullUrl, loadError } = useImageSource(activeItem?.assetId ?? null);
 
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const objectUrlRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    setLoadError(null);
-    if (!activeAssetId) {
-      setImageUrl(null);
-      if (objectUrlRef.current) {
-        URL.revokeObjectURL(objectUrlRef.current);
-        objectUrlRef.current = null;
-      }
-      return;
-    }
-    void (async () => {
-      try {
-        const asset = await readImageAsset(activeAssetId);
-        if (!active) return;
-        if (!asset) {
-          setLoadError("Image file is no longer available. Replace it to continue.");
-          setImageUrl(null);
-          return;
-        }
-        const nextUrl = URL.createObjectURL(asset.blob);
-        const previousUrl = objectUrlRef.current;
-        objectUrlRef.current = nextUrl;
-        setImageUrl(nextUrl);
-        if (previousUrl) window.setTimeout(() => URL.revokeObjectURL(previousUrl), 600);
-      } catch (error) {
-        if (active) {
-          setLoadError(error instanceof Error ? error.message : "Image could not be loaded.");
-        }
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [activeAssetId]);
-
-  useEffect(
-    () => () => {
-      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
-    },
-    [],
-  );
-
-  return { activeItem, activeIndex: boundedIndex, imageUrl, loadError };
+  return { activeItem, thumbUrl, imageUrl: fullUrl, loadError };
 }

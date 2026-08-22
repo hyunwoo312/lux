@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { ConfigSegmented } from "@/components/config/WidgetConfig";
+import { ConfigSegmented, WidgetConfigDisclosure } from "@/components/config/WidgetConfig";
 
 const OPTIONS = [
   { value: "light", label: "Light" },
@@ -67,5 +67,46 @@ describe('ConfigSegmented fit="line"', () => {
   it("still wraps by default, so every other widget is untouched", () => {
     render(<ConfigSegmented label="Filter" value="all" options={OPTIONS} onChange={() => {}} />);
     expect(screen.getByRole("radiogroup", { name: "Filter" })).toHaveClass("flex-wrap");
+  });
+});
+
+describe("WidgetConfigDisclosure", () => {
+  it("keeps its contents out of the way until asked", () => {
+    render(
+      <WidgetConfigDisclosure title="Captions">
+        <p>Inner detail</p>
+      </WidgetConfigDisclosure>,
+    );
+
+    expect(screen.queryByText("Inner detail")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /captions/i })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+  });
+
+  it("reveals and hides its contents on click", () => {
+    render(
+      <WidgetConfigDisclosure title="Captions">
+        <p>Inner detail</p>
+      </WidgetConfigDisclosure>,
+    );
+
+    const toggle = screen.getByRole("button", { name: /captions/i });
+    fireEvent.click(toggle);
+    expect(screen.getByText("Inner detail")).toBeInTheDocument();
+
+    fireEvent.click(toggle);
+    expect(screen.queryByText("Inner detail")).not.toBeInTheDocument();
+  });
+
+  it("can start open when the contents matter more than the space", () => {
+    render(
+      <WidgetConfigDisclosure title="Captions" defaultOpen>
+        <p>Inner detail</p>
+      </WidgetConfigDisclosure>,
+    );
+
+    expect(screen.getByText("Inner detail")).toBeInTheDocument();
   });
 });

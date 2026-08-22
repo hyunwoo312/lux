@@ -106,8 +106,8 @@ export function BaseWidget({
         className={cn(
           accentClass(accent),
           `
-            text-card-foreground relative flex h-full flex-col overflow-hidden rounded-2xl
-            transition-shadow
+            text-card-foreground group/widget relative flex h-full flex-col overflow-hidden
+            rounded-2xl transition-shadow
           `,
           !omitSurface &&
             (background === "solid" ? "glass-solid" : livePattern ? "glass" : "glass-faux"),
@@ -141,7 +141,20 @@ export function BaseWidget({
             aria-hidden
           />
         )}
-        <div className="relative z-20 flex items-center justify-between gap-2 px-4 py-2">
+        <div
+          className={cn(
+            "relative z-20 flex items-center justify-between gap-2 px-4 py-2",
+            chromeHidden &&
+              `
+                absolute inset-x-0 top-0 bg-gradient-to-b from-black/45 to-transparent pb-6
+                opacity-0 transition-opacity duration-200
+                group-hover/widget:opacity-100
+                group-focus-within/widget:opacity-100
+                [&_button]:text-white/75
+                [&_button:hover]:text-white
+              `,
+          )}
+        >
           <div className="@container relative min-w-0 flex-1">
             <AnimatePresence mode="wait" initial={false} custom={showConfig}>
               <motion.div
