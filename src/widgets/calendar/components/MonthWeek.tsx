@@ -7,22 +7,29 @@ import { MonthDayCell } from "@/widgets/calendar/components/MonthDayCell";
 import { getEventColor, getReadableTextColor } from "@/widgets/calendar/lib/colors";
 import { getEventTitle } from "@/widgets/calendar/lib/agenda";
 import { getDateKey } from "@/widgets/calendar/lib/dates";
-import type { EventSegment, MonthWeek as MonthWeekData } from "@/widgets/calendar/lib/month-layout";
+import {
+  countHiddenBars,
+  DAY_NUMBER_HEIGHT,
+  EVENT_ROW_HEIGHT,
+  getBarColumn,
+  getDayBottomPlan,
+  getWeekRowBudget,
+  shouldShowBarTitle,
+  type EventSegment,
+  type MonthMetrics,
+  type MonthWeek as MonthWeekData,
+} from "@/widgets/calendar/lib/month-layout";
 import type { CalendarEvent } from "@/widgets/calendar/types";
 import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
-export const DAY_NUMBER_HEIGHT = 22;
-export const EVENT_ROW_HEIGHT = 18;
+const SUMMARY_SWATCHES = 3;
 
 type MonthWeekProps = {
   week: MonthWeekData;
   eventsByDate: Map<string, CalendarEvent[]>;
   colors: Map<string, string>;
-  maxRows: number;
-  dotsMode: boolean;
-  showTitles: boolean;
-  cellWidth: number;
+  metrics: MonthMetrics;
 };
 
 function EventBar({
@@ -39,8 +46,7 @@ function EventBar({
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
     const ratio = rect.width > 0 ? (event.clientX - rect.left) / rect.width : 0;
-    const offset = Math.min(segment.span - 1, Math.max(0, Math.floor(ratio * segment.span)));
-    onActivate(segment.startCol + offset);
+    onActivate(getBarColumn(ratio, segment));
   };
   return (
     <Tooltip content={getEventTitle(segment.event)} solid side="top">
@@ -55,8 +61,8 @@ function EventBar({
             pointer-events-auto absolute flex items-center overflow-hidden px-1 text-micro
             font-medium
           `,
-          segment.continuesLeft ? "rounded-l-none" : "rounded-l-[3px]",
-          segment.continuesRight ? "rounded-r-none" : "rounded-r-[3px]",
+          segment.continuesLeft ? "rounded-l-none" : "rounded-l-xs",
+          segment.continuesRight ? "rounded-r-none" : "rounded-r-xs",
         )}
         style={{
           left: `calc(${(segment.startCol / 7) * 100}% + 2px)`,
@@ -89,17 +95,22 @@ function TimedChip({ event, color }: { event: CalendarEvent; color: string }) {
   );
 }
 
-function Dots({ events, colors }: { events: CalendarEvent[]; colors: Map<string, string> }) {
+function DaySummary({ events, colors }: { events: CalendarEvent[]; colors: Map<string, string> }) {
   if (events.length === 0) return null;
   return (
-    <span className="flex justify-center gap-0.5 pt-0.5" aria-hidden>
-      {events.slice(0, 3).map((event) => (
-        <i
-          key={event.id}
-          className="size-1 rounded-full"
-          style={{ backgroundColor: getEventColor(event, colors) }}
-        />
-      ))}
+    <span aria-hidden className="flex items-center gap-0.5 px-1">
+      <span className="flex h-1 min-w-0 flex-1 gap-0.5">
+        {events.slice(0, SUMMARY_SWATCHES).map((event) => (
+          <i
+            key={event.id}
+            className="min-w-0 flex-1 rounded-full"
+            style={{ backgroundColor: getEventColor(event, colors) }}
+          />
+        ))}
+      </span>
+      <span className="text-ink-2 text-micro leading-none font-semibold tabular-nums">
+        {events.length}
+      </span>
     </span>
   );
 }
@@ -115,17 +126,14 @@ function DayBottom({
   bottomRows: number;
   colors: Map<string, string>;
 }) {
-  if (bottomRows <= 0) return null;
-  const wantsMore = hiddenBars > 0 || timedEvents.length > bottomRows;
-  const visible = timedEvents.slice(0, wantsMore ? Math.max(0, bottomRows - 1) : bottomRows);
-  const moreCount = hiddenBars + (timedEvents.length - visible.length);
+  const { visibleCount, moreCount } = getDayBottomPlan(timedEvents.length, hiddenBars, bottomRows);
 
   return (
     <div className="flex min-w-0 flex-col">
-      {visible.map((event) => (
+      {timedEvents.slice(0, visibleCount).map((event) => (
         <TimedChip key={event.id} event={event} color={getEventColor(event, colors)} />
       ))}
-      {wantsMore && moreCount > 0 && (
+      {moreCount > 0 && (
         <span
           className="text-ink-3 px-1 text-micro font-medium"
           style={{ height: `${EVENT_ROW_HEIGHT}px` }}
@@ -137,15 +145,7 @@ function DayBottom({
   );
 }
 
-export function MonthWeek({
-  week,
-  eventsByDate,
-  colors,
-  maxRows,
-  dotsMode,
-  showTitles,
-  cellWidth,
-}: MonthWeekProps) {
+export function MonthWeek({ week, eventsByDate, colors, metrics }: MonthWeekProps) {
   const reduced = useReducedMotion();
   const instanceId = useWidgetInstanceId();
   const mode = useCalendar((d) => d.mode);
@@ -159,12 +159,8 @@ export function MonthWeek({
       ? week.days.findIndex((day) => day.dateKey === getDateKey(selectedDay))
       : -1;
 
-  const weekHasTimed = week.days.some((day) => day.timedEvents.length > 0);
-  let bandRows = Math.min(week.laneCount, maxRows);
-  if (bandRows === maxRows && maxRows > 0 && (week.laneCount > maxRows || weekHasTimed)) {
-    bandRows = maxRows - 1;
-  }
-  const bottomRows = Math.max(0, maxRows - bandRows);
+  const { summaryMode, cellWidth } = metrics;
+  const { bandRows, bottomRows } = getWeekRowBudget(week, metrics.maxRows);
 
   return (
     <div className="border-border/30 relative h-full min-h-0 border-t">
@@ -176,22 +172,16 @@ export function MonthWeek({
       <div role="row" className="relative grid h-full grid-cols-7">
         {week.days.map((day, column) => {
           const dayEvents = eventsByDate.get(day.dateKey) ?? [];
-          const hiddenBars = week.segments.filter(
-            (segment) =>
-              segment.lane >= bandRows &&
-              segment.startCol <= column &&
-              column < segment.startCol + segment.span,
-          ).length;
           return (
-            <MonthDayCell key={day.dateKey} day={day}>
-              {dotsMode ? (
-                <Dots events={dayEvents} colors={colors} />
+            <MonthDayCell key={day.dateKey} day={day} eventCount={dayEvents.length}>
+              {summaryMode ? (
+                <DaySummary events={dayEvents} colors={colors} />
               ) : (
                 <>
                   <div style={{ height: `${bandRows * EVENT_ROW_HEIGHT}px` }} aria-hidden />
                   <DayBottom
                     timedEvents={day.timedEvents}
-                    hiddenBars={hiddenBars}
+                    hiddenBars={countHiddenBars(week, bandRows, column)}
                     bottomRows={bottomRows}
                     colors={colors}
                   />
@@ -214,7 +204,7 @@ export function MonthWeek({
           className="border-primary pointer-events-none absolute rounded-md border-2"
         />
       )}
-      {!dotsMode && (
+      {!summaryMode && (
         <div className="pointer-events-none absolute inset-0">
           {week.segments
             .filter((segment) => segment.lane < bandRows)
@@ -223,7 +213,7 @@ export function MonthWeek({
                 key={segment.event.id}
                 segment={segment}
                 color={getEventColor(segment.event, colors)}
-                showTitle={showTitles && segment.span * cellWidth > 56}
+                showTitle={shouldShowBarTitle(segment.span, cellWidth)}
                 onActivate={(column) => {
                   const date = week.days[column]?.date;
                   if (date) activateDay(date);

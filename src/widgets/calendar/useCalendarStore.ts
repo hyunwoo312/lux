@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
+import { loadErrorMessage } from "@/lib/net";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
@@ -24,8 +25,10 @@ import {
 } from "@/widgets/calendar/lib/dates";
 import { isCalendarSyncCoolingDown } from "@/widgets/calendar/lib/cooldown";
 import {
-  calendarEventSchema,
+  CALENDAR_DENSITIES,
   CALENDAR_VIEWS,
+  LEGACY_CALENDAR_VIEWS,
+  calendarEventSchema,
   connectedCalendarSchema,
   MAX_CALENDAR_EVENTS,
   MAX_LOOKAHEAD_DAYS,
@@ -34,15 +37,18 @@ import {
   type CalendarMode,
   type CalendarProviderId,
   type CalendarSyncStatus,
+  type CalendarDensity,
   type CalendarView,
   type ConnectedCalendar,
 } from "@/widgets/calendar/types";
 
-const SYNC_WINDOW_MONTHS = 6;
+const SYNC_PAST_MONTHS = 12;
+const SYNC_FUTURE_MONTHS = 12;
 
 type ProviderCalendarSettings = {
   calendars: ConnectedCalendar[];
   enabledCalendarIds: string[];
+  selectionChosen?: boolean;
   failedCalendarIds: string[];
   lastError?: string;
   lastSyncedAt?: string;
@@ -61,6 +67,7 @@ export type CalendarData = {
   lookaheadDays: number;
   enabled: boolean;
   view: CalendarView;
+  density: CalendarDensity;
   google: ProviderCalendarSettings;
   microsoft: ProviderCalendarSettings;
   primarySource: CalendarProviderId;
@@ -80,6 +87,7 @@ type SyncOptions = { bypassCooldown?: boolean; providerId?: CalendarProviderId }
 type CalendarState = {
   byInstance: Record<string, CalendarData>;
   setView: (instanceId: string, view: CalendarView) => void;
+  setDensity: (instanceId: string, density: CalendarDensity) => void;
   setListAnchor: (instanceId: string, date: Date) => void;
   setLookaheadDays: (instanceId: string, days: number) => void;
   setPrimarySource: (instanceId: string, provider: CalendarProviderId) => void;
@@ -138,7 +146,8 @@ function createDefaultData(): CalendarData {
     events: [],
     lookaheadDays: 7,
     enabled: true,
-    view: "calendar",
+    view: "agenda",
+    density: "comfortable",
     google: EMPTY_PROVIDER,
     microsoft: EMPTY_PROVIDER,
     primarySource: "google",
@@ -149,28 +158,80 @@ function createDefaultData(): CalendarData {
 
 const DEFAULT_DATA = createDefaultData();
 
+function tolerantArray<T>(schema: z.ZodType<T>) {
+  return z
+    .unknown()
+    .transform((raw) => {
+      if (!Array.isArray(raw)) return [] as T[];
+      const kept: T[] = [];
+      for (const entry of raw) {
+        const parsed = schema.safeParse(entry);
+        if (parsed.success) kept.push(parsed.data);
+      }
+      return kept;
+    })
+    .default([] as T[]);
+}
+
 const providerSettingsSchema = z.object({
-  calendars: z.array(connectedCalendarSchema).default([]),
-  enabledCalendarIds: z.array(z.string()).default([]),
-  failedCalendarIds: z.array(z.string()).default([]),
-  lastError: z.string().optional(),
-  lastSyncedAt: z.string().optional(),
+  calendars: tolerantArray(connectedCalendarSchema),
+  enabledCalendarIds: tolerantArray(z.string()),
+  failedCalendarIds: tolerantArray(z.string()),
+  selectionChosen: z.boolean().optional().catch(undefined),
+  lastError: z.string().optional().catch(undefined),
+  lastSyncedAt: z.string().optional().catch(undefined),
 });
 
 const configSchema = z.object({
-  events: z.array(calendarEventSchema).default([]),
-  lookaheadDays: z.number().default(7),
-  enabled: z.boolean().default(true),
-  view: z.enum(CALENDAR_VIEWS).default("calendar"),
-  google: providerSettingsSchema.default(EMPTY_PROVIDER),
-  microsoft: providerSettingsSchema.default(EMPTY_PROVIDER),
-  primarySource: z.enum(["google", "microsoft"]).default("google"),
-  refreshIntervalHours: z.number().default(6),
+  events: tolerantArray(calendarEventSchema),
+  lookaheadDays: z.number().catch(7),
+  enabled: z.boolean().catch(true),
+  view: z.enum(CALENDAR_VIEWS).catch("agenda"),
+  density: z.enum(CALENDAR_DENSITIES).catch("comfortable"),
+  google: providerSettingsSchema.catch(EMPTY_PROVIDER),
+  microsoft: providerSettingsSchema.catch(EMPTY_PROVIDER),
+  primarySource: z.enum(["google", "microsoft"]).catch("google"),
+  refreshIntervalHours: z.number().catch(6),
 });
 
+const byInstanceSchema = z
+  .unknown()
+  .transform((raw) => {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+    const parsed: Record<string, z.infer<typeof configSchema>> = {};
+    for (const [instanceId, value] of Object.entries(raw)) {
+      const entry = configSchema.safeParse(normaliseConfig(value));
+      if (entry.success) parsed[instanceId] = entry.data;
+    }
+    return parsed;
+  })
+  .default({});
+
 const persistedSchema = z.object({
-  byInstance: z.record(z.string(), configSchema),
+  byInstance: byInstanceSchema,
 });
+
+const LEGACY_KEYS = [
+  "view",
+  "lookaheadDays",
+  "enabled",
+  "google",
+  "microsoft",
+  "primarySource",
+  "refreshIntervalHours",
+] as const;
+
+function looksLikeLegacySingleton(persisted: unknown): boolean {
+  if (!persisted || typeof persisted !== "object") return false;
+  return LEGACY_KEYS.some((key) => key in persisted);
+}
+
+function normaliseConfig(value: unknown): unknown {
+  if (!value || typeof value !== "object") return value;
+  const data = value as Record<string, unknown>;
+  const remapped = typeof data.view === "string" ? LEGACY_CALENDAR_VIEWS[data.view] : undefined;
+  return remapped ? { ...data, view: remapped } : data;
+}
 
 function clampLookahead(days: number): number {
   if (!Number.isFinite(days)) return 7;
@@ -186,17 +247,32 @@ function clampRefreshInterval(hours: number): number {
 function getSyncWindow(): SyncWindow {
   const now = new Date();
   return {
-    timeMin: new Date(now.getFullYear(), now.getMonth(), 1),
-    timeMax: new Date(now.getFullYear(), now.getMonth() + SYNC_WINDOW_MONTHS, 1),
+    timeMin: new Date(now.getFullYear(), now.getMonth() - SYNC_PAST_MONTHS, 1),
+    timeMax: new Date(now.getFullYear(), now.getMonth() + SYNC_FUTURE_MONTHS, 1),
   };
+}
+
+export function capCalendarEvents(events: CalendarEvent[], now = new Date()): CalendarEvent[] {
+  const sorted = [...events].sort(compareEventsByStart);
+  if (sorted.length <= MAX_CALENDAR_EVENTS) return sorted;
+
+  const cutoff = now.getTime();
+  const upcoming = sorted.filter((event) => new Date(event.endsAt).getTime() >= cutoff);
+  const past = sorted.filter((event) => new Date(event.endsAt).getTime() < cutoff);
+  const kept = upcoming.slice(0, MAX_CALENDAR_EVENTS);
+  const remaining = MAX_CALENDAR_EVENTS - kept.length;
+
+  if (remaining > 0) kept.push(...past.slice(-remaining));
+  return kept.sort(compareEventsByStart);
 }
 
 function resolveEnabledCalendarIds(
   calendars: ConnectedCalendar[],
   previousIds: string[],
+  chosen: boolean,
 ): string[] {
   const existing = previousIds.filter((id) => calendars.some((calendar) => calendar.id === id));
-  if (existing.length) return existing;
+  if (existing.length || chosen) return existing;
   const primary = calendars.find((calendar) => calendar.primary) ?? calendars[0];
   return primary ? [primary.id] : [];
 }
@@ -216,7 +292,11 @@ async function syncProvider(
 
   try {
     const calendars = await fetchCalendars(current.enabledCalendarIds);
-    const enabledCalendarIds = resolveEnabledCalendarIds(calendars, current.enabledCalendarIds);
+    const enabledCalendarIds = resolveEnabledCalendarIds(
+      calendars,
+      current.enabledCalendarIds,
+      current.selectionChosen ?? false,
+    );
     const markedCalendars = calendars.map((calendar) => ({
       ...calendar,
       selected: enabledCalendarIds.includes(calendar.id),
@@ -237,7 +317,10 @@ async function syncProvider(
       failed,
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Calendar sync failed";
+    const message =
+      error instanceof Error
+        ? loadErrorMessage(error, "Couldn’t sync your calendar.")
+        : "Couldn’t sync your calendar.";
     return {
       settings: { ...current, failedCalendarIds: current.enabledCalendarIds, lastError: message },
       events: [],
@@ -273,10 +356,12 @@ export const useCalendarStore = create<CalendarState>()(
             refreshIntervalHours: clampRefreshInterval(hours),
           })),
         ),
+      setDensity: (instanceId, density) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, density }))),
       setView: (instanceId, view) =>
         set((state) =>
           update(state, instanceId, (data) => {
-            if (view !== "list") return { ...data, view };
+            if (view === "calendar") return { ...data, view };
             const anchor =
               data.mode === "week" && data.selectedDay
                 ? startOfDay(data.selectedDay)
@@ -372,9 +457,10 @@ export const useCalendarStore = create<CalendarState>()(
             const keptEvents = current.events.filter(
               (event) => !targets.some((providerId) => event.id.startsWith(`${providerId}-`)),
             );
-            const events = [...keptEvents, ...results.flatMap((entry) => entry.result.events)]
-              .sort(compareEventsByStart)
-              .slice(0, MAX_CALENDAR_EVENTS);
+            const events = capCalendarEvents([
+              ...keptEvents,
+              ...results.flatMap((entry) => entry.result.events),
+            ]);
 
             const syncing = current.syncing.filter((providerId) => !targets.includes(providerId));
             const hasError = Boolean(google.lastError || microsoft.lastError);
@@ -407,6 +493,7 @@ export const useCalendarStore = create<CalendarState>()(
             const updated: ProviderCalendarSettings = {
               ...current,
               enabledCalendarIds,
+              selectionChosen: true,
               calendars: current.calendars.map((calendar) =>
                 calendar.id === calendarId ? { ...calendar, selected } : calendar,
               ),
@@ -438,7 +525,7 @@ export const useCalendarStore = create<CalendarState>()(
       goToToday: (instanceId) =>
         set((state) =>
           update(state, instanceId, (data) => {
-            if (data.view === "list") return { ...data, listAnchor: startOfDay(new Date()) };
+            if (data.view !== "calendar") return { ...data, listAnchor: startOfDay(new Date()) };
             if (data.mode !== "week") return { ...data, ...freshNav() };
             const today = startOfDay(new Date());
             const visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -507,6 +594,7 @@ export const useCalendarStore = create<CalendarState>()(
               lookaheadDays: data.lookaheadDays,
               enabled: data.enabled,
               view: data.view,
+              density: data.density,
               google: data.google,
               microsoft: data.microsoft,
               primarySource: data.primarySource,
@@ -517,7 +605,8 @@ export const useCalendarStore = create<CalendarState>()(
       }),
       migrate: (persisted, version) => {
         if (version >= 2) return persisted;
-        const legacy = configSchema.safeParse(persisted);
+        if (!looksLikeLegacySingleton(persisted)) return { byInstance: {} };
+        const legacy = configSchema.safeParse(normaliseConfig(persisted));
         return { byInstance: legacy.success ? { calendar: legacy.data } : {} };
       },
       merge: (persisted, current) => {
@@ -527,6 +616,7 @@ export const useCalendarStore = create<CalendarState>()(
         for (const [id, config] of Object.entries(parsed.data.byInstance)) {
           byInstance[id] = {
             ...config,
+            events: capCalendarEvents(config.events),
             lookaheadDays: clampLookahead(config.lookaheadDays),
             refreshIntervalHours: clampRefreshInterval(config.refreshIntervalHours),
             ...freshNav(),

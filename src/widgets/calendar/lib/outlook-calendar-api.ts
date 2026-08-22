@@ -1,10 +1,12 @@
 import { z } from "zod";
 import { integrationFetch } from "@/integrations";
 import { ensureOk, parseResponse } from "@/lib/net";
-import { compareEventsByStart } from "@/widgets/calendar/lib/agenda";
+import { fanOutCalendars, parseCalendarItems } from "@/widgets/calendar/lib/provider-fetch";
 import {
   MAX_CALENDAR_EVENTS,
   type CalendarEvent,
+  type CalendarEventsResult,
+  type CalendarEventWindow,
   type ConnectedCalendar,
   type RsvpStatus,
 } from "@/widgets/calendar/types";
@@ -12,13 +14,44 @@ import {
 const API_BASE_URL = "https://graph.microsoft.com/v1.0";
 const MAX_EVENT_PAGES = 10;
 
-type GraphCalendar = {
-  id?: string;
-  name?: string;
-  color?: string;
-  hexColor?: string;
-  isDefaultCalendar?: boolean;
-};
+const graphCalendarSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().optional(),
+  color: z.string().optional(),
+  hexColor: z.string().optional(),
+  isDefaultCalendar: z.boolean().optional(),
+});
+type GraphCalendar = z.infer<typeof graphCalendarSchema>;
+
+const graphDateTimeSchema = z.object({
+  dateTime: z.string().optional(),
+  timeZone: z.string().optional(),
+});
+type GraphDateTime = z.infer<typeof graphDateTimeSchema>;
+
+const graphEventSchema = z.object({
+  id: z.string().optional(),
+  subject: z.string().optional(),
+  start: graphDateTimeSchema.optional(),
+  end: graphDateTimeSchema.optional(),
+  isAllDay: z.boolean().optional(),
+  isCancelled: z.boolean().optional(),
+  location: z.object({ displayName: z.string().optional() }).optional(),
+  webLink: z.string().optional(),
+  onlineMeeting: z.object({ joinUrl: z.string().optional() }).nullish(),
+  onlineMeetingUrl: z.string().nullish(),
+  responseStatus: z.object({ response: z.string().optional() }).optional(),
+});
+type GraphEvent = z.infer<typeof graphEventSchema>;
+
+const outlookEventsEnvelope = z.object({
+  value: z.array(z.unknown()).optional(),
+  "@odata.nextLink": z.string().optional(),
+});
+
+const outlookCalendarsEnvelope = z.object({
+  value: z.array(z.unknown()).optional(),
+});
 
 const NAMED_COLOR_HEX: Record<string, string> = {
   lightBlue: "#a6c8ff",
@@ -37,25 +70,6 @@ function resolveCalendarColor(calendar: GraphCalendar): string | undefined {
   return calendar.color ? NAMED_COLOR_HEX[calendar.color] : undefined;
 }
 
-type GraphDateTime = {
-  dateTime?: string;
-  timeZone?: string;
-};
-
-type GraphEvent = {
-  id?: string;
-  subject?: string;
-  start?: GraphDateTime;
-  end?: GraphDateTime;
-  isAllDay?: boolean;
-  isCancelled?: boolean;
-  location?: { displayName?: string };
-  webLink?: string;
-  onlineMeeting?: { joinUrl?: string } | null;
-  onlineMeetingUrl?: string | null;
-  responseStatus?: { response?: string };
-};
-
 const GRAPH_RSVP: Record<string, RsvpStatus> = {
   accepted: "accepted",
   organizer: "accepted",
@@ -73,29 +87,21 @@ function outlookRsvp(event: GraphEvent): RsvpStatus | undefined {
   return response ? GRAPH_RSVP[response] : undefined;
 }
 
-type OutlookEventWindow = {
-  calendarIds: string[];
-  timeMin: Date;
-  timeMax: Date;
-};
+function toIsoString(date: Date): string | null {
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
 
-type OutlookEventsResult = {
-  events: CalendarEvent[];
-  failedCalendarIds: string[];
-};
-
-function parseAllDayDate(value: string): string {
+function parseAllDayDate(value: string): string | null {
   const datePart = value.split("T")[0] ?? value;
   const [year = 0, month = 1, day = 1] = datePart.split("-").map(Number);
-  return new Date(year, month - 1, day).toISOString();
+  return toIsoString(new Date(year, month - 1, day));
 }
 
 function normalizeDateTime(value: GraphDateTime | undefined, isAllDay: boolean): string | null {
   if (!value?.dateTime) return null;
   if (isAllDay) return parseAllDayDate(value.dateTime);
   const utc = value.dateTime.endsWith("Z") ? value.dateTime : `${value.dateTime}Z`;
-  const parsed = new Date(utc);
-  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  return toIsoString(new Date(utc));
 }
 
 export function normalizeOutlookCalendar(
@@ -176,7 +182,7 @@ async function fetchEventsForCalendar(
     );
 
     events.push(
-      ...(payload.value ?? [])
+      ...parseCalendarItems(graphEventSchema, payload.value ?? [])
         .map((event) => normalizeOutlookEvent(event, calendarId))
         .filter((event): event is CalendarEvent => Boolean(event)),
     );
@@ -187,15 +193,6 @@ async function fetchEventsForCalendar(
 
   return events;
 }
-
-const outlookEventsEnvelope = z.object({
-  value: z.array(z.custom<GraphEvent>()).optional(),
-  "@odata.nextLink": z.string().optional(),
-});
-
-const outlookCalendarsEnvelope = z.object({
-  value: z.array(z.custom<GraphCalendar>()).optional(),
-});
 
 export async function fetchOutlookCalendars(
   selectedCalendarIds: readonly string[] = [],
@@ -210,7 +207,7 @@ export async function fetchOutlookCalendars(
     await response.json(),
   );
 
-  return (payload.value ?? [])
+  return parseCalendarItems(graphCalendarSchema, payload.value ?? [])
     .map((calendar) => normalizeOutlookCalendar(calendar, selectedCalendarIds))
     .filter((calendar): calendar is ConnectedCalendar => Boolean(calendar));
 }
@@ -219,22 +216,8 @@ export async function fetchOutlookCalendarEvents({
   calendarIds,
   timeMin,
   timeMax,
-}: OutlookEventWindow): Promise<OutlookEventsResult> {
-  const results = await Promise.allSettled(
-    calendarIds.map((calendarId) => fetchEventsForCalendar(calendarId, timeMin, timeMax)),
+}: CalendarEventWindow): Promise<CalendarEventsResult> {
+  return fanOutCalendars(calendarIds, (calendarId) =>
+    fetchEventsForCalendar(calendarId, timeMin, timeMax),
   );
-
-  const events = results
-    .filter(
-      (result): result is PromiseFulfilledResult<CalendarEvent[]> => result.status === "fulfilled",
-    )
-    .flatMap((result) => result.value)
-    .sort(compareEventsByStart);
-
-  const failedCalendarIds = results.flatMap((result, index) => {
-    const calendarId = calendarIds[index];
-    return result.status === "rejected" && calendarId ? [calendarId] : [];
-  });
-
-  return { events, failedCalendarIds };
 }

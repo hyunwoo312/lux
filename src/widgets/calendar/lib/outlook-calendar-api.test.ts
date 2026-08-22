@@ -187,3 +187,80 @@ describe("normalizeOutlookCalendar", () => {
     expect(normalizeOutlookCalendar({ id: "c3" })).toBeNull();
   });
 });
+
+describe("outlook malformed payload handling", () => {
+  it("drops an event with an unparseable date instead of throwing", () => {
+    expect(
+      normalizeOutlookEvent(
+        { id: "bad", subject: "Broken", start: { dateTime: "not-a-date" }, end: {} },
+        "cal1",
+      ),
+    ).toBeNull();
+
+    expect(
+      normalizeOutlookEvent(
+        {
+          id: "bad-all-day",
+          subject: "Broken",
+          isAllDay: true,
+          start: { dateTime: "zz-zz-zz" },
+          end: { dateTime: "zz-zz-zz" },
+        },
+        "cal1",
+      ),
+    ).toBeNull();
+  });
+
+  it("keeps the sibling events when one item is malformed", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          value: [
+            {
+              id: "good-1",
+              subject: "Standup",
+              start: { dateTime: "2026-06-16T20:00:00.0000000" },
+              end: { dateTime: "2026-06-16T20:30:00.0000000" },
+            },
+            "nope",
+            { id: "bad-shape", subject: 12, start: { dateTime: "2026-06-16T21:00:00.0000000" } },
+            {
+              id: "good-2",
+              subject: "Review",
+              start: { dateTime: "2026-06-16T21:00:00.0000000" },
+              end: { dateTime: "2026-06-16T21:30:00.0000000" },
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const result = await fetchOutlookCalendarEvents({
+      calendarIds: ["cal1"],
+      timeMin: new Date("2026-06-01T00:00:00Z"),
+      timeMax: new Date("2026-12-01T00:00:00Z"),
+    });
+
+    expect(result.events.map((event) => event.id)).toEqual([
+      "microsoft-cal1-good-1",
+      "microsoft-cal1-good-2",
+    ]);
+    expect(result.failedCalendarIds).toEqual([]);
+  });
+
+  it("surfaces a shape-changed envelope as a failed calendar, not a crash", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(JSON.stringify({ value: "not-an-array" }), { status: 200 }),
+    );
+
+    const result = await fetchOutlookCalendarEvents({
+      calendarIds: ["cal1"],
+      timeMin: new Date("2026-06-01T00:00:00Z"),
+      timeMax: new Date("2026-12-01T00:00:00Z"),
+    });
+
+    expect(result.events).toEqual([]);
+    expect(result.failedCalendarIds).toEqual(["cal1"]);
+  });
+});

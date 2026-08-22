@@ -6,12 +6,21 @@ import { z } from "zod";
 
 export const MIN_LOOKAHEAD_DAYS = 1;
 export const MAX_LOOKAHEAD_DAYS = 30;
-export const MAX_CALENDAR_EVENTS = 500;
+export const MAX_CALENDAR_EVENTS = 1000;
 
 export type CalendarSyncStatus = "idle" | "syncing" | "error";
 
-export const CALENDAR_VIEWS = ["calendar", "list"] as const;
+export const CALENDAR_VIEWS = ["agenda", "calendar"] as const;
 export type CalendarView = (typeof CALENDAR_VIEWS)[number];
+
+export const LEGACY_CALENDAR_VIEWS: Record<string, CalendarView> = {
+  today: "agenda",
+  list: "agenda",
+  month: "calendar",
+};
+
+export const CALENDAR_DENSITIES = ["comfortable", "compact"] as const;
+export type CalendarDensity = (typeof CALENDAR_DENSITIES)[number];
 
 export type CalendarMode = "month" | "week";
 
@@ -52,3 +61,14 @@ export const connectedCalendarSchema = z.object({
   selected: z.boolean().default(false),
 });
 export type ConnectedCalendar = z.infer<typeof connectedCalendarSchema>;
+
+export type CalendarEventWindow = {
+  calendarIds: string[];
+  timeMin: Date;
+  timeMax: Date;
+};
+
+export type CalendarEventsResult = {
+  events: CalendarEvent[];
+  failedCalendarIds: string[];
+};

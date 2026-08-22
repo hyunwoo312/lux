@@ -220,3 +220,99 @@ describe("google calendar response validation", () => {
     expect(result.failedCalendarIds).toEqual(["primary"]);
   });
 });
+
+describe("google malformed payload handling", () => {
+  it("drops an event with an unparseable date instead of throwing", () => {
+    expect(
+      normalizeGoogleEvent(
+        {
+          id: "bad",
+          summary: "Broken",
+          start: { dateTime: "not-a-date" },
+          end: { dateTime: "2026-08-04T10:00:00Z" },
+        },
+        "primary",
+      ),
+    ).toBeNull();
+
+    expect(
+      normalizeGoogleEvent(
+        { id: "bad-all-day", summary: "Broken", start: { date: "zz-zz-zz" }, end: { date: "zz" } },
+        "primary",
+      ),
+    ).toBeNull();
+  });
+
+  it("keeps the sibling events when one item is malformed", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          items: [
+            {
+              id: "good-1",
+              summary: "Standup",
+              start: { dateTime: "2026-06-20T09:00:00Z" },
+              end: { dateTime: "2026-06-20T09:30:00Z" },
+            },
+            {
+              id: "bad-date",
+              summary: "Broken",
+              start: { dateTime: "not-a-date" },
+              end: { dateTime: "not-a-date" },
+            },
+            42,
+            { id: 99, start: { dateTime: "2026-06-20T11:00:00Z" } },
+            {
+              id: "good-2",
+              summary: "Review",
+              start: { dateTime: "2026-06-20T10:00:00Z" },
+              end: { dateTime: "2026-06-20T10:30:00Z" },
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const result = await fetchGoogleCalendarEvents({
+      calendarIds: ["primary"],
+      timeMin: new Date("2026-06-01T00:00:00Z"),
+      timeMax: new Date("2026-12-01T00:00:00Z"),
+    });
+
+    expect(result.events.map((event) => event.id)).toEqual([
+      "google-primary-good-1",
+      "google-primary-good-2",
+    ]);
+    expect(result.failedCalendarIds).toEqual([]);
+  });
+
+  it("keeps a healthy calendar's events when a sibling calendar fails", async () => {
+    mockFetch
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            items: [
+              {
+                id: "ok",
+                summary: "Standup",
+                start: { dateTime: "2026-06-20T09:00:00Z" },
+                end: { dateTime: "2026-06-20T09:30:00Z" },
+              },
+            ],
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(new Response("nope", { status: 500 }));
+
+    const result = await fetchGoogleCalendarEvents({
+      calendarIds: ["primary", "broken"],
+      timeMin: new Date("2026-06-01T00:00:00Z"),
+      timeMax: new Date("2026-12-01T00:00:00Z"),
+    });
+
+    expect(result.events.map((event) => event.id)).toEqual(["google-primary-ok"]);
+    expect(result.failedCalendarIds).toEqual(["broken"]);
+  });
+});

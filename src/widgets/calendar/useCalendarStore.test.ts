@@ -1,10 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { RateLimitError } from "@/lib/net";
+import { MAX_CALENDAR_EVENTS } from "@/widgets/calendar/types";
 import { useIntegrationStore } from "@/integrations";
 import {
   fetchGoogleCalendarEvents,
   fetchGoogleCalendars,
 } from "@/widgets/calendar/lib/google-calendar-api";
-import { useCalendarStore, type CalendarData } from "@/widgets/calendar/useCalendarStore";
+import {
+  capCalendarEvents,
+  useCalendarStore,
+  type CalendarData,
+} from "@/widgets/calendar/useCalendarStore";
 import type { CalendarEvent, ConnectedCalendar } from "@/widgets/calendar/types";
 
 vi.mock("@/widgets/calendar/lib/google-calendar-api", () => ({
@@ -45,6 +51,7 @@ function baseData(over: Partial<CalendarData> = {}): CalendarData {
     lookaheadDays: 7,
     enabled: true,
     view: "calendar",
+    density: "comfortable",
     google: { calendars: [], enabledCalendarIds: [], failedCalendarIds: [] },
     microsoft: { calendars: [], enabledCalendarIds: [], failedCalendarIds: [] },
     primarySource: "google",
@@ -110,14 +117,25 @@ describe("useCalendarStore.sync", () => {
     expect(data()?.google.lastError).toBeDefined();
   });
 
-  it("captures a thrown sync failure as error state", async () => {
-    fetchCalendarsMock.mockRejectedValue(new Error("Google Calendar is not connected"));
+  it("captures a thrown sync failure as error state without leaking the raw message", async () => {
+    fetchCalendarsMock.mockRejectedValue(
+      new Error("Google calendar events request failed for c_9a8f7@group.calendar.google.com"),
+    );
 
     await useCalendarStore.getState().sync(ID);
 
     const d = data();
     expect(d?.status).toBe("error");
-    expect(d?.google.lastError).toBe("Google Calendar is not connected");
+    expect(d?.google.lastError).toBe("Couldn’t sync your calendar.");
+    expect(d?.google.lastError).not.toContain("group.calendar.google.com");
+  });
+
+  it("still shows a rate limit in the user's own words", async () => {
+    fetchCalendarsMock.mockRejectedValue(new RateLimitError(30_000));
+
+    await useCalendarStore.getState().sync(ID);
+
+    expect(data()?.google.lastError).toMatch(/Rate limited/);
   });
 
   it("skips syncing while cooling down unless bypassed", async () => {
@@ -232,10 +250,9 @@ describe("useCalendarStore.migrate", () => {
 
   it("migrates legacy singleton data under the calendar instance key", () => {
     const legacy = {
-      events: [createEvent()],
       lookaheadDays: 14,
       enabled: false,
-      view: "list",
+      view: "agenda",
       google: {
         calendars: [createCalendar({ selected: true })],
         enabledCalendarIds: ["primary"],
@@ -246,18 +263,21 @@ describe("useCalendarStore.migrate", () => {
       refreshIntervalHours: 12,
     };
 
-    expect(migrate?.(legacy, 1)).toEqual({ byInstance: { calendar: legacy } });
+    expect(migrate?.(legacy, 1)).toEqual({
+      byInstance: { calendar: { ...legacy, density: "comfortable", events: [] } },
+    });
   });
 
-  it("drops unrecognized legacy data", () => {
-    expect(migrate?.({ events: "nope" }, 1)).toEqual({ byInstance: {} });
+  it("does not invent an instance out of a blob with nothing recognisable in it", () => {
+    expect(migrate?.({}, 1)).toEqual({ byInstance: {} });
+    expect(migrate?.({ somethingElse: 1 }, 1)).toEqual({ byInstance: {} });
+    expect(migrate?.("nonsense", 1)).toEqual({ byInstance: {} });
   });
 
   it("passes current-version data through unchanged", () => {
     const persisted = {
       byInstance: {
         [ID]: {
-          events: [],
           lookaheadDays: 7,
           enabled: true,
           view: "calendar",
@@ -269,5 +289,161 @@ describe("useCalendarStore.migrate", () => {
       },
     };
     expect(migrate?.(persisted, 2)).toBe(persisted);
+  });
+});
+
+describe("useCalendarStore.merge", () => {
+  const merge = useCalendarStore.persist.getOptions().merge;
+  const mergeInto = (persisted: unknown) =>
+    merge?.(persisted, {
+      ...useCalendarStore.getState(),
+      byInstance: {},
+    }) as ReturnType<typeof useCalendarStore.getState>;
+
+  const valid = {
+    lookaheadDays: 14,
+    enabled: true,
+    view: "agenda",
+    density: "compact",
+    primarySource: "microsoft",
+    refreshIntervalHours: 3,
+  };
+
+  it("keeps every other setting when one field is unreadable", () => {
+    const merged = mergeInto({
+      byInstance: { a: { ...valid, view: "nonsense", lookaheadDays: "14" } },
+    });
+
+    expect(merged.byInstance["a"]?.view).toBe("agenda");
+    expect(merged.byInstance["a"]?.lookaheadDays).toBe(7);
+    expect(merged.byInstance["a"]?.density).toBe("compact");
+    expect(merged.byInstance["a"]?.primarySource).toBe("microsoft");
+  });
+
+  it("keeps the other instances when one of them is unreadable", () => {
+    const merged = mergeInto({
+      byInstance: { a: valid, b: "not-an-object", c: { ...valid, view: "calendar" } },
+    });
+
+    expect(Object.keys(merged.byInstance)).toEqual(["a", "c"]);
+    expect(merged.byInstance["a"]?.view).toBe("agenda");
+  });
+
+  it("keeps the instance when one stored calendar is corrupt", () => {
+    const merged = mergeInto({
+      byInstance: {
+        a: {
+          ...valid,
+          google: {
+            calendars: [{ id: "good", summary: "Good" }, 42],
+            enabledCalendarIds: ["good"],
+            failedCalendarIds: [],
+          },
+        },
+      },
+    });
+
+    expect(merged.byInstance["a"]?.google.calendars).toHaveLength(1);
+    expect(merged.byInstance["a"]?.google.enabledCalendarIds).toEqual(["good"]);
+  });
+
+  it("moves readers off the retired view names", () => {
+    expect(mergeInto({ byInstance: { a: { view: "list" } } }).byInstance["a"]?.view).toBe("agenda");
+    expect(mergeInto({ byInstance: { a: { view: "calendar" } } }).byInstance["a"]?.view).toBe(
+      "calendar",
+    );
+  });
+
+  it("starts empty rather than throwing on a blob with no instances at all", () => {
+    expect(mergeInto({}).byInstance).toEqual({});
+    expect(mergeInto({ byInstance: null }).byInstance).toEqual({});
+    expect(mergeInto({ byInstance: [] }).byInstance).toEqual({});
+    expect(mergeInto(undefined).byInstance).toEqual({});
+  });
+
+  it("keeps the sync stamp so a new tab reads the cache instead of refetching", () => {
+    const lastSyncedAt = new Date().toISOString();
+    const merged = mergeInto({
+      byInstance: {
+        a: {
+          ...valid,
+          google: { calendars: [], enabledCalendarIds: [], failedCalendarIds: [], lastSyncedAt },
+        },
+      },
+    });
+
+    expect(merged.byInstance["a"]?.google.lastSyncedAt).toBe(lastSyncedAt);
+  });
+
+  it("restores the cached events so a new tab paints before any network call", () => {
+    const merged = mergeInto({
+      byInstance: { a: { ...valid, events: [createEvent()] } },
+    });
+
+    expect(merged.byInstance["a"]?.events).toHaveLength(1);
+  });
+
+  it("drops only the unreadable events from the cache", () => {
+    const merged = mergeInto({
+      byInstance: { a: { ...valid, events: [createEvent(), { id: "broken" }] } },
+    });
+
+    expect(merged.byInstance["a"]?.events).toHaveLength(1);
+  });
+});
+
+describe("useCalendarStore.partialize", () => {
+  it("writes the event cache so the next tab has something to read", () => {
+    const partialize = useCalendarStore.persist.getOptions().partialize;
+    seed({ events: [createEvent()] });
+
+    const persisted = partialize?.(useCalendarStore.getState()) as {
+      byInstance: Record<string, CalendarData>;
+    };
+
+    expect(persisted.byInstance[ID]?.events).toHaveLength(1);
+  });
+});
+
+describe("capCalendarEvents", () => {
+  const now = new Date("2026-08-23T12:00:00.000Z");
+  const spread = (count: number, dayOffset: number) =>
+    Array.from({ length: count }, (_, index) => {
+      const start = new Date(now);
+      start.setDate(start.getDate() + dayOffset * (index + 1));
+      const end = new Date(start.getTime() + 30 * 60_000);
+      return {
+        ...createEvent(),
+        id: `${dayOffset < 0 ? "past" : "future"}-${index}`,
+        startsAt: start.toISOString(),
+        endsAt: end.toISOString(),
+      };
+    });
+
+  it("leaves a small calendar untouched apart from ordering", () => {
+    const capped = capCalendarEvents([...spread(3, 1), ...spread(3, -1)], now);
+    expect(capped).toHaveLength(6);
+    expect(capped.map((event) => new Date(event.startsAt).getTime())).toEqual(
+      [...capped].map((event) => new Date(event.startsAt).getTime()).sort((a, b) => a - b),
+    );
+  });
+
+  it("never lets a year of history push out upcoming events", () => {
+    const capped = capCalendarEvents([...spread(MAX_CALENDAR_EVENTS, -1), ...spread(20, 1)], now);
+
+    const upcoming = capped.filter((event) => new Date(event.endsAt).getTime() >= now.getTime());
+    expect(capped).toHaveLength(MAX_CALENDAR_EVENTS);
+    expect(upcoming).toHaveLength(20);
+  });
+
+  it("fills the remaining room with the most recent history", () => {
+    const capped = capCalendarEvents([...spread(MAX_CALENDAR_EVENTS, -1), ...spread(2, 1)], now);
+
+    const past = capped.filter((event) => new Date(event.endsAt).getTime() < now.getTime());
+    const oldestKept = new Date(past[0]?.startsAt ?? 0).getTime();
+    const dropped = new Date(now);
+    dropped.setDate(dropped.getDate() - MAX_CALENDAR_EVENTS);
+
+    expect(oldestKept).toBeGreaterThan(dropped.getTime());
   });
 });

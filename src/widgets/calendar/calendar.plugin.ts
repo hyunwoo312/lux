@@ -5,7 +5,7 @@ import type { WidgetPlugin } from "@/widgets/core/types";
 import { CalendarWidget } from "@/widgets/calendar/CalendarWidget";
 import { CalendarConfig } from "@/widgets/calendar/CalendarConfig";
 import { CalendarHeaderActions } from "@/widgets/calendar/CalendarHeaderActions";
-import { CalendarStatus } from "@/widgets/calendar/CalendarStatus";
+import { CalendarTabs } from "@/widgets/calendar/CalendarTabs";
 import { CALENDAR_ACCENT } from "@/widgets/calendar/types";
 
 export const calendarPlugin: WidgetPlugin = {
@@ -17,7 +17,7 @@ export const calendarPlugin: WidgetPlugin = {
   defaultLayout: { w: 8, h: 9, minW: 6, minH: 6, maxW: 14, maxH: 14 },
   component: CalendarWidget,
   configComponent: CalendarConfig,
-  statusComponent: CalendarStatus,
+  statusComponent: CalendarTabs,
   headerActionComponent: CalendarHeaderActions,
   accent: CALENDAR_ACCENT,
   useLock: () => {

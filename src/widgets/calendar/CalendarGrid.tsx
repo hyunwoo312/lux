@@ -4,19 +4,15 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useElementSize } from "@/hooks/useElementSize";
 import { useNow } from "@/hooks/useNow";
 import { DayPreview } from "@/widgets/calendar/components/DayPreview";
-import {
-  DAY_NUMBER_HEIGHT,
-  EVENT_ROW_HEIGHT,
-  MonthWeek,
-} from "@/widgets/calendar/components/MonthWeek";
+import { MonthControls } from "@/widgets/calendar/components/MonthControls";
+import { MonthWeek } from "@/widgets/calendar/components/MonthWeek";
+import { WeekdayHeader } from "@/widgets/calendar/components/WeekdayHeader";
 import { getEventsByDate } from "@/widgets/calendar/lib/agenda";
-import { addDays, getDateKey, getMonthGridDays, startOfDay } from "@/widgets/calendar/lib/dates";
-import { computeMonthLayout } from "@/widgets/calendar/lib/month-layout";
+import { getDateKey, getMonthGridDays, startOfWeek } from "@/widgets/calendar/lib/dates";
+import { computeMonthLayout, getMonthMetrics } from "@/widgets/calendar/lib/month-layout";
 import { EASE_OUT, SPRING_CRISP } from "@/lib/motion";
 import { useCalendar } from "@/widgets/calendar/useCalendarStore";
 import type { DisplayCalendarEvent } from "@/widgets/calendar/types";
-
-const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"] as const;
 
 type CalendarGridProps = {
   events: DisplayCalendarEvent[];
@@ -50,7 +46,7 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
     previousMonthIndex.current = visibleMonthIndex;
   }, [visibleMonthIndex]);
 
-  const weekStart = selectedDay ? addDays(startOfDay(selectedDay), -selectedDay.getDay()) : null;
+  const weekStart = selectedDay ? startOfWeek(selectedDay) : null;
   const weekTime = weekStart ? weekStart.getTime() : 0;
   const previousWeekTime = useRef(weekTime);
   const weekDirection = Math.sign(weekTime - previousWeekTime.current);
@@ -58,12 +54,9 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
     previousWeekTime.current = weekTime;
   }, [weekTime]);
 
-  const rowHeight = height / 6;
-  const cellWidth = width / 7;
-  const maxRows = Math.max(0, Math.floor((rowHeight - DAY_NUMBER_HEIGHT) / EVENT_ROW_HEIGHT));
-  const dotsMode = maxRows < 1;
-  const showTitles = cellWidth >= 64;
-  const cellProps = { eventsByDate, colors, maxRows, dotsMode, showTitles, cellWidth };
+  const metrics = useMemo(() => getMonthMetrics(width, height), [width, height]);
+  const { rowHeight, cellWidth } = metrics;
+  const cellProps = { eventsByDate, colors, metrics };
 
   const selectedKey = selectedDay ? getDateKey(selectedDay) : null;
   const focusedWeek = useMemo(() => {
@@ -94,13 +87,8 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div aria-hidden className="text-ink-4 grid grid-cols-7 pb-1">
-        {WEEKDAYS.map((weekday, index) => (
-          <span key={index} className="text-micro text-center font-semibold">
-            {weekday}
-          </span>
-        ))}
-      </div>
+      <MonthControls />
+      <WeekdayHeader className="pb-1" />
       <div
         ref={gridRef}
         role="grid"

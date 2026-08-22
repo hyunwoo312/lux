@@ -6,6 +6,7 @@ import { accentClass } from "@/widgets/core/accent";
 import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { CALENDAR_ACCENT } from "@/widgets/calendar/types";
 import { ConfigSegmented } from "@/components/config/WidgetConfig";
+import { WeekdayHeader } from "@/widgets/calendar/components/WeekdayHeader";
 import {
   addDays,
   getDateKey,
@@ -17,7 +18,12 @@ import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarSto
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 const monthTitleFormatter = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" });
-const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"] as const;
+const fullDateFormatter = new Intl.DateTimeFormat(undefined, {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
 
 const LOOKAHEAD_OPTIONS = [
   { value: "1", label: "Today" },
@@ -42,13 +48,7 @@ function MiniMonth({ month, anchorTime, endTime, onSelect }: MiniMonthProps) {
   const monthIndex = month.getMonth();
   return (
     <div className="w-52">
-      <div className="text-ink-4 mb-1 grid grid-cols-7">
-        {WEEKDAYS.map((weekday, index) => (
-          <span key={index} className="text-micro text-center font-semibold">
-            {weekday}
-          </span>
-        ))}
-      </div>
+      <WeekdayHeader className="mb-1" />
       <div className="grid grid-cols-7 gap-y-1">
         {getMonthGridDays(month).map((day, index) => {
           const time = day.getTime();
@@ -61,6 +61,8 @@ function MiniMonth({ month, anchorTime, endTime, onSelect }: MiniMonthProps) {
             <button
               key={getDateKey(day)}
               type="button"
+              aria-label={fullDateFormatter.format(day)}
+              aria-pressed={isStart}
               onClick={() => onSelect(day)}
               className="
                 press focus-ring group relative flex h-8 cursor-pointer items-center justify-center
@@ -80,7 +82,6 @@ function MiniMonth({ month, anchorTime, endTime, onSelect }: MiniMonthProps) {
                 className={cn(
                   "relative z-10 flex size-7 items-center justify-center rounded-sm text-caption",
                   "tabular-nums transition-colors",
-                  "focus-ring group- group-",
                   isStart && "bg-primary text-primary-foreground font-semibold",
                   !isStart && "group-hover:bg-foreground/10",
                   !isStart && inMonth && "text-ink",

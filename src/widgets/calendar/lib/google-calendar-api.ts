@@ -1,10 +1,12 @@
 import { z } from "zod";
 import { integrationFetch } from "@/integrations";
 import { ensureOk, parseResponse } from "@/lib/net";
-import { compareEventsByStart } from "@/widgets/calendar/lib/agenda";
+import { fanOutCalendars, parseCalendarItems } from "@/widgets/calendar/lib/provider-fetch";
 import {
   MAX_CALENDAR_EVENTS,
   type CalendarEvent,
+  type CalendarEventsResult,
+  type CalendarEventWindow,
   type ConnectedCalendar,
   type RsvpStatus,
 } from "@/widgets/calendar/types";
@@ -12,30 +14,50 @@ import {
 const API_BASE_URL = "https://www.googleapis.com/calendar/v3";
 const MAX_EVENT_PAGES = 10;
 
-type GoogleCalendarListEntry = {
-  id?: string;
-  summary?: string;
-  backgroundColor?: string;
-  primary?: boolean;
-};
+const googleCalendarListEntrySchema = z.object({
+  id: z.string().optional(),
+  summary: z.string().optional(),
+  backgroundColor: z.string().optional(),
+  primary: z.boolean().optional(),
+});
+type GoogleCalendarListEntry = z.infer<typeof googleCalendarListEntrySchema>;
 
-type GoogleCalendarDateTime = {
-  date?: string;
-  dateTime?: string;
-};
+const googleDateTimeSchema = z.object({
+  date: z.string().optional(),
+  dateTime: z.string().optional(),
+});
+type GoogleCalendarDateTime = z.infer<typeof googleDateTimeSchema>;
 
-type GoogleCalendarEvent = {
-  id?: string;
-  summary?: string;
-  start?: GoogleCalendarDateTime;
-  end?: GoogleCalendarDateTime;
-  location?: string;
-  status?: "confirmed" | "tentative" | "cancelled";
-  htmlLink?: string;
-  hangoutLink?: string;
-  conferenceData?: { entryPoints?: Array<{ entryPointType?: string; uri?: string }> };
-  attendees?: Array<{ self?: boolean; responseStatus?: string }>;
-};
+const googleEventSchema = z.object({
+  id: z.string().optional(),
+  summary: z.string().optional(),
+  start: googleDateTimeSchema.optional(),
+  end: googleDateTimeSchema.optional(),
+  location: z.string().optional(),
+  status: z.string().optional(),
+  htmlLink: z.string().optional(),
+  hangoutLink: z.string().optional(),
+  conferenceData: z
+    .object({
+      entryPoints: z
+        .array(z.object({ entryPointType: z.string().optional(), uri: z.string().optional() }))
+        .optional(),
+    })
+    .optional(),
+  attendees: z
+    .array(z.object({ self: z.boolean().optional(), responseStatus: z.string().optional() }))
+    .optional(),
+});
+type GoogleCalendarEvent = z.infer<typeof googleEventSchema>;
+
+const googleEventsEnvelope = z.object({
+  items: z.array(z.unknown()).optional(),
+  nextPageToken: z.string().optional(),
+});
+
+const googleCalendarsEnvelope = z.object({
+  items: z.array(z.unknown()).optional(),
+});
 
 const GOOGLE_RSVP: Record<string, RsvpStatus> = {
   accepted: "accepted",
@@ -56,24 +78,17 @@ function googleRsvp(event: GoogleCalendarEvent): RsvpStatus | undefined {
   return self?.responseStatus ? GOOGLE_RSVP[self.responseStatus] : undefined;
 }
 
-type GoogleCalendarEventWindow = {
-  calendarIds: string[];
-  timeMin: Date;
-  timeMax: Date;
-};
+function toIsoString(date: Date): string | null {
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
 
-type GoogleCalendarEventsResult = {
-  events: CalendarEvent[];
-  failedCalendarIds: string[];
-};
-
-function parseAllDayDate(value: string): string {
+function parseAllDayDate(value: string): string | null {
   const [year = 0, month = 1, day = 1] = value.split("-").map(Number);
-  return new Date(year, month - 1, day).toISOString();
+  return toIsoString(new Date(year, month - 1, day));
 }
 
 function normalizeDateTime(value: GoogleCalendarDateTime | undefined): string | null {
-  if (value?.dateTime) return new Date(value.dateTime).toISOString();
+  if (value?.dateTime) return toIsoString(new Date(value.dateTime));
   if (value?.date) return parseAllDayDate(value.date);
   return null;
 }
@@ -158,7 +173,7 @@ async function fetchEventsForCalendar(
     );
 
     events.push(
-      ...(payload.items ?? [])
+      ...parseCalendarItems(googleEventSchema, payload.items ?? [])
         .map((event) => normalizeGoogleEvent(event, calendarId))
         .filter((event): event is CalendarEvent => Boolean(event)),
     );
@@ -170,15 +185,6 @@ async function fetchEventsForCalendar(
 
   return events;
 }
-
-const googleEventsEnvelope = z.object({
-  items: z.array(z.custom<GoogleCalendarEvent>()).optional(),
-  nextPageToken: z.string().optional(),
-});
-
-const googleCalendarsEnvelope = z.object({
-  items: z.array(z.custom<GoogleCalendarListEntry>()).optional(),
-});
 
 export async function fetchGoogleCalendars(
   selectedCalendarIds: readonly string[] = [],
@@ -193,7 +199,7 @@ export async function fetchGoogleCalendars(
     await response.json(),
   );
 
-  return (payload.items ?? [])
+  return parseCalendarItems(googleCalendarListEntrySchema, payload.items ?? [])
     .map((calendar) => normalizeGoogleCalendar(calendar, selectedCalendarIds))
     .filter((calendar): calendar is ConnectedCalendar => Boolean(calendar));
 }
@@ -202,22 +208,8 @@ export async function fetchGoogleCalendarEvents({
   calendarIds,
   timeMin,
   timeMax,
-}: GoogleCalendarEventWindow): Promise<GoogleCalendarEventsResult> {
-  const results = await Promise.allSettled(
-    calendarIds.map((calendarId) => fetchEventsForCalendar(calendarId, timeMin, timeMax)),
+}: CalendarEventWindow): Promise<CalendarEventsResult> {
+  return fanOutCalendars(calendarIds, (calendarId) =>
+    fetchEventsForCalendar(calendarId, timeMin, timeMax),
   );
-
-  const events = results
-    .filter(
-      (result): result is PromiseFulfilledResult<CalendarEvent[]> => result.status === "fulfilled",
-    )
-    .flatMap((result) => result.value)
-    .sort(compareEventsByStart);
-
-  const failedCalendarIds = results.flatMap((result, index) => {
-    const calendarId = calendarIds[index];
-    return result.status === "rejected" && calendarId ? [calendarId] : [];
-  });
-
-  return { events, failedCalendarIds };
 }

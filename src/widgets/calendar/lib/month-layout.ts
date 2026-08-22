@@ -9,6 +9,14 @@ import type { CalendarEvent } from "@/widgets/calendar/types";
 const DAY_MS = 86_400_000;
 const GRID_DAYS = 42;
 
+export const DAY_NUMBER_HEIGHT = 18;
+export const EVENT_ROW_HEIGHT = 18;
+
+const WEEKS_PER_GRID = 6;
+const COLUMNS_PER_WEEK = 7;
+const BAR_INSET = 4;
+const BAR_TITLE_MIN_WIDTH = 40;
+
 export type EventSegment = {
   event: CalendarEvent;
   lane: number;
@@ -144,4 +152,59 @@ export function computeMonthLayout(
   }
 
   return { weeks };
+}
+
+export type MonthMetrics = {
+  rowHeight: number;
+  cellWidth: number;
+  maxRows: number;
+  summaryMode: boolean;
+};
+
+export function getMonthMetrics(width: number, height: number): MonthMetrics {
+  const rowHeight = height / WEEKS_PER_GRID;
+  const cellWidth = width / COLUMNS_PER_WEEK;
+  const maxRows = Math.max(0, Math.floor((rowHeight - DAY_NUMBER_HEIGHT) / EVENT_ROW_HEIGHT));
+  return { rowHeight, cellWidth, maxRows, summaryMode: maxRows < 1 };
+}
+
+export function shouldShowBarTitle(span: number, cellWidth: number): boolean {
+  return span * cellWidth - BAR_INSET >= BAR_TITLE_MIN_WIDTH;
+}
+
+export type WeekRowBudget = { bandRows: number; bottomRows: number };
+
+export function getWeekRowBudget(week: MonthWeek, maxRows: number): WeekRowBudget {
+  const weekHasTimed = week.days.some((day) => day.timedEvents.length > 0);
+  const fitting = Math.min(week.laneCount, maxRows);
+  const needsBottomRow = maxRows > 0 && (week.laneCount > maxRows || weekHasTimed);
+  const bandRows = fitting === maxRows && needsBottomRow ? maxRows - 1 : fitting;
+  return { bandRows, bottomRows: Math.max(0, maxRows - bandRows) };
+}
+
+export function countHiddenBars(week: MonthWeek, bandRows: number, column: number): number {
+  return week.segments.filter(
+    (segment) =>
+      segment.lane >= bandRows &&
+      segment.startCol <= column &&
+      column < segment.startCol + segment.span,
+  ).length;
+}
+
+export type DayBottomPlan = { visibleCount: number; moreCount: number };
+
+export function getDayBottomPlan(
+  timedCount: number,
+  hiddenBars: number,
+  bottomRows: number,
+): DayBottomPlan {
+  if (bottomRows <= 0) return { visibleCount: 0, moreCount: hiddenBars + timedCount };
+  const wantsMore = hiddenBars > 0 || timedCount > bottomRows;
+  const visibleCount = Math.min(timedCount, wantsMore ? bottomRows - 1 : bottomRows);
+  return { visibleCount, moreCount: hiddenBars + timedCount - visibleCount };
+}
+
+export function getBarColumn(ratio: number, segment: EventSegment): number {
+  const offset = Math.min(segment.span - 1, Math.max(0, Math.floor(ratio * segment.span)));
+  return segment.startCol + offset;
 }

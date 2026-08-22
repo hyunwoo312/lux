@@ -6,6 +6,7 @@ import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { IconActionButton } from "@/components/IconActionButton";
 import { Switch } from "@/components/ui/switch";
 import {
+  ConfigSegmented,
   ConfigSelect,
   WidgetConfigGroup,
   WidgetConfigItem,
@@ -22,12 +23,17 @@ import {
   useCalendarStore,
 } from "@/widgets/calendar/useCalendarStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import type { CalendarProviderId } from "@/widgets/calendar/types";
+import type { CalendarDensity, CalendarProviderId } from "@/widgets/calendar/types";
 
 const REFRESH_OPTIONS = REFRESH_INTERVAL_OPTIONS.map((hours) => ({
   value: String(hours),
   label: `Every ${hours} hours`,
 }));
+
+const DENSITY_OPTIONS: { value: CalendarDensity; label: string }[] = [
+  { value: "comfortable", label: "Comfortable" },
+  { value: "compact", label: "Compact" },
+];
 
 const SOURCE_OPTIONS: { value: CalendarProviderId; label: string }[] = [
   { value: "google", label: "Google" },
@@ -176,6 +182,8 @@ export function CalendarConfig() {
   const instanceId = useWidgetInstanceId();
   const enabled = useCalendar((d) => d.enabled);
   const setEnabled = useCalendarStore((s) => s.setEnabled);
+  const density = useCalendar((d) => d.density);
+  const setDensity = useCalendarStore((s) => s.setDensity);
   const refreshIntervalHours = useCalendar((d) => d.refreshIntervalHours);
   const setRefreshIntervalHours = useCalendarStore((s) => s.setRefreshIntervalHours);
   const primarySource = useCalendar((d) => d.primarySource);
@@ -197,6 +205,18 @@ export function CalendarConfig() {
               checked={enabled}
               onCheckedChange={(checked) => setEnabled(instanceId, checked === true)}
               aria-label="Show calendar events"
+            />
+          }
+        />
+        <WidgetConfigItem
+          title="Timeline density"
+          description="How much height each hour takes in the agenda timeline"
+          control={
+            <ConfigSegmented
+              label="Timeline density"
+              value={density}
+              options={DENSITY_OPTIONS}
+              onChange={(value) => setDensity(instanceId, value)}
             />
           }
         />

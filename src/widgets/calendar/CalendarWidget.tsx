@@ -4,7 +4,7 @@ import { CalendarOff } from "lucide-react";
 import { CalendarConnectPrompt } from "@/widgets/calendar/components/CalendarConnectPrompt";
 import { CalendarSignedOutPreview } from "@/widgets/calendar/components/CalendarSignedOutPreview";
 import { CalendarGrid } from "@/widgets/calendar/CalendarGrid";
-import { CalendarListView } from "@/widgets/calendar/CalendarListView";
+import { AgendaView } from "@/widgets/calendar/AgendaView";
 import { useWidgetChrome } from "@/widgets/core/useWidgetChrome";
 import { useCalendarAutoSync } from "@/widgets/calendar/hooks/useCalendarAutoSync";
 import { useCalendarConnection } from "@/widgets/calendar/hooks/useCalendarConnection";
@@ -72,23 +72,18 @@ export function CalendarWidget() {
 
   return (
     <LayoutGroup>
-      <div className="relative h-full min-h-0">
+      <div className="relative h-full min-h-0 overflow-hidden">
         <AnimatePresence initial={false} mode="popLayout">
-          {view === "list" ? (
+          {view === "agenda" ? (
             <motion.div
-              key="list"
+              key={view}
               className="absolute inset-0"
               initial={{ opacity: 0, y: slide ? "4%" : 0 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: slide ? "4%" : 0 }}
               transition={transition}
             >
-              <CalendarListView
-                events={visibleEvents}
-                colors={colors}
-                enabled={enabled}
-                status={status}
-              />
+              <AgendaView events={visibleEvents} colors={colors} status={status} />
             </motion.div>
           ) : (
             <motion.div

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIntegrationStore } from "@/integrations";
 import { CalendarWidget } from "@/widgets/calendar/CalendarWidget";
@@ -17,6 +17,7 @@ function baseData(over: Partial<CalendarData> = {}): CalendarData {
     lookaheadDays: 7,
     enabled: true,
     view: "calendar",
+    density: "comfortable",
     google: { calendars: [], enabledCalendarIds: [], failedCalendarIds: [] },
     microsoft: { calendars: [], enabledCalendarIds: [], failedCalendarIds: [] },
     primarySource: "google",
@@ -66,10 +67,8 @@ function connectAccount() {
 }
 
 function timedEvent(): CalendarEvent {
-  const start = new Date();
-  start.setHours(9, 0, 0, 0);
-  const end = new Date(start);
-  end.setHours(10, 0, 0, 0);
+  const start = new Date(Date.now() + 30 * 60_000);
+  const end = new Date(start.getTime() + 60 * 60_000);
   return {
     id: "google-primary-standup",
     calendarId: "primary",
@@ -105,9 +104,15 @@ beforeEach(() => {
 
 describe("CalendarWidget", () => {
   it("previews sample events when no account is linked", () => {
-    patch({ view: "list" });
+    patch({ view: "agenda" });
     renderWidget();
     expect(screen.getByText("Team standup")).toBeInTheDocument();
+  });
+
+  it("previews the agenda timeline when no account is linked", () => {
+    patch({ view: "agenda" });
+    renderWidget();
+    expect(screen.getByText(/^Current time/)).toBeInTheDocument();
   });
 
   it("renders the month grid weekday header in calendar view", () => {
@@ -118,20 +123,21 @@ describe("CalendarWidget", () => {
     expect(screen.queryByRole("button", { name: "Connect" })).not.toBeInTheDocument();
   });
 
-  it("renders event titles and separates multi-day events in list view", () => {
+  it("puts timed events on the axis and untimed ones in the pinned block", () => {
     connectAccount();
-    patch({ view: "list", events: [timedEvent(), multiDayEvent()] });
+    patch({ view: "agenda", events: [timedEvent(), multiDayEvent()] });
 
     renderWidget();
 
+    const pinned = screen.getByRole("region", { name: "All-day and multi-day events" });
+    expect(within(pinned).getByText("Team Trip")).toBeInTheDocument();
+    expect(within(pinned).queryByText("Standup")).toBeNull();
     expect(screen.getByText("Standup")).toBeInTheDocument();
-    expect(screen.getByText("Team Trip")).toBeInTheDocument();
-    expect(screen.getByText("Multi-day")).toBeInTheDocument();
   });
 
-  it("opens the source event in a new tab from list view", () => {
+  it("opens the source event in a new tab from the agenda", () => {
     connectAccount();
-    patch({ view: "list", events: [timedEvent()] });
+    patch({ view: "agenda", events: [timedEvent()] });
     const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
 
     renderWidget();

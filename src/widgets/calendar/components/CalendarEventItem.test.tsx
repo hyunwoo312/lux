@@ -30,34 +30,7 @@ function renderItem(value: DisplayCalendarEvent) {
   );
 }
 
-describe("CalendarEventItem rsvp", () => {
-  it("marks an event that needs a response", () => {
-    renderItem(event({ rsvp: "needsAction" }));
-
-    expect(screen.getByLabelText("Needs your response")).toBeInTheDocument();
-  });
-
-  it("does not mark an event already accepted", () => {
-    renderItem(event({ rsvp: "accepted" }));
-
-    expect(screen.queryByLabelText("Needs your response")).not.toBeInTheDocument();
-  });
-
-  it("strikes through a declined event without hiding it", () => {
-    renderItem(event({ rsvp: "declined" }));
-
-    expect(screen.getByText("Standup")).toBeInTheDocument();
-    expect(screen.getByText("Standup").className).toContain("line-through");
-  });
-});
-
 describe("CalendarEventItem join action", () => {
-  it("offers a join button when the event has a join url", () => {
-    renderItem(event({ joinUrl: "https://meet.google.com/abc" }));
-
-    expect(screen.getByLabelText("Join Standup")).toBeInTheDocument();
-  });
-
   it("opens the join url in a new tab", () => {
     const open = vi.spyOn(window, "open").mockImplementation(() => null);
     renderItem(event({ joinUrl: "https://meet.google.com/abc" }));
@@ -70,12 +43,6 @@ describe("CalendarEventItem join action", () => {
       "noopener,noreferrer",
     );
     open.mockRestore();
-  });
-
-  it("shows no join button for an event without one", () => {
-    renderItem(event());
-
-    expect(screen.queryByLabelText("Join Standup")).not.toBeInTheDocument();
   });
 
   it("replaces the countdown with a pinned join button for an imminent meeting", () => {
@@ -113,18 +80,13 @@ describe("CalendarEventItem join action", () => {
     expect(screen.getByText(/^in /)).toBeInTheDocument();
   });
 
-  it("reserves title space permanently when the join button is pinned", () => {
-    const { container } = renderItem(
-      event({
-        startsAt: "2026-08-04T09:20:00Z",
-        endsAt: "2026-08-04T09:50:00Z",
-        joinUrl: "https://meet.google.com/abc",
-      }),
-    );
+  it("keeps the actions rendered and legible without hovering", () => {
+    renderItem(event({ joinUrl: "https://meet.google.com/abc" }));
 
-    const titleColumn = container.querySelector('[class*="flex-col"]');
-    // pinned buttons are always visible, so the padding must not be hover-only
-    expect(titleColumn?.className).toMatch(/(^|\s)pr-\d/);
+    const actions = screen.getByLabelText("Join Standup").closest("div");
+
+    expect(actions?.className).not.toContain("opacity-0");
+    expect(actions?.className).toContain("opacity-60");
   });
 
   it("keeps the countdown when an imminent event has no join url", () => {

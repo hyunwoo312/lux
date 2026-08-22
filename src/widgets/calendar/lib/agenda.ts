@@ -4,13 +4,7 @@ import type {
   CalendarProviderId,
   DisplayCalendarEvent,
 } from "@/widgets/calendar/types";
-import {
-  addDays,
-  endOfDay,
-  getDateKey,
-  getRangeEndDate,
-  startOfDay,
-} from "@/widgets/calendar/lib/dates";
+import { getDateKey, startOfDay } from "@/widgets/calendar/lib/dates";
 
 function getEventProvider(event: CalendarEvent): CalendarProviderId {
   return event.provider ?? (event.id.startsWith("microsoft-") ? "microsoft" : "google");
@@ -81,30 +75,6 @@ export function dedupeCalendarEvents(
   }));
 }
 
-function isEventActiveOnDate(event: CalendarEvent, date: Date): boolean {
-  return (
-    getEventDisplayEndDate(event) >= startOfDay(date) && getEventStartDate(event) <= endOfDay(date)
-  );
-}
-
-export function getEventsInRange<T extends CalendarEvent>(
-  events: T[],
-  startDate: Date,
-  lookaheadDays: number,
-): T[] {
-  const rangeStart = startOfDay(startDate);
-  const rangeEnd = endOfDay(getRangeEndDate(startDate, lookaheadDays));
-
-  return events
-    .filter(
-      (event) =>
-        getEventDisplayEndDate(event) >= rangeStart && getEventStartDate(event) <= rangeEnd,
-    )
-    .sort(
-      (first, second) => getEventStartDate(first).getTime() - getEventStartDate(second).getTime(),
-    );
-}
-
 export function getEventsByDate<T extends CalendarEvent>(events: T[]): Map<string, T[]> {
   const byDate = new Map<string, T[]>();
 
@@ -123,64 +93,10 @@ export function getEventsByDate<T extends CalendarEvent>(events: T[]): Map<strin
   return byDate;
 }
 
-function sortAgendaEvents(first: CalendarEvent, second: CalendarEvent): number {
-  if (first.isAllDay !== second.isAllDay) return first.isAllDay ? -1 : 1;
-  return getEventStartDate(first).getTime() - getEventStartDate(second).getTime();
-}
-
-export function getMultiDayEvents<T extends CalendarEvent>(events: T[]): T[] {
-  return events.filter(isMultiDayEvent).sort(sortAgendaEvents);
-}
-
-type AgendaGroup<T extends CalendarEvent> = {
-  id: string;
-  label: string;
-  events: T[];
-};
-
-function formatDateLabel(date: Date, today: Date): string {
-  const tomorrow = addDays(today, 1);
-  if (getDateKey(date) === getDateKey(today)) return "Today";
-  if (getDateKey(date) === getDateKey(tomorrow)) return "Tomorrow";
-  return new Intl.DateTimeFormat(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  }).format(date);
-}
-
-export function getAgendaGroups<T extends CalendarEvent>(
-  events: T[],
-  startDate: Date,
-  lookaheadDays: number,
-  today: Date,
-): AgendaGroup<T>[] {
-  const groups: AgendaGroup<T>[] = [];
-  const rangeEnd = getRangeEndDate(startDate, lookaheadDays);
-
-  for (
-    let cursor = startOfDay(startDate);
-    cursor <= rangeEnd;
-    cursor.setDate(cursor.getDate() + 1)
-  ) {
-    const date = new Date(cursor);
-    const dayEvents = events.filter((event) => isEventActiveOnDate(event, date));
-    if (dayEvents.length) {
-      groups.push({
-        id: getDateKey(date),
-        label: formatDateLabel(date, today),
-        events: [...dayEvents].sort(sortAgendaEvents),
-      });
-    }
-  }
-
-  return groups;
-}
-
 export function formatEventTime(event: CalendarEvent, hour12: boolean): string {
   if (event.isAllDay) return "All day";
   return new Intl.DateTimeFormat(undefined, {
-    hour: "2-digit",
+    hour: hour12 ? "numeric" : "2-digit",
     minute: "2-digit",
     hour12,
   }).format(new Date(event.startsAt));
@@ -194,44 +110,6 @@ export function formatEventRelativeTime(event: CalendarEvent, now: Date): string
   if (minutes < 1) return "now";
   if (minutes < 60) return `in ${minutes}m`;
   return `in ${Math.round(minutes / 60)}h`;
-}
-
-function findNextEvent<T extends CalendarEvent>(events: T[], now: Date): T | null {
-  let next: T | null = null;
-  let nextStart = Infinity;
-  for (const event of events) {
-    if (event.isAllDay) continue;
-    const start = getEventStartDate(event).getTime();
-    if (start <= now.getTime()) continue;
-    if (start < nextStart) {
-      nextStart = start;
-      next = event;
-    }
-  }
-  return next;
-}
-
-export function formatFreeUntil(
-  events: CalendarEvent[],
-  now: Date,
-  hour12: boolean,
-): string | null {
-  const inProgress = events.some(
-    (event) =>
-      !event.isAllDay &&
-      getEventStartDate(event).getTime() <= now.getTime() &&
-      getEventDisplayEndDate(event).getTime() > now.getTime(),
-  );
-  if (inProgress) return null;
-
-  const next = findNextEvent(events, now);
-  if (!next) return null;
-
-  const startsAt = getEventStartDate(next);
-  if (startsAt.getTime() - now.getTime() > 12 * 60 * 60 * 1000) return null;
-  if (getDateKey(startsAt) !== getDateKey(now)) return null;
-
-  return `Free until ${formatEventTime(next, hour12)}`;
 }
 
 export function formatEventDateRange(event: CalendarEvent): string {

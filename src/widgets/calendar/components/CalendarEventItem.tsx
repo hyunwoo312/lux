@@ -24,15 +24,7 @@ const PROVIDER_META: Record<
   microsoft: { label: "Outlook", Icon: OutlookServiceIcon, iconClass: "size-[17px]" },
 };
 
-const BASE_PR: Record<number, string> = { 1: "pr-9", 2: "pr-16", 3: "pr-24" };
-const HOVER_PR: Record<number, string> = {
-  1: "group-hover:pr-9 group-focus-within:pr-9",
-  2: "group-hover:pr-16 group-focus-within:pr-16",
-  3: "group-hover:pr-24 group-focus-within:pr-24",
-};
-
-const ACTION_BUTTON =
-  "focus-ring flex size-7 cursor-pointer items-center justify-center rounded-sm";
+const ACTION_BUTTON = "focus-ring flex cursor-pointer items-center justify-center rounded-sm";
 
 function openUrl(url: string) {
   window.open(url, "_blank", "noopener,noreferrer");
@@ -69,10 +61,7 @@ export function CalendarEventItem({
   const needsResponse = event.rsvp === "needsAction";
   const declined = event.rsvp === "declined";
   const pinActions = Boolean(joinUrl) && imminent;
-  const actionCount = openLinks.length + (joinUrl ? 1 : 0);
-  const padCount = Math.min(3, actionCount) as 1 | 2 | 3;
-  const padClass =
-    actionCount === 0 ? undefined : pinActions || relative ? BASE_PR[padCount] : HOVER_PR[padCount];
+  const hasActions = openLinks.length > 0 || Boolean(joinUrl);
 
   return (
     <motion.div
@@ -84,7 +73,7 @@ export function CalendarEventItem({
         delay: reduced ? 0 : Math.min(index, 8) * 0.025,
         layout: { duration: reduced ? 0 : 0.32, ease: EASE_OUT },
       }}
-      className={cn(ROW.item, "group relative", declined && "opacity-50")}
+      className={cn(ROW.item, "group", declined && "opacity-50")}
     >
       <span
         aria-hidden
@@ -94,9 +83,7 @@ export function CalendarEventItem({
       <span className="text-ink-3 w-12 flex-none text-micro font-semibold tabular-nums">
         {timeLabel ?? formatEventTime(event, !clock24h)}
       </span>
-      <span
-        className={cn("flex min-w-0 flex-1 flex-col transition-[padding] duration-200", padClass)}
-      >
+      <span className="flex min-w-0 flex-1 flex-col">
         <span className="flex min-w-0 items-baseline gap-1.5">
           <span
             className={cn("text-ink truncate text-body font-medium", declined && "line-through")}
@@ -116,30 +103,19 @@ export function CalendarEventItem({
         {event.location && <span className="text-ink-3 truncate text-micro">{event.location}</span>}
       </span>
       {relative && !pinActions && (
-        <span
-          className={cn(
-            `
-              text-primary pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-micro
-              font-semibold tabular-nums
-            `,
-            actionCount > 0 &&
-              "transition-opacity duration-200 group-hover:opacity-0 group-focus-within:opacity-0",
-          )}
-        >
+        <span className="text-primary flex-none text-micro font-semibold tabular-nums">
           {relative}
         </span>
       )}
-      {actionCount > 0 && (
+      {hasActions && (
         <div
           className={cn(
             `
-              absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-1 transition
-              duration-200
-              motion-reduce:translate-x-0
-              group-hover:translate-x-0 group-hover:opacity-100
-              group-focus-within:translate-x-0 group-focus-within:opacity-100
+              flex flex-none items-center gap-1 transition-opacity duration-200
+              group-hover:opacity-100
+              group-focus-within:opacity-100
             `,
-            pinActions ? "translate-x-0 opacity-100" : "translate-x-2 opacity-0",
+            pinActions ? "opacity-100" : "opacity-60",
           )}
         >
           {joinUrl && (
@@ -150,7 +126,7 @@ export function CalendarEventItem({
                 whileTap={reduced ? undefined : { scale: 0.85 }}
                 aria-label={`Join ${title}`}
                 onClick={() => openUrl(joinUrl)}
-                className={cn(ACTION_BUTTON, "text-primary")}
+                className={cn(ACTION_BUTTON, "size-7", "text-primary")}
               >
                 <Video className="size-4" aria-hidden />
               </motion.button>
@@ -166,7 +142,7 @@ export function CalendarEventItem({
                   whileTap={reduced ? undefined : { scale: 0.85 }}
                   aria-label={`Open ${title} in ${label}`}
                   onClick={() => openUrl(link.sourceUrl)}
-                  className={ACTION_BUTTON}
+                  className={cn(ACTION_BUTTON, "size-7")}
                 >
                   <Icon className={iconClass} />
                 </motion.button>
