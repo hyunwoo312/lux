@@ -288,6 +288,7 @@ export const useImageStore = create<ImageState>()(
         return { byInstance: legacy.success ? { image: legacy.data } : {} };
       },
       merge: (persisted, current) => {
+        if (persisted === undefined || persisted === null) return current;
         const parsed = persistedSchema.safeParse(persisted);
         if (!parsed.success) {
           console.warn("Refusing to overwrite unreadable image data");

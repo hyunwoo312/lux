@@ -127,7 +127,7 @@ export function BaseWidget({
         )}
         <div
           className={cn(
-            "relative z-20 flex items-center justify-between gap-2 px-4 py-2",
+            "relative z-widget-chrome flex items-center justify-between gap-2 px-4 py-2",
             chromeHidden &&
               `
                 absolute inset-x-0 top-0 bg-gradient-to-b from-black/45 to-transparent pb-6

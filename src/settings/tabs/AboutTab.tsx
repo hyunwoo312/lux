@@ -112,7 +112,7 @@ export function AboutTab() {
         <LogoMark />
 
         <div className="flex flex-col items-center gap-1">
-          <h2 className="text-2xl font-semibold tracking-tight">Lux</h2>
+          <h2 className="text-heading font-semibold tracking-tight">Lux</h2>
           <p className="text-ink-3 text-body">A new tab worth opening.</p>
         </div>
 

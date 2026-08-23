@@ -8,7 +8,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import type { Transition } from "motion/react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GRID_MODIFIERS, VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
@@ -35,6 +35,8 @@ type FormState = { mode: "add" } | { mode: "edit"; link: QuickLink };
 const MORPH: Transition = { duration: DURATION.slow, ease: EASE_STANDARD };
 
 export function HomeTab({ editing }: { editing: boolean }) {
+  const reduced = useReducedMotion() ?? false;
+  const morph: Transition = reduced ? { duration: 0 } : MORPH;
   const instanceId = useWidgetInstanceId();
   const links = useQuickAccess((d) => d.links);
   const view = useQuickAccess((d) => d.view);
@@ -96,7 +98,7 @@ export function HomeTab({ editing }: { editing: boolean }) {
       <motion.div
         ref={scrollRef}
         animate={{ x: form ? "-12%" : 0, opacity: form ? 0 : 1 }}
-        transition={{ duration: DURATION.base, ease: EASE_OUT }}
+        transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}
         className={cn(
           "h-full overflow-x-hidden scroll-fade overflow-y-auto",
           form && "pointer-events-none",
@@ -128,7 +130,7 @@ export function HomeTab({ editing }: { editing: boolean }) {
                 {!form && (
                   <motion.li
                     layoutId={editing ? undefined : "qa-add"}
-                    transition={MORPH}
+                    transition={morph}
                     className="list-none"
                   >
                     <button
@@ -218,7 +220,7 @@ export function HomeTab({ editing }: { editing: boolean }) {
       {form && (
         <motion.div
           layoutId="qa-add"
-          transition={MORPH}
+          transition={morph}
           className="
             bg-popover border-border/60 absolute inset-x-2 top-1/2 z-10 -translate-y-1/2 rounded-lg
             border p-3 shadow-lg

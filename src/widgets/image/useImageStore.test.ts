@@ -223,3 +223,23 @@ describe("useImageStore", () => {
     });
   });
 });
+
+describe("absent versus unreadable", () => {
+  const merge = useImageStore.persist.getOptions().merge;
+  const current = useImageStore.getState();
+
+  it("treats nothing stored as a fresh start, not as data it must protect", () => {
+    expect((merge?.(undefined, current) as { unreadable: boolean }).unreadable).toBe(false);
+    expect((merge?.(null, current) as { unreadable: boolean }).unreadable).toBe(false);
+  });
+
+  it("still refuses to overwrite a value that is not a config at all", () => {
+    expect((merge?.("corrupted", current) as { unreadable: boolean }).unreadable).toBe(true);
+  });
+
+  it("keeps a tolerated object rather than declaring it unreadable", () => {
+    expect(
+      (merge?.({ byInstance: "nonsense" }, current) as { unreadable: boolean }).unreadable,
+    ).toBe(false);
+  });
+});

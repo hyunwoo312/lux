@@ -131,7 +131,9 @@ function HeaderClock({ className }: { className?: string }) {
   const dayPeriod = parts.find((part) => part.type === "dayPeriod")?.value;
 
   return (
-    <span className={cn("text-ink text-2xl font-semibold tracking-wide tabular-nums", className)}>
+    <span
+      className={cn("text-ink text-heading font-semibold tracking-wide tabular-nums", className)}
+    >
       {hour}
       <span className="mx-0.5">:</span>
       {minute}

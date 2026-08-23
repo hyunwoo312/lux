@@ -279,7 +279,7 @@ export function WidgetPalette() {
               align="start"
               sideOffset={8}
               collisionPadding={12}
-              className="z-50"
+              className="z-overlay"
               onOpenAutoFocus={(event) => event.preventDefault()}
               onCloseAutoFocus={(event) => event.preventDefault()}
             >

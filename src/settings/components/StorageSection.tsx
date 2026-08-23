@@ -96,7 +96,7 @@ function Tile({
         <Icon className="size-3.5 shrink-0" aria-hidden />
         {label}
       </span>
-      <span className="text-ink text-lg leading-none font-semibold tabular-nums">{value}</span>
+      <span className="text-ink text-title leading-none font-semibold tabular-nums">{value}</span>
       <span className="text-ink-3 text-micro">{detail}</span>
     </motion.div>
   );

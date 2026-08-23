@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { useEffect } from "react";
-import { motion, useAnimationControls } from "motion/react";
+import { motion, useAnimationControls, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 type BorderTrailProps = {
@@ -11,9 +11,11 @@ type BorderTrailProps = {
 
 export function BorderTrail({ active = true, size = 52, duration = 7 }: BorderTrailProps) {
   const controls = useAnimationControls();
+  const reduced = useReducedMotion() ?? false;
+  const running = active && !reduced;
 
   useEffect(() => {
-    if (!active) {
+    if (!running) {
       controls.stop();
       return;
     }
@@ -21,7 +23,7 @@ export function BorderTrail({ active = true, size = 52, duration = 7 }: BorderTr
       offsetDistance: ["0%", "100%"],
       transition: { repeat: Infinity, duration, ease: "linear" },
     });
-  }, [active, controls, duration]);
+  }, [running, controls, duration]);
 
   return (
     <div
@@ -32,7 +34,7 @@ export function BorderTrail({ active = true, size = 52, duration = 7 }: BorderTr
           [mask-composite:intersect]
           [mask-image:linear-gradient(transparent,transparent),linear-gradient(#000,#000)]
         `,
-        active && "opacity-100",
+        running && "opacity-100",
       )}
     >
       <motion.div

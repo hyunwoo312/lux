@@ -29,7 +29,7 @@ export function LinkIcon({
           aria-hidden
           className={cn(
             "bg-foreground/5 flex size-full items-center justify-center leading-none",
-            view === "grid" ? "text-lg" : "text-micro",
+            view === "grid" ? "text-title" : "text-micro",
           )}
         >
           {icon}

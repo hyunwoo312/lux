@@ -95,6 +95,7 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
         </div>
         {locked && lock && (
           <ConnectOverlay
+            icon={plugin.icon}
             message={lock.message}
             actionLabel={lock.actionLabel}
             onAction={lock.onAction}

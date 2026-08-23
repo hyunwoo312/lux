@@ -52,7 +52,7 @@ function CrashCard({ message }: { message: string }) {
       <div className="bg-card text-card-foreground w-full max-w-md rounded-2xl border p-6 shadow-lg">
         <div className="flex items-center gap-2.5">
           <TriangleAlert className="text-destructive size-5 shrink-0" aria-hidden />
-          <h1 className="text-base font-semibold">Lux hit an error</h1>
+          <h1 className="text-body-lg font-semibold">Lux hit an error</h1>
         </div>
 
         <p className="text-ink-3 mt-2 text-body">

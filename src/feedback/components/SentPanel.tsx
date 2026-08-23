@@ -1,4 +1,4 @@
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { Check, Copy, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { CWS_REVIEW_URL } from "@/lib/links";
 import { openUrl } from "@/lib/open-url";
 
 export function SentPanel({ id, onClose }: { id: string; onClose: () => void }) {
+  const reduced = useReducedMotion() ?? false;
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -23,9 +24,9 @@ export function SentPanel({ id, onClose }: { id: string; onClose: () => void }) 
     <div className="flex flex-col items-center gap-3 px-6 py-10 text-center">
       <motion.span
         className="bg-primary/10 text-primary grid size-11 place-items-center rounded-full"
-        initial={{ scale: 0.6, opacity: 0 }}
+        initial={reduced ? false : { scale: 0.6, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={SPRING_POP}
+        transition={reduced ? { duration: 0 } : SPRING_POP}
       >
         <Check className="size-5" aria-hidden />
       </motion.span>
