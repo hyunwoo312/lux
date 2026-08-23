@@ -1,51 +1,31 @@
-import { useCallback, useRef, useSyncExternalStore } from "react";
-import {
-  polledResourceVersion,
-  usePolledResource,
-  watchPolledResource,
-} from "@/widgets/core/usePolledResource";
-import { fetchQuote, parseCachedQuote } from "@/widgets/stocks/lib/yahoo-finance";
-import { extendedSession, marketState, quoteCacheKey } from "@/widgets/stocks/lib/quote";
+import { useCallback } from "react";
+import { peekPolledResource, usePolledResource } from "@/widgets/core/usePolledResource";
+import { quoteKey } from "@/widgets/stocks/lib/cacheKeys";
+import { fetchQuote, parseCachedQuote } from "@/widgets/stocks/lib/quotes";
+import { extendedSession, isAlwaysOpen, marketState } from "@/widgets/stocks/lib/quote";
 import { useStocks } from "@/widgets/stocks/useStocksStore";
-import { useStocksSync } from "@/widgets/stocks/hooks/useStocksSync";
 import type { Quote, StockRange } from "@/widgets/stocks/types";
 
-const OPEN_INTERVAL_MS = 60_000;
-const CLOSED_INTERVAL_MS = 10 * 60_000;
+const FOCUSED_OPEN_MS = 60_000;
+const FOCUSED_CLOSED_MS = 10 * 60_000;
+const BACKGROUND_MS = 15 * 60_000;
 
-export function useQuotesVersion(symbols: string[], range: StockRange, enabled: boolean): number {
-  const subscribe = useCallback(
-    (onChange: () => void) => {
-      if (!enabled) return () => undefined;
-      const unsubscribes = symbols.map((symbol) =>
-        watchPolledResource(quoteCacheKey(symbol, range), onChange),
-      );
-      return () => {
-        for (const unsubscribe of unsubscribes) unsubscribe();
-      };
-    },
-    [symbols, range, enabled],
-  );
-  const getVersion = useCallback(
-    () =>
-      symbols.reduce((sum, symbol) => sum + polledResourceVersion(quoteCacheKey(symbol, range)), 0),
-    [symbols, range],
-  );
-  return useSyncExternalStore(subscribe, getVersion);
+function focusedInterval(quote: Quote | undefined, nowMs: number): number {
+  if (!quote) return FOCUSED_OPEN_MS;
+  if (isAlwaysOpen(quote)) return FOCUSED_OPEN_MS;
+  const idle = marketState(quote, nowMs) === "closed" && !extendedSession(quote, nowMs);
+  return idle ? FOCUSED_CLOSED_MS : FOCUSED_OPEN_MS;
 }
 
-export function useQuote(symbol: string, rangeOverride?: StockRange) {
+type QuoteOptions = { range?: StockRange; focused?: boolean };
+
+export function useQuote(
+  symbol: string,
+  { range: rangeOverride, focused = false }: QuoteOptions = {},
+) {
   const storeRange = useStocks((d) => d.range);
   const range = rangeOverride ?? storeRange;
-  const lastData = useRef<Quote | null>(null);
-
-  const now = Date.now();
-  const intervalMs =
-    lastData.current &&
-    marketState(lastData.current, now) === "closed" &&
-    !extendedSession(lastData.current, now)
-      ? CLOSED_INTERVAL_MS
-      : OPEN_INTERVAL_MS;
+  const cacheKey = quoteKey(symbol, range);
 
   const fetcher = useCallback(
     (signal: AbortSignal) => fetchQuote(symbol, range, signal),
@@ -53,16 +33,17 @@ export function useQuote(symbol: string, rangeOverride?: StockRange) {
   );
 
   const resource = usePolledResource(fetcher, {
-    intervalMs,
-    cacheKey: quoteCacheKey(symbol, range),
+    intervalMs: focused
+      ? focusedInterval(peekPolledResource<Quote>(cacheKey), Date.now())
+      : BACKGROUND_MS,
+    cacheKey,
     persist: true,
     parsePersisted: parseCachedQuote,
   });
 
-  useStocksSync(resource.refresh, resource.isRefreshing, resource.lastSyncedAt);
-
-  const data = resource.state.status === "success" ? resource.state.data : null;
-  lastData.current = data;
-
-  return { ...resource, data, range };
+  return {
+    ...resource,
+    data: resource.state.status === "success" ? resource.state.data : null,
+    range,
+  };
 }

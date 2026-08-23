@@ -2,14 +2,25 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
+import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { invalidatePolledResource } from "@/widgets/core/usePolledResource";
 import { syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
-import { quoteCacheKey } from "@/widgets/stocks/lib/quote";
-import { INDEX_RANGE, MARKET_INDICES } from "@/widgets/stocks/lib/indices";
-import { STOCK_RANGES, STOCK_SORTS, type StockRange, type StockSort } from "@/widgets/stocks/types";
+import { quoteKey, sparkKey } from "@/widgets/stocks/lib/cacheKeys";
+import { DEFAULT_INDICES } from "@/widgets/stocks/lib/indices";
+import {
+  CHANGE_MODES,
+  CHART_STYLES,
+  DAY_RANGE,
+  STOCK_RANGES,
+  STOCK_VIEWS,
+  type ChangeMode,
+  type ChartStyle,
+  type StockRange,
+  type StockView,
+} from "@/widgets/stocks/types";
 
 export const MAX_SYMBOLS = 20;
 export const STOCKS_SYNC_COOLDOWN_MS = 60_000;
@@ -18,8 +29,10 @@ type StocksData = {
   symbols: string[];
   range: StockRange;
   showName: boolean;
-  showIndices: boolean;
-  sort: StockSort;
+  indexSymbols: string[];
+  view: StockView;
+  changeMode: ChangeMode;
+  chartStyle: ChartStyle;
   selectedSymbol: string | null;
 };
 
@@ -34,8 +47,10 @@ type StocksState = {
   reorderSymbols: (instanceId: string, activeSymbol: string, overSymbol: string) => void;
   setRange: (instanceId: string, range: StockRange) => void;
   setShowName: (instanceId: string, showName: boolean) => void;
-  setShowIndices: (instanceId: string, showIndices: boolean) => void;
-  setSort: (instanceId: string, sort: StockSort) => void;
+  setIndexSymbols: (instanceId: string, indexSymbols: string[]) => void;
+  setView: (instanceId: string, view: StockView) => void;
+  setChangeMode: (instanceId: string, changeMode: ChangeMode) => void;
+  setChartStyle: (instanceId: string, chartStyle: ChartStyle) => void;
   selectSymbol: (instanceId: string, symbol: string) => void;
   clearSelection: (instanceId: string) => void;
   beginSync: (instanceId: string) => void;
@@ -49,23 +64,26 @@ const DEFAULT_DATA: StocksData = {
   symbols: ["AAPL", "MSFT", "NVDA", "TSLA"],
   range: "1d",
   showName: true,
-  showIndices: false,
-  sort: "manual",
+  indexSymbols: [],
+  view: "list",
+  changeMode: "percent",
+  chartStyle: "line",
   selectedSymbol: null,
 };
 
 const dataSchema = z.object({
-  symbols: z.array(z.string()).max(MAX_SYMBOLS).default([]),
-  range: z.enum(STOCK_RANGES).default("1d"),
-  showName: z.boolean().default(true),
-  showIndices: z.boolean().default(false),
-  sort: z.enum(STOCK_SORTS).default("manual"),
-  selectedSymbol: z.string().nullable().default(null),
+  symbols: tolerantArray(z.string()),
+  range: z.enum(STOCK_RANGES).catch("1d"),
+  showName: z.boolean().catch(true),
+  showIndices: z.boolean().catch(false).default(false),
+  indexSymbols: tolerantArray(z.string()),
+  view: z.enum(STOCK_VIEWS).catch("list"),
+  changeMode: z.enum(CHANGE_MODES).catch("percent"),
+  chartStyle: z.enum(CHART_STYLES).catch("line"),
+  selectedSymbol: z.string().nullable().catch(null),
 });
 
-const persistedSchema = z.object({
-  byInstance: z.record(z.string(), dataSchema),
-});
+const persistedSchema = z.object({ byInstance: tolerantRecord(dataSchema) });
 
 const gatedStorage = createGatedChromeStorage();
 
@@ -122,10 +140,14 @@ export const useStocksStore = create<StocksState>()(
         set((state) => update(state, instanceId, (data) => ({ ...data, range }))),
       setShowName: (instanceId, showName) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, showName }))),
-      setShowIndices: (instanceId, showIndices) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, showIndices }))),
-      setSort: (instanceId, sort) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, sort }))),
+      setIndexSymbols: (instanceId, indexSymbols) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, indexSymbols }))),
+      setView: (instanceId, view) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, view }))),
+      setChangeMode: (instanceId, changeMode) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, changeMode }))),
+      setChartStyle: (instanceId, chartStyle) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, chartStyle }))),
       selectSymbol: (instanceId, symbol) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, selectedSymbol: symbol }))),
       clearSelection: (instanceId) =>
@@ -155,13 +177,13 @@ export const useStocksStore = create<StocksState>()(
         if (remainingMs > 0) return;
         const data = get().byInstance[instanceId];
         if (!data) return;
+        invalidatePolledResource(sparkKey(data.symbols, DAY_RANGE));
         for (const symbol of data.symbols) {
-          invalidatePolledResource(quoteCacheKey(symbol, data.range));
+          invalidatePolledResource(quoteKey(symbol, DAY_RANGE));
+          if (data.range !== DAY_RANGE) invalidatePolledResource(quoteKey(symbol, data.range));
         }
-        if (data.showIndices) {
-          for (const index of MARKET_INDICES) {
-            invalidatePolledResource(quoteCacheKey(index.symbol, INDEX_RANGE));
-          }
+        if (data.indexSymbols.length > 0) {
+          invalidatePolledResource(sparkKey(data.indexSymbols, DAY_RANGE));
         }
         set((state) => ({
           syncNonce: { ...state.syncNonce, [instanceId]: (state.syncNonce[instanceId] ?? 0) + 1 },
@@ -190,29 +212,37 @@ export const useStocksStore = create<StocksState>()(
               symbols: data.symbols,
               range: data.range,
               showName: data.showName,
-              showIndices: data.showIndices,
-              sort: data.sort,
+              indexSymbols: data.indexSymbols,
+              view: data.view,
+              changeMode: data.changeMode,
+              chartStyle: data.chartStyle,
               selectedSymbol: data.selectedSymbol,
             },
           ]),
         ),
       }),
-      merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(persisted);
-        if (!parsed.success) return current;
-        const byInstance: Record<string, StocksData> = {};
-        for (const [id, data] of Object.entries(parsed.data.byInstance)) {
-          byInstance[id] = {
-            symbols: data.symbols,
-            range: data.range,
-            showName: data.showName,
-            showIndices: data.showIndices,
-            sort: data.sort,
-            selectedSymbol: data.selectedSymbol,
-          };
-        }
-        return { ...current, byInstance };
-      },
+      merge: (persisted, current) =>
+        mergePersisted("widget:stocks", persistedSchema, persisted, current, (parsed) => {
+          const byInstance: Record<string, StocksData> = {};
+          for (const [id, data] of Object.entries(parsed.byInstance)) {
+            byInstance[id] = {
+              symbols: data.symbols.slice(0, MAX_SYMBOLS),
+              range: data.range,
+              showName: data.showName,
+              indexSymbols:
+                data.indexSymbols.length > 0
+                  ? data.indexSymbols
+                  : data.showIndices
+                    ? DEFAULT_INDICES
+                    : [],
+              view: data.view,
+              changeMode: data.changeMode,
+              chartStyle: data.chartStyle,
+              selectedSymbol: data.selectedSymbol,
+            };
+          }
+          return { ...current, byInstance };
+        }),
     },
   ),
 );

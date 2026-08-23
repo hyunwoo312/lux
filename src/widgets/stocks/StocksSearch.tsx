@@ -1,19 +1,46 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
-import { Check, ChevronLeft, TrendingUp } from "lucide-react";
+import {
+  Banknote,
+  Bitcoin,
+  Boxes,
+  Building2,
+  ChartLine,
+  Check,
+  ChevronLeft,
+  Layers,
+  PiggyBank,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { ExpandingSearch } from "@/components/ExpandingSearch";
 import { cn } from "@/lib/utils";
 import { accentClass } from "@/widgets/core/accent";
-import { searchSymbols } from "@/widgets/stocks/lib/yahoo-finance";
+import { searchSymbols } from "@/widgets/stocks/lib/symbols";
 import { MAX_SYMBOLS, useStocks, useStocksStore } from "@/widgets/stocks/useStocksStore";
+import { useDetailSymbol } from "@/widgets/stocks/hooks/useDetailSymbol";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import { STOCKS_ACCENT, type SymbolSearchResult } from "@/widgets/stocks/types";
+import {
+  STOCKS_ACCENT,
+  type InstrumentType,
+  type SymbolSearchResult,
+} from "@/widgets/stocks/types";
+import { TYPE } from "@/lib/type";
+
+const TYPE_ICON: Record<InstrumentType, LucideIcon> = {
+  EQUITY: Building2,
+  ETF: Layers,
+  INDEX: ChartLine,
+  CRYPTOCURRENCY: Bitcoin,
+  CURRENCY: Banknote,
+  FUTURE: Boxes,
+  MUTUALFUND: PiggyBank,
+};
 
 export function StocksSearch() {
   const baseId = useId();
   const instanceId = useWidgetInstanceId();
   const symbols = useStocks((d) => d.symbols);
-  const selectedSymbol = useStocks((d) => d.selectedSymbol);
+  const detail = useDetailSymbol();
   const addSymbol = useStocksStore((s) => s.addSymbol);
   const clearSelection = useStocksStore((s) => s.clearSelection);
 
@@ -118,7 +145,7 @@ export function StocksSearch() {
     }
   };
 
-  const inDetail = symbols.length > 1 && selectedSymbol !== null;
+  const inDetail = detail !== null && symbols.length > 1;
   if (inDetail) {
     return (
       <button
@@ -175,6 +202,8 @@ export function StocksSearch() {
             >
               {results.map((result, index) => {
                 const added = isAdded(result);
+                const Icon = result.instrumentType ? TYPE_ICON[result.instrumentType] : ChartLine;
+                const meta = [result.exchange, result.sector].filter(Boolean).join(" · ");
                 return (
                   <li key={result.symbol}>
                     <button
@@ -198,10 +227,15 @@ export function StocksSearch() {
                         added && "opacity-60",
                       )}
                     >
-                      <TrendingUp className="text-ink-3 size-4 shrink-0" aria-hidden />
-                      <span className="shrink-0 font-medium">{result.symbol}</span>
-                      <span className="text-ink-3 min-w-0 flex-1 truncate text-caption">
-                        {result.name}
+                      <Icon className="text-ink-4 size-4 shrink-0" aria-hidden />
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="flex min-w-0 items-baseline gap-1.5">
+                          <span className="shrink-0 font-medium">{result.symbol}</span>
+                          <span className={cn(TYPE.rowSubtitle, "min-w-0 truncate")}>
+                            {result.name}
+                          </span>
+                        </span>
+                        {meta ? <span className={cn(TYPE.rowMeta, "truncate")}>{meta}</span> : null}
                       </span>
                       {added && <Check className="text-ink-3 size-4 shrink-0" aria-hidden />}
                     </button>

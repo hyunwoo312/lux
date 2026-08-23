@@ -1,57 +1,46 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
+import {
+  rectSortingStrategy,
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { GRID_MODIFIERS, VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
 import { EASE_OUT } from "@/lib/motion";
-import { peekPolledResource } from "@/widgets/core/usePolledResource";
+import { cn } from "@/lib/utils";
+import { useElementSize } from "@/hooks/useElementSize";
 import { SortableRow } from "@/widgets/core/SortableRow";
 import { StockRow } from "@/widgets/stocks/components/StockRow";
+import { StockCard } from "@/widgets/stocks/components/StockCard";
 import { StockDetail } from "@/widgets/stocks/components/StockDetail";
-import { IndexStrip } from "@/widgets/stocks/components/IndexStrip";
-import { deriveChange, quoteCacheKey, referencePrice } from "@/widgets/stocks/lib/quote";
-import { useQuotesVersion } from "@/widgets/stocks/hooks/useQuote";
+import { IndexRail } from "@/widgets/stocks/components/IndexRail";
+import { StocksEmptyState } from "@/widgets/stocks/components/StocksEmptyState";
+import { useWatchlistSparks } from "@/widgets/stocks/hooks/useSparks";
+import { useDetailSymbol } from "@/widgets/stocks/hooks/useDetailSymbol";
+import { gridColumns, showsSparkline } from "@/widgets/stocks/lib/layout";
+
+const VIEW_SWAP_MS = 0.22;
 import { useStocks, useStocksStore } from "@/widgets/stocks/useStocksStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import type { Quote, StockRange, StockSort } from "@/widgets/stocks/types";
-
-function orderedSymbols(symbols: string[], sort: StockSort, range: StockRange): string[] {
-  if (sort === "alpha") return [...symbols].sort((a, b) => a.localeCompare(b));
-  if (sort === "change") {
-    const percentOf = (symbol: string) => {
-      const quote = peekPolledResource<Quote>(quoteCacheKey(symbol, range));
-      return quote
-        ? deriveChange(quote, referencePrice(quote, range)).percent
-        : Number.NEGATIVE_INFINITY;
-    };
-    return [...symbols].sort((a, b) => percentOf(b) - percentOf(a));
-  }
-  return symbols;
-}
 
 export function StocksWidget() {
   const reduced = useReducedMotion();
   const instanceId = useWidgetInstanceId();
   const symbols = useStocks((d) => d.symbols);
-  const range = useStocks((d) => d.range);
-  const sort = useStocks((d) => d.sort);
-  const selectedSymbol = useStocks((d) => d.selectedSymbol);
-  const showIndices = useStocks((d) => d.showIndices);
+  const view = useStocks((d) => d.view);
+  const addSymbol = useStocksStore((s) => s.addSymbol);
   const selectSymbol = useStocksStore((s) => s.selectSymbol);
   const removeSymbol = useStocksStore((s) => s.removeSymbol);
   const reorderSymbols = useStocksStore((s) => s.reorderSymbols);
 
+  const [ref, { width }] = useElementSize<HTMLDivElement>();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const { map } = useWatchlistSparks();
 
-  useQuotesVersion(symbols, range, sort === "change");
-  const ordered = orderedSymbols(symbols, sort, range);
-
-  const detail =
-    symbols.length === 1
-      ? (symbols[0] ?? null)
-      : selectedSymbol && symbols.includes(selectedSymbol)
-        ? selectedSymbol
-        : null;
+  const isGrid = view === "grid";
+  const showSparkline = showsSparkline(width);
+  const detail = useDetailSymbol();
 
   const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT };
   const offset = reduced ? 0 : "4%";
@@ -63,18 +52,26 @@ export function StocksWidget() {
     }
   };
 
+  const renderItem = (symbol: string) => {
+    const shared = {
+      symbol,
+      spark: map?.[symbol],
+      onSelect: () => selectSymbol(instanceId, symbol),
+      onRemove: () => removeSymbol(instanceId, symbol),
+    };
+    return isGrid ? (
+      <StockCard {...shared} />
+    ) : (
+      <StockRow {...shared} showSparkline={showSparkline} />
+    );
+  };
+
   return (
-    <div className="flex h-full flex-col overflow-hidden">
-      {showIndices ? <IndexStrip /> : null}
+    <div ref={ref} className="flex h-full flex-col overflow-hidden">
+      <IndexRail />
       <div className="relative min-h-0 flex-1">
         {symbols.length === 0 ? (
-          <div
-            className="
-              text-ink-3 flex h-full items-center justify-center px-2 text-center text-body
-            "
-          >
-            Search above to add a symbol.
-          </div>
+          <StocksEmptyState onAdd={(symbol) => addSymbol(instanceId, symbol)} />
         ) : (
           <AnimatePresence initial={false} mode="popLayout">
             {detail ? (
@@ -91,48 +88,47 @@ export function StocksWidget() {
             ) : (
               <motion.div
                 key="list"
-                className="absolute inset-0 overflow-x-hidden scroll-fade overflow-y-auto"
+                className="scroll-fade absolute inset-0 overflow-x-hidden overflow-y-auto"
                 initial={{ opacity: 0, y: offset }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: offset }}
                 transition={transition}
               >
-                {sort === "manual" ? (
+                <motion.div
+                  key={view}
+                  initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 6 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: reduced ? 0 : VIEW_SWAP_MS, ease: EASE_OUT }}
+                >
                   <DndContext
                     sensors={sensors}
                     collisionDetection={closestCenter}
-                    modifiers={VERTICAL_LIST_MODIFIERS}
+                    modifiers={isGrid ? GRID_MODIFIERS : VERTICAL_LIST_MODIFIERS}
                     onDragEnd={handleDragEnd}
                   >
-                    <SortableContext items={ordered} strategy={verticalListSortingStrategy}>
-                      <ul className="flex flex-col gap-0.5">
-                        <AnimatePresence initial={false} mode="popLayout">
-                          {ordered.map((symbol) => (
-                            <SortableRow key={symbol} id={symbol}>
-                              <StockRow
-                                symbol={symbol}
-                                onSelect={() => selectSymbol(instanceId, symbol)}
-                                onRemove={() => removeSymbol(instanceId, symbol)}
-                              />
-                            </SortableRow>
-                          ))}
-                        </AnimatePresence>
+                    <SortableContext
+                      items={symbols}
+                      strategy={isGrid ? rectSortingStrategy : verticalListSortingStrategy}
+                    >
+                      <ul
+                        className={cn(isGrid ? "grid gap-1" : "flex flex-col gap-0.5")}
+                        style={
+                          isGrid
+                            ? {
+                                gridTemplateColumns: `repeat(${gridColumns(width)}, minmax(0, 1fr))`,
+                              }
+                            : undefined
+                        }
+                      >
+                        {symbols.map((symbol) => (
+                          <SortableRow key={symbol} id={symbol}>
+                            {renderItem(symbol)}
+                          </SortableRow>
+                        ))}
                       </ul>
                     </SortableContext>
                   </DndContext>
-                ) : (
-                  <ul className="flex flex-col gap-0.5">
-                    {ordered.map((symbol) => (
-                      <li key={symbol}>
-                        <StockRow
-                          symbol={symbol}
-                          onSelect={() => selectSymbol(instanceId, symbol)}
-                          onRemove={() => removeSymbol(instanceId, symbol)}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>

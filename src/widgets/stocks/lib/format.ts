@@ -1,4 +1,4 @@
-import type { StockRange } from "@/widgets/stocks/types";
+import type { ChangeMode, StockRange } from "@/widgets/stocks/types";
 
 export function formatSigned(value: number, digits = 2): string {
   const sign = value > 0 ? "+" : value < 0 ? "-" : "";
@@ -13,19 +13,34 @@ function magnitudeDecimals(value: number): number {
   return 8;
 }
 
-export function formatPrice(value: number, currency: string, priceHint = 2): string {
-  const maxDigits = Math.min(8, Math.max(priceHint, magnitudeDecimals(value)));
-  const options: Intl.NumberFormatOptions = {
-    style: "currency",
-    currency,
+function fractionDigits(value: number, priceHint: number): number {
+  return Math.min(8, Math.max(priceHint, magnitudeDecimals(value)));
+}
+
+export function formatNumber(value: number, priceHint = 2): string {
+  const digits = fractionDigits(value, priceHint);
+  return new Intl.NumberFormat(undefined, {
     minimumFractionDigits: 2,
-    maximumFractionDigits: maxDigits,
-  };
+    maximumFractionDigits: digits,
+  }).format(value);
+}
+
+export function formatPrice(value: number, currency: string, priceHint = 2): string {
+  const digits = fractionDigits(value, priceHint);
   try {
-    return new Intl.NumberFormat(undefined, options).format(value);
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: digits,
+    }).format(value);
   } catch {
-    return value.toFixed(maxDigits);
+    return value.toFixed(digits);
   }
+}
+
+export function formatChange(change: number, percent: number, mode: ChangeMode): string {
+  return mode === "percent" ? `${formatSigned(percent)}%` : formatSigned(change);
 }
 
 export function formatCountdown(ms: number): string {
@@ -39,19 +54,46 @@ export function formatCountdown(ms: number): string {
 }
 
 export function formatVolume(value: number): string {
+  if (value >= 1e12) return `${(value / 1e12).toFixed(2)}T`;
   if (value >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
   if (value >= 1e6) return `${(value / 1e6).toFixed(2)}M`;
   if (value >= 1e3) return `${(value / 1e3).toFixed(1)}K`;
   return String(value);
 }
 
-export function formatChartTime(seconds: number, range: StockRange, hour12: boolean): string {
-  const date = new Date(seconds * 1000);
-  const options: Intl.DateTimeFormatOptions =
+function withZone(
+  options: Intl.DateTimeFormatOptions,
+  timeZone: string | null,
+): Intl.DateTimeFormatOptions {
+  return timeZone ? { ...options, timeZone } : options;
+}
+
+function safeFormat(date: Date, options: Intl.DateTimeFormatOptions): string {
+  try {
+    return new Intl.DateTimeFormat(undefined, options).format(date);
+  } catch {
+    return new Intl.DateTimeFormat(undefined, { ...options, timeZone: undefined }).format(date);
+  }
+}
+
+export function formatExchangeTime(ms: number, timeZone: string | null, hour12: boolean): string {
+  return safeFormat(
+    new Date(ms),
+    withZone({ hour: "numeric", minute: "2-digit", hour12, timeZoneName: "short" }, timeZone),
+  );
+}
+
+export function formatChartTime(
+  seconds: number,
+  range: StockRange,
+  hour12: boolean,
+  timeZone: string | null = null,
+): string {
+  const base: Intl.DateTimeFormatOptions =
     range === "1d"
       ? { hour: "numeric", minute: "2-digit", hour12 }
       : range === "5d"
         ? { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12 }
         : { month: "short", day: "numeric", year: "numeric" };
-  return new Intl.DateTimeFormat(undefined, options).format(date);
+  return safeFormat(new Date(seconds * 1000), withZone(base, timeZone));
 }

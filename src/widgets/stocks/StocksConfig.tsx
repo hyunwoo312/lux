@@ -1,58 +1,69 @@
 import {
+  ConfigMultiToggle,
   ConfigSegmented,
-  ConfigSelect,
   WidgetConfigGroup,
   WidgetConfigItem,
 } from "@/components/config/WidgetConfig";
 import { useStocks, useStocksStore } from "@/widgets/stocks/useStocksStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import type { StockRange, StockSort } from "@/widgets/stocks/types";
-
-const RANGE_OPTIONS: { value: StockRange; label: string }[] = [
-  { value: "1d", label: "1 day" },
-  { value: "5d", label: "5 days" },
-  { value: "1mo", label: "1 month" },
-  { value: "6mo", label: "6 months" },
-  { value: "1y", label: "1 year" },
-  { value: "ytd", label: "YTD" },
-  { value: "5y", label: "5 years" },
-  { value: "max", label: "Max" },
-];
+import { INDEX_CATALOGUE, MAX_INDICES } from "@/widgets/stocks/lib/indices";
+import type { ChangeMode, ChartStyle } from "@/widgets/stocks/types";
 
 const NAME_OPTIONS: { value: "show" | "hide"; label: string }[] = [
   { value: "show", label: "Show" },
   { value: "hide", label: "Hide" },
 ];
 
-const SORT_OPTIONS: { value: StockSort; label: string }[] = [
-  { value: "manual", label: "Manual" },
-  { value: "change", label: "% change" },
-  { value: "alpha", label: "A–Z" },
+const CHANGE_OPTIONS: { value: ChangeMode; label: string }[] = [
+  { value: "percent", label: "Percent" },
+  { value: "absolute", label: "Price" },
 ];
+
+const STYLE_OPTIONS: { value: ChartStyle; label: string }[] = [
+  { value: "line", label: "Line" },
+  { value: "candle", label: "Candles" },
+];
+
+const INDEX_OPTIONS = INDEX_CATALOGUE.map((index) => ({
+  value: index.symbol,
+  label: index.label,
+}));
 
 export function StocksConfig() {
   const instanceId = useWidgetInstanceId();
-  const range = useStocks((d) => d.range);
-  const setRange = useStocksStore((s) => s.setRange);
   const showName = useStocks((d) => d.showName);
   const setShowName = useStocksStore((s) => s.setShowName);
-  const showIndices = useStocks((d) => d.showIndices);
-  const setShowIndices = useStocksStore((s) => s.setShowIndices);
-  const sort = useStocks((d) => d.sort);
-  const setSort = useStocksStore((s) => s.setSort);
+  const changeMode = useStocks((d) => d.changeMode);
+  const setChangeMode = useStocksStore((s) => s.setChangeMode);
+  const chartStyle = useStocks((d) => d.chartStyle);
+  const setChartStyle = useStocksStore((s) => s.setChartStyle);
+  const indexSymbols = useStocks((d) => d.indexSymbols);
+  const setIndexSymbols = useStocksStore((s) => s.setIndexSymbols);
 
   return (
     <>
       <WidgetConfigGroup label="Display">
         <WidgetConfigItem
-          title="Range"
-          description="Time span of the row chart"
+          title="Change"
+          description="Show movement as a percentage or in price"
           control={
-            <ConfigSelect
-              label="Chart range"
-              value={range}
-              options={RANGE_OPTIONS}
-              onChange={(value) => setRange(instanceId, value)}
+            <ConfigSegmented
+              label="Change"
+              value={changeMode}
+              options={CHANGE_OPTIONS}
+              onChange={(value) => setChangeMode(instanceId, value)}
+            />
+          }
+        />
+        <WidgetConfigItem
+          title="Chart style"
+          description="How the detail chart draws price"
+          control={
+            <ConfigSegmented
+              label="Chart style"
+              value={chartStyle}
+              options={STYLE_OPTIONS}
+              onChange={(value) => setChartStyle(instanceId, value)}
             />
           }
         />
@@ -68,30 +79,21 @@ export function StocksConfig() {
             />
           }
         />
+      </WidgetConfigGroup>
+
+      <WidgetConfigGroup label="Market rail">
         <WidgetConfigItem
-          title="Market indices"
-          description="Show S&P 500, Nasdaq and Dow above the watchlist"
-          control={
-            <ConfigSegmented
-              label="Market indices"
-              value={showIndices ? "show" : "hide"}
-              options={NAME_OPTIONS}
-              onChange={(value) => setShowIndices(instanceId, value === "show")}
-            />
-          }
-        />
-        <WidgetConfigItem
-          title="Sort"
-          description="Order the watchlist (Manual allows drag)"
-          control={
-            <ConfigSelect
-              label="Sort"
-              value={sort}
-              options={SORT_OPTIONS}
-              onChange={(value) => setSort(instanceId, value)}
-            />
-          }
-        />
+          title="Indices"
+          description={`Shown above the watchlist. Pick up to ${MAX_INDICES}.`}
+        >
+          <ConfigMultiToggle
+            label="Market indices"
+            values={indexSymbols}
+            options={INDEX_OPTIONS}
+            maxSelected={MAX_INDICES}
+            onChange={(values) => setIndexSymbols(instanceId, values)}
+          />
+        </WidgetConfigItem>
       </WidgetConfigGroup>
 
       <WidgetConfigGroup label="About">

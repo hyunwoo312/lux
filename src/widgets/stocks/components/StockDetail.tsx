@@ -1,56 +1,114 @@
-import { RotateCw } from "lucide-react";
+import { CandlestickChart, LineChart } from "lucide-react";
+import { IconActionButton } from "@/components/IconActionButton";
 import { RetryButton, StateMessage } from "@/components/StateMessage";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TYPE } from "@/lib/type";
 import { cn } from "@/lib/utils";
 import {
   formatCountdown,
+  formatExchangeTime,
+  formatNumber,
   formatPrice,
-  formatSigned,
   formatVolume,
 } from "@/widgets/stocks/lib/format";
 import {
+  changeOf,
   changeTone,
-  deriveChange,
+  directionOf,
   extendedSession,
+  isAlwaysOpen,
   marketState,
   referencePrice,
 } from "@/widgets/stocks/lib/quote";
 import { useQuote } from "@/widgets/stocks/hooks/useQuote";
+import { useStocksSync } from "@/widgets/stocks/hooks/useStocksSync";
+import { useStocks, useStocksStore } from "@/widgets/stocks/useStocksStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
+import { ChangeValue } from "@/widgets/stocks/components/ChangeValue";
+import { PriceChart } from "@/widgets/stocks/components/PriceChart";
+import { RangeChips } from "@/widgets/stocks/components/RangeChips";
 import { StockRemoveButton } from "@/widgets/stocks/components/StockRemoveButton";
-import { Sparkline } from "@/widgets/stocks/components/Sparkline";
-import type { Quote, StockRange } from "@/widgets/stocks/types";
-
-function formatRange(
-  low: number | null,
-  high: number | null,
-  currency: string,
-  priceHint: number,
-): string {
-  if (low == null || high == null) return "—";
-  return `${formatPrice(low, currency, priceHint)} – ${formatPrice(high, currency, priceHint)}`;
-}
+import { RANGE_LABEL, type Quote, type StockRange } from "@/widgets/stocks/types";
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <dt className="text-ink-3 text-caption">{label}</dt>
-      <dd className="text-ink truncate text-body tabular-nums">{value}</dd>
+    <div className="flex min-w-0 flex-col gap-0.5">
+      <dt className={TYPE.rowMeta}>{label}</dt>
+      <dd className="text-ink truncate text-caption tabular-nums slashed-zero">{value}</dd>
     </div>
   );
 }
 
-function RangeBar({ low, high, value }: { low: number; high: number; value: number }) {
+function RangeMeter({
+  label,
+  low,
+  high,
+  value,
+  priceHint,
+}: {
+  label: string;
+  low: number | null;
+  high: number | null;
+  value: number;
+  priceHint: number;
+}) {
+  if (low == null || high == null) return null;
   const fraction = high > low ? Math.min(1, Math.max(0, (value - low) / (high - low))) : 0.5;
+
   return (
-    <div className="bg-muted relative mt-1 h-1 rounded-full">
-      <div
-        className="
-          bg-foreground absolute top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full
-        "
-        style={{ left: `${fraction * 100}%` }}
-      />
+    <div className="flex min-w-0 flex-col gap-1">
+      <dt className={TYPE.rowMeta}>{label}</dt>
+      <dd className="flex flex-col gap-1">
+        <div className="bg-foreground/10 relative h-1 rounded-full">
+          <span
+            className="
+              bg-ink absolute top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full
+            "
+            style={{ left: `${fraction * 100}%` }}
+          />
+        </div>
+        <div className="text-ink-3 flex justify-between text-micro tabular-nums slashed-zero">
+          <span>{formatNumber(low, priceHint)}</span>
+          <span>{formatNumber(high, priceHint)}</span>
+        </div>
+      </dd>
     </div>
+  );
+}
+
+function MarketStatus({ data }: { data: Quote }) {
+  const clock24h = useAppSettingsStore((state) => state.clock24h);
+  const now = Date.now();
+  const state = isAlwaysOpen(data) ? "open" : marketState(data, now);
+  const opensInMs = data.sessionStart != null ? data.sessionStart * 1000 - now : null;
+  const asOf =
+    data.asOf != null ? formatExchangeTime(data.asOf, data.exchangeTimezone, !clock24h) : null;
+  const venue = data.exchange ? `${data.exchange} · ` : "";
+
+  return (
+    <span className="text-ink-3 flex min-w-0 items-center gap-1.5 text-caption">
+      {state === "open" ? (
+        <>
+          <span className="bg-live size-1.5 shrink-0 rounded-full" />
+          <span className="truncate">{data.exchange ?? "Market"} · Open</span>
+        </>
+      ) : state === "closed" && opensInMs != null && opensInMs > 0 ? (
+        <span className="truncate">
+          {venue}Opens in {formatCountdown(opensInMs)}
+        </span>
+      ) : asOf ? (
+        <span className="truncate">
+          {venue}
+          {state === "closed" ? "Closed" : "As of"} · {asOf}
+        </span>
+      ) : (
+        <span className="truncate">
+          {venue}
+          {state === "closed" ? "Closed" : ""}
+        </span>
+      )}
+    </span>
   );
 }
 
@@ -59,9 +117,8 @@ function DetailSkeleton() {
     <div className="flex h-full flex-col gap-3">
       <Skeleton className="h-5 w-32" />
       <Skeleton className="h-8 w-28" />
-      <Skeleton className="h-16 w-full" />
-      <div className="grid grid-cols-2 gap-3">
-        <Skeleton className="h-8" />
+      <Skeleton className="min-h-16 flex-1" />
+      <div className="grid grid-cols-3 gap-3">
         <Skeleton className="h-8" />
         <Skeleton className="h-8" />
         <Skeleton className="h-8" />
@@ -71,103 +128,97 @@ function DetailSkeleton() {
 }
 
 function DetailBody({ data, range }: { data: Quote; range: StockRange }) {
-  const clock24h = useAppSettingsStore((state) => state.clock24h);
+  const instanceId = useWidgetInstanceId();
+  const changeMode = useStocks((d) => d.changeMode);
+  const chartStyle = useStocks((d) => d.chartStyle);
+  const setRange = useStocksStore((s) => s.setRange);
+  const setChartStyle = useStocksStore((s) => s.setChartStyle);
+
   const reference = referencePrice(data, range);
-  const { change, percent } = deriveChange(data, reference);
-  const tone = changeTone(change);
-  const now = Date.now();
-  const market = marketState(data, now);
-  const extended = extendedSession(data, now);
-  const opensInMs = data.sessionStart != null ? data.sessionStart * 1000 - now : null;
-  const asOf =
-    data.asOf != null
-      ? new Date(data.asOf).toLocaleTimeString(undefined, {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: !clock24h,
-        })
-      : null;
+  const { change, percent } = changeOf(data.price, reference);
+  const direction = directionOf(change);
+  const extended = extendedSession(data, Date.now());
+  const candles = chartStyle === "candle";
 
   return (
-    <div className="flex h-full flex-col gap-3 scroll-fade overflow-y-auto">
-      <div className="pr-16">
+    <div className="scroll-fade flex h-full min-h-0 flex-col gap-2 overflow-x-hidden overflow-y-auto">
+      <div className="flex shrink-0 flex-col gap-1 pr-8">
         <div className="flex items-baseline gap-2">
-          <span className="text-ink text-lg leading-tight font-semibold">{data.symbol}</span>
-          <span className="text-ink-3 min-w-0 truncate text-body">{data.name}</span>
+          <span className={cn(TYPE.title, "shrink-0")}>{data.symbol}</span>
+          <span className={cn(TYPE.rowSubtitle, "min-w-0 truncate")}>{data.name}</span>
         </div>
-        <div className="mt-1 flex items-baseline gap-2">
-          <span className="text-ink text-2xl font-semibold tabular-nums">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <span className="text-ink text-heading leading-none font-semibold tabular-nums slashed-zero">
             {formatPrice(data.price, data.currency, data.priceHint)}
           </span>
-          <span className={cn("text-body tabular-nums", tone)}>
-            {formatSigned(change)} ({formatSigned(percent)}%)
-          </span>
+          <ChangeValue change={change} percent={percent} mode={changeMode} variant="chip" />
+          {range !== "1d" ? <span className={TYPE.rowMeta}>over {RANGE_LABEL[range]}</span> : null}
         </div>
-        <div className="text-ink-3 mt-1 flex items-center gap-1.5 text-caption">
-          {market === "open" ? (
-            <>
-              <span className="bg-primary size-1.5 rounded-full" />
-              Live
-            </>
-          ) : market === "closed" ? (
-            opensInMs != null && opensInMs > 0 ? (
-              `Opens in ${formatCountdown(opensInMs)}`
-            ) : asOf ? (
-              `Closed · as of ${asOf}`
-            ) : (
-              "Closed"
-            )
-          ) : asOf ? (
-            `As of ${asOf}`
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+          <MarketStatus data={data} />
+          {extended ? (
+            <span className="flex items-baseline gap-1 text-caption">
+              <span className="text-ink-4">
+                {extended.kind === "pre" ? "Pre-market" : "After hours"}
+              </span>
+              <span className="text-ink tabular-nums slashed-zero">
+                {formatNumber(extended.price, data.priceHint)}
+              </span>
+              <span
+                className={cn(
+                  "tabular-nums slashed-zero",
+                  changeTone(directionOf(extended.change)),
+                )}
+              >
+                {extended.percent >= 0 ? "+" : "−"}
+                {Math.abs(extended.percent).toFixed(2)}%
+              </span>
+            </span>
           ) : null}
         </div>
-        {extended ? (
-          <div className="mt-1 flex items-baseline gap-1.5 text-caption">
-            <span className="text-ink-3">
-              {extended.kind === "pre" ? "Pre-market" : "After hours"}
-            </span>
-            <span className="text-ink tabular-nums">
-              {formatPrice(extended.price, data.currency, data.priceHint)}
-            </span>
-            <span className={cn("tabular-nums", changeTone(extended.change))}>
-              {formatSigned(extended.change)} ({formatSigned(extended.percent)}%)
-            </span>
-          </div>
-        ) : null}
       </div>
 
-      <Sparkline
-        series={data.series}
-        timestamps={data.timestamps}
-        currency={data.currency}
-        priceHint={data.priceHint}
-        range={range}
-        tone={tone}
+      <div className="flex shrink-0 items-center gap-1.5">
+        <div className="min-w-0 flex-1">
+          <RangeChips value={range} onChange={(next) => setRange(instanceId, next)} />
+        </div>
+        <IconActionButton
+          icon={candles ? CandlestickChart : LineChart}
+          label={candles ? "Show a line chart" : "Show candles"}
+          tooltip={candles ? "Line chart" : "Candlesticks"}
+          onClick={() => setChartStyle(instanceId, candles ? "line" : "candle")}
+        />
+      </div>
+
+      <PriceChart
+        bars={data.bars}
+        direction={direction}
         baseline={reference}
-        variant="detail"
-        className="h-16 w-full shrink-0"
+        style={chartStyle}
+        range={range}
+        priceHint={data.priceHint}
+        timeZone={data.exchangeTimezone}
+        dividends={data.dividends}
+        className="min-h-20 flex-1"
       />
 
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
-        <div className="col-span-2 flex flex-col gap-0.5">
-          <dt className="text-ink-3 text-caption">Day range</dt>
-          <dd className="text-ink text-body tabular-nums">
-            {formatRange(data.dayLow, data.dayHigh, data.currency, data.priceHint)}
-          </dd>
-          {data.dayLow != null && data.dayHigh != null ? (
-            <RangeBar low={data.dayLow} high={data.dayHigh} value={data.price} />
-          ) : null}
-        </div>
-        <Stat
-          label="Prev close"
-          value={formatPrice(data.previousClose, data.currency, data.priceHint)}
+      <dl className="grid shrink-0 grid-cols-2 gap-x-4 gap-y-2">
+        <RangeMeter
+          label="Day range"
+          low={data.dayLow}
+          high={data.dayHigh}
+          value={data.price}
+          priceHint={data.priceHint}
         />
-        <Stat
-          label="52-wk range"
-          value={formatRange(data.week52Low, data.week52High, data.currency, data.priceHint)}
+        <RangeMeter
+          label="52-week range"
+          low={data.week52Low}
+          high={data.week52High}
+          value={data.price}
+          priceHint={data.priceHint}
         />
+        <Stat label="Prev close" value={formatNumber(data.previousClose, data.priceHint)} />
         <Stat label="Volume" value={data.volume != null ? formatVolume(data.volume) : "—"} />
-        {data.exchange ? <Stat label="Exchange" value={data.exchange} /> : null}
       </dl>
     </div>
   );
@@ -179,24 +230,13 @@ type StockDetailProps = {
 };
 
 export function StockDetail({ symbol, onRemove }: StockDetailProps) {
-  const { state, data, refresh, isRefreshing, range } = useQuote(symbol);
+  const { state, data, refresh, isRefreshing, lastSyncedAt, range } = useQuote(symbol, {
+    focused: true,
+  });
+  useStocksSync(refresh, isRefreshing, lastSyncedAt);
 
   return (
     <div className="relative h-full">
-      <button
-        type="button"
-        onClick={refresh}
-        disabled={isRefreshing}
-        aria-label={`Refresh ${symbol}`}
-        className="
-          press cursor-pointer text-ink-4
-          hover:text-ink
-          absolute top-0 right-8 z-10 grid size-7 place-items-center
-          [&_svg]:size-4
-        "
-      >
-        <RotateCw className={isRefreshing ? "animate-spin" : undefined} />
-      </button>
       <StockRemoveButton
         symbol={symbol}
         onRemove={onRemove}

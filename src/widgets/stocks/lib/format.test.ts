@@ -1,83 +1,100 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatChange,
   formatChartTime,
   formatCountdown,
+  formatExchangeTime,
+  formatNumber,
   formatPrice,
   formatSigned,
   formatVolume,
 } from "@/widgets/stocks/lib/format";
 
-describe("formatPrice", () => {
-  it("uses two decimals for ordinary prices", () => {
-    expect(formatPrice(150.25, "USD", 2)).toContain("150.25");
-    expect(formatPrice(60_123.4, "USD", 2)).toContain("123.40");
-  });
-
-  it("honors a higher priceHint for FX rates", () => {
-    expect(formatPrice(1.0842, "USD", 4)).toContain("1.0842");
-  });
-
-  it("shows enough decimals for sub-dollar crypto even when the hint is low", () => {
-    expect(formatPrice(0.1234, "USD", 2)).toContain("0.1234");
-    expect(formatPrice(0.00001234, "USD", 2)).toContain("0.00001234");
-  });
-});
-
 describe("formatSigned", () => {
-  it("prefixes a plus for positive values", () => {
-    expect(formatSigned(1.234)).toBe("+1.23");
-  });
-
-  it("keeps the minus for negative values", () => {
-    expect(formatSigned(-1.236)).toBe("-1.24");
-  });
-
-  it("omits the sign for zero", () => {
-    expect(formatSigned(0)).toBe("0.00");
+  it.each([
+    [1.5, "+1.50"],
+    [-1.5, "-1.50"],
+    [0, "0.00"],
+  ])("writes %s as %s", (value, expected) => {
+    expect(formatSigned(value)).toBe(expected);
   });
 });
 
-describe("formatCountdown", () => {
-  it("combines hours and minutes", () => {
-    expect(formatCountdown(3 * 3_600_000 + 12 * 60_000)).toBe("3h 12m");
+describe("formatNumber", () => {
+  it("leaves the currency off so a column of prices lines up", () => {
+    expect(formatNumber(1234.5)).toBe("1,234.50");
   });
 
-  it("shows minutes only under an hour", () => {
-    expect(formatCountdown(12 * 60_000)).toBe("12m");
+  it("keeps enough decimals to tell two small prices apart", () => {
+    expect(formatNumber(0.0001234)).toBe("0.000123");
+  });
+});
+
+describe("formatPrice", () => {
+  it("names the currency in the detail view", () => {
+    expect(formatPrice(1234.5, "USD")).toBe("$1,234.50");
   });
 
-  it("combines days and hours for multi-day gaps", () => {
-    expect(formatCountdown(2 * 86_400_000 + 3 * 3_600_000)).toBe("2d 3h");
+  it("falls back to a plain number for a currency the browser rejects", () => {
+    expect(formatPrice(12.5, "NOT-A-CURRENCY")).toBe("12.50");
   });
+});
 
-  it("rounds sub-minute durations up to one minute", () => {
-    expect(formatCountdown(30_000)).toBe("1m");
+describe("formatChange", () => {
+  it("shows percent or price depending on the column mode", () => {
+    expect(formatChange(2.5, 1.25, "percent")).toBe("+1.25%");
+    expect(formatChange(2.5, 1.25, "absolute")).toBe("+2.50");
   });
 });
 
 describe("formatVolume", () => {
-  it("abbreviates millions and billions", () => {
-    expect(formatVolume(64_460_950)).toBe("64.46M");
-    expect(formatVolume(2_300_000_000)).toBe("2.30B");
-    expect(formatVolume(5400)).toBe("5.4K");
-    expect(formatVolume(640)).toBe("640");
+  it.each([
+    [1_500_000_000_000, "1.50T"],
+    [2_400_000_000, "2.40B"],
+    [3_500_000, "3.50M"],
+    [4_200, "4.2K"],
+    [42, "42"],
+  ])("shortens %s to %s", (value, expected) => {
+    expect(formatVolume(value)).toBe(expected);
   });
 });
 
-describe("formatChartTime honours the global clock setting", () => {
-  const point = Date.parse("2026-08-20T18:30:00Z") / 1000;
+describe("formatCountdown", () => {
+  it.each([
+    [90 * 60_000, "1h 30m"],
+    [30 * 60_000, "30m"],
+    [26 * 60 * 60_000, "1d 2h"],
+    [0, "1m"],
+  ])("turns %sms into %s", (ms, expected) => {
+    expect(formatCountdown(ms)).toBe(expected);
+  });
+});
 
-  it("renders intraday points in 12- or 24-hour time", () => {
-    expect(formatChartTime(point, "1d", true)).toMatch(/AM|PM/);
-    expect(formatChartTime(point, "1d", false)).not.toMatch(/AM|PM/);
+describe("exchange clock", () => {
+  it("reports the close in the exchange's own timezone, not the reader's", () => {
+    const noonUtc = Date.UTC(2026, 0, 5, 21, 0, 0);
+    expect(formatExchangeTime(noonUtc, "America/New_York", true)).toContain("4:00 PM");
   });
 
-  it("applies the same setting to the 5-day axis", () => {
-    expect(formatChartTime(point, "5d", true)).toMatch(/AM|PM/);
-    expect(formatChartTime(point, "5d", false)).not.toMatch(/AM|PM/);
+  it("still prints a time when the timezone is unknown", () => {
+    expect(formatExchangeTime(Date.UTC(2026, 0, 5, 21, 0, 0), null, true)).toMatch(/\d/);
   });
 
-  it("leaves date-only ranges alone", () => {
-    expect(formatChartTime(point, "1y", true)).not.toMatch(/AM|PM/);
+  it("falls back to local time for a timezone the browser rejects", () => {
+    expect(formatExchangeTime(Date.UTC(2026, 0, 5, 21, 0, 0), "Not/AZone", true)).toMatch(/\d/);
+  });
+});
+
+describe("formatChartTime", () => {
+  it("shows a clock time within a single day", () => {
+    expect(formatChartTime(Date.UTC(2026, 0, 5, 21, 0, 0) / 1000, "1d", true, "UTC")).toBe(
+      "9:00 PM",
+    );
+  });
+
+  it("shows a date on longer ranges", () => {
+    expect(formatChartTime(Date.UTC(2026, 0, 5, 21, 0, 0) / 1000, "1y", true, "UTC")).toBe(
+      "Jan 5, 2026",
+    );
   });
 });

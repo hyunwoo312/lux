@@ -1,150 +1,69 @@
-import { useId, useState } from "react";
-import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
-import type { PointerEvent as ReactPointerEvent } from "react";
+import { useId } from "react";
 import { cn } from "@/lib/utils";
 import { useElementSize } from "@/hooks/useElementSize";
-import { sparklineChart } from "@/widgets/stocks/lib/sparkline";
-import { formatChartTime, formatPrice } from "@/widgets/stocks/lib/format";
-import type { StockRange } from "@/widgets/stocks/types";
+import { areaPath, chartGeometry, linePath } from "@/widgets/stocks/lib/chart";
+import { changeTone } from "@/widgets/stocks/lib/quote";
+import type { ChangeDirection } from "@/widgets/stocks/lib/quote";
+import type { PricePoint } from "@/widgets/stocks/types";
 
 type SparklineProps = {
-  series: number[];
-  timestamps: number[];
-  currency: string;
-  priceHint: number;
-  range: StockRange;
-  tone: string;
+  points: PricePoint[];
+  direction: ChangeDirection;
   baseline?: number;
-  variant?: "compact" | "detail";
   className?: string;
 };
 
-export function Sparkline({
-  series,
-  timestamps,
-  currency,
-  priceHint,
-  range,
-  tone,
-  baseline,
-  variant = "compact",
-  className,
-}: SparklineProps) {
-  const clock24h = useAppSettingsStore((state) => state.clock24h);
-  const detail = variant === "detail";
+export function Sparkline({ points, direction, baseline, className }: SparklineProps) {
   const gradientId = useId();
-  const [ref, { width, height }] = useElementSize<HTMLDivElement>();
-  const [active, setActive] = useState<number | null>(null);
-
-  const chart = width > 0 && height > 0 ? sparklineChart(series, width, height, baseline) : null;
-  const points = chart
-    ? chart.points.map((entry) => `${entry.x.toFixed(2)},${entry.y.toFixed(2)}`).join(" ")
-    : "";
-  const baselineY = chart && baseline != null ? chart.yFor(baseline) : null;
-  const idx = active != null && chart && active < chart.points.length ? active : null;
-  const point = idx != null && chart ? chart.points[idx] : undefined;
-
-  const handleMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!chart) return;
-    const count = chart.points.length;
-    const rect = event.currentTarget.getBoundingClientRect();
-    const fraction = (event.clientX - rect.left) / rect.width;
-    setActive(Math.max(0, Math.min(count - 1, Math.round(fraction * (count - 1)))));
-  };
+  const [ref, { width, height }] = useElementSize<HTMLSpanElement>();
+  const geometry = chartGeometry(
+    points.map((point) => point.close),
+    width,
+    height,
+    { baseline },
+  );
+  const last = geometry?.points.at(-1);
+  const baselineY = geometry && baseline != null ? geometry.yFor(baseline) : null;
 
   return (
-    <div ref={ref} className={cn("relative", className)}>
-      {chart ? (
-        <svg className={cn("absolute inset-0 h-full w-full", tone)} aria-hidden>
-          {detail ? (
-            <>
-              <defs>
-                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="currentColor" stopOpacity={0.22} />
-                  <stop offset="100%" stopColor="currentColor" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <polygon
-                points={`0,${height} ${points} ${width},${height}`}
-                fill={`url(#${gradientId})`}
-              />
-            </>
-          ) : null}
-          {baselineY != null ? (
+    <span ref={ref} className={cn("relative block", className)} aria-hidden>
+      {geometry && last ? (
+        <svg className={cn("absolute inset-0 size-full", changeTone(direction))}>
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="currentColor" stopOpacity={0.24} />
+              <stop offset="100%" stopColor="currentColor" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          {geometry.points.length > 1 && (
+            <path d={areaPath(geometry.points, height)} fill={`url(#${gradientId})`} />
+          )}
+          {baselineY != null && (
             <line
               x1={0}
               y1={baselineY}
               x2={width}
               y2={baselineY}
-              className="stroke-muted-foreground/25"
+              className="stroke-ink-4/30"
               strokeWidth={1}
-              strokeDasharray="3 3"
+              strokeDasharray="2 3"
               vectorEffect="non-scaling-stroke"
             />
-          ) : null}
-          <polyline
-            points={points}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
-          />
-          {point ? (
-            <>
-              <line
-                x1={point.x}
-                y1={0}
-                x2={point.x}
-                y2={height}
-                className="stroke-muted-foreground/40"
-                strokeWidth={1}
-                vectorEffect="non-scaling-stroke"
-              />
-              <circle
-                cx={point.x}
-                cy={point.y}
-                r={4}
-                className="fill-current stroke-background"
-                strokeWidth={2}
-                vectorEffect="non-scaling-stroke"
-              />
-            </>
-          ) : null}
+          )}
+          {geometry.points.length > 1 && (
+            <path
+              d={linePath(geometry.points)}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+            />
+          )}
+          <circle cx={last.x} cy={last.y} r={2} className="fill-current" />
         </svg>
       ) : null}
-
-      <div
-        className="absolute inset-0"
-        onPointerMove={handleMove}
-        onPointerLeave={() => setActive(null)}
-      />
-
-      {point && idx != null ? (
-        <div
-          className={cn(
-            "pointer-events-none absolute z-10 -translate-x-1/2 whitespace-nowrap",
-            detail ? "bottom-full mb-1" : "top-0",
-          )}
-          style={{ left: `${Math.min(Math.max(point.x, 28), Math.max(width - 28, 28))}px` }}
-        >
-          <div
-            className="
-              bg-card flex flex-col items-center rounded px-1.5 py-0.5 leading-tight shadow-sm
-            "
-          >
-            <span className="text-ink text-caption font-medium tabular-nums">
-              {formatPrice(series[idx] ?? 0, currency, priceHint)}
-            </span>
-            {detail && (timestamps[idx] ?? 0) > 0 ? (
-              <span className="text-ink-3 text-caption tabular-nums">
-                {formatChartTime(timestamps[idx] ?? 0, range, !clock24h)}
-              </span>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-    </div>
+    </span>
   );
 }

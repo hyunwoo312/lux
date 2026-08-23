@@ -2,13 +2,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
-vi.mock("@/widgets/stocks/lib/yahoo-finance", () => ({
-  fetchQuote: vi.fn(),
+vi.mock("@/widgets/stocks/lib/symbols", () => ({
   searchSymbols: vi.fn(),
-  parseCachedQuote: () => null,
+  fetchTrendingSymbols: vi.fn(),
+  parseCachedTrending: () => null,
 }));
 
-import { searchSymbols } from "@/widgets/stocks/lib/yahoo-finance";
+import { searchSymbols } from "@/widgets/stocks/lib/symbols";
 import { StocksSearch } from "@/widgets/stocks/StocksSearch";
 import { useStocksStore } from "@/widgets/stocks/useStocksStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
@@ -17,8 +17,32 @@ import type { SymbolSearchResult } from "@/widgets/stocks/types";
 const searchMock = vi.mocked(searchSymbols);
 const ID = "stocks-search";
 
-function result(symbol: string): SymbolSearchResult {
-  return { symbol, name: `${symbol} Inc.`, exchange: "NASDAQ" };
+function result(symbol: string, overrides: Partial<SymbolSearchResult> = {}): SymbolSearchResult {
+  return {
+    symbol,
+    name: `${symbol} Inc.`,
+    exchange: "NASDAQ",
+    sector: "Semiconductors",
+    instrumentType: "EQUITY",
+    ...overrides,
+  };
+}
+
+function seed(symbols: string[]) {
+  useStocksStore.setState({
+    byInstance: {
+      [ID]: {
+        symbols,
+        range: "1d",
+        showName: true,
+        indexSymbols: [],
+        view: "list",
+        changeMode: "percent",
+        chartStyle: "line",
+        selectedSymbol: null,
+      },
+    },
+  });
 }
 
 function renderSearch() {
@@ -31,18 +55,7 @@ function renderSearch() {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  useStocksStore.setState({
-    byInstance: {
-      [ID]: {
-        symbols: [],
-        range: "1d",
-        showName: true,
-        showIndices: false,
-        sort: "manual",
-        selectedSymbol: null,
-      },
-    },
-  });
+  seed([]);
 });
 
 describe("StocksSearch", () => {
@@ -60,18 +73,7 @@ describe("StocksSearch", () => {
   });
 
   it("disables and does not re-add a symbol already on the watchlist", async () => {
-    useStocksStore.setState({
-      byInstance: {
-        [ID]: {
-          symbols: ["AAPL"],
-          range: "1d",
-          showName: true,
-          showIndices: false,
-          sort: "manual",
-          selectedSymbol: null,
-        },
-      },
-    });
+    seed(["AAPL"]);
     searchMock.mockResolvedValue([result("AAPL")]);
     renderSearch();
 

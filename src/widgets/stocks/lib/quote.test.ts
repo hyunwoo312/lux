@@ -1,126 +1,140 @@
 import { describe, expect, it } from "vitest";
 import {
+  changeOf,
   changeTone,
-  deriveChange,
+  directionOf,
   extendedSession,
+  isAlwaysOpen,
   marketState,
   referencePrice,
+  sparkReference,
 } from "@/widgets/stocks/lib/quote";
-import type { Quote } from "@/widgets/stocks/types";
+import type { Quote, SparkSeries } from "@/widgets/stocks/types";
 
 function quote(overrides: Partial<Quote> = {}): Quote {
   return {
     symbol: "AAPL",
-    name: "Apple Inc.",
-    price: 150,
+    name: "Apple",
+    price: 110,
     previousClose: 100,
     currency: "USD",
     priceHint: 2,
-    asOf: 0,
+    asOf: null,
     sessionStart: null,
     sessionEnd: null,
     preMarketPrice: null,
     postMarketPrice: null,
     preMarketStart: null,
     postMarketEnd: null,
-    series: [],
-    timestamps: [],
+    bars: [],
     dayHigh: null,
     dayLow: null,
     week52High: null,
     week52Low: null,
     volume: null,
     exchange: null,
+    exchangeTimezone: null,
+    instrumentType: "EQUITY",
+    dividends: [],
     ...overrides,
   };
 }
 
-describe("referencePrice", () => {
-  it("uses the previous close for the intraday range", () => {
-    expect(referencePrice(quote({ previousClose: 100, series: [105, 110] }), "1d")).toBe(100);
+describe("changeOf", () => {
+  it("reports the move against the reference", () => {
+    expect(changeOf(110, 100)).toEqual({ change: 10, percent: 10 });
   });
 
-  it("uses the first datapoint for multi-day ranges", () => {
-    expect(referencePrice(quote({ previousClose: 100, series: [105, 110] }), "1mo")).toBe(105);
-  });
-
-  it("falls back to the previous close when the series is empty", () => {
-    expect(referencePrice(quote({ previousClose: 100, series: [] }), "1y")).toBe(100);
+  it("reports no move rather than dividing by zero", () => {
+    expect(changeOf(110, 0)).toEqual({ change: 110, percent: 0 });
   });
 });
 
-describe("deriveChange", () => {
-  it("computes absolute and percent change against the reference", () => {
-    expect(deriveChange(quote({ price: 150 }), 100)).toEqual({ change: 50, percent: 50 });
+describe("reference price", () => {
+  it("measures a one-day move against the previous close", () => {
+    expect(
+      referencePrice(
+        quote({ bars: [{ time: 1, close: 90, open: 90, high: 90, low: 90, volume: null }] }),
+        "1d",
+      ),
+    ).toBe(100);
   });
 
-  it("guards against a zero reference", () => {
-    expect(deriveChange(quote({ price: 5 }), 0)).toEqual({ change: 5, percent: 0 });
+  it("measures a longer range against the start of the series", () => {
+    const withBars = quote({
+      bars: [{ time: 1, close: 90, open: 90, high: 90, low: 90, volume: null }],
+    });
+    expect(referencePrice(withBars, "1y")).toBe(90);
+  });
+
+  it("falls back to the previous close when a longer range has no series", () => {
+    expect(referencePrice(quote(), "1y")).toBe(100);
+  });
+
+  it("uses the same rule for a batched spark series", () => {
+    const series: SparkSeries = {
+      symbol: "AAPL",
+      price: 110,
+      previousClose: 100,
+      points: [{ time: 1, close: 90 }],
+    };
+    expect(sparkReference(series, "1d")).toBe(100);
+    expect(sparkReference(series, "1y")).toBe(90);
   });
 });
 
-describe("changeTone", () => {
-  it("maps direction to a token class", () => {
-    expect(changeTone(1)).toBe("text-primary");
-    expect(changeTone(-1)).toBe("text-destructive");
-    expect(changeTone(0)).toBe("text-ink-3");
+describe("direction", () => {
+  it.each([
+    [1, "up"],
+    [-1, "down"],
+    [0, "flat"],
+  ])("reads %s as %s", (change, expected) => {
+    expect(directionOf(change)).toBe(expected);
+  });
+
+  it("colours a rise with the success token, not the widget accent", () => {
+    expect(changeTone("up")).toBe("text-success");
+    expect(changeTone("down")).toBe("text-destructive");
+    expect(changeTone("flat")).toBe("text-ink-3");
   });
 });
 
-describe("marketState", () => {
-  it("is open within the session and closed outside it", () => {
-    const q = quote({ sessionStart: 1000, sessionEnd: 2000 });
-    expect(marketState(q, 1500 * 1000)).toBe("open");
-    expect(marketState(q, 2500 * 1000)).toBe("closed");
-    expect(marketState(q, 500 * 1000)).toBe("closed");
+describe("market state", () => {
+  it("is open between the session bounds", () => {
+    const data = quote({ sessionStart: 100, sessionEnd: 200 });
+    expect(marketState(data, 150_000)).toBe("open");
+    expect(marketState(data, 250_000)).toBe("closed");
   });
 
-  it("is unknown without a session window", () => {
-    expect(marketState(quote(), 1500 * 1000)).toBe("unknown");
+  it("admits it cannot tell without session bounds", () => {
+    expect(marketState(quote(), 1_000)).toBe("unknown");
+  });
+
+  it("treats coins and currencies as always trading", () => {
+    expect(isAlwaysOpen(quote({ instrumentType: "CRYPTOCURRENCY" }))).toBe(true);
+    expect(isAlwaysOpen(quote({ instrumentType: "CURRENCY" }))).toBe(true);
+    expect(isAlwaysOpen(quote({ instrumentType: "EQUITY" }))).toBe(false);
   });
 });
 
 describe("extendedSession", () => {
-  const withExtended = quote({
-    price: 200,
-    previousClose: 190,
-    sessionStart: 1000,
-    sessionEnd: 2000,
-    preMarketStart: 500,
-    postMarketEnd: 3000,
-    preMarketPrice: 193,
-    postMarketPrice: 202,
-  });
-
-  it("reports the after-hours session and its change vs the regular close", () => {
-    expect(extendedSession(withExtended, 2500 * 1000)).toEqual({
+  it("measures after-hours against the closing price", () => {
+    const data = quote({ sessionEnd: 200, postMarketEnd: 300, postMarketPrice: 121 });
+    expect(extendedSession(data, 250_000)).toEqual({
       kind: "post",
-      price: 202,
-      change: 2,
-      percent: 1,
+      price: 121,
+      change: 11,
+      percent: 10,
     });
   });
 
-  it("reports the pre-market session and its change vs the previous close", () => {
-    expect(extendedSession(withExtended, 700 * 1000)).toEqual({
-      kind: "pre",
-      price: 193,
-      change: 3,
-      percent: (3 / 190) * 100,
-    });
+  it("measures pre-market against the previous close", () => {
+    const data = quote({ sessionStart: 200, preMarketStart: 100, preMarketPrice: 105 });
+    expect(extendedSession(data, 150_000)).toMatchObject({ kind: "pre", percent: 5 });
   });
 
-  it("is null during the regular session", () => {
-    expect(extendedSession(withExtended, 1500 * 1000)).toBeNull();
-  });
-
-  it("is null once the extended window has closed", () => {
-    expect(extendedSession(withExtended, 3500 * 1000)).toBeNull();
-  });
-
-  it("is null when there is no extended-hours price", () => {
-    expect(
-      extendedSession(quote({ sessionStart: 1000, sessionEnd: 2000 }), 2500 * 1000),
-    ).toBeNull();
+  it("reports nothing during the regular session", () => {
+    const data = quote({ sessionStart: 100, sessionEnd: 200, postMarketPrice: 121 });
+    expect(extendedSession(data, 150_000)).toBeNull();
   });
 });
