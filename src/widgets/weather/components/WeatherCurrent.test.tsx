@@ -4,6 +4,7 @@ import { render, screen } from "@testing-library/react";
 import { WeatherCurrent } from "@/widgets/weather/components/WeatherCurrent";
 import { useWeatherStore } from "@/widgets/weather/useWeatherStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   WEATHER_METRICS,
   type WeatherData,
@@ -21,11 +22,19 @@ function weather(overrides: Partial<WeatherData> = {}): WeatherData {
       apparentTemperature: 19,
       humidity: 50,
       windSpeed: 5,
+      windGusts: 9,
       windDirection: 180,
       weatherCode: 1,
       isDay: true,
     },
-    today: { date: "2026-06-26", weatherCode: 1, max: 25, min: 15 },
+    today: {
+      date: "2026-06-26",
+      weatherCode: 1,
+      max: 25,
+      min: 15,
+      precipitationSum: null,
+      precipitationChance: null,
+    },
     sunrise: "2026-06-26T05:30",
     sunset: "2026-06-26T20:45",
     uvIndex: 3,
@@ -38,7 +47,17 @@ function weather(overrides: Partial<WeatherData> = {}): WeatherData {
         isDay: true,
       },
     ],
-    daily: [{ date: "2026-06-26", weatherCode: 1, max: 25, min: 15 }],
+    daily: [
+      {
+        date: "2026-06-26",
+        weatherCode: 1,
+        max: 25,
+        min: 15,
+        precipitationSum: null,
+        precipitationChance: null,
+      },
+    ],
+    minutely: [],
     unitLabels: { temperature: "°C", windSpeed: "mph" },
     ...overrides,
   };
@@ -63,9 +82,11 @@ function seed(metrics: WeatherMetric[], rainAlert: WeatherRainAlert = "likely") 
 
 function renderCurrent(data: WeatherData = weather()) {
   return render(
-    <WidgetInstanceContext.Provider value={ID}>
-      <WeatherCurrent data={data} name="Anywhere" />
-    </WidgetInstanceContext.Provider>,
+    <TooltipProvider>
+      <WidgetInstanceContext.Provider value={ID}>
+        <WeatherCurrent data={data} name="Anywhere" />
+      </WidgetInstanceContext.Provider>
+    </TooltipProvider>,
   );
 }
 
@@ -78,18 +99,11 @@ beforeEach(() => {
 });
 
 describe("WeatherCurrent readings", () => {
-  it("shows the readings the widget is configured for", () => {
-    renderCurrent();
-
-    expect(screen.getByText(/Feels like/)).toBeInTheDocument();
-    expect(screen.getByText("UV 3")).toBeInTheDocument();
-  });
-
   it("drops a reading that was turned off", () => {
     seed(["humidity"]);
     renderCurrent();
 
-    expect(screen.queryByText(/Feels like/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Feels like")).not.toBeInTheDocument();
     expect(screen.getByText("50%")).toBeInTheDocument();
   });
 

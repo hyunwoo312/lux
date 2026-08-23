@@ -3,8 +3,10 @@ import { ROW } from "@/lib/row";
 import { Spinner } from "@/components/ui/spinner";
 import { RetryButton, StateMessage } from "@/components/StateMessage";
 import { Cloud, X } from "lucide-react";
+import { ItemActionButton } from "@/components/ItemActionButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { TYPE } from "@/lib/type";
 import { useElementSize } from "@/hooks/useElementSize";
 import { usePolledResource, type PolledResourceState } from "@/widgets/core/usePolledResource";
 import { useWeatherSync } from "@/widgets/weather/hooks/useWeatherSync";
@@ -34,40 +36,6 @@ type WeatherCardProps = {
   onSelect?: () => void;
   onRemove: () => void;
 };
-
-function RemoveButton({
-  name,
-  onRemove,
-  className,
-}: {
-  name: string;
-  onRemove: () => void;
-  className?: string;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={`Remove ${name}`}
-      onPointerDown={(event) => event.stopPropagation()}
-      onClick={(event) => {
-        event.stopPropagation();
-        onRemove();
-      }}
-      className={cn(
-        "press cursor-pointer",
-        `
-          text-ink-4
-          hover:text-destructive
-          grid size-7 shrink-0 place-items-center transition
-          [&_svg]:size-4
-        `,
-        className,
-      )}
-    >
-      <X />
-    </button>
-  );
-}
 
 function DetailSkeleton() {
   return (
@@ -109,7 +77,13 @@ function DetailedWeather({
 
   return (
     <div className="relative h-full">
-      <RemoveButton name={name} onRemove={onRemove} className="absolute top-0 right-0 z-10" />
+      <ItemActionButton
+        label={`Remove ${name}`}
+        onClick={onRemove}
+        className="hover:text-destructive absolute top-0 right-0 z-10"
+      >
+        <X />
+      </ItemActionButton>
       {!data ? (
         state.status === "error" ? (
           <StateMessage
@@ -195,25 +169,33 @@ export function WeatherCard({
             <Spinner className="text-ink-4" />
           )}
         </span>
-        <span className="text-ink w-10 shrink-0 text-lg font-semibold tabular-nums">
+        <span className="text-ink shrink-0 text-body-lg font-semibold tabular-nums slashed-zero">
           {data ? formatTemperature(data.current.temperature) : "—"}
         </span>
         <span className="min-w-0 flex-1 truncate text-body">{location.name}</span>
         {data && (
-          <span className="text-ink-3 shrink-0 text-caption tabular-nums">
+          <span
+            className={cn(
+              TYPE.rowMeta,
+              "hidden shrink-0 tabular-nums slashed-zero @[15rem]:inline",
+            )}
+          >
             {formatTemperature(data.today.max)} / {formatTemperature(data.today.min)}
           </span>
         )}
       </button>
-      <RemoveButton
-        name={location.name}
-        onRemove={onRemove}
+      <ItemActionButton
+        label={`Remove ${location.name}`}
+        onClick={onRemove}
         className="
+          hover:text-destructive
           absolute top-1/2 right-1.5 -translate-y-1/2 translate-x-2 opacity-0 transition
           group-hover:translate-x-0 group-hover:opacity-100
           group-focus-within:translate-x-0 group-focus-within:opacity-100
         "
-      />
+      >
+        <X />
+      </ItemActionButton>
     </div>
   );
 }

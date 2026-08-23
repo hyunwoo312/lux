@@ -3,6 +3,7 @@ import {
   fetchWeather,
   parseCachedWeather,
   weatherCacheKey,
+  windSpeedLabel,
 } from "@/widgets/weather/lib/open-meteo";
 import type { WeatherData, WeatherLocation, WeatherWindUnit } from "@/widgets/weather/types";
 
@@ -13,11 +14,19 @@ const valid: WeatherData = {
     apparentTemperature: 19,
     humidity: 50,
     windSpeed: 5,
+    windGusts: 9,
     windDirection: 180,
     weatherCode: 1,
     isDay: true,
   },
-  today: { date: "2026-06-26", weatherCode: 1, max: 25, min: 15 },
+  today: {
+    date: "2026-06-26",
+    weatherCode: 1,
+    max: 25,
+    min: 15,
+    precipitationSum: null,
+    precipitationChance: null,
+  },
   sunrise: "2026-06-26T05:30",
   sunset: "2026-06-26T20:45",
   uvIndex: 3,
@@ -30,7 +39,17 @@ const valid: WeatherData = {
       isDay: true,
     },
   ],
-  daily: [{ date: "2026-06-26", weatherCode: 1, max: 25, min: 15 }],
+  daily: [
+    {
+      date: "2026-06-26",
+      weatherCode: 1,
+      max: 25,
+      min: 15,
+      precipitationSum: null,
+      precipitationChance: null,
+    },
+  ],
+  minutely: [],
   unitLabels: { temperature: "°F", windSpeed: "mph" },
 };
 
@@ -136,5 +155,20 @@ describe("weatherCacheKey", () => {
     expect(weatherCacheKey(LOCATION, "imperial", "auto")).toBe(
       weatherCacheKey(LOCATION, "imperial", "mph"),
     );
+  });
+});
+
+describe("windSpeedLabel", () => {
+  it("writes miles per hour the way people write it, not the way the API sends it", () => {
+    expect(windSpeedLabel("imperial", "auto")).toBe("mph");
+  });
+
+  it("spells the metric units out rather than echoing the request value", () => {
+    expect(windSpeedLabel("metric", "auto")).toBe("km/h");
+    expect(windSpeedLabel("metric", "ms")).toBe("m/s");
+  });
+
+  it("keeps an explicit choice that needs no translation", () => {
+    expect(windSpeedLabel("metric", "kn")).toBe("kn");
   });
 });

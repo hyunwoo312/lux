@@ -40,6 +40,7 @@ export type WeatherNow = {
   apparentTemperature: number;
   humidity: number;
   windSpeed: number;
+  windGusts: number | null;
   windDirection: number;
   weatherCode: number;
   isDay: boolean;
@@ -58,6 +59,14 @@ export type WeatherDay = {
   weatherCode: number;
   max: number;
   min: number;
+  precipitationSum: number | null;
+  precipitationChance: number | null;
+};
+
+export type WeatherMinute = {
+  time: string;
+  precipitation: number;
+  probability: number;
 };
 
 export type WeatherUnitLabels = {
@@ -72,6 +81,7 @@ export type WeatherData = {
   sunset: string;
   uvIndex: number | null;
   hourly: WeatherHour[];
+  minutely: WeatherMinute[];
   daily: WeatherDay[];
   unitLabels: WeatherUnitLabels;
 };

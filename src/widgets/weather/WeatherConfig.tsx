@@ -106,7 +106,7 @@ export function WeatherConfig() {
         />
         <WidgetConfigItem
           title="Rain alert"
-          description="Warn about rain in the next few hours, at 30% or 50% odds"
+          description="Warn when rain is close, at 30% or 50% odds"
           control={
             <ConfigSegmented
               label="Rain alert"

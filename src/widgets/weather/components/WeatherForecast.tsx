@@ -1,11 +1,13 @@
-import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
-import { formatHour, formatTemperature, formatWeekday } from "@/widgets/weather/lib/forecast";
+import { TYPE } from "@/lib/type";
+import { cn } from "@/lib/utils";
+import { formatTemperature, formatWeekday } from "@/widgets/weather/lib/forecast";
+import { WeatherHourly } from "@/widgets/weather/components/WeatherHourly";
 import { WeatherIcon } from "@/widgets/weather/components/WeatherIcon";
 import { useWeather } from "@/widgets/weather/useWeatherStore";
-import type { WeatherData } from "@/widgets/weather/types";
+import type { WeatherData, WeatherDay } from "@/widgets/weather/types";
 
-const HOURLY_COUNT = 48;
-const HOURLY_PRECIP_MIN = 20;
+const HOURLY_COUNT = 24;
+const DAILY_CHANCE_MIN = 20;
 
 type WeatherForecastProps = {
   data: WeatherData;
@@ -13,48 +15,68 @@ type WeatherForecastProps = {
   showDaily: boolean;
 };
 
+function RangeBar({ day, low, high }: { day: WeatherDay; low: number; high: number }) {
+  const span = high - low;
+  const from = span > 0 ? ((day.min - low) / span) * 100 : 0;
+  const to = span > 0 ? ((day.max - low) / span) * 100 : 100;
+
+  return (
+    <span className="bg-foreground/10 relative h-1 min-w-6 flex-1 rounded-full">
+      <span
+        className="bg-ink-3 absolute inset-y-0 rounded-full"
+        style={{ left: `${from}%`, right: `${100 - to}%` }}
+      />
+    </span>
+  );
+}
+
 export function WeatherForecast({ data, showHourly, showDaily }: WeatherForecastProps) {
-  const clock24h = useAppSettingsStore((s) => s.clock24h);
   const forecastDays = useWeather((d) => d.forecastDays);
   const { current, hourly, daily } = data;
-  const start = hourly.findIndex((hour) => hour.time > current.time);
-  const hours = start === -1 ? [] : hourly.slice(start, start + HOURLY_COUNT);
+  const next = hourly.findIndex((hour) => hour.time > current.time);
+  const from = Math.max(0, next - 1);
+  const hours = next === -1 ? [] : hourly.slice(from, from + HOURLY_COUNT);
   const days = daily.slice(1, 1 + Number(forecastDays));
+
+  const low = days.length > 0 ? Math.min(...days.map((day) => day.min)) : 0;
+  const high = days.length > 0 ? Math.max(...days.map((day) => day.max)) : 0;
+  const showChance = days.some(
+    (day) => day.precipitationChance != null && day.precipitationChance >= DAILY_CHANCE_MIN,
+  );
 
   return (
     <div className="flex flex-col gap-2">
-      {showHourly && hours.length > 0 && (
-        <div className="border-border/50 flex gap-1 overflow-x-auto border-t pt-2">
-          {hours.map((hour) => (
-            <div key={hour.time} className="flex w-10 shrink-0 flex-col items-center gap-1">
-              <span className="text-ink-3 text-micro">{formatHour(hour.time, !clock24h)}</span>
-              <WeatherIcon code={hour.weatherCode} isDay={hour.isDay} className="text-ink size-4" />
-              <span className="text-ink text-caption tabular-nums">
-                {formatTemperature(hour.temperature)}
-              </span>
-              <span className="text-ink-3 text-micro tabular-nums">
-                {hour.precipitationProbability >= HOURLY_PRECIP_MIN
-                  ? `${hour.precipitationProbability}%`
-                  : " "}
-              </span>
-            </div>
-          ))}
+      {showHourly && hours.length > 1 && (
+        <div className="border-border/50 border-t pt-2">
+          <WeatherHourly hours={hours} className="h-20 w-full" />
         </div>
       )}
 
       {showDaily && days.length > 0 && (
-        <div className="border-border/50 flex flex-col gap-1 border-t pt-2">
+        <ul className="border-border/50 flex flex-col gap-1.5 border-t pt-2">
           {days.map((day) => (
-            <div key={day.date} className="flex items-center gap-3 text-body">
-              <span className="text-ink-3 w-9 shrink-0">{formatWeekday(day.date)}</span>
+            <li key={day.date} className="flex items-center gap-2 text-caption">
+              <span className={cn(TYPE.rowSubtitle, "w-9 shrink-0")}>
+                {formatWeekday(day.date)}
+              </span>
               <WeatherIcon code={day.weatherCode} isDay className="text-ink-3 size-4" />
-              <span className="text-ink ml-auto tabular-nums">{formatTemperature(day.max)}</span>
-              <span className="text-ink-3 w-8 text-right tabular-nums">
+              {showChance && (
+                <span className="text-info w-8 shrink-0 text-micro tabular-nums slashed-zero">
+                  {day.precipitationChance != null && day.precipitationChance >= DAILY_CHANCE_MIN
+                    ? `${day.precipitationChance}%`
+                    : ""}
+                </span>
+              )}
+              <span className="text-ink-3 w-7 shrink-0 text-right tabular-nums slashed-zero">
                 {formatTemperature(day.min)}
               </span>
-            </div>
+              <RangeBar day={day} low={low} high={high} />
+              <span className="text-ink w-7 shrink-0 text-right tabular-nums slashed-zero">
+                {formatTemperature(day.max)}
+              </span>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );

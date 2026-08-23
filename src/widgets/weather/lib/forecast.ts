@@ -46,34 +46,34 @@ export function forecastVisibility(
   };
 }
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
 export function formatTemperature(value: number): string {
   return `${Math.round(value)}°`;
 }
 
+function localDate(iso: string): Date | null {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function format(date: Date, options: Intl.DateTimeFormatOptions): string {
+  return new Intl.DateTimeFormat(undefined, options).format(date);
+}
+
 export function formatHour(iso: string, hour12: boolean): string {
-  const hour = Number(iso.slice(11, 13));
-  if (Number.isNaN(hour)) return "";
-  if (!hour12) return String(hour).padStart(2, "0");
-  const period = hour < 12 ? "AM" : "PM";
-  const display = hour % 12 === 0 ? 12 : hour % 12;
-  return `${display} ${period}`;
+  const date = localDate(iso);
+  if (!date) return "";
+  return format(date, hour12 ? { hour: "numeric", hour12 } : { hour: "2-digit", hour12 });
 }
 
 export function formatWeekday(date: string): string {
-  const day = new Date(`${date}T12:00:00Z`).getUTCDay();
-  return WEEKDAYS[day] ?? "";
+  const parsed = localDate(`${date}T12:00:00`);
+  return parsed ? format(parsed, { weekday: "short" }) : "";
 }
 
 export function formatClock(iso: string, hour12: boolean): string {
-  const hour = Number(iso.slice(11, 13));
-  const minute = iso.slice(14, 16);
-  if (Number.isNaN(hour) || minute.length !== 2) return "";
-  if (!hour12) return `${String(hour).padStart(2, "0")}:${minute}`;
-  const period = hour < 12 ? "AM" : "PM";
-  const display = hour % 12 === 0 ? 12 : hour % 12;
-  return `${display}:${minute} ${period}`;
+  const date = localDate(iso);
+  if (!date) return "";
+  return format(date, { hour: hour12 ? "numeric" : "2-digit", minute: "2-digit", hour12 });
 }
 
 const COMPASS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;

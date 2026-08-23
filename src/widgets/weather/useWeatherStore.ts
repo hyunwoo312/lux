@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
+import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
@@ -87,18 +88,16 @@ const locationSchema = z.object({
 });
 
 const configSchema = z.object({
-  locations: z.array(locationSchema).max(MAX_LOCATIONS).default([]),
-  units: z.enum(["metric", "imperial"]).default("imperial"),
-  windUnit: z.enum(WEATHER_WIND_UNITS).default("auto"),
-  forecastDays: z.enum(WEATHER_FORECAST_DAYS).default("5"),
-  rainAlert: z.enum(WEATHER_RAIN_ALERTS).default("likely"),
-  metrics: z.array(z.enum(WEATHER_METRICS)).default([...WEATHER_METRICS]),
-  selectedId: z.string().nullable().default(null),
+  locations: tolerantArray(locationSchema),
+  units: z.enum(["metric", "imperial"]).catch("imperial"),
+  windUnit: z.enum(WEATHER_WIND_UNITS).catch("auto"),
+  forecastDays: z.enum(WEATHER_FORECAST_DAYS).catch("5"),
+  rainAlert: z.enum(WEATHER_RAIN_ALERTS).catch("likely"),
+  metrics: tolerantArray(z.enum(WEATHER_METRICS)).default([...WEATHER_METRICS]),
+  selectedId: z.string().nullable().catch(null),
 });
 
-const persistedSchema = z.object({
-  byInstance: z.record(z.string(), configSchema),
-});
+const persistedSchema = z.object({ byInstance: tolerantRecord(configSchema) });
 
 const legacySchema = z.object({
   location: locationSchema
@@ -269,24 +268,23 @@ export const useWeatherStore = create<WeatherState>()(
           byInstance: { weather: v2.success ? v2.data : { locations: [], units: "imperial" } },
         };
       },
-      merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(persisted);
-        if (!parsed.success) return current;
-        const byInstance: Record<string, WeatherData> = {};
-        for (const [id, data] of Object.entries(parsed.data.byInstance)) {
-          byInstance[id] = {
-            locations: data.locations,
-            units: data.units,
-            windUnit: data.windUnit,
-            forecastDays: data.forecastDays,
-            rainAlert: data.rainAlert,
-            metrics: data.metrics,
-            selectedId: data.selectedId,
-            searchOpen: false,
-          };
-        }
-        return { ...current, byInstance };
-      },
+      merge: (persisted, current) =>
+        mergePersisted("widget:weather", persistedSchema, persisted, current, (parsed) => {
+          const byInstance: Record<string, WeatherData> = {};
+          for (const [id, data] of Object.entries(parsed.byInstance)) {
+            byInstance[id] = {
+              locations: data.locations.slice(0, MAX_LOCATIONS),
+              units: data.units,
+              windUnit: data.windUnit,
+              forecastDays: data.forecastDays,
+              rainAlert: data.rainAlert,
+              metrics: data.metrics,
+              selectedId: data.selectedId,
+              searchOpen: false,
+            };
+          }
+          return { ...current, byInstance };
+        }),
     },
   ),
 );

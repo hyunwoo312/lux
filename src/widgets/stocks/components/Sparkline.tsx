@@ -1,7 +1,7 @@
 import { useId } from "react";
 import { cn } from "@/lib/utils";
 import { useElementSize } from "@/hooks/useElementSize";
-import { areaPath, chartGeometry, linePath } from "@/widgets/stocks/lib/chart";
+import { areaPath, chartGeometry, linePath } from "@/lib/chart";
 import { changeTone } from "@/widgets/stocks/lib/quote";
 import type { ChangeDirection } from "@/widgets/stocks/lib/quote";
 import type { PricePoint } from "@/widgets/stocks/types";

@@ -1,4 +1,15 @@
-import { Droplets, Navigation, Sunrise, Sunset, Umbrella, Wind } from "lucide-react";
+import {
+  Droplets,
+  Navigation,
+  Sun,
+  Sunrise,
+  Sunset,
+  Thermometer,
+  Umbrella,
+  Wind,
+} from "lucide-react";
+import type { ReactNode } from "react";
+import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { TYPE } from "@/lib/type";
 import {
@@ -7,6 +18,7 @@ import {
   formatTemperature,
   windCardinal,
 } from "@/widgets/weather/lib/forecast";
+import { findNowcast, nowcastLabel } from "@/widgets/weather/lib/nowcast";
 import { wmoInfo } from "@/widgets/weather/lib/wmo";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { WeatherIcon } from "@/widgets/weather/components/WeatherIcon";
@@ -23,22 +35,44 @@ type WeatherCurrentProps = {
   name: string;
 };
 
+function Reading({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <Tooltip content={label} side="top">
+      <span className="text-ink-3 inline-flex items-center gap-1 text-caption tabular-nums slashed-zero">
+        <span className="sr-only">{label}</span>
+        {children}
+      </span>
+    </Tooltip>
+  );
+}
+
 export function WeatherCurrent({ data, name }: WeatherCurrentProps) {
   const clock24h = useAppSettingsStore((s) => s.clock24h);
   const metrics = useWeather((d) => d.metrics);
   const rainAlert = useWeather((d) => d.rainAlert);
-  const { current, today, hourly, sunrise, sunset, uvIndex, unitLabels } = data;
+  const { current, today, hourly, minutely, sunrise, sunset, uvIndex, unitLabels } = data;
   const condition = wmoInfo(current.weatherCode, current.isDay);
+  const threshold = rainAlert === "off" ? 0 : RAIN_THRESHOLD[rainAlert];
+
+  const nowcast = rainAlert === "off" ? null : findNowcast(minutely, current.time, { threshold });
   const imminent =
-    rainAlert === "off"
-      ? null
-      : findImminentPrecip(hourly, current.time, { threshold: RAIN_THRESHOLD[rainAlert] });
-  const visible = metrics.filter((metric) => {
+    rainAlert === "off" || nowcast ? null : findImminentPrecip(hourly, current.time, { threshold });
+  const alert = nowcast
+    ? { text: nowcastLabel(nowcast), probability: nowcast.probability }
+    : imminent
+      ? {
+          text: imminent.inHours <= 1 ? "Rain within the hour" : `Rain in ~${imminent.inHours}h`,
+          probability: imminent.probability,
+        }
+      : null;
+
+  const hasValue = (metric: WeatherMetric) => {
     if (metric === "uv") return uvIndex !== null;
     if (metric === "sunrise") return Boolean(sunrise);
     if (metric === "sunset") return Boolean(sunset);
     return true;
-  });
+  };
+  const visible = metrics.filter(hasValue);
   const shows = (metric: WeatherMetric) => visible.includes(metric);
 
   return (
@@ -54,42 +88,50 @@ export function WeatherCurrent({ data, name }: WeatherCurrentProps) {
           <span className={cn(TYPE.display, "text-ink")}>
             {formatTemperature(current.temperature)}
           </span>
-          <span className="text-ink-3 truncate text-body">{condition.label}</span>
+          <span className={cn(TYPE.rowSubtitle, "truncate")}>{condition.label}</span>
         </div>
-        <div className="ml-auto flex flex-col items-end gap-0.5 text-body tabular-nums">
+        <div className="ml-auto flex flex-col items-end gap-0.5 text-body tabular-nums slashed-zero">
           <span className="text-ink">H {formatTemperature(today.max)}</span>
           <span className="text-ink-3">L {formatTemperature(today.min)}</span>
         </div>
       </div>
 
-      {imminent && (
+      {alert && (
         <div
           className="
-            bg-primary text-primary-foreground inline-flex w-fit items-center gap-1.5 rounded-full
-            px-2.5 py-1 text-caption font-medium
+            bg-warning text-warning-foreground inline-flex w-fit items-center gap-1.5 rounded-full
+            px-2.5 py-1 text-caption font-medium tabular-nums slashed-zero
           "
         >
           <Umbrella className="size-3.5 shrink-0" aria-hidden />
           <span>
-            {imminent.inHours <= 1 ? "Rain within the hour" : `Rain in ~${imminent.inHours}h`} ·{" "}
-            {imminent.probability}%
+            {alert.text} · {alert.probability}%
           </span>
         </div>
       )}
 
       {visible.length > 0 && (
-        <div className="text-ink-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-caption">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           {shows("feelsLike") && (
-            <span>Feels like {formatTemperature(current.apparentTemperature)}</span>
+            <Reading label="Feels like">
+              <Thermometer className="size-3.5 shrink-0" aria-hidden />
+              {formatTemperature(current.apparentTemperature)}
+            </Reading>
           )}
           {shows("humidity") && (
-            <span className="inline-flex items-center gap-1">
+            <Reading label="Humidity">
               <Droplets className="size-3.5 shrink-0" aria-hidden />
               {current.humidity}%
-            </span>
+            </Reading>
           )}
           {shows("wind") && (
-            <span className="inline-flex items-center gap-1">
+            <Reading
+              label={
+                current.windGusts != null
+                  ? `Wind, gusting ${Math.round(current.windGusts)} ${unitLabels.windSpeed}`
+                  : "Wind"
+              }
+            >
               <Wind className="size-3.5 shrink-0" aria-hidden />
               {Math.round(current.windSpeed)} {unitLabels.windSpeed}
               <Navigation
@@ -98,20 +140,25 @@ export function WeatherCurrent({ data, name }: WeatherCurrentProps) {
                 role="img"
                 aria-label={`from the ${windCardinal(current.windDirection)}`}
               />
-            </span>
+            </Reading>
           )}
-          {shows("uv") && uvIndex !== null && <span>UV {Math.round(uvIndex)}</span>}
+          {shows("uv") && uvIndex !== null && (
+            <Reading label="UV index">
+              <Sun className="size-3.5 shrink-0" aria-hidden />
+              {Math.round(uvIndex)}
+            </Reading>
+          )}
           {shows("sunrise") && (
-            <span className="inline-flex items-center gap-1">
+            <Reading label="Sunrise">
               <Sunrise className="size-3.5 shrink-0" aria-hidden />
               {formatClock(sunrise, !clock24h)}
-            </span>
+            </Reading>
           )}
           {shows("sunset") && (
-            <span className="inline-flex items-center gap-1">
+            <Reading label="Sunset">
               <Sunset className="size-3.5 shrink-0" aria-hidden />
               {formatClock(sunset, !clock24h)}
-            </span>
+            </Reading>
           )}
         </div>
       )}

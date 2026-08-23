@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MAX_LOCATIONS, useWeatherStore } from "@/widgets/weather/useWeatherStore";
 import { makeLocationId, WEATHER_METRICS, type WeatherLocation } from "@/widgets/weather/types";
 
@@ -143,6 +143,67 @@ describe("useWeatherStore", () => {
     store().addLocation("b", city("y"));
     expect(data("a")?.locations.map((entry) => entry.id)).toEqual(["x"]);
     expect(data("b")?.locations.map((entry) => entry.id)).toEqual(["y"]);
+  });
+
+  describe("surviving a corrupt persisted value", () => {
+    const { merge } = useWeatherStore.persist.getOptions();
+    const city = (id: string) => ({ id, name: `City ${id}`, latitude: 1, longitude: 2 });
+    const sound = {
+      locations: [city("a")],
+      units: "imperial",
+      windUnit: "auto",
+      forecastDays: "5",
+      rainAlert: "likely",
+      metrics: [...WEATHER_METRICS],
+      selectedId: null,
+    };
+    const restore = (overrides: Record<string, unknown> = {}) =>
+      merge?.({ byInstance: { [ID]: { ...sound, ...overrides } } }, store()) as {
+        byInstance: Record<string, WeatherInstance>;
+      };
+
+    beforeEach(() => {
+      vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    });
+
+    it("keeps the cities when a reading this build does not know is stored", () => {
+      const entry = restore({ metrics: [...WEATHER_METRICS, "dewPoint"] }).byInstance[ID];
+      expect(entry?.locations.map((location) => location.id)).toEqual(["a"]);
+      expect(entry?.metrics).toEqual([...WEATHER_METRICS]);
+    });
+
+    it("keeps the cities when the forecast length is one this build no longer offers", () => {
+      const entry = restore({ forecastDays: "10" }).byInstance[ID];
+      expect(entry?.locations).toHaveLength(1);
+      expect(entry?.forecastDays).toBe("5");
+    });
+
+    it("drops only the unreadable city, not the whole list", () => {
+      const entry = restore({
+        locations: [city("a"), { ...city("b"), latitude: "51.5" }, city("c")],
+      }).byInstance[ID];
+      expect(entry?.locations.map((location) => location.id)).toEqual(["a", "c"]);
+    });
+
+    it("trims a list that grew past the cap instead of discarding it", () => {
+      const many = Array.from({ length: MAX_LOCATIONS + 3 }, (_, index) => city(`c${index}`));
+      expect(restore({ locations: many }).byInstance[ID]?.locations).toHaveLength(MAX_LOCATIONS);
+    });
+
+    it("falls back to a sane unit when units were stored as a number", () => {
+      const entry = restore({ units: 1 }).byInstance[ID];
+      expect(entry?.locations).toHaveLength(1);
+      expect(entry?.units).toBe("imperial");
+    });
+
+    it("keeps one widget's cities when another widget is unreadable", () => {
+      const restored = merge?.(
+        { byInstance: { [ID]: sound, other: "not an object" } },
+        store(),
+      ) as { byInstance: Record<string, WeatherInstance> };
+      expect(restored.byInstance[ID]?.locations).toHaveLength(1);
+      expect(restored.byInstance.other).toBeUndefined();
+    });
   });
 
   describe("requestRefresh", () => {
