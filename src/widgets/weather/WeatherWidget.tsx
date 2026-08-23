@@ -1,4 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { MapPin } from "lucide-react";
+import { StateMessage } from "@/components/StateMessage";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -38,9 +40,7 @@ export function WeatherWidget() {
   return (
     <div className="relative h-full overflow-hidden">
       {locations.length === 0 ? (
-        <div className="text-ink-3 flex h-full items-center justify-center px-2 text-center text-body">
-          Search above to add a city.
-        </div>
+        <StateMessage icon={MapPin} message="Search above to add a city." />
       ) : (
         <AnimatePresence initial={false} mode="popLayout">
           {detail ? (

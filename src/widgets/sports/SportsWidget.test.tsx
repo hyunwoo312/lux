@@ -81,7 +81,8 @@ describe("SportsWidget", () => {
     fetchMock.mockRejectedValue(new Error("boom"));
     renderWidget("sports-error", "nhl");
 
-    expect(await screen.findByText("Scores are unavailable right now.")).toBeInTheDocument();
+    expect(await screen.findByText("Couldn’t load scores.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
 
   it("warns that live detail is unconfirmed for a league we could not verify", async () => {

@@ -5,7 +5,7 @@ import { EASE_OUT, listVariants, rowVariants } from "@/lib/motion";
 import { IconActionButton } from "@/components/IconActionButton";
 import { openUrl } from "@/lib/open-url";
 import { cn } from "@/lib/utils";
-import { RetryButton, StateMessage } from "@/components/StateMessage";
+import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { SectionHeading } from "@/widgets/sports/components/SportsSection";
 import { UnverifiedNotice } from "@/widgets/sports/components/UnverifiedNotice";
 import { LeaderboardPlayerDetail } from "@/widgets/sports/components/golf/LeaderboardPlayerDetail";
@@ -26,10 +26,12 @@ export function LeaderboardView({ league }: { league: League }) {
 
   if (state.status === "error") {
     return (
-      <StateMessage
-        icon={Flag}
-        message="The leaderboard is unavailable right now."
-        action={<RetryButton onRetry={refresh} retrying={isRefreshing} />}
+      <ErrorState
+        error={state.error}
+        service="ESPN"
+        subject="the leaderboard"
+        onRetry={refresh}
+        retrying={isRefreshing}
       />
     );
   }

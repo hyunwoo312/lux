@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from "vitest";
 import { HttpError, RateLimitError } from "@/lib/net";
-import { classifyLoadError, loadFailureMessage } from "@/widgets/anilist/lib/load-failure";
+import { classifyLoadError } from "@/lib/net";
+import { loadFailureMessage } from "@/widgets/anilist/lib/load-failure";
 
 const setOnline = (value: boolean) =>
   Object.defineProperty(navigator, "onLine", { value, configurable: true });

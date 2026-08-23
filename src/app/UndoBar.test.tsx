@@ -34,6 +34,15 @@ describe("UndoBar", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
+  it("carries the widget's removal note, which the removed confirm dialog used to show", () => {
+    store().addWidget("calendar");
+    const id = store().widgets[0]?.id ?? "";
+    store().removeWidget(id);
+    render(<UndoBar />);
+
+    expect(screen.getByRole("status")).toHaveTextContent(/calendar selection will be reset/i);
+  });
+
   it("names the widget that was removed", () => {
     removeAWidget();
     render(<UndoBar />);

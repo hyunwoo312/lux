@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { AlertTriangle, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ImageNotice } from "@/widgets/image/components/ImageNotice";
+import { StateMessage } from "@/components/StateMessage";
+import { Button } from "@/components/ui/button";
 import type { WidgetContentProps } from "@/widgets/core/types";
 import { useImageUploads } from "@/widgets/image/hooks/useImageUploads";
 import { IMAGE_MIME_TYPES } from "@/widgets/image/types";
@@ -76,19 +77,16 @@ export function ImageWidget({ editing }: WidgetContentProps) {
 
   if (unreadable) {
     return (
-      <ImageNotice icon={AlertTriangle} tone="text-warning">
-        <p>Your saved images could not be read, so nothing is being overwritten.</p>
-        <button
-          type="button"
-          onClick={discardUnreadable}
-          className="
-            press focus-ring text-ink-2 bg-foreground/5 cursor-pointer rounded-md px-2 py-1
-            hover:bg-foreground/10 hover:text-ink
-          "
-        >
-          Start fresh
-        </button>
-      </ImageNotice>
+      <StateMessage
+        icon={AlertTriangle}
+        tone="warning"
+        message="Your saved images could not be read, so nothing is being overwritten."
+        action={
+          <Button variant="outline" onClick={discardUnreadable}>
+            Start fresh
+          </Button>
+        }
+      />
     );
   }
 

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { usePolledResource } from "@/widgets/core/usePolledResource";
 import { fetchReleases, parseCachedReleases } from "@/widgets/github/lib/api/releases";
-import { GithubNotice } from "@/widgets/github/components/GithubNotice";
+import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { GithubStaleNotice } from "@/widgets/github/components/GithubStaleNotice";
 import { isUnseen, newestPublishedAt } from "@/widgets/github/lib/releases-unseen";
 import { visibleItems } from "@/widgets/github/lib/visibility";
@@ -32,13 +32,19 @@ export function ReleasesView({ enabled, showPrivate }: { enabled: boolean; showP
   );
   useGithubSync(refresh, isRefreshing, lastSyncedAt);
 
-  if (state.status === "loading") return <GithubNotice>Loading releases…</GithubNotice>;
+  if (state.status === "loading") return <StateMessage message="Loading releases…" />;
   if (state.status === "error")
     return (
-      <GithubNotice error={state.error} fallback="Couldn’t load releases." onRetry={refresh} />
+      <ErrorState
+        error={state.error}
+        service="GitHub"
+        subject="releases"
+        onRetry={refresh}
+        retrying={isRefreshing}
+      />
     );
   if (state.status === "empty")
-    return <GithubNotice>Watch a repository to follow its releases.</GithubNotice>;
+    return <StateMessage icon={Tag} message="Watch a repository to follow its releases." />;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -73,11 +79,14 @@ export function ReleaseList({
 
   if (releases.length === 0) {
     return (
-      <GithubNotice>
-        {data.releases.length > 0
-          ? "The only releases are from private repositories, which this widget hides."
-          : "None of the repositories you watch have published a release."}
-      </GithubNotice>
+      <StateMessage
+        icon={Tag}
+        message={
+          data.releases.length > 0
+            ? "The only releases are from private repositories, which this widget hides."
+            : "None of the repositories you watch have published a release."
+        }
+      />
     );
   }
 

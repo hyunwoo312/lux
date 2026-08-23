@@ -4,7 +4,6 @@ import type { Transition, Variants } from "motion/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, Settings, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { DURATION, EASE_OUT, POP } from "@/lib/motion";
@@ -30,7 +29,6 @@ type BaseWidgetProps = {
   headerAction?: ReactNode;
   config?: ReactNode;
   onRemove: () => void;
-  removalNote?: () => string | null;
   children: ReactNode;
 };
 
@@ -57,29 +55,15 @@ export function BaseWidget({
   headerAction,
   config,
   onRemove,
-  removalNote,
   children,
 }: BaseWidgetProps) {
   const reduced = useReducedMotion();
   const livePattern = useWallpaperStore((s) => s.source === "generated");
   const [showConfig, setShowConfig] = useState(false);
-  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
-  const [removalWarning, setRemovalWarning] = useState<string | null>(null);
-
-  const requestRemove = () => {
-    const warning = removalNote?.() ?? null;
-    if (!warning) {
-      onRemove();
-      return;
-    }
-    setRemovalWarning(warning);
-    setConfirmRemoveOpen(true);
-  };
   const chrome = useMemo(() => ({ openConfig: () => setShowConfig(true) }), []);
 
   useEffect(() => {
     if (editing) setShowConfig(false);
-    else setConfirmRemoveOpen(false);
   }, [editing]);
 
   const hasBackdrop = Boolean(backdrop);
@@ -228,7 +212,7 @@ export function BaseWidget({
                       size="icon-xs"
                       className={WIDGET_HEADER_ACTION}
                       aria-label={`Remove ${title}`}
-                      onClick={requestRemove}
+                      onClick={onRemove}
                     >
                       <X />
                     </Button>
@@ -262,14 +246,6 @@ export function BaseWidget({
           </AnimatePresence>
         </div>
       </div>
-      <ConfirmDialog
-        open={confirmRemoveOpen}
-        onOpenChange={setConfirmRemoveOpen}
-        title={`Remove ${title}?`}
-        description={removalWarning ?? ""}
-        confirmLabel="Remove"
-        onConfirm={onRemove}
-      />
     </WidgetChromeContext.Provider>
   );
 }

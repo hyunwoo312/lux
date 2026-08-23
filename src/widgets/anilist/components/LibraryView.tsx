@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { StateMessage } from "@/components/StateMessage";
+import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { Button } from "@/components/ui/button";
 import { DURATION, EASE_OUT } from "@/lib/motion";
 import { usePolledResource, patchPolledResource } from "@/widgets/core/usePolledResource";
@@ -9,7 +9,7 @@ import { fetchList, saveListStatus, saveProgress } from "@/widgets/anilist/lib/a
 import { parseCachedCurrent } from "@/widgets/anilist/lib/api/cache";
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { computeBehind, progressLabel, sortCurrentEntries } from "@/widgets/anilist/lib/current";
-import { loadFailureMessage, writeFailureMessage } from "@/widgets/anilist/lib/load-failure";
+import { writeFailureMessage } from "@/widgets/anilist/lib/load-failure";
 import {
   emptyListMessage,
   listStatusLabel,
@@ -18,7 +18,6 @@ import {
 } from "@/widgets/anilist/lib/list-status";
 import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
 import { AnilistWriteNotice } from "@/widgets/anilist/components/AnilistWriteNotice";
-import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
 import { AnilistStaleNotice } from "@/widgets/anilist/components/AnilistStaleNotice";
 import { LibraryControls } from "@/widgets/anilist/components/library/LibraryControls";
 import { LibraryEntries } from "@/widgets/anilist/components/library/LibraryEntries";
@@ -89,9 +88,7 @@ export function LibraryView({ enabled, userId, newTab }: LibraryViewProps) {
             {state.status === "loading" ? (
               <AnilistSkeleton variant={viewMode} label="Loading your list…" />
             ) : state.status === "error" ? (
-              <AnilistPlaceholder>
-                {loadFailureMessage(state.error, "your list")}
-              </AnilistPlaceholder>
+              <ErrorState error={state.error} service="AniList" subject="your list" />
             ) : state.status === "empty" ? (
               <StateMessage
                 message={emptyListMessage("all")}
@@ -212,7 +209,7 @@ function ListBody({
       : statusMatched.length === 0
         ? emptyListMessage(listFilter)
         : "Nothing here.";
-    return <AnilistPlaceholder>{message}</AnilistPlaceholder>;
+    return <StateMessage message={message} />;
   }
 
   return (

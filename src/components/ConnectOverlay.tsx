@@ -10,7 +10,7 @@ export function ConnectOverlay({ message, actionLabel, onAction }: ConnectOverla
   return (
     <div
       className="
-        bg-background/30 absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 px-4
+        bg-background/70 absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 px-4
         text-center
       "
     >

@@ -1,19 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ROW } from "@/lib/row";
-import { Heart } from "lucide-react";
+import { Heart, Users } from "lucide-react";
+import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { usePagedResource } from "@/widgets/core/usePagedResource";
 import { fetchActivityPage, toggleActivityLike } from "@/widgets/anilist/lib/api/feed";
 import { parseCachedActivity } from "@/widgets/anilist/lib/api/cache";
 import { AnilistStaleNotice } from "@/widgets/anilist/components/AnilistStaleNotice";
-import { loadFailureMessage, writeFailureMessage } from "@/widgets/anilist/lib/load-failure";
+import { writeFailureMessage } from "@/widgets/anilist/lib/load-failure";
 import { FeedList } from "@/widgets/anilist/components/FeedList";
 import { FeedThumb } from "@/widgets/anilist/components/FeedThumb";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
 import { AnilistWriteNotice } from "@/widgets/anilist/components/AnilistWriteNotice";
-import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
@@ -105,9 +105,17 @@ export function ActivityView({
   if (state.status === "loading")
     return <AnilistSkeleton variant="list" label="Loading activity…" />;
   if (state.status === "error")
-    return <AnilistPlaceholder>{loadFailureMessage(state.error, "your feed")}</AnilistPlaceholder>;
+    return (
+      <ErrorState
+        error={state.error}
+        service="AniList"
+        subject="your feed"
+        onRetry={refresh}
+        retrying={isRefreshing}
+      />
+    );
   if (state.status === "empty")
-    return <AnilistPlaceholder>No recent activity from people you follow.</AnilistPlaceholder>;
+    return <StateMessage icon={Users} message="No recent activity from people you follow." />;
 
   const seen = seenRef.current;
 

@@ -1,6 +1,5 @@
 import { CalendarDays } from "lucide-react";
-import { useIntegrationStore } from "@/integrations";
-import { useSettingsStore } from "@/settings";
+import { useProviderLock } from "@/widgets/core/useProviderLock";
 import type { WidgetPlugin } from "@/widgets/core/types";
 import { CalendarWidget } from "@/widgets/calendar/CalendarWidget";
 import { CalendarConfig } from "@/widgets/calendar/CalendarConfig";
@@ -20,28 +19,11 @@ export const calendarPlugin: WidgetPlugin = {
   statusComponent: CalendarTabs,
   headerActionComponent: CalendarHeaderActions,
   accent: CALENDAR_ACCENT,
-  useLock: () => {
-    const loaded = useIntegrationStore((s) => s.loaded);
-    const hasAccount = useIntegrationStore((s) =>
-      s.accounts.some(
-        (account) => account.providerId === "google" || account.providerId === "microsoft",
-      ),
-    );
-    const connected = useIntegrationStore((s) =>
-      s.accounts.some(
-        (account) =>
-          (account.providerId === "google" || account.providerId === "microsoft") &&
-          account.status === "connected",
-      ),
-    );
-    if (!loaded || connected) return null;
-    return {
-      message: hasAccount
-        ? "Reconnect your calendar to see your schedule."
-        : "Connect a calendar to see your schedule.",
-      actionLabel: hasAccount ? "Reconnect" : "Connect",
-      onAction: () => useSettingsStore.getState().openSettings("accounts"),
-    };
-  },
+  useLock: () =>
+    useProviderLock({
+      providers: ["google", "microsoft"],
+      label: "a calendar",
+      subject: "your schedule",
+    }),
   removalNote: () => "Its calendar selection will be reset — your accounts stay connected.",
 };

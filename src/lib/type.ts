@@ -23,5 +23,3 @@ export const TYPE = {
   help: "text-caption text-ink-3 leading-relaxed",
   eyebrow: "text-micro font-semibold tracking-[0.06em] text-ink-4 uppercase",
 } as const;
-
-export type TypeRole = keyof typeof TYPE;

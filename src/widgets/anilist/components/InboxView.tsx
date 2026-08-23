@@ -1,14 +1,13 @@
 import { ROW } from "@/lib/row";
-import { Bell } from "lucide-react";
+import { Bell, Inbox } from "lucide-react";
+import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { usePagedResource } from "@/widgets/core/usePagedResource";
 import { fetchInboxPage } from "@/widgets/anilist/lib/api/feed";
 import { parseCachedInbox } from "@/widgets/anilist/lib/api/cache";
 import { AnilistStaleNotice } from "@/widgets/anilist/components/AnilistStaleNotice";
-import { loadFailureMessage } from "@/widgets/anilist/lib/load-failure";
 import { FeedList } from "@/widgets/anilist/components/FeedList";
 import { FeedThumb } from "@/widgets/anilist/components/FeedThumb";
-import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
 import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
@@ -53,9 +52,17 @@ export function InboxView({
 
   if (state.status === "loading") return <AnilistSkeleton variant="list" label="Loading inbox…" />;
   if (state.status === "error")
-    return <AnilistPlaceholder>{loadFailureMessage(state.error, "your inbox")}</AnilistPlaceholder>;
+    return (
+      <ErrorState
+        error={state.error}
+        service="AniList"
+        subject="your inbox"
+        onRetry={refresh}
+        retrying={isRefreshing}
+      />
+    );
   if (state.status === "empty")
-    return <AnilistPlaceholder>Inbox zero — nothing waiting.</AnilistPlaceholder>;
+    return <StateMessage icon={Inbox} message="Inbox zero — nothing waiting." />;
 
   return (
     <div className="flex h-full min-h-0 flex-col">

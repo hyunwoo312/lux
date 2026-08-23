@@ -1,4 +1,5 @@
 export {
+  classifyLoadError,
   ensureOk,
   HttpError,
   InvalidResponseError,

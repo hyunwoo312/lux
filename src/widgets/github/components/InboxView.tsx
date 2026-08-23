@@ -7,7 +7,8 @@ import {
   parseCachedInbox,
   unsubscribeGithubThread,
 } from "@/widgets/github/lib/api/inbox";
-import { GithubNotice } from "@/widgets/github/components/GithubNotice";
+import { Inbox } from "lucide-react";
+import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { GithubStaleNotice } from "@/widgets/github/components/GithubStaleNotice";
 import { InboxList } from "@/widgets/github/components/inbox/InboxList";
 import type { NotificationActions } from "@/widgets/github/components/inbox/InboxRows";
@@ -58,12 +59,19 @@ export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPriv
     );
   };
 
-  if (state.status === "loading") return <GithubNotice>Loading inbox…</GithubNotice>;
+  if (state.status === "loading") return <StateMessage message="Loading inbox…" />;
   if (state.status === "error")
     return (
-      <GithubNotice error={state.error} fallback="Couldn’t load your inbox." onRetry={refresh} />
+      <ErrorState
+        error={state.error}
+        service="GitHub"
+        subject="your inbox"
+        onRetry={refresh}
+        retrying={isRefreshing}
+      />
     );
-  if (state.status === "empty") return <GithubNotice>Inbox zero — nothing waiting.</GithubNotice>;
+  if (state.status === "empty")
+    return <StateMessage icon={Inbox} message="Inbox zero — nothing waiting." />;
 
   const actions: NotificationActions = {
     pending,

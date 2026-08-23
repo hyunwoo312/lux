@@ -45,9 +45,11 @@ export function WidgetRefreshButton({
   const spinning = syncing && !reduced;
   const disabled = syncing || coolingDown;
   const failing = freshness?.status === "failing";
-  const staleSince = failing ? formatRelativeTime(freshness.since, now) : null;
-  const staleNotice = staleSince
-    ? `${label} last updated ${staleSince}. Refreshing is failing, retrying automatically.`
+  const staleSince = failing && freshness.since ? formatRelativeTime(freshness.since, now) : null;
+  const staleNotice = failing
+    ? staleSince
+      ? `${label} last updated ${staleSince}. Refreshing is failing, retrying automatically.`
+      : `${label} isn’t refreshing. Retrying automatically.`
     : null;
 
   return (

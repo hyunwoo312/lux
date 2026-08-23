@@ -1,19 +1,4 @@
-import { HttpError, isOnline, loadErrorMessage, RateLimitError } from "@/lib/net";
-
-type LoadFailure = "offline" | "unreachable" | "rateLimited" | "auth" | "other";
-
-export function classifyLoadError(error: Error): LoadFailure {
-  if (!isOnline()) return "offline";
-  if (error instanceof RateLimitError) return "rateLimited";
-  if (error instanceof HttpError) {
-    if (error.status >= 500) return "unreachable";
-    if (error.status === 401 || error.status === 403) return "auth";
-    return "other";
-  }
-  if (error instanceof TypeError) return "unreachable";
-  if (error.name === "TimeoutError") return "unreachable";
-  return "other";
-}
+import { classifyLoadError, loadErrorMessage } from "@/lib/net";
 
 export function loadFailureMessage(error: Error, subject: string): string {
   switch (classifyLoadError(error)) {

@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { CalendarOff } from "lucide-react";
-import { CalendarConnectPrompt } from "@/widgets/calendar/components/CalendarConnectPrompt";
+import { StateMessage } from "@/components/StateMessage";
+import { Button } from "@/components/ui/button";
 import { CalendarSignedOutPreview } from "@/widgets/calendar/components/CalendarSignedOutPreview";
 import { CalendarGrid } from "@/widgets/calendar/CalendarGrid";
 import { AgendaView } from "@/widgets/calendar/AgendaView";
@@ -54,15 +55,14 @@ export function CalendarWidget() {
 
   if (loaded && connected && status === "idle" && (!enabled || enabledCalendarCount === 0)) {
     return (
-      <CalendarConnectPrompt
+      <StateMessage
         icon={CalendarOff}
         message={
           enabled
             ? "No calendars selected for this widget."
             : "Events are turned off for this widget."
         }
-        actionLabel="Open widget settings"
-        onAction={openConfig}
+        action={<Button onClick={openConfig}>Open widget settings</Button>}
       />
     );
   }

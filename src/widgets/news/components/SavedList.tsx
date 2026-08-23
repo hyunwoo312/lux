@@ -1,4 +1,5 @@
-import { Bookmark } from "lucide-react";
+import { Bookmark, SearchX } from "lucide-react";
+import { StateMessage } from "@/components/StateMessage";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/tooltip";
 import { HeadlineRow } from "@/widgets/news/components/HeadlineRow";
@@ -68,24 +69,15 @@ export function SavedList({
 
   if (bookmarks.length === 0) {
     return (
-      <div
-        className="
-          text-ink-3 flex h-full flex-col items-center justify-center gap-2 px-4 text-center
-          text-body
-        "
-      >
-        <Bookmark className="text-ink-4 size-6" aria-hidden />
-        <p>Nothing saved yet — use the bookmark on a headline to keep it here.</p>
-      </div>
+      <StateMessage
+        icon={Bookmark}
+        message="Nothing saved yet — use the bookmark on a headline to keep it here."
+      />
     );
   }
 
   if (visible.length === 0) {
-    return (
-      <div className="text-ink-3 flex h-full items-center justify-center px-4 text-center text-body">
-        {`No saved headlines match “${filterQuery}”`}
-      </div>
-    );
+    return <StateMessage icon={SearchX} message={`No saved headlines match “${filterQuery}”`} />;
   }
 
   return (

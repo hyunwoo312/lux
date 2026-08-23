@@ -1,8 +1,6 @@
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { StateMessage } from "@/components/StateMessage";
-import { TYPE } from "@/lib/type";
-import { cn } from "@/lib/utils";
 import { SpotifyServiceIcon } from "@/components/icons/service-icons";
 
 type SpotifyEmptyAction = {
@@ -22,12 +20,8 @@ export function SpotifyEmptyState({ title, message, action, extra }: SpotifyEmpt
   return (
     <StateMessage
       icon={SpotifyServiceIcon}
-      message={
-        <>
-          <strong className="text-ink block text-body font-semibold">{title}</strong>
-          <span className={cn(TYPE.rowSubtitle, "leading-snug text-balance")}>{message}</span>
-        </>
-      }
+      title={title}
+      message={message}
       action={
         action || extra ? (
           <div className="flex items-center gap-2">

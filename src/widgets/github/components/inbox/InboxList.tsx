@@ -1,12 +1,12 @@
 import { useMemo } from "react";
 import type { ReactNode } from "react";
-import { AlertCircle, CheckCheck, ChevronRight, RotateCw } from "lucide-react";
+import { AlertCircle, CheckCheck, ChevronRight, Inbox, RotateCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConfigSegmented } from "@/components/config/WidgetConfig";
 import { Spinner } from "@/components/ui/spinner";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import { GithubNotice } from "@/widgets/github/components/GithubNotice";
+import { StateMessage } from "@/components/StateMessage";
 import {
   IssueRow,
   NotificationRow,
@@ -103,11 +103,14 @@ export function InboxList({
         )}
       </div>
       {emptyForFilter ? (
-        <GithubNotice>
-          {filter === "all"
-            ? "Inbox zero — nothing waiting."
-            : `Nothing under ${FILTER_LABEL[filter]}.`}
-        </GithubNotice>
+        <StateMessage
+          icon={Inbox}
+          message={
+            filter === "all"
+              ? "Inbox zero — nothing waiting."
+              : `Nothing under ${FILTER_LABEL[filter]}.`
+          }
+        />
       ) : (
         <div className="scroll-fade flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1">
           {groups.map((group) => (

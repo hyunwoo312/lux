@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { Variants } from "motion/react";
-import { RetryButton, StateMessage } from "@/components/StateMessage";
+import { ErrorState } from "@/components/StateMessage";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DURATION, EASE_OUT } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -40,9 +40,12 @@ export function TrendingContent({ layout }: { layout: NewsLayout }) {
 
   if (state.status === "error" && !feed) {
     return (
-      <StateMessage
-        message={`Couldn’t load what's trending in ${regionLabel(region)}.`}
-        action={<RetryButton onRetry={refresh} retrying={isRefreshing} />}
+      <ErrorState
+        error={state.error}
+        service="Google Trends"
+        subject={`what’s trending in ${regionLabel(region)}`}
+        onRetry={refresh}
+        retrying={isRefreshing}
       />
     );
   }

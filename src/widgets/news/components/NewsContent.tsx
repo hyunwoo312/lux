@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { CloudOff, Star, WifiOff } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RetryButton, StateMessage } from "@/components/StateMessage";
+import { ErrorState } from "@/components/StateMessage";
 import { formatRelativeTime } from "@/lib/relative-time";
 import type { PolledResourceState } from "@/widgets/core/usePolledResource";
 import { HeadlineRow } from "@/widgets/news/components/HeadlineRow";
@@ -70,9 +70,12 @@ export function NewsContent({
 }: NewsContentProps) {
   if (state.status === "error") {
     return (
-      <StateMessage
-        message="Couldn’t load the news."
-        action={<RetryButton onRetry={refresh} retrying={isRefreshing} />}
+      <ErrorState
+        error={state.error}
+        service="The news feed"
+        subject="the news"
+        onRetry={refresh}
+        retrying={isRefreshing}
       />
     );
   }

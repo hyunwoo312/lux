@@ -1,4 +1,5 @@
 import type { ZodIssue, ZodType } from "zod";
+import { isOnline } from "@/lib/net/online";
 
 export class HttpError extends Error {
   readonly status: number;
@@ -57,6 +58,21 @@ export function rateLimitError(response: Response, now = Date.now()): RateLimitE
     (response.status === 403 && response.headers.get("x-ratelimit-remaining") === "0");
   if (!isRateLimited) return null;
   return new RateLimitError(retryAfterMs(response, now));
+}
+
+export type LoadFailure = "offline" | "unreachable" | "rateLimited" | "auth" | "other";
+
+export function classifyLoadError(error: Error): LoadFailure {
+  if (!isOnline()) return "offline";
+  if (error instanceof RateLimitError) return "rateLimited";
+  if (error instanceof HttpError) {
+    if (error.status >= 500) return "unreachable";
+    if (error.status === 401 || error.status === 403) return "auth";
+    return "other";
+  }
+  if (error instanceof TypeError) return "unreachable";
+  if (error.name === "TimeoutError") return "unreachable";
+  return "other";
 }
 
 export function loadErrorMessage(error: Error, fallback: string): string {

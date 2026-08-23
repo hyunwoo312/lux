@@ -1,6 +1,5 @@
 import { GitHubServiceIcon } from "@/components/icons/service-icons";
-import { useIntegrationStore } from "@/integrations";
-import { useSettingsStore } from "@/settings";
+import { useProviderLock } from "@/widgets/core/useProviderLock";
 import type { WidgetPlugin } from "@/widgets/core/types";
 import { GithubWidget } from "@/widgets/github/GithubWidget";
 import { GithubConfig } from "@/widgets/github/GithubConfig";
@@ -21,19 +20,7 @@ export const githubPlugin: WidgetPlugin = {
   statusComponent: GithubTabs,
   headerActionComponent: GithubHeaderActions,
   accent: GITHUB_ACCENT,
-  useLock: () => {
-    const loaded = useIntegrationStore((s) => s.loaded);
-    const account = useIntegrationStore(
-      (s) => s.accounts.find((entry) => entry.providerId === "github") ?? null,
-    );
-    if (!loaded || account?.status === "connected") return null;
-    return {
-      message: account
-        ? "Reconnect GitHub to see your activity."
-        : "Connect GitHub to see your activity.",
-      actionLabel: account ? "Reconnect" : "Connect",
-      onAction: () => useSettingsStore.getState().openSettings("accounts"),
-    };
-  },
+  useLock: () =>
+    useProviderLock({ providers: ["github"], label: "GitHub", subject: "your activity" }),
   removalNote: () => "Its settings will be reset — your GitHub account stays connected.",
 };

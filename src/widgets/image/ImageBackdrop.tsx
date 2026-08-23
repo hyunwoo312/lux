@@ -3,7 +3,7 @@ import { DURATION, EASE_STANDARD } from "@/lib/motion";
 import { AnimatePresence, motion, useReducedMotion, type TargetAndTransition } from "motion/react";
 import { ImageOff } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ImageNotice } from "@/widgets/image/components/ImageNotice";
+import { StateMessage } from "@/components/StateMessage";
 import { useActiveImage } from "@/widgets/image/hooks/useActiveImage";
 import { type ImageBrightness, type ImageFit, type ImageTransition } from "@/widgets/image/types";
 import { useImage } from "@/widgets/image/useImageStore";
@@ -73,11 +73,7 @@ export function ImageBackdrop() {
   useEffect(() => setFullLoaded(false), [imageUrl]);
 
   if (loadError) {
-    return (
-      <ImageNotice icon={ImageOff}>
-        <p>{loadError}</p>
-      </ImageNotice>
-    );
+    return <StateMessage icon={ImageOff} compact message={loadError} />;
   }
 
   if (!imageUrl) return null;

@@ -2,7 +2,9 @@ import { EASE_OUT } from "@/lib/motion";
 import { useEffect, useMemo, useState } from "react";
 import { RemoteImage } from "@/components/media/RemoteImage";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Music, Play } from "lucide-react";
+import { ListMusic, Music, Play } from "lucide-react";
+import { StateMessage } from "@/components/StateMessage";
+import { Button } from "@/components/ui/button";
 import { useShallow } from "zustand/react/shallow";
 import { TYPE } from "@/lib/type";
 import { cn } from "@/lib/utils";
@@ -135,27 +137,25 @@ export function SpotifyQueuePanel() {
         <p className={TYPE.eyebrow}>Up next</p>
         {playError && <p className="text-ink-3 text-micro">{playError}</p>}
         {queueError && upNext.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-            <p className={cn(TYPE.rowSubtitle)}>{queueError}</p>
-            <button
-              type="button"
-              onClick={() => void loadSpotifyQueue()}
-              className="
-                press cursor-pointer focus-ring text-primary rounded-sm text-caption font-medium
-                hover:underline
-              "
-            >
-              Retry
-            </button>
+          <div className="flex min-h-0 flex-1">
+            <StateMessage
+              compact
+              message={queueError}
+              action={
+                <Button size="xs" variant="outline" onClick={() => void loadSpotifyQueue()}>
+                  Retry
+                </Button>
+              }
+            />
           </div>
         ) : queueLoading && upNext.length === 0 ? (
-          <p className="text-ink-3 flex flex-1 items-center justify-center text-caption">
-            Loading queue…
-          </p>
+          <div className="flex min-h-0 flex-1">
+            <StateMessage compact message="Loading queue…" />
+          </div>
         ) : upNext.length === 0 ? (
-          <p className="text-ink-3 flex flex-1 items-center justify-center text-center text-caption">
-            Nothing queued.
-          </p>
+          <div className="flex min-h-0 flex-1">
+            <StateMessage compact icon={ListMusic} message="Nothing queued." />
+          </div>
         ) : (
           <ul className="flex min-h-0 flex-1 flex-col gap-0.5 scroll-fade overflow-y-auto">
             <AnimatePresence initial={false}>

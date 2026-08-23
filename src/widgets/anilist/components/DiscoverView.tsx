@@ -13,12 +13,13 @@ import { fetchDiscover } from "@/widgets/anilist/lib/api/discover";
 import { parseCachedDiscover } from "@/widgets/anilist/lib/api/cache";
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
-import { loadFailureMessage, writeFailureMessage } from "@/widgets/anilist/lib/load-failure";
+import { AlertCircle, SearchX } from "lucide-react";
+import { ErrorState, StateMessage } from "@/components/StateMessage";
+import { writeFailureMessage } from "@/widgets/anilist/lib/load-failure";
 import { AnilistWriteNotice } from "@/widgets/anilist/components/AnilistWriteNotice";
 import { cn } from "@/lib/utils";
 import { COVER_GRID } from "@/widgets/anilist/components/coverGrid";
 import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
-import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
 import { AnilistStaleNotice } from "@/widgets/anilist/components/AnilistStaleNotice";
 import { DiscoverRow } from "@/widgets/anilist/components/discover/DiscoverRow";
 import { DiscoverSearchBar } from "@/widgets/anilist/components/discover/DiscoverSearchBar";
@@ -198,9 +199,10 @@ function SearchBody({
 }) {
   if (state.status === "idle" || state.status === "loading")
     return <AnilistSkeleton variant={viewMode} label="Searching…" />;
-  if (state.status === "error") return <AnilistPlaceholder>{state.message}</AnilistPlaceholder>;
+  if (state.status === "error")
+    return <StateMessage icon={AlertCircle} tone="error" message={state.message} />;
   if (state.status === "empty")
-    return <AnilistPlaceholder>No results for “{query}”.</AnilistPlaceholder>;
+    return <StateMessage icon={SearchX} message={`No results for “${query}”.`} />;
 
   return (
     <div className="flex h-full flex-col">
@@ -235,11 +237,8 @@ function DiscoverBody({
   if (state.status === "loading")
     return <AnilistSkeleton variant={viewMode} label="Loading titles…" />;
   if (state.status === "error")
-    return (
-      <AnilistPlaceholder>{loadFailureMessage(state.error, "trending titles")}</AnilistPlaceholder>
-    );
-  if (state.status === "empty")
-    return <AnilistPlaceholder>Nothing to show here right now.</AnilistPlaceholder>;
+    return <ErrorState error={state.error} service="AniList" subject="trending titles" />;
+  if (state.status === "empty") return <StateMessage message="Nothing to show here right now." />;
 
   return (
     <div className="flex h-full flex-col">

@@ -1,6 +1,6 @@
 import { CloudOff, WifiOff } from "lucide-react";
 import { formatRelativeTime } from "@/lib/relative-time";
-import { classifyLoadError } from "@/widgets/anilist/lib/load-failure";
+import { classifyLoadError } from "@/lib/net";
 import type { Freshness } from "@/widgets/core/usePolledResource";
 
 export function AnilistStaleNotice({ freshness }: { freshness: Freshness }) {

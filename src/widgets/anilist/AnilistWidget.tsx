@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useIntegrationStore } from "@/integrations";
+import { StateMessage } from "@/components/StateMessage";
 import { useAnilist } from "@/widgets/anilist/useAnilistStore";
 import { LibraryView } from "@/widgets/anilist/components/LibraryView";
 import { FeedView } from "@/widgets/anilist/components/FeedView";
 import { DiscoverView } from "@/widgets/anilist/components/DiscoverView";
-import { AnilistPlaceholder } from "@/widgets/anilist/components/AnilistPlaceholder";
 import { DURATION, EASE_OUT } from "@/lib/motion";
 
 export function AnilistWidget() {
@@ -22,7 +22,7 @@ export function AnilistWidget() {
     if (!loaded) void load();
   }, [loaded, load]);
 
-  if (!loaded) return <AnilistPlaceholder>Loading AniList…</AnilistPlaceholder>;
+  if (!loaded) return <StateMessage message="Loading AniList…" />;
 
   const connected = account?.status === "connected";
   if (!connected) return <DiscoverView />;

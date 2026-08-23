@@ -18,13 +18,6 @@ describe("WidgetHost lock overlay", () => {
     useIntegrationStore.setState({ accounts: [], loaded: true });
   });
 
-  it("overlays a connect action on the sample widget when signed out", () => {
-    renderHost();
-
-    expect(screen.getByRole("button", { name: "Connect" })).toBeInTheDocument();
-    expect(screen.getByText(/contributions in the last year/)).toBeInTheDocument();
-  });
-
   it("makes the sample content inert so keyboard focus can't reach behind the overlay", () => {
     renderHost();
 

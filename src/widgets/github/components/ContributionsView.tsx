@@ -6,7 +6,8 @@ import {
   parseCachedContributions,
 } from "@/widgets/github/lib/api/contributions";
 import { ActivityLedger } from "@/widgets/github/components/ActivityLedger";
-import { GithubNotice } from "@/widgets/github/components/GithubNotice";
+import { Activity } from "lucide-react";
+import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { GithubStaleNotice } from "@/widgets/github/components/GithubStaleNotice";
 import { Heatmap, HeatmapLegend } from "@/widgets/github/components/ContributionsChart";
 import { Stats } from "@/widgets/github/components/contributions/ContributionsStats";
@@ -66,12 +67,18 @@ export function ContributionsView({ enabled }: { enabled: boolean }) {
     );
   }, [showPrivate, data?.totals, ledgerActivity]);
 
-  if (state.status === "loading") return <GithubNotice>Loading contributions…</GithubNotice>;
+  if (state.status === "loading") return <StateMessage message="Loading contributions…" />;
   if (state.status === "error")
     return (
-      <GithubNotice error={state.error} fallback="Couldn’t load contributions." onRetry={refresh} />
+      <ErrorState
+        error={state.error}
+        service="GitHub"
+        subject="contributions"
+        onRetry={refresh}
+        retrying={isRefreshing}
+      />
     );
-  if (!data) return <GithubNotice>No contributions yet.</GithubNotice>;
+  if (!data) return <StateMessage icon={Activity} message="No contributions yet." />;
 
   const metrics = heatmapMetrics(size.width);
   const todayKey = localDayKey(new Date());

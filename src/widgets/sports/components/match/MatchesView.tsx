@@ -1,6 +1,6 @@
 import { CalendarRange, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RetryButton, StateMessage } from "@/components/StateMessage";
+import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { useNow } from "@/hooks/useNow";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
@@ -28,10 +28,12 @@ export function MatchesView({ league }: { league: League }) {
 
   if (state.status === "error") {
     return (
-      <StateMessage
-        icon={Trophy}
-        message="Scores are unavailable right now."
-        action={<RetryButton onRetry={refresh} retrying={isRefreshing} />}
+      <ErrorState
+        error={state.error}
+        service="ESPN"
+        subject="scores"
+        onRetry={refresh}
+        retrying={isRefreshing}
       />
     );
   }

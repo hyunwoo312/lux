@@ -1,6 +1,4 @@
-import { SPRING_POP } from "@/lib/motion";
 import { useEffect, useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -24,7 +22,6 @@ export function ConfirmDialog({
   confirmLabel,
   onConfirm,
 }: ConfirmDialogProps) {
-  const reduced = useReducedMotion();
   const [armed, setArmed] = useState(false);
 
   useEffect(() => {
@@ -41,18 +38,15 @@ export function ConfirmDialog({
       <DialogContent showClose={false} className="dialog-pop w-[min(22rem,calc(100vw-2rem))] p-5">
         <div className="flex flex-col gap-4">
           <div className="flex items-start gap-3">
-            <motion.span
+            <span
               aria-hidden
               className="
                 bg-destructive/10 text-destructive flex size-9 shrink-0 items-center justify-center
                 rounded-lg
               "
-              initial={reduced ? false : { scale: 0.4, rotate: -16, opacity: 0 }}
-              animate={{ scale: 1, rotate: 0, opacity: 1 }}
-              transition={reduced ? { duration: 0 } : { ...SPRING_POP, delay: 0.05 }}
             >
               <Trash2 className="size-5" />
-            </motion.span>
+            </span>
             <div className="flex min-w-0 flex-col gap-1">
               <DialogTitle>{title}</DialogTitle>
               <DialogDescription>{description}</DialogDescription>
@@ -66,7 +60,6 @@ export function ConfirmDialog({
               size="lg"
               variant="destructive"
               disabled={!armed}
-              className="transition-[box-shadow] hover:shadow-[0_0_16px_-4px_var(--destructive)]"
               onClick={() => {
                 onOpenChange(false);
                 onConfirm();
