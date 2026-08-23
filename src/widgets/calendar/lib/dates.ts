@@ -27,6 +27,17 @@ export function getDateKey(date: Date): string {
   return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 }
 
+export function dateFromKey(key: string): Date | null {
+  const parts = key.split("-").map(Number);
+  const [year, month, day] = parts;
+  if (parts.length !== 3 || year === undefined || month === undefined || day === undefined) {
+    return null;
+  }
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return null;
+  const date = new Date(year, month, day);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export function addDays(date: Date, days: number): Date {
   const next = new Date(date);
   next.setDate(next.getDate() + days);

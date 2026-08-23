@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { useReducedMotion } from "motion/react";
+import { useMemo, useRef } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { CalendarClock, CloudOff, Sunrise } from "lucide-react";
 import { StateMessage } from "@/components/StateMessage";
 import { useElementSize } from "@/hooks/useElementSize";
@@ -9,7 +9,8 @@ import { AgendaCompactList } from "@/widgets/calendar/components/agenda/AgendaCo
 import { AgendaTimeline } from "@/widgets/calendar/components/agenda/AgendaTimeline";
 import { AgendaUntimedBlock } from "@/widgets/calendar/components/agenda/AgendaUntimedBlock";
 import { getEventStartDate } from "@/widgets/calendar/lib/agenda";
-import { endOfDay, getRangeEndDate, startOfDay } from "@/widgets/calendar/lib/dates";
+import { DURATION, EASE_OUT } from "@/lib/motion";
+import { endOfDay, getDateKey, getRangeEndDate, startOfDay } from "@/widgets/calendar/lib/dates";
 import {
   buildTimeline,
   describeNextAfterToday,
@@ -61,41 +62,61 @@ export function AgendaView({ events, colors, status }: AgendaViewProps) {
   }, [events, rangeStart, days]);
 
   const compact = size.width > 0 && size.width < TIMELINE_MIN_WIDTH;
+  const anchorKey = getDateKey(rangeStart);
+  const direction = useTravelDirection(anchorKey, rangeStart.getTime());
+  const shift = reduced ? 0 : 14;
 
   return (
     <div ref={ref} className="flex h-full min-h-0 flex-col gap-2 pt-0.5">
-      <AgendaUntimedBlock events={allDay} colors={colors} compact={compact} />
-      {timed.length === 0 ? (
-        <div className="min-h-0 flex-1">
-          <EmptyAgenda
-            events={events}
-            status={status}
-            days={days}
-            hadEventsInRange={hadEventsInRange}
-            hasUntimed={allDay.length > 0}
-            nextLater={nextLater}
-          />
-        </div>
-      ) : compact ? (
-        <AgendaCompactList
-          segments={segments}
-          colors={colors}
-          now={now}
-          hour12={hour12}
-          reduced={reduced}
-        />
-      ) : (
-        <AgendaTimeline
-          segments={segments}
-          colors={colors}
-          now={now}
-          hour12={hour12}
-          pxPerMinute={HOUR_PX[density] / 60}
-          reduced={reduced}
-        />
-      )}
+      <AgendaUntimedBlock events={allDay} colors={colors} compact={compact} anchorKey={anchorKey} />
+      <AnimatePresence initial={false} mode="wait">
+        <motion.div
+          key={anchorKey}
+          className="flex min-h-0 flex-1 flex-col"
+          initial={{ opacity: 0, x: direction * shift }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -direction * shift }}
+          transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}
+        >
+          {timed.length === 0 ? (
+            <EmptyAgenda
+              events={events}
+              status={status}
+              days={days}
+              hadEventsInRange={hadEventsInRange}
+              hasUntimed={allDay.length > 0}
+              nextLater={nextLater}
+            />
+          ) : compact ? (
+            <AgendaCompactList
+              segments={segments}
+              colors={colors}
+              now={now}
+              hour12={hour12}
+              reduced={reduced}
+            />
+          ) : (
+            <AgendaTimeline
+              segments={segments}
+              colors={colors}
+              now={now}
+              hour12={hour12}
+              pxPerMinute={HOUR_PX[density] / 60}
+              reduced={reduced}
+            />
+          )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
+}
+
+function useTravelDirection(key: string, time: number): number {
+  const seen = useRef({ key, time, direction: 1 });
+  if (seen.current.key !== key) {
+    seen.current = { key, time, direction: time >= seen.current.time ? 1 : -1 };
+  }
+  return seen.current.direction;
 }
 
 type EmptyAgendaProps = {

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { CalendarGrid } from "@/widgets/calendar/CalendarGrid";
 import { AgendaView } from "@/widgets/calendar/AgendaView";
 import { useCalendar } from "@/widgets/calendar/useCalendarStore";
@@ -58,13 +59,12 @@ function buildSampleEvents(): DisplayCalendarEvent[] {
   ];
 }
 
-const SAMPLE_EVENTS = buildSampleEvents();
-
 export function CalendarSignedOutPreview() {
   const view = useCalendar((d) => d.view);
+  const events = useMemo(buildSampleEvents, []);
 
   if (view === "calendar") {
-    return <CalendarGrid events={SAMPLE_EVENTS} colors={SAMPLE_COLORS} />;
+    return <CalendarGrid events={events} colors={SAMPLE_COLORS} />;
   }
-  return <AgendaView events={SAMPLE_EVENTS} colors={SAMPLE_COLORS} status="idle" />;
+  return <AgendaView events={events} colors={SAMPLE_COLORS} status="idle" />;
 }

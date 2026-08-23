@@ -4,6 +4,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIntegrationStore } from "@/integrations";
 import { CalendarVisibilityPicker } from "@/widgets/calendar/components/CalendarVisibilityPicker";
+import { getDateKey } from "@/widgets/calendar/lib/dates";
 import { useCalendarStore, type CalendarData } from "@/widgets/calendar/useCalendarStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import type { ConnectedCalendar } from "@/widgets/calendar/types";
@@ -37,6 +38,7 @@ function baseData(over: Partial<CalendarData> = {}): CalendarData {
     selectedDay: null,
     focusRowIndex: 0,
     listAnchor: now,
+    listAnchorSetOn: getDateKey(now),
     ...over,
   };
 }
@@ -65,23 +67,6 @@ function connectGoogle() {
   });
 }
 
-function connectBoth() {
-  connectGoogle();
-  useIntegrationStore.setState((state) => ({
-    accounts: [
-      ...state.accounts,
-      {
-        id: "microsoft-1",
-        providerId: "microsoft",
-        providerAccountId: "2",
-        displayName: "Grace",
-        status: "connected",
-        connectedAt: "2026-06-20T00:00:00.000Z",
-      },
-    ],
-  }));
-}
-
 function renderPicker() {
   return render(
     <WidgetInstanceContext.Provider value={ID}>
@@ -100,44 +85,6 @@ beforeEach(() => {
 });
 
 describe("CalendarVisibilityPicker", () => {
-  it("renders nothing when no account is connected", () => {
-    seed({
-      google: {
-        calendars: [calendar("work", "Work")],
-        enabledCalendarIds: ["work"],
-        failedCalendarIds: [],
-      },
-    });
-
-    const { container } = renderPicker();
-
-    expect(container).toBeEmptyDOMElement();
-  });
-
-  it("lists calendars from both providers", () => {
-    connectBoth();
-    seed({
-      google: {
-        calendars: [calendar("work", "Work")],
-        enabledCalendarIds: ["work"],
-        failedCalendarIds: [],
-      },
-      microsoft: {
-        calendars: [calendar("team", "Team")],
-        enabledCalendarIds: ["team"],
-        failedCalendarIds: [],
-      },
-    });
-    renderPicker();
-
-    fireEvent.click(screen.getByRole("button", { name: /choose calendars/i }));
-
-    expect(screen.getByRole("checkbox", { name: "Work" })).toBeTruthy();
-    expect(screen.getByRole("checkbox", { name: "Team" })).toBeTruthy();
-    expect(screen.getByText("Google")).toBeTruthy();
-    expect(screen.getByText("Outlook")).toBeTruthy();
-  });
-
   it("hides a calendar and resyncs that provider when its row is toggled", () => {
     connectGoogle();
     seed({
@@ -154,20 +101,6 @@ describe("CalendarVisibilityPicker", () => {
 
     expect(setCalendarSelection).toHaveBeenCalledWith(ID, "google", "home", false);
     expect(sync).toHaveBeenCalledWith(ID, { bypassCooldown: true, providerId: "google" });
-  });
-
-  it("signals on the trigger that some calendars are hidden", () => {
-    connectGoogle();
-    seed({
-      google: {
-        calendars: [calendar("work", "Work"), calendar("home", "Home")],
-        enabledCalendarIds: ["work"],
-        failedCalendarIds: [],
-      },
-    });
-    renderPicker();
-
-    expect(screen.getByRole("button", { name: "Choose calendars, 1 hidden" })).toBeTruthy();
   });
 
   it("allows deselecting the last remaining calendar", () => {

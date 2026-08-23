@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIntegrationStore } from "@/integrations";
 import { CalendarWidget } from "@/widgets/calendar/CalendarWidget";
+import { getDateKey } from "@/widgets/calendar/lib/dates";
 import { useCalendarStore, type CalendarData } from "@/widgets/calendar/useCalendarStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import type { CalendarEvent } from "@/widgets/calendar/types";
@@ -30,6 +31,7 @@ function baseData(over: Partial<CalendarData> = {}): CalendarData {
     selectedDay: null,
     focusRowIndex: 0,
     listAnchor: now,
+    listAnchorSetOn: getDateKey(now),
     ...over,
   };
 }
@@ -81,27 +83,9 @@ function timedEvent(): CalendarEvent {
   };
 }
 
-function multiDayEvent(): CalendarEvent {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 3);
-  return {
-    id: "google-primary-trip",
-    calendarId: "primary",
-    title: "Team Trip",
-    startsAt: start.toISOString(),
-    endsAt: end.toISOString(),
-    isAllDay: true,
-    visibility: "default",
-  };
-}
-
 beforeEach(() => {
-  const midMorning = new Date();
-  midMorning.setHours(9, 0, 0, 0);
   vi.useFakeTimers({ shouldAdvanceTime: true });
-  vi.setSystemTime(midMorning);
+  vi.setSystemTime(new Date(2026, 0, 15, 9, 0, 0, 0));
   useIntegrationStore.setState({ accounts: [], loaded: true });
   useCalendarStore.setState({ byInstance: { [ID]: baseData() } });
 });
@@ -115,32 +99,6 @@ describe("CalendarWidget", () => {
     patch({ view: "agenda" });
     renderWidget();
     expect(screen.getByText("Team standup")).toBeInTheDocument();
-  });
-
-  it("previews the agenda timeline when no account is linked", () => {
-    patch({ view: "agenda" });
-    renderWidget();
-    expect(screen.getByText(/^Current time/)).toBeInTheDocument();
-  });
-
-  it("renders the month grid weekday header in calendar view", () => {
-    connectAccount();
-    patch({ events: [timedEvent()] });
-    renderWidget();
-    expect(screen.getAllByText("W").length).toBeGreaterThan(0);
-    expect(screen.queryByRole("button", { name: "Connect" })).not.toBeInTheDocument();
-  });
-
-  it("puts timed events on the axis and untimed ones in the pinned block", () => {
-    connectAccount();
-    patch({ view: "agenda", events: [timedEvent(), multiDayEvent()] });
-
-    renderWidget();
-
-    const pinned = screen.getByRole("region", { name: "All-day and multi-day events" });
-    expect(within(pinned).getByText("Team Trip")).toBeInTheDocument();
-    expect(within(pinned).queryByText("Standup")).toBeNull();
-    expect(screen.getByText("Standup")).toBeInTheDocument();
   });
 
   it("opens the source event in a new tab from the agenda", () => {

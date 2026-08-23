@@ -19,6 +19,7 @@ import {
 import { compareEventsByStart } from "@/widgets/calendar/lib/agenda";
 import {
   addDays,
+  dateFromKey,
   getDateKey,
   getMonthGridDays,
   getMonthOffset,
@@ -81,6 +82,7 @@ export type CalendarData = {
   selectedDay: Date | null;
   focusRowIndex: number;
   listAnchor: Date;
+  listAnchorSetOn: string;
 };
 
 type SyncOptions = { bypassCooldown?: boolean; providerId?: CalendarProviderId };
@@ -128,6 +130,7 @@ function freshNav(): Pick<
   | "selectedDay"
   | "focusRowIndex"
   | "listAnchor"
+  | "listAnchorSetOn"
 > {
   const now = new Date();
   return {
@@ -139,7 +142,21 @@ function freshNav(): Pick<
     selectedDay: null,
     focusRowIndex: 0,
     listAnchor: startOfDay(now),
+    listAnchorSetOn: getDateKey(now),
   };
+}
+
+function anchorFor(
+  key: string | undefined,
+  setOn: string | undefined,
+): Pick<CalendarData, "listAnchor" | "listAnchorSetOn"> {
+  const today = startOfDay(new Date());
+  const todayKey = getDateKey(today);
+  if (!key || setOn !== todayKey) return { listAnchor: today, listAnchorSetOn: todayKey };
+  const stored = dateFromKey(key);
+  return stored
+    ? { listAnchor: startOfDay(stored), listAnchorSetOn: setOn }
+    : { listAnchor: today, listAnchorSetOn: todayKey };
 }
 
 function createDefaultData(): CalendarData {
@@ -178,6 +195,8 @@ const configSchema = z.object({
   microsoft: providerSettingsSchema.catch(EMPTY_PROVIDER),
   primarySource: z.enum(["google", "microsoft"]).catch("google"),
   refreshIntervalHours: z.number().catch(6),
+  listAnchorKey: z.string().optional().catch(undefined),
+  listAnchorSetOn: z.string().optional().catch(undefined),
 });
 
 const persistedSchema = z.object({
@@ -335,16 +354,22 @@ export const useCalendarStore = create<CalendarState>()(
         set((state) =>
           update(state, instanceId, (data) => {
             if (view === "calendar") return { ...data, view };
-            const anchor =
-              data.mode === "week" && data.selectedDay
-                ? startOfDay(data.selectedDay)
-                : startOfDay(new Date());
-            return { ...data, view, listAnchor: anchor };
+            if (data.mode !== "week" || !data.selectedDay) return { ...data, view };
+            return {
+              ...data,
+              view,
+              listAnchor: startOfDay(data.selectedDay),
+              listAnchorSetOn: getDateKey(new Date()),
+            };
           }),
         ),
       setListAnchor: (instanceId, date) =>
         set((state) =>
-          update(state, instanceId, (data) => ({ ...data, listAnchor: startOfDay(date) })),
+          update(state, instanceId, (data) => ({
+            ...data,
+            listAnchor: startOfDay(date),
+            listAnchorSetOn: getDateKey(new Date()),
+          })),
         ),
       setLookaheadDays: (instanceId, days) =>
         set((state) =>
@@ -427,8 +452,15 @@ export const useCalendarStore = create<CalendarState>()(
               else microsoft = settings;
             }
 
+            const refreshed = new Set(
+              results.filter((entry) => !entry.result.failed).map((entry) => entry.providerId),
+            );
             const keptEvents = current.events.filter(
-              (event) => !targets.some((providerId) => event.id.startsWith(`${providerId}-`)),
+              (event) =>
+                !targets.some(
+                  (providerId) =>
+                    refreshed.has(providerId) && event.id.startsWith(`${providerId}-`),
+                ),
             );
             const events = capCalendarEvents([
               ...keptEvents,
@@ -498,7 +530,10 @@ export const useCalendarStore = create<CalendarState>()(
       goToToday: (instanceId) =>
         set((state) =>
           update(state, instanceId, (data) => {
-            if (data.view !== "calendar") return { ...data, listAnchor: startOfDay(new Date()) };
+            if (data.view !== "calendar") {
+              const today = startOfDay(new Date());
+              return { ...data, listAnchor: today, listAnchorSetOn: getDateKey(today) };
+            }
             if (data.mode !== "week") return { ...data, ...freshNav() };
             const today = startOfDay(new Date());
             const visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -572,6 +607,8 @@ export const useCalendarStore = create<CalendarState>()(
               microsoft: data.microsoft,
               primarySource: data.primarySource,
               refreshIntervalHours: data.refreshIntervalHours,
+              listAnchorKey: getDateKey(data.listAnchor),
+              listAnchorSetOn: data.listAnchorSetOn,
             },
           ]),
         ),
@@ -592,6 +629,7 @@ export const useCalendarStore = create<CalendarState>()(
               lookaheadDays: clampLookahead(config.lookaheadDays),
               refreshIntervalHours: clampRefreshInterval(config.refreshIntervalHours),
               ...freshNav(),
+              ...anchorFor(config.listAnchorKey, config.listAnchorSetOn),
             };
           }
           return { ...current, byInstance };

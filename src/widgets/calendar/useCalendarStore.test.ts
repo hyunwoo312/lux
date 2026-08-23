@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RateLimitError } from "@/lib/net";
+import { addDays, getDateKey, startOfDay } from "@/widgets/calendar/lib/dates";
 import { MAX_CALENDAR_EVENTS } from "@/widgets/calendar/types";
 import { useIntegrationStore } from "@/integrations";
 import {
@@ -64,6 +65,7 @@ function baseData(over: Partial<CalendarData> = {}): CalendarData {
     selectedDay: null,
     focusRowIndex: 0,
     listAnchor: now,
+    listAnchorSetOn: getDateKey(now),
     ...over,
   };
 }
@@ -105,6 +107,20 @@ describe("useCalendarStore.sync", () => {
     expect(d?.google.enabledCalendarIds).toEqual(["primary"]);
     expect(d?.google.calendars[0]?.selected).toBe(true);
     expect(d?.google.lastSyncedAt).toBeDefined();
+  });
+
+  it("keeps the events it already had when a sync fails, so the widget still works offline", async () => {
+    fetchCalendarsMock.mockResolvedValue([createCalendar()]);
+    fetchEventsMock.mockResolvedValue({ events: [createEvent()], failedCalendarIds: [] });
+    await useCalendarStore.getState().sync(ID);
+    expect(data()?.events).toHaveLength(1);
+
+    fetchCalendarsMock.mockRejectedValue(new TypeError("Failed to fetch"));
+
+    await useCalendarStore.getState().sync(ID, { bypassCooldown: true });
+
+    expect(data()?.status).toBe("error");
+    expect(data()?.events).toHaveLength(1);
   });
 
   it("records an error status when a calendar fails", async () => {
@@ -445,5 +461,48 @@ describe("capCalendarEvents", () => {
     dropped.setDate(dropped.getDate() - MAX_CALENDAR_EVENTS);
 
     expect(oldestKept).toBeGreaterThan(dropped.getTime());
+  });
+});
+
+describe("the agenda anchor is scoped to the day it was chosen", () => {
+  const merge = useCalendarStore.persist.getOptions().merge;
+  const mergeInto = (config: Record<string, unknown>) =>
+    merge?.(
+      { byInstance: { one: config } },
+      {
+        ...useCalendarStore.getState(),
+        byInstance: {},
+      },
+    ) as ReturnType<typeof useCalendarStore.getState>;
+  const today = startOfDay(new Date());
+
+  it("restores the date the user was looking at earlier the same day", () => {
+    const chosen = addDays(today, 3);
+    const merged = mergeInto({
+      listAnchorKey: getDateKey(chosen),
+      listAnchorSetOn: getDateKey(today),
+    });
+
+    expect(merged.byInstance["one"]?.listAnchor).toEqual(startOfDay(chosen));
+  });
+
+  it("falls back to today when the choice was made on an earlier day", () => {
+    const merged = mergeInto({
+      listAnchorKey: getDateKey(addDays(today, 3)),
+      listAnchorSetOn: getDateKey(addDays(today, -1)),
+    });
+
+    expect(merged.byInstance["one"]?.listAnchor).toEqual(today);
+  });
+
+  it("opens on today when nothing was ever stored", () => {
+    expect(mergeInto({}).byInstance["one"]?.listAnchor).toEqual(today);
+  });
+
+  it("records the day a choice was made, so tomorrow starts fresh", () => {
+    useCalendarStore.setState({ byInstance: {} });
+    useCalendarStore.getState().setListAnchor("one", addDays(today, 2));
+
+    expect(useCalendarStore.getState().byInstance["one"]?.listAnchorSetOn).toBe(getDateKey(today));
   });
 });

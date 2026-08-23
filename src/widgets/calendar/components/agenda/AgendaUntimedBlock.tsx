@@ -2,15 +2,17 @@ import { useState, type WheelEvent } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { DURATION, EASE_OUT } from "@/lib/motion";
 import { AgendaEventActions } from "@/widgets/calendar/components/agenda/AgendaEventActions";
-import { CalendarRange } from "lucide-react";
+import { CalendarClock, CalendarRange } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip } from "@/components/ui/tooltip";
+import { CalendarNavButton } from "@/widgets/calendar/components/CalendarNavButton";
 import { CalendarRangePicker } from "@/widgets/calendar/components/CalendarRangePicker";
 import { formatEventDateRange, getEventTitle } from "@/widgets/calendar/lib/agenda";
 import { getEventColor } from "@/widgets/calendar/lib/colors";
 import { formatDayRange, getRangeEndDate } from "@/widgets/calendar/lib/dates";
-import { useCalendar } from "@/widgets/calendar/useCalendarStore";
+import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { MAX_LOOKAHEAD_DAYS, type DisplayCalendarEvent } from "@/widgets/calendar/types";
 
 const ROW_COUNT = 2;
@@ -50,6 +52,19 @@ function RangeTrigger() {
         <CalendarRangePicker onSelect={() => setOpen(false)} />
       </PopoverContent>
     </Popover>
+  );
+}
+
+function TodayButton() {
+  const instanceId = useWidgetInstanceId();
+  const goToToday = useCalendarStore((s) => s.goToToday);
+
+  return (
+    <CalendarNavButton
+      label="Go to today"
+      icon={CalendarClock}
+      onClick={() => goToToday(instanceId)}
+    />
   );
 }
 
@@ -127,6 +142,7 @@ type AgendaUntimedBlockProps = {
   events: DisplayCalendarEvent[];
   colors: Map<string, string>;
   compact: boolean;
+  anchorKey: string;
 };
 
 function scrollHorizontally(event: WheelEvent<HTMLDivElement>) {
@@ -135,7 +151,12 @@ function scrollHorizontally(event: WheelEvent<HTMLDivElement>) {
   track.scrollLeft += event.deltaY;
 }
 
-export function AgendaUntimedBlock({ events, colors, compact }: AgendaUntimedBlockProps) {
+export function AgendaUntimedBlock({
+  events,
+  colors,
+  compact,
+  anchorKey,
+}: AgendaUntimedBlockProps) {
   const reduced = useReducedMotion();
   const rows = [0, 1]
     .map((row) => events.filter((_, index) => index % ROW_COUNT === row))
@@ -148,7 +169,10 @@ export function AgendaUntimedBlock({ events, colors, compact }: AgendaUntimedBlo
         compact ? "flex-col items-stretch" : "items-center",
       )}
     >
-      <RangeTrigger />
+      <span className="flex flex-none items-center gap-0.5">
+        <RangeTrigger />
+        <TodayButton />
+      </span>
       {rows.length > 0 && !compact && (
         <span aria-hidden className="bg-border/60 my-1 w-px flex-none self-stretch" />
       )}
@@ -158,7 +182,7 @@ export function AgendaUntimedBlock({ events, colors, compact }: AgendaUntimedBlo
             onWheel={scrollHorizontally}
             className="-mx-1.5 overflow-x-auto overscroll-x-contain px-1.5 py-1"
           >
-            <ul className="flex w-max min-w-full flex-col gap-1">
+            <ul key={anchorKey} className="flex w-max min-w-full flex-col gap-1">
               {rows.map((row, index) => (
                 <li key={index}>
                   <ul className="flex items-center gap-1">
