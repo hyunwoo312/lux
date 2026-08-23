@@ -14,7 +14,7 @@ export const spotifyPlugin: WidgetPlugin = {
   description: "See what's playing and control playback",
   icon: SpotifyServiceIcon,
   brandIcon: true,
-  defaultLayout: { w: 6, h: 6, minW: 6, minH: 4, maxW: 12, maxH: 12 },
+  defaultLayout: { w: 8, h: 5, minW: 8, minH: 5, maxW: 14, maxH: 14 },
   component: SpotifyWidget,
   configComponent: SpotifyConfig,
   statusComponent: SpotifyStatus,

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { RemoteImage } from "@/components/media/RemoteImage";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Check, Heart, ListPlus, Music, Play } from "lucide-react";
@@ -6,12 +6,10 @@ import { ExpandingSearch } from "@/components/ExpandingSearch";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { accentClass } from "@/widgets/core/accent";
+import { useSpotifySearchResults } from "@/widgets/spotify/hooks/useSpotifySearchResults";
 import {
   addSpotifyToQueue,
-  getMySpotifyPlaylists,
   getSpotifyDevices,
-  getSpotifySavedTrackFlags,
-  searchSpotify,
   startSpotifyPlayback,
 } from "@/widgets/spotify/lib/spotify-api";
 import {
@@ -46,18 +44,23 @@ export function SpotifySearch() {
   const baseId = useId();
 
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SpotifySearchResult[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [active, setActive] = useState(0);
+  const {
+    query,
+    setQuery,
+    results,
+    playlists,
+    playlistsLoading,
+    searching,
+    error: searchError,
+    active,
+    setActive,
+  } = useSpotifySearchResults(open);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const error = searchError ?? actionError;
   const [devices, setDevices] = useState<SpotifyPlaybackDevice[]>([]);
   const [targetDeviceId, setTargetDeviceId] = useState<string | null>(null);
-  const [myPlaylists, setMyPlaylists] = useState<SpotifySearchResult[]>([]);
-  const [playlistsLoading, setPlaylistsLoading] = useState(false);
   const [queueingId, setQueueingId] = useState<string | null>(null);
   const [queuedIds, setQueuedIds] = useState<Set<string>>(new Set());
-  const debounceRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     if (open) return;
@@ -77,67 +80,10 @@ export function SpotifySearch() {
         if (cancelled) return;
         setDevices([]);
       });
-    setPlaylistsLoading(true);
-    getMySpotifyPlaylists()
-      .then((found) => {
-        if (!cancelled) setMyPlaylists(found);
-      })
-      .catch(() => {
-        if (!cancelled) setMyPlaylists([]);
-      })
-      .finally(() => {
-        if (!cancelled) setPlaylistsLoading(false);
-      });
     return () => {
       cancelled = true;
     };
   }, [open]);
-
-  const markLikedTracks = async (found: SpotifySearchResult[], signal: AbortSignal) => {
-    const ids = found.filter((result) => result.kind === "track").map((result) => result.id);
-    if (ids.length === 0) return;
-    let liked: Set<string>;
-    try {
-      liked = await getSpotifySavedTrackFlags(ids, signal);
-    } catch {
-      return;
-    }
-    if (signal.aborted || liked.size === 0) return;
-    setResults((prev) =>
-      prev.map((result) => (liked.has(result.id) ? { ...result, liked: true } : result)),
-    );
-  };
-
-  useEffect(() => {
-    const trimmed = query.trim();
-    if (trimmed.length < 2) {
-      setResults([]);
-      setSearching(false);
-      return;
-    }
-    const controller = new AbortController();
-    window.clearTimeout(debounceRef.current);
-    setSearching(true);
-    setError(null);
-    debounceRef.current = window.setTimeout(() => {
-      searchSpotify(trimmed, controller.signal)
-        .then((found) => {
-          setResults(found);
-          setActive(0);
-          setSearching(false);
-          void markLikedTracks(found, controller.signal);
-        })
-        .catch((caught: unknown) => {
-          if (caught instanceof DOMException && caught.name === "AbortError") return;
-          setError("Couldn't search Spotify.");
-          setSearching(false);
-        });
-    }, 300);
-    return () => {
-      controller.abort();
-      window.clearTimeout(debounceRef.current);
-    };
-  }, [query]);
 
   const targetDevice =
     devices.find((device) => device.id === targetDeviceId) ??
@@ -146,20 +92,21 @@ export function SpotifySearch() {
 
   const pick = (result: SpotifySearchResult) => {
     if (!targetDevice) return;
+    setActionError(null);
     startSpotifyPlayback(result, targetDevice.id)
       .then(() => {
         requestSpotifyPlaybackRefresh();
         setQuery("");
-        setResults([]);
         setOpen(false);
       })
       .catch((caught: unknown) => {
-        setError(caught instanceof Error ? caught.message : "Couldn't start playback.");
+        setActionError(caught instanceof Error ? caught.message : "Couldn't start playback.");
       });
   };
 
   const addToQueue = (result: SpotifySearchResult) => {
     if (!targetDevice || queueingId === result.id || queuedIds.has(result.id)) return;
+    setActionError(null);
     setQueueingId(result.id);
     addSpotifyToQueue(result.uri, targetDevice.id)
       .then(() => {
@@ -167,14 +114,14 @@ export function SpotifySearch() {
         setQueuedIds((prev) => new Set(prev).add(result.id));
       })
       .catch((caught: unknown) => {
-        setError(caught instanceof Error ? caught.message : "Couldn't add to queue.");
+        setActionError(caught instanceof Error ? caught.message : "Couldn't add to queue.");
       })
       .finally(() => setQueueingId(null));
   };
 
   const trimmed = query.trim();
   const isSearch = trimmed.length >= 2;
-  const ownedMatches = myPlaylists
+  const ownedMatches = playlists
     .filter((playlist) => playlist.title.toLowerCase().includes(trimmed.toLowerCase()))
     .slice(0, OWNED_PLAYLIST_CAP);
   const ownedIds = new Set(ownedMatches.map((playlist) => playlist.id));
@@ -183,7 +130,7 @@ export function SpotifySearch() {
         0,
         MAX_RESULTS,
       )
-    : myPlaylists.slice(0, MAX_RESULTS);
+    : playlists.slice(0, MAX_RESULTS);
 
   const hasOptions = open && !error && rows.length > 0;
   const needsDeviceChoice = !targetDevice && devices.length > 0;

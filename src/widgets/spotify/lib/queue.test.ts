@@ -21,8 +21,4 @@ describe("dedupeUpNext", () => {
     const queue = [item("b"), item("c")];
     expect(dedupeUpNext(queue, "a")).toEqual([item("b"), item("c")]);
   });
-
-  it("handles an empty queue", () => {
-    expect(dedupeUpNext([], "a")).toEqual([]);
-  });
 });

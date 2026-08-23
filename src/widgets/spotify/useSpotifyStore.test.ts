@@ -10,16 +10,14 @@ beforeEach(() => {
 describe("useSpotifyStore", () => {
   it("keeps display settings independent per instance", () => {
     store().setTimeDisplayMode("a", "remaining");
-    store().setAmbient("b", false);
+    store().setTimeDisplayMode("b", "total");
 
     expect(store().byInstance["a"]?.timeDisplayMode).toBe("remaining");
-    expect(store().byInstance["a"]?.ambient).toBe(true);
-    expect(store().byInstance["b"]?.ambient).toBe(false);
     expect(store().byInstance["b"]?.timeDisplayMode).toBe("total");
   });
 
   it("drops an instance on cleanup", () => {
-    store().setAmbient("a", false);
+    store().setTimeDisplayMode("a", "remaining");
     store().removeInstance("a");
     expect(store().byInstance["a"]).toBeUndefined();
   });
@@ -29,7 +27,7 @@ describe("useSpotifyStore", () => {
 
     it("migrates legacy singleton data under the spotify instance key", () => {
       expect(migrate?.({ timeDisplayMode: "remaining", ambient: false }, 1)).toEqual({
-        byInstance: { spotify: { timeDisplayMode: "remaining", ambient: false } },
+        byInstance: { spotify: { timeDisplayMode: "remaining" } },
       });
     });
 
@@ -39,7 +37,7 @@ describe("useSpotifyStore", () => {
 
     it("passes current-version data through unchanged", () => {
       const persisted = {
-        byInstance: { "spotify-1": { timeDisplayMode: "total", ambient: true } },
+        byInstance: { "spotify-1": { timeDisplayMode: "total" } },
       };
       expect(migrate?.(persisted, 2)).toBe(persisted);
     });

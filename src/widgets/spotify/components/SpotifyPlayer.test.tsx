@@ -57,7 +57,6 @@ function renderPlayer(contextName: string | null) {
       <SpotifyPlayer
         controller={controller(contextName)}
         playback={playback({ uri: "spotify:playlist:p1", kind: "playlist" })}
-        view="expanded"
         timeDisplayMode="total"
       />
     </TooltipProvider>,

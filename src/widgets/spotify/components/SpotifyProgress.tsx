@@ -5,6 +5,7 @@ type SpotifyProgressProps = {
   displayedProgressMs: number;
   leftLabel: string;
   rightLabel: string;
+  showLabels?: boolean;
   disabled: boolean;
   onChange: (positionMs: number) => void;
   onCommit: () => void;
@@ -15,12 +16,13 @@ export function SpotifyProgress({
   displayedProgressMs,
   leftLabel,
   rightLabel,
+  showLabels = true,
   disabled,
   onChange,
   onCommit,
 }: SpotifyProgressProps) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1">
       <Slider
         value={[Math.min(displayedProgressMs, durationMs)]}
         min={0}
@@ -31,10 +33,12 @@ export function SpotifyProgress({
         onValueChange={(values) => onChange(values[0] ?? 0)}
         onValueCommit={onCommit}
       />
-      <div className="text-ink-3 flex justify-between text-micro tabular-nums">
-        <span>{leftLabel}</span>
-        <span>{rightLabel}</span>
-      </div>
+      {showLabels && (
+        <div className="text-ink-3 flex justify-between text-micro tabular-nums">
+          <span>{leftLabel}</span>
+          <span>{rightLabel}</span>
+        </div>
+      )}
     </div>
   );
 }

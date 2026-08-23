@@ -61,7 +61,7 @@ export type SpotifySearchResult = {
   mine?: boolean;
 };
 
-export type SpotifyResponsiveView = "compact" | "details" | "expanded";
+export type SpotifyResponsiveView = "bar" | "stacked";
 
 export type SpotifyPendingAction =
   | "playback"

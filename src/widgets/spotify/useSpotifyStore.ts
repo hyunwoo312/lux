@@ -9,27 +9,23 @@ import { SPOTIFY_TIME_DISPLAY_MODES, type SpotifyTimeDisplayMode } from "@/widge
 
 type SpotifyData = {
   timeDisplayMode: SpotifyTimeDisplayMode;
-  ambient: boolean;
   queueView: boolean;
 };
 
 type SpotifyState = {
   byInstance: Record<string, SpotifyData>;
   setTimeDisplayMode: (instanceId: string, mode: SpotifyTimeDisplayMode) => void;
-  setAmbient: (instanceId: string, ambient: boolean) => void;
   setQueueView: (instanceId: string, queueView: boolean) => void;
   removeInstance: (instanceId: string) => void;
 };
 
 const DEFAULT_DATA: SpotifyData = {
   timeDisplayMode: "total",
-  ambient: true,
   queueView: false,
 };
 
 const configSchema = z.object({
   timeDisplayMode: z.enum(SPOTIFY_TIME_DISPLAY_MODES).default("total"),
-  ambient: z.boolean().default(true),
   queueView: z.boolean().default(false),
 });
 
@@ -53,8 +49,6 @@ export const useSpotifyStore = create<SpotifyState>()(
       byInstance: {},
       setTimeDisplayMode: (instanceId, timeDisplayMode) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, timeDisplayMode }))),
-      setAmbient: (instanceId, ambient) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, ambient }))),
       setQueueView: (instanceId, queueView) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, queueView }))),
       removeInstance: (instanceId) =>
@@ -74,7 +68,6 @@ export const useSpotifyStore = create<SpotifyState>()(
             ? {
                 spotify: {
                   timeDisplayMode: legacy.data.timeDisplayMode,
-                  ambient: legacy.data.ambient,
                 },
               }
             : {},

@@ -8,7 +8,9 @@ import type {
   SpotifyPlaybackState,
 } from "@/widgets/spotify/types";
 
-const CONTROL_BUTTON = `focus-ring text-ink-3 inline-flex size-8 items-center justify-center rounded-full
+const ACTIVE_TOGGLE = "text-primary hover:text-primary";
+
+const CONTROL_BUTTON = `focus-ring text-ink-3 relative inline-flex items-center justify-center rounded-full
  transition-colors
  hover:text-ink
  disabled:pointer-events-none disabled:opacity-40
@@ -19,6 +21,7 @@ type SpotifyControlsProps = {
   pendingActions: Set<SpotifyPendingAction>;
   canRestart: boolean;
   showSideControls: boolean;
+  compact?: boolean;
   deviceOptions: SpotifyPlaybackDevice[];
   volumePercent: number;
   onTogglePlayback: () => void;
@@ -37,6 +40,7 @@ export function SpotifyControls({
   pendingActions,
   canRestart,
   showSideControls,
+  compact = false,
   deviceOptions,
   volumePercent,
   onTogglePlayback,
@@ -49,9 +53,14 @@ export function SpotifyControls({
   onChangeVolume,
   onCommitVolume,
 }: SpotifyControlsProps) {
+  const size = compact ? "size-7" : "size-8";
+  const play = compact ? "size-8" : "size-10";
+  const glyph = compact ? "size-3.5" : "size-4";
+  const playGlyph = compact ? "size-4" : "size-5";
+
   return (
     <div className="flex items-center justify-between gap-1">
-      <div className="flex w-8 justify-start">
+      <div className={cn("flex justify-start", compact ? "w-0" : "w-8")}>
         {showSideControls && (
           <SpotifyDeviceMenu
             devices={deviceOptions}
@@ -73,36 +82,42 @@ export function SpotifyControls({
           className={cn(
             "press cursor-pointer",
             CONTROL_BUTTON,
-            playback.shuffle && "text-primary hover:text-primary",
+            size,
+            playback.shuffle && ACTIVE_TOGGLE,
           )}
         >
-          <Shuffle className="size-4" aria-hidden />
+          <Shuffle className={glyph} aria-hidden />
+          {playback.shuffle && <ActiveDot />}
         </button>
         <button
           type="button"
           aria-label={canRestart ? "Restart track" : "Previous track"}
           disabled={pendingActions.has("previous")}
           onClick={onPrevious}
-          className={cn("press cursor-pointer", CONTROL_BUTTON)}
+          className={cn("press cursor-pointer", CONTROL_BUTTON, size)}
         >
-          <SkipBack className="size-4" aria-hidden />
+          <SkipBack className={glyph} aria-hidden />
         </button>
         <button
           type="button"
           aria-label={playback.isPlaying ? "Pause" : "Play"}
           disabled={pendingActions.has("playback")}
           onClick={onTogglePlayback}
-          className="
-            press cursor-pointer focus-ring bg-primary text-primary-foreground inline-flex size-10
-            items-center justify-center rounded-full
-            hover:scale-105
-            disabled:pointer-events-none disabled:opacity-50
-          "
+          className={cn(
+            `
+              focus-ring text-ink inline-flex cursor-pointer items-center justify-center
+              rounded-full transition-transform
+              hover:scale-105
+              active:scale-95
+              disabled:pointer-events-none disabled:opacity-40
+            `,
+            play,
+          )}
         >
           {playback.isPlaying ? (
-            <Pause className="size-5 fill-current" aria-hidden />
+            <Pause className={cn(playGlyph, "fill-current")} aria-hidden />
           ) : (
-            <Play className="size-5 translate-x-px fill-current" aria-hidden />
+            <Play className={cn(playGlyph, "translate-x-px fill-current")} aria-hidden />
           )}
         </button>
         <button
@@ -110,9 +125,9 @@ export function SpotifyControls({
           aria-label="Next track"
           disabled={pendingActions.has("next")}
           onClick={onNext}
-          className={cn("press cursor-pointer", CONTROL_BUTTON)}
+          className={cn("press cursor-pointer", CONTROL_BUTTON, size)}
         >
-          <SkipForward className="size-4" aria-hidden />
+          <SkipForward className={glyph} aria-hidden />
         </button>
         <button
           type="button"
@@ -123,18 +138,20 @@ export function SpotifyControls({
           className={cn(
             "press cursor-pointer",
             CONTROL_BUTTON,
-            playback.repeatMode !== "off" && "text-primary hover:text-primary",
+            size,
+            playback.repeatMode !== "off" && ACTIVE_TOGGLE,
           )}
         >
           {playback.repeatMode === "track" ? (
-            <Repeat1 className="size-4" aria-hidden />
+            <Repeat1 className={glyph} aria-hidden />
           ) : (
-            <Repeat className="size-4" aria-hidden />
+            <Repeat className={glyph} aria-hidden />
           )}
+          {playback.repeatMode !== "off" && <ActiveDot />}
         </button>
       </div>
 
-      <div className="flex w-8 justify-end">
+      <div className={cn("flex justify-end", compact ? "w-0" : "w-8")}>
         {showSideControls && (
           <SpotifyVolume
             volumePercent={volumePercent}
@@ -145,5 +162,14 @@ export function SpotifyControls({
         )}
       </div>
     </div>
+  );
+}
+
+function ActiveDot() {
+  return (
+    <span
+      aria-hidden
+      className="bg-primary absolute bottom-0 left-1/2 size-1 -translate-x-1/2 rounded-full"
+    />
   );
 }

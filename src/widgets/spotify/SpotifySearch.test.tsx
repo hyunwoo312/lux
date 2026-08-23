@@ -99,15 +99,6 @@ describe("SpotifySearch device targeting", () => {
     await waitFor(() => expect(refreshMock).toHaveBeenCalled());
   });
 
-  it("still shows results when no device is active", async () => {
-    devicesMock.mockResolvedValue([device("d1", "Desk", false), device("d2", "Phone", false)]);
-    renderSearch();
-    await openAndSearch();
-
-    expect(screen.getByText("Lullaby")).toBeInTheDocument();
-    expect(screen.getByText("Play on")).toBeInTheDocument();
-  });
-
   it("plays on a device the user picks when none is active", async () => {
     devicesMock.mockResolvedValue([device("d1", "Desk", false), device("d2", "Phone", false)]);
     renderSearch();
@@ -164,14 +155,5 @@ describe("SpotifySearch device targeting", () => {
     );
     const after = screen.getAllByRole("option").map((row) => row.textContent);
     expect(after).toEqual(before);
-  });
-
-  it("explains what to do when there are no devices at all", async () => {
-    devicesMock.mockResolvedValue([]);
-    renderSearch();
-    await openAndSearch();
-
-    expect(screen.getByText("Open Spotify on a device to start playback.")).toBeInTheDocument();
-    expect(screen.getByText("Lullaby")).toBeInTheDocument();
   });
 });

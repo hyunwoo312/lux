@@ -1,4 +1,9 @@
 import { useEffect } from "react";
+import {
+  createLatestOnly,
+  createSerialQueue,
+  type QueuedRunner,
+} from "@/widgets/spotify/lib/actionQueue";
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import {
@@ -230,12 +235,34 @@ function scheduleFollowUpRefresh(): void {
   scheduleRefreshBursts(FOLLOW_UP_REFRESH_DELAYS_MS);
 }
 
+const skipQueue = createSerialQueue();
+const toggleQueues = new Map<SpotifyPendingAction, QueuedRunner>();
+
+function queueFor(pendingAction: SpotifyPendingAction): QueuedRunner {
+  const existing = toggleQueues.get(pendingAction);
+  if (existing) return existing;
+  const created = createLatestOnly();
+  toggleQueues.set(pendingAction, created);
+  return created;
+}
+
+function queuePlaybackAction(
+  action: () => Promise<void>,
+  afterAction: (() => void) | undefined,
+  pendingAction: SpotifyPendingAction,
+  mode: "serial" | "latest",
+): void {
+  const runner = mode === "serial" ? skipQueue : queueFor(pendingAction);
+  runner(() => runPlaybackAction(action, afterAction, pendingAction, true));
+}
+
 async function runPlaybackAction(
   action: () => Promise<void>,
   afterAction?: () => void,
   pendingAction?: SpotifyPendingAction,
+  queued = false,
 ): Promise<void> {
-  if (pendingAction && get().pendingActions.has(pendingAction)) return;
+  if (!queued && pendingAction && get().pendingActions.has(pendingAction)) return;
   try {
     if (pendingAction) setPendingAction(pendingAction, true);
     set({ error: null });
@@ -272,23 +299,20 @@ function getDisplayedProgressMs(): number {
 function togglePlayback(): void {
   const { playback } = get();
   if (!playback) return;
-  void runPlaybackAction(
-    playback.isPlaying ? pauseSpotifyPlayback : resumeSpotifyPlayback,
-    () => {
-      set((state) =>
-        state.playback
-          ? { playback: { ...state.playback, isPlaying: !state.playback.isPlaying } }
-          : state,
-      );
-      markSyncedNow();
-    },
+  const shouldPlay = !playback.isPlaying;
+  set({ playback: { ...playback, isPlaying: shouldPlay } });
+  markSyncedNow();
+  queuePlaybackAction(
+    shouldPlay ? resumeSpotifyPlayback : pauseSpotifyPlayback,
+    undefined,
     "playback",
+    "latest",
   );
 }
 
 function previousTrack(): void {
   if (getDisplayedProgressMs() > RESTART_THRESHOLD_MS) {
-    void runPlaybackAction(
+    queuePlaybackAction(
       () => seekSpotifyPlayback(0),
       () => {
         set((state) =>
@@ -297,28 +321,23 @@ function previousTrack(): void {
         markSyncedNow();
       },
       "previous",
+      "serial",
     );
     return;
   }
-  void runPlaybackAction(skipSpotifyPrevious, undefined, "previous");
+  queuePlaybackAction(skipSpotifyPrevious, undefined, "previous", "serial");
 }
 
 function nextTrack(): void {
-  void runPlaybackAction(skipSpotifyNext, undefined, "next");
+  queuePlaybackAction(skipSpotifyNext, undefined, "next", "serial");
 }
 
 function toggleShuffle(): void {
   const { playback } = get();
   if (!playback) return;
   const nextShuffle = !playback.shuffle;
-  void runPlaybackAction(
-    () => setSpotifyShuffle(nextShuffle),
-    () =>
-      set((state) =>
-        state.playback ? { playback: { ...state.playback, shuffle: nextShuffle } } : state,
-      ),
-    "shuffle",
-  );
+  set({ playback: { ...playback, shuffle: nextShuffle } });
+  queuePlaybackAction(() => setSpotifyShuffle(nextShuffle), undefined, "shuffle", "latest");
 }
 
 function cycleRepeat(): void {
@@ -327,14 +346,8 @@ function cycleRepeat(): void {
   const currentIndex = SPOTIFY_REPEAT_MODES.indexOf(playback.repeatMode);
   const nextRepeatMode =
     SPOTIFY_REPEAT_MODES[(currentIndex + 1) % SPOTIFY_REPEAT_MODES.length] ?? "off";
-  void runPlaybackAction(
-    () => setSpotifyRepeatMode(nextRepeatMode),
-    () =>
-      set((state) =>
-        state.playback ? { playback: { ...state.playback, repeatMode: nextRepeatMode } } : state,
-      ),
-    "repeat",
-  );
+  set({ playback: { ...playback, repeatMode: nextRepeatMode } });
+  queuePlaybackAction(() => setSpotifyRepeatMode(nextRepeatMode), undefined, "repeat", "latest");
 }
 
 function changeVolume(volumePercent: number): void {

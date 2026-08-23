@@ -4,6 +4,7 @@ import { RemoteImage } from "@/components/media/RemoteImage";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Music, Play } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
+import { TYPE } from "@/lib/type";
 import { cn } from "@/lib/utils";
 import {
   loadSpotifyQueue,
@@ -131,11 +132,11 @@ export function SpotifyQueuePanel() {
       )}
 
       <div className="flex min-h-0 flex-1 flex-col gap-1.5">
-        <p className="text-ink-3 text-micro font-medium tracking-wide uppercase">Up next</p>
+        <p className={TYPE.eyebrow}>Up next</p>
         {playError && <p className="text-ink-3 text-micro">{playError}</p>}
         {queueError && upNext.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-            <p className="text-ink-3 text-caption">{queueError}</p>
+            <p className={cn(TYPE.rowSubtitle)}>{queueError}</p>
             <button
               type="button"
               onClick={() => void loadSpotifyQueue()}

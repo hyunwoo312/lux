@@ -5,6 +5,7 @@ import { useSettingsStore } from "@/settings";
 import { useElementSize } from "@/hooks/useElementSize";
 import { SpotifyDeviceMenu } from "@/widgets/spotify/components/SpotifyDeviceMenu";
 import { SpotifyEmptyState } from "@/widgets/spotify/components/SpotifyEmptyState";
+import { SpotifyBar } from "@/widgets/spotify/components/SpotifyBar";
 import { SpotifyPlayer } from "@/widgets/spotify/components/SpotifyPlayer";
 import { SpotifyQueuePanel } from "@/widgets/spotify/components/SpotifyQueuePanel";
 import { useSpotifyConnection } from "@/widgets/spotify/hooks/useSpotifyConnection";
@@ -13,10 +14,11 @@ import { useSpotify } from "@/widgets/spotify/useSpotifyStore";
 import type { ElementSize } from "@/hooks/useElementSize";
 import type { SpotifyResponsiveView } from "@/widgets/spotify/types";
 
-function getViewMode({ width, height }: ElementSize): SpotifyResponsiveView {
-  if (height >= 300 && width >= 250) return "expanded";
-  if (height >= 140) return "details";
-  return "compact";
+const STACKED_MIN_HEIGHT = 260;
+const ROOMY_MIN_WIDTH = 320;
+
+function getViewMode({ height }: ElementSize): SpotifyResponsiveView {
+  return height >= STACKED_MIN_HEIGHT ? "stacked" : "bar";
 }
 
 type ErrorCopy = { title: string; message: string; reconnect: boolean };
@@ -57,6 +59,7 @@ export function SpotifyWidget() {
   const queueView = useSpotify((d) => d.queueView);
 
   const view = getViewMode(size);
+  const roomy = size.width >= ROOMY_MIN_WIDTH;
 
   let content: ReactNode;
   if (!loaded) {
@@ -109,11 +112,18 @@ export function SpotifyWidget() {
         >
           {queueView ? (
             <SpotifyQueuePanel />
+          ) : view === "bar" ? (
+            <SpotifyBar
+              controller={controller}
+              playback={controller.playback}
+              timeDisplayMode={timeDisplayMode}
+              roomy={roomy}
+              size={size}
+            />
           ) : (
             <SpotifyPlayer
               controller={controller}
               playback={controller.playback}
-              view={view}
               timeDisplayMode={timeDisplayMode}
             />
           )}

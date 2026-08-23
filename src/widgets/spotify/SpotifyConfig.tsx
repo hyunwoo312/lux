@@ -1,6 +1,5 @@
 import { Settings2 } from "lucide-react";
 import { IconActionButton } from "@/components/IconActionButton";
-import { Switch } from "@/components/ui/switch";
 import { useSettingsStore } from "@/settings";
 import {
   ConfigSegmented,
@@ -22,8 +21,6 @@ export function SpotifyConfig() {
   const instanceId = useWidgetInstanceId();
   const timeDisplayMode = useSpotify((d) => d.timeDisplayMode);
   const setTimeDisplayMode = useSpotifyStore((s) => s.setTimeDisplayMode);
-  const ambient = useSpotify((d) => d.ambient);
-  const setAmbient = useSpotifyStore((s) => s.setAmbient);
 
   const accountDescription = account
     ? account.status === "needsReconnect"
@@ -58,17 +55,6 @@ export function SpotifyConfig() {
               value={timeDisplayMode}
               options={TIME_DISPLAY_OPTIONS}
               onChange={(value) => setTimeDisplayMode(instanceId, value)}
-            />
-          }
-        />
-        <WidgetConfigItem
-          title="Ambient artwork"
-          description="Blur the album art behind the player"
-          control={
-            <Switch
-              checked={ambient}
-              onCheckedChange={(checked) => setAmbient(instanceId, checked === true)}
-              aria-label="Ambient album artwork"
             />
           }
         />
