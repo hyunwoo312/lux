@@ -5,12 +5,15 @@ import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from 
 import type { DragEndEvent } from "@dnd-kit/core";
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { BorderTrail } from "@/components/ui/border-trail";
+import { Input } from "@/components/ui/input";
+import { TYPE } from "@/lib/type";
+import { cn } from "@/lib/utils";
 import { VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
+import { BorderTrail } from "@/widgets/tasks/components/BorderTrail";
 import { orderTasks } from "@/widgets/tasks/lib/order";
 import { getTaskData, useTasks, useTasksStore } from "@/widgets/tasks/useTasksStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import { DraftTaskRow, TaskRow } from "@/widgets/tasks/components/TaskRow";
+import { TaskRow } from "@/widgets/tasks/components/TaskRow";
 
 const REMOVE_DELAY_MS = 900;
 
@@ -28,7 +31,6 @@ export function TasksWidget() {
   const reduced = useReducedMotion();
 
   const [newTitle, setNewTitle] = useState("");
-  const [draftId, setDraftId] = useState(() => crypto.randomUUID());
   const [revealingId, setRevealingId] = useState<string | null>(null);
   const [focused, setFocused] = useState(false);
   const pulse = useAnimationControls();
@@ -46,8 +48,7 @@ export function TasksWidget() {
     () => orderTasks(tasks, autoSort, completedPosition),
     [tasks, autoSort, completedPosition],
   );
-  const hasDraft = newTitle.trim().length > 0;
-  const showEmpty = ordered.length === 0 && !hasDraft;
+  const showEmpty = ordered.length === 0;
 
   const cancelRemoval = (id: string) => {
     const timer = removalTimers.current.get(id);
@@ -88,10 +89,10 @@ export function TasksWidget() {
     event.preventDefault();
     if (!newTitle.trim()) return;
 
-    addTask(instanceId, newTitle, draftId);
-    if (!reduced) setRevealingId(draftId);
+    const id = crypto.randomUUID();
+    addTask(instanceId, newTitle, id);
+    if (!reduced) setRevealingId(id);
     setNewTitle("");
-    setDraftId(crypto.randomUUID());
     if (!reduced) {
       pulse.start({
         scale: [1, 1.015, 1],
@@ -110,26 +111,21 @@ export function TasksWidget() {
   return (
     <div className="flex h-full flex-col gap-2">
       <form onSubmit={handleSubmit} className="shrink-0">
-        <div className="relative overflow-hidden rounded-lg">
-          <motion.input
-            animate={pulse}
+        <motion.div animate={pulse} className="relative overflow-hidden rounded-md">
+          <Input
+            size="lg"
             value={newTitle}
             onChange={(event) => setNewTitle(event.target.value)}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             placeholder="Add a task…"
             aria-label="Add a task"
-            className="
-              focus-ring border-border/70 bg-background/60
-              placeholder:text-ink-4
-              relative w-full rounded-lg border px-3 py-2 text-body
-            "
           />
           {!reduced && <BorderTrail active={focused} />}
-        </div>
+        </motion.div>
       </form>
       {showEmpty ? (
-        <div className="text-ink-4 flex flex-1 items-center justify-center text-body">
+        <div className={cn(TYPE.rowSubtitle, "flex flex-1 items-center justify-center")}>
           No tasks yet
         </div>
       ) : (
@@ -156,12 +152,12 @@ export function TasksWidget() {
                     task={task}
                     sortable={!autoSort}
                     revealing={task.id === revealingId}
+                    onRevealed={() => setRevealingId(null)}
                     onToggle={() => handleToggle(task.id)}
                     onEdit={(title) => editTask(instanceId, task.id, title)}
                     onRemove={() => removeTask(instanceId, task.id)}
                   />
                 ))}
-                {hasDraft && <DraftTaskRow key={draftId} text={newTitle} />}
               </AnimatePresence>
             </motion.ul>
           </SortableContext>

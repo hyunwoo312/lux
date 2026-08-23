@@ -41,7 +41,6 @@ const taskSchema = z.object({
   id: z.string(),
   title: z.string(),
   done: z.boolean().catch(false),
-  createdAt: z.number().catch(0),
 });
 
 const dataSchema = z.object({
@@ -79,7 +78,7 @@ export const useTasksStore = create<TasksState>()(
         set((state) => {
           const trimmed = title.trim();
           if (!trimmed) return state;
-          const task: Task = { id, title: trimmed, done: false, createdAt: Date.now() };
+          const task: Task = { id, title: trimmed, done: false };
           return update(state, instanceId, (data) => ({ ...data, tasks: [...data.tasks, task] }));
         }),
       toggleTask: (instanceId, id) =>

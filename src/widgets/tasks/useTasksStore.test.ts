@@ -8,6 +8,49 @@ describe("useTasksStore", () => {
     useTasksStore.setState({ byInstance: {} });
   });
 
+  it("adds a task with its title trimmed", () => {
+    store().addTask(ID, "  buy milk  ", "1");
+    expect(store().byInstance[ID]?.tasks).toEqual([{ id: "1", title: "buy milk", done: false }]);
+  });
+
+  it("ignores a task with nothing but whitespace in it", () => {
+    store().addTask(ID, "   ", "1");
+    expect(store().byInstance[ID]?.tasks ?? []).toEqual([]);
+  });
+
+  it("adds new tasks to the end of the list", () => {
+    store().addTask(ID, "a", "1");
+    store().addTask(ID, "b", "2");
+    expect(store().byInstance[ID]?.tasks.map((task) => task.id)).toEqual(["1", "2"]);
+  });
+
+  it("toggles a task done and back again", () => {
+    store().addTask(ID, "a", "1");
+    store().toggleTask(ID, "1");
+    expect(store().byInstance[ID]?.tasks[0]?.done).toBe(true);
+    store().toggleTask(ID, "1");
+    expect(store().byInstance[ID]?.tasks[0]?.done).toBe(false);
+  });
+
+  it("edits a task's title, trimmed", () => {
+    store().addTask(ID, "a", "1");
+    store().editTask(ID, "1", "  renamed  ");
+    expect(store().byInstance[ID]?.tasks[0]?.title).toBe("renamed");
+  });
+
+  it("keeps the old title rather than accepting an empty edit", () => {
+    store().addTask(ID, "a", "1");
+    store().editTask(ID, "1", "   ");
+    expect(store().byInstance[ID]?.tasks[0]?.title).toBe("a");
+  });
+
+  it("removes a single task and leaves the rest", () => {
+    store().addTask(ID, "a", "1");
+    store().addTask(ID, "b", "2");
+    store().removeTask(ID, "1");
+    expect(store().byInstance[ID]?.tasks.map((task) => task.id)).toEqual(["2"]);
+  });
+
   it("clears only completed tasks", () => {
     store().addTask(ID, "a", "1");
     store().addTask(ID, "b", "2");
@@ -109,7 +152,7 @@ describe("useTasksStore", () => {
       expect(migrate?.(legacy, 1)).toEqual({
         byInstance: {
           tasks: {
-            tasks: [{ id: "1", title: "a", done: false, createdAt: 1000 }],
+            tasks: [{ id: "1", title: "a", done: false }],
             autoSort: true,
             completedPosition: "top",
             removeOnCompletion: false,

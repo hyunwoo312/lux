@@ -1,22 +1,23 @@
 import { DURATION, EASE_OUT } from "@/lib/motion";
 import { ROW } from "@/lib/row";
 import type { CSSProperties, KeyboardEvent } from "react";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Transition } from "motion/react";
 import { motion, useReducedMotion } from "motion/react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Pencil, X } from "lucide-react";
+import { ItemActionButton } from "@/components/ItemActionButton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { TextMorph } from "@/widgets/tasks/components/TextMorph";
 import type { Task } from "@/widgets/tasks/types";
 
 type TaskRowProps = {
   task: Task;
   sortable: boolean;
   revealing?: boolean;
+  onRevealed?: () => void;
   onToggle: () => void;
   onEdit: (title: string) => void;
   onRemove: () => void;
@@ -24,39 +25,18 @@ type TaskRowProps = {
 
 const ROW_TRANSITION: Transition = { duration: DURATION.base, ease: EASE_OUT };
 
-export function DraftTaskRow({ text }: { text: string }) {
-  const reduced = useReducedMotion();
-
-  return (
-    <motion.li
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 0.5 }}
-      exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
-      transition={ROW_TRANSITION}
-      className={ROW.item}
-    >
-      <span className="border-muted-foreground/40 size-4 shrink-0 rounded-xs border border-dashed" />
-      <div className="min-w-0 flex-1">
-        <TextMorph
-          text={text}
-          className="text-ink-3 block overflow-hidden text-body whitespace-nowrap"
-        />
-      </div>
-    </motion.li>
-  );
-}
-
 export function TaskRow({
   task,
   sortable,
   revealing = false,
+  onRevealed,
   onToggle,
   onEdit,
   onRemove,
 }: TaskRowProps) {
   const reduced = useReducedMotion();
   const [editing, setEditing] = useState(false);
-  const [revealActive, setRevealActive] = useState(false);
+  const [revealActive, setRevealActive] = useState(revealing);
   const [truncated, setTruncated] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const observer = useRef<ResizeObserver | null>(null);
@@ -76,10 +56,6 @@ export function TaskRow({
   }, []);
 
   useEffect(() => () => observer.current?.disconnect(), []);
-
-  useLayoutEffect(() => {
-    if (revealing) setRevealActive(true);
-  }, [revealing]);
 
   useEffect(() => {
     if (editing) {
@@ -161,7 +137,9 @@ export function TaskRow({
                 ref={measureRef}
                 onDoubleClick={() => setEditing(true)}
                 onAnimationEnd={() => {
-                  if (revealActive) setRevealActive(false);
+                  if (!revealActive) return;
+                  setRevealActive(false);
+                  onRevealed?.();
                 }}
                 className={cn(
                   "block truncate text-body",
@@ -194,38 +172,16 @@ export function TaskRow({
             group-hover:translate-x-0 group-hover:opacity-100
           "
         >
-          <motion.button
-            type="button"
-            whileHover={reduced ? undefined : { scale: 1.18 }}
-            whileTap={reduced ? undefined : { scale: 0.85 }}
-            onPointerDown={stopDrag}
-            onClick={() => setEditing(true)}
-            aria-label={`Edit ${task.title}`}
-            className="
-              text-ink-4
-              hover:text-ink
-              cursor-pointer p-0.5 transition-colors
-              [&_svg]:size-3.5
-            "
-          >
+          <ItemActionButton label={`Edit ${task.title}`} onClick={() => setEditing(true)}>
             <Pencil />
-          </motion.button>
-          <motion.button
-            type="button"
-            whileHover={reduced ? undefined : { scale: 1.18 }}
-            whileTap={reduced ? undefined : { scale: 0.85 }}
-            onPointerDown={stopDrag}
+          </ItemActionButton>
+          <ItemActionButton
+            label={`Delete ${task.title}`}
             onClick={onRemove}
-            aria-label={`Delete ${task.title}`}
-            className="
-              text-ink-4
-              hover:text-destructive
-              cursor-pointer p-0.5 transition-colors
-              [&_svg]:size-3.5
-            "
+            className="hover:text-destructive"
           >
             <X />
-          </motion.button>
+          </ItemActionButton>
         </div>
       )}
     </motion.li>

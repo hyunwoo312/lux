@@ -3,7 +3,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Pencil, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ItemActionButton } from "@/widgets/quick-access/components/ItemActionButton";
+import { ItemActionButton } from "@/components/ItemActionButton";
 import { QuickItem } from "@/widgets/quick-access/components/QuickItem";
 import { QA_REVEAL, qaTileClass } from "@/widgets/quick-access/lib/itemStyles";
 import { QuickLinkAnchor } from "@/widgets/quick-access/components/QuickLinkAnchor";

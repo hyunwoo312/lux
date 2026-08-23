@@ -5,7 +5,6 @@ const task = (id: string, done: boolean): Task => ({
   id,
   title: id,
   done,
-  createdAt: 0,
 });
 
 describe("orderTasks", () => {

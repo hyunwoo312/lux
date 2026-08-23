@@ -3,7 +3,7 @@ import { motion } from "motion/react";
 import { Pin, Volume2, VolumeX, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
-import { ItemActionButton } from "@/widgets/quick-access/components/ItemActionButton";
+import { ItemActionButton } from "@/components/ItemActionButton";
 import { QuickItem } from "@/widgets/quick-access/components/QuickItem";
 import { QuickLinkAnchor } from "@/widgets/quick-access/components/QuickLinkAnchor";
 import {
