@@ -1,5 +1,17 @@
 import { matchesTeam } from "@/widgets/sports/lib/espn";
-import type { Match } from "@/widgets/sports/types";
+import { leagueById, type League } from "@/widgets/sports/lib/leagues";
+import type { LeagueFollowing, Match } from "@/widgets/sports/types";
+
+export type FollowedLeague = { league: League; teams: string[] };
+
+export function followedLeagues(following: Record<string, LeagueFollowing>): FollowedLeague[] {
+  return Object.entries(following).flatMap(([leagueId, entry]) => {
+    const league = leagueById(leagueId);
+    if (!league) return [];
+    if (entry.teams.length === 0 && entry.tour !== true) return [];
+    return [{ league, teams: entry.teams }];
+  });
+}
 
 type FollowedView = {
   matches: Match[];

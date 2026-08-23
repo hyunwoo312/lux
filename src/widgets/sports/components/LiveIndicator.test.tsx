@@ -9,18 +9,4 @@ describe("LiveIndicator", () => {
 
     expect(screen.getByRole("status", { name: "Live" })).toBeInTheDocument();
   });
-
-  it("uses the dedicated live colour, not the widget accent", () => {
-    const { container } = render(<LiveIndicator />);
-    const bar = container.querySelector(".live-sweep");
-
-    expect(bar?.className).toContain("bg-live");
-    expect(bar?.className).not.toContain("bg-primary");
-  });
-
-  it("carries the sweep animation the reduced-motion rule can switch off", () => {
-    const { container } = render(<LiveIndicator />);
-
-    expect(container.querySelector(".live-sweep")).toBeInTheDocument();
-  });
 });

@@ -31,6 +31,9 @@ export function hasMatchDetail(match: Match): boolean {
     match.away.periods.length ||
     match.home.periods.length ||
     match.situation ||
+    match.events.length ||
+    match.stats.length ||
+    (match.state === "pre" && match.away.form && match.home.form) ||
     match.venue ||
     match.broadcast ||
     match.link ||

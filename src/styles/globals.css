@@ -808,26 +808,23 @@
   animation-timing-function: ease-in-out;
 }
 
-@keyframes live-sweep {
-  0% {
-    transform: translateX(-100%);
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
   }
   50% {
-    transform: translateX(200%);
-  }
-  100% {
-    transform: translateX(-100%);
+    opacity: 0.35;
   }
 }
 
-@utility live-sweep {
-  animation: live-sweep 2.6s var(--ease-standard) infinite;
+@utility live-pulse {
+  animation: live-pulse 2s var(--ease-standard) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .live-sweep {
+  .live-pulse {
     animation: none;
-    transform: translateX(50%);
   }
 }
 

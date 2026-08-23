@@ -1,32 +1,49 @@
 import type { ReactNode } from "react";
 import { ExternalLink } from "lucide-react";
+import { TYPE } from "@/lib/type";
 import { cn } from "@/lib/utils";
 import { openUrl } from "@/lib/open-url";
-import { BaseDiamond, OutDots } from "@/widgets/sports/components/BaseDiamond";
-import { LineScore } from "@/widgets/sports/components/LineScore";
+import { BaseDiamond, OutDots } from "@/widgets/sports/components/match/BaseDiamond";
+import { LineScore } from "@/widgets/sports/components/match/LineScore";
+import { MatchStats } from "@/widgets/sports/components/match/MatchStats";
+import { MatchTimeline } from "@/widgets/sports/components/match/MatchTimeline";
+import { TeamForm } from "@/widgets/sports/components/match/TeamForm";
 import { TeamLogo } from "@/widgets/sports/components/TeamLogo";
 import { useChangeFlash } from "@/widgets/sports/hooks/useChangeFlash";
-import { COLUMN } from "@/widgets/sports/lib/columns";
+import { COLUMN, MATCH_GRID } from "@/widgets/sports/lib/columns";
 import { peopleFor, type DetailPerson } from "@/widgets/sports/lib/detail";
+import type { Sport } from "@/widgets/sports/lib/leagues";
+import { readRecord } from "@/widgets/sports/lib/record";
 import { formatSituation } from "@/widgets/sports/lib/situation";
 import type { Match } from "@/widgets/sports/types";
 
-function TeamStat({ value, side }: { value: string | undefined; side: "away" | "home" }) {
+function RecordSide({
+  value,
+  sport,
+  side,
+}: {
+  value: string | undefined;
+  sport: Sport;
+  side: "away" | "home";
+}) {
   const home = side === "home";
+  const parts = readRecord(value, sport);
+
   return (
-    <>
-      {home ? <span className={COLUMN.score} /> : <span className={COLUMN.logo} />}
-      <span
-        className={cn(
-          COLUMN.name,
-          "text-ink-3 text-micro font-normal",
-          home ? "text-left" : "text-right",
-        )}
-      >
-        {value ?? ""}
+    <div className={cn(COLUMN.side, home && "flex-row-reverse")}>
+      <span className={COLUMN.logo} />
+      <span className="text-micro flex min-w-0 items-center gap-1.5 truncate">
+        {parts.length > 0
+          ? parts.map((part) => (
+              <span key={part.label} className="text-ink tabular-nums">
+                {part.value}
+                <span className="text-ink-4 ml-0.5 font-medium">{part.label}</span>
+              </span>
+            ))
+          : (value ?? "")}
       </span>
-      {home ? <span className={COLUMN.logo} /> : <span className={COLUMN.score} />}
-    </>
+      <span className={COLUMN.score} />
+    </div>
   );
 }
 
@@ -62,11 +79,15 @@ function PersonRow({ logo, label, name, detail }: DetailPerson) {
   );
 }
 
-export function MatchDetail({ match }: { match: Match }) {
+export function MatchDetail({ match, sport }: { match: Match; sport: Sport }) {
   const situation = match.situation;
   const hasCount = situation?.balls != null && situation.strikes != null;
   const meta = [match.venue, match.broadcast].filter(Boolean).join(" · ");
   const hasRecords = Boolean(match.away.record || match.home.record);
+  const form =
+    match.state === "pre" && match.away.form && match.home.form
+      ? { away: match.away.form, home: match.home.form }
+      : null;
 
   const live = match.state === "in";
   const people = peopleFor(match);
@@ -80,14 +101,18 @@ export function MatchDetail({ match }: { match: Match }) {
   return (
     <div className="flex flex-col gap-2 px-2 pt-1 pb-2.5">
       {hasRecords ? (
-        <div className="flex items-center gap-2">
-          <span aria-hidden className="flex-1" />
-          <div className="flex shrink-0 items-center gap-1">
-            <TeamStat value={match.away.record} side="away" />
-            <span className={COLUMN.separator} />
-            <TeamStat value={match.home.record} side="home" />
-          </div>
-          <span aria-hidden className="flex-1" />
+        <div className={MATCH_GRID}>
+          <RecordSide value={match.away.record} sport={sport} side="away" />
+          <span className={COLUMN.separator} />
+          <RecordSide value={match.home.record} sport={sport} side="home" />
+        </div>
+      ) : null}
+
+      {form ? (
+        <div className={MATCH_GRID}>
+          <TeamForm form={form.away} side="away" />
+          <span className={cn(COLUMN.separator, TYPE.eyebrow)}>Form</span>
+          <TeamForm form={form.home} side="home" />
         </div>
       ) : null}
 
@@ -97,9 +122,22 @@ export function MatchDetail({ match }: { match: Match }) {
         </Section>
       ) : null}
 
+      {match.events.length > 0 ? (
+        <Section>
+          <p className={cn(TYPE.eyebrow, "mb-1.5")}>Goals and cards</p>
+          <MatchTimeline events={match.events} />
+        </Section>
+      ) : null}
+
+      {match.stats.length > 0 ? (
+        <Section>
+          <MatchStats stats={match.stats} />
+        </Section>
+      ) : null}
+
       {people.length > 0 ? (
         <Section>
-          <p className="text-ink-4 text-micro mb-1.5 font-medium uppercase">
+          <p className={cn(TYPE.eyebrow, "mb-1.5")}>
             {match.state === "pre" ? "Probable starters" : "Top performers"}
           </p>
           <div className="flex flex-col gap-1">

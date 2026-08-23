@@ -2,6 +2,13 @@ import type { AccentPreset } from "@/widgets/core/accent";
 
 export const SPORTS_ACCENT: AccentPreset = "violet";
 
+export const SPORTS_TABS = ["discover", "favorites"] as const;
+export type SportsTab = (typeof SPORTS_TABS)[number];
+
+export type SportsPanel = "leagues" | null;
+
+export type LeagueFollowing = { teams: string[]; tour?: boolean };
+
 export const MATCH_STATES = ["pre", "in", "post"] as const;
 export type MatchState = (typeof MATCH_STATES)[number];
 
@@ -9,6 +16,30 @@ export type MatchLeader = {
   label?: string;
   athlete: string;
   detail: string;
+};
+
+export const MATCH_EVENT_KINDS = [
+  "goal",
+  "own-goal",
+  "penalty",
+  "penalty-missed",
+  "yellow",
+  "red",
+] as const;
+export type MatchEventKind = (typeof MATCH_EVENT_KINDS)[number];
+
+export type MatchEvent = {
+  minute: string;
+  side: "home" | "away";
+  kind: MatchEventKind;
+  player: string;
+};
+
+export type MatchStat = {
+  label: string;
+  home: number;
+  away: number;
+  suffix?: string;
 };
 
 export type MatchTeam = {
@@ -23,6 +54,8 @@ export type MatchTeam = {
   errors?: number;
   leaders: MatchLeader[];
   probable?: string;
+  form?: string;
+  shootout?: number;
 };
 
 export type MatchSituation = {
@@ -44,4 +77,6 @@ export type Match = {
   venue?: string;
   broadcast?: string;
   situation?: MatchSituation;
+  events: MatchEvent[];
+  stats: MatchStat[];
 };

@@ -14,3 +14,9 @@ Bundled third-party assets:
   Inter (https://rsms.me/inter/)
   Copyright 2016 The Inter Project Authors
   Licensed under the SIL Open Font License, Version 1.1
+
+  Tabler Icons (https://tabler.io/icons)
+  Copyright 2020-2026 Pawel Kuna
+  Licensed under the MIT License.
+  The six sport glyphs in src/widgets/sports/components/sportIcons.tsx are
+  redrawn from Tabler's outline set.

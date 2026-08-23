@@ -1,15 +1,19 @@
 import { z } from "zod";
-import { ensureOk, withTimeout } from "@/lib/net";
+import { espnUrl, fetchEspn } from "@/widgets/sports/lib/espnApi";
 import {
+  MATCH_EVENT_KINDS,
   MATCH_STATES,
   type Match,
+  type MatchEvent,
+  type MatchEventKind,
   type MatchLeader,
+  type MatchStat,
   type MatchState,
   type MatchTeam,
 } from "@/widgets/sports/types";
 
-const API_BASE = "https://site.api.espn.com/apis/site/v2/sports";
 const CDN_BASE = "https://cdn.espn.com/core";
+const RANGE_LIMIT = 1000;
 
 const athleteSchema = z.object({
   shortName: z.string().optional(),
@@ -38,13 +42,91 @@ const competitorSchema = z.object({
     )
     .optional(),
   probables: z.array(z.object({ athlete: athleteSchema.optional() })).optional(),
+  form: z.string().optional(),
+  shootoutScore: z.number().optional(),
+  statistics: z
+    .array(z.object({ name: z.string().optional(), displayValue: z.string().optional() }))
+    .optional(),
   team: z.object({
+    id: z.string().optional(),
     abbreviation: z.string().optional(),
     shortDisplayName: z.string().optional(),
     displayName: z.string().optional(),
     logo: z.string().optional(),
   }),
 });
+
+const detailSchema = z.object({
+  type: z.object({ text: z.string().optional() }).optional(),
+  clock: z.object({ displayValue: z.string().optional() }).optional(),
+  team: z.object({ id: z.string().optional() }).optional(),
+  scoringPlay: z.boolean().optional(),
+  redCard: z.boolean().optional(),
+  yellowCard: z.boolean().optional(),
+  penaltyKick: z.boolean().optional(),
+  ownGoal: z.boolean().optional(),
+  shootout: z.boolean().optional(),
+  athletesInvolved: z.array(athleteSchema).optional(),
+});
+
+const STAT_COLUMNS: { name: string; label: string; suffix?: string }[] = [
+  { name: "possessionPct", label: "Possession", suffix: "%" },
+  { name: "totalShots", label: "Shots" },
+  { name: "shotsOnTarget", label: "On target" },
+  { name: "wonCorners", label: "Corners" },
+  { name: "foulsCommitted", label: "Fouls" },
+];
+
+type RawCompetitor = z.infer<typeof competitorSchema>;
+
+function statValue(competitor: RawCompetitor, name: string): number | null {
+  const raw = competitor.statistics?.find((entry) => entry.name === name)?.displayValue;
+  if (raw == null) return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+}
+
+function toStats(home: RawCompetitor, away: RawCompetitor): MatchStat[] {
+  return STAT_COLUMNS.flatMap(({ name, label, suffix }) => {
+    const homeValue = statValue(home, name);
+    const awayValue = statValue(away, name);
+    if (homeValue == null || awayValue == null) return [];
+    if (homeValue === 0 && awayValue === 0) return [];
+    return [{ label, home: homeValue, away: awayValue, ...(suffix ? { suffix } : {}) }];
+  });
+}
+
+function eventKind(detail: z.infer<typeof detailSchema>): MatchEventKind | null {
+  if (detail.redCard) return "red";
+  if (detail.yellowCard) return "yellow";
+  if (detail.ownGoal) return "own-goal";
+  const missedPenalty = detail.penaltyKick && !detail.scoringPlay;
+  if (missedPenalty) return "penalty-missed";
+  if (detail.penaltyKick) return "penalty";
+  if (detail.scoringPlay) return "goal";
+  return null;
+}
+
+function toEvents(
+  details: z.infer<typeof detailSchema>[] | undefined,
+  homeId: string | undefined,
+  awayId: string | undefined,
+): MatchEvent[] {
+  if (!details) return [];
+  return details.flatMap((detail) => {
+    if (detail.shootout) return [];
+    const kind = eventKind(detail);
+    const athlete = detail.athletesInvolved?.[0];
+    const player = athlete?.shortName ?? athlete?.displayName;
+    const minute = detail.clock?.displayValue;
+    const teamId = detail.team?.id;
+    if (!kind || !player || !minute || !teamId) return [];
+    if (teamId !== homeId && teamId !== awayId) return [];
+    return [
+      { minute, side: teamId === homeId ? ("home" as const) : ("away" as const), kind, player },
+    ];
+  });
+}
 
 const MAX_LEADERS = 3;
 
@@ -88,6 +170,7 @@ const eventSchema = z.object({
     .array(
       z.object({
         competitors: z.array(competitorSchema),
+        details: z.array(detailSchema).optional(),
         venue: z.object({ fullName: z.string().optional() }).optional(),
         broadcasts: z.array(z.object({ names: z.array(z.string()).optional() })).optional(),
         situation: z
@@ -108,7 +191,7 @@ const eventSchema = z.object({
 
 const scoreboardSchema = z.object({ events: z.array(z.unknown()).optional() });
 
-function toTeam(competitor: z.infer<typeof competitorSchema>, state: MatchState): MatchTeam {
+function toTeam(competitor: RawCompetitor, state: MatchState): MatchTeam {
   const { team } = competitor;
   const parsed = competitor.score != null ? Number(competitor.score) : Number.NaN;
   const probable = competitor.probables?.[0]?.athlete;
@@ -125,6 +208,8 @@ function toTeam(competitor: z.infer<typeof competitorSchema>, state: MatchState)
     errors: competitor.errors,
     leaders: state === "pre" ? [] : toLeaders(competitor.leaders),
     probable: state === "pre" ? (probable?.shortName ?? probable?.displayName) : undefined,
+    form: competitor.form,
+    shootout: competitor.shootoutScore,
   };
 }
 
@@ -163,6 +248,8 @@ function toMatch(raw: unknown): Match | null {
     venue: competition?.venue?.fullName,
     broadcast: competition?.broadcasts?.[0]?.names?.[0],
     situation: state === "in" ? toSituation(competition?.situation) : undefined,
+    events: toEvents(competition?.details, home.team.id, away.team.id),
+    stats: state === "pre" ? [] : toStats(home, away),
   };
 }
 
@@ -195,10 +282,10 @@ export function parseMirrorScoreboard(raw: unknown): Match[] {
   return toMatches(parsed.data.content.sbData.events);
 }
 
-export function mirrorUrl(path: string, dates?: string | null): string | null {
+export function mirrorUrl(path: string): string | null {
   const [sport, league] = path.split("/");
   if (!sport || !league) return null;
-  return `${CDN_BASE}/${league}/scoreboard?xhr=1${dates ? `&dates=${dates}` : ""}`;
+  return `${CDN_BASE}/${league}/scoreboard?xhr=1`;
 }
 
 async function fetchMatches(
@@ -206,13 +293,7 @@ async function fetchMatches(
   parse: (raw: unknown) => Match[],
   signal?: AbortSignal,
 ): Promise<Match[]> {
-  const response = await fetch(url, {
-    signal: withTimeout(signal),
-  });
-
-  ensureOk(response, "Scores are unavailable right now");
-
-  return parse(await response.json());
+  return parse(await fetchEspn(url, "Scores are unavailable right now", signal));
 }
 
 export async function fetchScoreboard(
@@ -220,11 +301,11 @@ export async function fetchScoreboard(
   signal?: AbortSignal,
   dates?: string | null,
 ): Promise<Match[]> {
-  const query = dates ? `?dates=${dates}` : "";
+  const query = dates ? `?dates=${dates}&limit=${RANGE_LIMIT}` : "";
   try {
-    return await fetchMatches(`${API_BASE}/${path}/scoreboard${query}`, parseScoreboard, signal);
+    return await fetchMatches(espnUrl(path, "scoreboard", query), parseScoreboard, signal);
   } catch (error) {
-    const mirror = mirrorUrl(path, dates);
+    const mirror = dates ? null : mirrorUrl(path);
     if (!mirror || signal?.aborted) throw error;
     try {
       return await fetchMatches(mirror, parseMirrorScoreboard, signal);
@@ -278,12 +359,8 @@ export function parseTeams(raw: unknown): TeamOption[] {
 }
 
 export async function fetchTeams(path: string, signal?: AbortSignal): Promise<TeamOption[]> {
-  const response = await fetch(`${API_BASE}/${path}/teams`, {
-    signal: withTimeout(signal),
-  });
-
-  ensureOk(response, "Teams are unavailable right now");
-  return parseTeams(await response.json());
+  const raw = await fetchEspn(espnUrl(path, "teams"), "Teams are unavailable right now", signal);
+  return parseTeams(raw);
 }
 
 export function matchesTeam(match: Match, abbreviation: string): boolean {
@@ -304,6 +381,8 @@ const cachedTeamSchema = z.object({
     .array(z.object({ label: z.string().optional(), athlete: z.string(), detail: z.string() }))
     .catch([]),
   probable: z.string().optional(),
+  form: z.string().optional(),
+  shootout: z.number().optional(),
 });
 
 const cachedMatchSchema = z.object({
@@ -325,6 +404,26 @@ const cachedMatchSchema = z.object({
       lastPlay: z.string().optional(),
     })
     .optional(),
+  events: z
+    .array(
+      z.object({
+        minute: z.string(),
+        side: z.enum(["home", "away"]),
+        kind: z.enum(MATCH_EVENT_KINDS),
+        player: z.string(),
+      }),
+    )
+    .catch([]),
+  stats: z
+    .array(
+      z.object({
+        label: z.string(),
+        home: z.number(),
+        away: z.number(),
+        suffix: z.string().optional(),
+      }),
+    )
+    .catch([]),
 });
 
 export function parseCachedScoreboard(raw: unknown): Match[] | null {

@@ -134,6 +134,7 @@ type SelectControlProps<T extends string> = {
   disabled?: boolean;
   label: string;
   triggerClassName?: string;
+  contentClassName?: string;
 };
 
 export function ConfigSelect<T extends string>({
@@ -143,6 +144,7 @@ export function ConfigSelect<T extends string>({
   disabled = false,
   label,
   triggerClassName,
+  contentClassName,
 }: SelectControlProps<T>) {
   const handleChange = (next: string) => {
     const match = options.find((option) => option.value === next);
@@ -159,7 +161,7 @@ export function ConfigSelect<T extends string>({
       >
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className={contentClassName}>
         {options.map((option) => (
           <SelectItem key={option.value} value={option.value}>
             {option.label}

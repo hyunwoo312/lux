@@ -20,6 +20,8 @@ export function match(overrides: Partial<Match> = {}): Match {
     startsAt: "2026-08-07T22:40Z",
     away: team(),
     home: team({ abbreviation: "PIT", name: "Pirates", score: 2 }),
+    events: [],
+    stats: [],
     ...overrides,
   };
 }

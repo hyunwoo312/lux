@@ -460,6 +460,42 @@ export function peekFreshness(prefix: string): Freshness {
   return worst;
 }
 
+export type ResourceGroup = { isRefreshing: boolean; lastSyncedAt: number };
+
+function readGroup(keys: readonly string[]): ResourceGroup {
+  let isRefreshing = false;
+  let lastSyncedAt = 0;
+  for (const key of keys) {
+    const snapshot = liveResources.get(key)?.getSnapshot();
+    if (!snapshot) continue;
+    if (snapshot.isRefreshing) isRefreshing = true;
+    if (snapshot.at > lastSyncedAt) lastSyncedAt = snapshot.at;
+  }
+  return { isRefreshing, lastSyncedAt };
+}
+
+export function useResourceGroup(keys: readonly string[]): ResourceGroup {
+  const id = keys.join("\u0000");
+  const latest = useRef(keys);
+  latest.current = keys;
+  const [group, setGroup] = useState(() => readGroup(keys));
+
+  useEffect(() => {
+    const update = () =>
+      setGroup((current) => {
+        const next = readGroup(latest.current);
+        return current.isRefreshing === next.isRefreshing &&
+          current.lastSyncedAt === next.lastSyncedAt
+          ? current
+          : next;
+      });
+    update();
+    return subscribeFreshness(update);
+  }, [id]);
+
+  return group;
+}
+
 export function useFreshness(prefix: string): Freshness {
   return useSyncExternalStore(
     subscribeFreshness,
@@ -505,6 +541,10 @@ export function clearPolledResources(): void {
   dataCache.clear();
   cacheVersions.clear();
   liveResources.clear();
+}
+
+export function refreshPolledResource(cacheKey: string): void {
+  (liveResources.get(cacheKey) as SharedResource<unknown> | undefined)?.refresh();
 }
 
 export function invalidatePolledResource(cacheKey: string): void {

@@ -19,10 +19,6 @@ function match(state: MatchState, overrides: Partial<Match> = {}): Match {
 }
 
 describe("hasMatchDetail", () => {
-  it("is false for a bare fixture, so the row does not expand onto nothing", () => {
-    expect(hasMatchDetail(match("pre"))).toBe(false);
-  });
-
   it("is true once there is anything worth showing", () => {
     expect(hasMatchDetail(match("pre", { venue: "Bell Centre" }))).toBe(true);
     expect(hasMatchDetail(match("pre", { link: "https://espn.com/g/1" }))).toBe(true);

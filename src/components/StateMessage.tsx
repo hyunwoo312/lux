@@ -1,10 +1,9 @@
-import type { LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 
 type StateMessageProps = {
-  icon?: LucideIcon;
+  icon?: ComponentType<{ className?: string }>;
   message: ReactNode;
   action?: ReactNode;
 };

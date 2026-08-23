@@ -114,13 +114,13 @@ export const ENDPOINTS: readonly Endpoint[] = [
   {
     host: "https://site.api.espn.com/*",
     usedBy: "widgets/sports",
-    reason: "Team lists per league",
-    access: "cors",
+    reason: "Scoreboards and team lists per league; the teams route sends no CORS header",
+    access: "host-permission",
   },
   {
     host: "https://cdn.espn.com/*",
     usedBy: "widgets/sports",
-    reason: "Scoreboards and match detail",
+    reason: "Scoreboard mirror used when the primary host fails",
     access: "cors",
   },
   {

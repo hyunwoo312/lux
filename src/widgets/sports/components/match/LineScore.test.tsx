@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { LineScore } from "@/widgets/sports/components/LineScore";
+import { LineScore } from "@/widgets/sports/components/match/LineScore";
 import { match as baseMatch, team as baseTeam } from "@/widgets/sports/lib/fixtures";
 import type { Match, MatchState, MatchTeam } from "@/widgets/sports/types";
 

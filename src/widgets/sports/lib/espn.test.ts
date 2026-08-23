@@ -278,16 +278,47 @@ describe("parseScoreboard", () => {
 describe("matchStatus", () => {
   const now = new Date(2026, 7, 7, 12, 0).getTime();
 
-  it("uses ESPN's own wording for live and finished games", () => {
+  it("uses ESPN's own wording for a live game", () => {
     const [live] = parseScoreboard({
       events: [event("1", "in", "40.1 - 4th", ["CON", "72"], ["PHX", "70"])],
     });
+
+    expect(matchStatus(live!, now, true)).toBe("40.1 - 4th");
+  });
+
+  it("says when a finished game happened rather than repeating 'FT'", () => {
     const [done] = parseScoreboard({
       events: [event("2", "post", "FT", ["AME", "3"], ["SAN", "0"])],
     });
 
-    expect(matchStatus(live!, now, true)).toBe("40.1 - 4th");
-    expect(matchStatus(done!, now, true)).toBe("FT");
+    const twoHoursOn = Date.parse(done!.startsAt) + 2 * 60 * 60_000;
+    expect(matchStatus(done!, twoHoursOn, true)).toBe("2h ago");
+  });
+
+  it("dates a game that finished on an earlier day rather than giving a bare clock time", () => {
+    const [done] = parseScoreboard({
+      events: [event("4", "post", "FT", ["AME", "3"], ["SAN", "0"])],
+    });
+
+    const threeDaysOn = Date.parse(done!.startsAt) + 3 * 24 * 60 * 60_000;
+    expect(matchStatus(done!, threeDaysOn, true)).toMatch(/^[A-Z][a-z]{2}$/);
+  });
+
+  it("falls back to a numeric date once a finish is more than a week old", () => {
+    const [done] = parseScoreboard({
+      events: [event("5", "post", "FT", ["AME", "3"], ["SAN", "0"])],
+    });
+
+    const monthOn = Date.parse(done!.startsAt) + 30 * 24 * 60 * 60_000;
+    expect(matchStatus(done!, monthOn, true)).toMatch(/\d+\/\d+/);
+  });
+
+  it("keeps a finish that carries more than 'it ended'", () => {
+    const [done] = parseScoreboard({
+      events: [event("3", "post", "Postponed", ["AME", "0"], ["SAN", "0"])],
+    });
+
+    expect(matchStatus(done!, now, true)).toBe("Postponed");
   });
 
   it("replaces ESPN's US-timezone kickoff string with a local time", () => {
@@ -513,12 +544,6 @@ describe("mirrorUrl", () => {
     expect(mirrorUrl("football/nfl")).toBe("https://cdn.espn.com/core/nfl/scoreboard?xhr=1");
   });
 
-  it("carries the date range through to the mirror", () => {
-    expect(mirrorUrl("baseball/mlb", "20260805-20260811")).toBe(
-      "https://cdn.espn.com/core/mlb/scoreboard?xhr=1&dates=20260805-20260811",
-    );
-  });
-
   it("has no mirror for a path it cannot split", () => {
     expect(mirrorUrl("mlb")).toBeNull();
   });
@@ -594,6 +619,23 @@ describe("fetchScoreboard", () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(respond(null, false));
 
     await expect(fetchScoreboard("mlb")).rejects.toThrow();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks for a whole date range instead of the first page of it", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(respond(primary));
+
+    await fetchScoreboard("baseball/mlb", undefined, "20260820-20260903");
+
+    expect(fetchMock.mock.calls[0]?.[0]).toContain("dates=20260820-20260903&limit=");
+  });
+
+  it("fails rather than letting the mirror answer a range with today only", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(respond(null, false));
+
+    await expect(fetchScoreboard("baseball/mlb", undefined, "20260820-20260903")).rejects.toThrow(
+      "Scores are unavailable",
+    );
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
