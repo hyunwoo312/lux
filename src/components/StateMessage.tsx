@@ -5,7 +5,7 @@ import { classifyLoadError } from "@/lib/net";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 
-export type StateTone = "neutral" | "warning" | "error";
+type StateTone = "neutral" | "warning" | "error";
 
 const TONE_ICON: Record<StateTone, string> = {
   neutral: "text-ink-4",
@@ -31,15 +31,17 @@ export function StateMessage({
   action,
 }: StateMessageProps) {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 px-4 text-center">
-      {Icon && <Icon className={cn("size-6 shrink-0", TONE_ICON[tone])} aria-hidden />}
-      <div className="flex max-w-[34ch] flex-col gap-1">
-        {title && <p className="text-ink text-body font-medium text-balance">{title}</p>}
-        <p className={cn("text-ink-3 text-balance", compact ? "text-caption" : "text-body")}>
-          {message}
-        </p>
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto">
+      <div className="m-auto flex max-w-full flex-col items-center gap-3 px-4 py-2 text-center">
+        {Icon && <Icon className={cn("size-6 shrink-0", TONE_ICON[tone])} aria-hidden />}
+        <div className="flex max-w-[34ch] flex-col gap-1">
+          {title && <p className="text-ink text-body font-medium text-balance">{title}</p>}
+          <p className={cn("text-ink-3 text-balance", compact ? "text-caption" : "text-body")}>
+            {message}
+          </p>
+        </div>
+        {action}
       </div>
-      {action}
     </div>
   );
 }

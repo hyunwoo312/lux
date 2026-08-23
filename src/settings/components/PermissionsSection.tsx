@@ -54,7 +54,7 @@ const PERMISSIONS: PermissionItem[] = [
     alsoNeeds: ["tabs"],
     name: "Recently closed tabs",
     description:
-      "Lists recently closed tabs in Quick Access. Chrome only reveals their titles and addresses to extensions that can read tab details, so this asks for both.",
+      "Lists recently closed tabs in Quick Access. Chrome only reveals their titles and addresses to extensions that can read tab details, so this asks for both. Changing this reloads the page.",
     usedBy: "Quick Access",
     icon: Clock,
     required: false,
@@ -63,7 +63,7 @@ const PERMISSIONS: PermissionItem[] = [
     id: "tabs",
     name: "Open tabs",
     description:
-      "Lists your open tabs in Quick Access so you can switch to, close or mute one. Lux never injects into a tab or follows what you browse.",
+      "Lists your open tabs in Quick Access so you can switch to, close or mute one. Lux never injects into a tab or follows what you browse. Changing this reloads the page.",
     usedBy: "Quick Access",
     icon: AppWindow,
     required: false,

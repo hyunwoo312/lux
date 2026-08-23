@@ -15,7 +15,7 @@ const DialogOverlay = forwardRef<HTMLDivElement, ComponentProps<typeof DialogPri
       <DialogPrimitive.Overlay
         ref={ref}
         data-slot="dialog-overlay"
-        className={cn("dialog-overlay bg-scrim z-overlay fixed inset-0", className)}
+        className={cn("dialog-overlay bg-scrim fixed inset-0", className)}
         {...props}
       />
     );
@@ -44,6 +44,8 @@ type DialogContentProps = ComponentProps<typeof DialogPrimitive.Content> &
   VariantProps<typeof dialogContentVariants> & {
     showClose?: boolean;
     dismissOnClickOutside?: boolean;
+    overlayClassName?: string;
+    overDialog?: boolean;
   };
 
 function DialogContent({
@@ -52,17 +54,21 @@ function DialogContent({
   layout,
   showClose = true,
   dismissOnClickOutside = true,
+  overlayClassName,
+  overDialog = false,
   onInteractOutside,
   ...props
 }: DialogContentProps) {
+  const overlay = cn(overDialog ? "z-modal" : "z-overlay", overlayClassName);
+
   return (
     <DialogPrimitive.Portal>
       {dismissOnClickOutside ? (
         <DialogPrimitive.Close asChild>
-          <DialogOverlay />
+          <DialogOverlay className={overlay} />
         </DialogPrimitive.Close>
       ) : (
-        <DialogOverlay />
+        <DialogOverlay className={overlay} />
       )}
       <DialogPrimitive.Content
         data-slot="dialog-content"

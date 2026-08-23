@@ -35,7 +35,12 @@ export function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showClose={false} className="dialog-pop w-[min(22rem,calc(100vw-2rem))] p-5">
+      <DialogContent
+        showClose={false}
+        overDialog
+        overlayClassName="backdrop-blur-[6px]"
+        className="dialog-pop w-[min(22rem,calc(100vw-2rem))] p-5"
+      >
         <div className="flex flex-col gap-4">
           <div className="flex items-start gap-3">
             <span

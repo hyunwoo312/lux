@@ -60,7 +60,7 @@ export function rateLimitError(response: Response, now = Date.now()): RateLimitE
   return new RateLimitError(retryAfterMs(response, now));
 }
 
-export type LoadFailure = "offline" | "unreachable" | "rateLimited" | "auth" | "other";
+type LoadFailure = "offline" | "unreachable" | "rateLimited" | "auth" | "other";
 
 export function classifyLoadError(error: Error): LoadFailure {
   if (!isOnline()) return "offline";
