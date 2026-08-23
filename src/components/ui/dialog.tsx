@@ -4,6 +4,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TYPE } from "@/lib/type";
 
 function Dialog(props: ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
@@ -63,17 +64,11 @@ function DialogContent({
 
   return (
     <DialogPrimitive.Portal>
-      {dismissOnClickOutside ? (
-        <DialogPrimitive.Close asChild>
-          <DialogOverlay className={overlay} />
-        </DialogPrimitive.Close>
-      ) : (
-        <DialogOverlay className={overlay} />
-      )}
+      <DialogOverlay className={overlay} />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         onInteractOutside={(event) => {
-          event.preventDefault();
+          if (!dismissOnClickOutside) event.preventDefault();
           onInteractOutside?.(event);
         }}
         className={cn(dialogContentVariants({ layout, className }))}
@@ -109,7 +104,7 @@ function DialogTitle({ className, ...props }: ComponentProps<typeof DialogPrimit
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("text-base font-semibold", className)}
+      className={cn(TYPE.title, className)}
       {...props}
     />
   );

@@ -37,6 +37,12 @@ export function buildDiagnostics(input: {
   };
 }
 
-export function describeDiagnostics(diagnostics: Diagnostics): string {
-  return JSON.stringify(diagnostics, null, 2);
+export function describeDiagnostics(diagnostics: Diagnostics): [string, string][] {
+  return [
+    ["Lux version", diagnostics.version],
+    ["Browser", diagnostics.browser],
+    ["Operating system", diagnostics.os],
+    ["Widgets in use", diagnostics.widgets.join(", ") || "none"],
+    ["Accounts connected", diagnostics.providers.join(", ") || "none"],
+  ];
 }

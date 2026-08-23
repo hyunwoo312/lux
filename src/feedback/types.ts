@@ -3,7 +3,6 @@ export type FeedbackCategory = (typeof FEEDBACK_CATEGORIES)[number];
 
 export const MESSAGE_MIN = 10;
 export const MESSAGE_MAX = 1500;
-export const CONTACT_MAX = 200;
 
 export type Diagnostics = {
   version: string;
@@ -16,14 +15,12 @@ export type Diagnostics = {
 export type FeedbackDraft = {
   category: FeedbackCategory;
   message: string;
-  contact: string;
   includeDiagnostics: boolean;
 };
 
 export type FeedbackSubmission = {
   category: FeedbackCategory;
   message: string;
-  contact?: string;
   diagnostics?: Diagnostics;
 };
 

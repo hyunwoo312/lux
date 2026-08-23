@@ -1,47 +1,58 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Spinner } from "@/components/ui/spinner";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Check, ChevronDown, Copy, Star } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
+import { RotateCcw } from "lucide-react";
+import {
+  Dialog,
+  DialogCloseButton,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { EASE_OUT } from "@/lib/motion";
-import { CWS_REVIEW_URL } from "@/lib/links";
-import { openUrl } from "@/lib/open-url";
+import { DURATION, EASE_IN, EASE_OUT, SPRING_POP, SPRING_SOFT } from "@/lib/motion";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { useIntegrationStore } from "@/integrations";
-import { buildDiagnostics, describeDiagnostics } from "@/feedback/lib/diagnostics";
+import { buildDiagnostics, parseOs } from "@/feedback/lib/diagnostics";
 import { submitFeedback } from "@/feedback/lib/submit";
+import { Field } from "@/feedback/components/Field";
+import { CategoryChips } from "@/feedback/components/CategoryChips";
+import { DiagnosticsPanel } from "@/feedback/components/DiagnosticsPanel";
+import { SentPanel } from "@/feedback/components/SentPanel";
+import { SendingPanel } from "@/feedback/components/SendingPanel";
+import { useMeasuredHeight } from "@/feedback/lib/useMeasuredHeight";
 import {
   cooldownRemainingMs,
   isDuplicateSend,
   messageHash,
   useFeedbackStore,
 } from "@/feedback/useFeedbackStore";
-import {
-  FEEDBACK_CATEGORIES,
-  MESSAGE_MAX,
-  MESSAGE_MIN,
-  CONTACT_MAX,
-  type FeedbackCategory,
-} from "@/feedback/types";
+import { MESSAGE_MAX, MESSAGE_MIN, type FeedbackCategory } from "@/feedback/types";
 
 type Props = { open: boolean; onOpenChange: (open: boolean) => void };
+
+function viewVariants(reduced: boolean): Variants {
+  return {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        duration: reduced ? 0 : DURATION.base,
+        ease: EASE_OUT,
+        delay: reduced ? 0 : 0.06,
+      },
+    },
+    exit: { opacity: 0, transition: { duration: reduced ? 0 : DURATION.fast, ease: EASE_IN } },
+  };
+}
 
 type Status =
   | { kind: "idle" }
   | { kind: "sending" }
+  | { kind: "settling"; id: string }
   | { kind: "sent"; id: string }
   | { kind: "error"; message: string; retryable: boolean };
-
-const CATEGORY_LABEL: Record<FeedbackCategory, string> = {
-  bug: "Something's broken",
-  idea: "I have an idea",
-  other: "Something else",
-};
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const CATEGORY_PLACEHOLDER: Record<FeedbackCategory, string> = {
   bug: "What happened, and what did you expect instead?",
@@ -69,382 +80,273 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
   const setDraft = useFeedbackStore((s) => s.setDraft);
   const clearDraft = useFeedbackStore((s) => s.clearDraft);
   const recordSent = useFeedbackStore((s) => s.recordSent);
+  const lastSentAt = useFeedbackStore((s) => s.lastSentAt);
+  const lastSentHash = useFeedbackStore((s) => s.lastSentHash);
 
   const [status, setStatus] = useState<Status>({ kind: "idle" });
-  const [showDiagnostics, setShowDiagnostics] = useState(false);
-  const diagnosticsId = useId();
+  const [restored, setRestored] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+  const hintId = useId();
+  const countId = useId();
   const categoryLabelId = useId();
-  const contactErrorId = useId();
-  const categoryRefs = useRef<Partial<Record<FeedbackCategory, HTMLButtonElement | null>>>({});
   const diagnostics = useDiagnostics();
   const abortRef = useRef<AbortController | null>(null);
-  const sendShortcut = navigator.platform.startsWith("Mac") ? "⌘ + Enter" : "Ctrl + Enter";
+  const [viewRef, viewHeight] = useMeasuredHeight<HTMLDivElement>();
+  const sendShortcut = parseOs(navigator.userAgent) === "macOS" ? "⌘ + Enter" : "Ctrl + Enter";
 
   useEffect(() => {
-    if (open) setStatus({ kind: "idle" });
-    return () => abortRef.current?.abort();
+    if (!open) return;
+    setStatus({ kind: "idle" });
+    setNow(Date.now());
+    setRestored(useFeedbackStore.getState().draft.message.trim().length > 0);
   }, [open]);
 
-  const trimmed = draft.message.trim();
-  const tooShort = trimmed.length < MESSAGE_MIN;
-  const tooLong = trimmed.length > MESSAGE_MAX;
-  const contact = draft.contact.trim();
-  const contactInvalid = contact.length > 0 && !EMAIL_PATTERN.test(contact);
-  const canSend = !tooShort && !tooLong && !contactInvalid && status.kind !== "sending";
+  useEffect(() => () => abortRef.current?.abort(), []);
+
+  const message = draft.message.trim();
+  const tooShort = message.length < MESSAGE_MIN;
+  const tooLong = draft.message.length > MESSAGE_MAX;
+
+  const waitMs = cooldownRemainingMs(lastSentAt, now);
+  const cooling = waitMs > 0;
+  const duplicate = isDuplicateSend({ lastSentAt, lastSentHash }, message, now);
+  const sending = status.kind === "sending";
+  const settling = status.kind === "settling";
+  const inFlight = sending || settling;
+  const settled = status.kind === "sent";
+
+  useEffect(() => {
+    if (!open || !cooling) return;
+    const id = window.setInterval(() => setNow(Date.now()), 500);
+    return () => window.clearInterval(id);
+  }, [open, cooling]);
+
+  const canSend = !tooShort && !tooLong && !cooling && !duplicate && !inFlight;
 
   const send = async (): Promise<void> => {
-    const now = Date.now();
-    const { lastSentAt, lastSentHash } = useFeedbackStore.getState();
-
-    const waitMs = cooldownRemainingMs(lastSentAt, now);
-    if (waitMs > 0) {
-      const seconds = Math.ceil(waitMs / 1000);
-      setStatus({
-        kind: "error",
-        retryable: true,
-        message: `Just a moment — you can send another in ${seconds}s.`,
-      });
-      return;
-    }
-
-    if (isDuplicateSend({ lastSentAt, lastSentHash }, trimmed, now)) {
-      setStatus({
-        kind: "error",
-        retryable: false,
-        message: "You already sent this one — it's on its way.",
-      });
-      return;
-    }
-
     setStatus({ kind: "sending" });
     abortRef.current = new AbortController();
 
     const result = await submitFeedback(
       {
         category: draft.category,
-        message: trimmed,
-        ...(contact ? { contact } : {}),
+        message,
         ...(draft.includeDiagnostics ? { diagnostics } : {}),
       },
       abortRef.current.signal,
     );
 
     if (result.ok) {
-      recordSent(messageHash(trimmed), Date.now());
+      recordSent(messageHash(message), Date.now());
       clearDraft();
-      setStatus({ kind: "sent", id: result.id });
+      setRestored(false);
+      setStatus({ kind: "settling", id: result.id });
       return;
     }
     setStatus({ kind: "error", message: result.message, retryable: result.retryable });
   };
 
+  const hint = tooLong
+    ? "That’s a little long — trim it down a touch."
+    : tooShort && draft.message.length > 0
+      ? "A sentence or two is plenty — just enough to go on."
+      : "";
+
+  const describedBy = [hint ? hintId : null, countId].filter(Boolean).join(" ");
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent layout="flush" className="max-h-[85dvh] w-[min(32rem,calc(100vw-2rem))]">
-        <header className="border-border/50 flex flex-col gap-1 border-b px-6 py-5">
-          <DialogTitle className="text-base font-semibold">Send feedback</DialogTitle>
-          <DialogDescription className="text-ink-3 text-body">
-            Bugs, ideas, or anything else — it goes straight to the developer.
-          </DialogDescription>
-        </header>
-
-        {status.kind === "sent" ? (
-          <SentPanel id={status.id} reduced={reduced} onClose={() => onOpenChange(false)} />
-        ) : (
-          <div className="flex min-h-0 flex-1 flex-col gap-4 scroll-fade overflow-y-auto px-6 py-5">
-            <div className="flex flex-col gap-2">
-              <span id={categoryLabelId} className="text-ink-3 text-caption font-medium">
-                What kind of feedback?
-              </span>
-              <div
-                role="radiogroup"
-                aria-labelledby={categoryLabelId}
-                className="flex flex-wrap gap-2"
-              >
-                {FEEDBACK_CATEGORIES.map((category, index) => {
-                  const active = draft.category === category;
-                  return (
-                    <button
-                      key={category}
-                      type="button"
-                      role="radio"
-                      aria-checked={active}
-                      tabIndex={active ? 0 : -1}
-                      onClick={() => setDraft({ category })}
-                      onKeyDown={(event) => {
-                        const step =
-                          event.key === "ArrowRight" || event.key === "ArrowDown"
-                            ? 1
-                            : event.key === "ArrowLeft" || event.key === "ArrowUp"
-                              ? -1
-                              : 0;
-                        if (step === 0) return;
-                        event.preventDefault();
-                        const count = FEEDBACK_CATEGORIES.length;
-                        const next = FEEDBACK_CATEGORIES[(index + step + count) % count];
-                        if (next) {
-                          setDraft({ category: next });
-                          categoryRefs.current[next]?.focus();
-                        }
-                      }}
-                      ref={(node) => {
-                        categoryRefs.current[category] = node;
-                      }}
-                      className={cn(
-                        "press cursor-pointer",
-                        `focus-ring rounded-full border px-3 py-1.5 text-caption font-medium`,
-                        active
-                          ? "border-primary/40 bg-primary/10 text-ink"
-                          : "border-border text-ink-3 hover:bg-accent/60",
-                      )}
-                    >
-                      {CATEGORY_LABEL[category]}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="feedback-message" className="text-caption font-medium">
-                Your message
-              </label>
-              <textarea
-                id="feedback-message"
-                autoFocus
-                rows={6}
-                value={draft.message}
-                onChange={(event) => setDraft({ message: event.target.value })}
-                onKeyDown={(event) => {
-                  if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && canSend) {
-                    event.preventDefault();
-                    void send();
-                  }
-                }}
-                placeholder={CATEGORY_PLACEHOLDER[draft.category]}
-                className="
-                  focus-ring border-border bg-background/40
-                  placeholder:text-ink-4
-                  w-full resize-none rounded-md border px-3 py-2 text-body transition-colors
-                "
-              />
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-ink-4 min-w-0 text-caption">
-                  {tooLong
-                    ? "That's a little long — trim it down a touch."
-                    : tooShort
-                      ? "A sentence or two is plenty — just enough to go on."
-                      : ""}
-                </span>
-                <span
-                  aria-hidden
-                  className={cn(
-                    "shrink-0 text-caption tabular-nums",
-                    tooLong ? "text-destructive" : "text-ink-4",
-                  )}
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && inFlight) return;
+        onOpenChange(next);
+      }}
+    >
+      <DialogContent
+        layout="flush"
+        showClose={false}
+        dismissOnClickOutside={!inFlight}
+        className="w-[min(32.5rem,calc(100vw-2rem))]"
+      >
+        <motion.div
+          className="relative overflow-hidden"
+          initial={false}
+          animate={{ height: viewHeight ?? "auto" }}
+          transition={reduced ? { duration: 0 } : SPRING_SOFT}
+        >
+          <div ref={viewRef}>
+            <AnimatePresence mode="popLayout" initial={false}>
+              {inFlight ? (
+                <motion.div
+                  key="sending"
+                  variants={viewVariants(reduced)}
+                  initial="hidden"
+                  animate="show"
+                  exit="exit"
                 >
-                  {trimmed.length} / {MESSAGE_MAX}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="feedback-contact" className="text-caption font-medium">
-                Email <span className="text-ink-3 font-normal">(optional)</span>
-              </label>
-              <input
-                id="feedback-contact"
-                type="email"
-                maxLength={CONTACT_MAX}
-                value={draft.contact}
-                onChange={(event) => setDraft({ contact: event.target.value })}
-                placeholder="Only if you'd like a reply"
-                aria-invalid={contactInvalid}
-                aria-describedby={contactInvalid ? contactErrorId : undefined}
-                className={cn(
-                  `
-                    bg-background/40
-                    placeholder:text-ink-4
-                    focus-ring w-full rounded-md border px-3 py-2 text-body transition-colors
-                  `,
-                  contactInvalid ? "border-destructive/60" : "border-border",
-                )}
-              />
-              {contactInvalid && (
-                <p id={contactErrorId} className="text-destructive text-caption">
-                  That doesn't look like an email address — check it, or leave it empty.
-                </p>
-              )}
-            </div>
-
-            <div
-              className={cn(
-                "flex flex-col gap-2 rounded-md border p-3",
-                draft.includeDiagnostics ? "border-primary/30 bg-primary/5" : "border-border/50",
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <label htmlFor="feedback-diagnostics" className="text-caption font-medium">
-                    Include diagnostics
-                  </label>
-                  <p className="text-ink-4 text-caption">
-                    Your Lux version, browser, and which widgets and accounts you use — never their
-                    contents.
-                  </p>
-                </div>
-                <Switch
-                  id="feedback-diagnostics"
-                  checked={draft.includeDiagnostics}
-                  onCheckedChange={(includeDiagnostics) => setDraft({ includeDiagnostics })}
-                />
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowDiagnostics((value) => !value)}
-                aria-expanded={showDiagnostics}
-                aria-controls={diagnosticsId}
-                className="
-                  press cursor-pointer text-ink-3
-                  hover:text-ink
-                  flex items-center gap-1 self-start text-caption
-                "
-              >
-                {showDiagnostics ? "Hide" : "View"} what would be sent
-                <motion.span
-                  className="flex"
-                  animate={{ rotate: showDiagnostics ? 180 : 0 }}
-                  transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
+                  <SendingPanel
+                    settling={settling}
+                    onSettled={() => {
+                      if (status.kind === "settling") setStatus({ kind: "sent", id: status.id });
+                    }}
+                  />
+                </motion.div>
+              ) : settled ? (
+                <motion.div
+                  key="sent"
+                  variants={viewVariants(reduced)}
+                  initial="hidden"
+                  animate="show"
+                  exit="exit"
                 >
-                  <ChevronDown className="size-3" aria-hidden />
-                </motion.span>
-              </button>
+                  <SentPanel id={status.id} onClose={() => onOpenChange(false)} />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="form"
+                  variants={viewVariants(reduced)}
+                  initial="hidden"
+                  animate="show"
+                  exit="exit"
+                  className="scroll-fade flex max-h-[85dvh] flex-col gap-7 overflow-y-auto p-8"
+                >
+                  <header className="flex items-start justify-between gap-4">
+                    <div className="flex min-w-0 flex-col gap-1.5">
+                      <DialogTitle>Send feedback</DialogTitle>
+                      <DialogDescription className="text-ink-3 text-body">
+                        Describe the issue or share your ideas to help improve Lux.
+                      </DialogDescription>
+                    </div>
+                    <DialogCloseButton className="-mt-1 -mr-2 shrink-0" />
+                  </header>
 
-              <AnimatePresence initial={false}>
-                {showDiagnostics && (
-                  <motion.div
-                    id={diagnosticsId}
-                    className="overflow-hidden"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: reduced ? 0 : 0.24, ease: EASE_OUT }}
-                  >
-                    <pre
+                  {restored && message.length > 0 && (
+                    <div
                       className="
-                        bg-background/50 text-ink-3 max-h-40 overflow-auto rounded p-2 text-micro
+                        border-border/60 bg-foreground/5 -my-2 flex items-center gap-2 rounded-lg
+                        border border-dashed px-3 py-2
                       "
                     >
-                      {describeDiagnostics(diagnostics)}
-                    </pre>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                      <RotateCcw className="text-ink-4 size-3.5 shrink-0" aria-hidden />
+                      <span className="text-ink-3 min-w-0 flex-1 text-caption">
+                        Picked up where you left off.
+                      </span>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        onClick={() => {
+                          clearDraft();
+                          setRestored(false);
+                        }}
+                      >
+                        Start over
+                      </Button>
+                    </div>
+                  )}
 
-            {status.kind === "error" && (
-              <p role="alert" className="text-destructive text-caption">
-                {status.message}
-              </p>
-            )}
+                  <Field label="Context" labelId={categoryLabelId}>
+                    <CategoryChips
+                      value={draft.category}
+                      onValueChange={(category) => setDraft({ category })}
+                      labelId={categoryLabelId}
+                    />
+                  </Field>
+
+                  <Field label="Details" htmlFor="feedback-message">
+                    <div className="relative">
+                      <Textarea
+                        id="feedback-message"
+                        autoFocus
+                        rows={5}
+                        value={draft.message}
+                        aria-describedby={describedBy}
+                        onChange={(event) => setDraft({ message: event.target.value })}
+                        onKeyDown={(event) => {
+                          if (
+                            (event.metaKey || event.ctrlKey) &&
+                            event.key === "Enter" &&
+                            canSend
+                          ) {
+                            event.preventDefault();
+                            void send();
+                          }
+                        }}
+                        placeholder={CATEGORY_PLACEHOLDER[draft.category]}
+                        className="block min-h-30 resize-y rounded-xl p-4 pb-8"
+                      />
+                      <span
+                        aria-hidden
+                        className={cn(
+                          "pointer-events-none absolute right-4 bottom-3 text-micro tabular-nums",
+                          tooLong ? "text-destructive" : "text-ink-4",
+                        )}
+                      >
+                        {draft.message.length} / {MESSAGE_MAX}
+                      </span>
+                    </div>
+                    {hint && (
+                      <span id={hintId} className="text-ink-4 text-caption">
+                        {hint}
+                      </span>
+                    )}
+                    <span id={countId} className="sr-only">
+                      {draft.message.length} of {MESSAGE_MAX} characters used.
+                    </span>
+                  </Field>
+
+                  <DiagnosticsPanel
+                    enabled={draft.includeDiagnostics}
+                    onEnabledChange={(includeDiagnostics) => setDraft({ includeDiagnostics })}
+                    diagnostics={diagnostics}
+                  />
+
+                  {duplicate && (
+                    <p className="text-ink-3 -mt-4 text-caption">
+                      You already sent this one — it’s on its way.
+                    </p>
+                  )}
+
+                  {status.kind === "error" && (
+                    <p role="alert" className="text-destructive -mt-4 text-caption">
+                      {status.message}
+                    </p>
+                  )}
+
+                  <footer className="flex items-center justify-end gap-3">
+                    <span aria-hidden className="text-ink-4 mr-auto hidden text-caption sm:block">
+                      {sendShortcut}
+                    </span>
+                    <Button
+                      size="lg"
+                      variant="ghost"
+                      className="rounded-full px-5"
+                      onClick={() => onOpenChange(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="lg"
+                      type="button"
+                      onClick={() => void send()}
+                      disabled={!canSend}
+                      className="min-w-36 rounded-full px-6"
+                    >
+                      <motion.span
+                        key={cooling ? "waiting" : "idle"}
+                        initial={reduced ? false : { opacity: 0, scale: 0.7 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={reduced ? { duration: 0 } : SPRING_POP}
+                      >
+                        {cooling ? `Wait ${Math.ceil(waitMs / 1000)}s` : "Send Feedback"}
+                      </motion.span>
+                    </Button>
+                  </footer>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        )}
-
-        {status.kind !== "sent" && (
-          <footer className="border-border/50 flex items-center gap-3 border-t px-6 py-4">
-            <button
-              type="button"
-              onClick={() => openUrl(CWS_REVIEW_URL, "newTab")}
-              className="
-                press cursor-pointer text-ink-3
-                hover:text-ink
-                flex items-center gap-1.5 text-caption
-              "
-            >
-              <Star className="size-3.5" aria-hidden />
-              Rate Lux
-            </button>
-            <span aria-hidden className="text-ink-4 ml-auto hidden text-caption sm:block">
-              {sendShortcut}
-            </span>
-            <Button
-              size="lg"
-              type="button"
-              onClick={() => void send()}
-              disabled={!canSend}
-              className="min-w-24"
-            >
-              {status.kind === "sending" ? <Spinner /> : "Send"}
-            </Button>
-          </footer>
-        )}
+        </motion.div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function SentPanel({
-  id,
-  reduced,
-  onClose,
-}: {
-  id: string;
-  reduced: boolean;
-  onClose: () => void;
-}) {
-  const [copied, setCopied] = useState(false);
-
-  const copy = () => {
-    void navigator.clipboard?.writeText(id).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: reduced ? 0 : 0.24, ease: EASE_OUT }}
-        className="flex flex-col items-center gap-3 px-6 py-10 text-center"
-      >
-        <span className="bg-primary/10 text-primary grid size-11 place-items-center rounded-full">
-          <Check className="size-5" aria-hidden />
-        </span>
-        <div className="flex flex-col items-center gap-1.5">
-          <p className="text-body font-medium">Thank you — that's been sent.</p>
-          <button
-            type="button"
-            onClick={copy}
-            aria-label={`Copy reference ${id}`}
-            className="
-              press cursor-pointer text-ink-3
-              hover:text-ink
-              flex items-center gap-1.5 text-caption
-            "
-          >
-            Reference <span className="font-mono">{id}</span>
-            {copied ? (
-              <Check className="text-primary size-3" aria-hidden />
-            ) : (
-              <Copy className="size-3" aria-hidden />
-            )}
-          </button>
-        </div>
-        <p className="text-ink-4 max-w-xs text-caption">
-          Every message is read. If you left an email, expect a reply when there's something worth
-          saying.
-        </p>
-        <div className="mt-1 flex items-center gap-2">
-          <Button variant="outline" onClick={() => openUrl(CWS_REVIEW_URL, "newTab")}>
-            <Star className="size-3.5" aria-hidden />
-            Rate Lux
-          </Button>
-          <Button onClick={onClose}>Done</Button>
-        </div>
-      </motion.div>
-    </AnimatePresence>
   );
 }

@@ -20,6 +20,14 @@ const toggleGroupItemVariants = cva(
           [&_img]:size-4
           [&_svg]:size-4
         `,
+        card: `
+          border-border text-ink-3 flex flex-col items-center justify-center gap-2 rounded-lg border
+          px-2 py-3 text-caption font-medium
+          hover:bg-accent/50
+          data-[state=on]:border-primary data-[state=on]:bg-primary/10 data-[state=on]:text-ink
+          [&_svg]:size-5 [&_svg]:shrink-0
+          data-[state=on]:[&_svg]:text-primary
+        `,
       },
     },
   },

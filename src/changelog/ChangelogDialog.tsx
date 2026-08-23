@@ -30,7 +30,7 @@ export function ChangelogDialog({ open, onOpenChange }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent layout="flush" className="max-h-[80dvh] w-[min(34rem,calc(100vw-2rem))]">
         <header className="border-border/50 flex flex-col gap-1 border-b px-6 py-5">
-          <DialogTitle className="text-base font-semibold">What&apos;s new</DialogTitle>
+          <DialogTitle>What&apos;s new</DialogTitle>
           <DialogDescription className="text-ink-3 text-body">
             Recent updates to Lux.
           </DialogDescription>

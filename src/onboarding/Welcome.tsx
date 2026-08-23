@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { IconRow } from "@/components/IconRow";
 import { DURATION, EASE_OUT_STRONG, EASE_STANDARD, SPRING_SOFT } from "@/lib/motion";
+import { TYPE } from "@/lib/type";
 import { useOnboardingStore } from "@/onboarding/useOnboardingStore";
 
 const container: Variants = {
@@ -47,9 +48,7 @@ export function Welcome() {
             className="flex flex-col gap-5"
           >
             <motion.div variants={item} className="flex flex-col items-center gap-1.5 text-center">
-              <DialogTitle className="text-xl font-semibold tracking-tight">
-                Welcome to Lux
-              </DialogTitle>
+              <DialogTitle className={TYPE.heading}>Welcome to Lux</DialogTitle>
               <DialogDescription className="max-w-xs text-balance">
                 Your new tab, your way. Here are 3 things to know.
               </DialogDescription>

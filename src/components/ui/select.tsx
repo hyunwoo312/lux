@@ -54,7 +54,7 @@ function SelectContent({
         sideOffset={6}
         className={cn(
           `
-            bg-popover text-popover-foreground border-border overlay-pop relative z-50 max-h-72
+            bg-popover text-popover-foreground border-border overlay-pop relative z-popover max-h-72
             elev-3 overflow-hidden rounded-xl p-1
             origin-[var(--radix-select-content-transform-origin)]
           `,

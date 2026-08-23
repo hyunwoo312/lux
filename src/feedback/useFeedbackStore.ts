@@ -10,8 +10,7 @@ export const DUPLICATE_WINDOW_MS = 10 * 60_000;
 const EMPTY_DRAFT: FeedbackDraft = {
   category: "bug",
   message: "",
-  contact: "",
-  includeDiagnostics: false,
+  includeDiagnostics: true,
 };
 
 type FeedbackState = {
@@ -26,8 +25,7 @@ type FeedbackState = {
 const draftSchema = z.object({
   category: z.enum(FEEDBACK_CATEGORIES).catch("bug"),
   message: z.string().max(5000).catch(""),
-  contact: z.string().max(500).catch(""),
-  includeDiagnostics: z.boolean().catch(false),
+  includeDiagnostics: z.boolean().catch(true),
 });
 
 const persistedSchema = z.object({
@@ -45,7 +43,10 @@ export const useFeedbackStore = create<FeedbackState>()(
       lastSentAt: 0,
       lastSentHash: "",
       setDraft: (patch) => set((state) => ({ draft: { ...state.draft, ...patch } })),
-      clearDraft: () => set({ draft: EMPTY_DRAFT }),
+      clearDraft: () =>
+        set((state) => ({
+          draft: { ...EMPTY_DRAFT, includeDiagnostics: state.draft.includeDiagnostics },
+        })),
       recordSent: (hash, at) => set({ lastSentHash: hash, lastSentAt: at }),
     }),
     {
