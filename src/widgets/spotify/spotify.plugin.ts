@@ -19,8 +19,8 @@ export const spotifyPlugin: WidgetPlugin = {
   configComponent: SpotifyConfig,
   statusComponent: SpotifyStatus,
   headerActionComponent: SpotifyHeaderActions,
-  backdropComponent: SpotifyBackdrop,
-  decorativeBackdrop: true,
+  frame: { backdrop: SpotifyBackdrop, decorativeBackdrop: true },
   accent: SPOTIFY_ACCENT,
+  requiresAccount: ["spotify"],
   removalNote: () => "Its settings will be reset — your Spotify account stays connected.",
 };

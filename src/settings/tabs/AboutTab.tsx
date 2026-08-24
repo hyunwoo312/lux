@@ -16,7 +16,14 @@ import {
 import { motion, useAnimationControls, useReducedMotion, type Variants } from "motion/react";
 import { z } from "zod";
 import { IconRow } from "@/components/IconRow";
-import { DURATION, EASE_OUT, EASE_OUT_STRONG, EASE_STANDARD, SPRING_POP } from "@/lib/motion";
+import {
+  DURATION,
+  EASE_BACK,
+  EASE_OUT,
+  EASE_OUT_STRONG,
+  EASE_STANDARD,
+  SPRING_POP,
+} from "@/lib/motion";
 import { read, write } from "@/lib/storage";
 import { SettingsSection } from "@/settings/components/SettingsSection";
 import { useSettingsStore } from "@/settings/useSettingsStore";
@@ -328,7 +335,7 @@ function LogoMark() {
     void spin.start({
       rotate: [0, 360],
       scale: [1, 0.82, 1.12, 1],
-      transition: { duration: 0.7, ease: [0.34, 1.56, 0.64, 1] },
+      transition: { duration: 0.7, ease: EASE_BACK },
     });
     void glow.start({
       opacity: [0.5, 0],

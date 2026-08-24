@@ -1,6 +1,6 @@
 import { SPRING_CRISP } from "@/lib/motion";
 import type { ComponentType, ReactNode } from "react";
-import { useId, useRef, useState } from "react";
+import { useId, useState } from "react";
 import { motion } from "motion/react";
 import { ChevronRight } from "lucide-react";
 import {
@@ -107,12 +107,13 @@ export function WidgetConfigSubItem({
 }: ConfigSubItemProps) {
   return (
     <div
+      inert={disabled}
       className={cn(
         `
           border-border/70 ml-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-l
           pl-3 transition-opacity
         `,
-        disabled && "pointer-events-none opacity-40",
+        disabled && "opacity-40",
       )}
     >
       <ConfigText title={title} description={description} />
@@ -125,6 +126,7 @@ type ConfigOption<T extends string> = {
   value: T;
   label: string;
   icon?: ComponentType<{ className?: string }>;
+  disabled?: boolean;
 };
 
 type SelectControlProps<T extends string> = {
@@ -175,7 +177,7 @@ export function ConfigSelect<T extends string>({
 type SegmentedProps<T extends string> = {
   value: T;
   options: ConfigOption<T>[];
-  onChange: (value: T, origin?: { x: number; y: number }) => void;
+  onChange: (value: T) => void;
   disabled?: boolean;
   label: string;
   fit?: "wrap" | "line";
@@ -191,10 +193,9 @@ export function ConfigSegmented<T extends string>({
 }: SegmentedProps<T>) {
   const oneLine = fit === "line";
   const layoutId = useId();
-  const origin = useRef<{ x: number; y: number } | undefined>(undefined);
   const handleChange = (next: string) => {
     const match = options.find((option) => option.value === next);
-    if (match) onChange(match.value, origin.current);
+    if (match) onChange(match.value);
   };
   return (
     <ToggleGroup
@@ -215,11 +216,8 @@ export function ConfigSegmented<T extends string>({
             key={option.value}
             value={option.value}
             variant="segmented"
+            disabled={option.disabled}
             className={cn(oneLine && (active ? "shrink-0" : "min-w-0 flex-1"))}
-            onClick={(event) => {
-              const rect = event.currentTarget.getBoundingClientRect();
-              origin.current = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-            }}
           >
             {active && (
               <motion.span

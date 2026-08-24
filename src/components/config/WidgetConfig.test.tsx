@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { ConfigSegmented, WidgetConfigDisclosure } from "@/components/config/WidgetConfig";
+import { Switch } from "@/components/ui/switch";
+import {
+  ConfigSegmented,
+  WidgetConfigDisclosure,
+  WidgetConfigSubItem,
+} from "@/components/config/WidgetConfig";
 
 const OPTIONS = [
   { value: "light", label: "Light" },
@@ -17,13 +22,7 @@ describe("ConfigSegmented", () => {
   it("reports the chosen option", () => {
     const onChange = vi.fn();
     fireEvent.click(renderSegmented(onChange));
-    expect(onChange).toHaveBeenCalledWith("dark", expect.anything());
-  });
-
-  it("reports where the option was clicked so a transition can start there", () => {
-    const onChange = vi.fn();
-    fireEvent.click(renderSegmented(onChange));
-    expect(onChange.mock.calls[0]?.[1]).toEqual({ x: expect.any(Number), y: expect.any(Number) });
+    expect(onChange).toHaveBeenCalledWith("dark");
   });
 });
 
@@ -46,6 +45,27 @@ describe('ConfigSegmented fit="line"', () => {
       />,
     );
   }
+
+  it("refuses a click on an option marked unavailable, rather than silently ignoring it", () => {
+    const onChange = vi.fn();
+    render(
+      <ConfigSegmented
+        label="Theme"
+        value="light"
+        options={[
+          { value: "light", label: "Light" },
+          { value: "dark", label: "Dark" },
+          { value: "mixed", label: "Mixed", disabled: true },
+        ]}
+        onChange={onChange}
+      />,
+    );
+
+    const mixed = screen.getByRole("radio", { name: "Mixed" });
+    expect(mixed).toBeDisabled();
+    fireEvent.click(mixed);
+    expect(onChange).not.toHaveBeenCalled();
+  });
 
   it("never wraps to a second row", () => {
     renderLine();
@@ -108,5 +128,30 @@ describe("WidgetConfigDisclosure", () => {
     );
 
     expect(screen.getByText("Inner detail")).toBeInTheDocument();
+  });
+});
+
+describe("WidgetConfigSubItem", () => {
+  it("puts a disabled row out of keyboard reach, not just out of pointer reach", () => {
+    render(
+      <WidgetConfigSubItem
+        title="Interval"
+        disabled
+        control={<Switch aria-label="Rotate on a timer" onCheckedChange={vi.fn()} />}
+      />,
+    );
+
+    expect(screen.getByText("Interval").closest("[inert]")).not.toBeNull();
+  });
+
+  it("leaves an enabled row interactive", () => {
+    render(
+      <WidgetConfigSubItem
+        title="Interval"
+        control={<Switch aria-label="Rotate on a timer" onCheckedChange={vi.fn()} />}
+      />,
+    );
+
+    expect(screen.getByText("Interval").closest("[inert]")).toBeNull();
   });
 });

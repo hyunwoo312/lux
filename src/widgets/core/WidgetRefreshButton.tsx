@@ -1,4 +1,6 @@
 import { DURATION } from "@/lib/motion";
+
+const SPIN_SECONDS = 0.8;
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
@@ -78,7 +80,7 @@ export function WidgetRefreshButton({
           animate={{ rotate: spinning ? 360 : 0 }}
           transition={
             spinning
-              ? { repeat: Infinity, ease: "linear", duration: 0.8 }
+              ? { repeat: Infinity, ease: "linear", duration: SPIN_SECONDS }
               : { duration: DURATION.base }
           }
         >

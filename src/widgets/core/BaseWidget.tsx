@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { Transition, Variants } from "motion/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, Settings, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { DURATION, EASE_OUT, POP } from "@/lib/motion";
+import { DURATION, EASE_IN, EASE_OUT, POP } from "@/lib/motion";
 import { accentClass, type AccentPreset } from "@/widgets/core/accent";
 import type { WidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
 import { HEADER_LABEL, WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
@@ -40,6 +40,8 @@ const spin = {
 } as const;
 
 const swapTransition: Transition = { duration: DURATION.fast, ease: EASE_OUT };
+const paneEnter: Transition = { duration: DURATION.base, ease: EASE_OUT };
+const paneExit: Transition = { duration: DURATION.fast, ease: EASE_IN };
 export function BaseWidget({
   title,
   editing,
@@ -59,34 +61,47 @@ export function BaseWidget({
 }: BaseWidgetProps) {
   const reduced = useReducedMotion();
   const livePattern = useWallpaperStore((s) => s.source === "generated");
-  const [showConfig, setShowConfig] = useState(false);
-  const chrome = useMemo(() => ({ openConfig: () => setShowConfig(true) }), []);
-
-  useEffect(() => {
-    if (editing) setShowConfig(false);
-  }, [editing]);
+  const [configOpen, setConfigOpen] = useState(false);
+  const chrome = useMemo(() => ({ openConfig: () => setConfigOpen(true) }), []);
+  const showConfig = configOpen && !editing;
 
   const hasBackdrop = Boolean(backdrop);
   const contentBackdrop = hasBackdrop && !decorativeBackdrop;
   const chromeHidden = bare && !editing && !showConfig;
   const omitSurface = chromeHidden || (contentBackdrop && showConfig);
 
-  const offset = reduced ? 0 : 12;
-  const viewVariants: Variants = {
-    initial: (toConfig: boolean) => ({ opacity: 0, x: toConfig ? offset : -offset }),
-    animate: { opacity: 1, x: 0 },
-    exit: (toConfig: boolean) => ({ opacity: 0, x: toConfig ? -offset : offset }),
-  };
-  const iconSpin = (sign: number) => ({
-    initial: { opacity: 0, scale: 0.6, rotate: reduced ? 0 : sign * 90 },
-    animate: { opacity: 1, scale: 1, rotate: 0 },
-    exit: { opacity: 0, scale: 0.6, rotate: reduced ? 0 : sign * -90 },
-    transition: swapTransition,
-  });
+  const viewVariants = useMemo<Variants>(() => {
+    const offset = reduced ? 0 : 12;
+    return {
+      initial: (toConfig: boolean) => ({ opacity: 0, x: toConfig ? offset : -offset }),
+      animate: { opacity: 1, x: 0, transition: paneEnter },
+      exit: (toConfig: boolean) => ({
+        opacity: 0,
+        x: toConfig ? -offset : offset,
+        transition: paneExit,
+      }),
+    };
+  }, [reduced]);
+
+  const iconSpin = useCallback(
+    (sign: number) => ({
+      initial: { opacity: 0, scale: 0.6, rotate: reduced ? 0 : sign * 90 },
+      animate: { opacity: 1, scale: 1, rotate: 0 },
+      exit: { opacity: 0, scale: 0.6, rotate: reduced ? 0 : sign * -90 },
+      transition: swapTransition,
+    }),
+    [reduced],
+  );
 
   return (
     <WidgetChromeContext.Provider value={chrome}>
       <div
+        onKeyDown={(event) => {
+          if (event.key === "Escape" && showConfig) {
+            event.stopPropagation();
+            setConfigOpen(false);
+          }
+        }}
         className={cn(
           accentClass(accent),
           `
@@ -95,7 +110,10 @@ export function BaseWidget({
           `,
           !omitSurface &&
             (background === "solid" ? "glass-solid" : livePattern ? "glass" : "glass-faux"),
-          highlighted && "ring-primary/70 shadow-[0_0_22px_-2px_var(--primary)] ring-2",
+          !omitSurface &&
+            !highlighted &&
+            `hover:ring-primary/45 hover:ring-2 focus-within:ring-primary/70 focus-within:ring-2`,
+          highlighted && "ring-primary/70 shadow-glow-accent ring-2",
           editing && `pointer-events-none select-none`,
         )}
       >
@@ -121,7 +139,7 @@ export function BaseWidget({
         )}
         {contentBackdrop && showConfig && (
           <div
-            className="bg-background/70 pointer-events-none absolute inset-0 z-[5]"
+            className="bg-background/70 pointer-events-none absolute inset-0 z-widget-scrim"
             aria-hidden
           />
         )}
@@ -140,7 +158,7 @@ export function BaseWidget({
           )}
         >
           <div className="@container relative min-w-0 flex-1">
-            <AnimatePresence mode="wait" initial={false} custom={showConfig}>
+            <AnimatePresence mode="popLayout" initial={false} custom={showConfig}>
               <motion.div
                 key={showConfig ? "config" : "main"}
                 custom={showConfig}
@@ -148,8 +166,7 @@ export function BaseWidget({
                 initial="initial"
                 animate="animate"
                 exit="exit"
-                transition={swapTransition}
-                className="min-w-0"
+                className="w-full min-w-0"
               >
                 {showConfig ? (
                   <span className={HEADER_LABEL}>Settings</span>
@@ -187,7 +204,7 @@ export function BaseWidget({
                       className={WIDGET_HEADER_ACTION}
                       aria-label={showConfig ? `Close ${title} settings` : `${title} settings`}
                       aria-pressed={showConfig}
-                      onClick={() => setShowConfig((value) => !value)}
+                      onClick={() => setConfigOpen((value) => !value)}
                     >
                       <AnimatePresence mode="wait" initial={false}>
                         {showConfig ? (
@@ -222,8 +239,8 @@ export function BaseWidget({
             </AnimatePresence>
           </div>
         </div>
-        <div className="relative z-10 min-h-0 flex-1 overflow-hidden">
-          <AnimatePresence mode="wait" initial={false} custom={showConfig}>
+        <div className="@container relative z-widget-content min-h-0 flex-1 overflow-hidden">
+          <AnimatePresence mode="popLayout" initial={false} custom={showConfig}>
             <motion.div
               key={showConfig ? "config" : "main"}
               custom={showConfig}
@@ -231,9 +248,8 @@ export function BaseWidget({
               initial="initial"
               animate="animate"
               exit="exit"
-              transition={swapTransition}
               className={cn(
-                "h-full",
+                "h-full w-full overscroll-contain",
                 showConfig
                   ? "scroll-fade overflow-x-hidden overflow-y-auto px-4 pb-3"
                   : bleed

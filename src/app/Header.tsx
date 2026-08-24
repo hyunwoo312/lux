@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
+import { clockOptions } from "@/lib/clock";
 import { useNow } from "@/hooks/useNow";
 import { ChangelogDialog, consumeChangelogAutoShow, useHasUnseenRelease } from "@/changelog";
 import { GuideDialog, useGuideStore } from "@/guide";
@@ -131,8 +132,7 @@ export function Header() {
 function HeaderClock({ className }: { className?: string }) {
   const clock24h = useAppSettingsStore((s) => s.clock24h);
   const formatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", hour12: !clock24h }),
+    () => new Intl.DateTimeFormat(undefined, clockOptions(!clock24h)),
     [clock24h],
   );
   const now = useNow();

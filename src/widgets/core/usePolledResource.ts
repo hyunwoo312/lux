@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { useWidgetRefreshScale } from "@/widgets/core/useWidgetRefreshScale";
+import { useScaledCadence } from "@/widgets/core/useWidgetRefreshScale";
 import { POLLED_CACHE_PREFIX, setLocal } from "@/lib/local-store";
 import { RateLimitError } from "@/lib/net";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
@@ -110,39 +110,9 @@ type CacheEntry<T> = { data: T; at: number };
 
 const dataCache = new Map<string, CacheEntry<unknown>>();
 
-const cacheVersions = new Map<string, number>();
-const cacheWatchers = new Map<string, Set<() => void>>();
-
 function storeEntry<T>(cacheKey: string, entry: CacheEntry<T>, persist: boolean): void {
   dataCache.set(cacheKey, entry);
   if (persist) writePersisted(cacheKey, entry);
-  bumpCacheVersion(cacheKey);
-}
-
-function bumpCacheVersion(cacheKey: string): void {
-  cacheVersions.set(cacheKey, (cacheVersions.get(cacheKey) ?? 0) + 1);
-  const watchers = cacheWatchers.get(cacheKey);
-  if (!watchers) return;
-  queueMicrotask(() => {
-    for (const watcher of watchers) watcher();
-  });
-}
-
-export function watchPolledResource(cacheKey: string, onChange: () => void): () => void {
-  let watchers = cacheWatchers.get(cacheKey);
-  if (!watchers) {
-    watchers = new Set();
-    cacheWatchers.set(cacheKey, watchers);
-  }
-  watchers.add(onChange);
-  return () => {
-    watchers.delete(onChange);
-    if (watchers.size === 0) cacheWatchers.delete(cacheKey);
-  };
-}
-
-export function polledResourceVersion(cacheKey: string): number {
-  return cacheVersions.get(cacheKey) ?? 0;
 }
 
 function readPersisted<T>(
@@ -193,7 +163,6 @@ function seededEntry<T>(
     if (stored) {
       entry = stored;
       dataCache.set(cacheKey, stored);
-      bumpCacheVersion(cacheKey);
     }
   }
   return entry;
@@ -535,12 +504,8 @@ export function patchPolledResource<T>(cacheKey: string, update: (data: T) => T)
 }
 
 export function clearPolledResources(): void {
-  for (const cacheKey of [...dataCache.keys()]) {
-    removePersisted(cacheKey);
-    bumpCacheVersion(cacheKey);
-  }
+  for (const cacheKey of [...dataCache.keys()]) removePersisted(cacheKey);
   dataCache.clear();
-  cacheVersions.clear();
   liveResources.clear();
 }
 
@@ -551,7 +516,6 @@ export function refreshPolledResource(cacheKey: string): void {
 export function invalidatePolledResource(cacheKey: string): void {
   dataCache.delete(cacheKey);
   removePersisted(cacheKey);
-  bumpCacheVersion(cacheKey);
   (liveResources.get(cacheKey) as SharedResource<unknown> | undefined)?.markStale();
 }
 
@@ -567,9 +531,7 @@ export function usePolledResource<T>(
     persist = false,
     parsePersisted,
   } = options;
-  const scale = useWidgetRefreshScale();
-  const staleMs = (intervalMs ?? DEFAULT_STALE_MS) * scale;
-  const scaledIntervalMs = intervalMs === undefined ? undefined : intervalMs * scale;
+  const { staleMs, intervalMs: scaledIntervalMs } = useScaledCadence(intervalMs, DEFAULT_STALE_MS);
 
   const autoKeyRef = useRef("");
   if (!autoKeyRef.current) autoKeyRef.current = `polled#${(nextAutoKey += 1)}`;

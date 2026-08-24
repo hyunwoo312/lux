@@ -22,6 +22,7 @@ export const githubPlugin: WidgetPlugin = {
   headerActionComponent: GithubHeaderActions,
   refreshMs: INBOX_REFRESH_MS,
   accent: GITHUB_ACCENT,
+  requiresAccount: ["github"],
   useLock: () =>
     useProviderLock({ providers: ["github"], label: "GitHub", subject: "your activity" }),
   removalNote: () => "Its settings will be reset — your GitHub account stays connected.",

@@ -19,6 +19,7 @@ export const calendarPlugin: WidgetPlugin = {
   statusComponent: CalendarTabs,
   headerActionComponent: CalendarHeaderActions,
   accent: CALENDAR_ACCENT,
+  requiresAccount: ["google", "microsoft"],
   useLock: () =>
     useProviderLock({
       providers: ["google", "microsoft"],

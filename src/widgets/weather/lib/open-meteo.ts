@@ -13,12 +13,14 @@ const FORECAST_ENDPOINT = "https://api.open-meteo.com/v1/forecast";
 const FORECAST_DAYS = "8";
 const CACHE_SHAPE = 2;
 
-function windSpeedUnit(units: WeatherUnits, windUnit: WeatherWindUnit): string {
+type WindSpeedUnit = "mph" | "kmh" | "ms" | "kn";
+
+function windSpeedUnit(units: WeatherUnits, windUnit: WeatherWindUnit): WindSpeedUnit {
   if (windUnit !== "auto") return windUnit;
   return units === "imperial" ? "mph" : "kmh";
 }
 
-const WIND_LABEL: Record<string, string> = {
+const WIND_LABEL: Record<WindSpeedUnit, string> = {
   mph: "mph",
   kmh: "km/h",
   ms: "m/s",
@@ -26,8 +28,7 @@ const WIND_LABEL: Record<string, string> = {
 };
 
 export function windSpeedLabel(units: WeatherUnits, windUnit: WeatherWindUnit): string {
-  const unit = windSpeedUnit(units, windUnit);
-  return WIND_LABEL[unit] ?? unit;
+  return WIND_LABEL[windSpeedUnit(units, windUnit)];
 }
 
 export function weatherCacheKey(

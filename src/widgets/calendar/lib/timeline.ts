@@ -1,3 +1,4 @@
+import { formatClock, formatHourMark } from "@/lib/clock";
 import {
   formatEventRelativeTime,
   getEventDisplayEndDate,
@@ -180,21 +181,6 @@ export function formatDuration(minutes: number): string {
   if (hours === 0) return `${rest}m`;
   if (rest === 0) return `${hours}h`;
   return `${hours}h ${rest}m`;
-}
-
-export function formatClock(date: Date, hour12: boolean): string {
-  return new Intl.DateTimeFormat(undefined, {
-    hour: hour12 ? "numeric" : "2-digit",
-    minute: "2-digit",
-    hour12,
-  }).format(date);
-}
-
-export function formatHourMark(date: Date, hour12: boolean): string {
-  return new Intl.DateTimeFormat(undefined, {
-    hour: hour12 ? "numeric" : "2-digit",
-    hour12,
-  }).format(date);
 }
 
 export function formatTimeRange(event: CalendarEvent, hour12: boolean): string {
@@ -417,3 +403,5 @@ export function getRunGaps<T extends CalendarEvent>(run: TimelineRun<T>, now: Da
   if (fromMin <= 0) return run.gaps;
   return getFreeGaps(run.blocks, run.minutes, fromMin);
 }
+
+export { formatClock, formatHourMark };

@@ -163,7 +163,7 @@ export function HeatmapLegend({ metrics }: { metrics: HeatmapMetrics }) {
         <span
           key={level}
           aria-hidden
-          className={cn("rounded-[2px]", level)}
+          className={cn("rounded-2xs", level)}
           style={{ width: LEGEND_SWATCH, height: LEGEND_SWATCH }}
         />
       ))}
@@ -237,7 +237,7 @@ const HeatmapGrid = memo(function HeatmapGrid({
                   key={day.date}
                   data-day={dayTitle(day, todayKey)}
                   className={cn(
-                    "rounded-[2px]",
+                    "rounded-2xs",
                     LEVEL_CLASS[day.level],
                     day.date === todayKey && "ring-ink-2 ring-1",
                   )}

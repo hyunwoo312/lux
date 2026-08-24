@@ -1,3 +1,4 @@
+import { useShallow } from "zustand/react/shallow";
 import { useFrostImage } from "@/lib/frost-image";
 import { useWallpaperStore, type WallpaperFit } from "@/stores/useWallpaperStore";
 
@@ -10,9 +11,9 @@ const FIT_SIZE: Record<WallpaperFit, string> = {
 
 export function FauxGlassBackdrop() {
   const frostUrl = useFrostImage();
-  const fit = useWallpaperStore((s) => s.fit);
-  const dim = useWallpaperStore((s) => s.dim);
-  const blur = useWallpaperStore((s) => s.blur);
+  const { fit, dim, blur } = useWallpaperStore(
+    useShallow((s) => ({ fit: s.fit, dim: s.dim, blur: s.blur })),
+  );
 
   if (!frostUrl) return null;
 

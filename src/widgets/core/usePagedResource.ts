@@ -10,6 +10,7 @@ import {
   type Cadence,
   type Freshness,
 } from "@/widgets/core/usePolledResource";
+import { useScaledCadence } from "@/widgets/core/useWidgetRefreshScale";
 
 let nextAutoKey = 0;
 const DEFAULT_STALE_MS = 180_000;
@@ -442,7 +443,7 @@ export function usePagedResource<T>(
     parsePersisted,
   }: Options<T>,
 ): PagedResource<T> {
-  const staleMs = intervalMs ?? DEFAULT_STALE_MS;
+  const { staleMs, intervalMs: scaledIntervalMs } = useScaledCadence(intervalMs, DEFAULT_STALE_MS);
 
   const autoKeyRef = useRef("");
   if (!autoKeyRef.current) autoKeyRef.current = `paged#${(nextAutoKey += 1)}`;
@@ -481,7 +482,7 @@ export function usePagedResource<T>(
         key,
         cacheKey,
         staleMs,
-        intervalMs,
+        intervalMs: scaledIntervalMs,
         maxItems: maxItemsRef.current,
         persist: persistRef.current,
         parsePersisted: parsePersistedRef.current,
@@ -491,12 +492,12 @@ export function usePagedResource<T>(
     );
     resourceRef.current = resource;
     setSnapshot(resource.getSnapshot());
-    const unsubscribe = resource.subscribe(setSnapshot, { staleMs, intervalMs });
+    const unsubscribe = resource.subscribe(setSnapshot, { staleMs, intervalMs: scaledIntervalMs });
     return () => {
       resourceRef.current = null;
       unsubscribe();
     };
-  }, [key, cacheKey, enabled, staleMs, intervalMs]);
+  }, [key, cacheKey, enabled, staleMs, scaledIntervalMs]);
 
   const hasMore = snapshot.hasNextPage && snapshot.items.length < maxItems;
 

@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
+import { mergePersisted, tolerantRecord } from "@/lib/persist";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
@@ -25,13 +26,15 @@ const DEFAULT_DATA: SpotifyData = {
 };
 
 const configSchema = z.object({
-  timeDisplayMode: z.enum(SPOTIFY_TIME_DISPLAY_MODES).default("total"),
-  queueView: z.boolean().default(false),
+  timeDisplayMode: z.enum(SPOTIFY_TIME_DISPLAY_MODES).catch("total"),
+  queueView: z.boolean().catch(false),
 });
 
-const persistedSchema = z.object({
-  byInstance: z.record(z.string(), configSchema),
+const legacySchema = z.object({
+  timeDisplayMode: z.enum(SPOTIFY_TIME_DISPLAY_MODES),
 });
+
+const persistedSchema = z.object({ byInstance: tolerantRecord(configSchema) });
 
 const gatedStorage = createGatedChromeStorage();
 
@@ -62,7 +65,7 @@ export const useSpotifyStore = create<SpotifyState>()(
       partialize: (state) => ({ byInstance: state.byInstance }),
       migrate: (persisted, version) => {
         if (version >= 2) return persisted;
-        const legacy = configSchema.safeParse(persisted);
+        const legacy = legacySchema.safeParse(persisted);
         return {
           byInstance: legacy.success
             ? {
@@ -73,15 +76,16 @@ export const useSpotifyStore = create<SpotifyState>()(
             : {},
         };
       },
-      merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(persisted);
-        if (!parsed.success) return current;
-        const byInstance: Record<string, SpotifyData> = {};
-        for (const [id, config] of Object.entries(parsed.data.byInstance)) {
-          byInstance[id] = { ...DEFAULT_DATA, ...config };
-        }
-        return { ...current, byInstance };
-      },
+      merge: (persisted, current) =>
+        mergePersisted("widget:spotify", persistedSchema, persisted, current, (parsed) => ({
+          ...current,
+          byInstance: Object.fromEntries(
+            Object.entries(parsed.byInstance).map(([id, config]) => [
+              id,
+              { ...DEFAULT_DATA, ...config },
+            ]),
+          ),
+        })),
     },
   ),
 );

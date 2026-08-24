@@ -3,7 +3,8 @@ import { PermissionPrompt } from "@/components/PermissionPrompt";
 import { useGrantedPermissions } from "@/hooks/usePermission";
 import { isPermissionsManageable } from "@/lib/permissions";
 import { useSettingsStore } from "@/settings";
-import { BrowserMessage } from "@/widgets/quick-access/components/BrowserMessage";
+import { AlertCircle } from "lucide-react";
+import { RetryButton, StateMessage } from "@/components/StateMessage";
 import { BookmarksView } from "@/widgets/quick-access/components/BookmarksView";
 import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
 import { useBrowserItems } from "@/widgets/quick-access/hooks/useBrowserItems";
@@ -90,19 +91,24 @@ function ItemsView({ tab, editing }: { tab: ItemSource & BrowserTabKey; editing:
         <SearchField value={query} onChange={setQuery} label={`Search ${TAB_NOUN[tab]}`} />
       </div>
       <div ref={scrollRef} className="scroll-fade min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
-        {state.status === "loading" && (
-          <BrowserMessage>{`Loading ${TAB_NOUN[tab]}…`}</BrowserMessage>
-        )}
+        {state.status === "loading" && <StateMessage message={`Loading ${TAB_NOUN[tab]}…`} />}
         {state.status === "error" && (
-          <BrowserMessage>{`Couldn’t load ${TAB_NOUN[tab]}`}</BrowserMessage>
+          <StateMessage
+            icon={AlertCircle}
+            tone="error"
+            message={`Couldn’t load ${TAB_NOUN[tab]}.`}
+            action={<RetryButton onRetry={state.retry} retrying={false} />}
+          />
         )}
         {state.status === "ready" &&
           (searching ? (
-            <BrowserMessage>Searching…</BrowserMessage>
+            <StateMessage message="Searching…" />
           ) : items.length === 0 ? (
-            <BrowserMessage>
-              {query.trim() ? `No matches for “${query.trim()}”` : `No ${TAB_NOUN[tab]} yet`}
-            </BrowserMessage>
+            <StateMessage
+              message={
+                query.trim() ? `No matches for “${query.trim()}”` : `No ${TAB_NOUN[tab]} yet`
+              }
+            />
           ) : (
             <BrowserList
               items={items}

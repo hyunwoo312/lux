@@ -140,7 +140,7 @@ function SortableImage({ item, assetStore, disabled, onRemove }: SortableImagePr
             role="tooltip"
             style={{ left: cursor.x + 4, top: cursor.y + 4 }}
             className="
-              bg-popover text-popover-foreground border-border pointer-events-none fixed z-[100]
+              bg-popover text-popover-foreground border-border pointer-events-none fixed z-tooltip
               flex max-w-[14rem] flex-col gap-0.5 rounded-md border px-2.5 py-1.5 text-micro
               shadow-lg
             "

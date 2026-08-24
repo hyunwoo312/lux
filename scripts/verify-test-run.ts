@@ -21,23 +21,23 @@ let report: VitestJson;
 try {
   report = JSON.parse(readFileSync(RESULTS, "utf8")) as VitestJson;
 } catch {
-  console.error(`verify-test-run: ${RESULTS} missing or unreadable — did vitest run?`);
+  process.stderr.write(`verify-test-run: ${RESULTS} missing or unreadable — did vitest run?\n`);
   process.exit(1);
 }
 
-const ran = new Set((report.testResults ?? []).map((r) => r.name.replace(/\\/g, "/")));
-const missed = onDisk.filter((f) => ![...ran].some((r) => r.endsWith(f.replace(/\\/g, "/"))));
+const ran = (report.testResults ?? []).map((r) => r.name.replace(/\\/g, "/"));
+const missed = onDisk.filter((f) => !ran.some((r) => r.endsWith(f.replace(/\\/g, "/"))));
 
 if (missed.length > 0) {
-  console.error(
-    `verify-test-run: ${onDisk.length} test files on disk but ${ran.size} reported by vitest.`,
+  process.stderr.write(
+    `verify-test-run: ${onDisk.length} test files on disk but ${ran.length} reported by vitest.\n`,
   );
-  console.error("Files vitest did not report:");
-  for (const f of missed) console.error(`  ${f}`);
-  console.error(
-    "\nThis is the silent-drop failure: the summary can look green while files vanish.",
+  process.stderr.write("Files vitest did not report:\n");
+  for (const f of missed) process.stderr.write(`  ${f}\n`);
+  process.stderr.write(
+    "\nThis is the silent-drop failure: the summary can look green while files vanish.\n",
   );
   process.exit(1);
 }
 
-process.stdout.write(`verify-test-run: ${ran.size}/${onDisk.length} test files accounted for.\n`);
+process.stdout.write(`verify-test-run: ${ran.length}/${onDisk.length} test files accounted for.\n`);

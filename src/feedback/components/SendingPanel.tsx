@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { animate, motion, useMotionValue, useReducedMotion, useTransform } from "motion/react";
-import { EASE_OUT } from "@/lib/motion";
+import { EASE_OUT, EASE_OUT_STRONG } from "@/lib/motion";
 import { FEEDBACK_TIMEOUT_MS } from "@/lib/net";
 
 const IN_FLIGHT_CEILING = 92;
@@ -25,7 +25,7 @@ export function SendingPanel({ settling, onSettled }: Props) {
     if (settling) return;
     const controls = animate(progress, IN_FLIGHT_CEILING, {
       duration: reduced ? 0 : FEEDBACK_TIMEOUT_MS / 1000,
-      ease: [0.16, 1, 0.3, 1],
+      ease: EASE_OUT_STRONG,
     });
     return () => controls.stop();
   }, [settling, progress, reduced]);

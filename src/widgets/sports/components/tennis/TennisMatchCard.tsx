@@ -25,7 +25,7 @@ function PlayerLine({
           src={player.flag}
           alt=""
           loading="lazy"
-          className="size-3 shrink-0 rounded-[1px] object-cover"
+          className="size-3 shrink-0 rounded-2xs object-cover"
         />
       ) : (
         <span className="size-3 shrink-0" />

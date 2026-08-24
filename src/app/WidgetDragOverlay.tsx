@@ -30,9 +30,9 @@ function DropMorphGhost({ morph, onDone }: { morph: DropMorph; onDone: () => voi
       }}
       transition={{ duration: reduced ? 0 : 0.3, ease: EASE_STANDARD }}
       onAnimationComplete={onDone}
-      style={{ position: "fixed", zIndex: 60 }}
       className="
-        glass text-ink-3 pointer-events-none flex items-center justify-center rounded-2xl shadow-lg
+        glass text-ink-3 fixed z-modal pointer-events-none flex items-center justify-center
+        rounded-2xl shadow-lg
         [&_img]:size-7
         [&_svg]:size-7
       "
@@ -68,16 +68,14 @@ export function WidgetDragOverlay() {
     placeholder = (
       <div
         style={{
-          position: "fixed",
           left: rect.x,
           top: rect.y,
           width: rect.w,
           height: rect.h,
-          zIndex: 50,
         }}
         className="
-          border-foreground/40 bg-foreground/5 pointer-events-none rounded-2xl border-2
-          border-dashed
+          border-foreground/40 bg-foreground/5 fixed z-overlay pointer-events-none rounded-2xl
+          border-2 border-dashed
         "
       />
     );
@@ -88,15 +86,14 @@ export function WidgetDragOverlay() {
       {placeholder}
       <div
         style={{
-          position: "fixed",
           left: pointerX - ghostW / 2,
           top: pointerY - ghostH / 2,
           width: ghostW,
           height: ghostH,
-          zIndex: 60,
         }}
         className="
-          glass pointer-events-none flex items-center gap-3 rounded-2xl px-3 text-body shadow-lg
+          glass fixed z-modal pointer-events-none flex items-center gap-3 rounded-2xl px-3 text-body
+          shadow-lg
         "
       >
         <span

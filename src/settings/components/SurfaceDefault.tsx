@@ -9,10 +9,10 @@ import {
   type WidgetBackground,
 } from "@/widgets/core/useWidgetSettingsStore";
 
-const OPTIONS: { value: SurfacePreference; label: string }[] = [
+const OPTIONS: { value: SurfacePreference; label: string; disabled?: boolean }[] = [
   { value: "glass", label: "Glass" },
   { value: "solid", label: "Solid" },
-  { value: "custom", label: "Custom" },
+  { value: "custom", label: "Custom", disabled: true },
 ];
 
 function describe(background: WidgetBackground, count: number): string {
@@ -33,6 +33,11 @@ export function SurfaceDefault() {
     setPending(next);
   };
 
+  const note =
+    preference === "custom"
+      ? "Custom, because at least one widget has its own surface. Pick Glass or Solid to reset them all."
+      : "Changing one widget from its own settings moves this to Custom.";
+
   return (
     <>
       <SettingsRow
@@ -47,9 +52,7 @@ export function SurfaceDefault() {
           />
         }
       >
-        <p className="text-ink-4 text-caption">
-          Changing one widget from its own settings moves this to Custom.
-        </p>
+        <p className="text-ink-4 text-caption">{note}</p>
       </SettingsRow>
 
       <ConfirmDialog

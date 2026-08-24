@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, Copy, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { DURATION, EASE_OUT } from "@/lib/motion";
+import { DURATION, EASE_IN_OUT, EASE_OUT } from "@/lib/motion";
 
 const SPOTIFY_DASHBOARD_URL = "https://developer.spotify.com/dashboard";
 const SPOTIFY_POLICY_URL =
@@ -356,9 +356,7 @@ function DrawnCheck({ reduced }: { reduced: boolean | null }) {
         initial={reduced ? { pathLength: 1 } : { pathLength: 0 }}
         animate={{ pathLength: 1 }}
         transition={
-          reduced
-            ? { duration: 0 }
-            : { duration: DURATION.slow, ease: [0.65, 0, 0.35, 1], delay: 0.06 }
+          reduced ? { duration: 0 } : { duration: DURATION.slow, ease: EASE_IN_OUT, delay: 0.06 }
         }
       />
     </motion.svg>

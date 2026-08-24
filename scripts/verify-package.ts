@@ -15,6 +15,7 @@ function read<T>(path: string): T | null {
 type Manifest = {
   manifest_version?: number;
   name?: string;
+  description?: string;
   version?: string;
   minimum_chrome_version?: string;
   permissions?: string[];
@@ -40,7 +41,7 @@ if (pkg && built) {
   if (built.version !== pkg.version)
     fail.push(`built manifest is ${built.version}, package.json is ${pkg.version}`);
   for (const key of ["name", "description", "minimum_chrome_version"] as const) {
-    if (!built[key as keyof Manifest]) fail.push(`manifest is missing required field: ${key}`);
+    if (!built[key]) fail.push(`manifest is missing required field: ${key}`);
   }
 
   const referenced: string[] = [];

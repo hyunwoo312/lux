@@ -143,7 +143,7 @@ describe("colour tokens", () => {
   });
 
   it("the radius scale is monotonic and every rung is perceptibly distinct", () => {
-    const scale = ["xs", "sm", "md", "lg", "xl", "2xl", "3xl"];
+    const scale = ["2xs", "xs", "sm", "md", "lg", "xl", "2xl", "3xl"];
     const px = scale.map((name) => {
       const raw = rawToken("@theme inline", `radius-${name}`);
       const rem = raw.startsWith("var(") ? rawToken(":root", "radius") : raw;

@@ -303,6 +303,7 @@
   --color-edge-2: var(--edge-2);
   --color-edge-3: var(--edge-3);
   --color-edge-4: var(--edge-4);
+  --shadow-glow-accent: 0 0 22px -2px var(--primary);
   --shadow-elev-1: var(--elev-1);
   --shadow-elev-2: var(--elev-2);
   --shadow-elev-3: var(--elev-3);
@@ -312,6 +313,7 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  --radius-2xs: 0.125rem;
   --radius-xs: 0.25rem;
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
@@ -321,6 +323,8 @@
   --radius-3xl: 1.5rem;
 
   --z-index-wallpaper: -1;
+  --z-index-widget-scrim: 5;
+  --z-index-widget-content: 10;
   --z-index-widget-chrome: 20;
   --z-index-widget-overlay: 30;
   --z-index-sticky: 40;

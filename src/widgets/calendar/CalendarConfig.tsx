@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { RefreshCw, Settings2 } from "lucide-react";
+import { formatClock } from "@/lib/clock";
 import { useIntegrationStore } from "@/integrations";
 import { useSettingsStore } from "@/settings";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
@@ -42,13 +43,9 @@ const SOURCE_OPTIONS: { value: CalendarProviderId; label: string }[] = [
 
 function formatLastSynced(value: string | undefined, hour12: boolean): string | null {
   if (!value) return null;
-  return `Last synced ${new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12,
-  }).format(new Date(value))}`;
+  const date = new Date(value);
+  const day = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(date);
+  return `Last synced ${day}, ${formatClock(date, hour12)}`;
 }
 
 function getProviderNote(calendarCount: number, enabledCount: number): string | null {

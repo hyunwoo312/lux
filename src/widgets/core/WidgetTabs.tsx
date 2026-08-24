@@ -1,4 +1,5 @@
 import { DURATION, EASE_OUT, SPRING_CRISP } from "@/lib/motion";
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -53,14 +54,46 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
     measure();
   }, [value, wide, measure]);
 
+  const tabKey = tabs.map((tab) => tab.value).join("|");
   useEffect(() => {
     const observer = new ResizeObserver(() => measure());
     buttons.current.forEach((button) => observer.observe(button));
     return () => observer.disconnect();
-  }, [measure]);
+  }, [measure, tabKey]);
+
+  const focusTab = (next: T) => {
+    onSelect(next);
+    buttons.current.get(next)?.focus();
+  };
+
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const order = tabs.map((tab) => tab.value);
+    const current = order.indexOf(value);
+    if (current === -1) return;
+    const last = order.length - 1;
+    const next =
+      event.key === "ArrowRight"
+        ? order[current === last ? 0 : current + 1]
+        : event.key === "ArrowLeft"
+          ? order[current === 0 ? last : current - 1]
+          : event.key === "Home"
+            ? order[0]
+            : event.key === "End"
+              ? order[last]
+              : undefined;
+    if (next === undefined) return;
+    event.preventDefault();
+    focusTab(next);
+  };
 
   return (
-    <div ref={ref} role="tablist" className="relative flex w-full items-center gap-0.5">
+    <div
+      ref={ref}
+      role="tablist"
+      aria-orientation="horizontal"
+      onKeyDown={handleKeyDown}
+      className="relative flex w-full items-center gap-0.5"
+    >
       <div
         ref={measureRef}
         aria-hidden
@@ -107,6 +140,7 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
               type="button"
               role="tab"
               aria-selected={isActive}
+              tabIndex={isActive ? 0 : -1}
               aria-label={tab.badge ? `${tab.label} (${tab.badge})` : tab.label}
               onClick={() => onSelect(tab.value)}
               className={cn(

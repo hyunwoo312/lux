@@ -10,15 +10,13 @@ import {
 } from "@/widgets/quick-access/browser";
 import type { BookmarkFolder, BrowserItem, ItemSource } from "@/widgets/quick-access/types";
 
-type BrowserState =
-  | { status: "loading" }
-  | { status: "error" }
-  | { status: "ready"; items: BrowserItem[] };
+type Retry = { retry: () => void };
 
-type BookmarkTreeState =
-  | { status: "loading" }
-  | { status: "error" }
-  | { status: "ready"; root: BookmarkFolder };
+type BrowserState = Retry &
+  ({ status: "loading" } | { status: "error" } | { status: "ready"; items: BrowserItem[] });
+
+type BookmarkTreeState = Retry &
+  ({ status: "loading" } | { status: "error" } | { status: "ready"; root: BookmarkFolder });
 
 const FETCHERS: Record<ItemSource, () => Promise<BrowserItem[]>> = {
   recentlyClosed: fetchRecentlyClosed,
@@ -44,11 +42,11 @@ export function useBrowserItems(tab: ItemSource, enabled = true): BrowserState {
   useRefreshOnMount(refresh, enabled);
 
   return useMemo(() => {
-    if (state.status === "success") return { status: "ready", items: state.data };
-    if (state.status === "empty") return { status: "ready", items: [] };
-    if (state.status === "error") return { status: "error" };
-    return { status: "loading" };
-  }, [state]);
+    if (state.status === "success") return { status: "ready", items: state.data, retry: refresh };
+    if (state.status === "empty") return { status: "ready", items: [], retry: refresh };
+    if (state.status === "error") return { status: "error", retry: refresh };
+    return { status: "loading", retry: refresh };
+  }, [state, refresh]);
 }
 
 export function useBookmarkTree(enabled = true): BookmarkTreeState {
@@ -60,10 +58,10 @@ export function useBookmarkTree(enabled = true): BookmarkTreeState {
   useRefreshOnMount(refresh, enabled);
 
   return useMemo(() => {
-    if (state.status === "success") return { status: "ready", root: state.data };
-    if (state.status === "error") return { status: "error" };
-    return { status: "loading" };
-  }, [state]);
+    if (state.status === "success") return { status: "ready", root: state.data, retry: refresh };
+    if (state.status === "error") return { status: "error", retry: refresh };
+    return { status: "loading", retry: refresh };
+  }, [state, refresh]);
 }
 
 export function useOpenTabs(enabled: boolean): BrowserState {
@@ -83,9 +81,9 @@ export function useOpenTabs(enabled: boolean): BrowserState {
   }, [enabled, refresh]);
 
   return useMemo(() => {
-    if (state.status === "success") return { status: "ready", items: state.data };
-    if (state.status === "empty") return { status: "ready", items: [] };
-    if (state.status === "error") return { status: "error" };
-    return { status: "loading" };
-  }, [state]);
+    if (state.status === "success") return { status: "ready", items: state.data, retry: refresh };
+    if (state.status === "empty") return { status: "ready", items: [], retry: refresh };
+    if (state.status === "error") return { status: "error", retry: refresh };
+    return { status: "loading", retry: refresh };
+  }, [state, refresh]);
 }

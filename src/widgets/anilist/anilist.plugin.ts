@@ -21,5 +21,6 @@ export const anilistPlugin: WidgetPlugin = {
   headerActionComponent: AnilistHeaderActions,
   refreshMs: ANILIST_REFRESH_MS,
   accent: ANILIST_ACCENT,
+  requiresAccount: ["anilist"],
   removalNote: () => "Its settings will be reset — your AniList account stays connected.",
 };

@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { WidgetTypeContext } from "@/widgets/core/useWidgetRefreshScale";
 import { useReducedMotion } from "motion/react";
-import { cn } from "@/lib/utils";
 import { BaseWidget } from "@/widgets/core/BaseWidget";
 import { WidgetErrorBoundary } from "@/widgets/core/WidgetErrorBoundary";
 import { CommonWidgetConfig } from "@/widgets/core/CommonWidgetConfig";
 import { ConnectOverlay } from "@/components/ConnectOverlay";
 import { WidgetConfig } from "@/components/config/WidgetConfig";
-import { accentClass } from "@/widgets/core/accent";
 import type { WidgetInstance } from "@/widgets/core/types";
 import { useWidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
 import { useWidgetHighlightStore } from "@/widgets/core/useWidgetHighlightStore";
@@ -33,7 +31,7 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
   const [pulse, setPulse] = useState(isLastAdded);
   const containerRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
-  const useBare = plugin?.useBare ?? useNoBare;
+  const useBare = plugin?.frame?.useBare ?? useNoBare;
   const bare = useBare(instance.id);
   const useLock = plugin?.useLock ?? useNoLock;
   const lock = useLock(instance.id);
@@ -54,32 +52,30 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
 
   if (!plugin) return null;
 
-  const accent = plugin.accent ?? "default";
-
   const Widget = plugin.component;
   const ConfigComponent = plugin.configComponent;
   const StatusComponent = plugin.statusComponent;
   const HeaderActionComponent = plugin.headerActionComponent;
-  const BackdropComponent = plugin.backdropComponent;
+  const BackdropComponent = plugin.frame?.backdrop;
 
   const locked = Boolean(lock) && !editing;
 
   return (
     <WidgetInstanceContext.Provider value={instance.id}>
       <WidgetTypeContext.Provider value={instance.type}>
-        <div ref={containerRef} className={cn("relative h-full", accentClass(accent))}>
+        <div ref={containerRef} className="relative h-full">
           <div inert={locked} className="h-full">
             <BaseWidget
               title={plugin.name}
               editing={editing}
               size={size}
               background={background}
-              accent={accent}
-              bleed={plugin.bleed}
+              accent={plugin.accent}
+              bleed={plugin.frame?.bleed}
               bare={bare}
               highlighted={highlighted || pulse}
               backdrop={BackdropComponent ? <BackdropComponent /> : undefined}
-              decorativeBackdrop={plugin.decorativeBackdrop}
+              decorativeBackdrop={plugin.frame?.decorativeBackdrop}
               headline={StatusComponent ? <StatusComponent /> : undefined}
               headerAction={HeaderActionComponent ? <HeaderActionComponent /> : undefined}
               config={

@@ -5,9 +5,9 @@ import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from 
 import type { DragEndEvent } from "@dnd-kit/core";
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { ListChecks } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { TYPE } from "@/lib/type";
-import { cn } from "@/lib/utils";
+import { StateMessage } from "@/components/StateMessage";
 import { VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
 import { BorderTrail } from "@/widgets/tasks/components/BorderTrail";
 import { orderTasks } from "@/widgets/tasks/lib/order";
@@ -125,9 +125,7 @@ export function TasksWidget() {
         </motion.div>
       </form>
       {showEmpty ? (
-        <div className={cn(TYPE.rowSubtitle, "flex flex-1 items-center justify-center")}>
-          No tasks yet
-        </div>
+        <StateMessage icon={ListChecks} message="No tasks yet" />
       ) : (
         <DndContext
           sensors={sensors}

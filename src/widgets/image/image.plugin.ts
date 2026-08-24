@@ -17,10 +17,12 @@ export const imagePlugin: WidgetPlugin = {
   component: ImageWidget,
   configComponent: ImageConfig,
   statusComponent: ImageStatus,
-  backdropComponent: ImageBackdrop,
+  frame: {
+    backdrop: ImageBackdrop,
+    bleed: true,
+    useBare: (instanceId) => useImageStore((s) => s.byInstance[instanceId]?.hideFrame ?? false),
+  },
   accent: IMAGE_ACCENT,
-  bleed: true,
-  useBare: (instanceId) => useImageStore((s) => s.byInstance[instanceId]?.hideFrame ?? false),
   removalNote: (instanceId) => {
     const data = useImageStore.getState().byInstance[instanceId];
     const count = !data ? 0 : data.mode === "multi" ? data.items.length : data.single ? 1 : 0;

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronRight, Folder } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { BrowserMessage } from "@/widgets/quick-access/components/BrowserMessage";
+import { AlertCircle, Bookmark } from "lucide-react";
+import { RetryButton, StateMessage } from "@/components/StateMessage";
 import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
 import { useBookmarkTree } from "@/widgets/quick-access/hooks/useBrowserItems";
 import { useItemActions } from "@/widgets/quick-access/hooks/useItemActions";
@@ -33,8 +34,17 @@ export function BookmarksView({ editing }: { editing: boolean }) {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }, [folderId]);
 
-  if (state.status === "loading") return <BrowserMessage>Loading bookmarks…</BrowserMessage>;
-  if (state.status === "error") return <BrowserMessage>Couldn’t load bookmarks</BrowserMessage>;
+  if (state.status === "loading") return <StateMessage message="Loading bookmarks…" />;
+  if (state.status === "error") {
+    return (
+      <StateMessage
+        icon={AlertCircle}
+        tone="error"
+        message="Couldn’t load bookmarks."
+        action={<RetryButton onRetry={state.retry} retrying={false} />}
+      />
+    );
+  }
 
   const trail = resolveFolderTrail(state.root, path);
   const current = trail[trail.length - 1] ?? state.root;
@@ -54,7 +64,7 @@ export function BookmarksView({ editing }: { editing: boolean }) {
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-x-hidden scroll-fade overflow-y-auto">
         {searching ? (
           found.length === 0 ? (
-            <BrowserMessage>{`No bookmarks match “${query.trim()}”`}</BrowserMessage>
+            <StateMessage icon={Bookmark} message={`No bookmarks match “${query.trim()}”`} />
           ) : (
             <BrowserList
               items={found}
@@ -68,9 +78,10 @@ export function BookmarksView({ editing }: { editing: boolean }) {
             />
           )
         ) : isEmpty ? (
-          <BrowserMessage>
-            {trail.length > 1 ? "This folder is empty" : "No bookmarks yet"}
-          </BrowserMessage>
+          <StateMessage
+            icon={Bookmark}
+            message={trail.length > 1 ? "This folder is empty" : "No bookmarks yet"}
+          />
         ) : (
           <>
             {current.folders.length > 0 && (

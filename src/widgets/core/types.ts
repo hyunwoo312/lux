@@ -1,3 +1,4 @@
+import type { IntegrationProviderId } from "@/integrations";
 import type { ComponentType } from "react";
 import type { AccentPreset } from "@/widgets/core/accent";
 
@@ -43,6 +44,13 @@ export type WidgetLock = {
   onAction: () => void;
 };
 
+export type WidgetFrame = {
+  bleed?: boolean;
+  backdrop?: ComponentType;
+  decorativeBackdrop?: boolean;
+  useBare?: (instanceId: string) => boolean;
+};
+
 export type WidgetPlugin = {
   type: WidgetType;
   name: string;
@@ -56,12 +64,10 @@ export type WidgetPlugin = {
   configComponent?: ComponentType;
   statusComponent?: ComponentType;
   headerActionComponent?: ComponentType;
-  backdropComponent?: ComponentType;
-  decorativeBackdrop?: boolean;
   refreshMs?: number;
-  accent?: AccentPreset;
-  bleed?: boolean;
-  useBare?: (instanceId: string) => boolean;
+  accent: AccentPreset;
+  requiresAccount?: IntegrationProviderId[];
+  frame?: WidgetFrame;
   useLock?: (instanceId: string) => WidgetLock | null;
   removalNote?: (instanceId: string) => string | null;
 };

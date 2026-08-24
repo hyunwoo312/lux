@@ -24,7 +24,7 @@ export function CommonWidgetConfig() {
     <WidgetConfigGroup label="General">
       <WidgetConfigItem
         title="Background"
-        description="Card surface style"
+        description="Sets this widget only, and switches Settings → Widgets to Custom"
         control={
           <ConfigSegmented
             label="Widget background"

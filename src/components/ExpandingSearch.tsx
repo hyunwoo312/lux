@@ -3,11 +3,11 @@ import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 import { Search, X } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { EASE_MORPH } from "@/lib/motion";
 import { useElementSize } from "@/hooks/useElementSize";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 
 const COLLAPSED_W = 28;
-const MORPH_EASE = [0.2, 0.8, 0.2, 1] as const;
 
 type ExpandingSearchProps = {
   open: boolean;
@@ -98,11 +98,11 @@ export function ExpandingSearch({
     }
   };
 
-  const morph = { duration: reduced ? 0 : 0.42, ease: MORPH_EASE };
-  const surface = { duration: reduced ? 0 : 0.3, ease: MORPH_EASE };
+  const morph = { duration: reduced ? 0 : 0.42, ease: EASE_MORPH };
+  const surface = { duration: reduced ? 0 : 0.3, ease: EASE_MORPH };
   const contentIn = (delay: number) => ({
     duration: reduced ? 0 : 0.25,
-    ease: MORPH_EASE,
+    ease: EASE_MORPH,
     delay: open && !reduced ? delay : 0,
   });
 
