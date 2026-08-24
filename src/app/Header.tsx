@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, MessageSquarePlus, Pencil, ScrollText, Settings } from "lucide-react";
+import { BookOpen, Check, MessageSquarePlus, Pencil, ScrollText, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useNow } from "@/hooks/useNow";
 import { ChangelogDialog, consumeChangelogAutoShow, useHasUnseenRelease } from "@/changelog";
+import { GuideDialog, useGuideStore } from "@/guide";
 import { FeedbackDialog } from "@/feedback";
 import { WidgetPalette } from "@/app/WidgetPalette";
 import { useSettingsStore } from "@/settings";
@@ -19,6 +20,7 @@ export function Header() {
   const openSettings = useSettingsStore((s) => s.openSettings);
   const hasUnseenRelease = useHasUnseenRelease();
   const [changelogOpen, setChangelogOpen] = useState(false);
+  const openGuide = useGuideStore((s) => s.openGuide);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   useEffect(() => {
@@ -92,6 +94,16 @@ export function Header() {
             )}
           </Button>
         </Tooltip>
+        <Tooltip content="Guide">
+          <Button
+            variant="ghost"
+            size="icon-lg"
+            aria-label="Open the Lux guide"
+            onClick={() => openGuide()}
+          >
+            <BookOpen className="size-5" />
+          </Button>
+        </Tooltip>
         <Tooltip content="Send feedback">
           <Button
             variant="ghost"
@@ -105,6 +117,7 @@ export function Header() {
       </div>
 
       <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
+      <GuideDialog />
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       <HeaderClock
         className="

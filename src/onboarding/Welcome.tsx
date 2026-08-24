@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { motion, useReducedMotion, type Variants } from "motion/react";
 import { ArrowRight, Check, Info, LayoutGrid, Palette, Plug, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useGuideStore } from "@/guide";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { IconRow } from "@/components/IconRow";
@@ -22,7 +23,7 @@ export function Welcome() {
   const reduced = useReducedMotion();
   const open = useOnboardingStore((s) => s.welcomeOpen);
   const closeWelcome = useOnboardingStore((s) => s.closeWelcome);
-  const startTour = useOnboardingStore((s) => s.startTour);
+  const openGuide = useGuideStore((s) => s.openGuide);
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && closeWelcome()}>
@@ -99,7 +100,7 @@ export function Welcome() {
                   Installed
                 </span>
                 <span aria-hidden className="bg-border h-px w-4" />
-                <span className="text-ink-3">Tour</span>
+                <span className="text-ink-3">Guide</span>
                 <span aria-hidden className="bg-border h-px w-4" />
                 <span className="text-ink-3">Customize</span>
               </div>
@@ -107,8 +108,14 @@ export function Welcome() {
                 <Button size="lg" variant="ghost" onClick={closeWelcome}>
                   Skip
                 </Button>
-                <Button size="lg" onClick={startTour}>
-                  Take a tour
+                <Button
+                  size="lg"
+                  onClick={() => {
+                    closeWelcome();
+                    openGuide();
+                  }}
+                >
+                  Open the guide
                 </Button>
               </div>
             </motion.div>

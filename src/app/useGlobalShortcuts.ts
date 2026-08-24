@@ -10,6 +10,7 @@ import { useThemeStore } from "@/stores/useThemeStore";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useSettingsStore } from "@/settings";
+import { useGuideStore } from "@/guide";
 import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
 
 const HANDLERS: Record<ShortcutAction, () => void> = {
@@ -18,10 +19,10 @@ const HANDLERS: Record<ShortcutAction, () => void> = {
     if (settings.open) settings.closeSettings();
     else settings.openSettings();
   },
-  openHelp: () => {
-    const settings = useSettingsStore.getState();
-    if (settings.open && settings.tab === "help") settings.closeSettings();
-    else settings.openSettings("help");
+  openGuide: () => {
+    const guide = useGuideStore.getState();
+    if (guide.open) guide.closeGuide();
+    else guide.openGuide();
   },
   toggleTheme: () => useThemeStore.getState().toggle(),
   editLayout: () => useDashboardStore.getState().toggleEditing(),

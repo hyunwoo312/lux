@@ -4,8 +4,9 @@ import { Wallpaper } from "@/app/Wallpaper";
 import { Header } from "@/app/Header";
 import { WidgetDragOverlay } from "@/app/WidgetDragOverlay";
 import { UndoBar } from "@/app/UndoBar";
+import { GuideNudge } from "@/guide";
 import { SettingsDialog } from "@/settings";
-import { Tour, Welcome } from "@/onboarding";
+import { Welcome } from "@/onboarding";
 import { WidgetGrid } from "@/widgets/WidgetGrid";
 import { useGlobalShortcuts } from "@/app/useGlobalShortcuts";
 import { useDisableContextMenu } from "@/app/useDisableContextMenu";
@@ -49,7 +50,7 @@ export function App() {
       <UndoBar />
       <SettingsDialog />
       <Welcome />
-      <Tour />
+      <GuideNudge />
     </TooltipProvider>
   );
 }

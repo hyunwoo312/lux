@@ -21,7 +21,7 @@ type SettingsState = {
 
 const persistedSchema = z
   .object({
-    tab: z.enum(SETTINGS_TABS),
+    tab: z.enum(SETTINGS_TABS).catch("general"),
     sidebarCollapsed: z.boolean(),
   })
   .partial();

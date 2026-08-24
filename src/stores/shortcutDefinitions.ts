@@ -22,8 +22,8 @@ export const SHORTCUT_DEFINITIONS = [
     defaults: [ctrl(",")],
   },
   {
-    id: "openHelp",
-    label: "Open help",
+    id: "openGuide",
+    label: "Open the guide",
     description: "Guides, shortcuts, and FAQ",
     icon: CircleHelp,
     defaults: [ctrlShift("h")],

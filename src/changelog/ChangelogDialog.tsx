@@ -117,7 +117,7 @@ export function ChangelogDialog({ open, onOpenChange }: Props) {
               <DialogDescription className="sr-only">{release?.summary}</DialogDescription>
             </header>
 
-            <div className="scroll-fade min-h-0 flex-1 overflow-y-auto px-6 py-8">
+            <div className="scroll-fade scrollbar-inset-b min-h-0 flex-1 overflow-y-auto px-6 py-8">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={release?.version}

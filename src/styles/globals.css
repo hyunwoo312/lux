@@ -493,6 +493,18 @@
   }
 }
 
+@utility scrollbar-inset {
+  &::-webkit-scrollbar-track {
+    margin-block: var(--radius-3xl);
+  }
+}
+
+@utility scrollbar-inset-b {
+  &::-webkit-scrollbar-track {
+    margin-bottom: var(--radius-3xl);
+  }
+}
+
 @utility press {
   transition:
     color var(--duration-fast) var(--ease-standard),

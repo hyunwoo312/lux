@@ -1,8 +1,8 @@
 import type { ComponentType } from "react";
-import { CircleHelp, Keyboard, ShieldCheck, SlidersHorizontal } from "lucide-react";
+import { Keyboard, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import { LuxMark } from "@/components/LuxMark";
 
-export const SETTINGS_TABS = ["general", "accounts", "shortcuts", "help", "about"] as const;
+export const SETTINGS_TABS = ["general", "accounts", "shortcuts", "about"] as const;
 
 export type SettingsTab = (typeof SETTINGS_TABS)[number];
 
@@ -23,10 +23,6 @@ export const SETTINGS_TAB_META: Record<SettingsTab, SettingsTabMeta> = {
   shortcuts: {
     label: "Shortcuts",
     icon: Keyboard,
-  },
-  help: {
-    label: "Help",
-    icon: CircleHelp,
   },
   about: {
     label: "About",

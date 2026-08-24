@@ -5,7 +5,7 @@ import { useOnboardingStore } from "@/onboarding";
 
 describe("App", () => {
   beforeEach(() => {
-    useOnboardingStore.setState({ welcomeOpen: false, tourActive: false });
+    useOnboardingStore.setState({ welcomeOpen: false });
   });
 
   it("renders the header controls", () => {

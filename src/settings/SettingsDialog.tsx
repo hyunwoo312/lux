@@ -22,7 +22,6 @@ import { EASE_OUT_STRONG, SPRING_CRISP } from "@/lib/motion";
 import { AboutTab } from "@/settings/tabs/AboutTab";
 import { AccountsTab } from "@/settings/tabs/AccountsTab";
 import { GeneralTab } from "@/settings/tabs/GeneralTab";
-import { HelpTab } from "@/settings/tabs/HelpTab";
 import { ShortcutsTab } from "@/settings/tabs/ShortcutsTab";
 import { SETTINGS_TAB_META, type SettingsTab } from "@/settings/tabsMeta";
 import { SETTINGS_TABS, useSettingsStore } from "@/settings/useSettingsStore";
@@ -31,7 +30,6 @@ const TAB_COMPONENTS: Record<SettingsTab, ComponentType> = {
   general: GeneralTab,
   accounts: AccountsTab,
   shortcuts: ShortcutsTab,
-  help: HelpTab,
   about: AboutTab,
 };
 
@@ -232,7 +230,8 @@ export function SettingsDialog() {
           </header>
           <div
             className="
-              relative min-h-0 flex-1 overflow-x-hidden scroll-fade overflow-y-auto px-6 py-5
+              relative min-h-0 flex-1 overflow-x-hidden scroll-fade scrollbar-inset-b
+              overflow-y-auto px-6 py-5
               [&_section:first-child>:first-child]:hidden
             "
           >

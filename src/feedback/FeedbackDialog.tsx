@@ -208,7 +208,10 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
                   initial="hidden"
                   animate="show"
                   exit="exit"
-                  className="scroll-fade flex max-h-[85dvh] flex-col gap-7 overflow-y-auto p-8"
+                  className="
+                    scroll-fade scrollbar-inset flex max-h-[85dvh] flex-col gap-7 overflow-y-auto
+                    p-8
+                  "
                 >
                   <header className="flex items-start justify-between gap-4">
                     <div className="flex min-w-0 flex-col gap-1.5">
