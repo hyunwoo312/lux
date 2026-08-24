@@ -7,7 +7,7 @@ import { LeagueSelector } from "@/widgets/sports/components/LeagueSelector";
 import { MatchesView } from "@/widgets/sports/components/match/MatchesView";
 import { TennisView } from "@/widgets/sports/components/tennis/TennisView";
 import { SportsDayRange } from "@/widgets/sports/components/SportsDayRange";
-import { WidgetSearchField } from "@/widgets/core/WidgetSearchField";
+import { SearchField } from "@/components/SearchField";
 import { TeamSearchResults } from "@/widgets/sports/components/TeamSearchResults";
 import { useCurrentLeague } from "@/widgets/sports/hooks/useCurrentLeague";
 import type { Sport } from "@/widgets/sports/lib/leagues";
@@ -34,7 +34,7 @@ export function DiscoverTab() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-2 p-1">
       <div className="flex shrink-0 items-center gap-2 px-1">
-        <WidgetSearchField
+        <SearchField
           value={query}
           onChange={search}
           onFocus={() => query.trim().length > 0 && setLayer("search")}

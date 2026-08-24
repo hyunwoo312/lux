@@ -3,9 +3,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   clearResourceCaches,
   formatBytes,
-  LOCAL_STORAGE_CAP_BYTES,
+  breakdownOf,
   measureLocalStorage,
-  severityOf,
+  totalOf,
 } from "@/lib/storage-usage";
 
 beforeEach(() => {
@@ -68,16 +68,35 @@ describe("clearResourceCaches", () => {
   });
 });
 
-describe("severityOf", () => {
-  it("stays calm well below the cap", () => {
-    expect(severityOf(LOCAL_STORAGE_CAP_BYTES * 0.5)).toBe("calm");
+describe("breakdownOf", () => {
+  const usage = {
+    localBytes: 1000,
+    localCacheBytes: 400,
+    chromeBytes: 200,
+    imageBytes: 7 * 1024 * 1024,
+    imageCount: 3,
+  };
+
+  it("splits local storage into cache and preferences", () => {
+    const parts = breakdownOf(usage);
+
+    expect(parts.find((part) => part.label === "Cached data")?.bytes).toBe(400);
+    expect(parts.find((part) => part.label === "Preferences")?.bytes).toBe(600);
   });
 
-  it("warns as the cap approaches", () => {
-    expect(severityOf(LOCAL_STORAGE_CAP_BYTES * 0.75)).toBe("warning");
+  it("leaves out a store that holds nothing", () => {
+    const parts = breakdownOf({ ...usage, chromeBytes: 0, imageBytes: 0 });
+
+    expect(parts.map((part) => part.label)).toEqual(["Cached data", "Preferences"]);
   });
 
-  it("escalates near the cap, where eviction starts thrashing", () => {
-    expect(severityOf(LOCAL_STORAGE_CAP_BYTES * 0.95)).toBe("danger");
+  it("totals a profile far past the retired 5 MB cap without capping it", () => {
+    expect(totalOf(usage)).toBe(1000 + 200 + 7 * 1024 * 1024);
+  });
+
+  it("reports nothing rather than dividing by zero on an empty profile", () => {
+    expect(
+      totalOf({ localBytes: 0, localCacheBytes: 0, chromeBytes: 0, imageBytes: 0, imageCount: 0 }),
+    ).toBe(0);
   });
 });

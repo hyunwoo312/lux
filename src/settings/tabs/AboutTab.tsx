@@ -258,13 +258,13 @@ export function AboutTab() {
             action={
               <button
                 type="button"
-                onClick={() => setTab("general")}
+                onClick={() => setTab("storage")}
                 className="
                   press cursor-pointer text-primary w-fit text-caption font-medium
                   hover:underline
                 "
               >
-                Back up or reset in General
+                Back up or reset in Storage
               </button>
             }
           />

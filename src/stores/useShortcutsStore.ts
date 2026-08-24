@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
+import { mergePersisted } from "@/lib/persist";
 import { shortcutsEqual, type Shortcut } from "@/lib/shortcuts";
 import {
   SHORTCUT_DEFAULTS,
@@ -27,15 +28,29 @@ const shortcutSchema = z.object({
   key: z.string().min(1),
 });
 
-const bindingsSchema = z.array(shortcutSchema).max(MAX_SHORTCUT_SLOTS);
+function bindingsSchema(fallback: Shortcut[]) {
+  return z
+    .unknown()
+    .transform((raw) => {
+      if (!Array.isArray(raw)) return fallback;
+      const kept = raw.flatMap((entry) => {
+        const parsed = shortcutSchema.safeParse(entry);
+        return parsed.success ? [parsed.data] : [];
+      });
+      if (raw.length > 0 && kept.length === 0) return fallback;
+      return kept.slice(0, MAX_SHORTCUT_SLOTS);
+    })
+    .default(fallback);
+}
 
-const persistedSchema = z
-  .object(
-    Object.fromEntries(
-      SHORTCUT_DEFINITIONS.map((definition) => [definition.id, bindingsSchema]),
-    ) as Record<ShortcutAction, typeof bindingsSchema>,
-  )
-  .partial();
+const persistedSchema = z.object(
+  Object.fromEntries(
+    SHORTCUT_DEFINITIONS.map((definition) => [
+      definition.id,
+      bindingsSchema(SHORTCUT_DEFAULTS[definition.id]),
+    ]),
+  ) as Record<ShortcutAction, ReturnType<typeof bindingsSchema>>,
+);
 
 const initialBindings = () =>
   Object.fromEntries(
@@ -73,11 +88,11 @@ export const useShortcutsStore = create<ShortcutsState>()(
         Object.fromEntries(
           SHORTCUT_DEFINITIONS.map((definition) => [definition.id, state[definition.id]]),
         ) as Record<ShortcutAction, Shortcut[]>,
-      merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(persisted);
-        if (!parsed.success) return current;
-        return { ...current, ...parsed.data };
-      },
+      merge: (persisted, current) =>
+        mergePersisted("shortcuts", persistedSchema, persisted, current, (parsed) => ({
+          ...current,
+          ...parsed,
+        })),
     },
   ),
 );

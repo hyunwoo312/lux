@@ -22,7 +22,7 @@ import { COVER_GRID } from "@/widgets/anilist/components/coverGrid";
 import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
 import { AnilistStaleNotice } from "@/widgets/anilist/components/AnilistStaleNotice";
 import { DiscoverRow } from "@/widgets/anilist/components/discover/DiscoverRow";
-import { WidgetSearchField } from "@/widgets/core/WidgetSearchField";
+import { SearchField } from "@/components/SearchField";
 import { DiscoverTile } from "@/widgets/anilist/components/discover/DiscoverTile";
 import {
   useDiscoverSearch,
@@ -117,7 +117,7 @@ export function DiscoverView() {
 
   return (
     <div className="flex h-full flex-col gap-2 p-1">
-      <WidgetSearchField
+      <SearchField
         value={query}
         onChange={setQuery}
         label={`Search ${type}`}

@@ -1,11 +1,6 @@
 import { measureAllAssets } from "@/lib/asset-store";
 import { RESOURCE_CACHE_PREFIXES } from "@/lib/local-store";
 
-export const LOCAL_STORAGE_CAP_BYTES = 5 * 1024 * 1024;
-
-const WARN_RATIO = 0.7;
-const DANGER_RATIO = 0.9;
-
 export type StorageUsage = {
   localBytes: number;
   localCacheBytes: number;
@@ -14,13 +9,31 @@ export type StorageUsage = {
   imageCount: number;
 };
 
-export type StorageSeverity = "calm" | "warning" | "danger";
+export type StorageBreakdown = {
+  label: string;
+  bytes: number;
+  hint: string;
+};
 
-export function severityOf(bytes: number, cap = LOCAL_STORAGE_CAP_BYTES): StorageSeverity {
-  const ratio = bytes / cap;
-  if (ratio >= DANGER_RATIO) return "danger";
-  if (ratio >= WARN_RATIO) return "warning";
-  return "calm";
+export function breakdownOf(usage: StorageUsage): StorageBreakdown[] {
+  return [
+    {
+      label: "Cached data",
+      bytes: usage.localCacheBytes,
+      hint: "What widgets fetched and can fetch again",
+    },
+    {
+      label: "Preferences",
+      bytes: Math.max(0, usage.localBytes - usage.localCacheBytes),
+      hint: "Theme, layout and per-widget choices",
+    },
+    { label: "Pictures", bytes: usage.imageBytes ?? 0, hint: "Backgrounds and Image widgets" },
+    { label: "Widget data", bytes: usage.chromeBytes ?? 0, hint: "Notes, tasks, links and lists" },
+  ].filter((part) => part.bytes > 0);
+}
+
+export function totalOf(usage: StorageUsage): number {
+  return breakdownOf(usage).reduce((sum, part) => sum + part.bytes, 0);
 }
 
 function isResourceCacheKey(key: string): boolean {

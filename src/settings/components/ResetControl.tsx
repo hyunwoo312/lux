@@ -46,7 +46,7 @@ export function ResetControl({
       <AnimatePresence mode="wait" initial={false}>
         {phase === "idle" && (
           <motion.div key="idle" {...motionProps}>
-            <Button variant="ghost" className="text-ink-3" onClick={() => setPhase("confirm")}>
+            <Button variant="ghost-destructive" onClick={() => setPhase("confirm")}>
               {label}
             </Button>
           </motion.div>

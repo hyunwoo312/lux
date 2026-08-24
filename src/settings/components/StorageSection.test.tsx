@@ -19,30 +19,26 @@ beforeEach(() => {
 });
 
 describe("StorageSection", () => {
-  it("exposes the meter to assistive technology with a readable value", async () => {
+  it("reports a profile past the retired 5 MB cap as a plain total, not an overflow", async () => {
     localStorage.setItem("lux:polled:weather", "x".repeat(1000));
     render(<StorageSection />);
 
-    const meter = await screen.findByRole("progressbar", { name: "Browser storage used" });
-
-    expect(meter).toHaveAttribute("aria-valuetext", expect.stringContaining("of about 5 MB"));
+    expect(await screen.findByText("On this device")).toBeInTheDocument();
+    expect(screen.queryByText(/of ~?5 MB/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(screen.getByText("6.3 MB")).toBeInTheDocument();
   });
 
-  it("shows a meter only for the store that has a limit", async () => {
+  it("breaks the total down by where it lives", async () => {
     localStorage.setItem("lux:polled:weather", "x".repeat(1000));
+    localStorage.setItem("lux.theme", "dark");
     render(<StorageSection />);
 
-    await screen.findByText("Browser storage");
-    expect(screen.getByText(/of ~5 MB/)).toBeInTheDocument();
-    expect(screen.getByText("6 MB")).toBeInTheDocument();
-    expect(screen.getByText("340 KB")).toBeInTheDocument();
-    expect(screen.getAllByText(/no size limit|No size limit/i)).toHaveLength(2);
-  });
-
-  it("counts wallpapers and widget pictures together", async () => {
-    render(<StorageSection />);
-
-    expect(await screen.findByText("3 files · no size limit")).toBeInTheDocument();
+    await screen.findByText("On this device");
+    expect(screen.getByText(/Cached data/)).toBeInTheDocument();
+    expect(screen.getByText(/Preferences/)).toBeInTheDocument();
+    expect(screen.getByText(/Pictures/)).toBeInTheDocument();
+    expect(screen.getByText(/Widget data/)).toBeInTheDocument();
   });
 
   it("clears the cache and re-measures, leaving other keys alone", async () => {
@@ -61,14 +57,5 @@ describe("StorageSection", () => {
     render(<StorageSection />);
 
     expect(await screen.findByRole("button", { name: /Clear cache/ })).toBeDisabled();
-  });
-
-  it("says so plainly when chrome storage cannot be measured", async () => {
-    (chromeRef().storage.local as unknown as { getBytesInUse: unknown }).getBytesInUse = undefined;
-    render(<StorageSection />);
-
-    expect(
-      await screen.findByText("Available once Lux is installed as an extension"),
-    ).toBeInTheDocument();
   });
 });

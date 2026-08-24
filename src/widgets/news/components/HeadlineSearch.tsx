@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { WidgetSearchField } from "@/widgets/core/WidgetSearchField";
+import { SearchField } from "@/components/SearchField";
 import { useNewsStore } from "@/widgets/news/useNewsStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
@@ -21,7 +21,7 @@ export function GoogleSearch({ query }: { query: string }) {
 
   return (
     <form onSubmit={submit} className="shrink-0">
-      <WidgetSearchField value={value} onChange={change} label="Search Google News" />
+      <SearchField value={value} onChange={change} label="Search Google News" />
     </form>
   );
 }

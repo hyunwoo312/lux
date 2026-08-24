@@ -40,3 +40,38 @@ describe("useShortcutsStore", () => {
     expect(store().openSettings).toEqual(SHORTCUT_DEFAULTS.openSettings);
   });
 });
+
+describe("persisted tolerance", () => {
+  const merge = useShortcutsStore.persist.getOptions().merge;
+  const mergeInto = (persisted: unknown) =>
+    merge?.(persisted, { ...useShortcutsStore.getState() }) as Record<string, Shortcut[]>;
+  const custom: Shortcut = { mod: true, shift: false, alt: false, key: "k" };
+
+  it("keeps every other rebind when one action's bindings are corrupt", () => {
+    const merged = mergeInto({
+      openSettings: [custom],
+      toggleTheme: [{ mod: "yes", shift: false, alt: false, key: "t" }],
+    });
+
+    expect(merged["openSettings"]).toEqual([custom]);
+    expect(merged["toggleTheme"]).toEqual(SHORTCUT_DEFAULTS.toggleTheme);
+  });
+
+  it("drops only the unreadable binding, never the readable one beside it", () => {
+    const merged = mergeInto({ openSettings: [custom, { key: 5 }] });
+
+    expect(merged["openSettings"]).toEqual([custom]);
+  });
+
+  it("gives an action added after the profile was written its default", () => {
+    const merged = mergeInto({ openSettings: [custom] });
+
+    expect(merged["toggleTheme"]).toEqual(SHORTCUT_DEFAULTS.toggleTheme);
+  });
+
+  it("respects an action the user deliberately cleared", () => {
+    const merged = mergeInto({ openSettings: [] });
+
+    expect(merged["openSettings"]).toEqual([]);
+  });
+});

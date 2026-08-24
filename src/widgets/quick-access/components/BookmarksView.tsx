@@ -6,7 +6,7 @@ import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
 import { useBookmarkTree } from "@/widgets/quick-access/hooks/useBrowserItems";
 import { useItemActions } from "@/widgets/quick-access/hooks/useItemActions";
 import { resolveFolderTrail } from "@/widgets/quick-access/browser";
-import { WidgetSearchField } from "@/widgets/core/WidgetSearchField";
+import { SearchField } from "@/components/SearchField";
 import { searchBookmarks } from "@/widgets/quick-access/lib/search";
 import {
   QA_GRID_CONTAINER,
@@ -46,7 +46,7 @@ export function BookmarksView({ editing }: { editing: boolean }) {
   return (
     <div className="flex h-full flex-col">
       <div className="shrink-0 px-0.5 pt-1 pb-1.5">
-        <WidgetSearchField value={query} onChange={setQuery} label="Search bookmarks" />
+        <SearchField value={query} onChange={setQuery} label="Search bookmarks" />
       </div>
       {!searching && trail.length > 1 && (
         <Breadcrumb trail={trail} onNavigate={(depth) => setPath(reachedPath.slice(0, depth))} />

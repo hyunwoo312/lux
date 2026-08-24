@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { DIALOG_RAIL, DialogHeaderBar } from "@/components/DialogChrome";
 import { DURATION, EASE_OUT, SPRING_CRISP } from "@/lib/motion";
 import { TYPE } from "@/lib/type";
 import {
@@ -48,16 +49,13 @@ export function ChangelogDialog({ open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent layout="flush" className="h-[90dvh] w-[min(46rem,calc(100vw-2rem))]">
+      <DialogContent
+        layout="flush"
+        showClose={false}
+        className="h-[90dvh] w-[min(46rem,calc(100vw-2rem))]"
+      >
         <div className="flex min-h-0 flex-1">
-          <nav
-            aria-label="Releases"
-            className="
-              border-edge-2 bg-surface-2
-              dark:bg-surface-raised
-              flex w-52 shrink-0 flex-col border-r
-            "
-          >
+          <nav aria-label="Releases" className={cn(DIALOG_RAIL, "w-52")}>
             <p className={cn(TYPE.eyebrow, "mx-2 px-2.5 pt-5 pb-3")}>Release history</p>
             <div className="scroll-fade flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-5">
               {RELEASES.map((entry) => {
@@ -104,8 +102,11 @@ export function ChangelogDialog({ open, onOpenChange }: Props) {
           </nav>
 
           <div className="flex min-w-0 flex-1 flex-col">
-            <header className="border-edge-2 flex flex-col gap-2 border-b px-6 pt-4 pb-6">
-              <DialogTitle className="text-display-sm pr-10 font-extrabold tracking-tight">
+            <DialogHeaderBar>
+              <span className={cn(TYPE.eyebrow, "truncate")}>Release notes</span>
+            </DialogHeaderBar>
+            <header className="border-edge-2 flex flex-col gap-2 border-b px-6 pt-5 pb-6">
+              <DialogTitle className="text-display-sm font-extrabold tracking-tight">
                 Version {release?.version}
               </DialogTitle>
               <div className="flex flex-wrap items-center gap-3">

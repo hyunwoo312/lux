@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
+import { mergePersisted } from "@/lib/persist";
 import { SETTINGS_TABS, type SettingsTab } from "@/settings/tabsMeta";
 
 export { SETTINGS_TABS, type SettingsTab };
@@ -19,12 +20,10 @@ type SettingsState = {
   toggleSidebar: () => void;
 };
 
-const persistedSchema = z
-  .object({
-    tab: z.enum(SETTINGS_TABS).catch("general"),
-    sidebarCollapsed: z.boolean(),
-  })
-  .partial();
+const persistedSchema = z.object({
+  tab: z.enum(SETTINGS_TABS).catch("appearance"),
+  sidebarCollapsed: z.boolean().catch(false),
+});
 
 const gatedStorage = createGatedChromeStorage();
 
@@ -32,7 +31,7 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       open: false,
-      tab: "general",
+      tab: "appearance",
       sidebarCollapsed: false,
       permissionHighlight: null,
       openSettings: (tab) => set((state) => ({ open: true, tab: tab ?? state.tab })),
@@ -49,11 +48,11 @@ export const useSettingsStore = create<SettingsState>()(
       version: 1,
       onRehydrateStorage: () => () => gatedStorage.open(),
       partialize: (state) => ({ tab: state.tab, sidebarCollapsed: state.sidebarCollapsed }),
-      merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(persisted);
-        if (!parsed.success) return current;
-        return { ...current, ...parsed.data };
-      },
+      merge: (persisted, current) =>
+        mergePersisted("settings", persistedSchema, persisted, current, (parsed) => ({
+          ...current,
+          ...parsed,
+        })),
     },
   ),
 );

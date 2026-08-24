@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ChevronRight, LayoutGrid, Rocket, Search, SearchX, ShieldCheck, X } from "lucide-react";
+import { ChevronRight, LayoutGrid, Rocket, SearchX, ShieldCheck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { SearchField } from "@/components/SearchField";
 import { cn } from "@/lib/utils";
+import { DIALOG_RAIL } from "@/components/DialogChrome";
 import { DURATION, EASE_OUT, SPRING_CRISP } from "@/lib/motion";
 import { GUIDE_GROUPS } from "@/guide/content";
 import type { GuideGroup } from "@/guide/types";
@@ -46,46 +47,9 @@ export function GuideNav({ articleId, onSelect }: Props) {
   const searching = query.trim().length > 0;
 
   return (
-    <nav
-      aria-label="Guide topics"
-      className="
-        border-edge-2 bg-surface-2
-        dark:bg-surface-raised
-        flex w-64 shrink-0 flex-col border-r
-      "
-    >
+    <nav aria-label="Guide topics" className={cn(DIALOG_RAIL, "w-64")}>
       <div className="border-edge-2 border-b p-4">
-        <div className="relative">
-          <Search
-            aria-hidden
-            className="
-              text-ink-4 pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2
-            "
-          />
-          <Input
-            size="lg"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search the guide"
-            aria-label="Search the guide"
-            className="pl-8"
-          />
-          {searching && (
-            <button
-              type="button"
-              onClick={() => setQuery("")}
-              aria-label="Clear search"
-              className="
-                press focus-ring text-ink-4
-                hover:text-ink
-                absolute top-1/2 right-2 grid size-5 -translate-y-1/2 cursor-pointer
-                place-items-center rounded-sm
-              "
-            >
-              <X className="size-3.5" />
-            </button>
-          )}
-        </div>
+        <SearchField value={query} onChange={setQuery} label="Search the guide" />
       </div>
 
       <div className="scroll-fade min-h-0 flex-1 overflow-y-auto p-3">

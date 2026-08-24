@@ -20,7 +20,7 @@ const SIZES: Record<FieldSize, { icon: string; input: string; clear: string; cro
   },
 };
 
-type WidgetSearchFieldProps = {
+type SearchFieldProps = {
   value: string;
   onChange: (value: string) => void;
   label: string;
@@ -30,7 +30,7 @@ type WidgetSearchFieldProps = {
   className?: string;
 };
 
-export function WidgetSearchField({
+export function SearchField({
   value,
   onChange,
   label,
@@ -38,7 +38,7 @@ export function WidgetSearchField({
   size = "md",
   onFocus,
   className,
-}: WidgetSearchFieldProps) {
+}: SearchFieldProps) {
   const styles = SIZES[size];
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {

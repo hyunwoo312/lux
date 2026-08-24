@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { panelVariants } from "@/lib/motion";
 import { hasThumbnails, normalizeTitle } from "@/widgets/news/lib/news";
 import { GoogleSearch } from "@/widgets/news/components/HeadlineSearch";
-import { WidgetSearchField } from "@/widgets/core/WidgetSearchField";
+import { SearchField } from "@/components/SearchField";
 import { NewsContent } from "@/widgets/news/components/NewsContent";
 import { NewsSourceBar } from "@/widgets/news/components/NewsSourceBar";
 import { TrendingContent } from "@/widgets/news/components/TrendingContent";
@@ -112,7 +112,7 @@ export function NewsWidget() {
                 {tab === "google" ? (
                   <GoogleSearch query={googleQuery} />
                 ) : (
-                  <WidgetSearchField
+                  <SearchField
                     value={allFilter}
                     onChange={setAllFilter}
                     label="Filter headlines and sources"

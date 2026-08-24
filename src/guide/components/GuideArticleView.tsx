@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, ChevronRight } from "lucide-react";
 import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { DialogHeaderBar } from "@/components/DialogChrome";
 import { DURATION, EASE_IN, EASE_OUT } from "@/lib/motion";
 import { TYPE } from "@/lib/type";
 import { ARTICLE_ORDER } from "@/guide/content";
@@ -22,66 +23,70 @@ export function GuideArticleView({ location, onSelect }: Props) {
   const next = index >= 0 ? ARTICLE_ORDER[index + 1] : undefined;
 
   return (
-    <div className="scroll-fade scrollbar-inset min-h-0 flex-1 overflow-y-auto">
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={article.id}
-          initial={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{
-            opacity: 0,
-            transition: { duration: reduced ? 0 : DURATION.fast, ease: EASE_IN },
-          }}
-          transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}
-          className="mx-auto flex max-w-2xl flex-col gap-10 px-10 pt-6 pb-12"
+    <>
+      <DialogHeaderBar>
+        <nav
+          aria-label="Breadcrumb"
+          className="text-ink-3 flex min-w-0 items-center gap-2 text-caption"
         >
-          <div className="flex flex-col gap-4">
-            <nav
-              aria-label="Breadcrumb"
-              className="text-ink-3 flex items-center gap-2 text-caption"
-            >
-              <span>{group.title}</span>
-              <ChevronRight className="size-3 opacity-60" aria-hidden />
-              <span className="text-ink font-medium">{article.title}</span>
-            </nav>
-            <DialogTitle className="text-display-sm font-semibold tracking-tight">
-              {article.title}
-            </DialogTitle>
-            <DialogDescription className="text-ink-3 text-body-lg leading-relaxed">
-              {article.lead}
-            </DialogDescription>
-          </div>
+          <span className="shrink-0">{group.title}</span>
+          <ChevronRight className="size-3 shrink-0 opacity-60" aria-hidden />
+          <span className="text-ink truncate font-medium">{article.title}</span>
+        </nav>
+      </DialogHeaderBar>
+      <div className="scroll-fade scrollbar-inset-b min-h-0 flex-1 overflow-y-auto">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={article.id}
+            initial={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{
+              opacity: 0,
+              transition: { duration: reduced ? 0 : DURATION.fast, ease: EASE_IN },
+            }}
+            transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}
+            className="mx-auto flex max-w-2xl flex-col gap-10 px-10 pt-6 pb-12"
+          >
+            <div className="flex flex-col gap-4">
+              <DialogTitle className="text-display-sm font-semibold tracking-tight">
+                {article.title}
+              </DialogTitle>
+              <DialogDescription className="text-ink-3 text-body-lg leading-relaxed">
+                {article.lead}
+              </DialogDescription>
+            </div>
 
-          <div className="flex flex-col gap-8">
-            {article.blocks.map((block, blockIndex) => (
-              <ArticleBlock key={`${block.kind}-${blockIndex}`} block={block} />
-            ))}
-          </div>
+            <div className="flex flex-col gap-8">
+              {article.blocks.map((block, blockIndex) => (
+                <ArticleBlock key={`${block.kind}-${blockIndex}`} block={block} />
+              ))}
+            </div>
 
-          {(previous ?? next) && (
-            <>
-              <Separator />
-              <div className="grid gap-3 sm:grid-cols-2">
-                {previous && (
-                  <PagerCard
-                    direction="previous"
-                    title={previous.article.title}
-                    onClick={() => onSelect(previous.article.id)}
-                  />
-                )}
-                {next && (
-                  <PagerCard
-                    direction="next"
-                    title={next.article.title}
-                    onClick={() => onSelect(next.article.id)}
-                  />
-                )}
-              </div>
-            </>
-          )}
-        </motion.div>
-      </AnimatePresence>
-    </div>
+            {(previous ?? next) && (
+              <>
+                <Separator />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {previous && (
+                    <PagerCard
+                      direction="previous"
+                      title={previous.article.title}
+                      onClick={() => onSelect(previous.article.id)}
+                    />
+                  )}
+                  {next && (
+                    <PagerCard
+                      direction="next"
+                      title={next.article.title}
+                      onClick={() => onSelect(next.article.id)}
+                    />
+                  )}
+                </div>
+              </>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </>
   );
 }
 

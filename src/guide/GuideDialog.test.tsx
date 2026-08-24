@@ -86,3 +86,12 @@ describe("GuideDialog", () => {
     expect(await screen.findByRole("heading", { name: "The toolbar" })).toBeInTheDocument();
   });
 });
+
+describe("focus on open", () => {
+  it("does not park the caret in the search box, which would kill every global shortcut", () => {
+    open();
+
+    const search = screen.getByRole("searchbox", { name: "Search the guide" });
+    expect(document.activeElement).not.toBe(search);
+  });
+});

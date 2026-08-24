@@ -1,18 +1,12 @@
 import type { ComponentType } from "react";
 import { RemoteImage } from "@/components/media/RemoteImage";
 import { useEffect, useState } from "react";
-import {
-  AnilistServiceIcon,
-  GitHubServiceIcon,
-  GoogleServiceIcon,
-  OutlookServiceIcon,
-  SpotifyServiceIcon,
-} from "@/components/icons/service-icons";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { PermissionsSection } from "@/settings/components/PermissionsSection";
+import { PROVIDERS } from "@/settings/providers";
 import { SettingsSection } from "@/settings/components/SettingsSection";
 import { SpotifySetup } from "@/settings/components/SpotifySetup";
 import {
@@ -22,46 +16,6 @@ import {
   writeSpotifyClientId,
   type IntegrationProviderId,
 } from "@/integrations";
-
-type ProviderMeta = {
-  id: IntegrationProviderId;
-  label: string;
-  description: string;
-  icon: ComponentType<{ className?: string }>;
-};
-
-const PROVIDERS: ProviderMeta[] = [
-  {
-    id: "google",
-    label: "Google",
-    description: "Reads your calendar and email address — read-only.",
-    icon: GoogleServiceIcon,
-  },
-  {
-    id: "microsoft",
-    label: "Outlook",
-    description: "Reads your calendar and profile — read-only.",
-    icon: OutlookServiceIcon,
-  },
-  {
-    id: "spotify",
-    label: "Spotify",
-    description: "Controls playback; reads your library and playlists.",
-    icon: SpotifyServiceIcon,
-  },
-  {
-    id: "github",
-    label: "GitHub",
-    description: "Reads your profile, notifications, watched repos, and private repos.",
-    icon: GitHubServiceIcon,
-  },
-  {
-    id: "anilist",
-    label: "AniList",
-    description: "Reads your lists and inbox; AniList grants full access.",
-    icon: AnilistServiceIcon,
-  },
-];
 
 type Pending = "connecting" | "disconnecting";
 
