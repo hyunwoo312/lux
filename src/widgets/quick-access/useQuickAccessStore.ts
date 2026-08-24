@@ -29,6 +29,7 @@ type QuickAccessData = {
   activeTab: QuickAccessTab;
   openBehavior: OpenBehavior;
   view: QuickAccessView;
+  bookmarkPath: string[];
   showTopSites: boolean;
   showOpenTabs: boolean;
   showRecentlyClosed: boolean;
@@ -53,6 +54,7 @@ type QuickAccessState = {
   setActiveTab: (instanceId: string, tab: QuickAccessTab) => void;
   setOpenBehavior: (instanceId: string, openBehavior: OpenBehavior) => void;
   setView: (instanceId: string, view: QuickAccessView) => void;
+  setBookmarkPath: (instanceId: string, bookmarkPath: string[]) => void;
   setShowTopSites: (instanceId: string, showTopSites: boolean) => void;
   setShowOpenTabs: (instanceId: string, showOpenTabs: boolean) => void;
   setShowRecentlyClosed: (instanceId: string, showRecentlyClosed: boolean) => void;
@@ -64,6 +66,7 @@ const DEFAULT_DATA: QuickAccessData = {
   activeTab: "home",
   openBehavior: "currentTab",
   view: "grid",
+  bookmarkPath: [],
   showTopSites: true,
   showOpenTabs: false,
   showRecentlyClosed: false,
@@ -90,6 +93,7 @@ const dataSchema = z.object({
   activeTab: z.enum(["home", "bookmarks", "history"]).catch("home"),
   openBehavior: z.enum(["currentTab", "newTab"]).catch("currentTab"),
   view: z.enum(["grid", "list"]).catch("grid"),
+  bookmarkPath: z.array(z.string()).catch([]),
   showTopSites: z.boolean().catch(true),
   showOpenTabs: z.boolean().catch(false),
   showRecentlyClosed: z.boolean().catch(false),
@@ -223,6 +227,8 @@ export const useQuickAccessStore = create<QuickAccessState>()(
         set((state) => update(state, instanceId, (data) => ({ ...data, openBehavior }))),
       setView: (instanceId, view) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, view }))),
+      setBookmarkPath: (instanceId, bookmarkPath) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, bookmarkPath }))),
       setShowTopSites: (instanceId, showTopSites) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, showTopSites }))),
       setShowOpenTabs: (instanceId, showOpenTabs) =>

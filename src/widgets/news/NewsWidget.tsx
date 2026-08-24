@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { panelVariants } from "@/lib/motion";
 import { hasThumbnails, normalizeTitle } from "@/widgets/news/lib/news";
-import { GoogleSearch, HeadlineFilter } from "@/widgets/news/components/HeadlineSearch";
+import { GoogleSearch } from "@/widgets/news/components/HeadlineSearch";
+import { WidgetSearchField } from "@/widgets/core/WidgetSearchField";
 import { NewsContent } from "@/widgets/news/components/NewsContent";
 import { NewsSourceBar } from "@/widgets/news/components/NewsSourceBar";
 import { TrendingContent } from "@/widgets/news/components/TrendingContent";
@@ -111,7 +112,13 @@ export function NewsWidget() {
                 {tab === "google" ? (
                   <GoogleSearch query={googleQuery} />
                 ) : (
-                  <HeadlineFilter value={allFilter} onChange={setAllFilter} />
+                  <WidgetSearchField
+                    value={allFilter}
+                    onChange={setAllFilter}
+                    label="Filter headlines and sources"
+                    placeholder="Filter headlines and sources…"
+                    className="shrink-0"
+                  />
                 )}
               </div>
               <SavedToggle

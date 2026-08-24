@@ -7,7 +7,7 @@ import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { FavoriteLeagueSection } from "@/widgets/sports/components/FavoriteLeagueSection";
 import { FavoriteTourSection } from "@/widgets/sports/components/FavoriteTourSection";
 import { SportsDayRange } from "@/widgets/sports/components/SportsDayRange";
-import { SportsSearch } from "@/widgets/sports/components/SportsSearch";
+import { WidgetSearchField } from "@/widgets/core/WidgetSearchField";
 import { followedLeagues } from "@/widgets/sports/lib/roster";
 import { useSports, useSportsStore } from "@/widgets/sports/useSportsStore";
 
@@ -40,11 +40,13 @@ export function FavoritesTab() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-2 p-1">
       <div className="flex shrink-0 items-center gap-2 px-1">
-        <SportsSearch
+        <WidgetSearchField
           value={query}
           onChange={setQuery}
           label="Filter the teams you follow"
           placeholder="Filter followed teams…"
+          size="sm"
+          className="min-w-0 flex-1"
         />
         <SportsDayRange />
       </div>

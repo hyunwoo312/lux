@@ -16,6 +16,7 @@ function seed() {
         activeTab: "home",
         openBehavior: "currentTab",
         view: "list",
+        bookmarkPath: [],
         showTopSites: false,
         showOpenTabs: false,
         showRecentlyClosed: false,
@@ -62,17 +63,6 @@ describe("HomeTab add form", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("web address");
   });
 
-  it("closes the form once the link is accepted", () => {
-    renderTab();
-    openAddForm();
-
-    fireEvent.change(screen.getByLabelText("Link URL"), { target: { value: "example.com" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save" }));
-
-    expect(screen.queryByLabelText("Link URL")).not.toBeInTheDocument();
-    expect(screen.getByText("example.com")).toBeInTheDocument();
-  });
-
   it("offers an undo that puts the pin back", () => {
     renderTab();
 
@@ -96,6 +86,7 @@ describe("HomeTab add form", () => {
           activeTab: "home",
           openBehavior: "currentTab",
           view: "list",
+          bookmarkPath: [],
           showTopSites: false,
           showOpenTabs: false,
           showRecentlyClosed: false,

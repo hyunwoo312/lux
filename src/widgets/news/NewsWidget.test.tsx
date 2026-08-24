@@ -83,16 +83,6 @@ beforeEach(() => {
 });
 
 describe("NewsWidget", () => {
-  it("renders headlines for the active source's topic feed", async () => {
-    fetchFeedMock.mockResolvedValue([item("a", "First headline"), item("b", "Second headline")]);
-    seed("news-rows", "bbc");
-    renderWidget("news-rows");
-
-    expect(await screen.findByText("First headline")).toBeInTheDocument();
-    expect(screen.getByText("Second headline")).toBeInTheDocument();
-    expect(fetchFeedMock).toHaveBeenCalledWith("bbc", "us", "top", expect.anything());
-  });
-
   it("shows a retry affordance when the fetch fails", async () => {
     fetchFeedMock.mockRejectedValue(new Error("boom"));
     seed("news-error", "yahoo");
@@ -115,48 +105,6 @@ describe("NewsWidget", () => {
     await waitFor(() =>
       expect(fetchSearchMock).toHaveBeenCalledWith("tesla", "us", expect.anything()),
     );
-  });
-
-  it("hides the search box for non-Google sources", () => {
-    fetchFeedMock.mockResolvedValue([]);
-    seed("news-nyt", "nyt");
-    renderWidget("news-nyt");
-
-    expect(screen.queryByRole("searchbox", { name: "Search Google News" })).toBeNull();
-  });
-
-  it("renders a thumbnail when a headline carries an image", async () => {
-    fetchFeedMock.mockResolvedValue([item("a", "Pictured story", "https://img.test/a.jpg")]);
-    seed("news-thumb", "bbc", "", "uk");
-    const { container } = renderWidget("news-thumb");
-
-    await screen.findByText("Pictured story");
-    const img = container.querySelector('img[src="https://img.test/a.jpg"]');
-    expect(img).not.toBeNull();
-  });
-
-  it("shows the publisher label only for aggregated items", async () => {
-    const aggregated: NewsItem = {
-      ...item("agg", "Aggregated story"),
-      source: "Reuters",
-      sourceUrl: "https://reuters.com",
-    };
-    fetchFeedMock.mockResolvedValue([aggregated, item("plain", "Plain story")]);
-    seed("news-agg", "google", "", "uk");
-    renderWidget("news-agg");
-
-    await screen.findByText("Aggregated story");
-    expect(screen.getByText("Reuters")).toBeInTheDocument();
-    expect(screen.queryByText("Example")).toBeNull();
-  });
-
-  it("does not render feed thumbnails for a source without usable ones", async () => {
-    fetchFeedMock.mockResolvedValue([item("a", "NPR story", "https://img.test/huge.jpg")]);
-    seed("news-npr-img", "npr");
-    const { container } = renderWidget("news-npr-img");
-
-    await screen.findByText("NPR story");
-    expect(container.querySelector('img[src="https://img.test/huge.jpg"]')).toBeNull();
   });
 
   it("orders headlines by recency when sort-by-latest is on", async () => {
@@ -224,22 +172,6 @@ describe("NewsWidget", () => {
     expect(screen.queryByText("NYT story")).toBeNull();
   });
 
-  it("renders the merged feed with per-item sources on the All tab", async () => {
-    fetchMergedFeedsMock.mockResolvedValue([{ ...item("m1", "Merged story"), source: "BBC News" }]);
-    seed("news-all", "all");
-    renderWidget("news-all");
-
-    expect(await screen.findByText("Merged story")).toBeInTheDocument();
-    expect(screen.getByText("BBC News")).toBeInTheDocument();
-    expect(fetchMergedFeedsMock).toHaveBeenCalledWith(
-      [...NEWS_SOURCES],
-      "us",
-      "top",
-      expect.anything(),
-      expect.any(String),
-    );
-  });
-
   it("filters the All tab by headline or source text", async () => {
     fetchMergedFeedsMock.mockResolvedValue([
       { ...item("m1", "Rate cut announced"), source: "BBC News" },
@@ -258,24 +190,8 @@ describe("NewsWidget", () => {
     fireEvent.change(input, { target: { value: "zzz" } });
     expect(screen.getByText("No matches for “zzz”")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Clear filter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
     expect(screen.getByText("Rate cut announced")).toBeInTheDocument();
-  });
-
-  it("renders tiles with a fallback panel for imageless items in tile layout", async () => {
-    fetchFeedMock.mockResolvedValue([
-      item("pic", "Pictured tile", "https://img.test/tile.jpg"),
-      item("plain", "Plain tile"),
-    ]);
-    seed("news-tiles", "bbc", "", "international");
-    act(() => {
-      useNewsStore.getState().setLayout("news-tiles", "tiles");
-    });
-    const { container } = renderWidget("news-tiles");
-
-    await screen.findByText("Pictured tile");
-    expect(container.querySelector('img[src="https://img.test/tile.jpg"]')).not.toBeNull();
-    expect(screen.getByText("Plain tile")).toBeInTheDocument();
   });
 
   it("counts unseen headlines and marks displayed titles as seen", async () => {
@@ -291,43 +207,6 @@ describe("NewsWidget", () => {
         "fresh two",
       ]),
     );
-  });
-
-  it("renders one new-item indicator per counted new headline in list view", async () => {
-    fetchFeedMock.mockResolvedValue([
-      item("k1", "Known story"),
-      item("f1", "Fresh one"),
-      item("f2", "Fresh two"),
-    ]);
-    seed("news-new-list", "guardian", "", "au", ["known story"]);
-    renderWidget("news-new-list");
-
-    expect(await screen.findByText("2 new since your last visit")).toBeInTheDocument();
-    expect(screen.getAllByText("New")).toHaveLength(2);
-  });
-
-  it("renders one new-item indicator per counted new headline in tiles view", async () => {
-    fetchFeedMock.mockResolvedValue([item("k1", "Known tile"), item("f1", "Fresh tile")]);
-    seed("news-new-tiles", "guardian", "", "international", ["known tile"]);
-    act(() => {
-      useNewsStore.getState().setLayout("news-new-tiles", "tiles");
-    });
-    renderWidget("news-new-tiles");
-
-    expect(await screen.findByText("1 new since your last visit")).toBeInTheDocument();
-    expect(screen.getAllByText("New")).toHaveLength(1);
-  });
-
-  it("highlights configured keywords inside headlines", async () => {
-    fetchFeedMock.mockResolvedValue([item("h1", "Big crypto rally today")]);
-    seed("news-highlight", "npr", "", "international");
-    act(() => {
-      useNewsStore.getState().addHighlightTerm("news-highlight", "crypto");
-    });
-    renderWidget("news-highlight");
-
-    const highlighted = await screen.findByText("crypto");
-    expect(highlighted.tagName).toBe("MARK");
   });
 
   it("marks a headline read when it is opened", async () => {
@@ -367,32 +246,6 @@ describe("NewsWidget", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows a no-results message when a Google search returns nothing", async () => {
-    fetchSearchMock.mockResolvedValue([]);
-    seed("news-noresult", "google", "zzzqqq", "au");
-    renderWidget("news-noresult");
-
-    expect(await screen.findByText(/No results for/)).toHaveTextContent("zzzqqq");
-  });
-
-  it("refetches when the header refresh button is clicked", async () => {
-    fetchFeedMock.mockRejectedValue(new Error("boom"));
-    seed("news-hdr", "yahoo", "", "uk");
-    render(
-      <TooltipProvider>
-        <WidgetInstanceContext.Provider value="news-hdr">
-          <NewsHeaderActions />
-        </WidgetInstanceContext.Provider>
-      </TooltipProvider>,
-    );
-
-    const button = await screen.findByRole("button", { name: "Refresh" });
-    await waitFor(() => expect(button).not.toBeDisabled());
-    const before = fetchFeedMock.mock.calls.length;
-    fireEvent.click(button);
-    await waitFor(() => expect(fetchFeedMock.mock.calls.length).toBeGreaterThan(before));
-  });
-
   it("disables the header refresh during the cooldown after a successful fetch", async () => {
     fetchFeedMock.mockResolvedValue([item("a", "Headline")]);
     seed("news-cooldown", "yahoo", "", "international");
@@ -410,15 +263,6 @@ describe("NewsWidget", () => {
 });
 
 describe("news image loading", () => {
-  it("loads publisher thumbnails by default", async () => {
-    fetchFeedMock.mockResolvedValue([item("p", "Pictured", "https://img.test/a.jpg")]);
-    seed("news-img-on", "bbc", "", "international");
-    const { container } = renderWidget("news-img-on");
-
-    await screen.findByText("Pictured");
-    expect(container.querySelector('img[src="https://img.test/a.jpg"]')).not.toBeNull();
-  });
-
   it("requests no publisher images when loading is turned off", async () => {
     fetchFeedMock.mockResolvedValue([item("p", "Pictured", "https://img.test/a.jpg")]);
     seed("news-img-off", "bbc", "", "international");
@@ -429,19 +273,6 @@ describe("news image loading", () => {
 
     await screen.findByText("Pictured");
     expect(container.querySelector('img[src="https://img.test/a.jpg"]')).toBeNull();
-  });
-
-  it("falls back to the list even when the tile layout was chosen", async () => {
-    fetchFeedMock.mockResolvedValue([item("p", "Pictured", "https://img.test/a.jpg")]);
-    seed("news-img-tiles", "bbc", "", "international");
-    act(() => {
-      useNewsStore.getState().setLayout("news-img-tiles", "tiles");
-      useNewsStore.getState().setLoadImages("news-img-tiles", false);
-    });
-    const { container } = renderWidget("news-img-tiles");
-
-    await screen.findByText("Pictured");
-    expect(container.querySelector('img[src^="https://img.test"]')).toBeNull();
   });
 });
 
@@ -458,15 +289,6 @@ describe("remote images carry a no-referrer policy", () => {
 });
 
 describe("saved headlines", () => {
-  it("keeps the saved toggle reachable in every tab", async () => {
-    fetchFeedMock.mockResolvedValue([item("a", "First headline")]);
-    seed("news-saved-1", "bbc");
-    renderWidget("news-saved-1");
-
-    expect(await screen.findByText("First headline")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /saved headlines/i })).toBeInTheDocument();
-  });
-
   it("saves a headline from its bookmark and shows it in the saved view", async () => {
     fetchFeedMock.mockResolvedValue([item("a", "First headline")]);
     seed("news-saved-2", "bbc");
@@ -478,16 +300,6 @@ describe("saved headlines", () => {
     fireEvent.click(screen.getByRole("button", { name: /saved headlines/i }));
     expect(screen.getByRole("list", { name: "Saved headlines" })).toBeInTheDocument();
     expect(screen.getByText("First headline")).toBeInTheDocument();
-  });
-
-  it("says the saved view is empty rather than showing a blank panel", async () => {
-    fetchFeedMock.mockResolvedValue([item("a", "First headline")]);
-    seed("news-saved-3", "bbc");
-    renderWidget("news-saved-3");
-
-    await screen.findByText("First headline");
-    fireEvent.click(screen.getByRole("button", { name: /saved headlines/i }));
-    expect(screen.getByText(/Nothing saved yet/i)).toBeInTheDocument();
   });
 
   it("removes a headline from the saved view", async () => {

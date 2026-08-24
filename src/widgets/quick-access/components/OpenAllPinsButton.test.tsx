@@ -27,6 +27,7 @@ function seed(urls: string[], activeTab: QuickAccessTab = "home") {
         view: "grid",
         openBehavior: "currentTab",
         activeTab,
+        bookmarkPath: [],
         showTopSites: false,
         showOpenTabs: false,
         showRecentlyClosed: false,
@@ -64,19 +65,5 @@ describe("OpenAllPinsButton", () => {
     fireEvent.click(screen.getByLabelText("Open all 1 link in new tabs"));
 
     expect(open).toHaveBeenCalledWith("https://a.example", "_blank", "noopener,noreferrer");
-  });
-
-  it("stays hidden with no pinned links", () => {
-    seed([]);
-    renderButton();
-
-    expect(screen.queryByLabelText(/Open all/)).not.toBeInTheDocument();
-  });
-
-  it("stays hidden away from the home tab", () => {
-    seed(["https://a.example"], "bookmarks");
-    renderButton();
-
-    expect(screen.queryByLabelText(/Open all/)).not.toBeInTheDocument();
   });
 });

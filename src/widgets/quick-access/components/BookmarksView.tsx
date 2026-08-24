@@ -6,7 +6,7 @@ import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
 import { useBookmarkTree } from "@/widgets/quick-access/hooks/useBrowserItems";
 import { useItemActions } from "@/widgets/quick-access/hooks/useItemActions";
 import { resolveFolderTrail } from "@/widgets/quick-access/browser";
-import { QuickSearch } from "@/widgets/quick-access/components/QuickSearch";
+import { WidgetSearchField } from "@/widgets/core/WidgetSearchField";
 import { searchBookmarks } from "@/widgets/quick-access/lib/search";
 import {
   QA_GRID_CONTAINER,
@@ -14,14 +14,18 @@ import {
   qaTileClass,
 } from "@/widgets/quick-access/lib/itemStyles";
 import type { BookmarkFolder, QuickAccessView } from "@/widgets/quick-access/types";
-import { useQuickAccess } from "@/widgets/quick-access/useQuickAccessStore";
+import { useQuickAccess, useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 export function BookmarksView({ editing }: { editing: boolean }) {
+  const instanceId = useWidgetInstanceId();
   const state = useBookmarkTree();
   const view = useQuickAccess((d) => d.view);
+  const path = useQuickAccess((d) => d.bookmarkPath);
+  const setBookmarkPath = useQuickAccessStore((s) => s.setBookmarkPath);
   const { pinnedUrls, openBehavior, open, togglePin } = useItemActions();
-  const [path, setPath] = useState<string[]>([]);
   const [query, setQuery] = useState("");
+  const setPath = (next: string[]) => setBookmarkPath(instanceId, next);
   const scrollRef = useRef<HTMLDivElement>(null);
   const folderId = path[path.length - 1] ?? "";
 
@@ -41,7 +45,9 @@ export function BookmarksView({ editing }: { editing: boolean }) {
 
   return (
     <div className="flex h-full flex-col">
-      <QuickSearch value={query} onChange={setQuery} label="Search bookmarks" />
+      <div className="shrink-0 px-0.5 pt-1 pb-1.5">
+        <WidgetSearchField value={query} onChange={setQuery} label="Search bookmarks" />
+      </div>
       {!searching && trail.length > 1 && (
         <Breadcrumb trail={trail} onNavigate={(depth) => setPath(reachedPath.slice(0, depth))} />
       )}

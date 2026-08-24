@@ -9,7 +9,7 @@ import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
 import { useBrowserItems } from "@/widgets/quick-access/hooks/useBrowserItems";
 import { useItemActions } from "@/widgets/quick-access/hooks/useItemActions";
 import { useHistorySearch } from "@/widgets/quick-access/hooks/useHistorySearch";
-import { QuickSearch } from "@/widgets/quick-access/components/QuickSearch";
+import { WidgetSearchField } from "@/widgets/core/WidgetSearchField";
 import { filterItems } from "@/widgets/quick-access/lib/search";
 import type { ItemSource, QuickAccessTab } from "@/widgets/quick-access/types";
 import { useQuickAccess } from "@/widgets/quick-access/useQuickAccessStore";
@@ -86,7 +86,9 @@ function ItemsView({ tab, editing }: { tab: ItemSource & BrowserTabKey; editing:
 
   return (
     <div className="flex h-full flex-col">
-      <QuickSearch value={query} onChange={setQuery} label={`Search ${TAB_NOUN[tab]}`} />
+      <div className="shrink-0 px-0.5 pt-1 pb-1.5">
+        <WidgetSearchField value={query} onChange={setQuery} label={`Search ${TAB_NOUN[tab]}`} />
+      </div>
       <div ref={scrollRef} className="scroll-fade min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
         {state.status === "loading" && (
           <BrowserMessage>{`Loading ${TAB_NOUN[tab]}…`}</BrowserMessage>

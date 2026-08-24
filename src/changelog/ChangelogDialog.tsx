@@ -48,7 +48,7 @@ export function ChangelogDialog({ open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent layout="flush" className="h-[80dvh] w-[min(46rem,calc(100vw-2rem))]">
+      <DialogContent layout="flush" className="h-[90dvh] w-[min(46rem,calc(100vw-2rem))]">
         <div className="flex min-h-0 flex-1">
           <nav
             aria-label="Releases"

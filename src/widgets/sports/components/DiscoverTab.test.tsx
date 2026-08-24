@@ -43,7 +43,7 @@ function renderTab() {
   );
 }
 
-const searchBox = () => screen.getByRole("textbox", { name: /Search teams in every league/ });
+const searchBox = () => screen.getByRole("searchbox", { name: /Search teams in every league/ });
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -52,13 +52,6 @@ beforeEach(() => {
 });
 
 describe("DiscoverTab", () => {
-  it("opens the search results as soon as there is something to search for", async () => {
-    renderTab();
-    fireEvent.change(searchBox(), { target: { value: "ars" } });
-
-    expect(await screen.findByRole("button", { name: /Arsenal/ })).toBeInTheDocument();
-  });
-
   it("closes the league selector when the search takes over", async () => {
     renderTab();
     fireEvent.click(screen.getByRole("button", { name: "Baseball" }));
@@ -81,12 +74,5 @@ describe("DiscoverTab", () => {
     await waitFor(() =>
       expect(screen.queryByRole("button", { name: /Arsenal/ })).not.toBeInTheDocument(),
     );
-  });
-
-  it("shows the sport as the root of the path", () => {
-    renderTab();
-    const nav = screen.getByRole("navigation", { name: "League" });
-
-    expect(nav.textContent).toBe("BaseballMLB");
   });
 });

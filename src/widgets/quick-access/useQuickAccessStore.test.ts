@@ -13,6 +13,7 @@ describe("useQuickAccessStore", () => {
           activeTab: "home",
           openBehavior: "currentTab",
           view: "grid",
+          bookmarkPath: [],
           showTopSites: true,
           showOpenTabs: false,
           showRecentlyClosed: false,
@@ -138,6 +139,7 @@ describe("useQuickAccessStore", () => {
       activeTab: "home" as const,
       openBehavior: "currentTab" as const,
       view: "grid" as const,
+      bookmarkPath: [],
       showTopSites: true,
       showOpenTabs: false,
       showRecentlyClosed: false,
@@ -169,6 +171,7 @@ describe("useQuickAccessStore", () => {
             activeTab: "bookmarks",
             openBehavior: "newTab",
             view: "list",
+            bookmarkPath: [],
             showTopSites: true,
             showOpenTabs: false,
             showRecentlyClosed: false,
@@ -189,6 +192,7 @@ describe("useQuickAccessStore", () => {
             activeTab: "home",
             openBehavior: "currentTab",
             view: "grid",
+            bookmarkPath: [],
             showTopSites: true,
             showOpenTabs: false,
             showRecentlyClosed: false,
@@ -212,6 +216,7 @@ describe("useQuickAccessStore", () => {
       activeTab: "home",
       openBehavior: "newTab",
       view: "list",
+      bookmarkPath: [],
       showTopSites: false,
       showOpenTabs: false,
       showRecentlyClosed: false,
@@ -227,6 +232,13 @@ describe("useQuickAccessStore", () => {
 
       expect(merged.byInstance["a"]?.view).toBe("grid");
       expect(merged.byInstance["a"]?.links).toHaveLength(1);
+    });
+
+    it("keeps a profile written before bookmarkPath existed", () => {
+      const merged = mergeInto({ byInstance: { a: stored } });
+
+      expect(merged.byInstance["a"]?.links).toHaveLength(1);
+      expect(merged.byInstance["a"]?.bookmarkPath).toEqual([]);
     });
 
     it("keeps the pins when a setting is missing entirely", () => {

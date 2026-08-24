@@ -91,7 +91,7 @@ export function SettingsDialog() {
         showClose={false}
         onOpenAutoFocus={(event) => event.preventDefault()}
         layout="flush"
-        className="h-[80dvh] w-[min(52rem,calc(100vw-2rem))] flex-row bg-transparent"
+        className="h-[90dvh] w-[min(52rem,calc(100vw-2rem))] flex-row bg-transparent"
       >
         <aside
           className={cn(
