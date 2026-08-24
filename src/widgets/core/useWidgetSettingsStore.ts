@@ -2,10 +2,16 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
+import { mergePersisted, tolerantRecord } from "@/lib/persist";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance } from "@/widgets/core/byInstance";
 
 export type WidgetBackground = "glass" | "solid";
+
+export const SURFACE_PREFERENCES = ["glass", "solid", "custom"] as const;
+export type SurfacePreference = (typeof SURFACE_PREFERENCES)[number];
+
+export const DEFAULT_BACKGROUND: WidgetBackground = "glass";
 
 type WidgetSettings = {
   background?: WidgetBackground;
@@ -13,12 +19,19 @@ type WidgetSettings = {
 
 type WidgetSettingsState = {
   settings: Record<string, WidgetSettings>;
+  surfacePreference: SurfacePreference;
   setBackground: (id: string, background: WidgetBackground) => void;
+  applyBackgroundToAll: (ids: string[], background: WidgetBackground) => void;
   removeInstance: (id: string) => void;
 };
 
+const settingsSchema = z.object({
+  background: z.enum(["glass", "solid"]).catch(DEFAULT_BACKGROUND).optional(),
+});
+
 const persistedSchema = z.object({
-  settings: z.record(z.string(), z.object({ background: z.enum(["glass", "solid"]).optional() })),
+  settings: tolerantRecord(settingsSchema),
+  surfacePreference: z.enum(SURFACE_PREFERENCES).catch("custom"),
 });
 
 const gatedStorage = createGatedChromeStorage();
@@ -27,10 +40,18 @@ export const useWidgetSettingsStore = create<WidgetSettingsState>()(
   persist(
     (set) => ({
       settings: {},
+      surfacePreference: DEFAULT_BACKGROUND,
       setBackground: (id, background) =>
         set((state) => ({
           settings: { ...state.settings, [id]: { ...state.settings[id], background } },
+          surfacePreference: "custom",
         })),
+      applyBackgroundToAll: (ids, background) =>
+        set((state) => {
+          const settings = { ...state.settings };
+          for (const id of ids) settings[id] = { ...settings[id], background };
+          return { settings, surfacePreference: background };
+        }),
       removeInstance: (id) => set((state) => ({ settings: dropInstance(state.settings, id) })),
     }),
     {
@@ -38,12 +59,16 @@ export const useWidgetSettingsStore = create<WidgetSettingsState>()(
       storage: gatedStorage,
       version: 1,
       onRehydrateStorage: () => () => gatedStorage.open(),
-      partialize: (state) => ({ settings: state.settings }),
-      merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(persisted);
-        if (!parsed.success) return current;
-        return { ...current, settings: parsed.data.settings };
-      },
+      partialize: (state) => ({
+        settings: state.settings,
+        surfacePreference: state.surfacePreference,
+      }),
+      merge: (persisted, current) =>
+        mergePersisted("widget-settings", persistedSchema, persisted, current, (parsed) => ({
+          ...current,
+          settings: parsed.settings,
+          surfacePreference: parsed.surfacePreference,
+        })),
     },
   ),
 );
@@ -51,5 +76,9 @@ export const useWidgetSettingsStore = create<WidgetSettingsState>()(
 registerInstanceCleanup((id) => useWidgetSettingsStore.getState().removeInstance(id));
 
 export function useWidgetBackground(id: string): WidgetBackground {
-  return useWidgetSettingsStore((s) => s.settings[id]?.background ?? "glass");
+  return useWidgetSettingsStore((s) => {
+    const explicit = s.settings[id]?.background;
+    if (explicit) return explicit;
+    return s.surfacePreference === "custom" ? DEFAULT_BACKGROUND : s.surfacePreference;
+  });
 }

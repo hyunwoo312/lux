@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { WEATHER_REFRESH_MS } from "@/widgets/weather/types";
 import { ROW } from "@/lib/row";
 import { Spinner } from "@/components/ui/spinner";
 import { RetryButton, StateMessage } from "@/components/StateMessage";
@@ -25,8 +26,6 @@ import type {
   WeatherUnits,
   WeatherWindUnit,
 } from "@/widgets/weather/types";
-
-const REFRESH_MS = 10 * 60 * 1000;
 
 type WeatherCardProps = {
   location: WeatherLocation;
@@ -122,7 +121,7 @@ export function WeatherCard({
     [location, units, windUnit],
   );
   const { state, refresh, isRefreshing, lastSyncedAt } = usePolledResource(fetcher, {
-    intervalMs: REFRESH_MS,
+    intervalMs: WEATHER_REFRESH_MS,
     cacheKey: weatherCacheKey(location, units, windUnit),
     persist: true,
     parsePersisted: parseCachedWeather,

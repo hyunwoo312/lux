@@ -58,6 +58,7 @@ export type WidgetPlugin = {
   headerActionComponent?: ComponentType;
   backdropComponent?: ComponentType;
   decorativeBackdrop?: boolean;
+  refreshMs?: number;
   accent?: AccentPreset;
   bleed?: boolean;
   useBare?: (instanceId: string) => boolean;

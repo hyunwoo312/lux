@@ -8,9 +8,7 @@ import {
   resolveNewsTab,
 } from "@/widgets/news/lib/news";
 import { useNews } from "@/widgets/news/useNewsStore";
-import { NEWS_SOURCES } from "@/widgets/news/types";
-
-const REFRESH_MS = 10 * 60 * 1000;
+import { NEWS_SOURCES, NEWS_REFRESH_MS } from "@/widgets/news/types";
 
 export function useNewsResource(enabled = true) {
   const activeSource = useNews((d) => d.activeSource);
@@ -41,7 +39,7 @@ export function useNewsResource(enabled = true) {
   };
   const { state, refresh, isRefreshing, lastSyncedAt, freshness } = usePolledResource(fetcher, {
     enabled,
-    intervalMs: REFRESH_MS,
+    intervalMs: NEWS_REFRESH_MS,
     cacheKey,
     persist: true,
     parsePersisted: parseCachedNews,

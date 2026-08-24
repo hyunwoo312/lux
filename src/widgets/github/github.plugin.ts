@@ -1,4 +1,5 @@
 import { GitHubServiceIcon } from "@/components/icons/service-icons";
+import { INBOX_REFRESH_MS } from "@/widgets/github/types";
 import { useProviderLock } from "@/widgets/core/useProviderLock";
 import type { WidgetPlugin } from "@/widgets/core/types";
 import { GithubWidget } from "@/widgets/github/GithubWidget";
@@ -19,6 +20,7 @@ export const githubPlugin: WidgetPlugin = {
   configComponent: GithubConfig,
   statusComponent: GithubTabs,
   headerActionComponent: GithubHeaderActions,
+  refreshMs: INBOX_REFRESH_MS,
   accent: GITHUB_ACCENT,
   useLock: () =>
     useProviderLock({ providers: ["github"], label: "GitHub", subject: "your activity" }),

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { WidgetTypeContext } from "@/widgets/core/useWidgetRefreshScale";
 import { useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { BaseWidget } from "@/widgets/core/BaseWidget";
@@ -65,43 +66,45 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
 
   return (
     <WidgetInstanceContext.Provider value={instance.id}>
-      <div ref={containerRef} className={cn("relative h-full", accentClass(accent))}>
-        <div inert={locked} className="h-full">
-          <BaseWidget
-            title={plugin.name}
-            editing={editing}
-            size={size}
-            background={background}
-            accent={accent}
-            bleed={plugin.bleed}
-            bare={bare}
-            highlighted={highlighted || pulse}
-            backdrop={BackdropComponent ? <BackdropComponent /> : undefined}
-            decorativeBackdrop={plugin.decorativeBackdrop}
-            headline={StatusComponent ? <StatusComponent /> : undefined}
-            headerAction={HeaderActionComponent ? <HeaderActionComponent /> : undefined}
-            config={
-              <WidgetConfig>
-                <CommonWidgetConfig />
-                {ConfigComponent && <ConfigComponent />}
-              </WidgetConfig>
-            }
-            onRemove={() => removeWidget(instance.id)}
-          >
-            <WidgetErrorBoundary>
-              <Widget editing={editing} />
-            </WidgetErrorBoundary>
-          </BaseWidget>
+      <WidgetTypeContext.Provider value={instance.type}>
+        <div ref={containerRef} className={cn("relative h-full", accentClass(accent))}>
+          <div inert={locked} className="h-full">
+            <BaseWidget
+              title={plugin.name}
+              editing={editing}
+              size={size}
+              background={background}
+              accent={accent}
+              bleed={plugin.bleed}
+              bare={bare}
+              highlighted={highlighted || pulse}
+              backdrop={BackdropComponent ? <BackdropComponent /> : undefined}
+              decorativeBackdrop={plugin.decorativeBackdrop}
+              headline={StatusComponent ? <StatusComponent /> : undefined}
+              headerAction={HeaderActionComponent ? <HeaderActionComponent /> : undefined}
+              config={
+                <WidgetConfig>
+                  <CommonWidgetConfig />
+                  {ConfigComponent && <ConfigComponent />}
+                </WidgetConfig>
+              }
+              onRemove={() => removeWidget(instance.id)}
+            >
+              <WidgetErrorBoundary>
+                <Widget editing={editing} />
+              </WidgetErrorBoundary>
+            </BaseWidget>
+          </div>
+          {locked && lock && (
+            <ConnectOverlay
+              icon={plugin.icon}
+              message={lock.message}
+              actionLabel={lock.actionLabel}
+              onAction={lock.onAction}
+            />
+          )}
         </div>
-        {locked && lock && (
-          <ConnectOverlay
-            icon={plugin.icon}
-            message={lock.message}
-            actionLabel={lock.actionLabel}
-            onAction={lock.onAction}
-          />
-        )}
-      </div>
+      </WidgetTypeContext.Provider>
     </WidgetInstanceContext.Provider>
   );
 }

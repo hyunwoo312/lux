@@ -1,6 +1,7 @@
 import type { AccentPreset } from "@/widgets/core/accent";
 
 export const NEWS_ACCENT: AccentPreset = "rose";
+export const NEWS_REFRESH_MS = 10 * 60 * 1000;
 
 export const NEWS_SOURCES = ["bbc", "google", "guardian", "npr", "nyt", "yahoo"] as const;
 export type NewsSource = (typeof NEWS_SOURCES)[number];

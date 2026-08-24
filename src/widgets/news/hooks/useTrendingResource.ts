@@ -1,10 +1,9 @@
 import { useCallback, useEffect } from "react";
+import { NEWS_REFRESH_MS } from "@/widgets/news/types";
 import { usePolledResource } from "@/widgets/core/usePolledResource";
 import { fetchTrends, parseCachedTrends, trendsKey } from "@/widgets/news/lib/trending";
 import { ranksOf } from "@/widgets/news/lib/trend-movement";
 import { useNews, useNewsStore } from "@/widgets/news/useNewsStore";
-
-const REFRESH_MS = 10 * 60 * 1000;
 
 export function useTrendingResource(enabled = true) {
   const region = useNews((d) => d.trendRegion);
@@ -14,7 +13,7 @@ export function useTrendingResource(enabled = true) {
   const fetcher = useCallback((signal: AbortSignal) => fetchTrends(region, signal), [region]);
   const resource = usePolledResource(fetcher, {
     enabled,
-    intervalMs: REFRESH_MS,
+    intervalMs: NEWS_REFRESH_MS,
     cacheKey: trendsKey(region),
     persist: true,
     parsePersisted: parseCachedTrends,

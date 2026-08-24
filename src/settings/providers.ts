@@ -8,7 +8,7 @@ import {
 } from "@/components/icons/service-icons";
 import type { IntegrationProviderId } from "@/integrations";
 
-export type ProviderMeta = {
+type ProviderMeta = {
   id: IntegrationProviderId;
   label: string;
   description: string;

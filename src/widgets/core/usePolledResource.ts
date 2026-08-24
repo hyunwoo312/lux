@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useWidgetRefreshScale } from "@/widgets/core/useWidgetRefreshScale";
 import { POLLED_CACHE_PREFIX, setLocal } from "@/lib/local-store";
 import { RateLimitError } from "@/lib/net";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
@@ -566,7 +567,9 @@ export function usePolledResource<T>(
     persist = false,
     parsePersisted,
   } = options;
-  const staleMs = intervalMs ?? DEFAULT_STALE_MS;
+  const scale = useWidgetRefreshScale();
+  const staleMs = (intervalMs ?? DEFAULT_STALE_MS) * scale;
+  const scaledIntervalMs = intervalMs === undefined ? undefined : intervalMs * scale;
 
   const autoKeyRef = useRef("");
   if (!autoKeyRef.current) autoKeyRef.current = `polled#${(nextAutoKey += 1)}`;
@@ -601,7 +604,7 @@ export function usePolledResource<T>(
         key,
         cacheKey,
         staleMs,
-        intervalMs,
+        intervalMs: scaledIntervalMs,
         persist: persistRef.current,
         parsePersisted: parsePersistedRef.current,
       },
@@ -609,12 +612,15 @@ export function usePolledResource<T>(
     );
     resourceRef.current = resource;
     setSnapshot(resource.getSnapshot());
-    const unsubscribe = resource.subscribe(setSnapshot, { staleMs, intervalMs });
+    const unsubscribe = resource.subscribe(setSnapshot, {
+      staleMs,
+      intervalMs: scaledIntervalMs,
+    });
     return () => {
       resourceRef.current = null;
       unsubscribe();
     };
-  }, [key, cacheKey, enabled, staleMs, intervalMs]);
+  }, [key, cacheKey, enabled, staleMs, scaledIntervalMs]);
 
   const refresh = useCallback(() => {
     resourceRef.current?.refresh();

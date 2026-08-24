@@ -5,7 +5,7 @@ import { WeatherConfig } from "@/widgets/weather/WeatherConfig";
 import { WeatherSearch } from "@/widgets/weather/WeatherSearch";
 import { WeatherRefreshButton } from "@/widgets/weather/WeatherRefreshButton";
 import { useWeatherStore } from "@/widgets/weather/useWeatherStore";
-import { WEATHER_ACCENT } from "@/widgets/weather/types";
+import { WEATHER_ACCENT, WEATHER_REFRESH_MS } from "@/widgets/weather/types";
 
 export const weatherPlugin: WidgetPlugin = {
   type: "weather",
@@ -19,6 +19,7 @@ export const weatherPlugin: WidgetPlugin = {
   configComponent: WeatherConfig,
   statusComponent: WeatherSearch,
   headerActionComponent: WeatherRefreshButton,
+  refreshMs: WEATHER_REFRESH_MS,
   accent: WEATHER_ACCENT,
   removalNote: (instanceId) => {
     const count = useWeatherStore.getState().byInstance[instanceId]?.locations.length ?? 0;
