@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, MessageSquarePlus, Pencil, Settings } from "lucide-react";
+import { Check, MessageSquarePlus, Pencil, ScrollText, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
-import { LuxMark } from "@/components/LuxMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useNow } from "@/hooks/useNow";
@@ -84,7 +83,7 @@ export function Header() {
             aria-label={hasUnseenRelease ? "What's new — update available" : "What's new"}
             onClick={() => setChangelogOpen(true)}
           >
-            <LuxMark className="size-5" />
+            <ScrollText className="size-5" />
             {hasUnseenRelease && (
               <span
                 aria-hidden

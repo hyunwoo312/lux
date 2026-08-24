@@ -93,7 +93,7 @@ export function NewsWidget() {
         initial="hidden"
         animate="show"
         exit="exit"
-        className="flex h-full flex-col gap-2"
+        className="flex h-full flex-col gap-2 pt-1"
       >
         {view === "trending" ? (
           <>

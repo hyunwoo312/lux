@@ -1,4 +1,4 @@
-type ChangeType = "added" | "changed" | "fixed";
+export type ChangeType = "added" | "changed" | "fixed";
 
 const CHANGE_AREAS = [
   "Dashboard",
@@ -27,7 +27,10 @@ export type ReleaseChange = {
   type: ChangeType;
   area: ChangeArea;
   text: string;
+  highlight?: true;
 };
+
+export type AreaGroup = { area: ChangeArea; changes: ReleaseChange[] };
 
 export type Release = {
   version: string;
@@ -46,6 +49,25 @@ export const CHANGE_TYPE_LABEL: Record<ChangeType, string> = {
 
 export function sortChanges(changes: readonly ReleaseChange[]): ReleaseChange[] {
   return [...changes].sort((a, b) => CHANGE_AREAS.indexOf(a.area) - CHANGE_AREAS.indexOf(b.area));
+}
+
+export function highlightsOf(release: Release): ReleaseChange[] {
+  return release.changes.filter((change) => change.highlight === true);
+}
+
+export function groupByArea(changes: readonly ReleaseChange[]): AreaGroup[] {
+  const groups = new Map<ChangeArea, ReleaseChange[]>();
+  for (const change of sortChanges(changes)) {
+    const bucket = groups.get(change.area);
+    if (bucket) bucket.push(change);
+    else groups.set(change.area, [change]);
+  }
+  return [...groups].map(([area, list]) => ({
+    area,
+    changes: [...list].sort(
+      (a, b) => CHANGE_TYPE_ORDER.indexOf(a.type) - CHANGE_TYPE_ORDER.indexOf(b.type),
+    ),
+  }));
 }
 
 export const RELEASES: readonly Release[] = [
@@ -69,6 +91,7 @@ export const RELEASES: readonly Release[] = [
         type: "fixed",
         area: "Dashboard",
         text: "The frosted backdrop behind widgets is no longer blocky over a custom background, and it is reused between tabs instead of being blurred again each time.",
+        highlight: true,
       },
       {
         type: "fixed",
@@ -84,6 +107,7 @@ export const RELEASES: readonly Release[] = [
         type: "changed",
         area: "Settings",
         text: "Background images are converted to WebP when you add them, so a photo takes a fraction of the space and is far less likely to be dropped when browser storage fills up.",
+        highlight: true,
       },
       {
         type: "fixed",
@@ -99,6 +123,7 @@ export const RELEASES: readonly Release[] = [
         type: "fixed",
         area: "AniList",
         text: "Signing in no longer leaves the callback tab spinning on “Finishing AniList sign-in” — it closes on its own, even if you moved away from the Lux tab while signing in.",
+        highlight: true,
       },
     ],
   },
@@ -112,11 +137,13 @@ export const RELEASES: readonly Release[] = [
         type: "fixed",
         area: "Dashboard",
         text: "Running out of browser storage no longer quietly stops your theme from being remembered — Lux clears its oldest cached widget data to make room, and tells you in Settings if it still can’t save.",
+        highlight: true,
       },
       {
         type: "fixed",
         area: "Accounts",
         text: "Two accounts refreshing at the same moment no longer overwrite each other’s sign-in, which could leave one of them asking to be reconnected.",
+        highlight: true,
       },
       {
         type: "changed",
@@ -140,11 +167,13 @@ export const RELEASES: readonly Release[] = [
         type: "added",
         area: "Sports",
         text: "A new widget: live and upcoming scores for the leagues and teams you follow — NFL, NBA, WNBA, MLB, and NHL. Open a game for the line score, game leaders, and detail that keeps up while it’s live. No account needed.",
+        highlight: true,
       },
       {
         type: "added",
         area: "Feedback",
         text: "A button now sits beside What’s new in the toolbar. Send a bug, an idea, or anything else straight to the developer — with an optional email if you’d like a reply, and diagnostics only if you choose to include them.",
+        highlight: true,
       },
       {
         type: "added",
@@ -165,6 +194,7 @@ export const RELEASES: readonly Release[] = [
         type: "added",
         area: "AniList",
         text: "A new airing view: what’s out today, tomorrow, and across the rest of the week, with countdowns to each episode.",
+        highlight: true,
       },
       {
         type: "added",
