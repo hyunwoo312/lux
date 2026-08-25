@@ -1,4 +1,4 @@
-import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, Ref } from "react";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -27,7 +27,9 @@ type SearchFieldProps = {
   placeholder?: string;
   size?: FieldSize;
   onFocus?: () => void;
+  onKeyDown?: (event: ReactKeyboardEvent<HTMLInputElement>) => void;
   className?: string;
+  ref?: Ref<HTMLInputElement>;
 };
 
 export function SearchField({
@@ -37,7 +39,9 @@ export function SearchField({
   placeholder,
   size = "md",
   onFocus,
+  onKeyDown,
   className,
+  ref,
 }: SearchFieldProps) {
   const styles = SIZES[size];
 
@@ -45,7 +49,9 @@ export function SearchField({
     if (event.key === "Escape" && value.length > 0) {
       event.preventDefault();
       onChange("");
+      return;
     }
+    onKeyDown?.(event);
   };
 
   return (
@@ -58,6 +64,7 @@ export function SearchField({
         )}
       />
       <Input
+        ref={ref}
         type="search"
         value={value}
         onChange={(event) => onChange(event.target.value)}

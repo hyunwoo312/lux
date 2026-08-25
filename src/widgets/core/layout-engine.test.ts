@@ -1,7 +1,9 @@
 import {
+  applyDragWithinNarrowView,
   collides,
   findFirstOpenPosition,
   findNearestOpenPosition,
+  layoutColumnSpan,
   resolveLayoutCollisions,
   resolveLocalDisplacement,
 } from "@/widgets/core/layout-engine";
@@ -101,5 +103,48 @@ describe("layout-engine", () => {
     expect(a.x).toBe(0);
     expect(a.y).toBe(0);
     expect(collides(a, b)).toBe(false);
+  });
+});
+
+describe("a layout dragged while the window is too narrow to show it", () => {
+  const wide = [
+    { i: "a", x: 0, y: 0, w: 4, h: 4 },
+    { i: "b", x: 8, y: 0, w: 4, h: 4 },
+    { i: "c", x: 16, y: 0, w: 4, h: 4 },
+  ];
+
+  it("knows how wide the stored layout actually is", () => {
+    expect(layoutColumnSpan(wide)).toBe(20);
+  });
+
+  it("keeps the untouched widgets where the user put them, not where the narrow window squeezed them", () => {
+    const squeezed = [
+      { i: "a", x: 0, y: 0, w: 4, h: 4 },
+      { i: "b", x: 2, y: 4, w: 4, h: 4 },
+      { i: "c", x: 2, y: 0, w: 4, h: 4 },
+    ];
+
+    const merged = applyDragWithinNarrowView(wide, squeezed, "b", 6);
+
+    expect(merged.find((item) => item.i === "c")).toMatchObject({ x: 16, y: 0 });
+    expect(merged.find((item) => item.i === "a")).toMatchObject({ x: 0, y: 0 });
+  });
+
+  it("still records where the dragged widget was dropped", () => {
+    const squeezed = [
+      { i: "a", x: 0, y: 0, w: 4, h: 4 },
+      { i: "b", x: 2, y: 4, w: 4, h: 4 },
+      { i: "c", x: 2, y: 0, w: 4, h: 4 },
+    ];
+
+    const merged = applyDragWithinNarrowView(wide, squeezed, "b", 6);
+
+    expect(merged.find((item) => item.i === "b")).toMatchObject({ x: 2, y: 4 });
+  });
+
+  it("takes the new layout wholesale once the window is wide enough to show everything", () => {
+    const rearranged = wide.map((item) => ({ ...item, y: item.y + 1 }));
+
+    expect(applyDragWithinNarrowView(wide, rearranged, "b", 20)).toEqual(rearranged);
   });
 });

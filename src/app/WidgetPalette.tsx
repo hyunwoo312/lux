@@ -1,12 +1,13 @@
 import { DURATION, EASE_IN, EASE_OUT, SPRING_CRISP } from "@/lib/motion";
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
-import { forwardRef, useMemo, useRef } from "react";
+import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import type { Variants } from "motion/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Check, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
+import { SearchField } from "@/components/SearchField";
 import { cn } from "@/lib/utils";
 import { isOverGrid, resolveDrop } from "@/widgets/core/drag";
 import { accentClass } from "@/widgets/core/accent";
@@ -15,6 +16,7 @@ import { useWidgetDragStore } from "@/widgets/core/useWidgetDragStore";
 import { useWidgetHighlightStore } from "@/widgets/core/useWidgetHighlightStore";
 import { widgetPlugins } from "@/widgets/registry";
 import { useDashboardStore } from "@/stores/useDashboardStore";
+import { useIntegrationStore } from "@/integrations";
 import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
 
 const DRAG_THRESHOLD = 6;
@@ -39,7 +41,8 @@ function commitDrop(plugin: WidgetPlugin, px: number, py: number, ghostW: number
 
 type WidgetCardProps = {
   plugin: WidgetPlugin;
-  added: boolean;
+  added: number;
+  needsAccount: boolean;
   previewed: boolean;
   variants: Variants;
   onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => void;
@@ -49,7 +52,17 @@ type WidgetCardProps = {
 };
 
 const WidgetRow = forwardRef<HTMLButtonElement, WidgetCardProps>(function WidgetRow(
-  { plugin, added, previewed, variants, onPointerDown, onPreview, onKeyDown, onSelect },
+  {
+    plugin,
+    added,
+    needsAccount,
+    previewed,
+    variants,
+    onPointerDown,
+    onPreview,
+    onKeyDown,
+    onSelect,
+  },
   ref,
 ) {
   const Icon = plugin.icon;
@@ -64,8 +77,8 @@ const WidgetRow = forwardRef<HTMLButtonElement, WidgetCardProps>(function Widget
       onKeyDown={onKeyDown}
       onClick={onSelect}
       className="
-        press cursor-pointer focus-ring relative flex cursor-grab touch-none items-start gap-2.5
-        rounded-md px-2 py-2 text-left
+        press focus-ring relative flex cursor-grab touch-none items-start gap-2.5 rounded-md px-2
+        py-2 text-left
       "
     >
       {previewed && (
@@ -94,16 +107,37 @@ const WidgetRow = forwardRef<HTMLButtonElement, WidgetCardProps>(function Widget
       <span className="relative flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex items-center gap-1.5">
           <span className="truncate text-body font-medium">{plugin.name}</span>
-          {added && <Check className="text-ink-4 size-3 shrink-0" aria-hidden />}
-          {added && <span className="sr-only">Added</span>}
+          {added > 0 && (
+            <span
+              className="
+                bg-foreground/10 text-ink-3 shrink-0 rounded-sm px-1 text-micro font-semibold
+                tabular-nums
+              "
+              aria-hidden
+            >
+              {added}
+            </span>
+          )}
+          {added > 0 && (
+            <span className="sr-only">
+              {added === 1 ? "1 on your dashboard" : `${added} on your dashboard`}, adds another
+            </span>
+          )}
         </span>
         <span className="text-ink-4 text-micro line-clamp-2 leading-snug">
           {plugin.description}
         </span>
-        {plugin.recommended && !added && (
-          <span className="text-primary text-micro font-semibold tracking-wide uppercase">
-            Recommended
+        {needsAccount ? (
+          <span className="text-ink-4 text-micro font-semibold tracking-wide uppercase">
+            Needs an account
           </span>
+        ) : (
+          plugin.recommended &&
+          added === 0 && (
+            <span className="text-primary text-micro font-semibold tracking-wide uppercase">
+              Recommended
+            </span>
+          )
         )}
       </span>
     </motion.button>
@@ -120,14 +154,33 @@ export function WidgetPalette() {
   const setHighlighted = useWidgetHighlightStore((s) => s.setHighlighted);
   const reduced = useReducedMotion();
   const lastDragEnd = useRef(0);
+  const [query, setQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
   const cardRefs = useRef<(HTMLButtonElement | null)[][]>([]);
   const openRef = useRef(open);
   openRef.current = open;
   const activeTypes = new Set(widgets.map((widget) => widget.type));
+  const connected = useIntegrationStore((s) =>
+    s.accounts
+      .filter((account) => account.status === "connected")
+      .map((account) => account.providerId)
+      .join(","),
+  );
+  const countOf = (type: string) => widgets.filter((widget) => widget.type === type).length;
+  const missingAccount = (plugin: WidgetPlugin) =>
+    plugin.requiresAccount !== undefined &&
+    !plugin.requiresAccount.some((provider) => connected.split(",").includes(provider));
+
+  useEffect(() => {
+    if (open) searchRef.current?.focus();
+  }, [open]);
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
-    if (!next) setHighlighted(null);
+    if (!next) {
+      setHighlighted(null);
+      setQuery("");
+    }
   };
 
   const panelVariants = useMemo<Variants>(
@@ -140,8 +193,7 @@ export function WidgetPalette() {
         transition: {
           duration: DURATION.fast,
           ease: EASE_OUT,
-          staggerChildren: 0.03,
-          delayChildren: 0.02,
+          staggerChildren: 0.012,
         },
       },
       exit: {
@@ -161,14 +213,17 @@ export function WidgetPalette() {
     [reduced],
   );
 
-  const groups = useMemo(
-    () =>
-      WIDGET_CATEGORIES.map((category) => ({
-        category,
-        plugins: widgetPlugins.filter((plugin) => plugin.category === category),
-      })).filter((group) => group.plugins.length > 0),
-    [],
-  );
+  const groups = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    const matches = (plugin: WidgetPlugin) =>
+      needle.length === 0 ||
+      plugin.name.toLowerCase().includes(needle) ||
+      plugin.description.toLowerCase().includes(needle);
+    return WIDGET_CATEGORIES.map((category) => ({
+      category,
+      plugins: widgetPlugins.filter((plugin) => plugin.category === category && matches(plugin)),
+    })).filter((group) => group.plugins.length > 0);
+  }, [query]);
 
   const focusCell = (column: number, row: number) => {
     const columnRefs = cardRefs.current[column];
@@ -263,7 +318,7 @@ export function WidgetPalette() {
           <Button data-tour="add-widget" variant="ghost" size="icon-lg" aria-label="Add widget">
             <motion.span
               animate={{ rotate: open ? 45 : 0 }}
-              transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
+              transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}
               className="grid place-items-center"
             >
               <Plus />
@@ -293,11 +348,26 @@ export function WidgetPalette() {
                   outline-none
                 "
               >
-                <div className="px-2 pt-1 pb-2">
-                  <p className="text-ink-4 text-micro font-semibold uppercase">Widgets</p>
-                  <p className="text-ink-3 mt-1 text-caption">
-                    Click to add, or drag onto the grid.
-                  </p>
+                <div className="flex flex-col gap-2 px-2 pt-1 pb-2">
+                  <div>
+                    <p className="text-ink-4 text-micro font-semibold uppercase">Widgets</p>
+                    <p className="text-ink-3 mt-1 text-caption">
+                      Click to add, or drag onto the grid.
+                    </p>
+                  </div>
+                  <SearchField
+                    ref={searchRef}
+                    value={query}
+                    onChange={setQuery}
+                    label="Search widgets"
+                    size="sm"
+                    onKeyDown={(event) => {
+                      if (event.key === "ArrowDown") {
+                        event.preventDefault();
+                        focusCell(0, 0);
+                      }
+                    }}
+                  />
                 </div>
                 <div
                   onMouseLeave={clearPreviewPlugin}
@@ -308,6 +378,11 @@ export function WidgetPalette() {
                   }}
                   className="grid grid-cols-3 items-start gap-x-2 gap-y-3 px-1 pt-1 pb-1"
                 >
+                  {groups.length === 0 && (
+                    <p className="text-ink-3 col-span-3 px-2 py-6 text-center text-caption">
+                      {`No widget matches “${query.trim()}”`}
+                    </p>
+                  )}
                   {groups.map((group, column) => (
                     <section key={group.category} className="flex min-w-0 flex-col gap-1">
                       <h3 className="text-ink-2 px-2 pb-0.5 text-caption font-semibold">
@@ -321,7 +396,8 @@ export function WidgetPalette() {
                             cardRefs.current[column][row] = node;
                           }}
                           plugin={plugin}
-                          added={activeTypes.has(plugin.type)}
+                          added={countOf(plugin.type)}
+                          needsAccount={missingAccount(plugin)}
                           previewed={previewType === plugin.type}
                           variants={itemVariants}
                           onPointerDown={(event) => handlePointerDown(event, plugin)}

@@ -7,7 +7,9 @@ import { cn } from "@/lib/utils";
 import { accentClass, type AccentPreset } from "@/widgets/core/accent";
 import { CELL, GAP, gridColumns, gridWidth, PAD, UNIT } from "@/widgets/core/grid";
 import {
+  applyDragWithinNarrowView,
   clampLayout,
+  layoutColumnSpan,
   findFirstOpenPosition,
   getLayoutBottom,
   resolveLayoutCollisions,
@@ -25,6 +27,8 @@ const topLeftStrategy = {
   scale: 1,
   calcStyle: (pos: Position) => setTopLeft(pos) as CSSProperties,
 } as const;
+
+const RESIZE_HANDLES = ["n", "s", "w", "e", "nw", "ne", "sw", "se"] as const;
 
 const MIN_ROWS = 8;
 const EDIT_ROW_BUFFER = 1;
@@ -172,8 +176,10 @@ export function WidgetGrid() {
       scrollFrame.current = null;
     }
     const draggedId = activeWidgetId.current;
-    const displaced = resolveLocalDisplacement(next, cols, draggedId);
-    const cleaned = resolveLayoutCollisions(displaced, cols, draggedId);
+    const basis = Math.max(cols, layoutColumnSpan(layout));
+    const merged = applyDragWithinNarrowView(layout, next, draggedId, cols);
+    const displaced = resolveLocalDisplacement(merged, basis, draggedId);
+    const cleaned = resolveLayoutCollisions(displaced, basis, draggedId);
     activeWidgetId.current = null;
     setLayout(cleaned);
   };
@@ -256,7 +262,7 @@ export function WidgetGrid() {
               }}
               compactor={compactor}
               dragConfig={{ enabled: editing, cancel: "button, a, input, textarea" }}
-              resizeConfig={{ enabled: editing, handles: ["se"] }}
+              resizeConfig={{ enabled: editing, handles: RESIZE_HANDLES }}
               onDragStart={handleStart}
               onDrag={handleMove}
               onDragStop={handleStop}
@@ -280,7 +286,10 @@ export function WidgetGrid() {
                       ? { w: item.w, h: item.h }
                       : undefined;
                 return (
-                  <div key={widget.id}>
+                  <div
+                    key={widget.id}
+                    className={cn(editing && "cursor-grab active:cursor-grabbing")}
+                  >
                     <WidgetHost instance={widget} editing={editing} size={size} />
                   </div>
                 );
@@ -311,7 +320,7 @@ function PlacementPreview({ placement, ref }: { placement: Placement; ref?: Ref<
       className={cn(
         accentClass(placement.accent),
         "border-primary bg-primary/15 pointer-events-none rounded-2xl border-2 border-dashed",
-        "shadow-[0_0_22px_-6px_var(--primary)]",
+        "shadow-glow-accent",
       )}
     />
   );

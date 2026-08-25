@@ -108,10 +108,53 @@ describe("WidgetPalette", () => {
     expect(document.activeElement).toBe(last);
   });
 
-  it("marks a widget already on the grid as added", async () => {
+  it("says how many of a widget are already on the dashboard, and that clicking adds another", async () => {
+    useDashboardStore.getState().addWidget("note");
     useDashboardStore.getState().addWidget("note");
     await openPalette();
 
-    expect(screen.getByRole("button", { name: /Note/ })).toHaveTextContent("Added");
+    expect(screen.getByRole("button", { name: /Note/ })).toHaveTextContent(
+      "2 on your dashboard, adds another",
+    );
+  });
+
+  it("warns that a widget needs an account before you add it and find out", async () => {
+    await openPalette();
+
+    expect(screen.getByRole("button", { name: /GitHub/ })).toHaveTextContent("Needs an account");
+    expect(screen.getByRole("button", { name: /Note/ })).not.toHaveTextContent("Needs an account");
+  });
+});
+
+describe("finding a widget among many", () => {
+  it("narrows the list to what the query matches", async () => {
+    await openPalette();
+
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search widgets" }), {
+      target: { value: "weather" },
+    });
+
+    expect(screen.getByRole("button", { name: /Weather/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Note/ })).not.toBeInTheDocument();
+  });
+
+  it("matches the description too, not only the name", async () => {
+    await openPalette();
+
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search widgets" }), {
+      target: { value: "scratchpad" },
+    });
+
+    expect(screen.getByRole("button", { name: /Note/ })).toBeInTheDocument();
+  });
+
+  it("says nothing matched rather than showing an empty panel", async () => {
+    await openPalette();
+
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search widgets" }), {
+      target: { value: "zzzz" },
+    });
+
+    expect(screen.getByText(/No widget matches/)).toBeInTheDocument();
   });
 });

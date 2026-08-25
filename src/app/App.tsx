@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useBoardWidth } from "@/app/useBoardWidth";
 import { Wallpaper } from "@/app/Wallpaper";
 import { Header } from "@/app/Header";
 import { WidgetDragOverlay } from "@/app/WidgetDragOverlay";
@@ -30,12 +31,14 @@ export function App() {
     if (pending) useSettingsStore.getState().openPermissions(pending);
   }, []);
 
+  const boardWidth = useBoardWidth();
+
   return (
     <TooltipProvider>
       <FrostImageProvider value={frostUrl}>
         <div className="relative h-dvh overflow-hidden">
           <Wallpaper imageUrl={imageUrl} />
-          <div className="mx-auto flex h-dvh w-[var(--content-width)] flex-col gap-4 py-4">
+          <div style={{ width: boardWidth }} className="mx-auto flex h-dvh flex-col gap-4 py-4">
             <Header />
             <main
               data-tour="grid"

@@ -10,6 +10,23 @@ export function getLayoutBottom(layout: readonly Box[]): number {
   return layout.reduce((bottom, item) => Math.max(bottom, item.y + item.h), 0);
 }
 
+export function layoutColumnSpan(layout: readonly Box[]): number {
+  return layout.reduce((span, item) => Math.max(span, item.x + item.w), 0);
+}
+
+export function applyDragWithinNarrowView<T extends Box>(
+  stored: readonly T[],
+  next: readonly T[],
+  draggedId: string | null,
+  viewColumns: number,
+): T[] {
+  if (viewColumns >= layoutColumnSpan(stored)) return [...next];
+  if (!draggedId) return [...stored];
+  const moved = next.find((item) => item.i === draggedId);
+  if (!moved) return [...stored];
+  return stored.map((item) => (item.i === draggedId ? { ...item, ...moved } : item));
+}
+
 export function collides(a: Box, b: Box): boolean {
   if (a.i === b.i) return false;
   return !(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y);
