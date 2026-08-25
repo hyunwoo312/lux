@@ -1,11 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { BookOpen, Check, MessageSquarePlus, Pencil, ScrollText, Settings } from "lucide-react";
+import { POP } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
-import { clockOptions } from "@/lib/clock";
+import { clockOptions, formatClockDate } from "@/lib/clock";
 import { useNow } from "@/hooks/useNow";
 import { ChangelogDialog, consumeChangelogAutoShow, useHasUnseenRelease } from "@/changelog";
 import { GuideDialog, useGuideStore } from "@/guide";
@@ -23,6 +26,38 @@ export function Header() {
   const [changelogOpen, setChangelogOpen] = useState(false);
   const openGuide = useGuideStore((s) => s.openGuide);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const showClock = useAppSettingsStore((s) => s.showClock);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const [toolbarIndex, setToolbarIndex] = useState(0);
+
+  const toolbarButtons = () => [...(toolbarRef.current?.querySelectorAll("button") ?? [])];
+
+  useEffect(() => {
+    toolbarButtons().forEach((button, index) => {
+      button.tabIndex = index === toolbarIndex ? 0 : -1;
+    });
+  });
+
+  const handleToolbarKeys = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+    const jump = event.key === "Home" ? "first" : event.key === "End" ? "last" : null;
+    if (step === 0 && jump === null) return;
+    const buttons = toolbarButtons();
+    if (buttons.length === 0) return;
+    event.preventDefault();
+    const current = buttons.indexOf(document.activeElement as HTMLButtonElement);
+    const last = buttons.length - 1;
+    const next =
+      jump === "first"
+        ? 0
+        : jump === "last"
+          ? last
+          : current === -1
+            ? 0
+            : (current + step + buttons.length) % buttons.length;
+    setToolbarIndex(next);
+    buttons[next]?.focus();
+  };
 
   useEffect(() => {
     let active = true;
@@ -37,7 +72,17 @@ export function Header() {
   return (
     <header className="grid grid-cols-3 items-center gap-4">
       <div
+        ref={toolbarRef}
         data-tour="toolbar"
+        role="toolbar"
+        aria-label="Dashboard actions"
+        aria-orientation="horizontal"
+        onKeyDown={handleToolbarKeys}
+        onFocusCapture={(event) => {
+          const button = (event.target as Element).closest("button");
+          const index = button ? toolbarButtons().indexOf(button) : -1;
+          if (index !== -1) setToolbarIndex(index);
+        }}
         className="glass col-start-2 flex items-center gap-1 justify-self-center rounded-lg p-1"
       >
         <ThemeToggle />
@@ -50,20 +95,15 @@ export function Header() {
             aria-label={editing ? "Done editing layout" : "Edit layout"}
             onClick={toggleEditing}
           >
-            <span className="relative grid size-5 place-items-center">
-              <Pencil
-                className={cn(
-                  "absolute transition-all duration-300 ease-out",
-                  editing ? "scale-0 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100",
-                )}
-              />
-              <Check
-                className={cn(
-                  "absolute transition-all duration-300 ease-out",
-                  editing ? "scale-100 rotate-0 opacity-100" : "scale-0 -rotate-90 opacity-0",
-                )}
-              />
-            </span>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={editing ? "done" : "edit"}
+                className="grid place-items-center"
+                {...POP}
+              >
+                {editing ? <Check /> : <Pencil />}
+              </motion.span>
+            </AnimatePresence>
           </Button>
         </Tooltip>
         <Tooltip content="Settings">
@@ -120,17 +160,21 @@ export function Header() {
       <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
       <GuideDialog />
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
-      <HeaderClock
-        className="
-          glass col-start-3 inline-flex items-center justify-self-end self-stretch rounded-lg px-3
-        "
-      />
+      {showClock && (
+        <HeaderClock
+          className="
+            glass col-start-3 inline-flex flex-col items-end justify-center justify-self-end
+            self-stretch rounded-lg px-3
+          "
+        />
+      )}
     </header>
   );
 }
 
 function HeaderClock({ className }: { className?: string }) {
   const clock24h = useAppSettingsStore((s) => s.clock24h);
+  const clockDate = useAppSettingsStore((s) => s.clockDate);
   const formatter = useMemo(
     () => new Intl.DateTimeFormat(undefined, clockOptions(!clock24h)),
     [clock24h],
@@ -141,15 +185,17 @@ function HeaderClock({ className }: { className?: string }) {
   const hour = parts.find((part) => part.type === "hour")?.value ?? "";
   const minute = parts.find((part) => part.type === "minute")?.value ?? "";
   const dayPeriod = parts.find((part) => part.type === "dayPeriod")?.value;
+  const date = formatClockDate(now, clockDate);
 
   return (
-    <span
-      className={cn("text-ink text-heading font-semibold tracking-wide tabular-nums", className)}
-    >
-      {hour}
-      <span className="mx-0.5">:</span>
-      {minute}
-      {dayPeriod ? <span className="text-ink-3 ml-1">{dayPeriod}</span> : null}
+    <span className={className}>
+      <span className="text-ink text-heading font-semibold tracking-tight tabular-nums">
+        {hour}
+        <span className="mx-0.5">:</span>
+        {minute}
+        {dayPeriod ? <span className="text-ink-3 ml-1">{dayPeriod}</span> : null}
+      </span>
+      {date ? <span className="text-ink-3 text-caption leading-tight">{date}</span> : null}
     </span>
   );
 }

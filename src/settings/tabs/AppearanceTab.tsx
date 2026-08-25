@@ -1,10 +1,11 @@
 import { Switch } from "@/components/ui/switch";
-import { ConfigSegmented } from "@/components/config/WidgetConfig";
+import { ConfigSegmented, ConfigSelect } from "@/components/config/WidgetConfig";
 import { AccentPicker } from "@/settings/components/AccentPicker";
 import { WallpaperSetting } from "@/settings/components/WallpaperSetting";
 import { SettingsRow } from "@/settings/components/SettingsRow";
 import { SettingsSection } from "@/settings/components/SettingsSection";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
+import type { ClockDateFormat } from "@/lib/clock";
 import { useThemeStore } from "@/stores/useThemeStore";
 import type { ThemeMode } from "@/lib/theme";
 
@@ -14,9 +15,21 @@ const THEME_OPTIONS = [
   { value: "system", label: "System" },
 ] as const satisfies { value: ThemeMode; label: string }[];
 
+const CLOCK_DATE_OPTIONS = [
+  { value: "off", label: "None" },
+  { value: "weekday", label: "Weekday" },
+  { value: "date", label: "Date" },
+  { value: "weekdayDate", label: "Both" },
+  { value: "full", label: "With year" },
+] as const satisfies { value: ClockDateFormat; label: string }[];
+
 export function AppearanceTab() {
   const clock24h = useAppSettingsStore((s) => s.clock24h);
   const setClock24h = useAppSettingsStore((s) => s.setClock24h);
+  const showClock = useAppSettingsStore((s) => s.showClock);
+  const setShowClock = useAppSettingsStore((s) => s.setShowClock);
+  const clockDate = useAppSettingsStore((s) => s.clockDate);
+  const setClockDate = useAppSettingsStore((s) => s.setClockDate);
   const showGridLines = useAppSettingsStore((s) => s.showGridLines);
   const setShowGridLines = useAppSettingsStore((s) => s.setShowGridLines);
   const themeMode = useThemeStore((s) => s.mode);
@@ -62,9 +75,27 @@ export function AppearanceTab() {
           control={<Switch checked={showGridLines} onCheckedChange={setShowGridLines} />}
         />
         <SettingsRow
+          title="Clock"
+          description="Show the time in the header."
+          control={<Switch checked={showClock} onCheckedChange={setShowClock} />}
+        />
+        <SettingsRow
           title="24-hour time"
           description="Use a 24-hour clock instead of AM/PM."
           control={<Switch checked={clock24h} onCheckedChange={setClock24h} />}
+        />
+        <SettingsRow
+          title="Date under the clock"
+          description="Add the weekday, the date, or both."
+          control={
+            <ConfigSelect
+              label="Date under the clock"
+              value={clockDate}
+              options={[...CLOCK_DATE_OPTIONS]}
+              onChange={setClockDate}
+              disabled={!showClock}
+            />
+          }
         />
       </SettingsSection>
     </div>

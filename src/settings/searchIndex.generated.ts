@@ -21,6 +21,18 @@ export const GENERATED_SETTINGS: GeneratedSetting[] = [
     description: "Use a 24-hour clock instead of AM/PM.",
   },
   {
+    label: "Clock",
+    section: "Dashboard",
+    tab: "appearance",
+    description: "Show the time in the header.",
+  },
+  {
+    label: "Date under the clock",
+    section: "Dashboard",
+    tab: "appearance",
+    description: "Add the weekday, the date, or both.",
+  },
+  {
     label: "Grid lines",
     section: "Dashboard",
     tab: "appearance",

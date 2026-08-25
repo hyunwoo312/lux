@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { mergePersisted, tolerantRecord } from "@/lib/persist";
+import { CLOCK_DATE_FORMATS, type ClockDateFormat } from "@/lib/clock";
 
 export const REFRESH_CADENCES = ["default", "relaxed", "custom"] as const;
 export type RefreshCadence = (typeof REFRESH_CADENCES)[number];
@@ -13,10 +14,14 @@ const PRESET_SCALE: Partial<Record<RefreshCadence, number>> = { default: 1, rela
 
 type AppSettingsState = {
   clock24h: boolean;
+  showClock: boolean;
+  clockDate: ClockDateFormat;
   showGridLines: boolean;
   refreshCadence: RefreshCadence;
   widgetRefresh: Record<string, number>;
   setClock24h: (value: boolean) => void;
+  setShowClock: (value: boolean) => void;
+  setClockDate: (value: ClockDateFormat) => void;
   setShowGridLines: (value: boolean) => void;
   applyRefreshPreset: (types: string[], cadence: Exclude<RefreshCadence, "custom">) => void;
   setWidgetRefresh: (type: string, scale: number) => void;
@@ -25,6 +30,8 @@ type AppSettingsState = {
 
 const DEFAULTS = {
   clock24h: false,
+  showClock: true,
+  clockDate: "off" as ClockDateFormat,
   showGridLines: false,
   refreshCadence: "default" as RefreshCadence,
   widgetRefresh: {} as Record<string, number>,
@@ -32,6 +39,8 @@ const DEFAULTS = {
 
 const persistedSchema = z.object({
   clock24h: z.boolean().catch(DEFAULTS.clock24h),
+  showClock: z.boolean().catch(DEFAULTS.showClock),
+  clockDate: z.enum(CLOCK_DATE_FORMATS).catch(DEFAULTS.clockDate),
   showGridLines: z.boolean().catch(DEFAULTS.showGridLines),
   refreshCadence: z.enum(REFRESH_CADENCES).catch("custom"),
   widgetRefresh: tolerantRecord(z.number().min(0.5).max(4)),
@@ -44,6 +53,8 @@ export const useAppSettingsStore = create<AppSettingsState>()(
     (set) => ({
       ...DEFAULTS,
       setClock24h: (value) => set({ clock24h: value }),
+      setShowClock: (value) => set({ showClock: value }),
+      setClockDate: (value) => set({ clockDate: value }),
       setShowGridLines: (value) => set({ showGridLines: value }),
       applyRefreshPreset: (types, cadence) =>
         set(() => {
@@ -66,6 +77,8 @@ export const useAppSettingsStore = create<AppSettingsState>()(
       onRehydrateStorage: () => () => gatedStorage.open(),
       partialize: (state) => ({
         clock24h: state.clock24h,
+        showClock: state.showClock,
+        clockDate: state.clockDate,
         showGridLines: state.showGridLines,
         refreshCadence: state.refreshCadence,
         widgetRefresh: state.widgetRefresh,
