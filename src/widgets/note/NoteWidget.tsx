@@ -1,11 +1,11 @@
 import type { ChangeEvent, KeyboardEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { useDashboardStore } from "@/stores/useDashboardStore";
 import { continueList, toggleCheckbox, type ListEdit } from "@/widgets/note/lib/lists";
 import { NOTE_MAX_LENGTH, type NoteFontSize } from "@/widgets/note/types";
 import { useNote, useNoteStore } from "@/widgets/note/useNoteStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
+import type { WidgetContentProps } from "@/widgets/core/types";
 
 const FONT_SIZE_CLASS: Record<NoteFontSize, string> = {
   sm: "text-body",
@@ -16,7 +16,7 @@ const FONT_SIZE_CLASS: Record<NoteFontSize, string> = {
 const COMMIT_DELAY_MS = 400;
 const OVERFLOW_NOTICE_MS = 4000;
 
-export function NoteWidget() {
+export function NoteWidget({ justAdded }: WidgetContentProps) {
   const id = useWidgetInstanceId();
   const { text, fontSize } = useNote(id);
   const setText = useNoteStore((s) => s.setText);
@@ -48,12 +48,8 @@ export function NoteWidget() {
   useEffect(() => () => window.clearTimeout(noticeTimer.current), []);
 
   useEffect(() => {
-    const { lastAddedId, clearLastAdded } = useDashboardStore.getState();
-    if (lastAddedId === id) {
-      ref.current?.focus();
-      clearLastAdded();
-    }
-  }, [id]);
+    if (justAdded) ref.current?.focus();
+  }, [justAdded]);
 
   const schedule = (next: string) => {
     setValue(next);

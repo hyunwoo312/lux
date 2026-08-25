@@ -237,7 +237,7 @@ export const useAnilistStore = create<AnilistStoreState>()(
       name: "widget:anilist",
       storage: gatedStorage,
       version: 5,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => () => gatedStorage.open(useAnilistStore),
       partialize: (state) => ({
         byInstance: state.byInstance,
         lastSeenActivityAt: state.lastSeenActivityAt,

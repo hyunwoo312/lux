@@ -1,20 +1,23 @@
 import { useEffect } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useBoardWidth } from "@/app/useBoardWidth";
 import { Wallpaper } from "@/app/Wallpaper";
 import { Header } from "@/app/Header";
 import { WidgetDragOverlay } from "@/app/WidgetDragOverlay";
-import { UndoBar } from "@/app/UndoBar";
-import { GuideNudge } from "@/guide";
+import { Toaster } from "@/components/Toaster";
 import { SettingsDialog } from "@/settings";
 import { Welcome } from "@/onboarding";
 import { WidgetGrid } from "@/widgets/WidgetGrid";
 import { useGlobalShortcuts } from "@/app/useGlobalShortcuts";
 import { useDisableContextMenu } from "@/app/useDisableContextMenu";
 import { useActiveWallpaper } from "@/app/useActiveWallpaper";
+import { useHydrated } from "@/hooks/useHydrated";
+import { DURATION, EASE_OUT } from "@/lib/motion";
 import { FrostImageProvider } from "@/lib/frost-image";
 import { useWallpaperStore } from "@/stores/useWallpaperStore";
 import { takePendingPermissionHighlight } from "@/lib/permissions";
+import { useDashboardStore } from "@/stores/useDashboardStore";
 import { useSettingsStore } from "@/settings";
 import { sweepStaleResourceCaches } from "@/widgets/core/resourceCacheSweep";
 
@@ -24,6 +27,8 @@ export function App() {
   const wallpaperSource = useWallpaperStore((s) => s.source);
   const isPattern = wallpaperSource === "generated";
   const { imageUrl, frostUrl } = useActiveWallpaper(!isPattern);
+  const boardReady = useHydrated(useDashboardStore);
+  const reduced = useReducedMotion();
 
   useEffect(() => {
     sweepStaleResourceCaches(Date.now());
@@ -38,22 +43,24 @@ export function App() {
       <FrostImageProvider value={frostUrl}>
         <div className="relative h-dvh overflow-hidden">
           <Wallpaper imageUrl={imageUrl} />
-          <div style={{ width: boardWidth }} className="mx-auto flex h-dvh flex-col gap-4 py-4">
+          <motion.div
+            style={{ width: boardWidth }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: boardReady ? 1 : 0 }}
+            transition={{ duration: reduced ? 0 : DURATION.fast, ease: EASE_OUT }}
+            className="mx-auto flex h-full flex-col gap-4 py-4"
+          >
             <Header />
-            <main
-              data-tour="grid"
-              className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]"
-            >
+            <main data-tour="grid" className="scrollbar-gutter min-h-0 flex-1 overflow-y-auto">
               <WidgetGrid />
             </main>
-          </div>
+          </motion.div>
         </div>
       </FrostImageProvider>
       <WidgetDragOverlay />
-      <UndoBar />
+      <Toaster />
       <SettingsDialog />
       <Welcome />
-      <GuideNudge />
     </TooltipProvider>
   );
 }

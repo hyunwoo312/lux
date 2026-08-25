@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { read, remove, watchStorage, write } from "@/lib/storage";
+import { createGatedChromeStorage, read, remove, watchStorage, write } from "@/lib/storage";
 
 const schema = z.object({ count: z.number() });
 const fallback = { count: 0 };
@@ -65,5 +65,70 @@ describe("watchStorage", () => {
 
     emit({ "lux:integrations": { newValue: 1 } }, "local");
     expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("createGatedChromeStorage", () => {
+  const settled = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  function makeStore() {
+    const storage = createGatedChromeStorage<{ n: number }>();
+    const rehydrate = vi.fn();
+    return { storage, rehydrate, handle: { persist: { rehydrate } } };
+  }
+
+  it("holds writes back until the store says it is hydrated", async () => {
+    const { storage, handle } = makeStore();
+
+    await storage.setItem("gated", { state: { n: 1 }, version: 1 });
+    expect(await chrome.storage.local.get("lux:gated")).toEqual({});
+
+    storage.open(handle);
+    await storage.setItem("gated", { state: { n: 2 }, version: 1 });
+    expect(await chrome.storage.local.get("lux:gated")).toEqual({
+      "lux:gated": { state: { n: 2 }, version: 1 },
+    });
+  });
+
+  it("reloads when another tab writes the same store", async () => {
+    const { storage, rehydrate, handle } = makeStore();
+    await storage.getItem("gated");
+    storage.open(handle);
+
+    await chrome.storage.local.set({ "lux:gated": { state: { n: 7 }, version: 1 } });
+    await settled();
+
+    expect(rehydrate).toHaveBeenCalledOnce();
+  });
+
+  it("ignores the echo of its own writes, even when several are in flight", async () => {
+    const { storage, rehydrate, handle } = makeStore();
+    await storage.getItem("gated");
+    storage.open(handle);
+
+    await storage.setItem("gated", { state: { n: 3 }, version: 1 });
+    await storage.setItem("gated", { state: { n: 4 }, version: 1 });
+    await settled();
+
+    expect(rehydrate).not.toHaveBeenCalled();
+  });
+
+  it("tells a first open apart from a later resync", async () => {
+    const { storage, handle } = makeStore();
+    await storage.getItem("gated");
+
+    expect(storage.open(handle)).toBe("boot");
+    expect(storage.open(handle)).toBe("resync");
+  });
+
+  it("ignores another store's key", async () => {
+    const { storage, rehydrate, handle } = makeStore();
+    await storage.getItem("gated");
+    storage.open(handle);
+
+    await chrome.storage.local.set({ "lux:elsewhere": { state: {}, version: 1 } });
+    await settled();
+
+    expect(rehydrate).not.toHaveBeenCalled();
   });
 });

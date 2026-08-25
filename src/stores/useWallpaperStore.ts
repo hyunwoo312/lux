@@ -285,7 +285,7 @@ export const useWallpaperStore = create<WallpaperState>()(
       storage: gatedStorage,
       version: 1,
       onRehydrateStorage: () => (state) => {
-        gatedStorage.open();
+        if (gatedStorage.open(useWallpaperStore) === "resync") return;
         if (!state) return;
         void state
           .sanitizeAssets()

@@ -292,7 +292,7 @@ export const useNewsStore = create<NewsState>()(
       name: "widget:news",
       storage: gatedStorage,
       version: 1,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => () => gatedStorage.open(useNewsStore),
       partialize: (state) => ({
         byInstance: state.byInstance,
         trendSnapshots: state.trendSnapshots,

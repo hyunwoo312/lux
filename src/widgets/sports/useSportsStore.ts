@@ -171,7 +171,7 @@ export const useSportsStore = create<SportsState>()(
       name: "widget:sports",
       storage: gatedStorage,
       version: 2,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => () => gatedStorage.open(useSportsStore),
       partialize: (state) => ({ byInstance: state.byInstance }),
       migrate: (persisted, version) => {
         if (version >= 2) return persisted;

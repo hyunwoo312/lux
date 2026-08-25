@@ -146,7 +146,7 @@ export const useTasksStore = create<TasksState>()(
       name: "widget:tasks",
       storage: gatedStorage,
       version: 2,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => () => gatedStorage.open(useTasksStore),
       partialize: (state) => ({ byInstance: state.byInstance }),
       migrate: (persisted, version) => {
         if (version >= 2) return persisted;

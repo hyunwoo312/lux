@@ -1,6 +1,7 @@
 import { afterEach, beforeEach } from "vitest";
 import { installChromeMock } from "./chrome-mock";
 import { clearPolledResources } from "@/widgets/core/usePolledResource";
+import { useToastStore } from "@/stores/useToastStore";
 
 const hasDom = typeof window !== "undefined";
 
@@ -42,6 +43,7 @@ beforeEach(() => {
   installChromeMock();
   globalThis.localStorage?.clear();
   clearPolledResources();
+  useToastStore.setState({ toast: null });
 });
 
 afterEach(async () => {

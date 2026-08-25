@@ -1,20 +1,28 @@
 // @vitest-environment jsdom
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { App } from "@/app/App";
 import { useOnboardingStore } from "@/onboarding";
+import { useDashboardStore } from "@/stores/useDashboardStore";
 
 describe("App", () => {
   beforeEach(() => {
     useOnboardingStore.setState({ welcomeOpen: false });
   });
 
-  it("renders the header controls", () => {
+  it("lays the page out as a banner over one scroll region", () => {
     render(<App />);
-    const header = within(screen.getByRole("banner"));
 
-    expect(header.getByRole("button", { name: "Add widget" })).toBeInTheDocument();
-    expect(header.getByRole("button", { name: "Edit layout" })).toBeInTheDocument();
-    expect(header.getByRole("button", { name: "Settings" })).toBeInTheDocument();
-    expect(header.getByRole("button", { name: "Send feedback" })).toBeInTheDocument();
+    expect(screen.getByRole("banner")).toBeInTheDocument();
+    expect(screen.getByRole("main")).toBeInTheDocument();
+  });
+
+  it("holds the board back until the saved layout is in hand", async () => {
+    render(<App />);
+    const board = screen.getByRole("main").parentElement;
+
+    expect(board).toHaveStyle({ opacity: "0" });
+
+    await waitFor(() => expect(useDashboardStore.persist.hasHydrated()).toBe(true));
+    await waitFor(() => expect(board).not.toHaveStyle({ opacity: "0" }));
   });
 });

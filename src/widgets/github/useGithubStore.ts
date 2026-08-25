@@ -156,7 +156,7 @@ export const useGithubStore = create<GithubStoreState>()(
       name: "widget:github",
       storage: gatedStorage,
       version: 2,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => () => gatedStorage.open(useGithubStore),
       partialize: (state) => ({
         byInstance: state.byInstance,
         login: state.login,

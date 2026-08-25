@@ -215,23 +215,45 @@ describe("colour tokens", () => {
     expect([...missing]).toEqual([]);
   });
 
-  it("every named z-index utility used in source has a matching token", () => {
-    const srcRoot = fileURLToPath(new URL("..", import.meta.url));
-    const used = new Set<string>();
-    const walk = (dir: string) => {
-      for (const entry of readdirSync(dir)) {
-        const full = join(dir, entry);
-        if (statSync(full).isDirectory()) walk(full);
-        else if (/\.tsx?$/.test(entry)) {
-          for (const m of readFileSync(full, "utf8").matchAll(/\bz-([a-z][a-z-]*)\b/g)) {
-            if (m[1] && m[1] !== "index") used.add(m[1]);
-          }
+  describe("z-index", () => {
+    const LOCAL_STACKING_MAX = 30;
+    const tokens = [...css.matchAll(/--z-index-([a-z-]+):/g)].map((m) => m[1] as string);
+    const sources = (() => {
+      const files: string[] = [];
+      const walk = (dir: string) => {
+        for (const entry of readdirSync(dir)) {
+          const full = join(dir, entry);
+          if (statSync(full).isDirectory()) walk(full);
+          else if (/\.tsx?$/.test(entry)) files.push(full);
         }
-      }
-    };
-    walk(srcRoot);
-    const missing = [...used].filter((name) => !css.includes(`--z-index-${name}:`));
-    expect(missing).toEqual([]);
+      };
+      walk(fileURLToPath(new URL("..", import.meta.url)));
+      return files.map((file) => ({ file, body: readFileSync(file, "utf8") }));
+    })();
+    const used = new Set(
+      sources.flatMap(({ body }) =>
+        [...body.matchAll(/\bz-([a-z][a-z-]*)\b/g)]
+          .map((m) => m[1] as string)
+          .filter((name) => name !== "index"),
+      ),
+    );
+
+    it("names every layer it uses", () => {
+      expect([...used].filter((name) => !tokens.includes(name))).toEqual([]);
+    });
+
+    it("keeps no token nothing references", () => {
+      expect(tokens.filter((name) => !used.has(name))).toEqual([]);
+    });
+
+    it("reserves raw numbers for stacking inside a component", () => {
+      const offenders = sources.flatMap(({ file, body }) =>
+        [...body.matchAll(/\B(-?)z-\[?(\d+)\]?\b/g)]
+          .filter((m) => m[1] === "-" || Number(m[2]) > LOCAL_STACKING_MAX)
+          .map((m) => `${file.split("/src/")[1]}: ${m[0]}`),
+      );
+      expect(offenders).toEqual([]);
+    });
   });
 
   it("focus is expressed only through the shared utility", () => {

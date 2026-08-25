@@ -1,3 +1,5 @@
+export const WELCOME_SEEN_KEY = "lux.welcome.seen";
+
 export const POLLED_CACHE_PREFIX = "lux:polled:";
 export const PAGED_CACHE_PREFIX = "lux:paged:";
 export const RESOURCE_CACHE_PREFIXES = [POLLED_CACHE_PREFIX, PAGED_CACHE_PREFIX];

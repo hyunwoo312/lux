@@ -21,7 +21,7 @@ export function Wallpaper({ imageUrl }: { imageUrl: string | null }) {
   const showImage = imageUrl !== null && !isGenerated;
 
   return (
-    <div aria-hidden className="fixed inset-0 -z-10">
+    <div aria-hidden className="fixed inset-0 z-wallpaper">
       <div className="wallpaper absolute inset-0" />
       {isGenerated && <GeneratedWallpaper />}
       <AnimatePresence>

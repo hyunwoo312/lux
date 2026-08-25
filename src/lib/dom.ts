@@ -7,3 +7,7 @@ export function isEditableTarget(target: EventTarget | null): boolean {
     target.tagName === "SELECT"
   );
 }
+
+export function isModalLayerOpen(): boolean {
+  return document.body.style.pointerEvents === "none";
+}

@@ -46,7 +46,7 @@ export const useSettingsStore = create<SettingsState>()(
       name: "settings",
       storage: gatedStorage,
       version: 1,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => () => gatedStorage.open(useSettingsStore),
       partialize: (state) => ({ tab: state.tab, sidebarCollapsed: state.sidebarCollapsed }),
       merge: (persisted, current) =>
         mergePersisted("settings", persistedSchema, persisted, current, (parsed) => ({

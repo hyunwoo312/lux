@@ -80,6 +80,7 @@
   --focus-gap: oklch(1 0 0 / 0.55);
   --press-row: oklch(0 0 0 / 0.08);
   --grid-line: oklch(0 0 0 / 0.2);
+  --scrollbar-width: 11px;
   --scrollbar-thumb: oklch(0 0 0 / 0.2);
   --scrollbar-thumb-hover: oklch(0 0 0 / 0.3);
 
@@ -326,7 +327,6 @@
   --z-index-widget-content: 10;
   --z-index-widget-chrome: 20;
   --z-index-widget-overlay: 30;
-  --z-index-sticky: 40;
   --z-index-overlay: 50;
   --z-index-modal: 60;
   --z-index-toast: 70;
@@ -413,8 +413,8 @@
   }
 
   ::-webkit-scrollbar {
-    width: 11px;
-    height: 11px;
+    width: var(--scrollbar-width);
+    height: var(--scrollbar-width);
   }
 
   ::-webkit-scrollbar-track {
@@ -494,6 +494,10 @@
     animation: none;
     mask-image: none;
   }
+}
+
+@utility scrollbar-gutter {
+  scrollbar-gutter: stable;
 }
 
 @utility scrollbar-inset {
@@ -842,6 +846,19 @@
   .live-pulse {
     animation: none;
   }
+}
+
+@keyframes toast-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@utility toast-countdown {
+  animation: toast-countdown linear both;
 }
 
 @keyframes task-reveal {

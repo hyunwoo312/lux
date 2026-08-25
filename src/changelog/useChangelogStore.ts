@@ -32,7 +32,7 @@ export const useChangelogStore = create<ChangelogState>()(
       name: "changelog",
       storage: gatedStorage,
       version: 1,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => () => gatedStorage.open(useChangelogStore),
       partialize: (state) => ({ lastSeenVersion: state.lastSeenVersion }),
       merge: (persisted, current) => {
         const parsed = persistedSchema.safeParse(persisted);

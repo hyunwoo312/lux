@@ -1,12 +1,14 @@
 import { useEffect } from "react";
 
-const EDITABLE_SELECTOR = 'input, textarea, [contenteditable]:not([contenteditable="false"])';
+const NATIVE_MENU_SELECTOR =
+  'a[href], img, input, textarea, [contenteditable]:not([contenteditable="false"])';
 
 export function useDisableContextMenu() {
   useEffect(() => {
     const block = (event: MouseEvent) => {
       const target = event.target as Element | null;
-      if (target?.closest(EDITABLE_SELECTOR)) return;
+      if (target?.closest(NATIVE_MENU_SELECTOR)) return;
+      if (!document.getSelection()?.isCollapsed) return;
       event.preventDefault();
     };
     document.addEventListener("contextmenu", block);

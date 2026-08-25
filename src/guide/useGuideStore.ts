@@ -1,30 +1,40 @@
 import { create } from "zustand";
 import { getLocal, setLocal } from "@/lib/local-store";
 import { FIRST_ARTICLE_ID } from "@/guide/content";
+import { showToast, useToastStore } from "@/stores/useToastStore";
 
 export const GUIDE_NUDGED_KEY = "lux.guide.nudged";
+const NUDGE_KEY = "guide-nudge";
 
 type HelpState = {
   open: boolean;
   articleId: string;
-  nudgeOpen: boolean;
   openGuide: (articleId?: string) => void;
   closeGuide: () => void;
-  dismissNudge: () => void;
   setArticle: (articleId: string) => void;
 };
 
 export const useGuideStore = create<HelpState>()((set) => ({
   open: false,
   articleId: FIRST_ARTICLE_ID,
-  nudgeOpen: false,
-  openGuide: (articleId) =>
-    set({ open: true, nudgeOpen: false, articleId: articleId ?? FIRST_ARTICLE_ID }),
-  closeGuide: () => {
-    const firstTime = getLocal(GUIDE_NUDGED_KEY) === null;
-    if (firstTime) setLocal(GUIDE_NUDGED_KEY, "1");
-    set({ open: false, nudgeOpen: firstTime });
+  openGuide: (articleId) => {
+    const toasts = useToastStore.getState();
+    if (toasts.toast?.key === NUDGE_KEY) toasts.expire();
+    set({ open: true, articleId: articleId ?? FIRST_ARTICLE_ID });
   },
-  dismissNudge: () => set({ nudgeOpen: false }),
+  closeGuide: () => {
+    set({ open: false });
+    if (getLocal(GUIDE_NUDGED_KEY) !== null) return;
+    setLocal(GUIDE_NUDGED_KEY, "1");
+    showToast({
+      key: NUDGE_KEY,
+      message: "The guide is in the toolbar whenever you need it.",
+      action: {
+        kind: "action",
+        label: "Reopen",
+        run: () => useGuideStore.getState().openGuide(),
+      },
+    });
+  },
   setArticle: (articleId) => set({ articleId }),
 }));

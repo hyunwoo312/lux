@@ -17,7 +17,7 @@ const base = DEFAULT_IMAGE_CONFIG;
 function renderWidget() {
   return render(
     <WidgetInstanceContext.Provider value={ID}>
-      <ImageWidget editing={false} />
+      <ImageWidget editing={false} justAdded={false} />
     </WidgetInstanceContext.Provider>,
   );
 }

@@ -4,8 +4,7 @@ import { z } from "zod";
 import type { Layout, LayoutItem } from "react-grid-layout";
 import { mergePersisted, tolerantArray } from "@/lib/persist";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { getLocal } from "@/lib/local-store";
-import { WELCOME_SEEN_KEY } from "@/onboarding";
+import { getLocal, WELCOME_SEEN_KEY } from "@/lib/local-store";
 import {
   findFirstOpenPosition,
   findNearestOpenPosition,
@@ -16,6 +15,7 @@ import { pruneInstance } from "@/widgets/core/instanceCleanup";
 import type { WidgetInstance, WidgetPlugin, WidgetType } from "@/widgets/core/types";
 import { WIDGET_TYPES } from "@/widgets/core/types";
 import { getWidgetPlugin } from "@/widgets/registry";
+import { showToast } from "@/stores/useToastStore";
 
 const DEFAULT_COLUMNS = 12;
 const CONTENT_MAX_WIDTH = 2400;
@@ -45,16 +45,6 @@ function starterColumns(): number {
 
 export type PendingRemoval = { instance: WidgetInstance; layoutItem: LayoutItem };
 
-export const UNDO_WINDOW_MS = 8000;
-
-let undoTimer: number | undefined;
-
-function clearUndoTimer(): void {
-  if (undoTimer === undefined) return;
-  clearTimeout(undoTimer);
-  undoTimer = undefined;
-}
-
 type DashboardState = {
   widgets: WidgetInstance[];
   layout: Layout;
@@ -65,7 +55,7 @@ type DashboardState = {
   addWidget: (type: WidgetType, position?: { x: number; y: number }) => void;
   removeWidget: (id: string) => void;
   undoRemove: () => void;
-  settlePendingRemoval: () => void;
+  settlePendingRemoval: (id?: string) => void;
   setLayout: (layout: Layout) => void;
   setColumns: (columns: number) => void;
   toggleEditing: () => void;
@@ -180,20 +170,26 @@ export const useDashboardStore = create<DashboardState>()(
           };
         }),
       removeWidget: (id) => {
-        get().settlePendingRemoval();
-        const state = get();
-        const instance = state.widgets.find((entry) => entry.id === id);
-        const layoutItem = state.layout.find((entry) => entry.i === id);
+        const { widgets, layout } = get();
+        const instance = widgets.find((entry) => entry.id === id);
+        const layoutItem = layout.find((entry) => entry.i === id);
         if (!instance || !layoutItem) return;
+        get().settlePendingRemoval();
         set({
-          widgets: state.widgets.filter((entry) => entry.id !== id),
-          layout: state.layout.filter((entry) => entry.i !== id),
+          widgets: widgets.filter((entry) => entry.id !== id),
+          layout: layout.filter((entry) => entry.i !== id),
           pendingRemoval: { instance, layoutItem },
         });
-        undoTimer = window.setTimeout(() => get().settlePendingRemoval(), UNDO_WINDOW_MS);
+        const plugin = getWidgetPlugin(instance.type);
+        showToast({
+          key: instance.id,
+          message: `${plugin?.name ?? "Widget"} removed`,
+          note: plugin?.removalNote?.(instance.id) ?? undefined,
+          action: { kind: "undo", run: () => get().undoRemove() },
+          onExpire: () => get().settlePendingRemoval(instance.id),
+        });
       },
       undoRemove: () => {
-        clearUndoTimer();
         const pending = get().pendingRemoval;
         if (!pending) return;
         set((state) => {
@@ -205,10 +201,10 @@ export const useDashboardStore = create<DashboardState>()(
           };
         });
       },
-      settlePendingRemoval: () => {
-        clearUndoTimer();
+      settlePendingRemoval: (id) => {
         const pending = get().pendingRemoval;
         if (!pending) return;
+        if (id !== undefined && pending.instance.id !== id) return;
         pruneInstance(pending.instance.id);
         set({ pendingRemoval: null });
       },
@@ -242,7 +238,7 @@ export const useDashboardStore = create<DashboardState>()(
       storage: gatedStorage,
       version: 1,
       onRehydrateStorage: () => (state) => {
-        gatedStorage.open();
+        if (gatedStorage.open(useDashboardStore) === "resync") return;
         state?.settlePendingRemoval();
         state?.seedStarterIfFirstRun();
       },

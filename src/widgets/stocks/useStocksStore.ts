@@ -203,7 +203,7 @@ export const useStocksStore = create<StocksState>()(
       name: "widget:stocks",
       storage: gatedStorage,
       version: 1,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => () => gatedStorage.open(useStocksStore),
       partialize: (state) => ({
         byInstance: Object.fromEntries(
           Object.entries(state.byInstance).map(([id, data]) => [

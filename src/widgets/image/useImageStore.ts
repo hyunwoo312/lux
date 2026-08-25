@@ -244,7 +244,7 @@ export const useImageStore = create<ImageState>()(
       discardUnreadable: () => {
         if (!get().unreadable) return;
         set({ unreadable: false });
-        gatedStorage.open();
+        gatedStorage.open(useImageStore);
       },
       forgetOrphanedAssets: async () => {
         if (get().unreadable) return;
@@ -277,7 +277,7 @@ export const useImageStore = create<ImageState>()(
       version: 3,
       onRehydrateStorage: () => (state) => {
         if (state?.unreadable) return;
-        gatedStorage.open();
+        if (gatedStorage.open(useImageStore) === "resync") return;
         void state?.sanitizeAssets().then(() => state.forgetOrphanedAssets());
       },
       partialize: (state) => ({ byInstance: state.byInstance }),

@@ -36,6 +36,7 @@ export type WidgetInstance = {
 
 export type WidgetContentProps = {
   editing: boolean;
+  justAdded: boolean;
 };
 
 export type WidgetLock = {

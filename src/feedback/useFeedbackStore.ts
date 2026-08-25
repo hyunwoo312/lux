@@ -53,7 +53,7 @@ export const useFeedbackStore = create<FeedbackState>()(
       name: "lux:feedback",
       storage: gatedStorage,
       version: 1,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => () => gatedStorage.open(useFeedbackStore),
       partialize: (state) => ({
         draft: state.draft,
         lastSentAt: state.lastSentAt,

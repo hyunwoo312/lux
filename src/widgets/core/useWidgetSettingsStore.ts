@@ -58,7 +58,7 @@ export const useWidgetSettingsStore = create<WidgetSettingsState>()(
       name: "widget-settings",
       storage: gatedStorage,
       version: 1,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => () => gatedStorage.open(useWidgetSettingsStore),
       partialize: (state) => ({
         settings: state.settings,
         surfacePreference: state.surfacePreference,

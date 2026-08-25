@@ -53,7 +53,7 @@ export const useNoteStore = create<NoteState>()(
       name: "widget:note",
       storage: gatedStorage,
       version: 2,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => () => gatedStorage.open(useNoteStore),
       partialize: (state) => ({ byInstance: state.byInstance }),
       migrate: (persisted, version) => {
         if (version >= 2) return persisted;

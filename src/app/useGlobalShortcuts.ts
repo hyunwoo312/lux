@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { matchesAnyShortcut } from "@/lib/shortcuts";
-import { isEditableTarget } from "@/lib/dom";
+import { isEditableTarget, isModalLayerOpen } from "@/lib/dom";
 import {
   SHORTCUT_DEFINITIONS,
   useShortcutsStore,
@@ -9,6 +9,7 @@ import {
 import { useThemeStore } from "@/stores/useThemeStore";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
+import { useToastStore } from "@/stores/useToastStore";
 import { useSettingsStore } from "@/settings";
 import { useGuideStore } from "@/guide";
 import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
@@ -31,29 +32,40 @@ const HANDLERS: Record<ShortcutAction, () => void> = {
     const settings = useAppSettingsStore.getState();
     settings.setShowGridLines(!settings.showGridLines);
   },
+  undo: () => {
+    const toasts = useToastStore.getState();
+    if (toasts.toast?.action?.kind === "undo") toasts.runAction();
+  },
 };
+
+function dismissTopLayer(): boolean {
+  const toasts = useToastStore.getState();
+  if (toasts.toast) {
+    toasts.expire();
+    return true;
+  }
+  const dashboard = useDashboardStore.getState();
+  if (dashboard.editing) {
+    dashboard.toggleEditing();
+    return true;
+  }
+  return false;
+}
 
 export function useGlobalShortcuts() {
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.defaultPrevented) return;
-      const target = event.target;
-      const editable = isEditableTarget(target);
+      if (event.defaultPrevented || isModalLayerOpen()) return;
+      if (isEditableTarget(event.target)) return;
 
-      if (event.key === "Escape" && !editable) {
-        const dashboard = useDashboardStore.getState();
-        if (dashboard.editing && !useSettingsStore.getState().open) {
-          event.preventDefault();
-          dashboard.toggleEditing();
-        }
+      if (event.key === "Escape") {
+        if (dismissTopLayer()) event.preventDefault();
         return;
       }
 
-      if (editable) return;
-
-      const state = useShortcutsStore.getState();
+      const bindings = useShortcutsStore.getState();
       for (const definition of SHORTCUT_DEFINITIONS) {
-        if (matchesAnyShortcut(event, state[definition.id])) {
+        if (matchesAnyShortcut(event, bindings[definition.id])) {
           event.preventDefault();
           HANDLERS[definition.id]();
           return;

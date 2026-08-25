@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QuickAccessWidget } from "@/widgets/quick-access/QuickAccessWidget";
 import { useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
+import { useToastStore } from "@/stores/useToastStore";
 
 const ID = "qa-1";
 
@@ -29,7 +30,7 @@ function renderTab() {
   return render(
     <WidgetInstanceContext.Provider value={ID}>
       <TooltipProvider>
-        <QuickAccessWidget editing={false} />
+        <QuickAccessWidget editing={false} justAdded={false} />
       </TooltipProvider>
     </WidgetInstanceContext.Provider>,
   );
@@ -63,43 +64,16 @@ describe("HomeTab add form", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("web address");
   });
 
-  it("offers an undo that puts the pin back", () => {
+  it("hands a removed pin to the global undo", () => {
     renderTab();
 
     fireEvent.click(screen.getByLabelText("Remove GitHub"));
     expect(screen.queryByText("GitHub")).not.toBeInTheDocument();
+    expect(useToastStore.getState().toast?.message).toBe("Removed GitHub");
 
-    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+    act(() => useToastStore.getState().runAction());
 
     expect(screen.getByText("GitHub")).toBeInTheDocument();
-  });
-
-  it("puts the pin back where it was, not at the end", () => {
-    useQuickAccessStore.setState({
-      byInstance: {
-        [ID]: {
-          links: [
-            { id: "a", title: "One", url: "https://one.com/" },
-            { id: "b", title: "Two", url: "https://two.com/" },
-            { id: "c", title: "Three", url: "https://three.com/" },
-          ],
-          activeTab: "home",
-          openBehavior: "currentTab",
-          view: "list",
-          bookmarkPath: [],
-          showTopSites: false,
-          showOpenTabs: false,
-          showRecentlyClosed: false,
-        },
-      },
-    });
-    renderTab();
-
-    fireEvent.click(screen.getByLabelText("Remove Two"));
-    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
-
-    const titles = screen.getAllByText(/^(One|Two|Three)$/).map((node) => node.textContent);
-    expect(titles).toEqual(["One", "Two", "Three"]);
   });
 });
 

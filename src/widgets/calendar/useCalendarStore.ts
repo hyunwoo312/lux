@@ -592,7 +592,7 @@ export const useCalendarStore = create<CalendarState>()(
       name: "widget:calendar",
       storage: gatedStorage,
       version: 2,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => () => gatedStorage.open(useCalendarStore),
       partialize: (state) => ({
         byInstance: Object.fromEntries(
           Object.entries(state.byInstance).map(([id, data]) => [

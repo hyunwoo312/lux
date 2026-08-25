@@ -39,25 +39,36 @@ export async function remove(name: string): Promise<void> {
   }
 }
 
-export function watchStorage(name: string, onChange: () => void): () => void {
+export function watchStorage(name: string, onChange: (value: unknown) => void): () => void {
   if (typeof chrome === "undefined" || !chrome.storage?.onChanged) return () => {};
   const key = namespaced(name);
   const listener = (
     changes: Record<string, chrome.storage.StorageChange>,
     areaName: chrome.storage.AreaName,
   ) => {
-    if (areaName === "local" && key in changes) onChange();
+    const change = changes[key];
+    if (areaName === "local" && change) onChange(change.newValue);
   };
   chrome.storage.onChanged.addListener(listener);
   return () => chrome.storage.onChanged.removeListener(listener);
 }
 
-type GatedStorage<S> = PersistStorage<S> & { open: () => void };
+type PersistedStore = { persist: { rehydrate: () => void | Promise<void> } };
+
+type StorageOpen = "boot" | "resync";
+
+type GatedStorage<S> = PersistStorage<S> & { open: (store: PersistedStore) => StorageOpen };
+
+const serialize = (value: unknown) => JSON.stringify(value ?? null);
 
 export function createGatedChromeStorage<S>(): GatedStorage<S> {
   let hydrated = false;
+  let watching = false;
+  let storeName: string | undefined;
+  const selfWrites: string[] = [];
   return {
     getItem: async (name) => {
+      storeName = name;
       const key = namespaced(name);
       try {
         const stored = await chrome.storage.local.get(key);
@@ -73,13 +84,29 @@ export function createGatedChromeStorage<S>(): GatedStorage<S> {
       }
     },
     setItem: async (name, value) => {
-      if (hydrated) await write(name, value);
+      if (!hydrated) return;
+      selfWrites.push(serialize(value));
+      await write(name, value);
     },
     removeItem: async (name) => {
-      if (hydrated) await remove(name);
+      if (!hydrated) return;
+      selfWrites.push(serialize(undefined));
+      await remove(name);
     },
-    open: () => {
+    open: (store) => {
+      const opening: StorageOpen = hydrated ? "resync" : "boot";
       hydrated = true;
+      if (watching || storeName === undefined) return opening;
+      watching = true;
+      watchStorage(storeName, (value) => {
+        if (selfWrites[0] === serialize(value)) {
+          selfWrites.shift();
+          return;
+        }
+        selfWrites.length = 0;
+        void store.persist.rehydrate();
+      });
+      return opening;
     },
   };
 }

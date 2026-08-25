@@ -1,7 +1,5 @@
 import { create } from "zustand";
-import { getLocal, setLocal } from "@/lib/local-store";
-
-export const WELCOME_SEEN_KEY = "lux.welcome.seen";
+import { getLocal, setLocal, WELCOME_SEEN_KEY } from "@/lib/local-store";
 
 type OnboardingState = {
   welcomeOpen: boolean;

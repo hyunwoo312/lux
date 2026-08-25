@@ -8,6 +8,7 @@ import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { firstGrapheme } from "@/widgets/quick-access/lib/icon";
 import { hostnameOf, normalizeUrl } from "@/widgets/quick-access/lib/url";
+import { showToast } from "@/stores/useToastStore";
 import type {
   LinkResult,
   OpenBehavior,
@@ -48,7 +49,7 @@ type QuickAccessState = {
   ) => LinkResult;
   removeLink: (instanceId: string, id: string) => void;
   undoRemove: (instanceId: string) => void;
-  dismissRemoved: (instanceId: string) => void;
+  dismissRemoved: (instanceId: string, linkId?: string) => void;
   togglePin: (instanceId: string, title: string, url: string) => void;
   setLinks: (instanceId: string, links: QuickLink[]) => void;
   setActiveTab: (instanceId: string, tab: QuickAccessTab) => void;
@@ -185,7 +186,19 @@ export const useQuickAccessStore = create<QuickAccessState>()(
         );
         return "ok";
       },
-      removeLink: (instanceId, id) => set((state) => removeById(state, instanceId, id)),
+      removeLink: (instanceId, id) => {
+        const link = (get().byInstance[instanceId] ?? DEFAULT_DATA).links.find(
+          (entry) => entry.id === id,
+        );
+        if (!link) return;
+        set((state) => removeById(state, instanceId, id));
+        showToast({
+          key: `${instanceId}:${id}`,
+          message: `Removed ${link.title}`,
+          action: { kind: "undo", run: () => get().undoRemove(instanceId) },
+          onExpire: () => get().dismissRemoved(instanceId, id),
+        });
+      },
       undoRemove: (instanceId) =>
         set((state) => {
           const entry = state.removed[instanceId];
@@ -200,8 +213,12 @@ export const useQuickAccessStore = create<QuickAccessState>()(
             removed: { ...state.removed, [instanceId]: undefined },
           };
         }),
-      dismissRemoved: (instanceId) =>
-        set((state) => ({ removed: { ...state.removed, [instanceId]: undefined } })),
+      dismissRemoved: (instanceId, linkId) =>
+        set((state) => {
+          const entry = state.removed[instanceId];
+          if (!entry || (linkId !== undefined && entry.link.id !== linkId)) return state;
+          return { removed: { ...state.removed, [instanceId]: undefined } };
+        }),
       togglePin: (instanceId, title, url) =>
         set((state) => {
           const normalized = normalizeUrl(url);
@@ -245,7 +262,7 @@ export const useQuickAccessStore = create<QuickAccessState>()(
       name: "widget:quick-access",
       storage: gatedStorage,
       version: 2,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => () => gatedStorage.open(useQuickAccessStore),
       partialize: (state) => ({ byInstance: state.byInstance }),
       migrate: (persisted, version) => {
         if (version >= 2) return persisted;

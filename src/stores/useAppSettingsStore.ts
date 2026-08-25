@@ -74,7 +74,7 @@ export const useAppSettingsStore = create<AppSettingsState>()(
       name: "app-settings",
       storage: gatedStorage,
       version: 1,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => () => gatedStorage.open(useAppSettingsStore),
       partialize: (state) => ({
         clock24h: state.clock24h,
         showClock: state.showClock,

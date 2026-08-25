@@ -61,7 +61,7 @@ export const useSpotifyStore = create<SpotifyState>()(
       name: "widget:spotify",
       storage: gatedStorage,
       version: 2,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => () => gatedStorage.open(useSpotifyStore),
       partialize: (state) => ({ byInstance: state.byInstance }),
       migrate: (persisted, version) => {
         if (version >= 2) return persisted;

@@ -8,7 +8,10 @@ function createChromeMock() {
   >();
 
   function emitChange(changes: Record<string, { newValue?: unknown }>, areaName: string) {
-    for (const listener of changeListeners) listener(changes, areaName);
+    const listeners = [...changeListeners];
+    setTimeout(() => {
+      for (const listener of listeners) listener(changes, areaName);
+    }, 0);
   }
 
   return {
@@ -31,10 +34,20 @@ function createChromeMock() {
           return Object.fromEntries(list.filter((k) => store.has(k)).map((k) => [k, store.get(k)]));
         }),
         set: vi.fn(async (items: Record<string, unknown>) => {
-          for (const [k, v] of Object.entries(items)) store.set(k, v);
+          const changes: Record<string, { newValue?: unknown }> = {};
+          for (const [k, v] of Object.entries(items)) {
+            store.set(k, v);
+            changes[k] = { newValue: v };
+          }
+          emitChange(changes, "local");
         }),
         remove: vi.fn(async (keys: string | string[]) => {
-          for (const k of Array.isArray(keys) ? keys : [keys]) store.delete(k);
+          const changes: Record<string, { newValue?: unknown }> = {};
+          for (const k of Array.isArray(keys) ? keys : [keys]) {
+            store.delete(k);
+            changes[k] = {};
+          }
+          emitChange(changes, "local");
         }),
         clear: vi.fn(async () => store.clear()),
       },

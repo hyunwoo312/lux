@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { reconcilePersisted, UNDO_WINDOW_MS, useDashboardStore } from "@/stores/useDashboardStore";
-import { WELCOME_SEEN_KEY } from "@/onboarding";
+import { reconcilePersisted, useDashboardStore } from "@/stores/useDashboardStore";
+import { WELCOME_SEEN_KEY } from "@/lib/local-store";
 import { collides } from "@/widgets/core/layout-engine";
 import { useWidgetSettingsStore } from "@/widgets/core/useWidgetSettingsStore";
 
@@ -158,16 +158,27 @@ describe("useDashboardStore", () => {
       expect(useWidgetSettingsStore.getState().settings[id]?.background).toBe("solid");
     });
 
-    it("drops the content once the undo window expires", () => {
-      vi.useFakeTimers();
+    it("keeps the undo alive when another tab reloads this store", async () => {
       const id = addWidgetWithSettings();
       store().removeWidget(id);
 
-      vi.advanceTimersByTime(UNDO_WINDOW_MS);
+      await useDashboardStore.persist.rehydrate();
 
-      expect(store().pendingRemoval).toBeNull();
-      expect(useWidgetSettingsStore.getState().settings[id]).toBeUndefined();
-      vi.useRealTimers();
+      store().undoRemove();
+      expect(store().widgets.map((w) => w.id)).toEqual([id]);
+      expect(useWidgetSettingsStore.getState().settings[id]?.background).toBe("solid");
+    });
+
+    it("ignores a settle aimed at a removal that was already replaced", () => {
+      const first = addWidgetWithSettings();
+      store().addWidget("note");
+      const second = store().widgets[1]?.id ?? "";
+      store().removeWidget(first);
+      store().removeWidget(second);
+
+      store().settlePendingRemoval(first);
+
+      expect(store().pendingRemoval?.instance.id).toBe(second);
     });
 
     it("settles the previous removal when a second widget is removed", () => {
@@ -212,12 +223,11 @@ describe("useDashboardStore", () => {
       expect(restored && moved && collides(restored, moved)).toBe(false);
     });
 
-    it("prunes a removal left pending by a previous page on rehydrate", () => {
+    it("leaves nothing behind when the removal settles", () => {
       const id = addWidgetWithSettings();
       store().removeWidget(id);
 
-      const onRehydrate = useDashboardStore.persist.getOptions().onRehydrateStorage;
-      onRehydrate?.(store())?.(store(), undefined);
+      store().settlePendingRemoval();
 
       expect(store().pendingRemoval).toBeNull();
       expect(useWidgetSettingsStore.getState().settings[id]).toBeUndefined();

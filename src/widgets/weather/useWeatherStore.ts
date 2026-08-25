@@ -241,7 +241,7 @@ export const useWeatherStore = create<WeatherState>()(
       name: "widget:weather",
       storage: gatedStorage,
       version: 3,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => () => gatedStorage.open(useWeatherStore),
       partialize: (state) => ({
         byInstance: Object.fromEntries(
           Object.entries(state.byInstance).map(([id, data]) => [

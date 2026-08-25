@@ -83,7 +83,7 @@ export const useShortcutsStore = create<ShortcutsState>()(
       name: "shortcuts",
       storage: gatedStorage,
       version: 1,
-      onRehydrateStorage: () => () => gatedStorage.open(),
+      onRehydrateStorage: () => () => gatedStorage.open(useShortcutsStore),
       partialize: (state) =>
         Object.fromEntries(
           SHORTCUT_DEFINITIONS.map((definition) => [definition.id, state[definition.id]]),

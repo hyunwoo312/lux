@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { useDashboardStore } from "@/stores/useDashboardStore";
 import { NoteWidget } from "@/widgets/note/NoteWidget";
 import { useNoteStore } from "@/widgets/note/useNoteStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
@@ -9,10 +8,10 @@ import { NOTE_MAX_LENGTH } from "@/widgets/note/types";
 
 const ID = "note-1";
 
-function renderWidget() {
+function renderWidget({ justAdded = false } = {}) {
   return render(
     <WidgetInstanceContext.Provider value={ID}>
-      <NoteWidget />
+      <NoteWidget editing={false} justAdded={justAdded} />
     </WidgetInstanceContext.Provider>,
   );
 }
@@ -29,7 +28,6 @@ describe("NoteWidget", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     useNoteStore.setState({ byInstance: {} });
-    useDashboardStore.setState({ lastAddedId: null });
   });
 
   afterEach(() => {
@@ -64,11 +62,9 @@ describe("NoteWidget", () => {
   });
 
   it("focuses the textarea when it is the freshly added widget", () => {
-    useDashboardStore.setState({ lastAddedId: ID });
-    renderWidget();
+    renderWidget({ justAdded: true });
 
     expect(screen.getByLabelText("Note")).toBe(document.activeElement);
-    expect(useDashboardStore.getState().lastAddedId).toBeNull();
   });
 });
 
@@ -82,7 +78,7 @@ describe("the length cap", () => {
     seedNote("note-legacy", oversized);
     render(
       <WidgetInstanceContext.Provider value="note-legacy">
-        <NoteWidget />
+        <NoteWidget editing={false} justAdded={false} />
       </WidgetInstanceContext.Provider>,
     );
     expect(screen.getByLabelText("Note")).toHaveValue(oversized);

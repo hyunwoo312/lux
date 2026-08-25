@@ -1,5 +1,13 @@
 import type { ComponentType } from "react";
-import { CircleHelp, Grid3x3, LayoutGrid, Settings, SquarePlus, SunMoon } from "lucide-react";
+import {
+  CircleHelp,
+  Grid3x3,
+  LayoutGrid,
+  Settings,
+  SquarePlus,
+  SunMoon,
+  Undo2,
+} from "lucide-react";
 import type { Shortcut } from "@/lib/shortcuts";
 
 const ctrl = (key: string): Shortcut => ({ mod: true, shift: false, alt: false, key });
@@ -48,6 +56,13 @@ export const SHORTCUT_DEFINITIONS = [
     description: "Open the widget palette",
     icon: SquarePlus,
     defaults: [ctrlShift("a")],
+  },
+  {
+    id: "undo",
+    label: "Undo",
+    description: "Reverse the last removal while its message is showing",
+    icon: Undo2,
+    defaults: [ctrl("z")],
   },
   {
     id: "toggleGridLines",

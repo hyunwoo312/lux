@@ -87,7 +87,7 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
               onRemove={() => removeWidget(instance.id)}
             >
               <WidgetErrorBoundary>
-                <Widget editing={editing} />
+                <Widget editing={editing} justAdded={isLastAdded} />
               </WidgetErrorBoundary>
             </BaseWidget>
           </div>
