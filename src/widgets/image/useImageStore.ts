@@ -277,8 +277,11 @@ export const useImageStore = create<ImageState>()(
       version: 3,
       onRehydrateStorage: () => (state) => {
         if (state?.unreadable) return;
-        if (gatedStorage.open(useImageStore) === "resync") return;
-        void state?.sanitizeAssets().then(() => state.forgetOrphanedAssets());
+        if (gatedStorage.open(useImageStore) !== "boot") return;
+        void state
+          ?.sanitizeAssets()
+          .then(() => state.forgetOrphanedAssets())
+          .catch(() => undefined);
       },
       partialize: (state) => ({ byInstance: state.byInstance }),
       migrate: (persisted, version) => {

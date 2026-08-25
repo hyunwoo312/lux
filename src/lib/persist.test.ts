@@ -58,4 +58,23 @@ describe("mergePersisted", () => {
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
   });
+
+  it("says nothing when a store has simply never been written", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const current = { items: [{ id: "kept", n: 0 }] };
+
+    expect(mergePersisted("test", schema, undefined, current, (p) => p)).toBe(current);
+
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it("names what was wrong instead of printing an opaque object", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    mergePersisted("test", schema, "not-an-object", { items: [] }, (p) => p);
+
+    expect(String(warn.mock.calls[0]?.[0])).toMatch(/\(root\)/);
+    warn.mockRestore();
+  });
 });

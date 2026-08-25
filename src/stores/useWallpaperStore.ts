@@ -5,7 +5,7 @@ import { createAssetStore, missingAssetIds, type MediaImageItem } from "@/lib/as
 import { encodeToWebp, isOptimizedMimeType } from "@/lib/image-encode";
 import { getLocal, setLocal } from "@/lib/local-store";
 import { getNextSequentialIndex, getRandomIndexExcluding } from "@/lib/media-rotation";
-import { mergePersisted, tolerantArray } from "@/lib/persist";
+import { keepPersisted, mergePersisted, tolerantArray } from "@/lib/persist";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { GALLERY_WALLPAPERS } from "@/lib/wallpaper-gallery";
 
@@ -302,8 +302,9 @@ export const useWallpaperStore = create<WallpaperState>()(
       name: "wallpaper",
       storage: gatedStorage,
       version: 1,
+      migrate: keepPersisted,
       onRehydrateStorage: () => (state) => {
-        if (gatedStorage.open(useWallpaperStore) === "resync") return;
+        if (gatedStorage.open(useWallpaperStore) !== "boot") return;
         if (!state) return;
         void state
           .sanitizeAssets()

@@ -9,7 +9,7 @@ import {
 } from "@/integrations/types";
 
 const STORAGE_KEY = "integrations";
-const ACCOUNTS_LOCK = "lux:integration-accounts";
+const ACCOUNTS_LOCK = "lux-integration-accounts";
 
 const EMPTY_STORAGE: IntegrationStorageState = { version: 1, accounts: {} };
 

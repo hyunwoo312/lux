@@ -98,12 +98,12 @@ export function StorageTab() {
       <SettingsSection title="Start over">
         <SettingsRow
           title="Reset all settings"
-          description="Clears theme, shortcuts and background images. Widgets, their content and your accounts are kept."
+          description="Clears theme, shortcuts and background images, and shows the welcome again. Widgets, their content and your accounts are kept."
           control={
             <ResetControl
               onReset={resetAllSettings}
               label="Reset"
-              confirmMessage="Reset all settings? Clears theme, shortcuts, and background images. Widgets, content, and accounts are kept."
+              confirmMessage="Reset all settings? Clears theme, shortcuts, and background images, and shows the welcome again. Widgets, content, and accounts are kept."
               doneMessage="Settings reset"
             />
           }

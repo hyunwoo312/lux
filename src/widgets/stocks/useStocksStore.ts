@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
+import { keepPersisted, mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
@@ -203,6 +203,7 @@ export const useStocksStore = create<StocksState>()(
       name: "widget:stocks",
       storage: gatedStorage,
       version: 1,
+      migrate: keepPersisted,
       onRehydrateStorage: () => () => gatedStorage.open(useStocksStore),
       partialize: (state) => ({
         byInstance: Object.fromEntries(

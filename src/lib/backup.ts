@@ -4,7 +4,8 @@ const CHROME_PREFIX = "lux:";
 const LOCAL_PREFIX = "lux.";
 const EXCLUDED = new Set(["lux:integrations", "lux:integration-config"]);
 const MARKER = "lux-settings-backup";
-const BACKUP_VERSION = 2;
+const BACKUP_VERSION = 3;
+const MAX_BACKUP_BYTES = 8 * 1024 * 1024;
 
 type Backup = {
   marker: string;
@@ -77,6 +78,9 @@ function parseBackupFile(text: string): Partial<Backup> {
 }
 
 export async function importSettings(file: File): Promise<void> {
+  if (file.size > MAX_BACKUP_BYTES) {
+    throw new Error("That file is too large to be a Lux settings backup.");
+  }
   const parsed = parseBackupFile(await file.text());
   if (parsed.marker !== MARKER || !parsed.chromeLocal || !parsed.local) {
     throw new Error("Not a valid Lux settings file.");

@@ -115,7 +115,7 @@ export const GENERATED_SETTINGS: GeneratedSetting[] = [
     section: "Start over",
     tab: "storage",
     description:
-      "Clears theme, shortcuts and background images. Widgets, their content and your accounts are kept.",
+      "Clears theme, shortcuts and background images, and shows the welcome again. Widgets, their content and your accounts are kept.",
   },
   {
     label: "What Lux is storing",

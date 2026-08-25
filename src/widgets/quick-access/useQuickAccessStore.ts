@@ -271,7 +271,7 @@ export const useQuickAccessStore = create<QuickAccessState>()(
         return { byInstance: legacy.success ? { quickAccess: legacy.data } : {} };
       },
       merge: (persisted, current) =>
-        mergePersisted("widget:quickAccess", persistedSchema, persisted, current, (parsed) => ({
+        mergePersisted("widget:quick-access", persistedSchema, persisted, current, (parsed) => ({
           ...current,
           byInstance: parsed.byInstance,
         })),

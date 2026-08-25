@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { mergePersisted, tolerantRecord } from "@/lib/persist";
+import { keepPersisted, mergePersisted, tolerantRecord } from "@/lib/persist";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance } from "@/widgets/core/byInstance";
 
@@ -55,16 +55,17 @@ export const useWidgetSettingsStore = create<WidgetSettingsState>()(
       removeInstance: (id) => set((state) => ({ settings: dropInstance(state.settings, id) })),
     }),
     {
-      name: "widget-settings",
+      name: "widget:settings",
       storage: gatedStorage,
       version: 1,
+      migrate: keepPersisted,
       onRehydrateStorage: () => () => gatedStorage.open(useWidgetSettingsStore),
       partialize: (state) => ({
         settings: state.settings,
         surfacePreference: state.surfacePreference,
       }),
       merge: (persisted, current) =>
-        mergePersisted("widget-settings", persistedSchema, persisted, current, (parsed) => ({
+        mergePersisted("widget:settings", persistedSchema, persisted, current, (parsed) => ({
           ...current,
           settings: parsed.settings,
           surfacePreference: parsed.surfacePreference,

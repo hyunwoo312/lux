@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { mergePersisted } from "@/lib/persist";
+import { keepPersisted, mergePersisted } from "@/lib/persist";
 import { SETTINGS_TABS, type SettingsTab } from "@/settings/tabsMeta";
 
 export { SETTINGS_TABS, type SettingsTab };
@@ -46,6 +46,7 @@ export const useSettingsStore = create<SettingsState>()(
       name: "settings",
       storage: gatedStorage,
       version: 1,
+      migrate: keepPersisted,
       onRehydrateStorage: () => () => gatedStorage.open(useSettingsStore),
       partialize: (state) => ({ tab: state.tab, sidebarCollapsed: state.sidebarCollapsed }),
       merge: (persisted, current) =>

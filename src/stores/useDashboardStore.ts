@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import type { Layout, LayoutItem } from "react-grid-layout";
-import { mergePersisted, tolerantArray } from "@/lib/persist";
+import { keepPersisted, mergePersisted, tolerantArray } from "@/lib/persist";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { DASHBOARD_SEEDED_KEY, getLocal, setLocal } from "@/lib/local-store";
 import {
@@ -256,8 +256,9 @@ export const useDashboardStore = create<DashboardState>()(
       name: "dashboard",
       storage: gatedStorage,
       version: 1,
+      migrate: keepPersisted,
       onRehydrateStorage: () => (state) => {
-        if (gatedStorage.open(useDashboardStore) === "resync") return;
+        if (gatedStorage.open(useDashboardStore) !== "boot") return;
         state?.settlePendingRemoval();
         state?.seedStarterIfFirstRun();
       },

@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { mergePersisted } from "@/lib/persist";
+import { keepPersisted, mergePersisted } from "@/lib/persist";
 import { shortcutsEqual, type Shortcut } from "@/lib/shortcuts";
 import {
   SHORTCUT_DEFAULTS,
@@ -83,6 +83,7 @@ export const useShortcutsStore = create<ShortcutsState>()(
       name: "shortcuts",
       storage: gatedStorage,
       version: 1,
+      migrate: keepPersisted,
       onRehydrateStorage: () => () => gatedStorage.open(useShortcutsStore),
       partialize: (state) =>
         Object.fromEntries(

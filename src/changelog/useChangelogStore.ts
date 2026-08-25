@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
+import { keepPersisted, mergePersisted } from "@/lib/persist";
 import { createGatedChromeStorage, read, remove } from "@/lib/storage";
 
 function readCurrentVersion(): string {
@@ -32,13 +33,14 @@ export const useChangelogStore = create<ChangelogState>()(
       name: "changelog",
       storage: gatedStorage,
       version: 1,
+      migrate: keepPersisted,
       onRehydrateStorage: () => () => gatedStorage.open(useChangelogStore),
       partialize: (state) => ({ lastSeenVersion: state.lastSeenVersion }),
-      merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(persisted);
-        if (!parsed.success) return current;
-        return { ...current, ...parsed.data };
-      },
+      merge: (persisted, current) =>
+        mergePersisted("changelog", persistedSchema, persisted, current, (parsed) => ({
+          ...current,
+          ...parsed,
+        })),
     },
   ),
 );

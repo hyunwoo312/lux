@@ -8,7 +8,7 @@ import {
 } from "@/widgets/news/lib/trend-regions";
 import type { RankMap } from "@/widgets/news/lib/trend-movement";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
+import { keepPersisted, mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
@@ -292,6 +292,7 @@ export const useNewsStore = create<NewsState>()(
       name: "widget:news",
       storage: gatedStorage,
       version: 1,
+      migrate: keepPersisted,
       onRehydrateStorage: () => () => gatedStorage.open(useNewsStore),
       partialize: (state) => ({
         byInstance: state.byInstance,

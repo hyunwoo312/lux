@@ -36,6 +36,13 @@ describe("importSettings", () => {
     await expect(importSettings(file)).rejects.toThrow(/newer version/i);
   });
 
+  it("refuses a file too large to be a settings backup", async () => {
+    const huge = new File(["x"], "huge.json", { type: "application/json" });
+    Object.defineProperty(huge, "size", { value: 9 * 1024 * 1024 });
+
+    await expect(importSettings(huge)).rejects.toThrow(/too large/);
+  });
+
   it("rejects a file that is not a Lux settings backup", async () => {
     const file = makeFile({ hello: "world" });
     await expect(importSettings(file)).rejects.toThrow(/valid Lux settings file/i);

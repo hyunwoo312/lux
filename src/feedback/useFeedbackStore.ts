@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
+import { keepPersisted, mergePersisted } from "@/lib/persist";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { FEEDBACK_CATEGORIES, type FeedbackDraft } from "@/feedback/types";
 
@@ -50,19 +51,21 @@ export const useFeedbackStore = create<FeedbackState>()(
       recordSent: (hash, at) => set({ lastSentHash: hash, lastSentAt: at }),
     }),
     {
-      name: "lux:feedback",
+      name: "feedback",
       storage: gatedStorage,
       version: 1,
+      migrate: keepPersisted,
       onRehydrateStorage: () => () => gatedStorage.open(useFeedbackStore),
       partialize: (state) => ({
         draft: state.draft,
         lastSentAt: state.lastSentAt,
         lastSentHash: state.lastSentHash,
       }),
-      merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(persisted);
-        return parsed.success ? { ...current, ...parsed.data } : current;
-      },
+      merge: (persisted, current) =>
+        mergePersisted("feedback", persistedSchema, persisted, current, (parsed) => ({
+          ...current,
+          ...parsed,
+        })),
     },
   ),
 );

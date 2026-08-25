@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { mergePersisted, tolerantRecord } from "@/lib/persist";
+import { keepPersisted, mergePersisted, tolerantRecord } from "@/lib/persist";
 import { CLOCK_DATE_FORMATS, type ClockDateFormat } from "@/lib/clock";
 
 export const REFRESH_CADENCES = ["default", "relaxed", "custom"] as const;
@@ -74,6 +74,7 @@ export const useAppSettingsStore = create<AppSettingsState>()(
       name: "app-settings",
       storage: gatedStorage,
       version: 1,
+      migrate: keepPersisted,
       onRehydrateStorage: () => () => gatedStorage.open(useAppSettingsStore),
       partialize: (state) => ({
         clock24h: state.clock24h,

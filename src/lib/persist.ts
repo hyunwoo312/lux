@@ -30,6 +30,10 @@ export function tolerantRecord<T>(schema: z.ZodType<T>, normalise?: (value: unkn
     .default({} as Record<string, T>);
 }
 
+export function keepPersisted(persisted: unknown): unknown {
+  return persisted;
+}
+
 export function mergePersisted<P, S>(
   name: string,
   schema: z.ZodType<P>,
@@ -37,9 +41,14 @@ export function mergePersisted<P, S>(
   current: S,
   build: (parsed: P) => S,
 ): S {
+  if (persisted === undefined || persisted === null) return current;
+
   const result = schema.safeParse(persisted);
   if (!result.success) {
-    console.warn(`Resetting "${name}" — persisted state could not be read`, result.error.issues);
+    const detail = result.error.issues
+      .map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`)
+      .join("; ");
+    console.warn(`Resetting "${name}" — stored data could not be read. ${detail}`);
     return current;
   }
   return build(result.data);
