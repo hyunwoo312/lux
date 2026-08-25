@@ -1,29 +1,25 @@
 import { z } from "zod";
-import { read, write } from "@/lib/storage";
+import { read, readResult, writeOrThrow } from "@/lib/storage";
 
 const STORAGE_KEY = "integration-config";
 
 const providerConfigSchema = z.object({
-  version: z.literal(1),
   spotifyClientId: z.string().min(1).optional(),
 });
 type ProviderConfigState = z.infer<typeof providerConfigSchema>;
 
-const EMPTY_CONFIG: ProviderConfigState = { version: 1 };
-
-async function readConfig(): Promise<ProviderConfigState> {
-  return read(STORAGE_KEY, providerConfigSchema, EMPTY_CONFIG);
-}
+const EMPTY_CONFIG: ProviderConfigState = {};
 
 export async function readSpotifyClientId(): Promise<string | undefined> {
-  return (await readConfig()).spotifyClientId;
+  return (await read(STORAGE_KEY, providerConfigSchema, EMPTY_CONFIG)).spotifyClientId;
 }
 
 export async function writeSpotifyClientId(clientId: string): Promise<void> {
-  const state = await readConfig();
-  const next = providerConfigSchema.parse({
-    ...state,
-    spotifyClientId: clientId.trim() || undefined,
-  });
-  await write(STORAGE_KEY, next);
+  const current = await readResult(STORAGE_KEY, providerConfigSchema);
+  if (current.status === "unreadable") {
+    throw new Error("Provider settings could not be read, so nothing was changed.");
+  }
+  const state = current.status === "read" ? current.value : EMPTY_CONFIG;
+  const next: ProviderConfigState = { ...state, spotifyClientId: clientId.trim() || undefined };
+  await writeOrThrow(STORAGE_KEY, next);
 }

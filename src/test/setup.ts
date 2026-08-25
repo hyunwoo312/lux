@@ -7,6 +7,24 @@ const hasDom = typeof window !== "undefined";
 
 installChromeMock();
 
+if (typeof navigator !== "undefined" && !navigator.locks) {
+  const chains = new Map<string, Promise<unknown>>();
+  Object.defineProperty(navigator, "locks", {
+    configurable: true,
+    value: {
+      request: (name: string, task: () => Promise<unknown>) => {
+        const previous = chains.get(name) ?? Promise.resolve();
+        const run = previous.then(task, task);
+        chains.set(
+          name,
+          run.catch(() => undefined),
+        );
+        return run;
+      },
+    },
+  });
+}
+
 if (hasDom) {
   await import("@testing-library/jest-dom/vitest");
   globalThis.ResizeObserver ??= class {

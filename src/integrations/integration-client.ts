@@ -8,7 +8,7 @@ import {
 } from "@/integrations/oauth";
 import { withTimeout } from "@/lib/net";
 import { IntegrationReconnectRequiredError } from "@/integrations/errors";
-import { TemporaryAuthError } from "@/lib/net";
+import { InvalidResponseError, TemporaryAuthError } from "@/lib/net";
 import { anilistProvider } from "@/integrations/providers/anilist";
 import { githubProvider } from "@/integrations/providers/github";
 import { googleProvider } from "@/integrations/providers/google";
@@ -237,7 +237,7 @@ async function refreshProviderToken(
 
     return token.accessToken;
   } catch (error) {
-    if (error instanceof TemporaryAuthError) {
+    if (error instanceof TemporaryAuthError || error instanceof InvalidResponseError) {
       await writeAccount({ ...account, status: "connected", lastError: error.message });
       throw error;
     }

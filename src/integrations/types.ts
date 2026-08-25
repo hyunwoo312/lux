@@ -31,7 +31,6 @@ export const integrationAccountSchema = z.object({
 export type IntegrationAccount = z.infer<typeof integrationAccountSchema>;
 
 export const integrationStorageSchema = z.object({
-  version: z.literal(1),
   accounts: z.record(z.string(), integrationAccountSchema),
 });
 export type IntegrationStorageState = z.infer<typeof integrationStorageSchema>;

@@ -267,10 +267,50 @@ export function parseFeed(
     .slice(0, MAX_ITEMS);
 }
 
-async function fetchText(url: string, signal?: AbortSignal): Promise<string> {
-  const response = await fetch(url, { signal: withTimeout(signal) });
+type FeedRevision = { etag: string | null; lastModified: string | null; items: NewsItem[] };
+
+const MAX_TRACKED_FEEDS = 24;
+const revisions = new Map<string, FeedRevision>();
+
+function conditionalHeaders(url: string): HeadersInit | undefined {
+  const known = revisions.get(url);
+  if (!known) return undefined;
+  const headers: Record<string, string> = {};
+  if (known.etag) headers["If-None-Match"] = known.etag;
+  if (known.lastModified) headers["If-Modified-Since"] = known.lastModified;
+  return Object.keys(headers).length > 0 ? headers : undefined;
+}
+
+function rememberRevision(url: string, response: Response, items: NewsItem[]): void {
+  if (revisions.size >= MAX_TRACKED_FEEDS) {
+    const oldest = revisions.keys().next().value;
+    if (oldest !== undefined) revisions.delete(oldest);
+  }
+  revisions.set(url, {
+    etag: response.headers.get("etag"),
+    lastModified: response.headers.get("last-modified"),
+    items,
+  });
+}
+
+async function fetchItems(
+  url: string,
+  label: string,
+  source: NewsSource,
+  signal?: AbortSignal,
+): Promise<NewsItem[]> {
+  const response = await fetch(url, {
+    signal: withTimeout(signal),
+    headers: conditionalHeaders(url),
+  });
+
+  const unchanged = revisions.get(url);
+  if (response.status === 304 && unchanged) return unchanged.items;
+
   ensureOk(response, `News request failed (${response.status})`);
-  return readCappedText(response);
+  const items = parseFeed(await readCappedText(response), label, source);
+  rememberRevision(url, response, items);
+  return items;
 }
 
 export async function fetchFeed(
@@ -279,8 +319,7 @@ export async function fetchFeed(
   topic: NewsTopic,
   signal?: AbortSignal,
 ): Promise<NewsItem[]> {
-  const xml = await fetchText(feedUrl(source, region, topic), signal);
-  return parseFeed(xml, SOURCES[source].label, source);
+  return fetchItems(feedUrl(source, region, topic), SOURCES[source].label, source, signal);
 }
 
 export async function fetchSearch(
@@ -288,8 +327,7 @@ export async function fetchSearch(
   region: NewsRegion,
   signal?: AbortSignal,
 ): Promise<NewsItem[]> {
-  const xml = await fetchText(searchUrl(query, region), signal);
-  return parseFeed(xml, SOURCES.google.label, "google");
+  return fetchItems(searchUrl(query, region), SOURCES.google.label, "google", signal);
 }
 
 const MAX_MERGED_ITEMS = 50;

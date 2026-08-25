@@ -1,4 +1,4 @@
-import { read, watchStorage, writeOrThrow } from "@/lib/storage";
+import { read, readResult, watchStorage, writeOrThrow } from "@/lib/storage";
 import {
   integrationAccountSchema,
   integrationStorageSchema,
@@ -11,19 +11,12 @@ import {
 const STORAGE_KEY = "integrations";
 const ACCOUNTS_LOCK = "lux-integration-accounts";
 
-const EMPTY_STORAGE: IntegrationStorageState = { version: 1, accounts: {} };
+const EMPTY_STORAGE: IntegrationStorageState = { accounts: {} };
 
 const listeners = new Set<() => void>();
 
-let queued: Promise<unknown> = Promise.resolve();
-
 function withAccountsLock<T>(task: () => Promise<T>): Promise<T> {
-  if (typeof navigator !== "undefined" && navigator.locks?.request) {
-    return navigator.locks.request(ACCOUNTS_LOCK, task);
-  }
-  const run = queued.then(task, task);
-  queued = run.catch(() => undefined);
-  return run;
+  return navigator.locks.request(ACCOUNTS_LOCK, task);
 }
 
 export function subscribeAccounts(listener: () => void): () => void {
@@ -50,6 +43,14 @@ async function readStorage(): Promise<IntegrationStorageState> {
   return read(STORAGE_KEY, integrationStorageSchema, EMPTY_STORAGE);
 }
 
+async function readStorageForWrite(): Promise<IntegrationStorageState> {
+  const result = await readResult(STORAGE_KEY, integrationStorageSchema);
+  if (result.status === "unreadable") {
+    throw new Error("Connected accounts could not be read, so nothing was changed.");
+  }
+  return result.status === "read" ? result.value : EMPTY_STORAGE;
+}
+
 async function writeStorage(state: IntegrationStorageState): Promise<void> {
   await writeOrThrow(STORAGE_KEY, integrationStorageSchema.parse(state));
   for (const listener of listeners) listener();
@@ -70,7 +71,7 @@ export async function getAccountByProvider(
 export async function writeAccount(account: IntegrationAccount): Promise<void> {
   const parsed = integrationAccountSchema.parse(account);
   await withAccountsLock(async () => {
-    const state = await readStorage();
+    const state = await readStorageForWrite();
     await writeStorage({
       ...state,
       accounts: { ...state.accounts, [parsed.id]: parsed },
@@ -81,7 +82,7 @@ export async function writeAccount(account: IntegrationAccount): Promise<void> {
 export async function replaceProviderAccount(account: IntegrationAccount): Promise<void> {
   const parsed = integrationAccountSchema.parse(account);
   await withAccountsLock(async () => {
-    const state = await readStorage();
+    const state = await readStorageForWrite();
     const accounts: Record<string, IntegrationAccount> = {};
     for (const [id, existing] of Object.entries(state.accounts)) {
       if (existing.providerId !== parsed.providerId) accounts[id] = existing;
@@ -93,7 +94,7 @@ export async function replaceProviderAccount(account: IntegrationAccount): Promi
 
 export async function deleteAccount(accountId: string): Promise<void> {
   await withAccountsLock(async () => {
-    const state = await readStorage();
+    const state = await readStorageForWrite();
     const accounts = { ...state.accounts };
     delete accounts[accountId];
     await writeStorage({ ...state, accounts });

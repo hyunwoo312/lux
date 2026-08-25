@@ -5,20 +5,30 @@ import { profileReady } from "@/lib/profile";
 const NAMESPACE = "lux";
 const namespaced = (name: string) => `${NAMESPACE}:${name}`;
 
-export async function read<T>(name: string, schema: ZodType<T>, fallback: T): Promise<T> {
+export type ReadResult<T> =
+  | { status: "read"; value: T }
+  | { status: "absent" }
+  | { status: "unreadable" };
+
+export async function readResult<T>(name: string, schema: ZodType<T>): Promise<ReadResult<T>> {
   const key = namespaced(name);
   try {
     await profileReady();
     const stored = await chrome.storage.local.get(key);
-    if (stored[key] === undefined) return fallback;
+    if (stored[key] === undefined) return { status: "absent" };
     const result = schema.safeParse(stored[key]);
-    if (result.success) return result.data;
-    console.warn(`Discarding invalid stored value for "${name}"`, result.error.issues);
-    return fallback;
+    if (result.success) return { status: "read", value: result.data };
+    console.warn(`Refusing to treat unreadable "${name}" as empty`, result.error.issues);
+    return { status: "unreadable" };
   } catch (error) {
-    console.warn(`Failed to read "${name}" from storage`, error);
-    return fallback;
+    console.warn(`Refusing to treat unreadable "${name}" as empty`, error);
+    return { status: "unreadable" };
   }
+}
+
+export async function read<T>(name: string, schema: ZodType<T>, fallback: T): Promise<T> {
+  const result = await readResult(name, schema);
+  return result.status === "read" ? result.value : fallback;
 }
 
 export async function write(name: string, value: unknown): Promise<void> {
