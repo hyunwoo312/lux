@@ -51,7 +51,7 @@ export function App() {
             className="mx-auto flex h-full flex-col gap-4 py-4"
           >
             <Header />
-            <main data-tour="grid" className="scrollbar-gutter min-h-0 flex-1 overflow-y-auto">
+            <main className="scrollbar-gutter min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
               <WidgetGrid />
             </main>
           </motion.div>

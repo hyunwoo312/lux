@@ -1,6 +1,5 @@
-import type { ReactNode } from "react";
 import { motion, useReducedMotion, type Variants } from "motion/react";
-import { ArrowRight, Check, Info, LayoutGrid, Palette, Plug, type LucideIcon } from "lucide-react";
+import { ArrowRight, Info, LayoutGrid, Palette, Plug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGuideStore } from "@/guide";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -12,7 +11,7 @@ import { useOnboardingStore } from "@/onboarding/useOnboardingStore";
 
 const container: Variants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.06, delayChildren: 0.5 } },
+  show: { transition: { staggerChildren: 0.06 } },
 };
 const item: Variants = {
   hidden: { opacity: 0, y: 8 },
@@ -28,7 +27,6 @@ export function Welcome() {
   return (
     <Dialog open={open} onOpenChange={(next) => !next && closeWelcome()}>
       <DialogContent
-        dismissOnClickOutside={false}
         onOpenAutoFocus={(event) => event.preventDefault()}
         className="w-[min(28rem,calc(100vw-2rem))] p-6"
       >
@@ -39,7 +37,7 @@ export function Welcome() {
             className="mx-auto mb-4 size-12 object-contain"
             initial={reduced ? false : { scale: 0, rotate: -120, opacity: 0 }}
             animate={{ scale: 1, rotate: 0, opacity: 1 }}
-            transition={reduced ? { duration: 0 } : { ...SPRING_SOFT, delay: 0.1 }}
+            transition={reduced ? { duration: 0 } : SPRING_SOFT}
           />
 
           <motion.div
@@ -56,35 +54,35 @@ export function Welcome() {
             </motion.div>
 
             <motion.div variants={item} className="flex flex-col gap-3">
-              <Row icon={LayoutGrid} title="Make it yours">
+              <IconRow icon={LayoutGrid} title="Make it yours">
                 Use the toolbar up top to add widgets and edit your layout.
-              </Row>
-              <Row icon={Palette} title="Light or dark" control={<ThemeToggle />}>
+              </IconRow>
+              <IconRow icon={Palette} title="Light or dark" control={<ThemeToggle />}>
                 Switch the whole look — go ahead, try it now
                 <motion.span
                   aria-hidden
                   className="text-primary ml-1 inline-flex align-[-0.15em]"
                   animate={reduced ? undefined : { x: [0, 4, 0] }}
                   transition={
-                    reduced ? undefined : { duration: 1.1, repeat: Infinity, ease: EASE_STANDARD }
+                    reduced ? undefined : { duration: 1.1, repeat: 2, ease: EASE_STANDARD }
                   }
                 >
                   <ArrowRight className="size-3.5" />
                 </motion.span>
-              </Row>
-              <Row icon={Plug} title="Connect your accounts">
-                Connect Calendar, Spotify, GitHub, and AniList from Settings.
-              </Row>
+              </IconRow>
+              <IconRow icon={Plug} title="Connect your accounts">
+                Calendar, GitHub and AniList connect in one step from Settings. Spotify needs a few
+                more.
+              </IconRow>
             </motion.div>
 
             <motion.div
               variants={item}
               className="
-                border-primary/40 bg-primary/10 flex items-start gap-2.5 rounded-lg border px-3
-                py-2.5
+                border-primary/25 bg-primary/8 flex items-start gap-3 rounded-xl border px-3 py-3
               "
             >
-              <Info className="text-primary mt-0.5 size-4 shrink-0" />
+              <Info className="text-primary mt-0.5 size-4 shrink-0" aria-hidden />
               <p className="text-ink text-caption leading-relaxed">
                 <span className="font-semibold">Heads up:</span> the &quot;Customize Chrome /
                 Brave&quot; bar at the bottom of your new tab is your browser&apos;s, not Lux. To
@@ -93,53 +91,23 @@ export function Welcome() {
               </p>
             </motion.div>
 
-            <motion.div variants={item} className="flex items-center justify-between gap-2">
-              <div className="text-micro flex items-center gap-1.5">
-                <span className="text-primary flex items-center gap-1 font-medium">
-                  <Check className="size-3" aria-hidden />
-                  Installed
-                </span>
-                <span aria-hidden className="bg-border h-px w-4" />
-                <span className="text-ink-3">Guide</span>
-                <span aria-hidden className="bg-border h-px w-4" />
-                <span className="text-ink-3">Customize</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button size="lg" variant="ghost" onClick={closeWelcome}>
-                  Skip
-                </Button>
-                <Button
-                  size="lg"
-                  onClick={() => {
-                    closeWelcome();
-                    openGuide();
-                  }}
-                >
-                  Open the guide
-                </Button>
-              </div>
+            <motion.div variants={item} className="flex items-center justify-end gap-2">
+              <Button size="lg" variant="ghost" onClick={closeWelcome}>
+                Skip
+              </Button>
+              <Button
+                size="lg"
+                onClick={() => {
+                  closeWelcome();
+                  openGuide();
+                }}
+              >
+                Open the guide
+              </Button>
             </motion.div>
           </motion.div>
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function Row({
-  icon,
-  title,
-  control,
-  children,
-}: {
-  icon: LucideIcon;
-  title: string;
-  control?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <IconRow icon={icon} title={title} control={control}>
-      {children}
-    </IconRow>
   );
 }

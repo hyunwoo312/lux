@@ -315,7 +315,7 @@ export function WidgetPalette() {
     <PopoverPrimitive.Root open={open} onOpenChange={handleOpenChange}>
       <Tooltip content="Add widget" disabled={open}>
         <PopoverPrimitive.Trigger asChild>
-          <Button data-tour="add-widget" variant="ghost" size="icon-lg" aria-label="Add widget">
+          <Button variant="ghost" size="icon-lg" aria-label="Add widget">
             <motion.span
               animate={{ rotate: open ? 45 : 0 }}
               transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}

@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 import { reconcilePersisted, useDashboardStore } from "@/stores/useDashboardStore";
-import { WELCOME_SEEN_KEY } from "@/lib/local-store";
 import { collides } from "@/widgets/core/layout-engine";
 import { useWidgetSettingsStore } from "@/widgets/core/useWidgetSettingsStore";
 
@@ -111,14 +110,6 @@ describe("useDashboardStore", () => {
           expect(collides(a, b)).toBe(false);
         }
       }
-    });
-
-    it("does not seed once the welcome has been seen", () => {
-      localStorage.setItem(WELCOME_SEEN_KEY, "1");
-
-      store().seedStarterIfFirstRun();
-
-      expect(store().widgets).toHaveLength(0);
     });
 
     it("does not seed over an existing board", () => {
@@ -317,5 +308,42 @@ describe("useDashboardStore", () => {
       expect(result?.widgets).toHaveLength(1);
       expect(result?.layout).toHaveLength(1);
     });
+  });
+});
+
+describe("the starter board", () => {
+  const viewports = [1280, 1440, 1920, 2560, 3440];
+
+  function seedAt(viewportWidth: number) {
+    localStorage.clear();
+    useDashboardStore.setState({ widgets: [], layout: [] });
+    Object.defineProperty(window, "innerWidth", { value: viewportWidth, configurable: true });
+    store().seedStarterIfFirstRun();
+    return store().layout;
+  }
+
+  it("lays every widget out in a block that lines up and stays centred", () => {
+    for (const viewport of viewports) {
+      const layout = seedAt(viewport);
+      const columns = store().columns;
+      const left = Math.min(...layout.map((item) => item.x));
+      const right = Math.max(...layout.map((item) => item.x + item.w));
+
+      expect(layout).toHaveLength(4);
+      expect(new Set(layout.map((item) => item.w)).size).toBe(1);
+      expect(new Set(layout.map((item) => item.x)).size).toBe(2);
+      expect(right).toBeLessThanOrEqual(columns);
+      expect(Math.abs(left - (columns - right))).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("seeds once, and not again after the board is emptied", () => {
+    seedAt(1440);
+    expect(store().widgets).toHaveLength(4);
+
+    useDashboardStore.setState({ widgets: [], layout: [] });
+    store().seedStarterIfFirstRun();
+
+    expect(store().widgets).toHaveLength(0);
   });
 });

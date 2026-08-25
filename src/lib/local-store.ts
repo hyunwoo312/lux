@@ -1,4 +1,5 @@
 export const WELCOME_SEEN_KEY = "lux.welcome.seen";
+export const DASHBOARD_SEEDED_KEY = "lux.dashboard.seeded";
 
 export const POLLED_CACHE_PREFIX = "lux:polled:";
 export const PAGED_CACHE_PREFIX = "lux:paged:";

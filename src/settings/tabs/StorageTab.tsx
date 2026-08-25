@@ -9,6 +9,7 @@ import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useShortcutsStore } from "@/stores/useShortcutsStore";
 import { useAccentStore } from "@/stores/useAccentStore";
 import { useThemeStore } from "@/stores/useThemeStore";
+import { useOnboardingStore } from "@/onboarding";
 import { clearWallpaperAssets, useWallpaperStore } from "@/stores/useWallpaperStore";
 
 function resetAllSettings() {
@@ -18,6 +19,7 @@ function resetAllSettings() {
   useAccentStore.getState().reset();
   void clearWallpaperAssets();
   useWallpaperStore.getState().reset();
+  useOnboardingStore.getState().replayOnNextOpen();
 }
 
 export function StorageTab() {

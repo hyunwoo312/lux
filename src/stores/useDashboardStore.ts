@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { Layout, LayoutItem } from "react-grid-layout";
 import { mergePersisted, tolerantArray } from "@/lib/persist";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { getLocal, WELCOME_SEEN_KEY } from "@/lib/local-store";
+import { DASHBOARD_SEEDED_KEY, getLocal, setLocal } from "@/lib/local-store";
 import {
   findFirstOpenPosition,
   findNearestOpenPosition,
@@ -21,18 +21,13 @@ const DEFAULT_COLUMNS = 12;
 const CONTENT_MAX_WIDTH = 2400;
 const CONTENT_INSET = 100;
 
-const STARTER_WIDGETS: {
-  type: WidgetType;
-  xFraction: number;
-  widthFraction: number;
-  y: number;
-  h: number;
-}[] = [
-  { type: "quickAccess", xFraction: 0.0, widthFraction: 0.34, y: 0, h: 8 },
-  { type: "weather", xFraction: 0.6, widthFraction: 0.16, y: 0, h: 6 },
-  { type: "tasks", xFraction: 0.12, widthFraction: 0.26, y: 8, h: 6 },
-  { type: "stocks", xFraction: 0.46, widthFraction: 0.2, y: 6, h: 9 },
+const STARTER_ROWS: WidgetType[][] = [
+  ["quickAccess", "weather"],
+  ["tasks", "stocks"],
 ];
+const STARTER_TILE_HEIGHT = 8;
+const STARTER_MIN_TILE_WIDTH = 6;
+const STARTER_MAX_TILE_WIDTH = 12;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -41,6 +36,20 @@ function clamp(value: number, min: number, max: number): number {
 function starterColumns(): number {
   const contentWidth = Math.min(CONTENT_MAX_WIDTH, window.innerWidth - CONTENT_INSET);
   return gridColumns(contentWidth);
+}
+
+function starterTiles(columns: number): { type: WidgetType; x: number; y: number; w: number }[] {
+  const perRow = STARTER_ROWS[0]?.length ?? 1;
+  const width = clamp(Math.floor(columns / perRow), STARTER_MIN_TILE_WIDTH, STARTER_MAX_TILE_WIDTH);
+  const inset = Math.max(0, Math.floor((columns - width * perRow) / 2));
+  return STARTER_ROWS.flatMap((row, rowIndex) =>
+    row.map((type, columnIndex) => ({
+      type,
+      x: inset + columnIndex * width,
+      y: rowIndex * STARTER_TILE_HEIGHT,
+      w: width,
+    })),
+  );
 }
 
 export type PendingRemoval = { instance: WidgetInstance; layoutItem: LayoutItem };
@@ -215,22 +224,32 @@ export const useDashboardStore = create<DashboardState>()(
       seedStarterIfFirstRun: () =>
         set((state) => {
           if (state.widgets.length > 0) return state;
-          if (getLocal(WELCOME_SEEN_KEY) !== null) return state;
+          if (getLocal(DASHBOARD_SEEDED_KEY) !== null) return state;
+          setLocal(DASHBOARD_SEEDED_KEY, "1");
           const cols = starterColumns();
           const widgets: WidgetInstance[] = [];
           const raw: LayoutItem[] = [];
-          for (const entry of STARTER_WIDGETS) {
-            const plugin = getWidgetPlugin(entry.type);
+          for (const tile of starterTiles(cols)) {
+            const plugin = getWidgetPlugin(tile.type);
             if (!plugin) continue;
-            const id = createInstanceId(entry.type);
+            const id = createInstanceId(tile.type);
             const { minW, minH, maxW, maxH } = plugin.defaultLayout;
-            const w = clamp(Math.round(cols * entry.widthFraction), minW, maxW);
-            const h = clamp(entry.h, minH, maxH);
-            const x = clamp(Math.round(cols * entry.xFraction), 0, Math.max(0, cols - w));
-            widgets.push({ id, type: entry.type });
-            raw.push({ i: id, x, y: entry.y, w, h, minW, minH, maxW, maxH });
+            const w = clamp(tile.w, minW, maxW);
+            const h = clamp(STARTER_TILE_HEIGHT, minH, maxH);
+            widgets.push({ id, type: tile.type });
+            raw.push({
+              i: id,
+              x: clamp(tile.x, 0, Math.max(0, cols - w)),
+              y: tile.y,
+              w,
+              h,
+              minW,
+              minH,
+              maxW,
+              maxH,
+            });
           }
-          return { widgets, layout: resolveLayoutCollisions(raw, cols, null) };
+          return { widgets, columns: cols, layout: resolveLayoutCollisions(raw, cols, null) };
         }),
     }),
     {
