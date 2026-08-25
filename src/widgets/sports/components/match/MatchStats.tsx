@@ -18,7 +18,7 @@ export function MatchStats({ stats }: { stats: MatchStat[] }) {
                 {stat.away}
                 {suffix}
               </span>
-              <span className="text-ink-4 min-w-0 flex-1 truncate text-center">{stat.label}</span>
+              <span className="text-ink-3 min-w-0 flex-1 truncate text-center">{stat.label}</span>
               <span className="text-ink w-8 shrink-0 tabular-nums">
                 {stat.home}
                 {suffix}

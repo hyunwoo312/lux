@@ -73,7 +73,7 @@ export function HeadlineRow({
           <span
             className={cn(
               "line-clamp-1 text-caption leading-snug",
-              isRead ? "text-ink-4" : "text-ink-3",
+              isRead ? "text-ink-3" : "text-ink-3",
             )}
           >
             {item.dek}

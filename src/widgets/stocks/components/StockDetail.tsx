@@ -90,7 +90,7 @@ function MarketStatus({ data }: { data: Quote }) {
     <span className="text-ink-3 flex min-w-0 items-center gap-1.5 text-caption">
       {state === "open" ? (
         <>
-          <span className="bg-live size-1.5 shrink-0 rounded-full" />
+          <span className="bg-success size-1.5 shrink-0 rounded-full" />
           <span className="truncate">{data.exchange ?? "Market"} · Open</span>
         </>
       ) : state === "closed" && opensInMs != null && opensInMs > 0 ? (
@@ -158,7 +158,7 @@ function DetailBody({ data, range }: { data: Quote; range: StockRange }) {
           <MarketStatus data={data} />
           {extended ? (
             <span className="flex items-baseline gap-1 text-caption">
-              <span className="text-ink-4">
+              <span className="text-ink-3">
                 {extended.kind === "pre" ? "Pre-market" : "After hours"}
               </span>
               <span className="text-ink tabular-nums slashed-zero">

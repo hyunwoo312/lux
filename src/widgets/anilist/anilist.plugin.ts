@@ -1,7 +1,7 @@
 import { AnilistServiceIcon } from "@/components/icons/service-icons";
 import { ANILIST_REFRESH_MS } from "@/widgets/anilist/types";
 import type { WidgetPlugin } from "@/widgets/core/types";
-import { ANILIST_ACCENT } from "@/widgets/anilist/types";
+import { ANILIST_TINT } from "@/widgets/anilist/types";
 import { AnilistWidget } from "@/widgets/anilist/AnilistWidget";
 import { AnilistConfig } from "@/widgets/anilist/AnilistConfig";
 import { AnilistHeaderActions } from "@/widgets/anilist/AnilistHeaderActions";
@@ -20,7 +20,7 @@ export const anilistPlugin: WidgetPlugin = {
   statusComponent: AnilistTabs,
   headerActionComponent: AnilistHeaderActions,
   refreshMs: ANILIST_REFRESH_MS,
-  accent: ANILIST_ACCENT,
+  tint: ANILIST_TINT,
   requiresAccount: ["anilist"],
   removalNote: () => "Its settings will be reset — your AniList account stays connected.",
 };

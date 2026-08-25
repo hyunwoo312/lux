@@ -5,7 +5,7 @@ import { CalendarWidget } from "@/widgets/calendar/CalendarWidget";
 import { CalendarConfig } from "@/widgets/calendar/CalendarConfig";
 import { CalendarHeaderActions } from "@/widgets/calendar/CalendarHeaderActions";
 import { CalendarTabs } from "@/widgets/calendar/CalendarTabs";
-import { CALENDAR_ACCENT } from "@/widgets/calendar/types";
+import { CALENDAR_TINT } from "@/widgets/calendar/types";
 
 export const calendarPlugin: WidgetPlugin = {
   type: "calendar",
@@ -18,7 +18,7 @@ export const calendarPlugin: WidgetPlugin = {
   configComponent: CalendarConfig,
   statusComponent: CalendarTabs,
   headerActionComponent: CalendarHeaderActions,
-  accent: CALENDAR_ACCENT,
+  tint: CALENDAR_TINT,
   requiresAccount: ["google", "microsoft"],
   useLock: () =>
     useProviderLock({

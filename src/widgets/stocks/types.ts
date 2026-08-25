@@ -1,6 +1,6 @@
 import type { AccentPreset } from "@/widgets/core/accent";
 
-export const STOCKS_ACCENT: AccentPreset = "green";
+export const STOCKS_TINT: AccentPreset = "green";
 
 export const STOCK_RANGES = ["1d", "5d", "1mo", "6mo", "ytd", "1y", "5y"] as const;
 export type StockRange = (typeof STOCK_RANGES)[number];

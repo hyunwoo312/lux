@@ -38,7 +38,7 @@ export function TrendMovementBadge({
       aria-label={`${rising ? "Up" : "Down"} ${movement.places} ${movement.places === 1 ? "place" : "places"}`}
       className={cn(
         "inline-flex items-center gap-0.5 text-micro tabular-nums",
-        onArt ? "text-white drop-shadow-md" : rising ? "text-ink-2" : "text-ink-4",
+        onArt ? "text-white drop-shadow-md" : rising ? "text-ink-2" : "text-ink-3",
         className,
       )}
     >

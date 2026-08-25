@@ -61,7 +61,7 @@ export function MonthDayCell({ day, eventCount, children }: MonthDayCellProps) {
           className={cn(
             "grid size-4 place-items-center rounded-full text-caption tabular-nums",
             day.isToday && "bg-primary text-primary-foreground font-semibold",
-            !day.isToday && (day.inCurrentMonth ? "text-ink" : "text-ink-4"),
+            !day.isToday && (day.inCurrentMonth ? "text-ink" : "text-ink-3"),
             !day.isToday && isSelected && "font-semibold",
           )}
         >

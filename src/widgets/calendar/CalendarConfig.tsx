@@ -134,7 +134,7 @@ function CalendarProviderConfig({
               spinning={isSyncing}
             />
             {lastSyncedLabel && (
-              <span className="text-ink-4 text-micro ml-auto">{lastSyncedLabel}</span>
+              <span className="text-ink-3 text-micro ml-auto">{lastSyncedLabel}</span>
             )}
           </div>
 
@@ -168,7 +168,7 @@ function CalendarProviderConfig({
             </div>
           )}
 
-          {providerNote && <p className="text-ink-4 text-micro">{providerNote}</p>}
+          {providerNote && <p className="text-ink-3 text-micro">{providerNote}</p>}
         </div>
       </WidgetConfigItem>
     </WidgetConfigGroup>

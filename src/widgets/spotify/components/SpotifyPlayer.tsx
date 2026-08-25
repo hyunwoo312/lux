@@ -36,7 +36,7 @@ export function SpotifyPlayer({ controller, playback, timeDisplayMode }: Spotify
       <div className="flex min-w-0 flex-col gap-0.5">
         <SpotifyTrackTitle title={playback.track.title} liked={controller.isTrackLiked} />
         <p className={cn(TYPE.rowSubtitle, "truncate")}>{playback.track.artist}</p>
-        <p className="text-ink-4 truncate text-micro">
+        <p className="text-ink-3 truncate text-micro">
           {controller.contextName
             ? `${playback.track.album} · from ${controller.contextName}`
             : playback.track.album}

@@ -52,7 +52,7 @@ export function IndexRail() {
                   className="shrink-0 text-micro"
                 />
               ) : (
-                <span className="text-ink-4 shrink-0 text-micro">—</span>
+                <span className="text-ink-3 shrink-0 text-micro">—</span>
               )}
             </span>
           </li>

@@ -144,7 +144,7 @@ function renderRunRows({ run, colors, now, hour12, reduced, isLast }: RunRowsOpt
         <li
           key={`gap-${run.start.getTime()}-${entry.startMin}`}
           className="
-            border-border/50 text-ink-4 my-0.5 rounded-md border border-dashed px-2 py-1 text-micro
+            border-border/50 text-ink-3 my-0.5 rounded-md border border-dashed px-2 py-1 text-micro
             font-medium
           "
         >

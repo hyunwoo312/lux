@@ -14,7 +14,7 @@ export function SpotifyOpenLink() {
         rel="noreferrer"
         aria-label="Open current track in Spotify"
         className="
-          focus-ring text-ink-4
+          focus-ring text-ink-3
           hover:text-ink hover:bg-foreground/5
           grid size-7 place-items-center rounded-sm transition-colors
           [&_img]:size-4

@@ -158,7 +158,7 @@ function EmptyAgenda({
           <span className="text-ink-2 block font-medium">
             {emptyHeadline(days, hadEventsInRange, hasUntimed)}
           </span>
-          {nextLater && <span className="text-ink-4 mt-1 block text-caption">{nextLater}</span>}
+          {nextLater && <span className="text-ink-3 mt-1 block text-caption">{nextLater}</span>}
         </>
       }
     />

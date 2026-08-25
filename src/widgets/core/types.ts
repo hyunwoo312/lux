@@ -66,7 +66,7 @@ export type WidgetPlugin = {
   statusComponent?: ComponentType;
   headerActionComponent?: ComponentType;
   refreshMs?: number;
-  accent: AccentPreset;
+  tint?: AccentPreset;
   requiresAccount?: IntegrationProviderId[];
   frame?: WidgetFrame;
   useLock?: (instanceId: string) => WidgetLock | null;

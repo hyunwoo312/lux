@@ -8,7 +8,7 @@ import { Spinner } from "@/components/ui/spinner";
 type StateTone = "neutral" | "warning" | "error";
 
 const TONE_ICON: Record<StateTone, string> = {
-  neutral: "text-ink-4",
+  neutral: "text-ink-3",
   warning: "text-warning",
   error: "text-destructive",
 };

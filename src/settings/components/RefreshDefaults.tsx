@@ -70,7 +70,7 @@ export function RefreshDefaults() {
               <span
                 className={cn(
                   "bg-foreground/5 grid size-8 shrink-0 place-items-center rounded-lg",
-                  accentClass(plugin.accent),
+                  accentClass(plugin.tint),
                 )}
               >
                 <Icon className={cn("size-4", !plugin.brandIcon && "text-primary")} />

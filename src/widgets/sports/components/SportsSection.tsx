@@ -84,7 +84,7 @@ export function CollapsibleSection({
             animate={{ rotate: open ? 0 : -90 }}
             transition={{ duration: reduced ? 0 : 0.18, ease: EASE_OUT }}
           >
-            <ChevronDown className="text-ink-4 size-3.5" aria-hidden />
+            <ChevronDown className="text-ink-3 size-3.5" aria-hidden />
           </motion.span>
         </button>
       </h4>
@@ -107,5 +107,5 @@ export function CollapsibleSection({
 }
 
 function Count({ value }: { value: number }) {
-  return <span className="text-ink-4 text-micro shrink-0 tabular-nums">{value}</span>;
+  return <span className="text-ink-3 text-micro shrink-0 tabular-nums">{value}</span>;
 }

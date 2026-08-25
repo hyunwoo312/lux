@@ -44,7 +44,7 @@ function RangeTrigger() {
             [&_svg]:size-3.5
           "
         >
-          <CalendarRange className="text-ink-4" />
+          <CalendarRange className="text-ink-3" />
           {formatDayRange(listAnchor, rangeEnd)}
         </PopoverTrigger>
       </Tooltip>

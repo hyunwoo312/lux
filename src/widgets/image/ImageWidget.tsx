@@ -139,7 +139,7 @@ export function ImageWidget({ editing }: WidgetContentProps) {
             className={cn(
               "press-row transition-colors",
               `
-                focus-ring text-ink-4
+                focus-ring text-ink-3
                 hover:text-ink hover:border-foreground/40
                 border-border/60 flex h-full w-full cursor-pointer flex-col items-center
                 justify-center gap-2 rounded-lg border border-dashed p-4 text-center

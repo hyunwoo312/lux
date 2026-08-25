@@ -10,7 +10,7 @@ type GatedSource = Exclude<ItemSource, "history">;
 
 export function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-ink-4 text-micro px-1 font-semibold tracking-wider uppercase">
+    <span className="text-ink-3 text-micro px-1 font-semibold tracking-wider uppercase">
       {children}
     </span>
   );

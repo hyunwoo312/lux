@@ -44,8 +44,6 @@
   --warning-foreground: oklch(0.99 0.01 70);
   --success: oklch(0.53 0.13 150);
   --success-foreground: oklch(0.99 0.01 150);
-  --live: oklch(0.53 0.14 148);
-  --live-foreground: oklch(0.99 0.01 148);
   --info: oklch(0.53 0.12 245);
   --info-foreground: oklch(0.99 0.01 245);
 
@@ -129,8 +127,6 @@
   --warning-foreground: oklch(0.28 0.04 70);
   --success: oklch(0.73 0.18 150);
   --success-foreground: oklch(0.28 0.04 150);
-  --live: oklch(0.73 0.19 148);
-  --live-foreground: oklch(0.28 0.04 148);
   --info: oklch(0.73 0.13 245);
   --info-foreground: oklch(0.28 0.04 245);
 
@@ -281,8 +277,6 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
-  --color-live: var(--live);
-  --color-live-foreground: var(--live-foreground);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
 
@@ -443,7 +437,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    *,
+    *:not(.animate-spin),
     *::before,
     *::after {
       animation-duration: 0.01ms !important;
@@ -545,6 +539,13 @@
     box-shadow:
       0 0 0 1px var(--focus-gap),
       0 0 0 3px var(--ring);
+  }
+
+  @media (forced-colors: active) {
+    &:focus-visible {
+      outline: 3px solid CanvasText;
+      outline-offset: 2px;
+    }
   }
 }
 

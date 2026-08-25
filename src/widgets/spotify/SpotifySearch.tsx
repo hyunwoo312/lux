@@ -5,18 +5,13 @@ import { Check, Heart, ListPlus, Music, Play } from "lucide-react";
 import { ExpandingSearch } from "@/components/ExpandingSearch";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { accentClass } from "@/widgets/core/accent";
 import { useSpotifySearchResults } from "@/widgets/spotify/hooks/useSpotifySearchResults";
 import {
   addSpotifyToQueue,
   getSpotifyDevices,
   startSpotifyPlayback,
 } from "@/widgets/spotify/lib/spotify-api";
-import {
-  SPOTIFY_ACCENT,
-  type SpotifyPlaybackDevice,
-  type SpotifySearchResult,
-} from "@/widgets/spotify/types";
+import { type SpotifyPlaybackDevice, type SpotifySearchResult } from "@/widgets/spotify/types";
 import {
   loadSpotifyQueue,
   requestSpotifyPlaybackRefresh,
@@ -185,10 +180,7 @@ export function SpotifySearch() {
       className="-ml-1.5"
     >
       <div
-        className={cn(
-          accentClass(SPOTIFY_ACCENT),
-          "border-input bg-popover w-full overflow-hidden rounded-sm border shadow-md",
-        )}
+        className={cn("border-input bg-popover w-full overflow-hidden rounded-sm border shadow-md")}
       >
         <div className="max-h-72 overflow-y-auto p-1">
           {devices.length === 0 && (
@@ -315,7 +307,7 @@ export function SpotifySearch() {
                                   `,
                                   queuedIds.has(result.id)
                                     ? "text-primary"
-                                    : "text-ink-4 hover:text-ink",
+                                    : "text-ink-3 hover:text-ink",
                                   queueingId === result.id && "opacity-50",
                                 )}
                               >

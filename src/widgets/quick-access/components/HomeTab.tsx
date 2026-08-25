@@ -140,7 +140,7 @@ export function HomeTab({ editing }: { editing: boolean }) {
                       className={cn(
                         "press-row transition-colors",
                         `
-                          text-ink-4
+                          text-ink-3
                           hover:text-ink hover:border-foreground/40
                           border-border/60 w-full cursor-pointer border border-dashed
                           transition-colors

@@ -77,13 +77,13 @@ export function TennisView({ league }: { league: League }) {
             contentClassName="w-auto min-w-[var(--radix-select-trigger-width)] whitespace-nowrap"
           />
         ) : (
-          <span className="text-ink-4 text-micro shrink-0 truncate">{draw.label}</span>
+          <span className="text-ink-3 text-micro shrink-0 truncate">{draw.label}</span>
         )}
         <span className="flex-1" />
         <span
           className={cn(
             "text-micro shrink-0",
-            event.state === "in" ? "text-live font-medium" : "text-ink-4",
+            event.state === "in" ? "text-success font-medium" : "text-ink-3",
           )}
         >
           {event.detail}
@@ -99,7 +99,7 @@ export function TennisView({ league }: { league: League }) {
       </div>
 
       {(event.venue || event.dates) && (
-        <p className="text-ink-4 text-micro truncate px-2">
+        <p className="text-ink-3 text-micro truncate px-2">
           {[event.venue, event.dates].filter(Boolean).join(" · ")}
         </p>
       )}

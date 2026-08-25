@@ -112,7 +112,7 @@ export function NoteWidget({ justAdded }: WidgetContentProps) {
           `
             scroll-fade block h-full w-full max-w-[70ch] resize-none bg-transparent leading-relaxed
             outline-none
-            placeholder:text-ink-4
+            placeholder:text-ink-3
           `,
           FONT_SIZE_CLASS[fontSize],
         )}

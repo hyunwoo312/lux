@@ -37,7 +37,7 @@ function RecordSide({
           ? parts.map((part) => (
               <span key={part.label} className="text-ink tabular-nums">
                 {part.value}
-                <span className="text-ink-4 ml-0.5 font-medium">{part.label}</span>
+                <span className="text-ink-3 ml-0.5 font-medium">{part.label}</span>
               </span>
             ))
           : (value ?? "")}
@@ -69,7 +69,7 @@ function PersonRow({ logo, label, name, detail }: DetailPerson) {
     <div className="flex items-center gap-1.5">
       <TeamLogo src={logo} className="size-3" />
       <span className="text-micro text-ink min-w-0 shrink truncate font-medium">{name}</span>
-      {label ? <span className="text-ink-4 text-micro shrink-0 font-medium">{label}</span> : null}
+      {label ? <span className="text-ink-3 text-micro shrink-0 font-medium">{label}</span> : null}
       {detail ? (
         <span className="text-micro text-ink-3 ml-auto min-w-0 truncate tabular-nums">
           {detail}
@@ -179,7 +179,7 @@ export function MatchDetail({ match, sport }: { match: Match; sport: Sport }) {
 
       {meta || match.link ? (
         <div className="border-border/50 flex items-center gap-2 border-t pt-2">
-          <span className="text-ink-4 text-micro min-w-0 flex-1 truncate">{meta}</span>
+          <span className="text-ink-3 text-micro min-w-0 flex-1 truncate">{meta}</span>
           {match.link ? (
             <button
               type="button"

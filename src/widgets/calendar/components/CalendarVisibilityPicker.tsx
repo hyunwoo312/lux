@@ -108,7 +108,7 @@ export function CalendarVisibilityPicker() {
           {groups.map((group) => (
             <div key={group.providerId} className="flex flex-col">
               {groups.length > 1 && (
-                <p className="text-ink-4 px-2 pt-1.5 pb-1 text-micro font-medium">
+                <p className="text-ink-3 px-2 pt-1.5 pb-1 text-micro font-medium">
                   {PROVIDER_LABELS[group.providerId]}
                 </p>
               )}

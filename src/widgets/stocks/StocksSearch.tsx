@@ -14,16 +14,11 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { ExpandingSearch } from "@/components/ExpandingSearch";
 import { cn } from "@/lib/utils";
-import { accentClass } from "@/widgets/core/accent";
 import { searchSymbols } from "@/widgets/stocks/lib/symbols";
 import { MAX_SYMBOLS, useStocks, useStocksStore } from "@/widgets/stocks/useStocksStore";
 import { useDetailSymbol } from "@/widgets/stocks/hooks/useDetailSymbol";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import {
-  STOCKS_ACCENT,
-  type InstrumentType,
-  type SymbolSearchResult,
-} from "@/widgets/stocks/types";
+import { type InstrumentType, type SymbolSearchResult } from "@/widgets/stocks/types";
 import { TYPE } from "@/lib/type";
 
 const TYPE_ICON: Record<InstrumentType, LucideIcon> = {
@@ -177,10 +172,7 @@ export function StocksSearch() {
       activeDescendantId={hasOptions ? optionId(active) : undefined}
     >
       <div
-        className={cn(
-          accentClass(STOCKS_ACCENT),
-          "border-input bg-popover w-full overflow-hidden rounded-sm border shadow-md",
-        )}
+        className={cn("border-input bg-popover w-full overflow-hidden rounded-sm border shadow-md")}
       >
         <div className="max-h-56 overflow-y-auto p-1">
           {atCap ? (
@@ -227,7 +219,7 @@ export function StocksSearch() {
                         added && "opacity-60",
                       )}
                     >
-                      <Icon className="text-ink-4 size-4 shrink-0" aria-hidden />
+                      <Icon className="text-ink-3 size-4 shrink-0" aria-hidden />
                       <span className="flex min-w-0 flex-1 flex-col">
                         <span className="flex min-w-0 items-baseline gap-1.5">
                           <span className="shrink-0 font-medium">{result.symbol}</span>

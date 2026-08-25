@@ -129,7 +129,7 @@ export function DiscoverView() {
           />
         </div>
         {isSearching ? (
-          <span className="text-ink-4 text-micro truncate font-semibold tracking-wide uppercase">
+          <span className="text-ink-3 text-micro truncate font-semibold tracking-wide uppercase">
             Search results
           </span>
         ) : connected ? (
@@ -141,7 +141,7 @@ export function DiscoverView() {
             triggerClassName="w-auto"
           />
         ) : (
-          <span className="text-ink-4 text-micro truncate font-semibold tracking-wide uppercase">
+          <span className="text-ink-3 text-micro truncate font-semibold tracking-wide uppercase">
             {discoverFeedLabel(feed, type)}
           </span>
         )}

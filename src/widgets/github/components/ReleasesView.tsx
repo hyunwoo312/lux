@@ -96,7 +96,7 @@ export function ReleaseList({
         />
       ))}
       {data.watchedCount > data.watchedScanned && (
-        <p className="text-ink-4 text-micro shrink-0 px-2 py-1">
+        <p className="text-ink-3 text-micro shrink-0 px-2 py-1">
           Showing the {data.watchedScanned} most recently pushed of {data.watchedCount} watched
           repositories.
         </p>

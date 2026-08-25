@@ -6,7 +6,7 @@ const CI_META = {
   success: { icon: CheckCircle2, tone: "text-success" },
   failure: { icon: XCircle, tone: "text-destructive" },
   pending: { icon: Clock, tone: "text-warning" },
-  none: { icon: CircleSlash, tone: "text-ink-4" },
+  none: { icon: CircleSlash, tone: "text-ink-3" },
 } as const;
 
 export function CiBadge({ ci, className }: { ci: PullRequestCi; className?: string }) {

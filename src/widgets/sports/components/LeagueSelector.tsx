@@ -60,10 +60,10 @@ export function LeagueSelector({
                 >
                   <Icon className="size-4 shrink-0" />
                   <span className="min-w-0 flex-1 truncate text-left">{SPORT_LABEL[entry]}</span>
-                  <span className="text-ink-4 text-micro shrink-0 tabular-nums">
+                  <span className="text-ink-3 text-micro shrink-0 tabular-nums">
                     {leagues.length}
                   </span>
-                  <ChevronRight className="text-ink-4 size-3 shrink-0" aria-hidden />
+                  <ChevronRight className="text-ink-3 size-3 shrink-0" aria-hidden />
                 </button>
               );
             })}

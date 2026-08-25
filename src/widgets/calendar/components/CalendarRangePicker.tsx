@@ -2,9 +2,7 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { accentClass } from "@/widgets/core/accent";
 import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
-import { CALENDAR_ACCENT } from "@/widgets/calendar/types";
 import { ConfigSegmented } from "@/components/config/WidgetConfig";
 import { WeekdayHeader } from "@/widgets/calendar/components/WeekdayHeader";
 import {
@@ -85,7 +83,7 @@ function MiniMonth({ month, anchorTime, endTime, onSelect }: MiniMonthProps) {
                   isStart && "bg-primary text-primary-foreground font-semibold",
                   !isStart && "group-hover:bg-foreground/10",
                   !isStart && inMonth && "text-ink",
-                  !isStart && !inMonth && "text-ink-4",
+                  !isStart && !inMonth && "text-ink-3",
                 )}
               >
                 {day.getDate()}
@@ -122,7 +120,7 @@ export function CalendarRangePicker({ onSelect }: CalendarRangePickerProps) {
   };
 
   return (
-    <div className={cn("flex flex-col gap-3 p-3", accentClass(CALENDAR_ACCENT))}>
+    <div className={"flex flex-col gap-3 p-3"}>
       <div className="flex justify-center">
         <ConfigSegmented
           label="Date range"

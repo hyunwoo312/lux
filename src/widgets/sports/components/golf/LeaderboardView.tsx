@@ -50,8 +50,10 @@ export function LeaderboardView({ league }: { league: League }) {
 
       <div className="flex items-center gap-2 px-2">
         <h3 className="text-ink min-w-0 flex-1 truncate text-caption font-medium">{board.name}</h3>
-        {board.dates ? <span className="text-ink-4 text-micro shrink-0">{board.dates}</span> : null}
-        <span className={cn("text-micro shrink-0", live ? "text-live font-medium" : "text-ink-4")}>
+        {board.dates ? <span className="text-ink-3 text-micro shrink-0">{board.dates}</span> : null}
+        <span
+          className={cn("text-micro shrink-0", live ? "text-success font-medium" : "text-ink-3")}
+        >
           {board.detail}
         </span>
         {board.link ? (
@@ -116,7 +118,7 @@ function PlayerRow({
 
   const body = (
     <>
-      <span className="text-ink-4 text-micro w-7 shrink-0 text-right tabular-nums">
+      <span className="text-ink-3 text-micro w-7 shrink-0 text-right tabular-nums">
         {player.position}
       </span>
       {player.flag ? (
@@ -132,7 +134,7 @@ function PlayerRow({
       <span
         className={cn(
           "min-w-0 flex-1 truncate text-caption",
-          player.madeCut ? "text-ink" : "text-ink-4",
+          player.madeCut ? "text-ink" : "text-ink-3",
         )}
       >
         {player.name}
@@ -147,7 +149,7 @@ function PlayerRow({
           "w-8 shrink-0 text-right text-caption tabular-nums",
           player.position === "1" ? "text-primary font-semibold" : null,
           player.madeCut && player.position !== "1" ? "text-ink font-semibold" : null,
-          !player.madeCut && "text-ink-4",
+          !player.madeCut && "text-ink-3",
         )}
       >
         {player.score}

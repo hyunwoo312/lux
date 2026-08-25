@@ -86,10 +86,7 @@ const WidgetRow = forwardRef<HTMLButtonElement, WidgetCardProps>(function Widget
           layoutId="palette-hover"
           aria-hidden
           transition={SPRING_CRISP}
-          className={cn(
-            accentClass(plugin.accent),
-            "border-primary/60 bg-primary/10 pointer-events-none absolute inset-0 rounded-md border",
-          )}
+          className="bg-accent pointer-events-none absolute inset-0 rounded-md"
         />
       )}
       <span
@@ -99,7 +96,8 @@ const WidgetRow = forwardRef<HTMLButtonElement, WidgetCardProps>(function Widget
             [&_img]:size-5
             [&_svg]:size-5
           `,
-          !plugin.brandIcon && "text-ink-2",
+          accentClass(plugin.tint),
+          !plugin.brandIcon && "text-primary",
         )}
       >
         <Icon />

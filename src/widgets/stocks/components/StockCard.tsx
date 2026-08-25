@@ -20,7 +20,7 @@ type StockCardProps = {
 function Meta({ label, value }: { label: string; value: string }) {
   return (
     <span className="flex min-w-0 items-baseline gap-1">
-      <span className="text-ink-4 shrink-0 text-micro">{label}</span>
+      <span className="text-ink-3 shrink-0 text-micro">{label}</span>
       <span className="text-ink-2 truncate text-micro tabular-nums slashed-zero">{value}</span>
     </span>
   );

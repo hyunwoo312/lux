@@ -41,7 +41,7 @@ export function LibraryEntries({
       {grouped ? (
         groups.map((group) => (
           <section key={group.key} className={cn("flex flex-col", isGrid ? "gap-1.5" : "gap-1")}>
-            <h4 className="text-ink-4 text-micro px-1 font-bold tracking-wider uppercase">
+            <h4 className="text-ink-3 text-micro px-1 font-bold tracking-wider uppercase">
               {group.label}
             </h4>
             <ul aria-label={`Airing ${group.label}`} className={listClass}>
@@ -59,7 +59,7 @@ export function LibraryEntries({
         </ul>
       )}
       {entries.length > LIBRARY_PAGE_SIZE && (
-        <div ref={sentinelRef} className="text-ink-4 text-micro py-2 text-center">
+        <div ref={sentinelRef} className="text-ink-3 text-micro py-2 text-center">
           {hasMore ? `Showing ${visible.length} of ${entries.length}` : `${entries.length} titles`}
         </div>
       )}

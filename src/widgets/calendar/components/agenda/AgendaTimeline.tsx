@@ -63,7 +63,7 @@ function RunTrack({
           >
             <span
               className="
-                text-ink-4 w-10 flex-none text-right text-micro whitespace-nowrap tabular-nums
+                text-ink-3 w-10 flex-none text-right text-micro whitespace-nowrap tabular-nums
               "
             >
               {formatHourMark(mark, hour12)}
@@ -81,7 +81,7 @@ function RunTrack({
               key={`gap-${gap.startMin}`}
               style={{ top: gap.startMin * pxPerMinute, height }}
               className="
-                border-border/50 text-ink-4 absolute inset-x-0 flex items-center justify-center
+                border-border/50 text-ink-3 absolute inset-x-0 flex items-center justify-center
                 rounded-md border border-dashed px-1
               "
             >

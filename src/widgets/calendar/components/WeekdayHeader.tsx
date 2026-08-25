@@ -7,7 +7,7 @@ type WeekdayHeaderProps = {
 
 export function WeekdayHeader({ className }: WeekdayHeaderProps) {
   return (
-    <div aria-hidden className={cn("text-ink-4 grid grid-cols-7", className)}>
+    <div aria-hidden className={cn("text-ink-3 grid grid-cols-7", className)}>
       {WEEKDAY_LABELS.map((weekday) => (
         <span
           key={weekday.long}

@@ -17,9 +17,9 @@ export const TYPE = {
   title: "text-title font-semibold tracking-[-0.005em] text-ink",
 
   rowSubtitle: "text-caption text-ink-3",
-  rowMeta: "text-caption text-ink-4",
+  rowMeta: "text-caption text-ink-3",
 
   label: "text-body font-medium text-ink-2",
   help: "text-caption text-ink-3 leading-relaxed",
-  eyebrow: "text-micro font-semibold tracking-[0.06em] text-ink-4 uppercase",
+  eyebrow: "text-micro font-semibold tracking-[0.06em] text-ink-3 uppercase",
 } as const;

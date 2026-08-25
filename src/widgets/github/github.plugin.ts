@@ -6,7 +6,7 @@ import { GithubWidget } from "@/widgets/github/GithubWidget";
 import { GithubConfig } from "@/widgets/github/GithubConfig";
 import { GithubHeaderActions } from "@/widgets/github/GithubHeaderActions";
 import { GithubTabs } from "@/widgets/github/GithubTabs";
-import { GITHUB_ACCENT } from "@/widgets/github/types";
+import { GITHUB_TINT } from "@/widgets/github/types";
 
 export const githubPlugin: WidgetPlugin = {
   type: "github",
@@ -21,7 +21,7 @@ export const githubPlugin: WidgetPlugin = {
   statusComponent: GithubTabs,
   headerActionComponent: GithubHeaderActions,
   refreshMs: INBOX_REFRESH_MS,
-  accent: GITHUB_ACCENT,
+  tint: GITHUB_TINT,
   requiresAccount: ["github"],
   useLock: () =>
     useProviderLock({ providers: ["github"], label: "GitHub", subject: "your activity" }),

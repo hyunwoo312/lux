@@ -21,7 +21,7 @@ export function AnilistProfileLink() {
         rel="noreferrer"
         aria-label={`Open ${account.displayName} on AniList`}
         className="
-          focus-ring text-ink-4 inline-flex size-7 items-center justify-center rounded-sm
+          focus-ring text-ink-3 inline-flex size-7 items-center justify-center rounded-sm
           hover:text-ink
         "
       >

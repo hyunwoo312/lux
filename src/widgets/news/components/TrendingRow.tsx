@@ -30,7 +30,7 @@ export function TrendingRow({
       onClick={() => searchWeb(item.term, openBehavior)}
       className={cn(ROW.itemAction, "group w-full items-start")}
     >
-      <span className="text-ink-4 w-4 shrink-0 pt-0.5 text-right text-caption tabular-nums slashed-zero">
+      <span className="text-ink-3 w-4 shrink-0 pt-0.5 text-right text-caption tabular-nums slashed-zero">
         {rank}
       </span>
 

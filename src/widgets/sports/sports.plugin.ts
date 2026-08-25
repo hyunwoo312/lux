@@ -4,7 +4,7 @@ import { SportsWidget } from "@/widgets/sports/SportsWidget";
 import { SportsConfig } from "@/widgets/sports/SportsConfig";
 import { SportsTabs } from "@/widgets/sports/components/SportsTabs";
 import { SportsRefreshButton } from "@/widgets/sports/SportsRefreshButton";
-import { SPORTS_ACCENT } from "@/widgets/sports/types";
+import { SPORTS_TINT } from "@/widgets/sports/types";
 
 export const sportsPlugin: WidgetPlugin = {
   type: "sports",
@@ -17,5 +17,5 @@ export const sportsPlugin: WidgetPlugin = {
   configComponent: SportsConfig,
   statusComponent: SportsTabs,
   headerActionComponent: SportsRefreshButton,
-  accent: SPORTS_ACCENT,
+  tint: SPORTS_TINT,
 };

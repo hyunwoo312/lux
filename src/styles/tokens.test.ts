@@ -68,7 +68,7 @@ describe("colour tokens", () => {
 
   it.each(THEMES)("$name status ramp is legible and in gamut", ({ name, root }) => {
     const surfaces = SURFACES[name];
-    for (const status of ["destructive", "warning", "success", "live", "info"] as const) {
+    for (const status of ["destructive", "warning", "success", "info"] as const) {
       const color = token(root, status);
       const paired = token(root, `${status}-foreground`);
       expect(isInSrgbGamut(color), `${name} --${status} out of sRGB gamut`).toBe(true);

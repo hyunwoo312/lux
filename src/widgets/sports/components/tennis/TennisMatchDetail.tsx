@@ -10,7 +10,7 @@ function SetTable({ match }: { match: TennisMatch }) {
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="text-ink-4 text-micro flex items-center gap-1 pl-[7.5rem]">
+      <div className="text-ink-3 text-micro flex items-center gap-1 pl-[7.5rem]">
         {Array.from({ length: count }, (_, index) => (
           <span key={index} className="w-5 text-center tabular-nums">
             {index + 1}
@@ -41,12 +41,12 @@ function SetRow({ player, count }: { player: TennisPlayer; count: number }) {
             key={index}
             className={cn(
               "relative w-5 text-center text-micro tabular-nums",
-              set?.won ? "text-ink font-semibold" : "text-ink-4",
+              set?.won ? "text-ink font-semibold" : "text-ink-3",
             )}
           >
             {set?.games ?? "–"}
             {set?.tiebreak !== undefined && (
-              <span className="text-ink-4 absolute -top-1 -right-0.5 text-[0.5rem] leading-none">
+              <span className="text-ink-3 absolute -top-1 -right-0.5 text-[0.5rem] leading-none">
                 {set.tiebreak}
               </span>
             )}

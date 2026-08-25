@@ -1,6 +1,6 @@
 import type { AccentPreset } from "@/widgets/core/accent";
 
-export const SPOTIFY_ACCENT: AccentPreset = "green";
+export const SPOTIFY_TINT: AccentPreset = "green";
 
 export const SPOTIFY_REPEAT_MODES = ["off", "context", "track"] as const;
 export type SpotifyRepeatMode = (typeof SPOTIFY_REPEAT_MODES)[number];

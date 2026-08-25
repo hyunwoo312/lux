@@ -3,8 +3,7 @@ import { ROW } from "@/lib/row";
 import { Check, Monitor } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { accentClass } from "@/widgets/core/accent";
-import { SPOTIFY_ACCENT, type SpotifyPlaybackDevice } from "@/widgets/spotify/types";
+import { type SpotifyPlaybackDevice } from "@/widgets/spotify/types";
 
 type SpotifyDeviceMenuProps = {
   devices: SpotifyPlaybackDevice[];
@@ -42,11 +41,7 @@ export function SpotifyDeviceMenu({
       >
         <Monitor className="size-4" aria-hidden />
       </PopoverTrigger>
-      <PopoverContent
-        align="start"
-        side="top"
-        className={cn(accentClass(SPOTIFY_ACCENT), "w-56 p-1.5")}
-      >
+      <PopoverContent align="start" side="top" className={"w-56 p-1.5"}>
         <div className="flex flex-col gap-0.5">
           {devices.map((device) => {
             const active = device.id === activeId || device.isActive;

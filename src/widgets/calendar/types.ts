@@ -1,6 +1,6 @@
 import type { AccentPreset } from "@/widgets/core/accent";
 
-export const CALENDAR_ACCENT: AccentPreset = "orange";
+export const CALENDAR_TINT: AccentPreset = "orange";
 
 import { z } from "zod";
 

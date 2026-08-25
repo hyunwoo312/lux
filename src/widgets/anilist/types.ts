@@ -1,6 +1,6 @@
 import type { AccentPreset } from "@/widgets/core/accent";
 
-export const ANILIST_ACCENT: AccentPreset = "indigo";
+export const ANILIST_TINT: AccentPreset = "indigo";
 
 export const ANILIST_TABS = ["feed", "library", "discover"] as const;
 export type AnilistTab = (typeof ANILIST_TABS)[number];

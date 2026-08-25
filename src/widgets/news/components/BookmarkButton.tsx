@@ -38,7 +38,7 @@ export function BookmarkButton({
           `,
           onArt
             ? "text-white/70 hover:text-white"
-            : cn("hover:text-ink", saved ? "text-primary" : "text-ink-4"),
+            : cn("hover:text-ink", saved ? "text-primary" : "text-ink-3"),
           !saved && "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
           saved && "opacity-100",
           className,

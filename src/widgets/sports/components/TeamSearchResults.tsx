@@ -58,12 +58,12 @@ export function TeamSearchResults({ query }: { query: string }) {
             >
               <TeamLogo src={team.logo} className="size-4 shrink-0" />
               <span className="text-ink min-w-0 flex-1 truncate">{team.name}</span>
-              <span className="text-ink-4 text-micro shrink-0">{league?.label ?? ""}</span>
+              <span className="text-ink-3 text-micro shrink-0">{league?.label ?? ""}</span>
               <Star
                 aria-hidden
                 className={cn(
                   "size-3.5 shrink-0",
-                  isFollowed ? "text-primary fill-current" : "text-ink-4",
+                  isFollowed ? "text-primary fill-current" : "text-ink-3",
                 )}
               />
             </button>
@@ -95,10 +95,10 @@ function TourRow({ tour, followed }: { tour: League; followed: boolean }) {
       >
         <Icon className="text-ink-3 size-4 shrink-0" />
         <span className="text-ink min-w-0 flex-1 truncate">{tour.label}</span>
-        <span className="text-ink-4 text-micro shrink-0">{SPORT_LABEL[tour.sport]}</span>
+        <span className="text-ink-3 text-micro shrink-0">{SPORT_LABEL[tour.sport]}</span>
         <Star
           aria-hidden
-          className={cn("size-3.5 shrink-0", followed ? "text-primary fill-current" : "text-ink-4")}
+          className={cn("size-3.5 shrink-0", followed ? "text-primary fill-current" : "text-ink-3")}
         />
       </button>
     </li>
@@ -106,5 +106,5 @@ function TourRow({ tour, followed }: { tour: League; followed: boolean }) {
 }
 
 function Note({ children }: { children: ReactNode }) {
-  return <p className="text-ink-4 text-caption px-2 py-1.5">{children}</p>;
+  return <p className="text-ink-3 text-caption px-2 py-1.5">{children}</p>;
 }

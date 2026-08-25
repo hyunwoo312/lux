@@ -106,7 +106,7 @@ function SortableImage({ item, assetStore, disabled, onRemove }: SortableImagePr
         {url ? (
           <img src={url} alt={item.fileName} className="size-full object-cover" />
         ) : (
-          <div className="text-ink-4 grid size-full place-items-center [&_svg]:size-5">
+          <div className="text-ink-3 grid size-full place-items-center [&_svg]:size-5">
             <ImageIcon aria-hidden />
           </div>
         )}

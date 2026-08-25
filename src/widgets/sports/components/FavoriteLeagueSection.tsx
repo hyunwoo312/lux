@@ -59,9 +59,9 @@ export function FavoriteLeagueSection({
       onToggle={(next) => setSectionOpen(instanceId, league.id, next)}
     >
       {state.status === "loading" && matches.length === 0 ? (
-        <p className="text-ink-4 px-2 text-caption">Loading…</p>
+        <p className="text-ink-3 px-2 text-caption">Loading…</p>
       ) : state.status === "error" ? (
-        <p className="text-ink-4 px-2 text-caption">Scores unavailable.</p>
+        <p className="text-ink-3 px-2 text-caption">Scores unavailable.</p>
       ) : (
         <MatchList
           label={`${league.label} games`}

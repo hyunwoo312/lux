@@ -5,7 +5,7 @@ import { StocksConfig } from "@/widgets/stocks/StocksConfig";
 import { StocksSearch } from "@/widgets/stocks/StocksSearch";
 import { StocksHeaderActions } from "@/widgets/stocks/StocksHeaderActions";
 import { useStocksStore } from "@/widgets/stocks/useStocksStore";
-import { STOCKS_ACCENT } from "@/widgets/stocks/types";
+import { STOCKS_TINT } from "@/widgets/stocks/types";
 
 export const stocksPlugin: WidgetPlugin = {
   type: "stocks",
@@ -18,7 +18,7 @@ export const stocksPlugin: WidgetPlugin = {
   configComponent: StocksConfig,
   statusComponent: StocksSearch,
   headerActionComponent: StocksHeaderActions,
-  accent: STOCKS_ACCENT,
+  tint: STOCKS_TINT,
   removalNote: (instanceId) => {
     const count = useStocksStore.getState().byInstance[instanceId]?.symbols.length ?? 0;
     if (count === 0) return null;

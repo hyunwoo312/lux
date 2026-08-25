@@ -1,6 +1,6 @@
 import type { AccentPreset } from "@/widgets/core/accent";
 
-export const TASKS_ACCENT: AccentPreset = "indigo";
+export const TASKS_TINT: AccentPreset = "indigo";
 
 export type Task = {
   id: string;

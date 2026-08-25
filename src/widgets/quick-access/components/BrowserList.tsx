@@ -60,7 +60,7 @@ function RowActions({
         <ItemActionButton
           label={item.muted ? `Unmute ${item.title}` : `Mute ${item.title}`}
           onClick={() => onToggleMuted(item)}
-          className={item.muted ? "text-ink-4" : "text-primary hover:text-primary"}
+          className={item.muted ? "text-ink-3" : "text-primary hover:text-primary"}
         >
           {item.muted ? <VolumeX /> : <Volume2 />}
         </ItemActionButton>

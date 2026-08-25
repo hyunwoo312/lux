@@ -7,9 +7,9 @@ type FieldSize = "sm" | "md";
 
 const SIZES: Record<FieldSize, { icon: string; input: string; clear: string; cross: string }> = {
   sm: {
-    icon: "text-ink-4 size-3.5",
+    icon: "text-ink-3 size-3.5",
     input: "text-caption",
-    clear: "text-ink-4 right-2.5 size-5 rounded-xs",
+    clear: "text-ink-3 right-2.5 size-5 rounded-xs",
     cross: "size-3.5",
   },
   md: {

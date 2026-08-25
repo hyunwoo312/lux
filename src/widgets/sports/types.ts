@@ -1,6 +1,6 @@
 import type { AccentPreset } from "@/widgets/core/accent";
 
-export const SPORTS_ACCENT: AccentPreset = "violet";
+export const SPORTS_TINT: AccentPreset = "violet";
 
 export const SPORTS_TABS = ["discover", "favorites"] as const;
 export type SportsTab = (typeof SPORTS_TABS)[number];

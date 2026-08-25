@@ -24,12 +24,12 @@ export function LeaderboardPlayerDetail({ player }: { player: LeaderboardPlayer 
                 key={round.round}
                 className="bg-foreground/5 flex items-baseline gap-1 rounded-md px-1.5 py-1"
               >
-                <span className="text-ink-4 text-micro">R{round.round}</span>
+                <span className="text-ink-3 text-micro">R{round.round}</span>
                 <span className="text-ink text-caption font-semibold tabular-nums">
                   {round.toPar}
                 </span>
                 {round.strokes && (
-                  <span className="text-ink-4 text-micro tabular-nums">({round.strokes})</span>
+                  <span className="text-ink-3 text-micro tabular-nums">({round.strokes})</span>
                 )}
               </span>
             ))}
@@ -51,7 +51,7 @@ export function LeaderboardPlayerDetail({ player }: { player: LeaderboardPlayer 
                 >
                   {scoring[key]}
                 </span>
-                <span className="text-ink-4 text-micro">{label}</span>
+                <span className="text-ink-3 text-micro">{label}</span>
               </span>
             ))}
           </div>

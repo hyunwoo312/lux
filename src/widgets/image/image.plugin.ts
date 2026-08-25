@@ -5,7 +5,7 @@ import { ImageConfig } from "@/widgets/image/ImageConfig";
 import { ImageStatus } from "@/widgets/image/ImageStatus";
 import { ImageWidget } from "@/widgets/image/ImageWidget";
 import { useImageStore } from "@/widgets/image/useImageStore";
-import { IMAGE_ACCENT } from "@/widgets/image/types";
+import { IMAGE_TINT } from "@/widgets/image/types";
 
 export const imagePlugin: WidgetPlugin = {
   type: "image",
@@ -22,7 +22,7 @@ export const imagePlugin: WidgetPlugin = {
     bleed: true,
     useBare: (instanceId) => useImageStore((s) => s.byInstance[instanceId]?.hideFrame ?? false),
   },
-  accent: IMAGE_ACCENT,
+  tint: IMAGE_TINT,
   removalNote: (instanceId) => {
     const data = useImageStore.getState().byInstance[instanceId];
     const count = !data ? 0 : data.mode === "multi" ? data.items.length : data.single ? 1 : 0;

@@ -163,9 +163,9 @@ export function WeatherCard({
               className="text-ink size-6"
             />
           ) : state.status === "error" ? (
-            <Cloud className="text-ink-4 size-5" aria-hidden />
+            <Cloud className="text-ink-3 size-5" aria-hidden />
           ) : (
-            <Spinner className="text-ink-4" />
+            <Spinner className="text-ink-3" />
           )}
         </span>
         <span className="text-ink shrink-0 text-body-lg font-semibold tabular-nums slashed-zero">

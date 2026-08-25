@@ -155,7 +155,7 @@ export function Heatmap({
 export function HeatmapLegend({ metrics }: { metrics: HeatmapMetrics }) {
   return (
     <div
-      className="text-ink-4 flex items-center justify-end text-micro"
+      className="text-ink-3 flex items-center justify-end text-micro"
       style={{ gap: metrics.gap, height: LEGEND_H, width: heatmapWidth(metrics) }}
     >
       <span>Less</span>

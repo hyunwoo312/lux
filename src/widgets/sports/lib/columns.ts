@@ -6,5 +6,5 @@ export const COLUMN = {
   name: "min-w-0 truncate text-caption font-medium",
   score: "w-7 shrink-0 text-body tabular-nums",
   side: "flex min-w-0 items-center justify-end gap-1.5",
-  separator: "text-ink-4 px-2 text-caption",
+  separator: "text-ink-3 px-2 text-caption",
 };

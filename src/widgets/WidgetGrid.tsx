@@ -4,7 +4,6 @@ import { useReducedMotion } from "motion/react";
 import { GridLayout, useContainerWidth, setTopLeft } from "react-grid-layout";
 import type { Compactor, EventCallback, Position } from "react-grid-layout";
 import { cn } from "@/lib/utils";
-import { accentClass, type AccentPreset } from "@/widgets/core/accent";
 import { CELL, GAP, gridColumns, gridWidth, PAD, UNIT } from "@/widgets/core/grid";
 import {
   applyDragWithinNarrowView,
@@ -212,7 +211,7 @@ export function WidgetGrid() {
     if (!plugin) return null;
     const { w, h } = plugin.defaultLayout;
     const spot = findFirstOpenPosition({ i: "__preview__", x: 0, y: 0, w, h }, displayLayout, cols);
-    return { x: spot.x, y: spot.y, w, h, accent: plugin.accent ?? "default" };
+    return { x: spot.x, y: spot.y, w, h };
   }, [previewType, displayLayout, cols]);
   const previewBottom = previewPlacement ? previewPlacement.y + previewPlacement.h : 0;
   const previewFloor = useRef(0);
@@ -237,7 +236,7 @@ export function WidgetGrid() {
       {widgets.length === 0 ? (
         <div
           style={{ minHeight: workspaceHeight }}
-          className="text-ink-4 grid place-items-center text-body"
+          className="text-ink-3 grid place-items-center text-body"
         >
           {previewPlacement && mounted ? (
             <div className="relative" style={{ width: gw, height: workspaceHeight }}>
@@ -303,7 +302,7 @@ export function WidgetGrid() {
   );
 }
 
-type Placement = { x: number; y: number; w: number; h: number; accent: AccentPreset };
+type Placement = { x: number; y: number; w: number; h: number };
 
 function PlacementPreview({ placement, ref }: { placement: Placement; ref?: Ref<HTMLDivElement> }) {
   return (
@@ -318,7 +317,6 @@ function PlacementPreview({ placement, ref }: { placement: Placement; ref?: Ref<
         height: placement.h * UNIT - GAP,
       }}
       className={cn(
-        accentClass(placement.accent),
         "border-primary bg-primary/15 pointer-events-none rounded-2xl border-2 border-dashed",
         "shadow-glow-accent",
       )}

@@ -5,7 +5,7 @@ import { SpotifyConfig } from "@/widgets/spotify/SpotifyConfig";
 import { SpotifyStatus } from "@/widgets/spotify/SpotifyStatus";
 import { SpotifyHeaderActions } from "@/widgets/spotify/SpotifyHeaderActions";
 import { SpotifyBackdrop } from "@/widgets/spotify/components/SpotifyBackdrop";
-import { SPOTIFY_ACCENT } from "@/widgets/spotify/types";
+import { SPOTIFY_TINT } from "@/widgets/spotify/types";
 
 export const spotifyPlugin: WidgetPlugin = {
   type: "spotify",
@@ -20,7 +20,7 @@ export const spotifyPlugin: WidgetPlugin = {
   statusComponent: SpotifyStatus,
   headerActionComponent: SpotifyHeaderActions,
   frame: { backdrop: SpotifyBackdrop, decorativeBackdrop: true },
-  accent: SPOTIFY_ACCENT,
+  tint: SPOTIFY_TINT,
   requiresAccount: ["spotify"],
   removalNote: () => "Its settings will be reset — your Spotify account stays connected.",
 };

@@ -179,11 +179,11 @@ function CurrentTag() {
   return (
     <span
       className="
-        bg-live/15 ring-live/25 text-ink inline-flex shrink-0 items-center gap-1.5 rounded-sm px-1.5
-        py-0.5 text-micro font-semibold ring-1
+        bg-success/15 ring-success/25 text-ink inline-flex shrink-0 items-center gap-1.5 rounded-sm
+        px-1.5 py-0.5 text-micro font-semibold ring-1
       "
     >
-      <span aria-hidden className="bg-live size-1.5 shrink-0 rounded-full" />
+      <span aria-hidden className="bg-success size-1.5 shrink-0 rounded-full" />
       Current
     </span>
   );

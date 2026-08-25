@@ -17,7 +17,7 @@ export function ExtendedChange({
         className,
       )}
     >
-      <span className="text-ink-4">{extended.kind === "pre" ? "Pre" : "AH"} </span>
+      <span className="text-ink-3">{extended.kind === "pre" ? "Pre" : "AH"} </span>
       {formatSigned(extended.percent)}%
     </span>
   );

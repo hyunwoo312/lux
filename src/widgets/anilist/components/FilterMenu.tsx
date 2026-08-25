@@ -6,14 +6,12 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { ROW } from "@/lib/row";
 import { DURATION, EASE_OUT } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-import { accentClass } from "@/widgets/core/accent";
-import { ANILIST_ACCENT } from "@/widgets/anilist/types";
 
 const STAGGER_STEP = 0.025;
 
 export type FilterOption<T extends string> = { value: T; label: string; icon: LucideIcon };
 
-const TRIGGER_CLASS = `focus-ring text-ink-4
+const TRIGGER_CLASS = `focus-ring text-ink-3
  hover:text-ink hover:bg-foreground/5
  focus-visible:text-ink focus-visible:bg-foreground/5
  data-[state=open]:text-ink data-[state=open]:bg-foreground/5
@@ -56,7 +54,7 @@ export function FilterMenu<T extends string>({
           </AnimatePresence>
         </PopoverTrigger>
       </Tooltip>
-      <PopoverContent align="end" className={cn(accentClass(ANILIST_ACCENT), "w-auto min-w-40")}>
+      <PopoverContent align="end" className={"w-auto min-w-40"}>
         <div role="menu" aria-label={ariaLabel} className="flex flex-col">
           {options.map((option, index) => {
             const Icon = option.icon;

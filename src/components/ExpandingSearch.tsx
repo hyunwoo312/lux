@@ -151,7 +151,7 @@ export function ExpandingSearch({
                   duration-300
                   [&_svg]:size-4
                 `,
-                open ? "text-primary" : hovered ? "text-ink" : "text-ink-4",
+                open ? "text-primary" : hovered ? "text-ink" : "text-ink-3",
               )}
             >
               <Search aria-hidden />
@@ -174,7 +174,7 @@ export function ExpandingSearch({
               aria-hidden={!open}
               tabIndex={open ? 0 : -1}
               className={cn(
-                "placeholder:text-ink-4 text-ink",
+                "placeholder:text-ink-3 text-ink",
                 "relative h-full min-w-0 flex-1 bg-transparent text-body outline-none",
                 !open && "pointer-events-none",
               )}
@@ -191,7 +191,7 @@ export function ExpandingSearch({
               className={cn(
                 "press cursor-pointer",
                 `
-                  text-ink-4
+                  text-ink-3
                   hover:text-ink hover:bg-foreground/5
                   relative mr-1 grid size-6 shrink-0 place-items-center rounded-sm
                   [&_svg]:size-3.5

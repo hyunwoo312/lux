@@ -26,7 +26,7 @@ export function PermissionPrompt({
           py-2
         "
       >
-        <Lock className="text-ink-4 size-4 shrink-0" aria-hidden />
+        <Lock className="text-ink-3 size-4 shrink-0" aria-hidden />
         <span className="text-ink-3 min-w-0 flex-1 text-caption">{message}</span>
         <Button size="xs" className="shrink-0" onClick={enable}>
           Enable

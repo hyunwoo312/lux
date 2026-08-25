@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { DURATION, EASE_IN, EASE_OUT, POP } from "@/lib/motion";
-import { accentClass, type AccentPreset } from "@/widgets/core/accent";
 import type { WidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
 import { HEADER_LABEL, WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { WidgetChromeContext } from "@/widgets/core/useWidgetChrome";
@@ -19,7 +18,6 @@ type BaseWidgetProps = {
   editing: boolean;
   size?: { w: number; h: number };
   background?: WidgetBackground;
-  accent?: AccentPreset;
   bleed?: boolean;
   bare?: boolean;
   highlighted?: boolean;
@@ -47,7 +45,6 @@ export function BaseWidget({
   editing,
   size,
   background = "glass",
-  accent = "default",
   bleed = false,
   bare = false,
   highlighted = false,
@@ -103,7 +100,6 @@ export function BaseWidget({
           }
         }}
         className={cn(
-          accentClass(accent),
           `
             text-card-foreground group/widget relative flex h-full flex-col overflow-hidden
             rounded-2xl transition-shadow

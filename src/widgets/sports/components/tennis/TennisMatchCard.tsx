@@ -48,15 +48,15 @@ function PlayerLine({
               className={cn(
                 "relative w-3.5 text-center text-caption tabular-nums",
                 current
-                  ? "text-live font-semibold"
+                  ? "text-success font-semibold"
                   : set.won
                     ? "text-ink font-semibold"
-                    : "text-ink-4",
+                    : "text-ink-3",
               )}
             >
               {set.games}
               {set.tiebreak !== undefined && (
-                <span className="text-ink-4 absolute -top-0.5 -right-1 text-[0.5rem] leading-none">
+                <span className="text-ink-3 absolute -top-0.5 -right-1 text-[0.5rem] leading-none">
                   {set.tiebreak}
                 </span>
               )}
@@ -86,7 +86,7 @@ export function TennisMatchCard({ match }: { match: TennisMatch }) {
           <span
             className={cn(
               "min-w-0 truncate text-micro",
-              live ? "text-live font-medium" : "text-ink-4",
+              live ? "text-success font-medium" : "text-ink-3",
             )}
           >
             {[match.round, live || match.state === "pre" ? match.detail : null]

@@ -48,7 +48,7 @@ function Side({ event, side }: { event: MatchEvent; side: "home" | "away" }) {
   const name = (
     <span className="text-micro text-ink min-w-0 truncate">
       {event.player}
-      {suffix ? <span className="text-ink-4"> ({suffix})</span> : null}
+      {suffix ? <span className="text-ink-3"> ({suffix})</span> : null}
     </span>
   );
 
@@ -74,7 +74,7 @@ export function MatchTimeline({ events }: { events: MatchEvent[] }) {
       {events.map((event, index) => (
         <li key={`${event.minute}-${event.player}-${index}`} className="flex items-center gap-2">
           <Side event={event} side="away" />
-          <span className="text-ink-4 text-micro w-10 shrink-0 text-center tabular-nums">
+          <span className="text-ink-3 text-micro w-10 shrink-0 text-center tabular-nums">
             {event.minute}
           </span>
           <Side event={event} side="home" />

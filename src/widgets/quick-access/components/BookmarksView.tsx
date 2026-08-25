@@ -129,7 +129,7 @@ function Breadcrumb({
         const isCurrent = index === trail.length - 1;
         return (
           <span key={folder.id} className="flex min-w-0 items-center gap-0.5">
-            {index > 0 && <ChevronRight className="text-ink-4 size-3 shrink-0" aria-hidden />}
+            {index > 0 && <ChevronRight className="text-ink-3 size-3 shrink-0" aria-hidden />}
             <button
               type="button"
               onClick={() => onNavigate(index)}
@@ -185,7 +185,7 @@ function FolderTile({
           {folder.title}
         </span>
         {view === "list" && (
-          <span className="text-ink-4 text-micro shrink-0 tabular-nums">{count}</span>
+          <span className="text-ink-3 text-micro shrink-0 tabular-nums">{count}</span>
         )}
       </button>
     </li>

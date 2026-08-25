@@ -176,7 +176,11 @@ export function MatchRow({
           <span
             className={cn(
               "text-micro min-w-0 truncate text-right tabular-nums",
-              live ? "text-live font-medium" : match.state === "post" ? "text-ink-4" : "text-ink-3",
+              live
+                ? "text-success font-medium"
+                : match.state === "post"
+                  ? "text-ink-3"
+                  : "text-ink-3",
             )}
           >
             {matchStatus(match, now, hour12)}
@@ -199,7 +203,7 @@ export function IdleTeamRow({ abbreviation }: { abbreviation: string }) {
       }
       home={<span />}
       separator=""
-      status={<span className="text-ink-4 text-micro min-w-0 truncate text-right">No game</span>}
+      status={<span className="text-ink-3 text-micro min-w-0 truncate text-right">No game</span>}
     />
   );
 }

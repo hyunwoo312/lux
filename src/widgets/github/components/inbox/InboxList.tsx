@@ -188,7 +188,7 @@ function RepoSection({
             className={cn("size-3 shrink-0 transition-transform", !collapsed && "rotate-90")}
           />
           <span className="min-w-0 truncate">{repo}</span>
-          <span className="text-ink-4 shrink-0 tabular-nums">{count}</span>
+          <span className="text-ink-3 shrink-0 tabular-nums">{count}</span>
         </button>
       </h3>
       {!collapsed && children}

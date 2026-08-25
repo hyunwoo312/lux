@@ -27,7 +27,7 @@ function Cell({
         "px-1 py-0.5 text-center tabular-nums",
         divide && "border-border/60 border-l",
         current && "bg-foreground/5",
-        total ? "text-ink font-semibold" : blank ? "text-ink-4" : dim ? "text-ink-3" : "text-ink",
+        total ? "text-ink font-semibold" : blank ? "text-ink-3" : dim ? "text-ink-3" : "text-ink",
       )}
     >
       {children}
@@ -84,7 +84,7 @@ export function LineScore({ match }: { match: Match }) {
     <div className="-mx-1 overflow-x-auto px-1">
       <table className="text-micro w-full border-collapse">
         <thead>
-          <tr className="text-ink-4 border-border/50 border-b">
+          <tr className="text-ink-3 border-border/50 border-b">
             <th scope="col" className="sr-only">
               Team
             </th>

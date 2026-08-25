@@ -24,7 +24,7 @@ export function StockRemoveButton({
         className={cn(
           "press cursor-pointer focus-ring",
           `
-            text-ink-4
+            text-ink-3
             hover:text-ink
             grid size-7 place-items-center rounded-md transition-colors
             [&_svg]:size-4

@@ -84,7 +84,7 @@ function ImageDetailRow({ item, focalEnabled, onCaption, onFocal }: ImageDetailR
       style={focalEnabled ? { objectPosition: `${focal.x * 100}% ${focal.y * 100}%` } : undefined}
     />
   ) : (
-    <div className="text-ink-4 grid size-full place-items-center [&_svg]:size-4">
+    <div className="text-ink-3 grid size-full place-items-center [&_svg]:size-4">
       <ImageIcon aria-hidden />
     </div>
   );

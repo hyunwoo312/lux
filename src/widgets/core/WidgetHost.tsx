@@ -70,7 +70,6 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
               editing={editing}
               size={size}
               background={background}
-              accent={plugin.accent}
               bleed={plugin.frame?.bleed}
               bare={bare}
               highlighted={highlighted || pulse}

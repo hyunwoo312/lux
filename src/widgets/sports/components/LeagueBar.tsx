@@ -32,7 +32,7 @@ export function LeagueBar({
         <Icon className="size-3.5 shrink-0" />
         <span className="min-w-0 truncate">{SPORT_LABEL[league.sport]}</span>
       </button>
-      <ChevronRight className="text-ink-4 size-3.5 shrink-0" aria-hidden />
+      <ChevronRight className="text-ink-3 size-3.5 shrink-0" aria-hidden />
       <button
         type="button"
         onClick={onOpenLeagues}
@@ -46,7 +46,7 @@ export function LeagueBar({
           animate={{ rotate: leaguesOpen ? 180 : 0 }}
           transition={{ duration: reduced ? 0 : 0.18, ease: EASE_OUT }}
         >
-          <ChevronDown className="text-ink-4 size-3.5" aria-hidden />
+          <ChevronDown className="text-ink-3 size-3.5" aria-hidden />
         </motion.span>
       </button>
     </nav>

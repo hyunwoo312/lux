@@ -75,7 +75,7 @@ export function DiscoverRow({
             disabled={pending}
             onClick={onAdd}
             className="
-              press focus-ring text-ink-4
+              press focus-ring text-ink-3
               hover:text-ink
               grid size-7 shrink-0 cursor-pointer place-items-center rounded-sm
               disabled:pointer-events-none disabled:opacity-50

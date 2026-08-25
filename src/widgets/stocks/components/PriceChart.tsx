@@ -233,9 +233,9 @@ export function PriceChart({
             >
               {candles ? (
                 <>
-                  <span className="text-ink-4">O</span>
+                  <span className="text-ink-3">O</span>
                   {formatNumber(bar.open, priceHint)}
-                  <span className="text-ink-4">C</span>
+                  <span className="text-ink-3">C</span>
                   <span className={changeTone(directionOf(bar.close - bar.open))}>
                     {formatNumber(bar.close, priceHint)}
                   </span>

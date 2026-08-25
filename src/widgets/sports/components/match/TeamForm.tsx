@@ -14,7 +14,7 @@ export function TeamForm({ form, side }: { form: string; side: "home" | "away" }
           aria-hidden
           className={cn(
             "bg-foreground/8 grid size-3 place-items-center rounded-xs text-[0.5rem] leading-none",
-            result === "W" ? "text-ink font-semibold" : "text-ink-4",
+            result === "W" ? "text-ink font-semibold" : "text-ink-3",
           )}
         >
           {result}
