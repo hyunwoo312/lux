@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ensureOk, withTimeout } from "@/lib/net";
+import { ensureOk, readCappedText, withTimeout } from "@/lib/net";
 import { parseTraffic } from "@/widgets/news/lib/trend-traffic";
 import type { TrendItem, TrendNews, TrendsFeed } from "@/widgets/news/types";
 
@@ -73,7 +73,7 @@ export async function fetchTrends(region: string, signal?: AbortSignal): Promise
     referrerPolicy: "no-referrer",
   });
   ensureOk(response, "Trends request failed");
-  return parseTrends(await response.text(), region);
+  return parseTrends(await readCappedText(response), region);
 }
 
 const newsSchema = z.object({

@@ -9,7 +9,6 @@ import {
 } from "@/widgets/github/lib/api/inbox";
 import { Inbox } from "lucide-react";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
-import { GithubStaleNotice } from "@/widgets/github/components/GithubStaleNotice";
 import { InboxList } from "@/widgets/github/components/inbox/InboxList";
 import type { NotificationActions } from "@/widgets/github/components/inbox/InboxRows";
 import { useGithub } from "@/widgets/github/useGithubStore";
@@ -18,7 +17,7 @@ import { INBOX_CACHE_KEY, INBOX_REFRESH_MS } from "@/widgets/github/types";
 
 export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPrivate: boolean }) {
   const newTab = useGithub((d) => d.openBehavior === "newTab");
-  const { state, freshness, isRefreshing, refresh, lastSyncedAt } = usePolledResource(fetchInbox, {
+  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledResource(fetchInbox, {
     enabled,
     intervalMs: INBOX_REFRESH_MS,
     cacheKey: INBOX_CACHE_KEY,
@@ -91,7 +90,6 @@ export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPriv
         actions={actions}
         onRetry={refresh}
       />
-      <GithubStaleNotice freshness={freshness} />
     </div>
   );
 }

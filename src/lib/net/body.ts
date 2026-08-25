@@ -1,3 +1,5 @@
+import { ResponseTooLargeError } from "@/lib/net/errors";
+
 const MAX_RESPONSE_BYTES = 5_000_000;
 
 export async function readCappedText(
@@ -15,7 +17,7 @@ export async function readCappedText(
     total += value.byteLength;
     if (total > maxBytes) {
       await reader.cancel();
-      throw new Error("Response too large");
+      throw new ResponseTooLargeError(maxBytes);
     }
     chunks.push(value);
   }

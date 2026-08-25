@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
-import { CloudOff, Star, WifiOff } from "lucide-react";
+import { CloudOff, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/StateMessage";
-import { formatRelativeTime } from "@/lib/relative-time";
 import type { PolledResourceState } from "@/widgets/core/usePolledResource";
 import { HeadlineRow } from "@/widgets/news/components/HeadlineRow";
 import { HeadlineTile } from "@/widgets/news/components/HeadlineTile";
@@ -33,8 +32,6 @@ type NewsContentProps = {
   searchQuery: string | undefined;
   filterQuery: string;
   now: number;
-  isStale: boolean;
-  lastSyncedAt: number;
   missingSources: NewsSource[];
   readTitles: Set<string>;
   newTitles: Set<string>;
@@ -57,8 +54,6 @@ export function NewsContent({
   searchQuery,
   filterQuery,
   now,
-  isStale,
-  lastSyncedAt,
   missingSources,
   readTitles,
   newTitles,
@@ -177,12 +172,6 @@ export function NewsContent({
 
   return (
     <div className="flex h-full flex-col">
-      {isStale && (
-        <div className="text-ink-3 flex items-center gap-1.5 px-2 pb-1.5 text-caption">
-          <WifiOff className="size-3 shrink-0" aria-hidden />
-          Offline · updated {formatRelativeTime(lastSyncedAt, now)}
-        </div>
-      )}
       {missingSources.length > 0 && (
         <p className="text-ink-3 flex items-center gap-1.5 px-2 pb-1.5 text-caption">
           <CloudOff className="size-3 shrink-0" aria-hidden />

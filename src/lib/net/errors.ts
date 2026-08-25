@@ -31,6 +31,13 @@ export class InvalidResponseError extends Error {
   }
 }
 
+export class ResponseTooLargeError extends Error {
+  constructor(maxBytes: number) {
+    super(`Response larger than ${Math.round(maxBytes / 1_000_000)}MB`);
+    this.name = "ResponseTooLargeError";
+  }
+}
+
 export class TemporaryAuthError extends Error {
   constructor(message: string) {
     super(message);
@@ -45,8 +52,13 @@ function formatWait(waitMs: number): string {
 }
 
 export function retryAfterMs(response: Response, now = Date.now()): number {
-  const retryAfterSeconds = Number(response.headers.get("retry-after"));
+  const retryAfter = response.headers.get("retry-after");
+  const retryAfterSeconds = Number(retryAfter);
   if (retryAfterSeconds > 0) return retryAfterSeconds * 1000;
+  if (retryAfter && Number.isNaN(retryAfterSeconds)) {
+    const until = Date.parse(retryAfter);
+    if (!Number.isNaN(until)) return Math.max(0, until - now);
+  }
   const resetEpochSeconds = Number(response.headers.get("x-ratelimit-reset"));
   if (resetEpochSeconds > 0) return Math.max(0, resetEpochSeconds * 1000 - now);
   return 0;
@@ -70,6 +82,7 @@ export function classifyLoadError(error: Error): LoadFailure {
     if (error.status === 401 || error.status === 403) return "auth";
     return "other";
   }
+  if (error instanceof ResponseTooLargeError) return "other";
   if (error instanceof TypeError) return "unreachable";
   if (error.name === "TimeoutError") return "unreachable";
   return "other";

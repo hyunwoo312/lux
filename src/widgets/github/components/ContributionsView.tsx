@@ -8,7 +8,6 @@ import {
 import { ActivityLedger } from "@/widgets/github/components/ActivityLedger";
 import { Activity } from "lucide-react";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
-import { GithubStaleNotice } from "@/widgets/github/components/GithubStaleNotice";
 import { Heatmap, HeatmapLegend } from "@/widgets/github/components/ContributionsChart";
 import { Stats } from "@/widgets/github/components/contributions/ContributionsStats";
 import { heatmapHeight, heatmapMetrics, localDayKey } from "@/widgets/github/lib/heatmap";
@@ -32,16 +31,13 @@ export function ContributionsView({ enabled }: { enabled: boolean }) {
   const setLogin = useGithubStore((s) => s.setLogin);
   const showPrivate = useGithub((d) => d.showPrivate);
   const newTab = useGithub((d) => d.openBehavior === "newTab");
-  const { state, freshness, isRefreshing, refresh, lastSyncedAt } = usePolledResource(
-    fetchContributions,
-    {
-      enabled,
-      intervalMs: SLOW_REFRESH_MS,
-      cacheKey: CONTRIBUTIONS_CACHE_KEY,
-      persist: true,
-      parsePersisted: parseCachedContributions,
-    },
-  );
+  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledResource(fetchContributions, {
+    enabled,
+    intervalMs: SLOW_REFRESH_MS,
+    cacheKey: CONTRIBUTIONS_CACHE_KEY,
+    persist: true,
+    parsePersisted: parseCachedContributions,
+  });
   useGithubSync(refresh, isRefreshing, lastSyncedAt);
 
   const data = state.status === "success" ? state.data : null;
@@ -113,7 +109,6 @@ export function ContributionsView({ enabled }: { enabled: boolean }) {
           </div>
         )}
       </div>
-      <GithubStaleNotice freshness={freshness} />
     </div>
   );
 }

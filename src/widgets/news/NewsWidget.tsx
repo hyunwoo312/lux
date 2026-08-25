@@ -19,8 +19,9 @@ export function NewsWidget() {
   const instanceId = useWidgetInstanceId();
   const reduced = useReducedMotion() ?? false;
   const view = useNews((d) => d.view);
-  const { state, refresh, isRefreshing, tab, query, isStale, lastSyncedAt, missingSources } =
-    useNewsResource(view === "news");
+  const { state, refresh, isRefreshing, tab, query, missingSources } = useNewsResource(
+    view === "news",
+  );
   const openBehavior = useNews((d) => d.openBehavior);
   const googleQuery = useNews((d) => d.googleQuery);
   const sortByLatest = useNews((d) => d.sortByLatest);
@@ -156,8 +157,6 @@ export function NewsWidget() {
                   searchQuery={query || undefined}
                   filterQuery={tab === "google" ? "" : allFilter.trim()}
                   now={now}
-                  isStale={isStale}
-                  lastSyncedAt={lastSyncedAt}
                   missingSources={missingSources}
                   readTitles={readSet}
                   newTitles={newTitles}

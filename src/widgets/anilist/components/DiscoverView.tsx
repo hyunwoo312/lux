@@ -3,11 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ConfigSegmented, ConfigSelect } from "@/components/config/WidgetConfig";
 import { useIntegrationStore } from "@/integrations";
 import { useSettingsStore } from "@/settings";
-import {
-  usePolledResource,
-  type Freshness,
-  type PolledResourceState,
-} from "@/widgets/core/usePolledResource";
+import { usePolledResource, type PolledResourceState } from "@/widgets/core/usePolledResource";
 import { saveListStatus } from "@/widgets/anilist/lib/api/list";
 import { fetchDiscover } from "@/widgets/anilist/lib/api/discover";
 import { parseCachedDiscover } from "@/widgets/anilist/lib/api/cache";
@@ -20,7 +16,6 @@ import { AnilistWriteNotice } from "@/widgets/anilist/components/AnilistWriteNot
 import { cn } from "@/lib/utils";
 import { COVER_GRID } from "@/widgets/anilist/components/coverGrid";
 import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
-import { AnilistStaleNotice } from "@/widgets/anilist/components/AnilistStaleNotice";
 import { DiscoverRow } from "@/widgets/anilist/components/discover/DiscoverRow";
 import { SearchField } from "@/components/SearchField";
 import { DiscoverTile } from "@/widgets/anilist/components/discover/DiscoverTile";
@@ -102,7 +97,7 @@ export function DiscoverView() {
   const adds = usePlanningAdds();
   const search = useDiscoverSearch(query, lang, type, connected);
 
-  const { state, freshness, isRefreshing, refresh, lastSyncedAt } = usePolledResource(
+  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledResource(
     (signal) => fetchDiscover(lang, feed, type, connected, signal),
     {
       enabled: true,
@@ -164,7 +159,6 @@ export function DiscoverView() {
         ) : (
           <DiscoverBody
             state={state}
-            freshness={freshness}
             viewMode={viewMode}
             newTab={newTab}
             connected={connected}
@@ -227,14 +221,12 @@ function SearchBody({
 
 function DiscoverBody({
   state,
-  freshness,
   viewMode,
   newTab,
   connected,
   adds,
 }: {
   state: PolledResourceState<DiscoverMedia[]>;
-  freshness: Freshness;
   viewMode: ViewMode;
   newTab: boolean;
   connected: boolean;
@@ -248,7 +240,6 @@ function DiscoverBody({
 
   return (
     <div className="flex h-full flex-col">
-      <AnilistStaleNotice freshness={freshness} />
       <AnilistWriteNotice message={adds.writeError ?? ""} />
       <DiscoverList
         label="Discover"

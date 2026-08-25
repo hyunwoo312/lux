@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ensureOk, withTimeout } from "@/lib/net";
+import { ensureOk, parseResponse, withTimeout } from "@/lib/net";
 import type {
   GeocodeResult,
   WeatherData,
@@ -122,12 +122,9 @@ export async function fetchWeather(
     signal: withTimeout(signal),
   });
   ensureOk(response, "Weather request failed");
-  const parsed = forecastSchema.safeParse(await response.json());
-  if (!parsed.success) {
-    throw new Error("Unexpected weather response");
-  }
+  const parsed = parseResponse("weather", forecastSchema, await response.json());
 
-  const { current, current_units, hourly, daily } = parsed.data;
+  const { current, current_units, hourly, daily } = parsed;
   const days = buildDays(daily);
   const today = days[0];
   if (!today) {
@@ -157,10 +154,10 @@ export async function fetchWeather(
       precipitationProbability: hourly.precipitation_probability[index] ?? 0,
       isDay: hourly.is_day[index] === 1,
     })),
-    minutely: (parsed.data.minutely_15?.time ?? []).map((time, index) => ({
+    minutely: (parsed.minutely_15?.time ?? []).map((time, index) => ({
       time,
-      precipitation: parsed.data.minutely_15?.precipitation[index] ?? 0,
-      probability: parsed.data.minutely_15?.precipitation_probability[index] ?? 0,
+      precipitation: parsed.minutely_15?.precipitation[index] ?? 0,
+      probability: parsed.minutely_15?.precipitation_probability[index] ?? 0,
     })),
     daily: days,
     unitLabels: {
@@ -198,11 +195,8 @@ export async function searchPlaces(query: string, signal?: AbortSignal): Promise
     signal: withTimeout(signal),
   });
   ensureOk(response, "Place search failed");
-  const parsed = geocodeSchema.safeParse(await response.json());
-  if (!parsed.success) {
-    throw new Error("Unexpected place search response");
-  }
-  return (parsed.data.results ?? []).map((result) => ({
+  const parsed = parseResponse("place search", geocodeSchema, await response.json());
+  return (parsed.results ?? []).map((result) => ({
     id: result.id,
     name: result.name,
     label: [result.name, result.admin1, result.country].filter(Boolean).join(", "),

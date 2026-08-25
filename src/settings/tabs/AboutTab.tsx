@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { withTimeout } from "@/lib/net";
+import { parseResponse, withTimeout } from "@/lib/net";
 import { useEffect, useState } from "react";
 import {
   Code2,
@@ -80,9 +80,11 @@ function useGithubStars(): number | null {
       try {
         const response = await fetch(GITHUB_API, { signal: withTimeout(controller.signal) });
         if (!response.ok) return;
-        const parsed = repoSchema.safeParse(await response.json());
-        if (!parsed.success) return;
-        const count = parsed.data.stargazers_count;
+        const count = parseResponse(
+          "GitHub repo",
+          repoSchema,
+          await response.json(),
+        ).stargazers_count;
         setStars(count);
         await write(STARS_CACHE_KEY, { count, at: Date.now() });
       } catch {

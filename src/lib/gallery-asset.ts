@@ -1,4 +1,5 @@
 import type { MediaImageItem, StoredAsset } from "@/lib/asset-store";
+import { withTimeout } from "@/lib/net";
 import { findGalleryWallpaper } from "@/lib/wallpaper-gallery";
 import { wallpaperAssets } from "@/stores/useWallpaperStore";
 
@@ -26,7 +27,7 @@ export async function ensureGalleryAsset(galleryId: string): Promise<StoredAsset
   const existing = await wallpaperAssets.read(id).catch(() => null);
   if (existing) return existing;
   try {
-    const response = await fetch(wallpaper.url);
+    const response = await fetch(wallpaper.url, { signal: withTimeout() });
     if (!response.ok) return null;
     const blob = await response.blob();
     const asset = {

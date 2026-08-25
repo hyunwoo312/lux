@@ -1,4 +1,4 @@
-export type EndpointAccess = "host-permission" | "cors";
+export type EndpointAccess = "host-permission" | "cors" | "oauth-redirect";
 
 export type Endpoint = {
   host: string;
@@ -122,6 +122,30 @@ export const ENDPOINTS: readonly Endpoint[] = [
     usedBy: "widgets/sports",
     reason: "Scoreboard mirror used when the primary host fails",
     access: "cors",
+  },
+  {
+    host: "https://accounts.google.com/*",
+    usedBy: "integrations/providers/google",
+    reason: "Google sign-in page the browser is sent to; Lux never fetches it",
+    access: "oauth-redirect",
+  },
+  {
+    host: "https://login.microsoftonline.com/*",
+    usedBy: "integrations/providers/microsoft",
+    reason: "Microsoft sign-in page the browser is sent to; Lux never fetches it",
+    access: "oauth-redirect",
+  },
+  {
+    host: "https://github.com/*",
+    usedBy: "integrations/providers/github",
+    reason: "GitHub sign-in page the browser is sent to; Lux never fetches it",
+    access: "oauth-redirect",
+  },
+  {
+    host: "https://anilist.co/*",
+    usedBy: "integrations/providers/anilist",
+    reason: "AniList sign-in page the browser is sent to; Lux never fetches it",
+    access: "oauth-redirect",
   },
   {
     host: "https://lux.hyunwk.me/*",

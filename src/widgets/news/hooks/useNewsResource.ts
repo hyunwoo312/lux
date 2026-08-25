@@ -45,7 +45,6 @@ export function useNewsResource(enabled = true) {
     parsePersisted: parseCachedNews,
   });
 
-  const isStale = freshness.status === "failing" && state.status === "success";
   const missingSources = tab === "all" ? readFailedSources(cacheKey) : [];
 
   return {
@@ -56,7 +55,6 @@ export function useNewsResource(enabled = true) {
     freshness,
     tab,
     query,
-    isStale,
     missingSources,
   };
 }

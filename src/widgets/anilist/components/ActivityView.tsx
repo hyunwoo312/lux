@@ -7,7 +7,6 @@ import { formatRelativeTime } from "@/lib/relative-time";
 import { usePagedResource } from "@/widgets/core/usePagedResource";
 import { fetchActivityPage, toggleActivityLike } from "@/widgets/anilist/lib/api/feed";
 import { parseCachedActivity } from "@/widgets/anilist/lib/api/cache";
-import { AnilistStaleNotice } from "@/widgets/anilist/components/AnilistStaleNotice";
 import { writeFailureMessage } from "@/widgets/anilist/lib/load-failure";
 import { FeedList } from "@/widgets/anilist/components/FeedList";
 import { FeedThumb } from "@/widgets/anilist/components/FeedThumb";
@@ -38,24 +37,16 @@ export function ActivityView({
   const setLastSeen = useAnilistStore((s) => s.setLastSeenActivity);
   const lang = useAnilist((d) => d.titleLanguage);
   const seenRef = useRef(useAnilistStore.getState().lastSeenActivityAt ?? 0);
-  const {
-    state,
-    hasMore,
-    isLoadingMore,
-    isRefreshing,
-    loadMore,
-    refresh,
-    lastSyncedAt,
-    freshness,
-  } = usePagedResource((page, signal) => fetchActivityPage(page, lang, signal), {
-    enabled,
-    intervalMs: ACTIVITY_REFRESH_MS,
-    maxItems: ANILIST_MAX_ITEMS,
-    cacheKey: anilistKeys.activity(userId, lang),
-    getKey: (activity) => activity.id,
-    persist: true,
-    parsePersisted: parseCachedActivity,
-  });
+  const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh, lastSyncedAt } =
+    usePagedResource((page, signal) => fetchActivityPage(page, lang, signal), {
+      enabled,
+      intervalMs: ACTIVITY_REFRESH_MS,
+      maxItems: ANILIST_MAX_ITEMS,
+      cacheKey: anilistKeys.activity(userId, lang),
+      getKey: (activity) => activity.id,
+      persist: true,
+      parsePersisted: parseCachedActivity,
+    });
   useAnilistSync(refresh, isRefreshing, lastSyncedAt);
 
   const [likes, setLikes] = useState<Record<number, boolean>>({});
@@ -121,7 +112,6 @@ export function ActivityView({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <AnilistStaleNotice freshness={freshness} />
       <AnilistWriteNotice message={likeError} />
       <FeedList
         label="Recent activity"

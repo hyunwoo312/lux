@@ -18,7 +18,6 @@ import {
 } from "@/widgets/anilist/lib/list-status";
 import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
 import { AnilistWriteNotice } from "@/widgets/anilist/components/AnilistWriteNotice";
-import { AnilistStaleNotice } from "@/widgets/anilist/components/AnilistStaleNotice";
 import { LibraryControls } from "@/widgets/anilist/components/library/LibraryControls";
 import { LibraryEntries } from "@/widgets/anilist/components/library/LibraryEntries";
 import { LibraryRow } from "@/widgets/anilist/components/library/LibraryRow";
@@ -58,7 +57,7 @@ export function LibraryView({ enabled, userId, newTab }: LibraryViewProps) {
   const viewMode = useAnilist((d) => d.viewMode);
   const instanceId = useWidgetInstanceId();
   const setActiveTab = useAnilistStore((s) => s.setActiveTab);
-  const { state, isRefreshing, refresh, lastSyncedAt, freshness } = usePolledResource(
+  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledResource(
     (signal) => fetchList(userId, lang, signal),
     {
       enabled,
@@ -100,7 +99,6 @@ export function LibraryView({ enabled, userId, newTab }: LibraryViewProps) {
               />
             ) : (
               <>
-                <AnilistStaleNotice freshness={freshness} />
                 <ListBody data={state.data} newTab={newTab} lang={lang} userId={userId} />
               </>
             )}

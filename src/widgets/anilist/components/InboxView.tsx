@@ -5,7 +5,6 @@ import { formatRelativeTime } from "@/lib/relative-time";
 import { usePagedResource } from "@/widgets/core/usePagedResource";
 import { fetchInboxPage } from "@/widgets/anilist/lib/api/feed";
 import { parseCachedInbox } from "@/widgets/anilist/lib/api/cache";
-import { AnilistStaleNotice } from "@/widgets/anilist/components/AnilistStaleNotice";
 import { FeedList } from "@/widgets/anilist/components/FeedList";
 import { FeedThumb } from "@/widgets/anilist/components/FeedThumb";
 import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
@@ -30,24 +29,16 @@ export function InboxView({
   unreadCount: number;
 }) {
   const lang = useAnilist((d) => d.titleLanguage);
-  const {
-    state,
-    hasMore,
-    isLoadingMore,
-    isRefreshing,
-    loadMore,
-    refresh,
-    lastSyncedAt,
-    freshness,
-  } = usePagedResource((page, signal) => fetchInboxPage(page, lang, signal), {
-    enabled,
-    intervalMs: ANILIST_REFRESH_MS,
-    maxItems: ANILIST_MAX_ITEMS,
-    cacheKey: anilistKeys.inbox(userId, lang),
-    getKey: (notification) => notification.id,
-    persist: true,
-    parsePersisted: parseCachedInbox,
-  });
+  const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh, lastSyncedAt } =
+    usePagedResource((page, signal) => fetchInboxPage(page, lang, signal), {
+      enabled,
+      intervalMs: ANILIST_REFRESH_MS,
+      maxItems: ANILIST_MAX_ITEMS,
+      cacheKey: anilistKeys.inbox(userId, lang),
+      getKey: (notification) => notification.id,
+      persist: true,
+      parsePersisted: parseCachedInbox,
+    });
   useAnilistSync(refresh, isRefreshing, lastSyncedAt);
 
   if (state.status === "loading") return <AnilistSkeleton variant="list" label="Loading inbox…" />;
@@ -66,7 +57,6 @@ export function InboxView({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <AnilistStaleNotice freshness={freshness} />
       <FeedList
         label="Notifications"
         items={state.items}

@@ -5,7 +5,6 @@ import { formatRelativeTime } from "@/lib/relative-time";
 import { usePolledResource } from "@/widgets/core/usePolledResource";
 import { fetchReleases, parseCachedReleases } from "@/widgets/github/lib/api/releases";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
-import { GithubStaleNotice } from "@/widgets/github/components/GithubStaleNotice";
 import { isUnseen, newestPublishedAt } from "@/widgets/github/lib/releases-unseen";
 import { visibleItems } from "@/widgets/github/lib/visibility";
 import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
@@ -19,17 +18,14 @@ import {
 
 export function ReleasesView({ enabled, showPrivate }: { enabled: boolean; showPrivate: boolean }) {
   const newTab = useGithub((d) => d.openBehavior === "newTab");
-  const { state, freshness, isRefreshing, refresh, lastSyncedAt } = usePolledResource(
-    fetchReleases,
-    {
-      enabled,
-      intervalMs: SLOW_REFRESH_MS,
-      isEmpty: (data) => data.watchedCount === 0,
-      cacheKey: RELEASES_CACHE_KEY,
-      persist: true,
-      parsePersisted: parseCachedReleases,
-    },
-  );
+  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledResource(fetchReleases, {
+    enabled,
+    intervalMs: SLOW_REFRESH_MS,
+    isEmpty: (data) => data.watchedCount === 0,
+    cacheKey: RELEASES_CACHE_KEY,
+    persist: true,
+    parsePersisted: parseCachedReleases,
+  });
   useGithubSync(refresh, isRefreshing, lastSyncedAt);
 
   if (state.status === "loading") return <StateMessage message="Loading releases…" />;
@@ -49,7 +45,6 @@ export function ReleasesView({ enabled, showPrivate }: { enabled: boolean; showP
   return (
     <div className="flex h-full min-h-0 flex-col">
       <ReleaseList data={state.data} showPrivate={showPrivate} newTab={newTab} markSeen />
-      <GithubStaleNotice freshness={freshness} />
     </div>
   );
 }
