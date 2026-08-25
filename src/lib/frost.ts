@@ -39,7 +39,7 @@ export async function renderFrost(source: Blob): Promise<Blob | null> {
   }
 }
 
-export function hasCurrentFrost(asset: StoredAsset): boolean {
+function hasCurrentFrost(asset: StoredAsset): boolean {
   return Boolean(asset.frost) && asset.frostVersion === FROST_VERSION;
 }
 

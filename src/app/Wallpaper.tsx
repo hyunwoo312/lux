@@ -1,5 +1,6 @@
-import { EASE_STANDARD } from "@/lib/motion";
+import { useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { DURATION, EASE_STANDARD } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { GeneratedWallpaper } from "@/app/wallpaper/GeneratedWallpaper";
 import { useWallpaperStore, type WallpaperFit } from "@/stores/useWallpaperStore";
@@ -11,6 +12,8 @@ const FIT_CLASS: Record<WallpaperFit, string> = {
   "scale-down": "object-scale-down",
 };
 
+const BLEED_PER_BLUR_PX = 2;
+
 export function Wallpaper({ imageUrl }: { imageUrl: string | null }) {
   const source = useWallpaperStore((s) => s.source);
   const fit = useWallpaperStore((s) => s.fit);
@@ -19,6 +22,12 @@ export function Wallpaper({ imageUrl }: { imageUrl: string | null }) {
   const reduced = useReducedMotion();
   const isGenerated = source === "generated";
   const showImage = imageUrl !== null && !isGenerated;
+
+  const hasShownImage = useRef(false);
+  const crossfade = hasShownImage.current && !reduced;
+  if (showImage) hasShownImage.current = true;
+
+  const bleed = blur * BLEED_PER_BLUR_PX;
 
   return (
     <div aria-hidden className="fixed inset-0 z-wallpaper">
@@ -30,16 +39,22 @@ export function Wallpaper({ imageUrl }: { imageUrl: string | null }) {
             key={imageUrl}
             src={imageUrl}
             alt=""
-            initial={{ opacity: reduced ? 1 : 0 }}
+            initial={crossfade ? { opacity: 0 } : false}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: reduced ? 0 : 0.5, ease: EASE_STANDARD }}
-            className={cn("absolute inset-0 h-full w-full", FIT_CLASS[fit])}
-            style={blur > 0 ? { filter: `blur(${blur}px)`, transform: "scale(1.06)" } : undefined}
+            transition={{ duration: DURATION.slow, ease: EASE_STANDARD }}
+            className={cn("absolute", FIT_CLASS[fit])}
+            style={{
+              top: -bleed,
+              left: -bleed,
+              width: `calc(100% + ${bleed * 2}px)`,
+              height: `calc(100% + ${bleed * 2}px)`,
+              ...(blur > 0 ? { filter: `blur(${blur}px)` } : {}),
+            }}
           />
         )}
       </AnimatePresence>
-      {(showImage || isGenerated) && dim > 0 && (
+      {showImage && dim > 0 && (
         <div className="absolute inset-0 bg-black" style={{ opacity: dim }} />
       )}
     </div>

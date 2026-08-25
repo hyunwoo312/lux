@@ -1,12 +1,11 @@
-import type { CSSProperties, PointerEvent } from "react";
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import type { CSSProperties } from "react";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ImageIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/tooltip";
 import { GRID_MODIFIERS } from "@/lib/dnd";
 import { useAssetThumbUrl, type AssetStore, type MediaImageItem } from "@/lib/asset-store";
 import { getMetadataLabel } from "@/lib/media-format";
@@ -74,13 +73,6 @@ function SortableImage({ item, assetStore, disabled, onRemove }: SortableImagePr
   });
   const url = useAssetThumbUrl(assetStore, item.assetId);
   const meta = getMetadataLabel(item.mimeType, item.size);
-  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
-
-  useEffect(() => {
-    if (isDragging) setCursor(null);
-  }, [isDragging]);
-
-  const trackCursor = (event: PointerEvent) => setCursor({ x: event.clientX, y: event.clientY });
 
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -89,15 +81,20 @@ function SortableImage({ item, assetStore, disabled, onRemove }: SortableImagePr
   };
 
   return (
-    <>
+    <Tooltip
+      solid
+      content={
+        <span className="flex flex-col gap-0.5">
+          <span className="break-words">{item.fileName}</span>
+          {meta && <span className="text-ink-3">{meta}</span>}
+        </span>
+      }
+    >
       <li
         ref={setNodeRef}
         style={style}
         {...attributes}
         {...listeners}
-        onPointerEnter={trackCursor}
-        onPointerMove={trackCursor}
-        onPointerLeave={() => setCursor(null)}
         className={cn(
           `
             border-border/50 bg-foreground/5 focus-ring relative aspect-square cursor-grab
@@ -134,22 +131,6 @@ function SortableImage({ item, assetStore, disabled, onRemove }: SortableImagePr
           <X aria-hidden />
         </button>
       </li>
-      {cursor &&
-        createPortal(
-          <div
-            role="tooltip"
-            style={{ left: cursor.x + 4, top: cursor.y + 4 }}
-            className="
-              bg-popover text-popover-foreground border-border pointer-events-none fixed z-tooltip
-              flex max-w-[14rem] flex-col gap-0.5 rounded-md border px-2.5 py-1.5 text-micro
-              shadow-lg
-            "
-          >
-            <span className="font-medium break-words">{item.fileName}</span>
-            {meta && <span className="text-ink-3">{meta}</span>}
-          </div>,
-          document.body,
-        )}
-    </>
+    </Tooltip>
   );
 }

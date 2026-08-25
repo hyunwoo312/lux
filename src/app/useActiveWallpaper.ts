@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { RefObject } from "react";
 import type { MediaImageItem } from "@/lib/asset-store";
 import { resolveFrost } from "@/lib/frost";
+import { DURATION } from "@/lib/motion";
 import { ensureGalleryAsset, galleryItemFor } from "@/lib/gallery-asset";
 import {
   getSignature,
@@ -9,10 +10,10 @@ import {
   selectNewtabIndex,
   writeNewtabQueue,
 } from "@/lib/media-rotation";
-import { useWallpaperStore, wallpaperAssets } from "@/stores/useWallpaperStore";
+import { activeWallpaperIds, useWallpaperStore, wallpaperAssets } from "@/stores/useWallpaperStore";
 
 const WALLPAPER_NEWTAB_QUEUE_KEY = "lux.wallpaper.newtab-queue";
-const URL_RELEASE_DELAY_MS = 600;
+const URL_RELEASE_DELAY_MS = DURATION.slow * 1000 + 100;
 
 type ActiveWallpaper = {
   activeItem: MediaImageItem | null;
@@ -42,11 +43,9 @@ export function useActiveWallpaper(enabled: boolean): ActiveWallpaper {
   const advance = useWallpaperStore((s) => s.advance);
 
   const displayItems = useMemo(() => {
-    if (source === "gallery") {
-      const ids = mode === "multi" ? galleryItems : gallerySingle ? [gallerySingle] : [];
-      return ids.map(galleryItemFor).filter((item) => item !== null);
-    }
-    return mode === "multi" ? items : single ? [single] : [];
+    if (source !== "gallery") return mode === "multi" ? items : single ? [single] : [];
+    const ids = activeWallpaperIds({ source, mode, single, items, gallerySingle, galleryItems });
+    return ids.map(galleryItemFor).filter((item) => item !== null);
   }, [source, mode, items, single, galleryItems, gallerySingle]);
   const length = displayItems.length;
   const signature = useMemo(
@@ -98,9 +97,9 @@ export function useActiveWallpaper(enabled: boolean): ActiveWallpaper {
       return;
     }
     void (async () => {
-      if (activeGalleryId && !(await ensureGalleryAsset(activeGalleryId))) return;
-      if (!active) return;
-      const asset = await wallpaperAssets.read(activeAssetId).catch(() => null);
+      const asset = activeGalleryId
+        ? await ensureGalleryAsset(activeGalleryId)
+        : await wallpaperAssets.read(activeAssetId).catch(() => null);
       if (!active || !asset) return;
       const nextUrl = URL.createObjectURL(asset.blob);
       swapObjectUrl(objectUrlRef, nextUrl);

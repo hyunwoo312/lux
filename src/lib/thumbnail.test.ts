@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import type { AssetStore, StoredAsset } from "@/lib/asset-store";
-import { hasCurrentThumb, resolveThumb, THUMB_VERSION } from "@/lib/thumbnail";
+import { resolveThumb, THUMB_VERSION } from "@/lib/thumbnail";
 
 function makeStore(asset: StoredAsset) {
   const saved: StoredAsset[] = [];
@@ -51,7 +51,7 @@ describe("resolveThumb", () => {
     await expect(resolveThumb(store, asset)).resolves.toBe(FULL);
   });
 
-  it("treats a stale thumbnail version as absent", () => {
+  it("ignores a thumbnail left over from an older recipe", async () => {
     const asset: StoredAsset = {
       id: "a",
       fileName: "f",
@@ -61,6 +61,8 @@ describe("resolveThumb", () => {
       thumb: SMALL,
       thumbVersion: THUMB_VERSION - 1,
     };
-    expect(hasCurrentThumb(asset)).toBe(false);
+    const { store } = makeStore(asset);
+
+    await expect(resolveThumb(store, asset)).resolves.not.toBe(SMALL);
   });
 });

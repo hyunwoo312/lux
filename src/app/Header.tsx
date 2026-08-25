@@ -70,7 +70,7 @@ export function Header() {
   }, []);
 
   return (
-    <header className="grid grid-cols-3 items-center gap-4">
+    <header className="grid grid-cols-3 items-center gap-4 pr-(--scrollbar-width)">
       <div
         ref={toolbarRef}
         data-tour="toolbar"

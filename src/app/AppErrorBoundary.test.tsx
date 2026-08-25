@@ -41,7 +41,7 @@ describe("AppErrorBoundary", () => {
     renderBoundary(<Boom />);
 
     expect(screen.getByRole("heading", { name: /Lux hit an error/ })).toBeInTheDocument();
-    expect(screen.getByText("wallpaper exploded")).toBeInTheDocument();
+    expect(screen.getByText(/wallpaper exploded/)).toBeInTheDocument();
   });
 
   it("offers no way to send the crash anywhere", () => {

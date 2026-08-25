@@ -1,5 +1,5 @@
 import { createAssetStore, type StoredAsset } from "@/lib/asset-store";
-import { FROST_VERSION, hasCurrentFrost, renderFrost, resolveFrost } from "@/lib/frost";
+import { FROST_VERSION, renderFrost, resolveFrost } from "@/lib/frost";
 
 function asset(overrides: Partial<StoredAsset> = {}): StoredAsset {
   return {
@@ -15,26 +15,6 @@ function asset(overrides: Partial<StoredAsset> = {}): StoredAsset {
 function frostBlob(): Blob {
   return new Blob([new Uint8Array(64)], { type: "image/webp" });
 }
-
-describe("hasCurrentFrost", () => {
-  it("accepts an asset frosted by the current recipe", () => {
-    expect(hasCurrentFrost(asset({ frost: frostBlob(), frostVersion: FROST_VERSION }))).toBe(true);
-  });
-
-  it("rejects an asset with no cached frost", () => {
-    expect(hasCurrentFrost(asset())).toBe(false);
-  });
-
-  it("rejects a frost left over from an older recipe", () => {
-    expect(hasCurrentFrost(asset({ frost: frostBlob(), frostVersion: FROST_VERSION - 1 }))).toBe(
-      false,
-    );
-  });
-
-  it("rejects a frost blob with no version stamp", () => {
-    expect(hasCurrentFrost(asset({ frost: frostBlob() }))).toBe(false);
-  });
-});
 
 describe("resolveFrost", () => {
   it("returns the cached frost without touching storage", async () => {

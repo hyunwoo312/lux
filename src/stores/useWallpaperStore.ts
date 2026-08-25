@@ -5,6 +5,7 @@ import { createAssetStore, missingAssetIds, type MediaImageItem } from "@/lib/as
 import { encodeToWebp, isOptimizedMimeType } from "@/lib/image-encode";
 import { getLocal, setLocal } from "@/lib/local-store";
 import { getNextSequentialIndex, getRandomIndexExcluding } from "@/lib/media-rotation";
+import { mergePersisted, tolerantArray } from "@/lib/persist";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { GALLERY_WALLPAPERS } from "@/lib/wallpaper-gallery";
 
@@ -154,28 +155,26 @@ const itemSchema = z.object({
   size: z.number(),
 });
 
-const persistedSchema = z
-  .object({
-    source: z.enum(WALLPAPER_SOURCES),
-    generatedStyle: z.enum(GENERATED_STYLES),
-    generatedMotion: z.boolean(),
-    generatedIntensity: z.number(),
-    generatedDensity: z.number(),
-    generatedSpeed: z.number(),
-    gallerySingle: z.string().nullable(),
-    galleryItems: z.array(z.string()).max(MAX_WALLPAPER_IMAGES),
-    mode: z.enum(WALLPAPER_MODES),
-    single: itemSchema.nullable(),
-    items: z.array(itemSchema).max(MAX_WALLPAPER_IMAGES),
-    rotateOnNewtab: z.boolean(),
-    rotateTimed: z.boolean(),
-    intervalSeconds: z.number(),
-    order: z.enum(WALLPAPER_ORDERS),
-    fit: z.enum(WALLPAPER_FITS),
-    dim: z.number(),
-    blur: z.number(),
-  })
-  .partial();
+const persistedSchema = z.object({
+  source: z.enum(WALLPAPER_SOURCES).optional().catch(undefined),
+  generatedStyle: z.enum(GENERATED_STYLES).catch(DEFAULTS.generatedStyle),
+  generatedMotion: z.boolean().catch(DEFAULTS.generatedMotion),
+  generatedIntensity: z.number().catch(DEFAULTS.generatedIntensity),
+  generatedDensity: z.number().catch(DEFAULTS.generatedDensity),
+  generatedSpeed: z.number().catch(DEFAULTS.generatedSpeed),
+  gallerySingle: z.string().nullable().catch(DEFAULTS.gallerySingle),
+  galleryItems: tolerantArray(z.string()),
+  mode: z.enum(WALLPAPER_MODES).catch(DEFAULTS.mode),
+  single: itemSchema.nullable().catch(DEFAULTS.single),
+  items: tolerantArray(itemSchema),
+  rotateOnNewtab: z.boolean().catch(DEFAULTS.rotateOnNewtab),
+  rotateTimed: z.boolean().catch(DEFAULTS.rotateTimed),
+  intervalSeconds: z.number().catch(DEFAULTS.intervalSeconds),
+  order: z.enum(WALLPAPER_ORDERS).catch(DEFAULTS.order),
+  fit: z.enum(WALLPAPER_FITS).catch(DEFAULTS.fit),
+  dim: z.number().catch(DEFAULTS.dim),
+  blur: z.number().catch(DEFAULTS.blur),
+});
 
 export function resolveWallpaperSource(
   stored: WallpaperSource | undefined,
@@ -192,9 +191,28 @@ function clampIntensity(value: number): number {
   return Math.min(GENERATED_MAX_INTENSITY, Math.max(GENERATED_MIN_INTENSITY, stepped));
 }
 
+function clampRange(value: number, max: number, fallback: number): number {
+  if (!Number.isFinite(value)) return fallback;
+  return Math.min(max, Math.max(0, value));
+}
+
 function clampInterval(seconds: number): number {
   if (!Number.isFinite(seconds)) return 30;
   return Math.min(WALLPAPER_MAX_INTERVAL, Math.max(WALLPAPER_MIN_INTERVAL, Math.round(seconds)));
+}
+
+type WallpaperSelection = Pick<
+  WallpaperState,
+  "source" | "mode" | "single" | "items" | "gallerySingle" | "galleryItems"
+>;
+
+export function activeWallpaperIds(selection: WallpaperSelection): string[] {
+  if (selection.source === "gallery") {
+    if (selection.mode === "multi") return selection.galleryItems;
+    return selection.gallerySingle ? [selection.gallerySingle] : [];
+  }
+  if (selection.mode === "multi") return selection.items.map((item) => item.assetId);
+  return selection.single ? [selection.single.assetId] : [];
 }
 
 function normalizeIndex(index: number, length: number): number {
@@ -233,12 +251,12 @@ export const useWallpaperStore = create<WallpaperState>()(
       setIntervalSeconds: (seconds) => set({ intervalSeconds: clampInterval(seconds) }),
       setOrder: (order) => set({ order }),
       setFit: (fit) => set({ fit }),
-      setDim: (dim) => set({ dim }),
-      setBlur: (blur) => set({ blur }),
+      setDim: (dim) => set({ dim: clampRange(dim, WALLPAPER_MAX_DIM, DEFAULTS.dim) }),
+      setBlur: (blur) => set({ blur: clampRange(blur, WALLPAPER_MAX_BLUR, DEFAULTS.blur) }),
       setCurrentIndex: (currentIndex) => set({ currentIndex }),
       advance: () =>
         set((state) => {
-          const length = state.items.length;
+          const length = activeWallpaperIds(state).length;
           if (state.mode !== "multi" || length < 2) return state;
           const current = normalizeIndex(state.currentIndex, length);
           const next =
@@ -312,24 +330,24 @@ export const useWallpaperStore = create<WallpaperState>()(
         dim: state.dim,
         blur: state.blur,
       }),
-      merge: (persisted, current) => {
-        const parsed = persistedSchema.safeParse(persisted);
-        if (!parsed.success) return current;
-        const hasOwnImages = Boolean(parsed.data.single) || (parsed.data.items?.length ?? 0) > 0;
-        return {
+      merge: (persisted, current) =>
+        mergePersisted("wallpaper", persistedSchema, persisted, current, (parsed) => ({
           ...current,
-          ...parsed.data,
-          source: resolveWallpaperSource(parsed.data.source, hasOwnImages, current.source),
-          intervalSeconds: clampInterval(parsed.data.intervalSeconds ?? current.intervalSeconds),
-          generatedIntensity: clampIntensity(
-            parsed.data.generatedIntensity ?? current.generatedIntensity,
+          ...parsed,
+          galleryItems: parsed.galleryItems.slice(0, MAX_WALLPAPER_IMAGES),
+          items: parsed.items.slice(0, MAX_WALLPAPER_IMAGES),
+          source: resolveWallpaperSource(
+            parsed.source,
+            Boolean(parsed.single) || parsed.items.length > 0,
+            current.source,
           ),
-          generatedDensity: clampIntensity(
-            parsed.data.generatedDensity ?? current.generatedDensity,
-          ),
-          generatedSpeed: clampIntensity(parsed.data.generatedSpeed ?? current.generatedSpeed),
-        };
-      },
+          intervalSeconds: clampInterval(parsed.intervalSeconds),
+          generatedIntensity: clampIntensity(parsed.generatedIntensity),
+          generatedDensity: clampIntensity(parsed.generatedDensity),
+          generatedSpeed: clampIntensity(parsed.generatedSpeed),
+          dim: clampRange(parsed.dim, WALLPAPER_MAX_DIM, DEFAULTS.dim),
+          blur: clampRange(parsed.blur, WALLPAPER_MAX_BLUR, DEFAULTS.blur),
+        })),
     },
   ),
 );

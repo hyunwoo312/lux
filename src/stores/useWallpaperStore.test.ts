@@ -1,8 +1,11 @@
 // @vitest-environment jsdom
 import { encodeToWebp } from "@/lib/image-encode";
 import {
+  activeWallpaperIds,
   MAX_WALLPAPER_IMAGES,
   WALLPAPER_ENCODE_QUALITY,
+  WALLPAPER_MAX_BLUR,
+  WALLPAPER_MAX_DIM,
   resolveWallpaperSource,
   useWallpaperStore,
   wallpaperAssets,
@@ -184,5 +187,103 @@ describe("wallpaper source migration", () => {
     const ids = Array.from({ length: 30 }, (_, i) => `wp${i}`);
     useWallpaperStore.getState().setGalleryItems(ids);
     expect(useWallpaperStore.getState().galleryItems).toHaveLength(MAX_WALLPAPER_IMAGES);
+  });
+});
+
+describe("rotation across every source", () => {
+  const item = (id: string) => ({ assetId: id, fileName: id, mimeType: "image/webp", size: 1 });
+
+  it("names the pictures on show, whichever source they come from", () => {
+    const base = { single: null, items: [], gallerySingle: null, galleryItems: [] };
+    expect(
+      activeWallpaperIds({
+        ...base,
+        source: "custom",
+        mode: "multi",
+        items: [item("a"), item("b")],
+      }),
+    ).toEqual(["a", "b"]);
+    expect(
+      activeWallpaperIds({ ...base, source: "custom", mode: "single", single: item("a") }),
+    ).toEqual(["a"]);
+    expect(
+      activeWallpaperIds({
+        ...base,
+        source: "gallery",
+        mode: "multi",
+        galleryItems: ["wp1", "wp2"],
+      }),
+    ).toEqual(["wp1", "wp2"]);
+    expect(
+      activeWallpaperIds({ ...base, source: "gallery", mode: "single", gallerySingle: "wp3" }),
+    ).toEqual(["wp3"]);
+  });
+
+  it("advances a gallery selection, which only counted uploads before", () => {
+    useWallpaperStore.setState({
+      source: "gallery",
+      mode: "multi",
+      items: [],
+      galleryItems: ["wp1", "wp2", "wp3"],
+      order: "sequential",
+      currentIndex: 0,
+    });
+
+    store().advance();
+
+    expect(store().currentIndex).toBe(1);
+  });
+});
+
+describe("reading a damaged profile", () => {
+  const merge = (persisted: unknown) =>
+    useWallpaperStore.persist
+      .getOptions()
+      .merge?.(persisted, useWallpaperStore.getInitialState()) as ReturnType<
+      typeof useWallpaperStore.getInitialState
+    >;
+
+  it("drops only the bad image, not the whole background setup", () => {
+    const merged = merge({
+      source: "custom",
+      fit: "contain",
+      items: [
+        { assetId: "a", fileName: "a", mimeType: "image/webp", size: 1 },
+        { assetId: 42 },
+        { assetId: "c", fileName: "c", mimeType: "image/webp", size: 1 },
+      ],
+    });
+
+    expect(merged.items.map((entry) => entry.assetId)).toEqual(["a", "c"]);
+    expect(merged.fit).toBe("contain");
+    expect(merged.source).toBe("custom");
+  });
+
+  it("falls back on a retyped field instead of resetting everything", () => {
+    const merged = merge({
+      source: "custom",
+      fit: "not-a-fit",
+      dim: "very",
+      blur: 9000,
+      single: { assetId: "a", fileName: "a", mimeType: "image/webp", size: 1 },
+    });
+
+    expect(merged.fit).toBe("cover");
+    expect(merged.dim).toBe(0.3);
+    expect(merged.blur).toBe(WALLPAPER_MAX_BLUR);
+    expect(merged.single?.assetId).toBe("a");
+  });
+});
+
+describe("veil and blur limits", () => {
+  it("holds the veil and the blur inside their range whatever asks", () => {
+    store().setDim(5);
+    expect(store().dim).toBe(WALLPAPER_MAX_DIM);
+    store().setDim(-1);
+    expect(store().dim).toBe(0);
+    store().setBlur(500);
+    expect(store().blur).toBe(WALLPAPER_MAX_BLUR);
+    store().setBlur(Number.NaN);
+    expect(store().blur).toBe(0);
   });
 });

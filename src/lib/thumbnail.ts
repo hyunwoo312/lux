@@ -35,7 +35,7 @@ export async function renderThumbnail(source: Blob): Promise<Blob | null> {
   }
 }
 
-export function hasCurrentThumb(asset: StoredAsset): boolean {
+function hasCurrentThumb(asset: StoredAsset): boolean {
   return Boolean(asset.thumb) && asset.thumbVersion === THUMB_VERSION;
 }
 

@@ -1,4 +1,4 @@
-import type { MediaImageItem } from "@/lib/asset-store";
+import type { MediaImageItem, StoredAsset } from "@/lib/asset-store";
 import { findGalleryWallpaper } from "@/lib/wallpaper-gallery";
 import { wallpaperAssets } from "@/stores/useWallpaperStore";
 
@@ -6,10 +6,6 @@ const PREFIX = "gallery-";
 
 export function galleryAssetId(galleryId: string): string {
   return `${PREFIX}${galleryId}`;
-}
-
-export function isGalleryAssetId(assetId: string): boolean {
-  return assetId.startsWith(PREFIX);
 }
 
 export function galleryItemFor(galleryId: string): MediaImageItem | null {
@@ -23,25 +19,26 @@ export function galleryItemFor(galleryId: string): MediaImageItem | null {
   };
 }
 
-export async function ensureGalleryAsset(galleryId: string): Promise<boolean> {
+export async function ensureGalleryAsset(galleryId: string): Promise<StoredAsset | null> {
   const wallpaper = findGalleryWallpaper(galleryId);
-  if (!wallpaper) return false;
+  if (!wallpaper) return null;
   const id = galleryAssetId(galleryId);
   const existing = await wallpaperAssets.read(id).catch(() => null);
-  if (existing) return true;
+  if (existing) return existing;
   try {
     const response = await fetch(wallpaper.url);
-    if (!response.ok) return false;
+    if (!response.ok) return null;
     const blob = await response.blob();
-    await wallpaperAssets.save({
+    const asset = {
       id,
       fileName: wallpaper.name,
       mimeType: blob.type || "image/webp",
       size: blob.size,
       blob,
-    });
-    return true;
+    };
+    await wallpaperAssets.save(asset);
+    return asset;
   } catch {
-    return false;
+    return null;
   }
 }
