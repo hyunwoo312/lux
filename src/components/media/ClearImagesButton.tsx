@@ -1,4 +1,4 @@
-import { SPRING_POP } from "@/lib/motion";
+import { SPRING_POP, TAP } from "@/lib/motion";
 import { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { Trash2 } from "lucide-react";
@@ -29,8 +29,7 @@ export function ClearImagesButton({
           disabled={disabled}
           onClick={() => setConfirmOpen(true)}
           aria-label={label}
-          whileHover={reduced ? undefined : { scale: 1.08 }}
-          whileTap={reduced ? undefined : { scale: 0.9 }}
+          {...(reduced ? {} : TAP.control)}
           transition={SPRING_POP}
           className="
             focus-ring text-ink-3 border-border/60

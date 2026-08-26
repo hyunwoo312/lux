@@ -23,6 +23,7 @@ import {
   EASE_OUT_STRONG,
   EASE_STANDARD,
   SPRING_POP,
+  TAP,
 } from "@/lib/motion";
 import { read, write } from "@/lib/storage";
 import { SettingsSection } from "@/settings/components/SettingsSection";
@@ -351,8 +352,8 @@ function LogoMark() {
       type="button"
       aria-label="Lux"
       onClick={celebrate}
-      whileHover={{ y: -5, scale: 1.06 }}
-      whileTap={{ scale: 0.92 }}
+      whileHover={{ ...TAP.surface.whileHover, y: -5 }}
+      whileTap={TAP.surface.whileTap}
       transition={SPRING_POP}
       className="focus-ring relative grid size-16 cursor-pointer place-items-center rounded-xl"
     >

@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { TAP } from "@/lib/motion";
 import { Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GoogleCalendarServiceIcon, OutlookServiceIcon } from "@/components/icons/service-icons";
@@ -39,8 +40,7 @@ export function AgendaEventActions({ event, title, reduced, onColor }: AgendaEve
         <Tooltip content="Join meeting">
           <motion.button
             type="button"
-            whileHover={reduced ? undefined : { scale: 1.15 }}
-            whileTap={reduced ? undefined : { scale: 0.88 }}
+            {...(reduced ? {} : TAP.icon)}
             aria-label={`Join ${title}`}
             onClick={() => openUrl(joinUrl)}
             className={cn(
@@ -58,8 +58,7 @@ export function AgendaEventActions({ event, title, reduced, onColor }: AgendaEve
           <Tooltip key={link.provider} content={`Open in ${label}`}>
             <motion.button
               type="button"
-              whileHover={reduced ? undefined : { scale: 1.15 }}
-              whileTap={reduced ? undefined : { scale: 0.88 }}
+              {...(reduced ? {} : TAP.icon)}
               aria-label={`Open ${title} in ${label}`}
               onClick={() => openUrl(link.sourceUrl)}
               className={cn(BUTTON, onColor ? "hover:bg-black/15" : "hover:bg-foreground/10")}

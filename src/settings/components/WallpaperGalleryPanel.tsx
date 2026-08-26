@@ -1,4 +1,4 @@
-import { SPRING_POP } from "@/lib/motion";
+import { SPRING_POP, TAP } from "@/lib/motion";
 import { Check } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -57,8 +57,7 @@ export function WallpaperGalleryPanel() {
               title={wallpaper.name}
               disabled={isDisabled}
               onClick={() => toggle(wallpaper.id)}
-              whileHover={reduced || isDisabled ? undefined : { scale: 1.04 }}
-              whileTap={reduced || isDisabled ? undefined : { scale: 0.96 }}
+              {...(reduced || isDisabled ? {} : TAP.surface)}
               transition={SPRING_POP}
               className={cn(
                 TILE,

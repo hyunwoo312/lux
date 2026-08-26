@@ -15,6 +15,12 @@ export const DURATION = {
   slow: 0.35,
 } as const;
 
+export const TAP = {
+  icon: { whileHover: { scale: 1.18 }, whileTap: { scale: 0.85 } },
+  control: { whileHover: { scale: 1.12 }, whileTap: { scale: 0.9 } },
+  surface: { whileHover: { scale: 1.04 }, whileTap: { scale: 0.96 } },
+} as const;
+
 export const SPRING_CRISP: Transition = { type: "spring", stiffness: 500, damping: 40 };
 export const SPRING_SOFT: Transition = { type: "spring", stiffness: 260, damping: 30 };
 export const SPRING_POP: Transition = { type: "spring", stiffness: 400, damping: 18 };

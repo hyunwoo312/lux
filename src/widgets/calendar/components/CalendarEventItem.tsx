@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { GoogleCalendarServiceIcon, OutlookServiceIcon } from "@/components/icons/service-icons";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
-import { EASE_OUT } from "@/lib/motion";
+import { EASE_OUT, TAP } from "@/lib/motion";
 import {
   formatEventRelativeTime,
   formatEventTime,
@@ -122,8 +122,7 @@ export function CalendarEventItem({
             <Tooltip content="Join meeting">
               <motion.button
                 type="button"
-                whileHover={reduced ? undefined : { scale: 1.18 }}
-                whileTap={reduced ? undefined : { scale: 0.85 }}
+                {...(reduced ? {} : TAP.icon)}
                 aria-label={`Join ${title}`}
                 onClick={() => openUrl(joinUrl)}
                 className={cn(ACTION_BUTTON, "size-7", "text-primary")}
@@ -138,8 +137,7 @@ export function CalendarEventItem({
               <Tooltip key={link.provider} content={`Open in ${label}`}>
                 <motion.button
                   type="button"
-                  whileHover={reduced ? undefined : { scale: 1.18 }}
-                  whileTap={reduced ? undefined : { scale: 0.85 }}
+                  {...(reduced ? {} : TAP.icon)}
                   aria-label={`Open ${title} in ${label}`}
                   onClick={() => openUrl(link.sourceUrl)}
                   className={cn(ACTION_BUTTON, "size-7")}
