@@ -70,6 +70,69 @@ describe("upgrading a profile", () => {
   });
 });
 
+describe("moving Google off the relay", () => {
+  const googleAccount = {
+    id: "google-1",
+    providerId: "google",
+    providerAccountId: "1",
+    displayName: "Someone",
+    status: "connected",
+    connectedAt: "2026-08-01T00:00:00.000Z",
+    token: { accessToken: "a", refreshToken: "r", expiresAt: 1, tokenType: "Bearer", scopes: [] },
+  };
+  const spotifyAccount = { ...googleAccount, id: "spotify-1", providerId: "spotify" };
+
+  it("drops the relay token and asks the user to reconnect Google", async () => {
+    await chrome.storage.local.set({
+      "lux:integrations": { accounts: { "google-1": googleAccount } },
+    });
+
+    await upgradeProfile();
+
+    const stored = (await all())["lux:integrations"] as {
+      accounts: Record<string, { status: string; token?: unknown; lastError?: string }>;
+    };
+    expect(stored.accounts["google-1"]?.status).toBe("needsReconnect");
+    expect(stored.accounts["google-1"]).not.toHaveProperty("token");
+    expect(stored.accounts["google-1"]?.lastError).toMatch(/reconnect/i);
+  });
+
+  it("still runs for a profile already stamped at the previous version", async () => {
+    await chrome.storage.local.set({
+      "lux:profile": { version: 2 },
+      "lux:integrations": { accounts: { "google-1": googleAccount } },
+    });
+
+    await upgradeProfile();
+
+    const stored = (await all())["lux:integrations"] as {
+      accounts: Record<string, { status: string }>;
+    };
+    expect(stored.accounts["google-1"]?.status).toBe("needsReconnect");
+  });
+
+  it("leaves every other provider connected", async () => {
+    await chrome.storage.local.set({
+      "lux:integrations": { accounts: { "google-1": googleAccount, "spotify-1": spotifyAccount } },
+    });
+
+    await upgradeProfile();
+
+    const stored = (await all())["lux:integrations"] as {
+      accounts: Record<string, { status: string; token?: unknown }>;
+    };
+    expect(stored.accounts["spotify-1"]).toEqual(spotifyAccount);
+  });
+
+  it("refuses to rewrite an unreadable account blob rather than rebuilding it", async () => {
+    await chrome.storage.local.set({ "lux:integrations": "not an object" });
+
+    await upgradeProfile();
+
+    expect((await all())["lux:integrations"]).toBe("not an object");
+  });
+});
+
 describe("when the ledger cannot finish", () => {
   it("never leaves stores waiting when the ledger itself fails", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});

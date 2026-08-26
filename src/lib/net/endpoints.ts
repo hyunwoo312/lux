@@ -124,12 +124,6 @@ export const ENDPOINTS: readonly Endpoint[] = [
     access: "cors",
   },
   {
-    host: "https://accounts.google.com/*",
-    usedBy: "integrations/providers/google",
-    reason: "Google sign-in page the browser is sent to; Lux never fetches it",
-    access: "oauth-redirect",
-  },
-  {
     host: "https://login.microsoftonline.com/*",
     usedBy: "integrations/providers/microsoft",
     reason: "Microsoft sign-in page the browser is sent to; Lux never fetches it",

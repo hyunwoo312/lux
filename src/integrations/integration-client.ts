@@ -78,12 +78,13 @@ export function getIntegrationRedirectUri(providerId: IntegrationProviderId): st
 async function requestToken(
   provider: IntegrationProvider,
   interactive: boolean,
+  staleToken?: string,
 ): Promise<IntegrationTokenResponse> {
   const clientId = await resolveClientId(provider);
   const state = createOAuthState();
 
   if (provider.acquireToken) {
-    return provider.acquireToken({ clientId, state, interactive });
+    return provider.acquireToken({ clientId, state, interactive, staleToken });
   }
 
   const redirectUri = getRedirectUriForProvider(provider.id);
@@ -220,7 +221,10 @@ async function refreshProviderToken(
       : undefined;
 
   try {
-    const token = refresh && params ? await refresh(params) : await requestToken(provider, false);
+    const token =
+      refresh && params
+        ? await refresh(params)
+        : await requestToken(provider, false, account.token?.accessToken);
     await writeAccount({
       ...account,
       status: "connected",

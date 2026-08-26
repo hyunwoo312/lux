@@ -1,7 +1,7 @@
 const PROFILE_KEY = "lux:profile";
 const NAMESPACE_PREFIX = "lux:";
 
-export const PROFILE_VERSION = 2;
+export const PROFILE_VERSION = 3;
 
 const PRE_LEDGER_VERSION = 1;
 
@@ -63,6 +63,36 @@ async function renameKey(from: string, to: string): Promise<void> {
   await chrome.storage.local.remove(from);
 }
 
+const RELAY_GOOGLE_NOTICE = "Google sign-in moved to Chrome — reconnect to restore your calendar";
+
+async function requireGoogleReconnect(): Promise<void> {
+  const key = "lux:integrations";
+  const stored = await chrome.storage.local.get(key);
+  const blob: unknown = stored[key];
+  if (typeof blob !== "object" || blob === null) return;
+
+  const accounts = (blob as { accounts?: unknown }).accounts;
+  if (typeof accounts !== "object" || accounts === null) return;
+
+  let changed = false;
+  const next: Record<string, unknown> = {};
+
+  for (const [id, value] of Object.entries(accounts as Record<string, unknown>)) {
+    const account = value as { providerId?: unknown };
+    if (typeof value !== "object" || value === null || account.providerId !== "google") {
+      next[id] = value;
+      continue;
+    }
+    const withoutToken = Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).filter(([field]) => field !== "token"),
+    );
+    next[id] = { ...withoutToken, status: "needsReconnect", lastError: RELAY_GOOGLE_NOTICE };
+    changed = true;
+  }
+
+  if (changed) await chrome.storage.local.set({ [key]: { ...blob, accounts: next } });
+}
+
 const MIGRATIONS: Migration[] = [
   {
     toVersion: 2,
@@ -70,6 +100,10 @@ const MIGRATIONS: Migration[] = [
       await renameKey("lux:lux:feedback", "lux:feedback");
       await renameKey("lux:widget-settings", "lux:widget:settings");
     },
+  },
+  {
+    toVersion: 3,
+    run: requireGoogleReconnect,
   },
 ];
 

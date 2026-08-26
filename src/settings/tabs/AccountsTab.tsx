@@ -155,8 +155,8 @@ export function AccountsTab() {
           );
         })}
         <p className="text-ink-3 text-caption">
-          Google, Outlook, and GitHub sign-in goes through a stateless Lux relay that stores
-          nothing. Spotify and AniList connect directly.
+          Outlook and GitHub sign-in goes through a stateless Lux relay that stores nothing. Google,
+          Spotify and AniList connect directly.
         </p>
       </SettingsSection>
       <PermissionsSection />

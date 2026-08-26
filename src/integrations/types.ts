@@ -76,6 +76,7 @@ export type AcquireTokenParams = {
   clientId: string;
   state: string;
   interactive: boolean;
+  staleToken?: string;
 };
 
 export type IntegrationProvider = {

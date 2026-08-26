@@ -27,6 +27,10 @@ function createChromeMock() {
       remove: vi.fn(async () => undefined),
       onRemoved: { addListener: vi.fn(), removeListener: vi.fn() },
     },
+    identity: {
+      getAuthToken: vi.fn(async () => ({ token: "", grantedScopes: [] as string[] })),
+      removeCachedAuthToken: vi.fn(async () => undefined),
+    },
     storage: {
       local: {
         get: vi.fn(async (keys?: string | string[] | null) => {

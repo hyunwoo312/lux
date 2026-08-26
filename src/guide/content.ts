@@ -20,7 +20,7 @@ const GETTING_STARTED: readonly GuideArticle[] = [
       {
         kind: "callout",
         title: "Where your data lives",
-        text: "Your layout, notes and settings are stored in this browser. Widgets fetch straight from the services they show — weather, news, your calendar — and Lux keeps no copy of any of it on a server. Signing in to Google, Microsoft or GitHub is the one exception: the last step passes through a small Lux relay, because those providers require a secret that cannot ship inside an extension. The relay completes the exchange and stores nothing.",
+        text: "Your layout, notes and settings are stored in this browser. Widgets fetch straight from the services they show — weather, news, your calendar — and Lux keeps no copy of any of it on a server. Signing in to Microsoft or GitHub is the one exception: the last step passes through a small Lux relay, because those providers require a secret that cannot ship inside an extension. The relay completes the exchange and stores nothing. Google sign-in goes through Chrome itself and never reaches the relay.",
       },
       { kind: "link", href: PRIVACY_URL, label: "Read the privacy policy" },
     ],
@@ -560,7 +560,7 @@ export const GUIDE_GROUPS: readonly GuideGroup[] = [
           },
           {
             kind: "prose",
-            text: "Google, Microsoft and GitHub finish sign-in through a small Lux relay, because those three need a secret that cannot live inside an extension. Spotify and AniList talk to your browser directly. The relay keeps nothing.",
+            text: "Microsoft and GitHub finish sign-in through a small Lux relay, because those two need a secret that cannot live inside an extension. Google signs in through Chrome, and Spotify and AniList talk to your browser directly. The relay keeps nothing.",
           },
           {
             kind: "prose",

@@ -235,7 +235,7 @@ export function AboutTab() {
           <TrustRow
             icon={Network}
             title="Token relay"
-            description="Connecting Google, Microsoft, or GitHub routes sign-in and token refresh through a tiny stateless Lux relay that stores nothing — everything else stays on your device."
+            description="Connecting Microsoft or GitHub routes sign-in and token refresh through a tiny stateless Lux relay that stores nothing. Google signs in through Chrome, and everything else stays on your device."
           />
           <TrustRow
             icon={KeyRound}

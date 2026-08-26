@@ -44,7 +44,7 @@ _One setup, with every widget sized and placed to taste._
 
 > **Where your data lives**
 >
-> Your layout, notes and settings are stored in this browser. Widgets fetch straight from the services they show — weather, news, your calendar — and Lux keeps no copy of any of it on a server. Signing in to Google, Microsoft or GitHub is the one exception: the last step passes through a small Lux relay, because those providers require a secret that cannot ship inside an extension. The relay completes the exchange and stores nothing.
+> Your layout, notes and settings are stored in this browser. Widgets fetch straight from the services they show — weather, news, your calendar — and Lux keeps no copy of any of it on a server. Signing in to Microsoft or GitHub is the one exception: the last step passes through a small Lux relay, because those providers require a secret that cannot ship inside an extension. The relay completes the exchange and stores nothing. Google sign-in goes through Chrome itself and never reaches the relay.
 
 [Read the privacy policy](https://lux.hyunwk.me/privacy)
 
@@ -474,7 +474,7 @@ A widget that needs an account shows a **Connect** button. Press it and you sign
 - **GitHub** — Your profile, notifications, and repository access — the broad-sounding one on GitHub's consent screen, which is what lets private contributions count towards your heatmap. Lux only reads with it.
 - **AniList** — Your list, progress and notifications. The only one that writes as well as reads — liking something or bumping an episode count, and only when you do it.
 
-Google, Microsoft and GitHub finish sign-in through a small Lux relay, because those three need a secret that cannot live inside an extension. Spotify and AniList talk to your browser directly. The relay keeps nothing.
+Microsoft and GitHub finish sign-in through a small Lux relay, because those two need a secret that cannot live inside an extension. Google signs in through Chrome, and Spotify and AniList talk to your browser directly. The relay keeps nothing.
 
 Tokens expire after an hour or so and Lux renews them in the background, so you should not have to sign in again.
 

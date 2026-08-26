@@ -5,7 +5,7 @@ import type { IntegrationProvider } from "@/integrations/types";
 
 const PROFILE_ENDPOINT = "https://graph.microsoft.com/v1.0/me";
 
-const SCOPES = ["offline_access", "User.Read", "Calendars.Read"];
+const SCOPES = ["offline_access", "User.Read", "Calendars.Read", "Mail.Read"];
 
 const ACCESS_TOKEN_TTL_SECONDS = 3600;
 
