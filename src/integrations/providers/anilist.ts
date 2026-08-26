@@ -3,7 +3,7 @@ import { IntegrationReconnectRequiredError } from "@/integrations/errors";
 import { ensureOk, withTimeout, parseResponse } from "@/lib/net";
 import type {
   AcquireTokenParams,
-  IntegrationProvider,
+  BrowserAuthProvider,
   IntegrationTokenResponse,
 } from "@/integrations/types";
 
@@ -38,19 +38,15 @@ type AnilistCallback = {
 };
 
 async function readCallback(): Promise<AnilistCallback | null> {
-  try {
-    const stored = await chrome.storage.session.get(CALLBACK_KEY);
-    return (stored[CALLBACK_KEY] as AnilistCallback | undefined) ?? null;
-  } catch {
-    return null;
-  }
+  const stored = await chrome.storage.session.get(CALLBACK_KEY);
+  return (stored[CALLBACK_KEY] as AnilistCallback | undefined) ?? null;
 }
 
 async function clearCallback(): Promise<void> {
   try {
     await chrome.storage.session.remove(CALLBACK_KEY);
-  } catch {
-    return;
+  } catch (error) {
+    console.warn("Could not clear the stashed AniList sign-in callback", error);
   }
 }
 
@@ -87,12 +83,12 @@ function acquireToken({
       chrome.storage.onChanged.removeListener(onStorageChanged);
       chrome.tabs.onRemoved.removeListener(onRemoved);
       if (tabId !== undefined) void chrome.tabs.remove(tabId).catch(() => undefined);
+      void clearCallback();
       action();
     }
 
     function settleFrom(callback: AnilistCallback): boolean {
       if (!callback.state || callback.state !== state) return false;
-      void clearCallback();
 
       const accessToken = callback.accessToken;
       if (callback.error || !accessToken) {
@@ -123,10 +119,14 @@ function acquireToken({
 
     function onRemoved(closedTabId: number) {
       if (closedTabId !== tabId) return;
-      void readCallback().then((callback) => {
-        if (callback && settleFrom(callback)) return;
-        finish(() => reject(new Error("AniList sign-in was cancelled")));
-      });
+      void readCallback()
+        .then((callback) => {
+          if (callback && settleFrom(callback)) return;
+          finish(() => reject(new Error("AniList sign-in was cancelled")));
+        })
+        .catch((cause: unknown) =>
+          finish(() => reject(new Error("AniList sign-in could not be confirmed", { cause }))),
+        );
     }
 
     chrome.storage.onChanged.addListener(onStorageChanged);
@@ -145,11 +145,12 @@ function acquireToken({
   });
 }
 
-export const anilistProvider: IntegrationProvider = {
+export const anilistProvider: BrowserAuthProvider = {
   id: "anilist",
   label: "AniList",
   scopes: [],
   clientIdEnvKey: "VITE_ANILIST_CLIENT_ID",
+  auth: "browser",
   acquireToken,
   fetchProfile: async (accessToken) => {
     const response = await fetch(GRAPHQL_ENDPOINT, {

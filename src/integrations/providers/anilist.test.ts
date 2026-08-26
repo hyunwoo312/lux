@@ -15,7 +15,11 @@ function chromeMock() {
       onRemoved: { addListener: ReturnType<typeof vi.fn> };
     };
     storage: {
-      session: { set: (items: Record<string, unknown>) => Promise<void>; clear: () => void };
+      session: {
+        get: (key: string) => Promise<Record<string, unknown>>;
+        set: (items: Record<string, unknown>) => Promise<void>;
+        clear: () => void;
+      };
     };
   };
 }
@@ -110,6 +114,21 @@ describe("anilistProvider.acquireToken", () => {
     onRemoved(1);
 
     await expect(pending).rejects.toThrow(/cancelled/i);
+  });
+
+  it("clears the stashed token when the sign-in ends without settling", async () => {
+    const pending = acquire();
+    await flush();
+
+    const onRemoved = chromeMock().tabs.onRemoved.addListener.mock.calls[0]?.[0] as Removed;
+    await chromeMock().storage.session.set({
+      [CALLBACK_KEY]: { accessToken: "token-4", state: "someone-elses-state" },
+    });
+    onRemoved(1);
+
+    await expect(pending).rejects.toThrow(/cancelled/i);
+    await flush();
+    expect(await chromeMock().storage.session.get(CALLBACK_KEY)).toEqual({});
   });
 
   it("rejects when the callback carries an error", async () => {

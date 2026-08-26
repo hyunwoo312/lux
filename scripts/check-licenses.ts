@@ -39,6 +39,14 @@ if (!licenseText.includes("Apache License")) {
 if (!licenseText.includes("Version 2.0")) {
   ownProblems.push("LICENSE is not version 2.0");
 }
+
+const OWN_HOLDER = "Hyunwoo Kim";
+const foreignHolders = [...licenseText.matchAll(/^\s*Copyright \d{4} (.+)$/gm)]
+  .map((match) => match[1]?.trim())
+  .filter((holder) => holder !== undefined && holder !== OWN_HOLDER);
+if (foreignHolders.length > 0) {
+  ownProblems.push(`LICENSE names a foreign copyright holder: ${foreignHolders.join(", ")}`);
+}
 if (!existsSync("NOTICE")) {
   ownProblems.push("NOTICE is missing — Apache-2.0 forks are required to preserve it");
 }

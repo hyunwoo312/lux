@@ -79,15 +79,25 @@ export type AcquireTokenParams = {
   staleToken?: string;
 };
 
-export type IntegrationProvider = {
+type IntegrationProviderBase = {
   id: IntegrationProviderId;
   label: string;
   scopes: string[];
   clientIdEnvKey?: string;
   loadClientId?: () => Promise<string | undefined>;
-  acquireToken?: (params: AcquireTokenParams) => Promise<IntegrationTokenResponse>;
-  buildPkceAuthUrl?: (params: PkceAuthUrlParams) => string;
-  exchangeCode?: (params: ExchangeCodeParams) => Promise<IntegrationTokenResponse>;
-  refreshToken?: (params: RefreshTokenParams) => Promise<IntegrationTokenResponse>;
   fetchProfile: (accessToken: string) => Promise<IntegrationProfile>;
 };
+
+export type BrowserAuthProvider = IntegrationProviderBase & {
+  auth: "browser";
+  acquireToken: (params: AcquireTokenParams) => Promise<IntegrationTokenResponse>;
+};
+
+export type CodeAuthProvider = IntegrationProviderBase & {
+  auth: "code";
+  buildPkceAuthUrl: (params: PkceAuthUrlParams) => string;
+  exchangeCode: (params: ExchangeCodeParams) => Promise<IntegrationTokenResponse>;
+  refreshToken?: (params: RefreshTokenParams) => Promise<IntegrationTokenResponse>;
+};
+
+export type IntegrationProvider = BrowserAuthProvider | CodeAuthProvider;

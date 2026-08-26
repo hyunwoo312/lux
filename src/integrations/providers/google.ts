@@ -3,7 +3,7 @@ import { IntegrationReconnectRequiredError } from "@/integrations/errors";
 import { ensureOk, withTimeout, parseResponse } from "@/lib/net";
 import type {
   AcquireTokenParams,
-  IntegrationProvider,
+  BrowserAuthProvider,
   IntegrationTokenResponse,
 } from "@/integrations/types";
 
@@ -35,19 +35,25 @@ async function acquireToken({
 }: AcquireTokenParams): Promise<IntegrationTokenResponse> {
   await evictCachedToken(staleToken);
 
+  let cause: unknown;
   const result = await chrome.identity
     .getAuthToken({ interactive, scopes: GOOGLE_SCOPES })
-    .catch(() => undefined);
+    .catch((error: unknown) => {
+      cause = error;
+      return undefined;
+    });
   const accessToken = result?.token;
 
   if (!accessToken) {
     if (interactive) {
-      throw new Error("Google sign-in could not be completed");
+      throw new Error("Google sign-in could not be completed", { cause });
     }
-    throw new IntegrationReconnectRequiredError("Google Calendar needs to be reconnected");
+    throw new IntegrationReconnectRequiredError("Google Calendar needs to be reconnected", {
+      cause,
+    });
   }
 
-  const scopes = result?.grantedScopes ?? GOOGLE_SCOPES;
+  const scopes = result.grantedScopes ?? GOOGLE_SCOPES;
 
   if (!GOOGLE_SCOPES.every((scope) => scopes.includes(scope))) {
     await evictCachedToken(accessToken);
@@ -64,11 +70,12 @@ async function acquireToken({
   };
 }
 
-export const googleProvider: IntegrationProvider = {
+export const googleProvider: BrowserAuthProvider = {
   id: "google",
   label: "Google Calendar",
   scopes: GOOGLE_SCOPES,
   loadClientId: async () => chrome.runtime.getManifest().oauth2?.client_id,
+  auth: "browser",
   acquireToken,
   fetchProfile: async (accessToken) => {
     const response = await fetch(USERINFO_ENDPOINT, {

@@ -7,8 +7,8 @@ import { ensureOk, fetchTokenEndpoint, TemporaryAuthError, parseResponse } from 
 import { buildPkceAuthorizeUrl, parseScopes } from "@/integrations/providers/pkce";
 import { RELAY_BASE_URL } from "@/lib/relay";
 import type {
+  CodeAuthProvider,
   IntegrationProfile,
-  IntegrationProvider,
   IntegrationProviderId,
   IntegrationTokenResponse,
 } from "@/integrations/types";
@@ -33,17 +33,20 @@ type RelayProviderConfig = {
   authorizationEndpoint: string;
   authParams?: Record<string, string>;
   supportsRefresh: boolean;
-  defaultExpiresIn?: number;
+  defaultExpiresIn: number;
   fetchProfile: (accessToken: string) => Promise<IntegrationProfile>;
 };
 
-export function createRelayProvider(config: RelayProviderConfig): IntegrationProvider {
+export function createRelayProvider(config: RelayProviderConfig): CodeAuthProvider {
   const relayEndpoint = `${RELAY_BASE_URL}/${config.id}/token`;
 
-  const toTokenResponse = (payload: RelayTokenPayload): IntegrationTokenResponse => ({
-    accessToken: payload.access_token ?? "",
+  const toTokenResponse = (
+    payload: RelayTokenPayload,
+    accessToken: string,
+  ): IntegrationTokenResponse => ({
+    accessToken,
     refreshToken: payload.refresh_token,
-    expiresIn: payload.expires_in ?? config.defaultExpiresIn ?? 0,
+    expiresIn: payload.expires_in ?? config.defaultExpiresIn,
     tokenType: payload.token_type ?? "Bearer",
     scopes: parseScopes(payload.scope, config.scopes),
   });
@@ -55,12 +58,39 @@ export function createRelayProvider(config: RelayProviderConfig): IntegrationPro
       body: JSON.stringify(body),
     });
 
-  const provider: IntegrationProvider = {
+  const refreshToken: CodeAuthProvider["refreshToken"] = async ({ refreshToken: current }) => {
+    const response = await postToRelay({
+      grant_type: "refresh_token",
+      refresh_token: current,
+    });
+
+    if (!response.ok) {
+      if (isReconnectRequiredStatus(response.status)) {
+        throw new IntegrationReconnectRequiredError(`${config.label} needs to be reconnected`);
+      }
+      throw new TemporaryAuthError(`${config.label} is temporarily unavailable`);
+    }
+
+    const payload = parseResponse("token", relayTokenSchema, await response.json());
+    if (payload.error) {
+      throw new IntegrationReconnectRequiredError(`${config.label} needs to be reconnected`);
+    }
+    if (!payload.access_token) {
+      throw new TemporaryAuthError(`${config.label} is temporarily unavailable`);
+    }
+    return {
+      ...toTokenResponse(payload, payload.access_token),
+      refreshToken: payload.refresh_token ?? current,
+    };
+  };
+
+  return {
     id: config.id,
     label: config.label,
     scopes: config.scopes,
     clientIdEnvKey: config.clientIdEnvKey,
     loadClientId: config.loadClientId,
+    auth: "code",
     buildPkceAuthUrl: (params) =>
       buildPkceAuthorizeUrl(
         { authorizationEndpoint: config.authorizationEndpoint, authParams: config.authParams },
@@ -81,35 +111,9 @@ export function createRelayProvider(config: RelayProviderConfig): IntegrationPro
         throw new Error(`${config.label} sign-in could not be completed`);
       }
 
-      return toTokenResponse(payload);
+      return toTokenResponse(payload, payload.access_token);
     },
+    ...(config.supportsRefresh ? { refreshToken } : {}),
     fetchProfile: config.fetchProfile,
   };
-
-  if (config.supportsRefresh) {
-    provider.refreshToken = async ({ refreshToken }) => {
-      const response = await postToRelay({
-        grant_type: "refresh_token",
-        refresh_token: refreshToken,
-      });
-
-      if (!response.ok) {
-        if (isReconnectRequiredStatus(response.status)) {
-          throw new IntegrationReconnectRequiredError(`${config.label} needs to be reconnected`);
-        }
-        throw new TemporaryAuthError(`${config.label} is temporarily unavailable`);
-      }
-
-      const payload = parseResponse("token", relayTokenSchema, await response.json());
-      if (payload.error) {
-        throw new IntegrationReconnectRequiredError(`${config.label} needs to be reconnected`);
-      }
-      if (!payload.access_token) {
-        throw new TemporaryAuthError(`${config.label} is temporarily unavailable`);
-      }
-      return { ...toTokenResponse(payload), refreshToken: payload.refresh_token ?? refreshToken };
-    };
-  }
-
-  return provider;
 }

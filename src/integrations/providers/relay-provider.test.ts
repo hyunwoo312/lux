@@ -4,19 +4,20 @@ import { IntegrationReconnectRequiredError } from "@/integrations/errors";
 import { TemporaryAuthError } from "@/lib/net";
 
 const provider = createRelayProvider({
-  id: "google",
+  id: "microsoft",
   label: "Test Provider",
   scopes: ["scope-a", "scope-b"],
   authorizationEndpoint: "https://auth.example.com/authorize",
   authParams: { access_type: "offline" },
   supportsRefresh: true,
+  defaultExpiresIn: 3600,
   fetchProfile: async () => ({ providerAccountId: "1", displayName: "Test" }),
 });
 
 const exchangeParams = {
   clientId: "client-1",
   code: "code-1",
-  redirectUri: "https://ext.chromiumapp.org/google/oauth",
+  redirectUri: "https://ext.chromiumapp.org/microsoft/oauth",
   codeVerifier: "verifier-1",
 };
 
@@ -27,7 +28,7 @@ afterEach(() => {
 describe("createRelayProvider.buildPkceAuthUrl", () => {
   it("builds an authorization-code PKCE url and forwards extra auth params", () => {
     const url = new URL(
-      provider.buildPkceAuthUrl!({
+      provider.buildPkceAuthUrl({
         clientId: "client-1",
         redirectUri: exchangeParams.redirectUri,
         state: "state-1",
@@ -56,12 +57,12 @@ describe("createRelayProvider.exchangeCode", () => {
       ),
     );
 
-    const token = await provider.exchangeCode!(exchangeParams);
+    const token = await provider.exchangeCode(exchangeParams);
 
     expect(token).toMatchObject({ accessToken: "tok", refreshToken: "ref", expiresIn: 3600 });
     expect(token.scopes).toEqual(["scope-a", "scope-b"]);
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://lux.hyunwk.me/google/token",
+      "https://lux.hyunwk.me/microsoft/token",
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({
@@ -78,7 +79,7 @@ describe("createRelayProvider.exchangeCode", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ error: "exchange_failed" }), { status: 400 }),
     );
-    await expect(provider.exchangeCode!(exchangeParams)).rejects.toThrow();
+    await expect(provider.exchangeCode(exchangeParams)).rejects.toThrow();
   });
 });
 
@@ -139,7 +140,7 @@ describe("createRelayProvider without refresh support", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ access_token: "tok", token_type: "bearer", scope: "a" })),
     );
-    const token = await noRefresh.exchangeCode!({
+    const token = await noRefresh.exchangeCode({
       clientId: "c",
       code: "code",
       redirectUri: "https://ext.chromiumapp.org/github/oauth",

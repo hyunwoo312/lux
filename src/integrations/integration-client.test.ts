@@ -102,6 +102,24 @@ describe("refreshing a Spotify token", () => {
     expect(account?.token?.refreshToken).toBe("the-refresh-token");
   });
 
+  it("keeps the account connected when the refreshed token cannot be persisted", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) =>
+        String(input).includes("accounts.spotify.com")
+          ? tokenResponse()
+          : new Response("{}", { status: 200 }),
+      ),
+    );
+    vi.spyOn(chrome.storage.local, "set").mockRejectedValueOnce(new Error("storage down"));
+
+    await expect(integrationFetch("spotify", API_URL)).rejects.toThrow(/storage down/);
+
+    const account = await getAccountByProvider("spotify");
+    expect(account?.status).toBe("connected");
+    expect(account?.token?.accessToken).toBe("stale-access-token");
+  });
+
   it("refreshes and stores the rotated token on success", async () => {
     vi.stubGlobal(
       "fetch",

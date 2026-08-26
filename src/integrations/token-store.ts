@@ -25,18 +25,9 @@ export function subscribeAccounts(listener: () => void): () => void {
 }
 
 function toSummary(account: IntegrationAccount): IntegrationAccountSummary {
-  return {
-    id: account.id,
-    providerId: account.providerId,
-    providerAccountId: account.providerAccountId,
-    displayName: account.displayName,
-    email: account.email,
-    avatarUrl: account.avatarUrl,
-    status: account.status,
-    connectedAt: account.connectedAt,
-    lastSyncedAt: account.lastSyncedAt,
-    lastError: account.lastError,
-  };
+  const summary = { ...account };
+  delete summary.token;
+  return summary;
 }
 
 async function readStorage(): Promise<IntegrationStorageState> {
@@ -53,7 +44,6 @@ async function readStorageForWrite(): Promise<IntegrationStorageState> {
 
 async function writeStorage(state: IntegrationStorageState): Promise<void> {
   await writeOrThrow(STORAGE_KEY, integrationStorageSchema.parse(state));
-  for (const listener of listeners) listener();
 }
 
 export async function readAccountSummaries(): Promise<IntegrationAccountSummary[]> {

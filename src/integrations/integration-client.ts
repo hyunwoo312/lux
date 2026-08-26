@@ -83,33 +83,28 @@ async function requestToken(
   const clientId = await resolveClientId(provider);
   const state = createOAuthState();
 
-  if (provider.acquireToken) {
+  if (provider.auth === "browser") {
     return provider.acquireToken({ clientId, state, interactive, staleToken });
   }
 
   const redirectUri = getRedirectUriForProvider(provider.id);
+  const codeVerifier = createCodeVerifier();
+  const codeChallenge = await createCodeChallenge(codeVerifier);
+  const authUrl = provider.buildPkceAuthUrl({
+    clientId,
+    redirectUri,
+    state,
+    codeChallenge,
+    scopes: provider.scopes,
+  });
+  const callbackUrl = await launchWebAuthFlow(authUrl, interactive);
+  const callback = parseAuthCodeCallback(callbackUrl);
 
-  if (provider.buildPkceAuthUrl && provider.exchangeCode) {
-    const codeVerifier = createCodeVerifier();
-    const codeChallenge = await createCodeChallenge(codeVerifier);
-    const authUrl = provider.buildPkceAuthUrl({
-      clientId,
-      redirectUri,
-      state,
-      codeChallenge,
-      scopes: provider.scopes,
-    });
-    const callbackUrl = await launchWebAuthFlow(authUrl, interactive);
-    const callback = parseAuthCodeCallback(callbackUrl);
-
-    if (callback.state !== state) {
-      throw new Error("OAuth callback state did not match the active request");
-    }
-
-    return provider.exchangeCode({ clientId, code: callback.code, redirectUri, codeVerifier });
+  if (callback.state !== state) {
+    throw new Error("OAuth callback state did not match the active request");
   }
 
-  throw new Error(`${provider.label} is not configured for sign-in`);
+  return provider.exchangeCode({ clientId, code: callback.code, redirectUri, codeVerifier });
 }
 
 export async function connectIntegration(
@@ -213,33 +208,19 @@ async function refreshProviderToken(
   provider: IntegrationProvider,
   account: IntegrationAccount,
 ): Promise<string> {
-  const refresh = provider.refreshToken;
+  const refresh = provider.auth === "code" ? provider.refreshToken : undefined;
   const refreshToken = account.token?.refreshToken;
   const params =
     refresh && refreshToken
       ? { clientId: await resolveClientId(provider), refreshToken }
       : undefined;
 
+  let token: IntegrationTokenResponse;
   try {
-    const token =
+    token =
       refresh && params
         ? await refresh(params)
         : await requestToken(provider, false, account.token?.accessToken);
-    await writeAccount({
-      ...account,
-      status: "connected",
-      lastError: undefined,
-      lastSyncedAt: new Date().toISOString(),
-      token: {
-        accessToken: token.accessToken,
-        refreshToken: token.refreshToken ?? account.token?.refreshToken,
-        expiresAt: getExpiresAt(token.expiresIn),
-        tokenType: token.tokenType,
-        scopes: token.scopes,
-      },
-    });
-
-    return token.accessToken;
   } catch (error) {
     if (error instanceof TemporaryAuthError || error instanceof InvalidResponseError) {
       await writeAccount({ ...account, status: "connected", lastError: error.message });
@@ -253,6 +234,22 @@ async function refreshProviderToken(
     await markNeedsReconnect(account, message);
     throw new Error(message, { cause: error });
   }
+
+  await writeAccount({
+    ...account,
+    status: "connected",
+    lastError: undefined,
+    lastSyncedAt: new Date().toISOString(),
+    token: {
+      accessToken: token.accessToken,
+      refreshToken: token.refreshToken ?? account.token?.refreshToken,
+      expiresAt: getExpiresAt(token.expiresIn),
+      tokenType: token.tokenType,
+      scopes: token.scopes,
+    },
+  });
+
+  return token.accessToken;
 }
 
 async function markProviderNeedsReconnect(providerId: IntegrationProviderId): Promise<void> {

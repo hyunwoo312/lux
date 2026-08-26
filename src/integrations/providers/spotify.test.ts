@@ -17,7 +17,7 @@ afterEach(() => {
 describe("spotifyProvider.buildPkceAuthUrl", () => {
   it("builds an authorization-code PKCE url with the account chooser", () => {
     const url = new URL(
-      spotifyProvider.buildPkceAuthUrl!({ ...params, codeChallenge: "challenge" }),
+      spotifyProvider.buildPkceAuthUrl({ ...params, codeChallenge: "challenge" }),
     );
     expect(url.origin + url.pathname).toBe("https://accounts.spotify.com/authorize");
     expect(url.searchParams.get("response_type")).toBe("code");
@@ -42,7 +42,7 @@ describe("spotifyProvider.exchangeCode", () => {
       ),
     );
 
-    const token = await spotifyProvider.exchangeCode!({
+    const token = await spotifyProvider.exchangeCode({
       clientId: "client-123",
       code: "code-1",
       redirectUri: params.redirectUri,

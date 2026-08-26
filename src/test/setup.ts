@@ -45,6 +45,8 @@ if (hasDom) {
     }
   } as unknown as typeof IntersectionObserver;
 
+  Element.prototype.scrollIntoView ??= () => {};
+
   window.matchMedia ??= ((query: string) => ({
     matches: false,
     media: query,

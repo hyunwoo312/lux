@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createRelayProvider } from "@/integrations/providers/relay-provider";
 import { ensureOk, withTimeout, parseResponse } from "@/lib/net";
-import type { IntegrationProvider } from "@/integrations/types";
+import type { CodeAuthProvider } from "@/integrations/types";
 
 const PROFILE_ENDPOINT = "https://graph.microsoft.com/v1.0/me";
 
@@ -20,7 +20,7 @@ const microsoftProfileSchema = z.object({
   userPrincipalName: z.string().nullish(),
 });
 
-export const microsoftProvider: IntegrationProvider = createRelayProvider({
+export const microsoftProvider: CodeAuthProvider = createRelayProvider({
   id: "microsoft",
   label: "Outlook Calendar",
   scopes: SCOPES,

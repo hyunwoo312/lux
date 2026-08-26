@@ -1,11 +1,11 @@
 import { vi } from "vitest";
 
+type ChangeListener = (changes: Record<string, { newValue?: unknown }>, areaName: string) => void;
+
 function createChromeMock() {
   const store = new Map<string, unknown>();
   const session = new Map<string, unknown>();
-  const changeListeners = new Set<
-    (changes: Record<string, { newValue?: unknown }>, areaName: string) => void
-  >();
+  const changeListeners = new Set<ChangeListener>();
 
   function emitChange(changes: Record<string, { newValue?: unknown }>, areaName: string) {
     const listeners = [...changeListeners];
@@ -73,16 +73,21 @@ function createChromeMock() {
           emitChange(changes, "session");
         }),
         remove: vi.fn(async (keys: string | string[]) => {
-          for (const k of Array.isArray(keys) ? keys : [keys]) session.delete(k);
+          const changes: Record<string, { newValue?: unknown }> = {};
+          for (const k of Array.isArray(keys) ? keys : [keys]) {
+            session.delete(k);
+            changes[k] = {};
+          }
+          emitChange(changes, "session");
         }),
         clear: vi.fn(async () => session.clear()),
       },
       onChanged: {
-        addListener: vi.fn((listener: (c: never, a: string) => void) => {
-          changeListeners.add(listener as never);
+        addListener: vi.fn((listener: ChangeListener) => {
+          changeListeners.add(listener);
         }),
-        removeListener: vi.fn((listener: (c: never, a: string) => void) => {
-          changeListeners.delete(listener as never);
+        removeListener: vi.fn((listener: ChangeListener) => {
+          changeListeners.delete(listener);
         }),
       },
     },
