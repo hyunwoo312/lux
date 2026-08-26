@@ -185,7 +185,7 @@ export function MatchDetail({ match, sport }: { match: Match; sport: Sport }) {
               type="button"
               onClick={() => openUrl(match.link ?? "", "newTab")}
               className="
-                press cursor-pointer text-ink-3
+                press focus-ring cursor-pointer text-ink-3
                 hover:text-primary
                 text-micro flex shrink-0 items-center gap-1
               "

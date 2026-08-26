@@ -73,6 +73,8 @@
     0 8px 16px -6px oklch(0.3 0.05 285 / 0.15), 0 36px 72px -18px oklch(0.3 0.05 285 / 0.25);
 
   --border: var(--edge-2);
+  --skeleton: color-mix(in oklab, var(--foreground) 9%, transparent);
+  --skeleton-sheen: color-mix(in oklab, var(--foreground) 17%, transparent);
   --input: oklch(0 0 0 / 0.15);
   --ring: var(--primary);
   --focus-gap: oklch(1 0 0 / 0.55);
@@ -506,6 +508,24 @@
   }
 }
 
+@utility skeleton {
+  background-color: var(--skeleton);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--skeleton-sheen) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: skeleton-sweep 1.6s var(--ease-standard) infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    background-image: none;
+    animation: none;
+  }
+}
+
 @utility press {
   transition:
     color var(--duration-fast) var(--ease-standard),
@@ -896,6 +916,15 @@
   }
   50% {
     transform: scaleY(1);
+  }
+}
+
+@keyframes skeleton-sweep {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
   }
 }
 

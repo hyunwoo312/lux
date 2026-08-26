@@ -138,7 +138,7 @@ export function HomeTab({ editing }: { editing: boolean }) {
                       onClick={() => setForm({ mode: "add" })}
                       aria-label="Add link"
                       className={cn(
-                        "press-row transition-colors",
+                        "press-row focus-ring transition-colors",
                         `
                           text-ink-3
                           hover:text-ink hover:border-foreground/40

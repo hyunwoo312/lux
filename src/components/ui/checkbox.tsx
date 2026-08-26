@@ -9,11 +9,11 @@ function Checkbox({ className, ...props }: ComponentProps<typeof CheckboxPrimiti
       data-slot="checkbox"
       className={cn(
         `
-          peer border-input focus-ring
+          peer border-input focus-ring press
+          data-[state=unchecked]:hover:border-foreground/25
           data-[state=checked]:border-primary data-[state=checked]:bg-primary
           data-[state=checked]:text-primary-foreground
           size-4 shrink-0 cursor-pointer rounded-xs border bg-transparent shadow-sm
-          transition-colors
           disabled:cursor-not-allowed disabled:opacity-50
         `,
         className,

@@ -21,10 +21,11 @@ function SelectTrigger({
       data-slot="select-trigger"
       className={cn(
         `
-          border-input bg-background/60 focus-ring
+          border-input bg-background/60 focus-ring press
           data-[placeholder]:text-ink-3
+          hover:border-foreground/25
           flex h-8 w-full cursor-pointer items-center justify-between gap-2 rounded-md border px-2.5
-          py-1 text-caption whitespace-nowrap transition-colors
+          py-1 text-caption whitespace-nowrap
           disabled:cursor-not-allowed disabled:opacity-50
           [&_svg]:size-3.5 [&_svg]:shrink-0
         `,

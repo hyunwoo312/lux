@@ -144,7 +144,7 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
               aria-label={tab.badge ? `${tab.label} (${tab.badge})` : tab.label}
               onClick={() => onSelect(tab.value)}
               className={cn(
-                "press",
+                "press focus-ring",
                 `
                   relative flex cursor-pointer items-center rounded-md px-1.5 py-1 text-caption
                   font-medium transition-colors

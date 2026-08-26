@@ -96,7 +96,7 @@ function UntimedItem({ event, color, index, reduced }: UntimedItemProps) {
         ease: EASE_OUT,
       }}
     >
-      <Tooltip solid content={`${title} · ${range}`}>
+      <Tooltip prose content={`${title} · ${range}`}>
         <span
           className={cn(
             `

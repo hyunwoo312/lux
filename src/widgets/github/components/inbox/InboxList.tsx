@@ -234,7 +234,7 @@ function SectionError({
 
 function MarkAllReadButton({ marking, onClick }: { marking: boolean; onClick: () => void }) {
   return (
-    <Tooltip content="Mark all read" solid>
+    <Tooltip content="Mark all read" prose>
       <button
         type="button"
         onClick={onClick}

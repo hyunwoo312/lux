@@ -162,7 +162,7 @@ export function SettingsSidebar({ open }: { open: boolean }) {
             return (
               <div key={id}>
                 {effectiveCollapsed ? (
-                  <Tooltip content={label} side="right" solid>
+                  <Tooltip content={label} side="right" prose>
                     {button}
                   </Tooltip>
                 ) : (
@@ -189,7 +189,7 @@ export function SettingsSidebar({ open }: { open: boolean }) {
         {isNarrow ? (
           <img src="/logo.svg" alt="" className="size-4 object-contain" />
         ) : (
-          <Tooltip content={collapsed ? "Expand" : "Collapse"} side="right" solid>
+          <Tooltip content={collapsed ? "Expand" : "Collapse"} side="right" prose>
             <button
               type="button"
               onClick={toggleSidebar}

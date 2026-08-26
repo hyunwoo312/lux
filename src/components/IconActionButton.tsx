@@ -1,4 +1,4 @@
-import { SPRING_POP } from "@/lib/motion";
+import { SPRING_POP, TAP } from "@/lib/motion";
 import type { ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import type { LucideIcon } from "lucide-react";
@@ -29,17 +29,16 @@ export function IconActionButton({
     <Tooltip content={tooltip}>
       <motion.button
         type="button"
-        onClick={onClick}
-        disabled={disabled}
+        onClick={disabled ? undefined : onClick}
+        aria-disabled={disabled || undefined}
         aria-label={label}
-        whileHover={interactive ? { scale: 1.18 } : undefined}
-        whileTap={interactive ? { scale: 0.82 } : undefined}
+        {...(interactive ? TAP.icon : {})}
         transition={SPRING_POP}
         className="
           focus-ring cursor-pointer text-ink-3
           hover:text-ink
           inline-flex size-8 items-center justify-center rounded-md transition-colors
-          disabled:pointer-events-none disabled:opacity-40
+          aria-disabled:cursor-not-allowed aria-disabled:opacity-40
           [&_svg]:size-4 [&_svg]:shrink-0
         "
       >

@@ -6,6 +6,7 @@ const inputVariants = cva(
   `
     border-input bg-background/60
     placeholder:text-ink-3
+    hover:border-foreground/25
     focus-ring flex w-full min-w-0 rounded-md border transition-colors
     disabled:cursor-not-allowed disabled:opacity-50
   `,

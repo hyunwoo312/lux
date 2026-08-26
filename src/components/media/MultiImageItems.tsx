@@ -82,7 +82,7 @@ function SortableImage({ item, assetStore, disabled, onRemove }: SortableImagePr
 
   return (
     <Tooltip
-      solid
+      prose
       content={
         <span className="flex flex-col gap-0.5">
           <span className="break-words">{item.fileName}</span>

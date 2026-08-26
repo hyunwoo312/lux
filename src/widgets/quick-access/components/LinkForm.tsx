@@ -120,7 +120,8 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
         >
           <ul>
             {matches.map((item, index) => {
-              const rowClass = "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left";
+              const rowClass =
+                "focus-ring flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left";
               const label = (
                 <>
                   <Favicon url={item.url} size={16} className="size-4 shrink-0 rounded-xs" />

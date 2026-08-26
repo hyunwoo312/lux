@@ -33,7 +33,7 @@ export function HeadlineTitle({
 
   if (!clamped) return body;
   return (
-    <Tooltip content={title} side="bottom" solid>
+    <Tooltip content={title} side="bottom" prose>
       {body}
     </Tooltip>
   );

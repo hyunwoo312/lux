@@ -258,7 +258,7 @@ describe("NewsWidget", () => {
     );
 
     const button = await screen.findByRole("button", { name: "Refresh" });
-    await waitFor(() => expect(button).toBeDisabled());
+    await waitFor(() => expect(button).toHaveAttribute("aria-disabled", "true"));
   });
 });
 

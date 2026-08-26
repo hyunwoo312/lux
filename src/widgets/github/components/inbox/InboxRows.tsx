@@ -66,7 +66,7 @@ export function PullRequestRow({ pr, newTab }: { pr: InboxPullRequest; newTab: b
   return (
     <Tooltip
       content={`${CI_LABEL[pr.ci]}${pr.review === "none" ? "" : ` · ${REVIEW_LABEL[pr.review]}`}`}
-      solid
+      prose
     >
       <a
         href={pr.url}

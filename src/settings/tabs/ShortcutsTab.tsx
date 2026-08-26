@@ -111,7 +111,7 @@ export function ShortcutsTab() {
                           exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.8 }}
                           transition={SPRING_CRISP}
                         >
-                          <Tooltip content="Reset to default" solid>
+                          <Tooltip content="Reset to default" prose>
                             <Button
                               size="icon"
                               variant="ghost"

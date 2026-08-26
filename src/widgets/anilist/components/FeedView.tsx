@@ -67,7 +67,7 @@ export function FeedView({ enabled, userId, newTab }: FeedViewProps) {
           onChange={(next) => setFeedSource(instanceId, next)}
         />
         {source === "notifications" && unreadCount > 0 && (
-          <Tooltip content="Mark all read" solid>
+          <Tooltip content="Mark all read" prose>
             <button
               type="button"
               onClick={markRead}

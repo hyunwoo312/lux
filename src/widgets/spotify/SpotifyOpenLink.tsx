@@ -7,7 +7,7 @@ export function SpotifyOpenLink() {
   if (!trackId) return null;
 
   return (
-    <Tooltip content="Open in Spotify" solid>
+    <Tooltip content="Open in Spotify" prose>
       <a
         href={`https://open.spotify.com/track/${trackId}`}
         target="_blank"

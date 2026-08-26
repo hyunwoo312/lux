@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const toggleGroupItemVariants = cva(
-  `focus-ring cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-50`,
+  `focus-ring press cursor-pointer disabled:cursor-not-allowed disabled:opacity-50`,
   {
     variants: {
       variant: {

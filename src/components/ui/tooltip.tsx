@@ -24,10 +24,10 @@ type TooltipBodyProps = {
   content: ReactNode;
   side?: Side;
   align?: Align;
-  solid?: boolean;
+  prose?: boolean;
 };
 
-function TooltipBody({ content, side, align, solid }: TooltipBodyProps) {
+function TooltipBody({ content, side, align, prose }: TooltipBodyProps) {
   return (
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Content
@@ -40,7 +40,7 @@ function TooltipBody({ content, side, align, solid }: TooltipBodyProps) {
             bg-popover text-popover-foreground overlay-pop elev-3 z-tooltip rounded-md px-2.5 py-1.5
             text-micro font-medium
           `,
-          solid ? "max-w-[14rem]" : "tracking-wide whitespace-nowrap uppercase",
+          prose ? "max-w-[14rem]" : "tracking-wide whitespace-nowrap uppercase",
         )}
       >
         {content}
@@ -56,44 +56,37 @@ type TooltipProps = {
   sticky?: boolean;
   side?: Side;
   align?: Align;
-  solid?: boolean;
+  prose?: boolean;
 };
 
 const SHOW_DELAY = 200;
-const HOVER_RECHECK_DELAY = 500;
 
 function StickyTooltip({
   content,
   children,
   side,
   align,
+  prose,
 }: Omit<TooltipProps, "disabled" | "sticky">) {
   const [open, setOpen] = useState(false);
-  const showTimer = useRef<number | null>(null);
-  const recheckTimer = useRef<number | null>(null);
+  const timer = useRef<number | null>(null);
 
-  const clearTimers = () => {
-    if (showTimer.current) window.clearTimeout(showTimer.current);
-    if (recheckTimer.current) window.clearTimeout(recheckTimer.current);
-    showTimer.current = null;
-    recheckTimer.current = null;
+  const stopTimer = () => {
+    if (timer.current) window.clearTimeout(timer.current);
+    timer.current = null;
   };
 
-  useEffect(() => clearTimers, []);
+  useEffect(() => stopTimer, []);
 
   const show = () => {
-    clearTimers();
-    showTimer.current = window.setTimeout(() => setOpen(true), SHOW_DELAY);
+    stopTimer();
+    timer.current = window.setTimeout(() => setOpen(true), SHOW_DELAY);
   };
 
   const hide = (event: PointerEvent<HTMLElement> | FocusEvent<HTMLElement>) => {
-    clearTimers();
-    const node = event.currentTarget;
+    stopTimer();
+    if (event.currentTarget.matches(":hover")) return;
     setOpen(false);
-    recheckTimer.current = window.setTimeout(() => {
-      if (node.isConnected && node.matches(":hover")) setOpen(true);
-      recheckTimer.current = null;
-    }, HOVER_RECHECK_DELAY);
   };
 
   return (
@@ -104,10 +97,16 @@ function StickyTooltip({
         onPointerLeave={hide}
         onFocus={show}
         onBlur={hide}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            stopTimer();
+            setOpen(false);
+          }
+        }}
       >
         {children}
       </TooltipPrimitive.Trigger>
-      <TooltipBody content={content} side={side} align={align} />
+      <TooltipBody content={content} side={side} align={align} prose={prose} />
     </TooltipPrimitive.Root>
   );
 }
@@ -119,13 +118,13 @@ function Tooltip({
   sticky = false,
   side = "bottom",
   align = "center",
-  solid = false,
+  prose = false,
 }: TooltipProps) {
   if (disabled || !content) return <>{children}</>;
 
   if (sticky) {
     return (
-      <StickyTooltip content={content} side={side} align={align}>
+      <StickyTooltip content={content} side={side} align={align} prose={prose}>
         {children}
       </StickyTooltip>
     );
@@ -134,7 +133,7 @@ function Tooltip({
   return (
     <TooltipPrimitive.Root>
       <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
-      <TooltipBody content={content} side={side} align={align} solid={solid} />
+      <TooltipBody content={content} side={side} align={align} prose={prose} />
     </TooltipPrimitive.Root>
   );
 }

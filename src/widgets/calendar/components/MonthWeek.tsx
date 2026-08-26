@@ -49,7 +49,7 @@ function EventBar({
     onActivate(getBarColumn(ratio, segment));
   };
   return (
-    <Tooltip content={getEventTitle(segment.event)} solid side="top">
+    <Tooltip content={getEventTitle(segment.event)} prose side="top">
       <button
         type="button"
         tabIndex={-1}
@@ -83,7 +83,7 @@ function EventBar({
 
 function TimedChip({ event, color }: { event: CalendarEvent; color: string }) {
   return (
-    <Tooltip content={getEventTitle(event)} solid side="top">
+    <Tooltip content={getEventTitle(event)} prose side="top">
       <span
         className="flex items-center gap-1 truncate px-1 text-micro"
         style={{ height: `${EVENT_ROW_HEIGHT}px` }}

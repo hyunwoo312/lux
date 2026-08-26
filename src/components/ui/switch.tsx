@@ -8,11 +8,12 @@ function Switch({ className, ...props }: ComponentProps<typeof SwitchPrimitive.R
       data-slot="switch"
       className={cn(
         `
-          peer focus-ring
+          peer focus-ring press
           data-[state=checked]:bg-primary
+          data-[state=checked]:hover:bg-primary/90
           data-[state=unchecked]:bg-input
+          data-[state=unchecked]:hover:bg-foreground/20
           inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full p-0.5
-          transition-colors
           disabled:cursor-not-allowed disabled:opacity-50
         `,
         className,

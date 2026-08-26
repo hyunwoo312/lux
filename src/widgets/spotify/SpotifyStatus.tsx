@@ -11,7 +11,7 @@ export function SpotifyStatus() {
   }
 
   return (
-    <Tooltip content="Spotify not connected" solid>
+    <Tooltip content="Spotify not connected" prose>
       <span
         aria-label="Spotify not connected"
         className="

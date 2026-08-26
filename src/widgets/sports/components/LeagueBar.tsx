@@ -5,7 +5,7 @@ import { EASE_OUT } from "@/lib/motion";
 import { SPORT_ICON, SPORT_LABEL, type League } from "@/widgets/sports/lib/leagues";
 import type { SportsPanel } from "@/widgets/sports/types";
 
-const CRUMB = "press text-caption max-w-32 truncate rounded-sm px-1.5 py-1";
+const CRUMB = "press focus-ring text-caption max-w-32 truncate rounded-sm px-1.5 py-1";
 
 export function LeagueBar({
   league,

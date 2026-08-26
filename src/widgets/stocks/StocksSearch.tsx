@@ -147,7 +147,7 @@ export function StocksSearch() {
         type="button"
         onClick={() => clearSelection(instanceId)}
         className="
-          press cursor-pointer text-ink-3
+          press focus-ring cursor-pointer text-ink-3
           hover:text-ink
           inline-flex items-center gap-0.5 text-caption font-medium tracking-wide uppercase
         "
@@ -208,7 +208,7 @@ export function StocksSearch() {
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => pick(result)}
                       className={cn(
-                        "press-row transition-colors cursor-pointer",
+                        "press-row focus-ring transition-colors cursor-pointer",
                         `
                           flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-body
                           transition-colors

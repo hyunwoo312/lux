@@ -226,7 +226,7 @@ export function AddShortcutControl({
   }
 
   return (
-    <Tooltip content="Add Shortcut" solid>
+    <Tooltip content="Add Shortcut" prose>
       <motion.button
         type="button"
         onClick={start}

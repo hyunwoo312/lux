@@ -3,7 +3,7 @@ import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 import { Search, X } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { EASE_MORPH } from "@/lib/motion";
+import { DURATION, EASE_MORPH } from "@/lib/motion";
 import { useElementSize } from "@/hooks/useElementSize";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 
@@ -98,10 +98,10 @@ export function ExpandingSearch({
     }
   };
 
-  const morph = { duration: reduced ? 0 : 0.42, ease: EASE_MORPH };
-  const surface = { duration: reduced ? 0 : 0.3, ease: EASE_MORPH };
+  const morph = { duration: reduced ? 0 : DURATION.slow, ease: EASE_MORPH };
+  const surface = { duration: reduced ? 0 : DURATION.base, ease: EASE_MORPH };
   const contentIn = (delay: number) => ({
-    duration: reduced ? 0 : 0.25,
+    duration: reduced ? 0 : DURATION.base,
     ease: EASE_MORPH,
     delay: open && !reduced ? delay : 0,
   });
@@ -118,7 +118,7 @@ export function ExpandingSearch({
             transition={morph}
             className={cn(
               "absolute top-0 left-0 flex h-7 items-center overflow-hidden rounded-sm",
-              !reduced && "transition-shadow duration-300",
+              !reduced && "transition-shadow duration-base",
               open ? "shadow-sm" : "shadow-none",
             )}
           >
@@ -145,10 +145,10 @@ export function ExpandingSearch({
               tabIndex={open ? -1 : 0}
               onClick={() => onOpenChange(true)}
               className={cn(
-                "press cursor-pointer",
+                "press focus-ring cursor-pointer",
                 `
                   relative grid size-7 shrink-0 place-items-center rounded-sm transition-colors
-                  duration-300
+                  duration-base
                   [&_svg]:size-4
                 `,
                 open ? "text-primary" : hovered ? "text-ink" : "text-ink-3",

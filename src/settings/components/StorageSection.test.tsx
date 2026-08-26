@@ -56,6 +56,9 @@ describe("StorageSection", () => {
     localStorage.setItem("lux.theme", "dark");
     render(<StorageSection />);
 
-    expect(await screen.findByRole("button", { name: /Clear cache/ })).toBeDisabled();
+    expect(await screen.findByRole("button", { name: /Clear cache/ })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
   });
 });

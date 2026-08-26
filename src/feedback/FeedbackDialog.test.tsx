@@ -85,7 +85,7 @@ describe("FeedbackDialog", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(/couldn’t reach us/i);
     await waitFor(() => expect(screen.queryByRole("progressbar")).not.toBeInTheDocument());
     expect(screen.getByLabelText(/details/i)).toBeInTheDocument();
-    expect(sendButton()).toBeEnabled();
+    expect(sendButton()).not.toHaveAttribute("aria-disabled");
   });
 
   it("keeps the typed message intact after a failure, so nothing is lost", async () => {
@@ -106,10 +106,10 @@ describe("FeedbackDialog", () => {
 
   it("keeps send unavailable until there is something worth sending", () => {
     open();
-    expect(sendButton()).toBeDisabled();
+    expect(sendButton()).toHaveAttribute("aria-disabled", "true");
 
     type(VALID);
-    expect(sendButton()).toBeEnabled();
+    expect(sendButton()).not.toHaveAttribute("aria-disabled");
   });
 
   it("waits for the first keystroke before nagging about length", () => {
@@ -186,7 +186,7 @@ describe("FeedbackDialog", () => {
     type(VALID);
 
     const send = screen.getByRole("button", { name: /wait \d+s/i });
-    expect(send).toBeDisabled();
+    expect(send).toHaveAttribute("aria-disabled", "true");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
@@ -198,7 +198,7 @@ describe("FeedbackDialog", () => {
     open();
     type(VALID);
 
-    expect(sendButton()).toBeDisabled();
+    expect(sendButton()).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByText(/already sent this one/i)).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });

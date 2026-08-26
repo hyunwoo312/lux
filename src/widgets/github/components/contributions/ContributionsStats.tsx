@@ -92,7 +92,7 @@ function Stat({
   icon?: ReactNode;
 }) {
   return (
-    <Tooltip content={detail} solid>
+    <Tooltip content={detail} prose>
       <div className="flex cursor-default flex-col items-end">
         <span
           className={cn(

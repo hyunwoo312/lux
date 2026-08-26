@@ -16,7 +16,7 @@ export function qaItemGeometry(view: QuickAccessView): string {
 export function qaTileClass(view: QuickAccessView): string {
   return cn(
     qaItemGeometry(view),
-    "hover:bg-foreground/5 w-full cursor-pointer transition-colors",
+    "focus-ring hover:bg-foreground/5 w-full cursor-pointer transition-colors",
     view === "list" && "text-left",
   );
 }

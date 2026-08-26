@@ -7,7 +7,7 @@ const buttonVariants = cva(
   `
     focus-ring press inline-flex shrink-0 cursor-pointer items-center justify-center gap-2
     rounded-md font-medium whitespace-nowrap
-    disabled:pointer-events-none disabled:opacity-50
+    aria-disabled:cursor-not-allowed aria-disabled:opacity-50
     [&_svg]:shrink-0
   `,
   {
@@ -41,12 +41,16 @@ function Button({
   variant,
   size,
   asChild = false,
+  disabled = false,
+  onClick,
   ...props
 }: ComponentProps<"button"> & VariantProps<typeof buttonVariants> & { asChild?: boolean }) {
   const Comp = asChild ? Slot : "button";
   return (
     <Comp
       data-slot="button"
+      aria-disabled={disabled || undefined}
+      onClick={disabled ? undefined : onClick}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />

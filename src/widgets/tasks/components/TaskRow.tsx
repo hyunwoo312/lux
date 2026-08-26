@@ -131,7 +131,7 @@ export function TaskRow({
             className="w-full bg-transparent text-body outline-none"
           />
         ) : (
-          <Tooltip content={task.title} disabled={!truncated} side="top" align="start" solid>
+          <Tooltip content={task.title} disabled={!truncated} side="top" align="start" prose>
             <span className="relative inline-block max-w-full align-middle">
               <span
                 ref={measureRef}
