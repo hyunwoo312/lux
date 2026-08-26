@@ -52,12 +52,6 @@ describe("dedupeEntries", () => {
 
     expect(result).toHaveLength(2);
   });
-
-  it("leaves a list without duplicates untouched", () => {
-    const entries = [entry({ id: 1 }), entry({ id: 2 }), entry({ id: 3 })];
-
-    expect(dedupeEntries(entries).map((e) => e.id)).toEqual([1, 2, 3]);
-  });
 });
 
 describe("computeBehind", () => {

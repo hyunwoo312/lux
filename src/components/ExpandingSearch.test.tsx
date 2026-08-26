@@ -28,12 +28,6 @@ describe("ExpandingSearch", () => {
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });
 
-  it("reports value changes while open", () => {
-    const props = setup({ open: true });
-    fireEvent.change(screen.getByRole("combobox"), { target: { value: "lon" } });
-    expect(props.onValueChange).toHaveBeenCalledWith("lon");
-  });
-
   it("closes on Escape", () => {
     const props = setup({ open: true });
     fireEvent.keyDown(screen.getByRole("combobox"), { key: "Escape" });

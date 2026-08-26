@@ -1,14 +1,13 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 type SpotifyMarqueeProps = {
   label: string;
   className?: string;
-  children?: ReactNode;
 };
 
-export function SpotifyMarquee({ label, className, children }: SpotifyMarqueeProps) {
+export function SpotifyMarquee({ label, className }: SpotifyMarqueeProps) {
   const containerRef = useRef<HTMLSpanElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
   const reduced = useReducedMotion();
@@ -36,15 +35,10 @@ export function SpotifyMarquee({ label, className, children }: SpotifyMarqueePro
   const durationSeconds = Math.min(18, Math.max(8, label.length * 0.28));
 
   return (
-    <span
-      ref={containerRef}
-      className={cn("block overflow-hidden whitespace-nowrap", className)}
-      aria-label={label}
-    >
+    <span ref={containerRef} className={cn("block overflow-hidden whitespace-nowrap", className)}>
       <motion.span
         ref={textRef}
         className="inline-block"
-        aria-hidden
         animate={shouldAnimate ? { x: [0, 0, -overflowDistance, -overflowDistance, 0] } : { x: 0 }}
         transition={
           shouldAnimate
@@ -57,7 +51,7 @@ export function SpotifyMarquee({ label, className, children }: SpotifyMarqueePro
             : { duration: 0 }
         }
       >
-        {children ?? label}
+        {label}
       </motion.span>
     </span>
   );

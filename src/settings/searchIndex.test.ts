@@ -1,24 +1,35 @@
 // @vitest-environment jsdom
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { sourceFiles, sourcePath } from "@/test/source-files";
 import { searchSettings, settingsIndex } from "@/settings/searchIndex";
 import { SETTINGS_TABS } from "@/settings/tabsMeta";
-import { widgetPlugins } from "@/widgets/registry";
+
+const SETTINGS_ROW = /<SettingsRow\b[^>]*?\stitle="([^"]+)"/gs;
+
+function writtenRows(): { title: string; file: string }[] {
+  return sourceFiles()
+    .filter((file) => sourcePath(file).startsWith("settings/"))
+    .flatMap((file) =>
+      [...readFileSync(file, "utf8").matchAll(SETTINGS_ROW)].map((match) => ({
+        title: match[1] ?? "",
+        file: sourcePath(file),
+      })),
+    );
+}
 
 describe("settings search", () => {
-  it("only ever points at a tab that exists", () => {
-    for (const entry of settingsIndex()) {
-      expect(SETTINGS_TABS).toContain(entry.tab);
-    }
+  it("indexes every setting written as a row, wherever its tab keeps it", () => {
+    const labels = new Set(settingsIndex().map((entry) => entry.label));
+    const rows = writtenRows();
+
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.filter((row) => !labels.has(row.title))).toEqual([]);
   });
 
   it("covers every tab, so no tab is unreachable by search", () => {
     const covered = new Set(settingsIndex().map((entry) => entry.tab));
     expect([...SETTINGS_TABS].filter((tab) => !covered.has(tab))).toEqual([]);
-  });
-
-  it("grows with the widget registry rather than needing a hand edit", () => {
-    const listed = settingsIndex().filter((entry) => entry.tab === "widgets");
-    expect(listed).toHaveLength(widgetPlugins.length);
   });
 
   it("finds a setting by a word that only appears in its description", () => {

@@ -5,7 +5,7 @@ import {
   CHANGE_TYPE_LABEL,
   CHANGE_TYPE_ORDER,
   RELEASES,
-  sortChanges,
+  groupByArea,
   type Release,
 } from "../src/changelog/releases.ts";
 
@@ -18,20 +18,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 function renderBody(release: Release): string {
   const sections = CHANGE_TYPE_ORDER.flatMap((type) => {
-    const items = sortChanges(release.changes.filter((change) => change.type === type));
+    const items = release.changes.filter((change) => change.type === type);
     if (items.length === 0) return [];
 
-    const blocks: string[] = [];
-    for (const [index, change] of items.entries()) {
-      if (change.area !== items[index - 1]?.area) {
-        blocks.push(`#### ${change.area}\n`);
-      }
-      blocks.push(`- ${change.text}\n`);
-    }
-    const body = blocks
-      .join("")
-      .replace(/\n(#### )/g, "\n\n$1")
-      .trimEnd();
+    const body = groupByArea(items)
+      .map(({ area, changes }) => `#### ${area}\n${changes.map((c) => `- ${c.text}`).join("\n")}`)
+      .join("\n\n");
     return [`### ${CHANGE_TYPE_LABEL[type]}\n\n${body}`];
   });
   return [`_${release.summary}_`, ...sections].join("\n\n");

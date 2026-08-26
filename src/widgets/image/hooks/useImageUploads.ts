@@ -1,15 +1,11 @@
 import { useState } from "react";
+import type { StoredAssetMetadata } from "@/lib/asset-store";
 import { deleteImageAsset, saveImageAsset, validateImageFile } from "@/widgets/image/media";
 import { MAX_MULTI_IMAGES, type ImageItem } from "@/widgets/image/types";
 import { useImage, useImageStore } from "@/widgets/image/useImageStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
-function toItem(metadata: {
-  id: string;
-  fileName: string;
-  mimeType: string;
-  size: number;
-}): ImageItem {
+function toItem(metadata: StoredAssetMetadata): ImageItem {
   return {
     assetId: metadata.id,
     fileName: metadata.fileName,
