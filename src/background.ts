@@ -15,18 +15,29 @@ chrome.runtime.onInstalled.addListener((details) => {
   });
 });
 
-chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
-  if (
-    typeof message === "object" &&
-    message !== null &&
-    (message as { type?: unknown }).type === "anilist-oauth"
-  ) {
-    const { accessToken, tokenType, expiresIn, state, error } = message as AnilistCallback;
-    void stashAnilistCallback({ accessToken, tokenType, expiresIn, state, error }, sender.tab?.id);
-    sendResponse({ received: true });
-    return undefined;
-  }
+function anilistCallbackFrom(message: unknown): AnilistCallback | null {
+  if (typeof message !== "object" || message === null) return null;
+  const fields = message as Record<string, unknown>;
+  if (fields.type !== "anilist-oauth") return null;
 
+  const text = (name: keyof AnilistCallback) =>
+    typeof fields[name] === "string" ? fields[name] : undefined;
+
+  return {
+    accessToken: text("accessToken"),
+    tokenType: text("tokenType"),
+    expiresIn: text("expiresIn"),
+    state: text("state"),
+    error: text("error"),
+  };
+}
+
+chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
+  const callback = anilistCallbackFrom(message);
+  if (!callback) return undefined;
+
+  void stashAnilistCallback(callback, sender.tab?.id);
+  sendResponse({ received: true });
   return undefined;
 });
 

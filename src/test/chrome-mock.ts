@@ -17,6 +17,7 @@ function createChromeMock() {
   return {
     runtime: {
       onInstalled: { addListener: vi.fn() },
+      getManifest: vi.fn(() => ({ version: "9.9.9" })),
       onMessage: { addListener: vi.fn(), removeListener: vi.fn() },
       sendMessage: vi.fn(async () => undefined),
       lastError: undefined as { message: string } | undefined,

@@ -12,7 +12,10 @@ type MessageListener = (
 
 function chromeMock() {
   return globalThis.chrome as unknown as {
-    runtime: { onMessage: { addListener: ReturnType<typeof vi.fn> } };
+    runtime: {
+      onMessage: { addListener: ReturnType<typeof vi.fn> };
+      onInstalled: { addListener: ReturnType<typeof vi.fn> };
+    };
     tabs: { remove: ReturnType<typeof vi.fn> };
     storage: {
       session: {
@@ -31,6 +34,16 @@ async function loadWorker(): Promise<MessageListener> {
     | MessageListener
     | undefined;
   if (!listener) throw new Error("background.ts registered no onMessage listener");
+  return listener;
+}
+
+async function loadInstalledListener(): Promise<(details: { reason: string }) => void> {
+  vi.resetModules();
+  await import("@/background");
+  const listener = chromeMock().runtime.onInstalled.addListener.mock.calls.at(-1)?.[0] as
+    | ((details: { reason: string }) => void)
+    | undefined;
+  if (!listener) throw new Error("background.ts registered no onInstalled listener");
   return listener;
 }
 
@@ -117,5 +130,32 @@ describe("background worker — AniList callback", () => {
 
     await expect(pending).resolves.toMatchObject({ accessToken: "tok-e2e", tokenType: "Bearer" });
     expect(chromeMock().tabs.remove).toHaveBeenCalledWith(1);
+  });
+});
+
+describe("background worker — install and update", () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    await chrome.storage.local.clear();
+  });
+
+  it("queues the changelog for the version it just updated to", async () => {
+    const onInstalled = await loadInstalledListener();
+
+    onInstalled({ reason: "update" });
+    await flush();
+
+    expect(await chrome.storage.local.get("lux:changelog-pending")).toEqual({
+      "lux:changelog-pending": "9.9.9",
+    });
+  });
+
+  it("shows a fresh install nothing it has not seen", async () => {
+    const onInstalled = await loadInstalledListener();
+
+    onInstalled({ reason: "install" });
+    await flush();
+
+    expect(await chrome.storage.local.get("lux:changelog-pending")).toEqual({});
   });
 });
