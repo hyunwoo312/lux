@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RELAY_BASE_URL } from "@/lib/links";
+import { RELAY_BASE_URL } from "@/lib/relay";
 import { FEEDBACK_TIMEOUT_MS, parseResponse, withTimeout } from "@/lib/net";
 import type { FeedbackSubmission, SubmitResult } from "@/feedback/types";
 

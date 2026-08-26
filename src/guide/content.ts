@@ -1,6 +1,5 @@
 import type { ArticleLocation, GuideArticle, GuideBlock, GuideGroup } from "./types.ts";
-
-const PRIVACY_URL = "https://lux.hyunwk.me/privacy";
+import { PRIVACY_URL } from "../lib/links.ts";
 
 const GETTING_STARTED: readonly GuideArticle[] = [
   {

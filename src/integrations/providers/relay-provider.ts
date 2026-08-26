@@ -5,7 +5,7 @@ import {
 } from "@/integrations/errors";
 import { ensureOk, fetchTokenEndpoint, TemporaryAuthError, parseResponse } from "@/lib/net";
 import { buildPkceAuthorizeUrl, parseScopes } from "@/integrations/providers/pkce";
-import { RELAY_BASE_URL } from "@/lib/links";
+import { RELAY_BASE_URL } from "@/lib/relay";
 import type {
   IntegrationProfile,
   IntegrationProvider,

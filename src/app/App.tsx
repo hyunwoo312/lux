@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useBoardWidth } from "@/app/useBoardWidth";
@@ -12,7 +12,6 @@ import { WidgetGrid } from "@/widgets/WidgetGrid";
 import { useGlobalShortcuts } from "@/app/useGlobalShortcuts";
 import { useDisableContextMenu } from "@/app/useDisableContextMenu";
 import { useActiveWallpaper } from "@/app/useActiveWallpaper";
-import { useHydrated } from "@/hooks/useHydrated";
 import { DURATION, EASE_OUT } from "@/lib/motion";
 import { FrostImageProvider } from "@/lib/frost-image";
 import { useWallpaperStore } from "@/stores/useWallpaperStore";
@@ -20,6 +19,21 @@ import { takePendingPermissionHighlight } from "@/lib/permissions";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { useSettingsStore } from "@/settings";
 import { sweepStaleResourceCaches } from "@/widgets/core/resourceCacheSweep";
+
+type Hydratable = {
+  persist: { hasHydrated: () => boolean; onFinishHydration: (fn: () => void) => () => void };
+};
+
+function useHydrated(store: Hydratable): boolean {
+  const [hydrated, setHydrated] = useState(() => store.persist.hasHydrated());
+
+  useEffect(() => {
+    if (hydrated) return;
+    return store.persist.onFinishHydration(() => setHydrated(true));
+  }, [store, hydrated]);
+
+  return hydrated;
+}
 
 export function App() {
   useGlobalShortcuts();

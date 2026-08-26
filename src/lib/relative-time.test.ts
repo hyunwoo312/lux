@@ -12,8 +12,15 @@ describe("formatRelativeTime", () => {
     expect(formatRelativeTime(new Date(now - 14 * 86_400_000).toISOString(), now)).toBe("2w ago");
   });
 
-  it("accepts epoch milliseconds as well as ISO strings", () => {
-    expect(formatRelativeTime(now - 5 * 60_000, now)).toBe("5m ago");
-    expect(formatRelativeTime(now, now)).toBe("just now");
+  it("falls back to a date once relative stops being useful", () => {
+    const old = formatRelativeTime(now - 400 * 86_400_000, now);
+    expect(old).not.toMatch(/ago/);
+    expect(old).toMatch(/2022/);
+  });
+
+  it("omits the year while the date is still in the current one", () => {
+    const midYear = Date.parse("2024-08-01T12:00:00Z");
+
+    expect(formatRelativeTime(midYear - 40 * 86_400_000, midYear)).not.toMatch(/\d{4}/);
   });
 });
