@@ -15,6 +15,7 @@ This file is generated from `src/guide/content`. Edit that, then run `npm run gu
   - [Calendar](#calendar)
   - [GitHub](#github)
   - [Image](#image)
+  - [Mail](#email)
   - [News](#news)
   - [Note](#note)
   - [Quick Access](#quickAccess)
@@ -223,6 +224,22 @@ Point it at a set of pictures and it crossfades through them on a timer you choo
 _A slideshow crossfading through a set._
 
 One picture works just as well as a set. Either way they are stored in your browser and never uploaded — add them from the widget's own settings, where you also set how long each one stays up.
+
+Each widget carries a settings control in its own header, outside edit mode. That is where you choose whether it sits on glass or a solid surface, and which accent colour it uses. You can add more than one of the same widget.
+
+### Mail
+
+<a id="email"></a>
+
+_Gmail and Outlook inboxes in one list, headers only._
+
+Your Gmail and Outlook inboxes merged into one list, newest first and grouped by how recently each message arrived. Each row shows the sender with their initials, the subject, the first couple of lines, and how long ago it arrived, with a paperclip when something is attached. Unread messages sit at full strength; ones you have read fade back.
+
+**All**, **Gmail** and **Outlook** switch between the merged list and one mailbox at a time, and each tab carries a badge counting what is unread behind it. All keeps both in true date order as you scroll, fetching more from whichever mailbox is busier. The search above the list queries your whole inbox on the server, not just the messages already loaded, and the widget settings choose how many arrive per load.
+
+Lux reads your mail but never writes to it — nothing you do here can change a message, and opening one hands you to Gmail or Outlook rather than showing it in the widget.
+
+Connect either mailbox, or both. If one provider fails to load, the other still shows and the widget says which one is missing.
 
 Each widget carries a settings control in its own header, outside edit mode. That is where you choose whether it sits on glass or a solid surface, and which accent colour it uses. You can add more than one of the same widget.
 

@@ -10,14 +10,14 @@ export type Endpoint = {
 export const ENDPOINTS: readonly Endpoint[] = [
   {
     host: "https://www.googleapis.com/*",
-    usedBy: "integrations/providers/google, widgets/calendar",
-    reason: "Google account profile and Calendar events",
+    usedBy: "integrations/providers/google, widgets/calendar, widgets/email",
+    reason: "Google account profile, Calendar events and Gmail messages",
     access: "host-permission",
   },
   {
     host: "https://graph.microsoft.com/*",
-    usedBy: "integrations/providers/microsoft, widgets/calendar",
-    reason: "Microsoft account profile and Outlook calendars",
+    usedBy: "integrations/providers/microsoft, widgets/calendar, widgets/email",
+    reason: "Microsoft account profile, Outlook calendars and Outlook mail",
     access: "host-permission",
   },
   {

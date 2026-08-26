@@ -190,6 +190,24 @@ const WIDGET_BLOCKS: Record<string, GuideBlock[]> = {
       text: "Events keep their join link for Meet or Teams, show your RSVP with pending invitations flagged, and open on the provider's site if you need the full detail.",
     },
   ],
+  email: [
+    {
+      kind: "prose",
+      text: "Your Gmail and Outlook inboxes merged into one list, newest first and grouped by how recently each message arrived. Each row shows the sender with their initials, the subject, the first couple of lines, and how long ago it arrived, with a paperclip when something is attached. Unread messages sit at full strength; ones you have read fade back.",
+    },
+    {
+      kind: "prose",
+      text: "**All**, **Gmail** and **Outlook** switch between the merged list and one mailbox at a time, and each tab carries a badge counting what is unread behind it. All keeps both in true date order as you scroll, fetching more from whichever mailbox is busier. The search above the list queries your whole inbox on the server, not just the messages already loaded, and the widget settings choose how many arrive per load.",
+    },
+    {
+      kind: "prose",
+      text: "Lux reads your mail but never writes to it — nothing you do here can change a message, and opening one hands you to Gmail or Outlook rather than showing it in the widget.",
+    },
+    {
+      kind: "prose",
+      text: "Connect either mailbox, or both. If one provider fails to load, the other still shows and the widget says which one is missing.",
+    },
+  ],
   github: [
     {
       kind: "prose",
@@ -491,6 +509,10 @@ const WIDGET_META: Record<string, { title: string; lead: string }> = {
   calendar: {
     title: "Calendar",
     lead: "Google and Outlook events together, read-only, in two views.",
+  },
+  email: {
+    title: "Mail",
+    lead: "Gmail and Outlook inboxes in one list, headers only.",
   },
   github: { title: "GitHub", lead: "Three views of your GitHub activity." },
   image: { title: "Image", lead: "Your own photos, as a single image or a slideshow." },

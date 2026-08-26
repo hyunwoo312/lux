@@ -380,3 +380,45 @@ describe("paged freshness", () => {
     expect(resource.result.current.state.status).toBe("success");
   });
 });
+
+describe("a seed that is not a resumable position", () => {
+  const seed = (cacheKey: string) =>
+    localStorage.setItem(
+      `lux:paged:${cacheKey}`,
+      JSON.stringify({ items: [1], page: 1, hasNextPage: true, at: Date.now() }),
+    );
+
+  it("fetches on mount even though the cache is fresh, so paging has a cursor", async () => {
+    seed("no-resume");
+    const fetcher = vi.fn().mockResolvedValue({ items: [1, 2], hasNextPage: true });
+
+    renderHook(() =>
+      usePagedResource(fetcher, {
+        maxItems: 50,
+        getKey: (n: number) => n,
+        cacheKey: "no-resume",
+        persist: true,
+        resumePaging: false,
+      }),
+    );
+
+    await waitFor(() => expect(fetcher).toHaveBeenCalledWith(1, expect.anything()));
+  });
+
+  it("leaves a fresh cache alone when the position is resumable", async () => {
+    seed("resume");
+    const fetcher = vi.fn().mockResolvedValue({ items: [1, 2], hasNextPage: true });
+
+    renderHook(() =>
+      usePagedResource(fetcher, {
+        maxItems: 50,
+        getKey: (n: number) => n,
+        cacheKey: "resume",
+        persist: true,
+      }),
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+});

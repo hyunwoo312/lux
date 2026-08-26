@@ -9,6 +9,7 @@ export const WIDGET_TYPES = [
   "quickAccess",
   "image",
   "calendar",
+  "email",
   "spotify",
   "github",
   "weather",

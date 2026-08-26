@@ -104,7 +104,13 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
           return (
             <span key={tab.value} className="flex items-center">
               {tab.separated && <span className="mx-1 w-px" />}
-              <span className="flex items-center px-1.5 py-1 text-caption font-medium [&_svg]:size-3.5">
+              <span
+                className="
+                  flex items-center px-1.5 py-1 text-caption font-medium
+                  [&_img]:size-3.5
+                  [&_svg]:size-3.5
+                "
+              >
                 <Icon />
                 <span className="pl-1.5">{tab.label}</span>
               </span>
@@ -148,6 +154,7 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
                 `
                   relative flex cursor-pointer items-center rounded-md px-1.5 py-1 text-caption
                   font-medium transition-colors
+                  [&_img]:size-3.5
                   [&_svg]:size-3.5
                 `,
                 isActive ? "text-ink" : "text-ink-3 hover:text-ink",
@@ -157,12 +164,12 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
                 <span
                   aria-hidden
                   className="
-                    bg-primary text-primary-foreground absolute -top-1 -right-0.5 flex h-3.5
+                    bg-primary text-primary-foreground absolute -top-1.5 -right-1.5 flex h-3.5
                     min-w-3.5 items-center justify-center rounded-full px-1 text-micro leading-none
                     font-semibold tabular-nums
                   "
                 >
-                  {tab.badge > 9 ? "9+" : tab.badge}
+                  {tab.badge > 99 ? "99+" : tab.badge}
                 </span>
               ) : null}
               <Icon />

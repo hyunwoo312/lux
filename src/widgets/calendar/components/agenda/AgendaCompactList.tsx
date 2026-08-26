@@ -3,7 +3,7 @@ import { motion } from "motion/react";
 import { TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EASE_OUT } from "@/lib/motion";
-import { AgendaDayHeading } from "@/widgets/calendar/components/agenda/AgendaDayHeading";
+import { ListGroupHeading } from "@/components/ListGroupHeading";
 import { AgendaEventActions } from "@/widgets/calendar/components/agenda/AgendaEventActions";
 import { AgendaSkipRow } from "@/widgets/calendar/components/agenda/AgendaSkipRow";
 import { NowLine } from "@/widgets/calendar/components/agenda/NowLine";
@@ -209,7 +209,7 @@ export function AgendaCompactList({
     if (heading) {
       rows.push(
         <li key={`day-${segment.start.getTime()}`}>
-          <AgendaDayHeading label={formatDayHeading(segment.day, now)} gutter={COMPACT_GUTTER_PX} />
+          <ListGroupHeading label={formatDayHeading(segment.day, now)} gutter={COMPACT_GUTTER_PX} />
         </li>,
       );
     }

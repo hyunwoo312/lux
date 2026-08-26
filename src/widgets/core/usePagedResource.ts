@@ -35,6 +35,7 @@ export type PagedResource<T> = {
   freshness: Freshness;
   loadMore: () => void;
   refresh: () => void;
+  autoRefresh: () => void;
 };
 
 type Options<T> = {
@@ -44,6 +45,7 @@ type Options<T> = {
   cacheKey?: string;
   getKey: (item: T) => string | number;
   persist?: boolean;
+  resumePaging?: boolean;
   parsePersisted?: (raw: unknown) => T[] | null;
 };
 
@@ -79,14 +81,15 @@ function seedSnapshot<T>(
   enabled: boolean,
   cacheKey: string | undefined,
   persist: boolean,
+  resumePaging: boolean,
   parsePersisted?: (raw: unknown) => T[] | null,
 ): Snapshot<T> {
   const seed = enabled && cacheKey ? seededEntry<T>(cacheKey, persist, parsePersisted) : undefined;
   return seed
     ? {
         items: seed.items,
-        page: seed.page,
-        hasNextPage: seed.hasNextPage,
+        page: resumePaging ? seed.page : 1,
+        hasNextPage: resumePaging ? seed.hasNextPage : true,
         error: undefined,
         hasLoaded: true,
         isRefreshing: false,
@@ -177,6 +180,7 @@ type ResourceConfig<T> = {
   intervalMs?: number;
   maxItems: number;
   persist: boolean;
+  resumePaging: boolean;
   parsePersisted?: (raw: unknown) => T[] | null;
   getKey: (item: T) => string | number;
 };
@@ -284,6 +288,10 @@ class SharedResource<T> {
     void this.run("refresh");
   }
 
+  autoRefresh(): void {
+    this.pollRefresh();
+  }
+
   private pollRefresh(): void {
     if (Date.now() < this.retryAt) return;
     if (this.snapshot.page > 1) return;
@@ -310,7 +318,8 @@ class SharedResource<T> {
   private start(): void {
     const cadence = this.cadence();
     if (!this.snapshot.hasLoaded) void this.run("initial");
-    else if (Date.now() - this.snapshot.at >= cadence.staleMs) void this.run("refresh");
+    else if (!this.config.resumePaging || Date.now() - this.snapshot.at >= cadence.staleMs)
+      void this.run("refresh");
     this.register(cadence);
   }
 
@@ -440,6 +449,7 @@ export function usePagedResource<T>(
     cacheKey,
     getKey,
     persist = false,
+    resumePaging = true,
     parsePersisted,
   }: Options<T>,
 ): PagedResource<T> {
@@ -457,17 +467,27 @@ export function usePagedResource<T>(
   maxItemsRef.current = maxItems;
   const persistRef = useRef(persist);
   persistRef.current = persist;
+  const resumeRef = useRef(resumePaging);
+  resumeRef.current = resumePaging;
   const parsePersistedRef = useRef(parsePersisted);
   parsePersistedRef.current = parsePersisted;
 
   const [snapshot, setSnapshot] = useState<Snapshot<T>>(() =>
-    seedSnapshot<T>(enabled, cacheKey, persist, parsePersisted),
+    seedSnapshot<T>(enabled, cacheKey, persist, resumePaging, parsePersisted),
   );
 
   const keyRef = useRef(key);
   if (keyRef.current !== key) {
     keyRef.current = key;
-    setSnapshot(seedSnapshot<T>(enabled, cacheKey, persistRef.current, parsePersistedRef.current));
+    setSnapshot(
+      seedSnapshot<T>(
+        enabled,
+        cacheKey,
+        persistRef.current,
+        resumeRef.current,
+        parsePersistedRef.current,
+      ),
+    );
   }
 
   const resourceRef = useRef<SharedResource<T> | null>(null);
@@ -485,6 +505,7 @@ export function usePagedResource<T>(
         intervalMs: scaledIntervalMs,
         maxItems: maxItemsRef.current,
         persist: persistRef.current,
+        resumePaging: resumeRef.current,
         parsePersisted: parsePersistedRef.current,
         getKey: getKeyRef.current,
       },
@@ -510,6 +531,10 @@ export function usePagedResource<T>(
     resourceRef.current?.refresh();
   }, []);
 
+  const autoRefresh = useCallback(() => {
+    resourceRef.current?.autoRefresh();
+  }, []);
+
   let state: PagedResourceState<T>;
   if (!snapshot.hasLoaded) {
     state = snapshot.error ? { status: "error", error: snapshot.error } : { status: "loading" };
@@ -528,5 +553,6 @@ export function usePagedResource<T>(
     freshness: freshnessOf(snapshot),
     loadMore,
     refresh,
+    autoRefresh,
   };
 }

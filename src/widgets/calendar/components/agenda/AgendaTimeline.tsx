@@ -1,5 +1,5 @@
 import { useEffect, useRef, type Ref } from "react";
-import { AgendaDayHeading } from "@/widgets/calendar/components/agenda/AgendaDayHeading";
+import { ListGroupHeading } from "@/components/ListGroupHeading";
 import { AgendaEventBlock } from "@/widgets/calendar/components/agenda/AgendaEventBlock";
 import { AgendaSkipRow } from "@/widgets/calendar/components/agenda/AgendaSkipRow";
 import { NowLine } from "@/widgets/calendar/components/agenda/NowLine";
@@ -187,7 +187,7 @@ export function AgendaTimeline({
           return (
             <li key={`run-${segment.start.getTime()}`}>
               {heading && (
-                <AgendaDayHeading label={formatDayHeading(segment.day, now)} gutter={GUTTER_PX} />
+                <ListGroupHeading label={formatDayHeading(segment.day, now)} gutter={GUTTER_PX} />
               )}
               <RunTrack
                 run={segment}
