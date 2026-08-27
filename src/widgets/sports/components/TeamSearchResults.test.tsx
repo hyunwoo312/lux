@@ -13,6 +13,8 @@ import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import { TeamSearchResults } from "@/widgets/sports/components/TeamSearchResults";
 import { fetchTeamIndex } from "@/widgets/sports/lib/teamIndex";
 import { MAX_TEAMS, useSportsStore } from "@/widgets/sports/useSportsStore";
+import { seedSportsInstance } from "@/widgets/sports/lib/fixtures";
+import type { LeagueFollowing } from "@/widgets/sports/types";
 
 const fetchMock = vi.mocked(fetchTeamIndex);
 const ID = "search";
@@ -22,22 +24,8 @@ const INDEX = [
   { leagueId: "epl", abbreviation: "ARS", name: "Arsenal" },
 ];
 
-function renderResults(
-  query: string,
-  following: Record<string, { teams: string[]; tour?: boolean }> = {},
-) {
-  useSportsStore.setState({
-    byInstance: {
-      [ID]: {
-        tab: "discover" as const,
-        collapsed: [],
-        leagueId: "mlb",
-        following,
-        states: ["in", "pre", "post"] as const,
-        window: "today" as const,
-      },
-    },
-  });
+function renderResults(query: string, following: Record<string, LeagueFollowing> = {}) {
+  seedSportsInstance(ID, { following, window: "today" });
   render(
     <WidgetInstanceContext.Provider value={ID}>
       <TeamSearchResults query={query} />
@@ -77,7 +65,7 @@ describe("TeamSearchResults", () => {
     renderResults("ars", { epl: { teams: ["ARS"] } });
 
     const row = await screen.findByRole("button", { name: /Arsenal/ });
-    expect(row.querySelector("svg")?.getAttribute("class")).toContain("fill-current");
+    expect(row).toHaveAttribute("aria-pressed", "true");
 
     fireEvent.click(row);
     expect(followed("epl")).toEqual([]);

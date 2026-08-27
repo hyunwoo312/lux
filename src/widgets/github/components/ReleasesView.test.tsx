@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { ReleaseList } from "@/widgets/github/components/ReleasesView";
+import { useGithubStore } from "@/widgets/github/useGithubStore";
 import type { Release, ReleasesData } from "@/widgets/github/types";
 
 function release(overrides: Partial<Release> = {}): Release {
@@ -32,13 +33,12 @@ function renderList(payload: ReleasesData, showPrivate = true) {
 }
 
 describe("ReleaseList", () => {
-  it("links each release to its own tag page", () => {
-    renderList(data());
+  it("keeps marking a release new for the whole visit, not just the first frame", () => {
+    useGithubStore.setState({ lastSeenReleaseAt: new Date(0).toISOString() });
 
-    expect(screen.getByRole("link")).toHaveAttribute(
-      "href",
-      "https://github.com/o/web/releases/tag/v1.0.0",
-    );
+    render(<ReleaseList data={data()} showPrivate newTab={false} markSeen />);
+
+    expect(screen.getByText(/new since you last looked/)).toBeInTheDocument();
   });
 
   it("explains that private releases are hidden rather than reading as empty", () => {

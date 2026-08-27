@@ -51,6 +51,14 @@ type LeagueBase = {
 export type LeagueKind = "match" | "leaderboard" | "draw";
 export type League = LeagueBase & { kind: LeagueKind };
 
+const MLB: League = {
+  kind: "match",
+  id: "mlb",
+  label: "MLB",
+  sport: "baseball",
+  path: "baseball/mlb",
+};
+
 export const LEAGUES: League[] = [
   { kind: "match", id: "nfl", label: "NFL", sport: "football", path: "football/nfl" },
   {
@@ -62,7 +70,7 @@ export const LEAGUES: League[] = [
     liveUnverified: true,
   },
   { kind: "match", id: "wnba", label: "WNBA", sport: "basketball", path: "basketball/wnba" },
-  { kind: "match", id: "mlb", label: "MLB", sport: "baseball", path: "baseball/mlb" },
+  MLB,
   {
     kind: "match",
     id: "collegebaseball",
@@ -147,7 +155,8 @@ export const LEAGUES: League[] = [
   { kind: "draw", id: "wta", label: "WTA Tour", sport: "tennis", path: "tennis/wta" },
 ];
 
-export const DEFAULT_LEAGUE_ID = "mlb";
+export const DEFAULT_LEAGUE = MLB;
+export const DEFAULT_LEAGUE_ID = MLB.id;
 
 export function leagueById(id: string): League | undefined {
   return LEAGUES.find((league) => league.id === id);

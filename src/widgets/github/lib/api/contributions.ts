@@ -41,7 +41,7 @@ const CONTRIBUTIONS_QUERY = `query {
   }
 }`;
 
-const repoBreakdownSchema = z.array(
+const repoBreakdownSchema = tolerantArray(
   z.object({
     repository: z.object({
       nameWithOwner: z.string(),

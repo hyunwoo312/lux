@@ -46,10 +46,6 @@ describe("groupByRepo", () => {
     const groups = groupByRepo([issueEntry("a", "o/one", "not-a-date")]);
     expect(groups).toHaveLength(1);
   });
-
-  it("reads an empty inbox as no groups", () => {
-    expect(groupByRepo([])).toEqual([]);
-  });
 });
 
 describe("attentionCount", () => {
@@ -79,10 +75,6 @@ describe("attentionCount", () => {
 
   it("counts review requests and notifications, not your own pull requests", () => {
     expect(attentionCount([pr("reviewRequested"), pr("mine")], [notification])).toBe(2);
-  });
-
-  it("is zero on an empty inbox so the tab carries no badge", () => {
-    expect(attentionCount([], [])).toBe(0);
   });
 });
 

@@ -35,6 +35,15 @@ describe("following", () => {
     expect(data()?.following["mlb"]?.teams).toEqual(full);
   });
 
+  it("keeps a followed tour and its teams apart when either is toggled", () => {
+    store().toggleTour(ID, "pga");
+    store().toggleTeam(ID, "pga", "TW");
+    expect(data()?.following["pga"]).toEqual({ teams: ["TW"], tour: true });
+
+    store().toggleTour(ID, "pga");
+    expect(data()?.following["pga"]).toEqual({ teams: ["TW"], tour: false });
+  });
+
   it("follows teams in the league they belong to, not the one on screen", () => {
     store().setLeague(ID, "mlb");
     store().toggleTeam(ID, "epl", "ARS");

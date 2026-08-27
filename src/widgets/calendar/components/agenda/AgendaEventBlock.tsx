@@ -1,12 +1,11 @@
 import { motion } from "motion/react";
 import { TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { URGENCY_RING } from "@/widgets/calendar/components/agenda/urgency";
 import { EASE_OUT } from "@/lib/motion";
-import { AgendaEventActions } from "@/widgets/calendar/components/agenda/AgendaEventActions";
+import { CalendarEventActions } from "@/widgets/calendar/components/CalendarEventActions";
 import { getEventTitle } from "@/widgets/calendar/lib/agenda";
 import { getReadableTextColor } from "@/widgets/calendar/lib/colors";
-import { formatTimeRange, type EventUrgency } from "@/widgets/calendar/lib/timeline";
+import { formatTimeRange, URGENCY_RING, type EventUrgency } from "@/widgets/calendar/lib/timeline";
 import type { DisplayCalendarEvent } from "@/widgets/calendar/types";
 
 const LINE_PX = 16;
@@ -117,7 +116,7 @@ export function AgendaEventBlock({
               {countdown}
             </span>
           )}
-          <AgendaEventActions event={event} title={title} reduced={reduced} onColor />
+          <CalendarEventActions event={event} title={title} reduced={reduced} size="sm" onColor />
         </span>
       </span>
     </motion.li>

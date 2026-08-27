@@ -39,6 +39,7 @@ describe("useGithubStore", () => {
     expect(second.ok).toBe(false);
     expect(second.remainingMs).toBeGreaterThan(0);
     expect(second.remainingMs).toBeLessThanOrEqual(GITHUB_SYNC_COOLDOWN_MS);
+    expect(store().syncNonce).toBe(1);
   });
 
   describe("migrate", () => {

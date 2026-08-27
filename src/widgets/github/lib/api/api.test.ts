@@ -319,6 +319,62 @@ describe("markAllGithubNotificationsRead", () => {
   });
 });
 
+describe("fetchContributions", () => {
+  function contributionsResponse(commitRows: unknown[]) {
+    return jsonResponse({
+      data: {
+        viewer: {
+          login: "octo",
+          contributionsCollection: {
+            totalCommitContributions: 1,
+            totalPullRequestContributions: 0,
+            totalIssueContributions: 0,
+            totalPullRequestReviewContributions: 0,
+            commitContributionsByRepository: commitRows,
+            pullRequestContributionsByRepository: [],
+            issueContributionsByRepository: [],
+            pullRequestReviewContributionsByRepository: [],
+            contributionCalendar: {
+              totalContributions: 1,
+              weeks: [
+                {
+                  contributionDays: [
+                    {
+                      date: "2026-07-01",
+                      contributionCount: 1,
+                      contributionLevel: "FIRST_QUARTILE",
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      },
+    });
+  }
+
+  it("keeps the rest of the ledger when one repository row is malformed", async () => {
+    mockFetch.mockResolvedValue(
+      contributionsResponse([
+        { repository: { nameWithOwner: 42 } },
+        {
+          repository: {
+            nameWithOwner: "o/fine",
+            url: "https://github.com/o/fine",
+            isPrivate: false,
+          },
+          contributions: { totalCount: 3 },
+        },
+      ]),
+    );
+
+    const data = await fetchContributions();
+
+    expect(data.activity?.map((entry) => entry.repo)).toEqual(["o/fine"]);
+  });
+});
+
 describe("graphql errors returned with HTTP 200", () => {
   it("throws a RateLimitError when an error is RATE_LIMITED", async () => {
     mockFetch.mockResolvedValue(

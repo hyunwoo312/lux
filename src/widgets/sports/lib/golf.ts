@@ -188,7 +188,7 @@ export function parseLeaderboard(raw: unknown): Leaderboard | null {
         score: competitor.score ?? "—",
         today: card.at(-1)?.toPar,
         card,
-        ...(scoring ? { scoring } : {}),
+        scoring,
         madeCut: state !== "post" || card.length >= round,
       };
     });
@@ -199,7 +199,7 @@ export function parseLeaderboard(raw: unknown): Leaderboard | null {
   return {
     name: tournament.shortName ?? tournament.name ?? "Tournament",
     state,
-    ...(dates ? { dates } : {}),
+    dates,
     detail: competition.status?.type?.detail ?? (state === "post" ? "Final" : `Round ${round}`),
     players: entries.map((entry, index) => ({ ...entry, position: positions[index] ?? "" })),
     link: tournament.links?.find((entry) => entry.href)?.href,

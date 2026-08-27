@@ -6,22 +6,12 @@ import { LeagueSelector } from "@/widgets/sports/components/LeagueSelector";
 import type { Sport } from "@/widgets/sports/lib/leagues";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import { useSportsStore } from "@/widgets/sports/useSportsStore";
+import { seedSportsInstance } from "@/widgets/sports/lib/fixtures";
 
 const ID = "sports-1";
 
 function seed(leagueId = "mlb") {
-  useSportsStore.setState({
-    byInstance: {
-      [ID]: {
-        tab: "discover",
-        collapsed: [],
-        leagueId,
-        following: {},
-        states: ["in", "pre", "post"],
-        window: "today",
-      },
-    },
-  });
+  seedSportsInstance(ID, { leagueId, window: "today" });
 }
 
 function Host({ onPick }: { onPick: () => void }) {

@@ -12,25 +12,18 @@ import { fetchScoreboard } from "@/widgets/sports/lib/espn";
 import { FavoritesTab } from "@/widgets/sports/components/FavoritesTab";
 import { clearPolledResources } from "@/widgets/core/usePolledResource";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
-import { match, team } from "@/widgets/sports/lib/fixtures";
+import { match, seedSportsInstance, team } from "@/widgets/sports/lib/fixtures";
 import { useSportsStore } from "@/widgets/sports/useSportsStore";
+import { MATCH_STATES, type LeagueFollowing, type MatchState } from "@/widgets/sports/types";
 
 const fetchMock = vi.mocked(fetchScoreboard);
 const ID = "sports-fav";
 
-function seed(following: Record<string, { teams: string[] }>) {
-  useSportsStore.setState({
-    byInstance: {
-      [ID]: {
-        tab: "favorites",
-        collapsed: [],
-        leagueId: "mlb",
-        following,
-        states: ["in", "pre", "post"],
-        window: "today",
-      },
-    },
-  });
+function seed(
+  following: Record<string, LeagueFollowing>,
+  states: MatchState[] = [...MATCH_STATES],
+) {
+  seedSportsInstance(ID, { tab: "favorites", following, states, window: "today" });
 }
 
 function renderTab() {
@@ -111,6 +104,43 @@ describe("FavoritesTab", () => {
     renderTab();
 
     expect(screen.getByText(/Follow a team to see its games here/i)).toBeInTheDocument();
+  });
+
+  it("filters followed teams by name as well as abbreviation", async () => {
+    fetchMock.mockResolvedValue([
+      match({
+        id: "yankees",
+        away: team({ abbreviation: "NYY", name: "Yankees" }),
+        home: team({ abbreviation: "BOS", name: "Red Sox" }),
+      }),
+    ]);
+    seed({ mlb: { teams: ["NYY", "ATL"] } });
+    renderTab();
+    await screen.findByText("NYY");
+
+    fireEvent.change(screen.getByRole("searchbox", { name: /Filter the teams you follow/ }), {
+      target: { value: "yank" },
+    });
+
+    expect(screen.getByText("NYY")).toBeInTheDocument();
+    expect(screen.queryByText("ATL")).not.toBeInTheDocument();
+  });
+
+  it("honours the Show filter on the games your teams are in", async () => {
+    fetchMock.mockResolvedValue([
+      match({
+        id: "done",
+        state: "post",
+        detail: "FT",
+        away: team({ abbreviation: "NYY", name: "Yankees" }),
+        home: team({ abbreviation: "BOS", name: "Red Sox" }),
+      }),
+    ]);
+    seed({ mlb: { teams: ["NYY"] } }, ["in"]);
+    renderTab();
+
+    expect(await screen.findByRole("button", { name: /MLB/ })).toBeInTheDocument();
+    expect(screen.queryByText("NYY")).not.toBeInTheDocument();
   });
 
   it("remembers a folded league, so it stays folded on the next tab", async () => {

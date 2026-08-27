@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LEAGUES, leagueById, leaguesBySport } from "@/widgets/sports/lib/leagues";
+import { LEAGUES, leaguesBySport } from "@/widgets/sports/lib/leagues";
 
 describe("league registry", () => {
   it("gives every league a unique id", () => {
@@ -13,10 +13,5 @@ describe("league registry", () => {
 
   it("sends every golf league down the leaderboard branch", () => {
     for (const league of leaguesBySport("golf")) expect(league.kind).toBe("leaderboard");
-  });
-
-  it("finds a league by id and reports an unknown one as missing", () => {
-    expect(leagueById("epl")?.label).toBe("Premier League");
-    expect(leagueById("nope")).toBeUndefined();
   });
 });

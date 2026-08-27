@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { espnUrl, fetchEspn } from "@/widgets/sports/lib/espnApi";
 import { pickEventIndex } from "@/widgets/sports/lib/pickEvent";
-import { MATCH_STATES, type MatchState } from "@/widgets/sports/types";
+import { MATCH_STATES, STATE_ORDER, type MatchState } from "@/widgets/sports/types";
 
 export type TennisSet = { games: string; won: boolean; tiebreak?: number };
 
@@ -113,14 +113,12 @@ function toPlayer(raw: z.infer<typeof competitorSchema>): TennisPlayer {
   const athlete = raw.athlete;
   return {
     name: athlete?.shortName ?? athlete?.displayName ?? "—",
-    ...(athlete?.flag?.href ? { flag: athlete.flag.href } : {}),
-    ...(athlete?.links?.find((entry) => entry.href)?.href
-      ? { link: athlete.links.find((entry) => entry.href)?.href as string }
-      : {}),
+    flag: athlete?.flag?.href,
+    link: athlete?.links?.find((entry) => entry.href)?.href,
     sets: (raw.linescores ?? []).map((entry) => ({
       games: `${entry.value ?? ""}`,
       won: entry.winner ?? false,
-      ...(entry.tiebreak !== undefined ? { tiebreak: entry.tiebreak } : {}),
+      tiebreak: entry.tiebreak,
     })),
     winner: raw.winner ?? false,
   };
@@ -146,13 +144,13 @@ function toMatch(raw: unknown): TennisMatch | null {
     id: competition.id,
     state: competition.status?.type?.state ?? "pre",
     detail: competition.status?.type?.shortDetail ?? "",
-    ...(round ? { round } : {}),
+    round,
     startsAt: competition.date ?? "",
-    ...(court ? { court } : {}),
-    ...(venue ? { venue } : {}),
-    ...(broadcast ? { broadcast } : {}),
-    ...(bestOf ? { bestOf } : {}),
-    ...(summary ? { summary } : {}),
+    court,
+    venue,
+    broadcast,
+    bestOf,
+    summary,
     away: toPlayer(away),
     home: toPlayer(home),
   };
@@ -169,8 +167,6 @@ function playedOver(from: string | undefined, to: string | undefined): string | 
   const last = end.toLocaleDateString(undefined, DAY);
   return first === last ? first : `${first} – ${last}`;
 }
-
-const STATE_ORDER: Record<MatchState, number> = { in: 0, pre: 1, post: 2 };
 
 export function parseTennis(raw: unknown): TennisEvent | null {
   const board = boardSchema.safeParse(raw);
@@ -221,12 +217,10 @@ export function parseTennis(raw: unknown): TennisEvent | null {
     name: event.shortName ?? event.name ?? "Tournament",
     state: event.status.type.state,
     detail: event.status.type.detail ?? "",
-    ...(event.venue?.displayName ? { venue: event.venue.displayName } : {}),
-    ...(dates ? { dates } : {}),
+    venue: event.venue?.displayName,
+    dates,
     draws,
-    ...(event.links?.find((entry) => entry.href)?.href
-      ? { link: event.links.find((entry) => entry.href)?.href }
-      : {}),
+    link: event.links?.find((entry) => entry.href)?.href,
   };
 }
 

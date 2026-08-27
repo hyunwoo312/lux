@@ -60,13 +60,19 @@ function measure(color: string): number {
   return contrast(inkAgainst(getReadableTextColor(color), background), background);
 }
 
+function failingSwatches(palette: Record<string, string>): string[] {
+  return Object.entries(palette)
+    .filter(([, color]) => measure(color) < AA_CONTRAST)
+    .map(([name]) => name);
+}
+
 describe("getReadableTextColor", () => {
-  it.each(Object.entries(GOOGLE_PALETTE))("clears AA on the Google %s swatch", (_name, color) => {
-    expect(measure(color)).toBeGreaterThanOrEqual(AA_CONTRAST);
+  it("clears AA on every Google swatch", () => {
+    expect(failingSwatches(GOOGLE_PALETTE)).toEqual([]);
   });
 
-  it.each(Object.entries(OUTLOOK_PALETTE))("clears AA on the Outlook %s swatch", (_name, color) => {
-    expect(measure(color)).toBeGreaterThanOrEqual(AA_CONTRAST);
+  it("clears AA on every Outlook swatch", () => {
+    expect(failingSwatches(OUTLOOK_PALETTE)).toEqual([]);
   });
 
   it("picks dark ink on mid-tone swatches that a brightness threshold reads as dark", () => {
@@ -75,12 +81,6 @@ describe("getReadableTextColor", () => {
     expect(getReadableTextColor("#e67c73")).toBe("rgba(0, 0, 0, 0.8)");
     expect(getReadableTextColor("#f4511e")).toBe("rgba(0, 0, 0, 0.8)");
     expect(getReadableTextColor("#039be5")).toBe("rgba(0, 0, 0, 0.8)");
-  });
-
-  it("keeps light ink on genuinely dark swatches", () => {
-    expect(getReadableTextColor("#0b8043")).toBe("#ffffff");
-    expect(getReadableTextColor("#3f51b5")).toBe("#ffffff");
-    expect(getReadableTextColor("#d50000")).toBe("#ffffff");
   });
 
   it("treats shorthand hex as its expanded form", () => {

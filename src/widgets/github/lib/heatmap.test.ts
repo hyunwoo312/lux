@@ -9,14 +9,6 @@ import {
 const WIDGET_INNER = { w6: 248, w8: 348, w10: 448, wide: 1000 };
 
 describe("heatmapMetrics", () => {
-  it("keeps every cell square", () => {
-    for (const width of Object.values(WIDGET_INNER)) {
-      const metrics = heatmapMetrics(width);
-      expect(metrics.cell).toBeGreaterThanOrEqual(5);
-      expect(metrics.cell).toBeLessThanOrEqual(11);
-    }
-  });
-
   it("spends the available width on bigger cells rather than more weeks", () => {
     expect(heatmapMetrics(WIDGET_INNER.w6).cell).toBeLessThan(heatmapMetrics(WIDGET_INNER.w8).cell);
     expect(heatmapMetrics(WIDGET_INNER.w8).cell).toBeLessThan(

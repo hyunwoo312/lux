@@ -16,6 +16,8 @@ import {
 } from "@/widgets/calendar/lib/timeline";
 import type { CalendarEvent } from "@/widgets/calendar/types";
 
+const WEEKDAY = new Intl.DateTimeFormat(undefined, { weekday: "long" });
+
 function at(hour: number, minute = 0, dayOffset = 0): Date {
   const date = new Date(2026, 7, 23, hour, minute, 0, 0);
   date.setDate(date.getDate() + dayOffset);
@@ -240,6 +242,17 @@ describe("describeNextAfterToday", () => {
     expect(label).toContain("Next up: Retro, tomorrow at");
   });
 
+  it("never names a weekday that is already inside the visible range", () => {
+    const label = describeNextAfterToday(
+      [event({ id: "Retro", from: at(9, 0, 7), to: at(10, 0, 7) })],
+      at(20),
+      false,
+    );
+
+    expect(label).toContain("Next up: Retro,");
+    expect(label).not.toContain(WEEKDAY.format(at(20)));
+  });
+
   it.each([
     ["a clear calendar", [] as ReturnType<typeof event>[]],
     ["an event still to come today", [event({ id: "later", from: at(22), to: at(23) })]],
@@ -250,16 +263,6 @@ describe("describeNextAfterToday", () => {
 
 describe("getEventCountdown", () => {
   const now = new Date("2026-08-23T12:00:00.000Z");
-  const between = (startIso: string, endIso: string) =>
-    ({
-      id: "e",
-      calendarId: "c",
-      title: "T",
-      startsAt: startIso,
-      endsAt: endIso,
-      isAllDay: false,
-      visibility: "default",
-    }) as CalendarEvent;
 
   it.each([
     ["19:00", "20:00", null],
@@ -267,24 +270,18 @@ describe("getEventCountdown", () => {
     ["11:50", "12:30", "now"],
     ["10:00", "11:00", null],
   ])("counts %s-%s as %s", (from, to, expected) => {
-    const event = between(`2026-08-23T${from}:00.000Z`, `2026-08-23T${to}:00.000Z`);
+    const upcoming = event({
+      id: "e",
+      from: new Date(`2026-08-23T${from}:00.000Z`),
+      to: new Date(`2026-08-23T${to}:00.000Z`),
+    });
 
-    expect(getEventCountdown(event, now)).toBe(expected);
+    expect(getEventCountdown(upcoming, now)).toBe(expected);
   });
 });
 
 describe("buildTimeline", () => {
   const now = new Date("2026-08-23T12:20:00.000Z");
-  const ev = (id: string, startIso: string, endIso: string) =>
-    ({
-      id,
-      calendarId: "c",
-      title: id,
-      startsAt: startIso,
-      endsAt: endIso,
-      isAllDay: false,
-      visibility: "default",
-    }) as CalendarEvent;
 
   it("opens on an axis at the current hour even with nothing scheduled", () => {
     const segments = buildTimeline([], getWindowStart(now), now);
@@ -295,7 +292,13 @@ describe("buildTimeline", () => {
 
   it("keeps a short gap on the axis instead of eliding it", () => {
     const segments = buildTimeline(
-      [ev("a", "2026-08-23T13:00:00.000Z", "2026-08-23T13:30:00.000Z")],
+      [
+        event({
+          id: "a",
+          from: new Date("2026-08-23T13:00:00.000Z"),
+          to: new Date("2026-08-23T13:30:00.000Z"),
+        }),
+      ],
       getWindowStart(now),
       now,
     );
@@ -304,7 +307,13 @@ describe("buildTimeline", () => {
 
   it("elides a long empty stretch and resumes at the next event", () => {
     const segments = buildTimeline(
-      [ev("later", "2026-08-23T21:00:00.000Z", "2026-08-23T22:00:00.000Z")],
+      [
+        event({
+          id: "later",
+          from: new Date("2026-08-23T21:00:00.000Z"),
+          to: new Date("2026-08-23T22:00:00.000Z"),
+        }),
+      ],
       getWindowStart(now),
       now,
     );
@@ -317,8 +326,16 @@ describe("buildTimeline", () => {
   it("always breaks the axis at a day boundary", () => {
     const segments = buildTimeline(
       [
-        ev("today", "2026-08-23T13:00:00.000Z", "2026-08-23T14:00:00.000Z"),
-        ev("tomorrow", "2026-08-24T09:00:00.000Z", "2026-08-24T10:00:00.000Z"),
+        event({
+          id: "today",
+          from: new Date("2026-08-23T13:00:00.000Z"),
+          to: new Date("2026-08-23T14:00:00.000Z"),
+        }),
+        event({
+          id: "tomorrow",
+          from: new Date("2026-08-24T09:00:00.000Z"),
+          to: new Date("2026-08-24T10:00:00.000Z"),
+        }),
       ],
       getWindowStart(now),
       now,
@@ -375,17 +392,6 @@ describe("getRangeStart", () => {
 
 describe("buildTimeline over a picked range", () => {
   const now = new Date("2026-08-23T14:30:00.000Z");
-  const ev = (id: string, startIso: string, endIso: string) =>
-    ({
-      id,
-      calendarId: "c",
-      title: id,
-      startsAt: startIso,
-      endsAt: endIso,
-      isAllDay: false,
-      visibility: "default",
-    }) as CalendarEvent;
-
   const localAt = (dayOffset: number, hour: number) => {
     const date = new Date(now);
     date.setDate(date.getDate() + dayOffset);
@@ -396,7 +402,7 @@ describe("buildTimeline over a picked range", () => {
   it("skips the empty small hours of a future range and opens on its first event", () => {
     const rangeStart = getRangeStart(localAt(4, 0), now);
     const segments = buildTimeline(
-      [ev("later", localAt(4, 9).toISOString(), localAt(4, 10).toISOString())],
+      [event({ id: "later", from: localAt(4, 9), to: localAt(4, 10) })],
       rangeStart,
       now,
     );
@@ -409,8 +415,8 @@ describe("buildTimeline over a picked range", () => {
     const rangeStart = getRangeStart(localAt(4, 0), now);
     const { timed } = splitTimelineEvents(
       [
-        ev("inside", localAt(4, 9).toISOString(), localAt(4, 10).toISOString()),
-        ev("before", localAt(1, 9).toISOString(), localAt(1, 10).toISOString()),
+        event({ id: "inside", from: localAt(4, 9), to: localAt(4, 10) }),
+        event({ id: "before", from: localAt(1, 9), to: localAt(1, 10) }),
       ],
       rangeStart,
       3,

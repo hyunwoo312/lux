@@ -1,4 +1,9 @@
+import { DEFAULT_DATA, useSportsStore, type SportsData } from "@/widgets/sports/useSportsStore";
 import type { Match, MatchTeam } from "@/widgets/sports/types";
+
+export function seedSportsInstance(instanceId: string, overrides: Partial<SportsData> = {}): void {
+  useSportsStore.setState({ byInstance: { [instanceId]: { ...DEFAULT_DATA, ...overrides } } });
+}
 
 export function team(overrides: Partial<MatchTeam> = {}): MatchTeam {
   return {

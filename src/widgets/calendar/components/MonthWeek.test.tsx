@@ -30,7 +30,7 @@ function timedEvent(id: string, index: number, hour: number): CalendarEvent {
   };
 }
 
-function renderWeek(events: CalendarEvent[], width: number, height: number) {
+function renderWeek(events: CalendarEvent[], width: number, height: number, collapsed = false) {
   const layout = computeMonthLayout(DAYS, events, VISIBLE_MONTH, "2026-5-15");
   return render(
     <WidgetInstanceContext.Provider value={ID}>
@@ -40,6 +40,7 @@ function renderWeek(events: CalendarEvent[], width: number, height: number) {
           eventsByDate={getEventsByDate(events)}
           colors={new Map()}
           metrics={getMonthMetrics(width, height)}
+          collapsed={collapsed}
         />
       </TooltipProvider>
     </WidgetInstanceContext.Provider>,
@@ -62,5 +63,15 @@ describe("MonthWeek at small sizes", () => {
     renderWeek(BUSY_DAY, 358, 338);
 
     expect(screen.getByText("+3 more")).toBeInTheDocument();
+  });
+
+  it("takes a collapsed week out of the tab order", () => {
+    const { unmount } = renderWeek(BUSY_DAY, 358, 338);
+    expect(screen.getAllByRole("gridcell")[0]).not.toHaveAttribute("tabindex");
+    unmount();
+
+    renderWeek(BUSY_DAY, 358, 338, true);
+    const collapsedCells = screen.getAllByRole("gridcell");
+    expect(collapsedCells.every((cell) => cell.getAttribute("tabindex") === "-1")).toBe(true);
   });
 });

@@ -15,24 +15,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { clearPolledResources } from "@/widgets/core/usePolledResource";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import { SPORTS_SYNC_COOLDOWN_MS, useSportsStore } from "@/widgets/sports/useSportsStore";
+import { seedSportsInstance } from "@/widgets/sports/lib/fixtures";
 import type { LeagueFollowing } from "@/widgets/sports/types";
 
 const fetchMock = vi.mocked(fetchLeaderboard);
 const ID = "sports-refresh";
 
 function seed(following: Record<string, LeagueFollowing>) {
-  useSportsStore.setState({
-    byInstance: {
-      [ID]: {
-        tab: "favorites",
-        collapsed: [],
-        leagueId: "mlb",
-        following,
-        states: ["in", "pre", "post"],
-        window: "today",
-      },
-    },
-  });
+  seedSportsInstance(ID, { tab: "favorites", following, window: "today" });
 }
 
 function renderFavorites() {

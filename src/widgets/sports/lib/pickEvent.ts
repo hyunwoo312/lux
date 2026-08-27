@@ -1,8 +1,6 @@
-import type { MatchState } from "@/widgets/sports/types";
+import { STATE_ORDER, type MatchState } from "@/widgets/sports/types";
 
 export type DatedEvent = { state: MatchState; startsAt?: string | undefined };
-
-const PRIORITY: Record<MatchState, number> = { in: 0, pre: 1, post: 2 };
 
 function time(event: DatedEvent): number {
   const parsed = event.startsAt ? Date.parse(event.startsAt) : Number.NaN;
@@ -18,7 +16,7 @@ export function pickEventIndex(events: readonly DatedEvent[]): number {
     }
     const chosen = events[best];
     if (!chosen) return;
-    const byState = PRIORITY[event.state] - PRIORITY[chosen.state];
+    const byState = STATE_ORDER[event.state] - STATE_ORDER[chosen.state];
     if (byState < 0) {
       best = index;
       return;

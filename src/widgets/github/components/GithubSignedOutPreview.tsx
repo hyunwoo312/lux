@@ -1,6 +1,7 @@
+import { useMemo } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
 import { Heatmap, HeatmapLegend } from "@/widgets/github/components/ContributionsChart";
-import { Stats } from "@/widgets/github/components/contributions/ContributionsStats";
+import { ContributionsStats } from "@/widgets/github/components/ContributionsStats";
 import { InboxList } from "@/widgets/github/components/inbox/InboxList";
 import { ReleaseList } from "@/widgets/github/components/ReleasesView";
 import { buildContributions } from "@/widgets/github/lib/contributions";
@@ -178,14 +179,19 @@ const SAMPLE_RELEASES: ReleasesData = {
 
 function SampleContributions() {
   const [ref, size] = useElementSize<HTMLDivElement>();
-  const metrics = heatmapMetrics(size.width);
+  const metrics = useMemo(() => heatmapMetrics(size.width), [size.width]);
+  const weeks = useMemo(() => SAMPLE_CONTRIBUTIONS.weeks.slice(-metrics.weeks), [metrics.weeks]);
 
   return (
     <div className="flex h-full flex-col gap-3 p-1">
-      <Stats data={SAMPLE_CONTRIBUTIONS} total={SAMPLE_CONTRIBUTIONS.total} weeks={metrics.weeks} />
+      <ContributionsStats
+        data={SAMPLE_CONTRIBUTIONS}
+        total={SAMPLE_CONTRIBUTIONS.total}
+        weeks={metrics.weeks}
+      />
       <div ref={ref} className="min-h-0 flex-1 overflow-hidden">
         <Heatmap
-          weeks={SAMPLE_CONTRIBUTIONS.weeks}
+          weeks={weeks}
           metrics={metrics}
           total={SAMPLE_CONTRIBUTIONS.total}
           todayKey={localDayKey(new Date())}

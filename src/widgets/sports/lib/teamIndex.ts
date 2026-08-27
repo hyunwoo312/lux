@@ -28,7 +28,7 @@ function toIndexed(league: League, teams: TeamOption[]): IndexedTeam[] {
     leagueId: league.id,
     abbreviation: team.abbreviation,
     name: team.name,
-    ...(team.logo ? { logo: team.logo } : {}),
+    logo: team.logo,
   }));
 }
 

@@ -2,6 +2,18 @@ import type { ZodType } from "zod";
 import { compareEventsByStart } from "@/widgets/calendar/lib/agenda";
 import type { CalendarEvent, CalendarEventsResult } from "@/widgets/calendar/types";
 
+export const MAX_EVENT_PAGES = 10;
+
+export function toIsoString(date: Date): string | null {
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+export function parseAllDayDate(value: string): string | null {
+  const datePart = value.split("T")[0] ?? value;
+  const [year = 0, month = 1, day = 1] = datePart.split("-").map(Number);
+  return toIsoString(new Date(year, month - 1, day));
+}
+
 export function parseCalendarItems<T>(schema: ZodType<T>, items: readonly unknown[]): T[] {
   return items.flatMap((item) => {
     const parsed = schema.safeParse(item);

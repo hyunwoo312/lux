@@ -136,7 +136,7 @@ describe("TennisView", () => {
     );
     render(<TennisView league={ATP} />);
 
-    expect(await screen.findByText("3")).toBeInTheDocument();
-    expect(screen.getByText("7", { selector: "span.absolute" })).toBeInTheDocument();
+    expect(await screen.findByText("tiebreak 7")).toBeInTheDocument();
+    expect(screen.getByText("tiebreak 3")).toBeInTheDocument();
   });
 });

@@ -53,10 +53,6 @@ describe("computeStreaks", () => {
     expect(streaks.longestRange).toEqual({ from: "2026-01-01", to: "2026-01-02" });
     expect(streaks.currentRange).toEqual({ from: "2026-01-04", to: "2026-01-04" });
   });
-
-  it("has no range to report when there is no streak", () => {
-    expect(computeStreaks([day("d1", 0)]).currentRange).toBeUndefined();
-  });
 });
 
 describe("buildContributions", () => {

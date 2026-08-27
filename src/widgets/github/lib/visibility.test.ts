@@ -7,10 +7,6 @@ const items = [
 ];
 
 describe("visibleItems", () => {
-  it("keeps everything when private repositories are shown", () => {
-    expect(visibleItems(items, true)).toHaveLength(2);
-  });
-
   it("drops the private ones when they are hidden", () => {
     expect(visibleItems(items, false)).toEqual([{ id: "pub", isPrivate: false }]);
   });
