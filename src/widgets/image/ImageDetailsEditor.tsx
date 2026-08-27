@@ -90,11 +90,7 @@ function ImageDetailRow({ item, focalEnabled, onCaption, onFocal }: ImageDetailR
   );
 
   return (
-    <div
-      className={cn(`
-        border-border/60 bg-foreground/5 flex items-center gap-2.5 rounded-lg border p-2
-      `)}
-    >
+    <div className="border-border/60 bg-foreground/5 flex items-center gap-2.5 rounded-lg border p-2">
       {focalEnabled ? (
         <button
           type="button"
@@ -107,10 +103,10 @@ function ImageDetailRow({ item, focalEnabled, onCaption, onFocal }: ImageDetailR
           <span
             aria-hidden
             style={marker}
-            className={cn(`
+            className="
               border-primary bg-primary/40 absolute size-2.5 -translate-x-1/2 -translate-y-1/2
               rounded-full border-2 shadow-sm
-            `)}
+            "
           />
         </button>
       ) : (

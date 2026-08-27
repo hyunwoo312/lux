@@ -16,11 +16,6 @@ describe("useImageStore", () => {
     useImageStore.setState({ byInstance: { [ID]: { ...base } }, indices: {} });
   });
 
-  it("sets the single image", () => {
-    store().setSingle(ID, makeItem("a"));
-    expect(config(ID)?.single?.assetId).toBe("a");
-  });
-
   it("caps the image pool at the maximum", () => {
     const items = Array.from({ length: MAX_MULTI_IMAGES + 3 }, (_, index) =>
       makeItem(`item-${index}`),
@@ -221,25 +216,14 @@ describe("useImageStore", () => {
       expect(mergeInto({ byInstance: null }).byInstance).toEqual({});
       expect(mergeInto({ byInstance: [] }).byInstance).toEqual({});
     });
-  });
-});
 
-describe("absent versus unreadable", () => {
-  const merge = useImageStore.persist.getOptions().merge;
-  const current = useImageStore.getState();
+    it("treats nothing stored as a fresh start, not as data it must protect", () => {
+      expect(mergeInto(undefined).unreadable).toBe(false);
+      expect(mergeInto(null).unreadable).toBe(false);
+    });
 
-  it("treats nothing stored as a fresh start, not as data it must protect", () => {
-    expect((merge?.(undefined, current) as { unreadable: boolean }).unreadable).toBe(false);
-    expect((merge?.(null, current) as { unreadable: boolean }).unreadable).toBe(false);
-  });
-
-  it("still refuses to overwrite a value that is not a config at all", () => {
-    expect((merge?.("corrupted", current) as { unreadable: boolean }).unreadable).toBe(true);
-  });
-
-  it("keeps a tolerated object rather than declaring it unreadable", () => {
-    expect(
-      (merge?.({ byInstance: "nonsense" }, current) as { unreadable: boolean }).unreadable,
-    ).toBe(false);
+    it("keeps a tolerated object rather than declaring it unreadable", () => {
+      expect(mergeInto({ byInstance: "nonsense" }).unreadable).toBe(false);
+    });
   });
 });

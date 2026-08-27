@@ -1,16 +1,15 @@
 import type { ReactNode } from "react";
-import { CloudOff, Star } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import { ErrorState } from "@/components/StateMessage";
 import type { PolledResourceState } from "@/widgets/core/usePolledResource";
 import { HeadlineRow } from "@/widgets/news/components/HeadlineRow";
 import { HeadlineTile } from "@/widgets/news/components/HeadlineTile";
-import { sourceTab } from "@/widgets/news/lib/news";
+import { NewsNotices } from "@/widgets/news/components/NewsNotices";
+import { NewsSkeleton } from "@/widgets/news/components/NewsSkeleton";
+import { TILE_GRID_CLASS } from "@/widgets/news/components/tileStyles";
 import { selectHeadlines } from "@/widgets/news/lib/select-headlines";
 import type { OpenBehavior } from "@/lib/open-url";
 import type { NewsItem, NewsLayout, NewsSource } from "@/widgets/news/types";
-
-const TILE_GRID_CLASS = "grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-1.5";
 
 function NewsMessage({ children }: { children: ReactNode }) {
   return (
@@ -76,28 +75,7 @@ export function NewsContent({
   }
 
   if (state.status === "loading") {
-    if (layout === "tiles") {
-      return (
-        <div className={`${TILE_GRID_CLASS} p-0.5`}>
-          {Array.from({ length: 6 }, (_, index) => (
-            <Skeleton key={index} className="aspect-[16/9] w-full rounded-lg" />
-          ))}
-        </div>
-      );
-    }
-    return (
-      <div className="flex flex-col gap-2 p-2">
-        {Array.from({ length: 6 }, (_, index) => (
-          <div key={index} className="flex items-start gap-2.5">
-            {withThumbnail && <Skeleton className="size-11 shrink-0 rounded-md" />}
-            <div className="flex flex-1 flex-col gap-1.5">
-              <Skeleton className="h-3.5 w-full" />
-              <Skeleton className="h-3 w-24" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
+    return <NewsSkeleton layout={layout} withThumbnail={withThumbnail} />;
   }
 
   if (state.status === "empty") {
@@ -130,7 +108,10 @@ export function NewsContent({
   const list =
     layout === "tiles" ? (
       <ul
-        className={`${TILE_GRID_CLASS} scroll-fade min-h-0 flex-1 content-start overflow-y-auto p-1.5`}
+        className={cn(
+          TILE_GRID_CLASS,
+          "scroll-fade min-h-0 flex-1 content-start overflow-y-auto p-1.5",
+        )}
       >
         {items.map(({ item, titleKey }) => (
           <li key={item.id} className="min-w-0">
@@ -172,31 +153,12 @@ export function NewsContent({
 
   return (
     <div className="flex h-full flex-col">
-      {missingSources.length > 0 && (
-        <p className="text-ink-3 flex items-center gap-1.5 px-2 pb-1.5 text-caption">
-          <CloudOff className="size-3 shrink-0" aria-hidden />
-          {missingSources.map(sourceTab).join(", ")} didn’t load
-          <button
-            type="button"
-            onClick={refresh}
-            className="press focus-ring text-ink-2 ml-auto cursor-pointer rounded-sm hover:text-ink"
-          >
-            Retry
-          </button>
-        </p>
-      )}
-      {highlightCount > 0 && (
-        <p className="text-ink-3 flex items-center gap-1.5 px-2 pb-1.5 text-caption">
-          <Star className="text-primary size-3 shrink-0" aria-hidden />
-          {highlightCount} matching your keywords
-        </p>
-      )}
-      {newCount > 0 && (
-        <div className="text-ink-3 flex items-center gap-1.5 px-2 pb-1.5 text-caption">
-          <span className="bg-primary size-1.5 rounded-full" aria-hidden />
-          {newCount} new since your last visit
-        </div>
-      )}
+      <NewsNotices
+        missingSources={missingSources}
+        refresh={refresh}
+        highlightCount={highlightCount}
+        newCount={newCount}
+      />
       {list}
     </div>
   );

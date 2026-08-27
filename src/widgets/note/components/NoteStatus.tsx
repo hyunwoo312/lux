@@ -21,8 +21,8 @@ export function NoteStatus() {
       {atLimit
         ? "limit reached"
         : nearLimit
-          ? `${chars} / ${NOTE_MAX_LENGTH} chars`
-          : `${chars} ${chars === 1 ? "char" : "chars"}`}
+          ? `${chars.toLocaleString()} / ${NOTE_MAX_LENGTH.toLocaleString()} chars`
+          : `${chars.toLocaleString()} ${chars === 1 ? "char" : "chars"}`}
     </span>
   );
 }

@@ -155,6 +155,10 @@ export function searchUrl(query: string, region: NewsRegion): string {
   return `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&${GOOGLE_LOCALES[region]}`;
 }
 
+export function orderedSources(enabled: NewsSource[]): NewsSource[] {
+  return NEWS_SOURCES.filter((source) => enabled.includes(source));
+}
+
 export function resolveNewsTab(activeSource: NewsTab, sources: NewsSource[]): NewsTab {
   if (sources.length > 1) {
     return activeSource === "all" || !sources.includes(activeSource) ? "all" : activeSource;
@@ -267,31 +271,7 @@ export function parseFeed(
     .slice(0, MAX_ITEMS);
 }
 
-type FeedRevision = { etag: string | null; lastModified: string | null; items: NewsItem[] };
-
-const MAX_TRACKED_FEEDS = 24;
-const revisions = new Map<string, FeedRevision>();
-
-function conditionalHeaders(url: string): HeadersInit | undefined {
-  const known = revisions.get(url);
-  if (!known) return undefined;
-  const headers: Record<string, string> = {};
-  if (known.etag) headers["If-None-Match"] = known.etag;
-  if (known.lastModified) headers["If-Modified-Since"] = known.lastModified;
-  return Object.keys(headers).length > 0 ? headers : undefined;
-}
-
-function rememberRevision(url: string, response: Response, items: NewsItem[]): void {
-  if (revisions.size >= MAX_TRACKED_FEEDS) {
-    const oldest = revisions.keys().next().value;
-    if (oldest !== undefined) revisions.delete(oldest);
-  }
-  revisions.set(url, {
-    etag: response.headers.get("etag"),
-    lastModified: response.headers.get("last-modified"),
-    items,
-  });
-}
+export type NewsPayload = { items: NewsItem[]; missing: NewsSource[] };
 
 async function fetchItems(
   url: string,
@@ -301,16 +281,11 @@ async function fetchItems(
 ): Promise<NewsItem[]> {
   const response = await fetch(url, {
     signal: withTimeout(signal),
-    headers: conditionalHeaders(url),
+    credentials: "omit",
+    referrerPolicy: "no-referrer",
   });
-
-  const unchanged = revisions.get(url);
-  if (response.status === 304 && unchanged) return unchanged.items;
-
   ensureOk(response, `News request failed (${response.status})`);
-  const items = parseFeed(await readCappedText(response), label, source);
-  rememberRevision(url, response, items);
-  return items;
+  return parseFeed(await readCappedText(response), label, source);
 }
 
 export async function fetchFeed(
@@ -318,16 +293,23 @@ export async function fetchFeed(
   region: NewsRegion,
   topic: NewsTopic,
   signal?: AbortSignal,
-): Promise<NewsItem[]> {
-  return fetchItems(feedUrl(source, region, topic), SOURCES[source].label, source, signal);
+): Promise<NewsPayload> {
+  const items = await fetchItems(
+    feedUrl(source, region, topic),
+    SOURCES[source].label,
+    source,
+    signal,
+  );
+  return { items, missing: [] };
 }
 
 export async function fetchSearch(
   query: string,
   region: NewsRegion,
   signal?: AbortSignal,
-): Promise<NewsItem[]> {
-  return fetchItems(searchUrl(query, region), SOURCES.google.label, "google", signal);
+): Promise<NewsPayload> {
+  const items = await fetchItems(searchUrl(query, region), SOURCES.google.label, "google", signal);
+  return { items, missing: [] };
 }
 
 const MAX_MERGED_ITEMS = 50;
@@ -378,37 +360,28 @@ export function mergeFeeds(feeds: NewsItem[][]): NewsItem[] {
     .slice(0, MAX_MERGED_ITEMS);
 }
 
-const failedSources = new Map<string, NewsSource[]>();
-
-export function readFailedSources(cacheKey: string): NewsSource[] {
-  return failedSources.get(cacheKey) ?? [];
-}
-
 export async function fetchMergedFeeds(
   sources: NewsSource[],
   region: NewsRegion,
   topic: NewsTopic,
   signal?: AbortSignal,
-  cacheKey?: string,
-): Promise<NewsItem[]> {
+): Promise<NewsPayload> {
   const results = await Promise.allSettled(
     sources.map((source) => fetchFeed(source, region, topic, signal)),
   );
   const loaded = results.filter(
-    (result): result is PromiseFulfilledResult<NewsItem[]> => result.status === "fulfilled",
+    (result): result is PromiseFulfilledResult<NewsPayload> => result.status === "fulfilled",
   );
-  if (cacheKey) {
-    const missing = sources.filter((_, index) => results[index]?.status === "rejected");
-    if (missing.length > 0) failedSources.set(cacheKey, missing);
-    else failedSources.delete(cacheKey);
-  }
   if (loaded.length === 0) {
     const first = results[0];
     throw first?.status === "rejected" && first.reason instanceof Error
       ? first.reason
       : new Error("News request failed");
   }
-  return mergeFeeds(loaded.map((result) => result.value));
+  return {
+    items: mergeFeeds(loaded.map((result) => result.value.items)),
+    missing: sources.filter((_, index) => results[index]?.status === "rejected"),
+  };
 }
 
 const httpUrlSchema = z.string().refine(isHttpUrl);
@@ -426,7 +399,12 @@ const itemSchema = z.object({
   related: tolerantArray(z.object({ source: z.string(), link: httpUrlSchema })),
 });
 
-export function parseCachedNews(raw: unknown): NewsItem[] | null {
-  const result = tolerantArray(itemSchema).safeParse(raw);
-  return result.success && result.data.length > 0 ? result.data : null;
+const cachedNewsSchema = z.object({
+  items: tolerantArray(itemSchema),
+  missing: tolerantArray(z.enum(NEWS_SOURCES)),
+});
+
+export function parseCachedNews(raw: unknown): NewsPayload | null {
+  const result = cachedNewsSchema.safeParse(Array.isArray(raw) ? { items: raw } : raw);
+  return result.success && result.data.items.length > 0 ? result.data : null;
 }

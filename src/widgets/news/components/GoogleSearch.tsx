@@ -8,6 +8,11 @@ export function GoogleSearch({ query }: { query: string }) {
   const instanceId = useWidgetInstanceId();
   const setGoogleQuery = useNewsStore((s) => s.setGoogleQuery);
   const [value, setValue] = useState(query);
+  const [committed, setCommitted] = useState(query);
+  if (query !== committed) {
+    setCommitted(query);
+    setValue(query);
+  }
 
   const submit = (event: FormEvent) => {
     event.preventDefault();

@@ -1,7 +1,6 @@
 import { LayoutGrid, List } from "lucide-react";
 import { ViewToggleButton } from "@/widgets/core/ViewToggleButton";
 import { WidgetRefreshButton } from "@/widgets/core/WidgetRefreshButton";
-import { hasThumbnails } from "@/widgets/news/lib/news";
 import { useNewsResource } from "@/widgets/news/hooks/useNewsResource";
 import { useTrendingResource } from "@/widgets/news/hooks/useTrendingResource";
 import { NEWS_SYNC_COOLDOWN_MS, useNews, useNewsStore } from "@/widgets/news/useNewsStore";
@@ -14,12 +13,7 @@ export function NewsHeaderActions() {
   const trending = useTrendingResource(isTrending);
   const active = isTrending ? trending : news;
 
-  const enabledSources = useNews((d) => d.enabledSources);
-  const withThumbnail = isTrending
-    ? true
-    : news.tab === "all"
-      ? enabledSources.some(hasThumbnails)
-      : hasThumbnails(news.tab);
+  const withThumbnail = isTrending ? true : news.withThumbnail;
 
   return (
     <div className="flex items-center gap-0.5">

@@ -2,17 +2,13 @@ import { useState } from "react";
 import { RemoteImage } from "@/components/media/RemoteImage";
 import { Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TILE_CAPTION_CLASS } from "@/widgets/news/components/tileStyles";
 import { BookmarkButton } from "@/widgets/news/components/BookmarkButton";
 import { HeadlineTitle } from "@/widgets/news/components/HeadlineTitle";
 import { SOURCE_ICONS } from "@/widgets/news/components/sourceIcons";
 import { compactTime } from "@/widgets/news/lib/news";
 import type { OpenBehavior } from "@/lib/open-url";
 import type { NewsItem } from "@/widgets/news/types";
-
-const CAPTION = `
-  art-scrim absolute inset-x-0 bottom-0 block h-[calc(2lh+0.5rem)] px-2 py-1 text-caption
-  leading-snug font-medium
-`;
 
 export function HeadlineTile({
   item,
@@ -42,7 +38,7 @@ export function HeadlineTile({
   const timeLabel = item.publishedAt !== null ? compactTime(item.publishedAt, now) : null;
 
   const caption = (
-    <span className={CAPTION}>
+    <span className={TILE_CAPTION_CLASS}>
       <HeadlineTitle
         title={item.title}
         terms={highlightTerms}
@@ -58,15 +54,9 @@ export function HeadlineTile({
   );
 
   return (
-    <a
-      href={item.link}
-      target={openBehavior === "newTab" ? "_blank" : undefined}
-      rel="noreferrer"
-      onClick={onRead}
-      onAuxClick={onRead}
+    <div
       className="
-        press focus-ring group bg-foreground/5 relative block aspect-[16/9] overflow-hidden
-        rounded-lg
+        press group bg-foreground/5 relative aspect-[16/9] cursor-pointer overflow-hidden rounded-lg
       "
     >
       {hasImage && (
@@ -84,18 +74,27 @@ export function HeadlineTile({
       )}
       <SourceIcon
         className={cn(
-          "absolute top-2 left-2 size-4",
+          "absolute top-2 left-2 z-10 size-4",
           hasImage ? "text-white drop-shadow-md" : "text-ink-3",
         )}
       />
+      <a
+        href={item.link}
+        target={openBehavior === "newTab" ? "_blank" : undefined}
+        rel="noreferrer"
+        onClick={onRead}
+        onAuxClick={onRead}
+        className="focus-ring absolute inset-0 rounded-lg"
+      >
+        {caption}
+      </a>
       <BookmarkButton
         title={item.title}
         saved={isSaved}
         onToggle={onToggleSaved}
         onArt={hasImage}
-        className="absolute top-1 right-1 size-6"
+        className="absolute top-1 right-1 z-10 size-6"
       />
-      {caption}
-    </a>
+    </div>
   );
 }

@@ -24,16 +24,16 @@ function storedText() {
   return useNoteStore.getState().byInstance[ID]?.text;
 }
 
+beforeEach(() => {
+  vi.useFakeTimers();
+  useNoteStore.setState({ byInstance: {} });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe("NoteWidget", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-    useNoteStore.setState({ byInstance: {} });
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   it("does not commit to the store until the debounce elapses", () => {
     renderWidget();
     fireEvent.change(screen.getByLabelText("Note"), { target: { value: "draft" } });
@@ -68,11 +68,7 @@ describe("NoteWidget", () => {
   });
 });
 
-describe("the length cap", () => {
-  beforeEach(() => {
-    useNoteStore.setState({ byInstance: {} });
-  });
-
+describe("length limit", () => {
   it("does not clip a note that was already longer than the cap", () => {
     const oversized = "y".repeat(NOTE_MAX_LENGTH * 2);
     seedNote("note-legacy", oversized);
@@ -83,9 +79,18 @@ describe("the length cap", () => {
     );
     expect(screen.getByLabelText("Note")).toHaveValue(oversized);
   });
-});
 
-describe("length limit", () => {
+  it("caps growth rather than length, so an oversized note survives a keystroke", () => {
+    const oversized = "y".repeat(NOTE_MAX_LENGTH * 2);
+    seedNote(ID, oversized);
+    renderWidget();
+    const field = screen.getByRole("textbox", { name: "Note" }) as HTMLTextAreaElement;
+
+    fireEvent.change(field, { target: { value: `${oversized}z` } });
+
+    expect(field.value).toHaveLength(NOTE_MAX_LENGTH * 2);
+  });
+
   it("says how much did not fit instead of silently dropping it", () => {
     renderWidget();
     const field = screen.getByRole("textbox", { name: "Note" });

@@ -1,5 +1,7 @@
 import type { ChangeEvent, KeyboardEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { DURATION, EASE_OUT } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { continueList, toggleCheckbox, type ListEdit } from "@/widgets/note/lib/lists";
 import { NOTE_MAX_LENGTH, type NoteFontSize } from "@/widgets/note/types";
@@ -20,6 +22,7 @@ export function NoteWidget({ justAdded }: WidgetContentProps) {
   const id = useWidgetInstanceId();
   const { text, fontSize } = useNote(id);
   const setText = useNoteStore((s) => s.setText);
+  const reduced = useReducedMotion();
   const ref = useRef<HTMLTextAreaElement>(null);
 
   const [value, setValue] = useState(text);
@@ -63,17 +66,25 @@ export function NoteWidget({ justAdded }: WidgetContentProps) {
     noticeTimer.current = window.setTimeout(() => setDropped(0), OVERFLOW_NOTICE_MS);
   };
 
+  const limitFor = () => Math.max(NOTE_MAX_LENGTH, valueRef.current.length);
+
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const next = event.target.value;
-    if (next.length > NOTE_MAX_LENGTH) {
-      reportDropped(next.length - NOTE_MAX_LENGTH);
-      schedule(next.slice(0, NOTE_MAX_LENGTH));
+    const limit = limitFor();
+    if (next.length > limit) {
+      reportDropped(next.length - limit);
+      schedule(next.slice(0, limit));
       return;
     }
     schedule(next);
   };
 
   const applyEdit = (edit: ListEdit) => {
+    const limit = limitFor();
+    if (edit.text.length > limit) {
+      reportDropped(edit.text.length - limit);
+      return;
+    }
     schedule(edit.text);
     requestAnimationFrame(() => ref.current?.setSelectionRange(edit.caret, edit.caret));
   };
@@ -117,18 +128,24 @@ export function NoteWidget({ justAdded }: WidgetContentProps) {
           FONT_SIZE_CLASS[fontSize],
         )}
       />
-      {dropped > 0 && (
-        <p
-          role="status"
-          className="
-            border-border bg-background/95 text-ink pointer-events-none absolute right-0 bottom-0
-            rounded-md border px-2 py-1 text-caption shadow-md
-          "
-        >
-          {dropped.toLocaleString()} characters didn’t fit — the note holds{" "}
-          {NOTE_MAX_LENGTH.toLocaleString()}.
-        </p>
-      )}
+      <AnimatePresence>
+        {dropped > 0 && (
+          <motion.p
+            initial={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
+            transition={{ duration: DURATION.fast, ease: EASE_OUT }}
+            role="status"
+            className="
+              border-border bg-background/95 text-ink pointer-events-none absolute right-0 bottom-0
+              rounded-md border px-2 py-1 text-caption shadow-md
+            "
+          >
+            {dropped.toLocaleString()} character{dropped === 1 ? "" : "s"} didn’t fit — the note
+            holds {NOTE_MAX_LENGTH.toLocaleString()}.
+          </motion.p>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -37,14 +37,7 @@ export function HeadlineRow({
   const hasImage = item.image !== null && !imageFailed;
 
   return (
-    <a
-      href={item.link}
-      target={openBehavior === "newTab" ? "_blank" : undefined}
-      rel="noreferrer"
-      onClick={onRead}
-      onAuxClick={onRead}
-      className={cn(ROW.itemAction, "group items-start")}
-    >
+    <div className={cn(ROW.item, "press-row group relative cursor-pointer items-start")}>
       {withThumbnail && (
         <span className="bg-foreground/5 size-11 shrink-0 overflow-hidden rounded-md">
           {hasImage && (
@@ -60,15 +53,24 @@ export function HeadlineRow({
         </span>
       )}
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <HeadlineTitle
-          title={item.title}
-          terms={highlightTerms}
-          isNew={isNew}
-          className={cn(
-            "group-hover:text-primary text-body leading-snug",
-            isRead ? "text-ink-3" : "text-ink",
-          )}
-        />
+        <a
+          href={item.link}
+          target={openBehavior === "newTab" ? "_blank" : undefined}
+          rel="noreferrer"
+          onClick={onRead}
+          onAuxClick={onRead}
+          className="focus-ring rounded-sm after:absolute after:inset-0"
+        >
+          <HeadlineTitle
+            title={item.title}
+            terms={highlightTerms}
+            isNew={isNew}
+            className={cn(
+              "group-hover:text-primary text-body leading-snug",
+              isRead ? "text-ink-3" : "text-ink",
+            )}
+          />
+        </a>
         {item.dek && (
           <span
             className={cn(
@@ -85,14 +87,15 @@ export function HeadlineRow({
           withSource={withSource}
           isRead={isRead}
           openBehavior={openBehavior}
+          className="relative"
         />
       </span>
       <BookmarkButton
         title={item.title}
         saved={isSaved}
         onToggle={onToggleSaved}
-        className="self-center"
+        className="relative self-center"
       />
-    </a>
+    </div>
   );
 }

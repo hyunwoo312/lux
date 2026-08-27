@@ -22,10 +22,7 @@ export type TrendNews = {
 export type TrendItem = {
   term: string;
   trafficLabel: string;
-  traffic: number | null;
-  startedAt: number | null;
   imageUrl: string | null;
-  imageSource: string | null;
   news: TrendNews[];
 };
 

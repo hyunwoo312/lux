@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { ensureOk, readCappedText, withTimeout } from "@/lib/net";
-import { parseTraffic } from "@/widgets/news/lib/trend-traffic";
 import type { TrendItem, TrendNews, TrendsFeed } from "@/widgets/news/types";
 
 const TRENDS_ENDPOINT = "https://trends.google.com/trending/rss";
@@ -41,17 +40,11 @@ export function parseTrends(xml: string, region: string): TrendsFeed {
   const items = [...doc.getElementsByTagName("item")].flatMap((node): TrendItem[] => {
     const term = childText(node, "title");
     if (!term) return [];
-    const published = childText(node, "pubDate");
-    const startedAt = published ? Date.parse(published) : Number.NaN;
-    const trafficLabel = childText(node, "approx_traffic");
     return [
       {
         term,
-        trafficLabel,
-        traffic: trafficLabel ? parseTraffic(trafficLabel) : null,
-        startedAt: Number.isNaN(startedAt) ? null : startedAt,
+        trafficLabel: childText(node, "approx_traffic"),
         imageUrl: childText(node, "picture") || null,
-        imageSource: childText(node, "picture_source") || null,
         news: children(node, "news_item")
           .flatMap((entry) => {
             const news = newsFrom(entry);
@@ -89,10 +82,7 @@ const feedSchema = z.object({
     z.object({
       term: z.string(),
       trafficLabel: z.string(),
-      traffic: z.number().nullable(),
-      startedAt: z.number().nullable(),
       imageUrl: z.string().nullable(),
-      imageSource: z.string().nullable(),
       news: z.array(newsSchema),
     }),
   ),

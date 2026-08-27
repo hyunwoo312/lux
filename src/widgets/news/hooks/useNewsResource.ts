@@ -1,14 +1,16 @@
+import type { PolledResourceState } from "@/widgets/core/usePolledResource";
 import { usePolledResource } from "@/widgets/core/usePolledResource";
 import {
   fetchFeed,
   fetchMergedFeeds,
   fetchSearch,
+  hasThumbnails,
+  orderedSources,
   parseCachedNews,
-  readFailedSources,
   resolveNewsTab,
 } from "@/widgets/news/lib/news";
 import { useNews } from "@/widgets/news/useNewsStore";
-import { NEWS_SOURCES, NEWS_REFRESH_MS } from "@/widgets/news/types";
+import { NEWS_REFRESH_MS, type NewsItem } from "@/widgets/news/types";
 
 export function useNewsResource(enabled = true) {
   const activeSource = useNews((d) => d.activeSource);
@@ -17,7 +19,7 @@ export function useNewsResource(enabled = true) {
   const topic = useNews((d) => d.topic);
   const googleQuery = useNews((d) => d.googleQuery);
 
-  const sources = NEWS_SOURCES.filter((entry) => enabledSources.includes(entry));
+  const sources = orderedSources(enabledSources);
   const tab = resolveNewsTab(activeSource, sources);
   const query = tab === "google" ? googleQuery.trim() : "";
 
@@ -28,33 +30,34 @@ export function useNewsResource(enabled = true) {
         ? `news:search:${region}:${query}`
         : `news:${tab}:${region}:${topic}`;
 
-  const fetcher = (signal: AbortSignal) => {
-    const run =
-      tab === "all"
-        ? fetchMergedFeeds(sources, region, topic, signal, cacheKey)
-        : query
-          ? fetchSearch(query, region, signal)
-          : fetchFeed(tab, region, topic, signal);
-    return run;
-  };
-  const { state, refresh, isRefreshing, lastSyncedAt, freshness } = usePolledResource(fetcher, {
+  const fetcher = (signal: AbortSignal) =>
+    tab === "all"
+      ? fetchMergedFeeds(sources, region, topic, signal)
+      : query
+        ? fetchSearch(query, region, signal)
+        : fetchFeed(tab, region, topic, signal);
+
+  const raw = usePolledResource(fetcher, {
     enabled,
     intervalMs: NEWS_REFRESH_MS,
+    isEmpty: (payload) => payload.items.length === 0,
     cacheKey,
     persist: true,
     parsePersisted: parseCachedNews,
   });
 
-  const missingSources = tab === "all" ? readFailedSources(cacheKey) : [];
+  const state: PolledResourceState<NewsItem[]> =
+    raw.state.status === "success" ? { status: "success", data: raw.state.data.items } : raw.state;
 
   return {
     state,
-    refresh,
-    isRefreshing,
-    lastSyncedAt,
-    freshness,
+    refresh: raw.refresh,
+    isRefreshing: raw.isRefreshing,
+    lastSyncedAt: raw.lastSyncedAt,
+    freshness: raw.freshness,
     tab,
     query,
-    missingSources,
+    missingSources: raw.state.status === "success" ? raw.state.data.missing : [],
+    withThumbnail: tab === "all" ? enabledSources.some(hasThumbnails) : hasThumbnails(tab),
   };
 }

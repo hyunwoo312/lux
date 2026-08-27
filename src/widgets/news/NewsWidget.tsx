@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { panelVariants } from "@/lib/motion";
-import { hasThumbnails, normalizeTitle } from "@/widgets/news/lib/news";
-import { GoogleSearch } from "@/widgets/news/components/HeadlineSearch";
+import { normalizeTitle } from "@/widgets/news/lib/news";
+import { GoogleSearch } from "@/widgets/news/components/GoogleSearch";
 import { SearchField } from "@/components/SearchField";
 import { NewsContent } from "@/widgets/news/components/NewsContent";
 import { NewsSourceBar } from "@/widgets/news/components/NewsSourceBar";
@@ -19,13 +19,11 @@ export function NewsWidget() {
   const instanceId = useWidgetInstanceId();
   const reduced = useReducedMotion() ?? false;
   const view = useNews((d) => d.view);
-  const { state, refresh, isRefreshing, tab, query, missingSources } = useNewsResource(
-    view === "news",
-  );
+  const { state, refresh, isRefreshing, tab, query, missingSources, withThumbnail } =
+    useNewsResource(view === "news");
   const openBehavior = useNews((d) => d.openBehavior);
   const googleQuery = useNews((d) => d.googleQuery);
   const sortByLatest = useNews((d) => d.sortByLatest);
-  const enabledSources = useNews((d) => d.enabledSources);
   const layout = useNews((d) => d.layout);
   const loadImages = useNews((d) => d.loadImages);
   const readTitles = useNews((d) => d.readTitles);
@@ -84,7 +82,6 @@ export function NewsWidget() {
     );
   }, [items, seenSnapshot]);
 
-  const withThumbnail = tab === "all" ? enabledSources.some(hasThumbnails) : hasThumbnails(tab);
   const now = useNow().getTime();
 
   return (

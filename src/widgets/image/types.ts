@@ -1,3 +1,4 @@
+import type { MediaImageItem } from "@/lib/asset-store";
 import type { AccentPreset } from "@/widgets/core/accent";
 
 export const IMAGE_TINT: AccentPreset = "yellow";
@@ -28,11 +29,7 @@ export const IMAGE_ENCODE_QUALITY = 0.85;
 
 export type ImageFocalPoint = { x: number; y: number };
 
-export type ImageItem = {
-  assetId: string;
-  fileName: string;
-  mimeType: string;
-  size: number;
+export type ImageItem = MediaImageItem & {
   caption?: string;
   focal?: ImageFocalPoint;
 };

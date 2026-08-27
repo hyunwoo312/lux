@@ -37,6 +37,8 @@ function item(id: string, title: string, image: string | null = null): NewsItem 
   };
 }
 
+const feed = (items: NewsItem[]) => ({ items, missing: [] });
+
 function seed(
   instanceId: string,
   activeSource: NewsTab,
@@ -93,8 +95,8 @@ describe("NewsWidget", () => {
   });
 
   it("shows the search box only on the Google source and searches on submit", async () => {
-    fetchFeedMock.mockResolvedValue([item("a", "Result")]);
-    fetchSearchMock.mockResolvedValue([item("b", "Search result")]);
+    fetchFeedMock.mockResolvedValue(feed([item("a", "Result")]));
+    fetchSearchMock.mockResolvedValue(feed([item("b", "Search result")]));
     seed("news-search", "google");
     renderWidget("news-search");
 
@@ -110,7 +112,7 @@ describe("NewsWidget", () => {
   it("orders headlines by recency when sort-by-latest is on", async () => {
     const older: NewsItem = { ...item("old", "Older story"), publishedAt: 1_000 };
     const newer: NewsItem = { ...item("new", "Newer story"), publishedAt: 2_000 };
-    fetchFeedMock.mockResolvedValue([older, newer]);
+    fetchFeedMock.mockResolvedValue(feed([older, newer]));
     useNewsStore.setState({
       byInstance: {
         "news-sort": {
@@ -144,9 +146,9 @@ describe("NewsWidget", () => {
     const delay = <T,>(value: T): Promise<T> =>
       new Promise((resolve) => setTimeout(() => resolve(value), 5));
     fetchFeedMock.mockImplementation((source) => {
-      if (source === "bbc") return delay([item("bbc-1", "BBC story")]);
-      if (source === "nyt") return delay([item("nyt-1", "NYT story")]);
-      return delay([]);
+      if (source === "bbc") return delay(feed([item("bbc-1", "BBC story")]));
+      if (source === "nyt") return delay(feed([item("nyt-1", "NYT story")]));
+      return delay(feed([]));
     });
     seed("news-switch", "bbc", "", "au");
     render(
@@ -173,10 +175,12 @@ describe("NewsWidget", () => {
   });
 
   it("filters the All tab by headline or source text", async () => {
-    fetchMergedFeedsMock.mockResolvedValue([
-      { ...item("m1", "Rate cut announced"), source: "BBC News" },
-      { ...item("m2", "Transfer window latest"), source: "The Guardian" },
-    ]);
+    fetchMergedFeedsMock.mockResolvedValue(
+      feed([
+        { ...item("m1", "Rate cut announced"), source: "BBC News" },
+        { ...item("m2", "Transfer window latest"), source: "The Guardian" },
+      ]),
+    );
     seed("news-all-filter", "all", "", "uk");
     renderWidget("news-all-filter");
 
@@ -195,7 +199,7 @@ describe("NewsWidget", () => {
   });
 
   it("counts unseen headlines and marks displayed titles as seen", async () => {
-    fetchFeedMock.mockResolvedValue([item("s1", "Fresh one"), item("s2", "Fresh two")]);
+    fetchFeedMock.mockResolvedValue(feed([item("s1", "Fresh one"), item("s2", "Fresh two")]));
     seed("news-seen", "nyt", "", "international", ["an older headline"]);
     renderWidget("news-seen");
 
@@ -210,7 +214,7 @@ describe("NewsWidget", () => {
   });
 
   it("marks a headline read when it is opened", async () => {
-    fetchFeedMock.mockResolvedValue([item("r1", "Readable story")]);
+    fetchFeedMock.mockResolvedValue(feed([item("r1", "Readable story")]));
     seed("news-read", "guardian");
     renderWidget("news-read");
 
@@ -219,10 +223,12 @@ describe("NewsWidget", () => {
   });
 
   it("hides headlines matching a muted keyword", async () => {
-    fetchFeedMock.mockResolvedValue([
-      item("keep", "Markets steady ahead of earnings"),
-      item("drop", "Celebrity gossip roundup"),
-    ]);
+    fetchFeedMock.mockResolvedValue(
+      feed([
+        item("keep", "Markets steady ahead of earnings"),
+        item("drop", "Celebrity gossip roundup"),
+      ]),
+    );
     seed("news-mute", "guardian", "", "uk");
     act(() => {
       useNewsStore.getState().addMutedTerm("news-mute", "GOSSIP");
@@ -234,7 +240,7 @@ describe("NewsWidget", () => {
   });
 
   it("explains when every headline is muted", async () => {
-    fetchFeedMock.mockResolvedValue([item("only", "Football final tonight")]);
+    fetchFeedMock.mockResolvedValue(feed([item("only", "Football final tonight")]));
     seed("news-mute-all", "npr", "", "uk");
     act(() => {
       useNewsStore.getState().addMutedTerm("news-mute-all", "football");
@@ -247,7 +253,7 @@ describe("NewsWidget", () => {
   });
 
   it("disables the header refresh during the cooldown after a successful fetch", async () => {
-    fetchFeedMock.mockResolvedValue([item("a", "Headline")]);
+    fetchFeedMock.mockResolvedValue(feed([item("a", "Headline")]));
     seed("news-cooldown", "yahoo", "", "international");
     render(
       <TooltipProvider>
@@ -264,7 +270,7 @@ describe("NewsWidget", () => {
 
 describe("news image loading", () => {
   it("requests no publisher images when loading is turned off", async () => {
-    fetchFeedMock.mockResolvedValue([item("p", "Pictured", "https://img.test/a.jpg")]);
+    fetchFeedMock.mockResolvedValue(feed([item("p", "Pictured", "https://img.test/a.jpg")]));
     seed("news-img-off", "bbc", "", "international");
     act(() => {
       useNewsStore.getState().setLoadImages("news-img-off", false);
@@ -278,7 +284,7 @@ describe("news image loading", () => {
 
 describe("remote images carry a no-referrer policy", () => {
   it("does not leak the extension origin to publishers", async () => {
-    fetchFeedMock.mockResolvedValue([item("p", "Pictured", "https://img.test/a.jpg")]);
+    fetchFeedMock.mockResolvedValue(feed([item("p", "Pictured", "https://img.test/a.jpg")]));
     seed("news-referrer", "bbc", "", "international");
     const { container } = renderWidget("news-referrer");
 
@@ -290,7 +296,7 @@ describe("remote images carry a no-referrer policy", () => {
 
 describe("saved headlines", () => {
   it("saves a headline from its bookmark and shows it in the saved view", async () => {
-    fetchFeedMock.mockResolvedValue([item("a", "First headline")]);
+    fetchFeedMock.mockResolvedValue(feed([item("a", "First headline")]));
     seed("news-saved-2", "bbc");
     renderWidget("news-saved-2");
 
@@ -303,7 +309,7 @@ describe("saved headlines", () => {
   });
 
   it("removes a headline from the saved view", async () => {
-    fetchFeedMock.mockResolvedValue([item("a", "First headline")]);
+    fetchFeedMock.mockResolvedValue(feed([item("a", "First headline")]));
     seed("news-saved-4", "bbc");
     renderWidget("news-saved-4");
 

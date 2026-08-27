@@ -9,8 +9,8 @@ import { encodeToWebp } from "@/lib/image-encode";
 import { renderThumbnail, THUMB_VERSION } from "@/lib/thumbnail";
 import { IMAGE_ENCODE_QUALITY, IMAGE_MAX_BYTES, IMAGE_MAX_DIMENSION } from "@/widgets/image/types";
 
-export type ImageMediaAsset = StoredAsset;
-export type ImageMediaMetadata = StoredAssetMetadata;
+type ImageMediaAsset = StoredAsset;
+type ImageMediaMetadata = StoredAssetMetadata;
 
 export const imageAssetStore = createAssetStore("lux.image-media");
 

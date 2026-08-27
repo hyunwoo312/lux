@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { NEWS_REFRESH_MS } from "@/widgets/news/types";
 import { usePolledResource } from "@/widgets/core/usePolledResource";
 import { fetchTrends, parseCachedTrends, trendsKey } from "@/widgets/news/lib/trending";
@@ -10,7 +10,7 @@ export function useTrendingResource(enabled = true) {
   const snapshot = useNewsStore((s) => s.trendSnapshots[region]);
   const remember = useNewsStore((s) => s.rememberTrendSnapshot);
 
-  const fetcher = useCallback((signal: AbortSignal) => fetchTrends(region, signal), [region]);
+  const fetcher = (signal: AbortSignal) => fetchTrends(region, signal);
   const resource = usePolledResource(fetcher, {
     enabled,
     intervalMs: NEWS_REFRESH_MS,

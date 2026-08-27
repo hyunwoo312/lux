@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { DURATION, EASE_STANDARD } from "@/lib/motion";
 import { AnimatePresence, motion, useReducedMotion, type TargetAndTransition } from "motion/react";
 import { ImageOff } from "lucide-react";
@@ -68,9 +68,8 @@ export function ImageBackdrop() {
   const kenBurns = useImage((c) => c.kenBurns);
   const { activeItem, thumbUrl, imageUrl, loadError } = useActiveImage();
   const reduced = useReducedMotion();
-  const [fullLoaded, setFullLoaded] = useState(false);
-
-  useEffect(() => setFullLoaded(false), [imageUrl]);
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
+  const fullLoaded = loadedUrl === imageUrl;
 
   if (loadError) {
     return <StateMessage icon={ImageOff} compact message={loadError} />;
@@ -118,7 +117,7 @@ export function ImageBackdrop() {
           <motion.img
             src={imageUrl}
             alt={altText}
-            onLoad={() => setFullLoaded(true)}
+            onLoad={() => setLoadedUrl(imageUrl)}
             initial={panning ? { scale: frame.scale[0], x: frame.x[0], y: frame.y[0] } : false}
             animate={panning ? { scale: frame.scale, x: frame.x, y: frame.y } : undefined}
             transition={

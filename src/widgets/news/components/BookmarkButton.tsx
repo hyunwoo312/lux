@@ -1,4 +1,3 @@
-import type { MouseEvent } from "react";
 import { Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -18,19 +17,13 @@ export function BookmarkButton({
 }) {
   const label = saved ? `Remove “${title}” from saved` : `Save “${title}” for later`;
 
-  const press = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    onToggle();
-  };
-
   return (
     <Tooltip content={saved ? "Saved" : "Save for later"}>
       <button
         type="button"
         aria-label={label}
         aria-pressed={saved}
-        onClick={press}
+        onClick={onToggle}
         className={cn(
           `
             press focus-ring flex size-7 shrink-0 cursor-pointer items-center justify-center

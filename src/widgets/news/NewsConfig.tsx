@@ -11,7 +11,7 @@ import {
   WidgetConfigItem,
 } from "@/components/config/WidgetConfig";
 import type { OpenBehavior } from "@/lib/open-url";
-import { sourceTab } from "@/widgets/news/lib/news";
+import { orderedSources, sourceTab } from "@/widgets/news/lib/news";
 import { TREND_REGIONS, type TrendRegion } from "@/widgets/news/lib/trend-regions";
 import { SOURCE_ICONS } from "@/widgets/news/components/sourceIcons";
 import {
@@ -21,7 +21,13 @@ import {
   type NewsRegion,
   type NewsTopic,
 } from "@/widgets/news/types";
-import { MAX_ENABLED_SOURCES, useNews, useNewsStore } from "@/widgets/news/useNewsStore";
+import {
+  MAX_ENABLED_SOURCES,
+  MAX_TERMS,
+  useNews,
+  useNewsStore,
+  type AddTermResult,
+} from "@/widgets/news/useNewsStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 const REGION_LABELS: Record<NewsRegion, string> = {
@@ -82,7 +88,7 @@ export function NewsConfig() {
   const setSortByLatest = useNewsStore((s) => s.setSortByLatest);
   const setLoadImages = useNewsStore((s) => s.setLoadImages);
 
-  const orderedEnabled = NEWS_SOURCES.filter((source) => enabledSources.includes(source));
+  const orderedEnabled = orderedSources(enabledSources);
 
   return (
     <>
@@ -229,6 +235,11 @@ function HighlightTermsEditor() {
   );
 }
 
+const REJECTED_TERM_MESSAGE: Record<Exclude<AddTermResult, "added" | "empty">, string> = {
+  duplicate: "Already in the list.",
+  full: `Up to ${MAX_TERMS} keywords.`,
+};
+
 function TermsEditor({
   terms,
   inputLabel,
@@ -239,15 +250,22 @@ function TermsEditor({
   terms: string[];
   inputLabel: string;
   removeLabel: (term: string) => string;
-  onAdd: (term: string) => void;
+  onAdd: (term: string) => AddTermResult;
   onRemove: (term: string) => void;
 }) {
   const [value, setValue] = useState("");
+  const [rejected, setRejected] = useState<string | null>(null);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    onAdd(value);
-    setValue("");
+    const result = onAdd(value);
+    if (result === "empty") return;
+    if (result === "added") {
+      setValue("");
+      setRejected(null);
+      return;
+    }
+    setRejected(REJECTED_TERM_MESSAGE[result]);
   };
 
   return (
@@ -255,12 +273,20 @@ function TermsEditor({
       <form onSubmit={submit}>
         <Input
           value={value}
-          onChange={(event) => setValue(event.target.value)}
+          onChange={(event) => {
+            setValue(event.target.value);
+            setRejected(null);
+          }}
           placeholder="Add a keyword and press Enter"
           aria-label={inputLabel}
           maxLength={40}
         />
       </form>
+      {rejected && (
+        <p role="status" className="text-ink-3 text-caption">
+          {rejected}
+        </p>
+      )}
       {terms.length > 0 && (
         <ul className="flex flex-wrap gap-1">
           {terms.map((term) => (

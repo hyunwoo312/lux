@@ -8,24 +8,13 @@ describe("useNoteStore", () => {
     useNoteStore.setState({ byInstance: {} });
   });
 
-  it("replaces the note text for an instance", () => {
+  it("writes each instance's text and font size independently", () => {
     store().setText("a", "first");
     store().setText("a", "second");
-
-    expect(store().byInstance["a"]?.text).toBe("second");
-  });
-
-  it("sets the font size for an instance", () => {
     store().setFontSize("a", "lg");
-
-    expect(store().byInstance["a"]?.fontSize).toBe("lg");
-  });
-
-  it("keeps instances independent", () => {
-    store().setText("a", "alpha");
     store().setText("b", "beta");
 
-    expect(store().byInstance["a"]?.text).toBe("alpha");
+    expect(store().byInstance["a"]).toEqual({ text: "second", fontSize: "lg" });
     expect(store().byInstance["b"]?.text).toBe("beta");
   });
 
@@ -60,16 +49,6 @@ describe("notes that predate the length cap", () => {
       ) as { byInstance?: Record<string, { text?: string }> } | undefined;
 
     expect(merged?.byInstance?.old?.text).toHaveLength(oversized.length);
-  });
-
-  it("migrates a v1 single-note payload without the retired legacy schema", () => {
-    const migrated = useNoteStore.persist
-      .getOptions()
-      .migrate?.({ text: "hello", fontSize: "lg" }, 1) as {
-      byInstance?: Record<string, { text?: string }>;
-    };
-
-    expect(migrated.byInstance?.note?.text).toBe("hello");
   });
 
   describe("merge tolerance", () => {

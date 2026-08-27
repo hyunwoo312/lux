@@ -1,20 +1,17 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import type { Variants } from "motion/react";
 import { ErrorState } from "@/components/StateMessage";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DURATION, EASE_OUT } from "@/lib/motion";
+import { DURATION, EASE_OUT, listVariants, rowVariants } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { movementFor } from "@/widgets/news/lib/trend-movement";
 import { regionLabel } from "@/widgets/news/lib/trend-regions";
 import { TrendingRow } from "@/widgets/news/components/TrendingRow";
 import { TrendingTile } from "@/widgets/news/components/TrendingTile";
+import { TILE_GRID_CLASS } from "@/widgets/news/components/tileStyles";
 import { TrendsAttribution } from "@/widgets/news/components/TrendsAttribution";
 import { useTrendingResource } from "@/widgets/news/hooks/useTrendingResource";
 import { useNews } from "@/widgets/news/useNewsStore";
 import type { NewsLayout } from "@/widgets/news/types";
-
-const TILE_GRID_CLASS = "grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-1.5";
-const STAGGER = 0.035;
 
 export function TrendingContent({ layout }: { layout: NewsLayout }) {
   const reduced = useReducedMotion() ?? false;
@@ -24,19 +21,6 @@ export function TrendingContent({ layout }: { layout: NewsLayout }) {
 
   const isTiles = layout === "tiles" && loadImages;
   const items = feed?.items ?? [];
-
-  const listVariants: Variants = {
-    hidden: {},
-    show: { transition: { staggerChildren: reduced ? 0 : STAGGER } },
-  };
-  const itemVariants: Variants = {
-    hidden: reduced ? { opacity: 0 } : { opacity: 0, y: 8 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: reduced ? 0 : DURATION.base, ease: EASE_OUT },
-    },
-  };
 
   if (state.status === "error" && !feed) {
     return (
@@ -70,7 +54,7 @@ export function TrendingContent({ layout }: { layout: NewsLayout }) {
           key={`${layout}:${region}`}
           initial="hidden"
           animate="show"
-          variants={listVariants}
+          variants={listVariants(reduced)}
           className={cn(isTiles ? TILE_GRID_CLASS : "flex flex-col gap-0.5")}
         >
           <AnimatePresence initial={false}>
@@ -80,7 +64,7 @@ export function TrendingContent({ layout }: { layout: NewsLayout }) {
                 <motion.li
                   key={item.term}
                   layout={reduced ? false : "position"}
-                  variants={itemVariants}
+                  variants={rowVariants(reduced)}
                   exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
                   transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}
                   className="min-w-0"
