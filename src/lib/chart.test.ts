@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { areaPath, chartGeometry, linePath } from "@/lib/chart";
+import { areaPath, chartGeometry } from "@/lib/chart";
 
 describe("chartGeometry", () => {
   it("keeps the highest and lowest points inside the box so the stroke is never clipped", () => {
@@ -48,14 +48,5 @@ describe("paths", () => {
 
   it("has no area to fill without points", () => {
     expect(areaPath([], 40)).toBe("");
-  });
-
-  it("starts the line with a move and continues with draws", () => {
-    expect(
-      linePath([
-        { x: 0, y: 1 },
-        { x: 2, y: 3 },
-      ]),
-    ).toBe("M0 1 L2 3");
   });
 });

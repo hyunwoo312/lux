@@ -53,6 +53,19 @@ describe("importSettings", () => {
     await expect(importSettings(file)).rejects.toThrow(/valid Lux settings file/i);
   });
 
+  it("keeps the profile when the file carries members that are not key maps", async () => {
+    await chrome.storage.local.set({ "lux:dashboard": { widgets: ["mine"] } });
+    const file = makeFile({
+      marker: "lux-settings-backup",
+      version: 1,
+      chromeLocal: "x",
+      local: "y",
+    });
+
+    await expect(importSettings(file)).rejects.toThrow(/valid Lux settings file/i);
+    expect((await chrome.storage.local.get(null))["lux:dashboard"]).toEqual({ widgets: ["mine"] });
+  });
+
   it("removes stored settings the backup does not contain", async () => {
     await chrome.storage.local.set({
       "lux:widget:note": { text: "stale" },

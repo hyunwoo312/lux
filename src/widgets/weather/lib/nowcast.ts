@@ -1,18 +1,11 @@
 import type { WeatherMinute } from "@/widgets/weather/types";
 
 const BUCKET_MINUTES = 15;
-const DEFAULT_WINDOW_MINUTES = 120;
-const DEFAULT_THRESHOLD = 50;
+const WINDOW_MINUTES = 120;
 
 export type Nowcast = {
   startsInMinutes: number;
   probability: number;
-  intensity: number;
-};
-
-type NowcastOptions = {
-  withinMinutes?: number;
-  threshold?: number;
 };
 
 function isWet(minute: WeatherMinute, threshold: number): boolean {
@@ -22,14 +15,14 @@ function isWet(minute: WeatherMinute, threshold: number): boolean {
 export function findNowcast(
   minutes: WeatherMinute[],
   fromIso: string,
-  { withinMinutes = DEFAULT_WINDOW_MINUTES, threshold = DEFAULT_THRESHOLD }: NowcastOptions = {},
+  threshold: number,
 ): Nowcast | null {
   if (minutes.length === 0) return null;
   const next = minutes.findIndex((minute) => minute.time > fromIso.slice(0, 16));
   if (next === -1) return null;
   const start = Math.max(0, next - 1);
 
-  const buckets = Math.max(1, Math.floor(withinMinutes / BUCKET_MINUTES));
+  const buckets = Math.max(1, Math.floor(WINDOW_MINUTES / BUCKET_MINUTES));
   const end = Math.min(start + buckets, minutes.length);
   for (let index = start; index < end; index += 1) {
     const minute = minutes[index];
@@ -37,7 +30,6 @@ export function findNowcast(
     return {
       startsInMinutes: (index - start) * BUCKET_MINUTES,
       probability: minute.probability,
-      intensity: minute.precipitation,
     };
   }
   return null;

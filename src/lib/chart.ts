@@ -1,6 +1,6 @@
-export type ChartPoint = { x: number; y: number };
+type ChartPoint = { x: number; y: number };
 
-export type ChartGeometry = {
+type ChartGeometry = {
   points: ChartPoint[];
   xFor: (index: number) => number;
   yFor: (value: number) => number;

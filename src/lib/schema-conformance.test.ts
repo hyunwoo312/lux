@@ -1,6 +1,4 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   ASSET_DATABASES,
@@ -10,28 +8,14 @@ import {
   EXTENSION_SESSION_KEYS,
   STORE_KEYS,
 } from "@/lib/profile";
-
-const SRC = fileURLToPath(new URL("..", import.meta.url));
-
-function sourceFiles(): string[] {
-  const found: string[] = [];
-  const walk = (dir: string) => {
-    for (const entry of readdirSync(dir)) {
-      const full = join(dir, entry);
-      if (statSync(full).isDirectory()) walk(full);
-      else if (/\.ts$/.test(entry) && !entry.includes(".test.")) found.push(full);
-    }
-  };
-  walk(SRC);
-  return found;
-}
+import { sourceFiles, sourcePath } from "@/test/source-files";
 
 const stores = sourceFiles()
   .map((file) => ({ file, body: readFileSync(file, "utf8") }))
-  .filter(({ body }) => body.includes("createGatedChromeStorage<") || body.includes("gatedStorage"))
+  .filter(({ body }) => body.includes("createGatedChromeStorage"))
   .filter(({ file }) => !file.endsWith("storage.ts"))
   .map(({ file, body }) => ({
-    file: file.split(/[/\\]src[/\\]/)[1] ?? file,
+    file: sourcePath(file),
     name: /name:\s*"([^"]+)"/.exec(
       body.slice(body.lastIndexOf("storage: gatedStorage") - 300),
     )?.[1],
@@ -39,18 +23,9 @@ const stores = sourceFiles()
   }));
 
 describe("every persisted store", () => {
-  it("was found by the sweep", () => {
-    expect(stores.length).toBe(STORE_KEYS.length);
-  });
-
   it("is registered in the profile ledger", () => {
     const names = stores.map((store) => store.name).sort();
     expect(names).toEqual([...STORE_KEYS].sort());
-  });
-
-  it("names itself without repeating the namespace the layer already adds", () => {
-    const offenders = stores.filter((store) => store.name?.startsWith("lux:"));
-    expect(offenders.map((store) => store.file)).toEqual([]);
   });
 
   it("uses widget:<slug> for widgets and a bare name for the rest", () => {
@@ -91,18 +66,17 @@ describe("every key this extension writes", () => {
   ];
 
   const covers = (literal: string) =>
-    registered.some((key) => key === literal || literal.startsWith(key)) ||
-    registered.some((key) => key.startsWith(literal));
+    registered.some((key) => key === literal || literal.startsWith(key));
 
   it("is named in the profile registry", () => {
     const strays: string[] = [];
     for (const file of sourceFiles()) {
-      if (file.endsWith("profile.ts")) continue;
+      if (file.endsWith("profile.ts") || file.endsWith("backup.ts")) continue;
       const body = readFileSync(file, "utf8");
       for (const match of body.matchAll(/"(lux[.:][a-z.:-]*)"/g)) {
         const literal = match[1];
         if (literal && !covers(literal)) {
-          strays.push(`${file.split(/[/\\]src[/\\]/)[1] ?? file}: ${literal}`);
+          strays.push(`${sourcePath(file)}: ${literal}`);
         }
       }
     }

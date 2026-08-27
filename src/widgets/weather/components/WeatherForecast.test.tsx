@@ -14,7 +14,7 @@ import type { WeatherData, WeatherDay, WeatherHour } from "@/widgets/weather/typ
 const ID = "weather-forecast";
 
 function hour(time: string, temperature: number, precipitationProbability = 0): WeatherHour {
-  return { time, temperature, weatherCode: 1, precipitationProbability, isDay: true };
+  return { time, temperature, weatherCode: 1, precipitationProbability };
 }
 
 function day(date: string, min: number, max: number, chance: number | null = null): WeatherDay {
@@ -23,7 +23,6 @@ function day(date: string, min: number, max: number, chance: number | null = nul
     weatherCode: 1,
     max,
     min,
-    precipitationSum: null,
     precipitationChance: chance,
   };
 }
@@ -50,7 +49,7 @@ function weather(overrides: Partial<WeatherData> = {}): WeatherData {
     ),
     minutely: [],
     daily: [day("2026-06-26", 15, 25), day("2026-06-27", 16, 26, 70), day("2026-06-28", 14, 22)],
-    unitLabels: { temperature: "°C", windSpeed: "mph" },
+    unitLabels: { windSpeed: "mph" },
     ...overrides,
   };
 }
@@ -66,7 +65,6 @@ function seed(forecastDays: "3" | "5" | "7" = "3") {
         rainAlert: "likely",
         metrics: [],
         selectedId: null,
-        searchOpen: false,
       },
     },
   });

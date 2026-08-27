@@ -4,17 +4,14 @@ import { areaPath, chartGeometry, linePath } from "@/lib/chart";
 import { TYPE } from "@/lib/type";
 import { cn } from "@/lib/utils";
 import { useElementSize } from "@/hooks/useElementSize";
-import { formatHour, formatTemperature, formatWeekday } from "@/widgets/weather/lib/forecast";
+import { formatTemperature, hourlyTicks, PRECIP_MIN_CHANCE } from "@/widgets/weather/lib/forecast";
 import type { WeatherHour } from "@/widgets/weather/types";
 
 const PRECIP_BAND = 14;
 const LABEL_BAND = 14;
-const TICK_EVERY = 6;
-const MIN_TICK_GAP = 38;
 const LABEL_HEIGHT = 12;
 const EDGE_ANCHOR = 26;
 const MAX_PRECIP = 100;
-const PRECIP_MIN_CHANCE = 20;
 const PRECIP_MIN_HEIGHT = 3;
 
 type WeatherHourlyProps = {
@@ -43,35 +40,7 @@ export function WeatherHourly({ hours, className }: WeatherHourlyProps) {
       ? hours.findIndex((hour) => hour.temperature === geometry.max)
       : -1;
 
-  const candidates = hours.flatMap((hour, index) => {
-    const midnight = index > 0 && hour.time.slice(11, 13) === "00";
-    const rank = index === 0 ? 0 : midnight ? 1 : 2;
-    if (rank === 2 && index % TICK_EVERY !== 0) return [];
-    return [
-      {
-        key: hour.time,
-        rank,
-        x: geometry?.xFor(index) ?? 0,
-        midnight,
-        label:
-          index === 0
-            ? "Now"
-            : midnight
-              ? formatWeekday(hour.time.slice(0, 10))
-              : formatHour(hour.time, !clock24h),
-      },
-    ];
-  });
-
-  const ticks = candidates
-    .slice()
-    .sort((a, b) => a.rank - b.rank || a.x - b.x)
-    .reduce<typeof candidates>((kept, tick) => {
-      if (kept.some((other) => Math.abs(other.x - tick.x) < MIN_TICK_GAP)) return kept;
-      kept.push(tick);
-      return kept;
-    }, [])
-    .sort((a, b) => a.x - b.x);
+  const { ticks, midnights } = hourlyTicks(hours, (index) => geometry?.xFor(index) ?? 0, clock24h);
 
   const labelTop = (index: number, above: boolean) => {
     const y = geometry?.points[index]?.y ?? 0;
@@ -101,21 +70,19 @@ export function WeatherHourly({ hours, className }: WeatherHourlyProps) {
               </linearGradient>
             </defs>
             <g className="text-ink-2">
-              {candidates
-                .filter((tick) => tick.midnight)
-                .map((tick) => (
-                  <line
-                    key={`divider-${tick.key}`}
-                    x1={tick.x}
-                    y1={0}
-                    x2={tick.x}
-                    y2={chartHeight}
-                    className="stroke-border"
-                    strokeWidth={1}
-                    strokeDasharray="2 3"
-                    vectorEffect="non-scaling-stroke"
-                  />
-                ))}
+              {midnights.map((tick) => (
+                <line
+                  key={`divider-${tick.key}`}
+                  x1={tick.x}
+                  y1={0}
+                  x2={tick.x}
+                  y2={chartHeight}
+                  className="stroke-border"
+                  strokeWidth={1}
+                  strokeDasharray="2 3"
+                  vectorEffect="non-scaling-stroke"
+                />
+              ))}
               <path d={areaPath(geometry.points, chartHeight)} fill={`url(#${gradientId})`} />
               <path
                 d={linePath(geometry.points)}
