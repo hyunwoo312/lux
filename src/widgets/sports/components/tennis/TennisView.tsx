@@ -6,20 +6,15 @@ import { IconActionButton } from "@/components/IconActionButton";
 import { openUrl } from "@/lib/open-url";
 import { cn } from "@/lib/utils";
 import { ConfigSelect } from "@/components/config/WidgetConfig";
-import { RetryButton, StateMessage } from "@/components/StateMessage";
+import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { useTennis } from "@/widgets/sports/hooks/useTennis";
 import { SPORT_ICON } from "@/widgets/sports/lib/leagues";
 import type { League } from "@/widgets/sports/lib/leagues";
-import { CollapsibleSection } from "@/widgets/sports/components/SportsSection";
+import { groupMatches } from "@/widgets/sports/lib/grouping";
+import { CollapsibleSection, ShowMoreButton } from "@/widgets/sports/components/SportsSection";
 import { TennisMatchCard } from "@/widgets/sports/components/tennis/TennisMatchCard";
-import type { TennisMatch } from "@/widgets/sports/lib/tennis";
 
 const PAGE = 12;
-const BANDS: { id: string; label: string; state: TennisMatch["state"] }[] = [
-  { id: "live", label: "Live", state: "in" },
-  { id: "upcoming", label: "Upcoming", state: "pre" },
-  { id: "past", label: "Past", state: "post" },
-];
 
 export function TennisView({ league }: { league: League }) {
   const { state, refresh, isRefreshing } = useTennis(league);
@@ -32,10 +27,12 @@ export function TennisView({ league }: { league: League }) {
 
   if (state.status === "error") {
     return (
-      <StateMessage
-        icon={Icon}
-        message="The draw is unavailable right now."
-        action={<RetryButton onRetry={refresh} retrying={isRefreshing} />}
+      <ErrorState
+        error={state.error}
+        service="ESPN"
+        subject="the draw"
+        onRetry={refresh}
+        retrying={isRefreshing}
       />
     );
   }
@@ -47,17 +44,7 @@ export function TennisView({ league }: { league: League }) {
   const draw = event.draws.find((entry) => entry.id === drawId) ?? event.draws[0];
   if (!draw) return <StateMessage icon={Icon} message={`No ${league.label} tournament in play.`} />;
 
-  const bands = BANDS.flatMap(({ id, label, state: band }) => {
-    const matches = draw.matches.filter((match) => match.state === band);
-    return matches.length > 0 ? [{ id, label, matches }] : [];
-  });
-
-  let budget = shown;
-  const paged = bands.map((band) => {
-    const slice = band.matches.slice(0, Math.max(0, budget));
-    budget -= slice.length;
-    return { ...band, matches: slice };
-  });
+  const paged = groupMatches(draw.matches.slice(0, shown));
   const hidden = draw.matches.length - shown;
 
   return (
@@ -121,19 +108,7 @@ export function TennisView({ league }: { league: League }) {
         ))}
       </motion.div>
 
-      {hidden > 0 && (
-        <button
-          type="button"
-          onClick={() => setShown((count) => count + PAGE)}
-          className={cn(`
-            press focus-ring text-ink-3
-            hover:bg-foreground/5 hover:text-ink
-            mx-2 cursor-pointer rounded-md py-1 text-caption transition-colors
-          `)}
-        >
-          Show more
-        </button>
-      )}
+      {hidden > 0 && <ShowMoreButton onClick={() => setShown((count) => count + PAGE)} />}
     </div>
   );
 }

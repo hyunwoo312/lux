@@ -23,6 +23,8 @@ type SpotifyControlsProps = {
   showSideControls: boolean;
   compact?: boolean;
   deviceOptions: SpotifyPlaybackDevice[];
+  devicesLoading: boolean;
+  devicesError: string | null;
   volumePercent: number;
   onTogglePlayback: () => void;
   onPrevious: () => void;
@@ -42,6 +44,8 @@ export function SpotifyControls({
   showSideControls,
   compact = false,
   deviceOptions,
+  devicesLoading,
+  devicesError,
   volumePercent,
   onTogglePlayback,
   onPrevious,
@@ -66,6 +70,8 @@ export function SpotifyControls({
             devices={deviceOptions}
             activeId={playback.device.id}
             disabled={pendingActions.has("device")}
+            loading={devicesLoading}
+            error={devicesError}
             onSelect={onTransferDevice}
             onOpen={onOpenDeviceMenu}
           />
@@ -155,7 +161,6 @@ export function SpotifyControls({
         {showSideControls && (
           <SpotifyVolume
             volumePercent={volumePercent}
-            disabled={pendingActions.has("volume")}
             onChange={onChangeVolume}
             onCommit={onCommitVolume}
           />

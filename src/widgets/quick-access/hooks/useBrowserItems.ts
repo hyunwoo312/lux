@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { invalidatePolledResource, usePolledResource } from "@/widgets/core/usePolledResource";
+import { usePolledResource } from "@/widgets/core/usePolledResource";
 import {
   fetchBookmarkTree,
   fetchHistory,
@@ -12,18 +12,21 @@ import type { BookmarkFolder, BrowserItem, ItemSource } from "@/widgets/quick-ac
 
 type Retry = { retry: () => void };
 
-type BrowserState = Retry &
+export type BrowserState = Retry &
   ({ status: "loading" } | { status: "error" } | { status: "ready"; items: BrowserItem[] });
 
 type BookmarkTreeState = Retry &
   ({ status: "loading" } | { status: "error" } | { status: "ready"; root: BookmarkFolder });
 
-const FETCHERS: Record<ItemSource, () => Promise<BrowserItem[]>> = {
+type PolledSource = Exclude<ItemSource, "openTabs">;
+
+const FETCHERS: Record<PolledSource, () => Promise<BrowserItem[]>> = {
   recentlyClosed: fetchRecentlyClosed,
   history: fetchHistory,
   topSites: fetchTopSites,
-  openTabs: fetchOpenTabs,
 };
+
+const TABS_DEBOUNCE_MS = 150;
 
 const REFRESH_MS = 60_000;
 
@@ -33,7 +36,7 @@ function useRefreshOnMount(refresh: () => void, enabled: boolean): void {
   }, [enabled, refresh]);
 }
 
-export function useBrowserItems(tab: ItemSource, enabled = true): BrowserState {
+export function useBrowserItems(tab: PolledSource, enabled = true): BrowserState {
   const { state, refresh } = usePolledResource(() => FETCHERS[tab](), {
     enabled,
     intervalMs: REFRESH_MS,
@@ -74,10 +77,15 @@ export function useOpenTabs(enabled: boolean): BrowserState {
 
   useEffect(() => {
     if (!enabled) return;
-    return watchTabs(() => {
-      invalidatePolledResource("quickAccess:openTabs");
-      refresh();
+    let timer: number | undefined;
+    const stop = watchTabs(() => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(refresh, TABS_DEBOUNCE_MS);
     });
+    return () => {
+      window.clearTimeout(timer);
+      stop();
+    };
   }, [enabled, refresh]);
 
   return useMemo(() => {

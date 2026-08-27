@@ -1,8 +1,7 @@
 import { EASE_OUT } from "@/lib/motion";
 import { useEffect, useMemo, useState } from "react";
-import { RemoteImage } from "@/components/media/RemoteImage";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ListMusic, Music, Play } from "lucide-react";
+import { ListMusic, Play } from "lucide-react";
 import { StateMessage } from "@/components/StateMessage";
 import { Button } from "@/components/ui/button";
 import { useShallow } from "zustand/react/shallow";
@@ -11,10 +10,11 @@ import { cn } from "@/lib/utils";
 import {
   loadSpotifyQueue,
   requestSpotifyPlaybackRefresh,
+  skipSpotifyAhead,
   useSpotifyPlaybackStore,
 } from "@/widgets/spotify/hooks/useSpotifyPlayback";
 import { dedupeUpNext } from "@/widgets/spotify/lib/queue";
-import { skipSpotifyNext } from "@/widgets/spotify/lib/spotify-api";
+import { SpotifyThumb } from "@/widgets/spotify/components/SpotifyThumb";
 import { RateLimitError } from "@/lib/net";
 import type { SpotifyQueueItem } from "@/widgets/spotify/types";
 
@@ -48,16 +48,6 @@ function PlayingBars({ animate }: { animate: boolean }) {
         />
       ))}
     </svg>
-  );
-}
-
-function QueueArtwork({ url }: { url?: string }) {
-  return url ? (
-    <RemoteImage src={url} alt="" className="size-9 shrink-0 rounded-md object-cover" />
-  ) : (
-    <span className="bg-foreground/5 grid size-9 shrink-0 place-items-center rounded-md">
-      <Music className="text-ink-3 size-4" aria-hidden />
-    </span>
   );
 }
 
@@ -99,11 +89,9 @@ export function SpotifyQueuePanel() {
       return;
     }
     setSkippingUri(item.uri);
-    void (async () => {
-      try {
-        for (let step = 0; step < steps; step += 1) await skipSpotifyNext();
-        requestSpotifyPlaybackRefresh();
-      } catch (caught) {
+    skipSpotifyAhead(steps)
+      .then(requestSpotifyPlaybackRefresh)
+      .catch((caught: unknown) => {
         setPlayError(
           caught instanceof RateLimitError
             ? "Spotify is busy — try again in a moment."
@@ -111,10 +99,8 @@ export function SpotifyQueuePanel() {
               ? caught.message
               : "Couldn't play that track.",
         );
-      } finally {
-        setSkippingUri(null);
-      }
-    })();
+      })
+      .finally(() => setSkippingUri(null));
   };
 
   return (
@@ -122,7 +108,7 @@ export function SpotifyQueuePanel() {
       {now.title && (
         <div className="bg-foreground/5 flex items-center gap-2.5 rounded-md px-2 py-1.5">
           <span className="sr-only">Now playing</span>
-          <QueueArtwork url={now.artworkUrl} />
+          <SpotifyThumb url={now.artworkUrl} />
           <span className="flex min-w-0 flex-1 flex-col">
             <span className="text-ink truncate text-body leading-tight font-medium">
               {now.title}
@@ -174,7 +160,7 @@ export function SpotifyQueuePanel() {
                     disabled={skippingUri !== null}
                     aria-label={`Play ${item.title}`}
                     className={cn(
-                      "press-row transition-colors cursor-pointer",
+                      "press-row cursor-pointer",
                       `
                         focus-ring group flex w-full items-center gap-2.5 rounded-sm px-1 py-1
                         text-left transition-colors
@@ -184,7 +170,7 @@ export function SpotifyQueuePanel() {
                       skippingUri === item.uri && "opacity-60",
                     )}
                   >
-                    <QueueArtwork url={item.artworkUrl} />
+                    <SpotifyThumb url={item.artworkUrl} />
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="text-ink truncate text-body leading-tight">
                         {item.title}

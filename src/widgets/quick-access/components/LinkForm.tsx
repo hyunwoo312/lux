@@ -1,5 +1,5 @@
 import type { FormEvent, KeyboardEvent } from "react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Pin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import type { LinkResult, QuickLink } from "@/widgets/quick-access/types";
 type LinkFormProps = {
   initial?: QuickLink;
   pinnedUrls: Set<string>;
-  onSubmit: (title: string, url: string, icon: string) => LinkResult;
+  onSubmit: (title: string, url: string) => LinkResult;
   onCancel: () => void;
 };
 
@@ -24,6 +24,7 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
   const [focused, setFocused] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const listboxId = useId();
 
   const suggestions = useHistorySuggestions(url, focused);
   const matches = suggestions.map((item) => ({ ...item, pinned: pinnedUrls.has(keyOf(item.url)) }));
@@ -51,7 +52,7 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const result = onSubmit(title, url, initial?.icon ?? "");
+    const result = onSubmit(title, url);
     if (result === "ok") return;
     setError(
       result === "duplicate"
@@ -108,6 +109,11 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
             onKeyDown={handleUrlKeyDown}
             placeholder="example.com"
             aria-label="Link URL"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={open}
+            aria-controls={listboxId}
+            aria-activedescendant={activeIndex >= 0 ? `${listboxId}-${activeIndex}` : undefined}
             autoFocus
           />
         </PopoverAnchor>
@@ -116,15 +122,15 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
           side="bottom"
           onOpenAutoFocus={(event) => event.preventDefault()}
           onCloseAutoFocus={(event) => event.preventDefault()}
-          className={cn("max-h-60 w-[var(--radix-popover-trigger-width)] overflow-y-auto")}
+          className="max-h-60 w-[var(--radix-popover-trigger-width)] overflow-y-auto"
         >
-          <ul>
+          <ul id={listboxId} role="listbox">
             {matches.map((item, index) => {
               const rowClass =
                 "focus-ring flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left";
               const label = (
                 <>
-                  <Favicon url={item.url} size={16} className="size-4 shrink-0 rounded-xs" />
+                  <Favicon url={item.url} size={32} className="size-4 shrink-0 rounded-xs" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-body">{item.title}</span>
                     <span className="text-ink-3 block truncate text-caption">
@@ -136,13 +142,22 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
               return (
                 <li key={item.id}>
                   {item.pinned ? (
-                    <div className={cn(rowClass, "opacity-50")}>
+                    <div
+                      id={`${listboxId}-${index}`}
+                      role="option"
+                      aria-selected={false}
+                      aria-disabled
+                      className={cn(rowClass, "opacity-50")}
+                    >
                       {label}
                       <Pin className="text-primary size-3.5 shrink-0 fill-current" />
                     </div>
                   ) : (
                     <button
                       type="button"
+                      id={`${listboxId}-${index}`}
+                      role="option"
+                      aria-selected={index === activeIndex}
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => choose(item)}
                       className={cn(

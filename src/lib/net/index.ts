@@ -6,6 +6,7 @@ export {
   loadErrorMessage,
   parseResponse,
   RateLimitError,
+  rateLimitError,
   ResponseTooLargeError,
   retryAfterMs,
   TemporaryAuthError,

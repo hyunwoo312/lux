@@ -35,7 +35,7 @@ export function SpotifyPlayer({ controller, playback, timeDisplayMode }: Spotify
 
       <div className="flex min-w-0 flex-col gap-0.5">
         <SpotifyTrackTitle title={playback.track.title} liked={controller.isTrackLiked} />
-        <p className={cn(TYPE.rowSubtitle, "truncate")}>{playback.track.artist}</p>
+        <p className={cn(TYPE.rowMeta, "truncate")}>{playback.track.artist}</p>
         <p className="text-ink-3 truncate text-micro">
           {controller.contextName
             ? `${playback.track.album} · from ${controller.contextName}`
@@ -48,7 +48,6 @@ export function SpotifyPlayer({ controller, playback, timeDisplayMode }: Spotify
         displayedProgressMs={displayedProgressMs}
         leftLabel={leftLabel}
         rightLabel={rightLabel}
-        disabled={controller.pendingActions.has("seek")}
         onChange={controller.changeProgress}
         onCommit={controller.commitProgress}
       />
@@ -59,6 +58,8 @@ export function SpotifyPlayer({ controller, playback, timeDisplayMode }: Spotify
         canRestart={displayedProgressMs > controller.restartThresholdMs}
         showSideControls
         deviceOptions={controller.deviceOptions}
+        devicesLoading={controller.devicesLoading}
+        devicesError={controller.devicesError}
         volumePercent={controller.volumePercent}
         onTogglePlayback={controller.togglePlayback}
         onPrevious={controller.previousTrack}

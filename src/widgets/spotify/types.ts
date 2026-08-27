@@ -61,8 +61,6 @@ export type SpotifySearchResult = {
   mine?: boolean;
 };
 
-export type SpotifyResponsiveView = "bar" | "stacked";
-
 export type SpotifyPendingAction =
   | "playback"
   | "previous"
@@ -73,3 +71,7 @@ export type SpotifyPendingAction =
   | "volume"
   | "device"
   | "refresh";
+
+export type SpotifyErrorKind = "premium" | "noDevice" | "unknown";
+
+export type SpotifyPlaybackError = { kind: SpotifyErrorKind; message: string };

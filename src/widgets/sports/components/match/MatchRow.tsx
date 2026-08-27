@@ -45,7 +45,7 @@ function TeamSide({ team, decided, side, live, starred }: TeamSideProps) {
         className={cn(
           COLUMN.score,
           home ? "text-left" : "text-right",
-          "rounded transition-colors duration-300",
+          "rounded-xs transition-colors duration-300",
           dim ? "text-ink-3 font-medium" : "text-ink font-semibold",
           scored && "bg-primary/15 text-primary",
         )}
@@ -176,11 +176,7 @@ export function MatchRow({
           <span
             className={cn(
               "text-micro min-w-0 truncate text-right tabular-nums",
-              live
-                ? "text-success font-medium"
-                : match.state === "post"
-                  ? "text-ink-3"
-                  : "text-ink-3",
+              live ? "text-success font-medium" : "text-ink-3",
             )}
           >
             {matchStatus(match, now, hour12)}

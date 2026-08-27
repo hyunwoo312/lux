@@ -20,22 +20,12 @@ import { clearPolledResources } from "@/widgets/core/usePolledResource";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import { DiscoverTab } from "@/widgets/sports/components/DiscoverTab";
 import { useSportsStore } from "@/widgets/sports/useSportsStore";
+import { seedSportsInstance } from "@/widgets/sports/lib/fixtures";
 
 const ID = "discover";
 
 function renderTab() {
-  useSportsStore.setState({
-    byInstance: {
-      [ID]: {
-        tab: "discover" as const,
-        collapsed: [],
-        leagueId: "mlb",
-        following: {},
-        states: ["in", "pre", "post"] as const,
-        window: "today" as const,
-      },
-    },
-  });
+  seedSportsInstance(ID, { window: "today" });
   render(
     <WidgetInstanceContext.Provider value={ID}>
       <DiscoverTab />

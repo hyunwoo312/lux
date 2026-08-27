@@ -29,7 +29,7 @@ export function MatchStats({ stats }: { stats: MatchStat[] }) {
                 <span
                   className={cn(
                     "h-full rounded-full",
-                    stat.away >= stat.home ? "bg-primary" : "bg-ink-4",
+                    stat.away >= stat.home ? "bg-primary" : "bg-ink-3",
                   )}
                   style={{ width: share(stat.away, total) }}
                 />
@@ -38,7 +38,7 @@ export function MatchStats({ stats }: { stats: MatchStat[] }) {
                 <span
                   className={cn(
                     "h-full rounded-full",
-                    stat.home >= stat.away ? "bg-primary" : "bg-ink-4",
+                    stat.home >= stat.away ? "bg-primary" : "bg-ink-3",
                   )}
                   style={{ width: share(stat.home, total) }}
                 />

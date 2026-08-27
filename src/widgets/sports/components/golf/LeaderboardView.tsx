@@ -2,11 +2,12 @@ import { useId, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ExternalLink, Flag } from "lucide-react";
 import { EASE_OUT, listVariants, rowVariants } from "@/lib/motion";
+import { TYPE } from "@/lib/type";
 import { IconActionButton } from "@/components/IconActionButton";
 import { openUrl } from "@/lib/open-url";
 import { cn } from "@/lib/utils";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
-import { SectionHeading } from "@/widgets/sports/components/SportsSection";
+import { ShowMoreButton } from "@/widgets/sports/components/SportsSection";
 import { UnverifiedNotice } from "@/widgets/sports/components/UnverifiedNotice";
 import { LeaderboardPlayerDetail } from "@/widgets/sports/components/golf/LeaderboardPlayerDetail";
 import { useLeaderboard } from "@/widgets/sports/hooks/useLeaderboard";
@@ -85,17 +86,7 @@ export function LeaderboardView({ league }: { league: League }) {
       </motion.ul>
 
       {shown < board.players.length && (
-        <button
-          type="button"
-          onClick={() => setShown((count) => count + PAGE)}
-          className="
-            press focus-ring text-ink-3
-            hover:bg-foreground/5 hover:text-ink
-            mx-2 cursor-pointer rounded-md py-1 text-caption transition-colors
-          "
-        >
-          Show more
-        </button>
+        <ShowMoreButton onClick={() => setShown((count) => count + PAGE)} />
       )}
     </div>
   );
@@ -161,7 +152,10 @@ function PlayerRow({
     <>
       {firstOut && (
         <li aria-hidden>
-          <SectionHeading label="Missed the cut" className="pt-2 pb-1" />
+          <h4 className="flex items-center gap-2 px-2 pt-2 pb-1">
+            <span className={TYPE.eyebrow}>Missed the cut</span>
+            <span aria-hidden className="bg-foreground/8 h-px flex-1" />
+          </h4>
         </li>
       )}
       <motion.li variants={rowVariants(reduced)} className="rounded-md">

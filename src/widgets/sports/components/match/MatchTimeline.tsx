@@ -34,7 +34,7 @@ function Marker({ kind }: { kind: MatchEventKind }) {
       aria-hidden
       className={cn(
         "size-2 shrink-0 rounded-full",
-        kind === "penalty-missed" ? "border-ink-4 border" : "bg-ink",
+        kind === "penalty-missed" ? "border-ink-3 border" : "bg-ink",
       )}
     />
   );

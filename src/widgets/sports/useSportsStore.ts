@@ -18,7 +18,7 @@ import {
 
 const NO_FOLLOWING: LeagueFollowing = { teams: [] };
 
-type SportsData = {
+export type SportsData = {
   tab: SportsTab;
   collapsed: string[];
   leagueId: string;
@@ -41,7 +41,7 @@ type SportsState = {
 
 const DEFAULT_STATES: MatchState[] = [...MATCH_STATES];
 
-const DEFAULT_DATA: SportsData = {
+export const DEFAULT_DATA: SportsData = {
   tab: "discover",
   collapsed: [],
   leagueId: DEFAULT_LEAGUE_ID,
@@ -139,20 +139,17 @@ export const useSportsStore = create<SportsState>()(
             const next = current.teams.includes(team)
               ? current.teams.filter((entry) => entry !== team)
               : [...current.teams, team].slice(0, MAX_TEAMS);
-            return { ...d, following: { ...d.following, [leagueId]: { teams: next } } };
+            return { ...d, following: { ...d.following, [leagueId]: { ...current, teams: next } } };
           }),
         ),
       toggleTour: (instanceId, leagueId) =>
         set((state) =>
           update(state, instanceId, (d) => {
             const current = followingFor(d, leagueId);
-            if (current.tour) {
-              const rest = Object.fromEntries(
-                Object.entries(d.following).filter(([id]) => id !== leagueId),
-              );
-              return { ...d, following: rest };
-            }
-            return { ...d, following: { ...d.following, [leagueId]: { ...current, tour: true } } };
+            return {
+              ...d,
+              following: { ...d.following, [leagueId]: { ...current, tour: !current.tour } },
+            };
           }),
         ),
       setStates: (instanceId, states) =>

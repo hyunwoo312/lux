@@ -20,6 +20,7 @@ import {
   setSpotifyVolume,
   skipSpotifyNext,
   skipSpotifyPrevious,
+  SpotifyRequestError,
   transferSpotifyPlayback,
 } from "@/widgets/spotify/lib/spotify-api";
 import { RateLimitError } from "@/lib/net";
@@ -28,6 +29,7 @@ import {
   type SpotifyPendingAction,
   type SpotifyPlaybackContext,
   type SpotifyPlaybackDevice,
+  type SpotifyPlaybackError,
   type SpotifyPlaybackState,
   type SpotifyQueueItem,
 } from "@/widgets/spotify/types";
@@ -42,6 +44,8 @@ const REQUEST_REFRESH_DELAYS_MS = [0, 800, 2000];
 type PlaybackStoreState = {
   playback: SpotifyPlaybackState | null;
   devices: SpotifyPlaybackDevice[];
+  devicesLoading: boolean;
+  devicesError: string | null;
   queue: SpotifyQueueItem[];
   queueLoading: boolean;
   queueError: string | null;
@@ -52,14 +56,21 @@ type PlaybackStoreState = {
   nowMs: number;
   likedTrack: { trackId: string; isLiked: boolean } | null;
   contextLabel: { uri: string; name: string | null } | null;
-  error: string | null;
+  error: SpotifyPlaybackError | null;
   isLoading: boolean;
 };
+
+function playbackError(caught: unknown, fallback: string): SpotifyPlaybackError {
+  if (caught instanceof SpotifyRequestError) return { kind: caught.kind, message: caught.message };
+  return { kind: "unknown", message: caught instanceof Error ? caught.message : fallback };
+}
 
 function initialState(): PlaybackStoreState {
   return {
     playback: null,
     devices: [],
+    devicesLoading: false,
+    devicesError: null,
     queue: [],
     queueLoading: false,
     queueError: null,
@@ -85,7 +96,6 @@ let connected = false;
 let polling = false;
 let isVolumeEditing = false;
 let refreshRequestId = 0;
-let rateLimitedUntil = 0;
 let lastPolledAt = 0;
 let currentPollMs = IDLE_POLL_MS;
 let unregisterScheduler: (() => void) | null = null;
@@ -94,6 +104,7 @@ let trackEndTimeoutId: ReturnType<typeof setTimeout> | undefined;
 const followUpTimeouts = new Set<ReturnType<typeof setTimeout>>();
 
 function scheduleRefreshBursts(delays: readonly number[]): void {
+  clearFollowUpTimeouts();
   delays.forEach((delayMs) => {
     const id = setTimeout(() => {
       followUpTimeouts.delete(id);
@@ -143,7 +154,6 @@ function reconcileTimers(): void {
 }
 
 async function refreshPlayback(): Promise<void> {
-  if (Date.now() < rateLimitedUntil) return;
   const requestId = refreshRequestId + 1;
   refreshRequestId = requestId;
 
@@ -161,10 +171,8 @@ async function refreshPlayback(): Promise<void> {
     void refreshContextName(nextPlayback?.context ?? null);
   } catch (caught) {
     if (requestId !== refreshRequestId) return;
-    if (caught instanceof RateLimitError) {
-      rateLimitedUntil = Date.now() + caught.retryAfterMs;
-    } else {
-      set({ error: caught instanceof Error ? caught.message : "Unable to load Spotify playback" });
+    if (!(caught instanceof RateLimitError)) {
+      set({ error: playbackError(caught, "Unable to load Spotify playback") });
     }
   } finally {
     if (requestId === refreshRequestId) set({ isLoading: false });
@@ -177,7 +185,6 @@ async function refreshLikedTrack(trackId: string | null): Promise<void> {
     return;
   }
   if (get().likedTrack?.trackId === trackId) return;
-  if (Date.now() < rateLimitedUntil) return;
   try {
     const liked = await getSpotifySavedTrackFlags([trackId]);
     if (get().playback?.track.id !== trackId) return;
@@ -193,7 +200,6 @@ async function refreshContextName(context: SpotifyPlaybackContext | null): Promi
     return;
   }
   if (get().contextLabel?.uri === context.uri) return;
-  if (Date.now() < rateLimitedUntil) return;
   try {
     const name = await getSpotifyContextName(context);
     if (get().playback?.context?.uri !== context.uri) return;
@@ -204,24 +210,26 @@ async function refreshContextName(context: SpotifyPlaybackContext | null): Promi
 }
 
 async function loadDevices(): Promise<void> {
-  if (Date.now() < rateLimitedUntil) return;
+  set({ devicesLoading: true, devicesError: null });
   try {
     set({ devices: await getSpotifyDevices() });
   } catch (caught) {
     if (caught instanceof RateLimitError) {
-      rateLimitedUntil = Date.now() + caught.retryAfterMs;
+      set({ devicesError: "Spotify is busy — try again in a moment." });
+    } else {
+      set({ devicesError: caught instanceof Error ? caught.message : "Unable to load devices." });
     }
+  } finally {
+    set({ devicesLoading: false });
   }
 }
 
 export async function loadSpotifyQueue(): Promise<void> {
-  if (Date.now() < rateLimitedUntil) return;
   set({ queueLoading: true, queueError: null });
   try {
     set({ queue: await getSpotifyQueue() });
   } catch (caught) {
     if (caught instanceof RateLimitError) {
-      rateLimitedUntil = Date.now() + caught.retryAfterMs;
       set({ queueError: "Spotify is busy — try again in a moment." });
     } else {
       set({ queueError: caught instanceof Error ? caught.message : "Unable to load the queue." });
@@ -231,18 +239,15 @@ export async function loadSpotifyQueue(): Promise<void> {
   }
 }
 
-function scheduleFollowUpRefresh(): void {
-  scheduleRefreshBursts(FOLLOW_UP_REFRESH_DELAYS_MS);
-}
-
 const skipQueue = createSerialQueue();
-const toggleQueues = new Map<SpotifyPendingAction, QueuedRunner>();
+const latestQueues = new Map<SpotifyPendingAction, QueuedRunner>();
 
 function queueFor(pendingAction: SpotifyPendingAction): QueuedRunner {
-  const existing = toggleQueues.get(pendingAction);
+  if (pendingAction === "next" || pendingAction === "previous") return skipQueue;
+  const existing = latestQueues.get(pendingAction);
   if (existing) return existing;
   const created = createLatestOnly();
-  toggleQueues.set(pendingAction, created);
+  latestQueues.set(pendingAction, created);
   return created;
 }
 
@@ -250,29 +255,38 @@ function queuePlaybackAction(
   action: () => Promise<void>,
   afterAction: (() => void) | undefined,
   pendingAction: SpotifyPendingAction,
-  mode: "serial" | "latest",
 ): void {
-  const runner = mode === "serial" ? skipQueue : queueFor(pendingAction);
-  runner(() => runPlaybackAction(action, afterAction, pendingAction, true));
+  queueFor(pendingAction)(() => runPlaybackAction(action, afterAction, pendingAction));
+}
+
+export function skipSpotifyAhead(steps: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+    skipQueue(async () => {
+      try {
+        for (let step = 0; step < steps; step += 1) await skipSpotifyNext();
+        resolve();
+      } catch (caught) {
+        reject(caught instanceof Error ? caught : new Error("Couldn't play that track."));
+      }
+    });
+  });
 }
 
 async function runPlaybackAction(
   action: () => Promise<void>,
-  afterAction?: () => void,
-  pendingAction?: SpotifyPendingAction,
-  queued = false,
+  afterAction: (() => void) | undefined,
+  pendingAction: SpotifyPendingAction,
 ): Promise<void> {
-  if (!queued && pendingAction && get().pendingActions.has(pendingAction)) return;
   try {
-    if (pendingAction) setPendingAction(pendingAction, true);
+    setPendingAction(pendingAction, true);
     set({ error: null });
     await action();
     afterAction?.();
-    scheduleFollowUpRefresh();
+    scheduleRefreshBursts(FOLLOW_UP_REFRESH_DELAYS_MS);
   } catch (caught) {
-    set({ error: caught instanceof Error ? caught.message : "Unable to control Spotify playback" });
+    set({ error: playbackError(caught, "Unable to control Spotify playback") });
   } finally {
-    if (pendingAction) setPendingAction(pendingAction, false);
+    setPendingAction(pendingAction, false);
   }
 }
 
@@ -289,13 +303,6 @@ function displayedProgressMs(state: ProgressInputs): number {
   return Math.min(playback.track.durationMs, Math.max(0, playback.progressMs + elapsed));
 }
 
-function getDisplayedProgressMs(): number {
-  const { playback, nowMs, playbackSyncedAt } = get();
-  if (!playback) return 0;
-  const elapsed = playback.isPlaying ? nowMs - playbackSyncedAt : 0;
-  return Math.min(playback.track.durationMs, Math.max(0, playback.progressMs + elapsed));
-}
-
 function togglePlayback(): void {
   const { playback } = get();
   if (!playback) return;
@@ -306,12 +313,11 @@ function togglePlayback(): void {
     shouldPlay ? resumeSpotifyPlayback : pauseSpotifyPlayback,
     undefined,
     "playback",
-    "latest",
   );
 }
 
 function previousTrack(): void {
-  if (getDisplayedProgressMs() > RESTART_THRESHOLD_MS) {
+  if (displayedProgressMs(get()) > RESTART_THRESHOLD_MS) {
     queuePlaybackAction(
       () => seekSpotifyPlayback(0),
       () => {
@@ -321,15 +327,14 @@ function previousTrack(): void {
         markSyncedNow();
       },
       "previous",
-      "serial",
     );
     return;
   }
-  queuePlaybackAction(skipSpotifyPrevious, undefined, "previous", "serial");
+  queuePlaybackAction(skipSpotifyPrevious, undefined, "previous");
 }
 
 function nextTrack(): void {
-  queuePlaybackAction(skipSpotifyNext, undefined, "next", "serial");
+  queuePlaybackAction(skipSpotifyNext, undefined, "next");
 }
 
 function toggleShuffle(): void {
@@ -337,7 +342,7 @@ function toggleShuffle(): void {
   if (!playback) return;
   const nextShuffle = !playback.shuffle;
   set({ playback: { ...playback, shuffle: nextShuffle } });
-  queuePlaybackAction(() => setSpotifyShuffle(nextShuffle), undefined, "shuffle", "latest");
+  queuePlaybackAction(() => setSpotifyShuffle(nextShuffle), undefined, "shuffle");
 }
 
 function cycleRepeat(): void {
@@ -347,7 +352,7 @@ function cycleRepeat(): void {
   const nextRepeatMode =
     SPOTIFY_REPEAT_MODES[(currentIndex + 1) % SPOTIFY_REPEAT_MODES.length] ?? "off";
   set({ playback: { ...playback, repeatMode: nextRepeatMode } });
-  queuePlaybackAction(() => setSpotifyRepeatMode(nextRepeatMode), undefined, "repeat", "latest");
+  queuePlaybackAction(() => setSpotifyRepeatMode(nextRepeatMode), undefined, "repeat");
 }
 
 function changeVolume(volumePercent: number): void {
@@ -369,7 +374,7 @@ function commitVolume(): void {
   if (typeof nextVolume !== "number") return;
   isVolumeEditing = false;
   set({ volumeDraft: null });
-  void runPlaybackAction(() => setSpotifyVolume(nextVolume), undefined, "volume");
+  queuePlaybackAction(() => setSpotifyVolume(nextVolume), undefined, "volume");
 }
 
 function changeProgress(positionMs: number): void {
@@ -387,11 +392,11 @@ function commitProgress(): void {
   const { progressDraftMs } = get();
   if (get().playback === null || progressDraftMs === null) return;
   set({ progressDraftMs: null });
-  void runPlaybackAction(() => seekSpotifyPlayback(progressDraftMs), undefined, "seek");
+  queuePlaybackAction(() => seekSpotifyPlayback(progressDraftMs), undefined, "seek");
 }
 
 function transferDevice(device: SpotifyPlaybackDevice): void {
-  void runPlaybackAction(
+  queuePlaybackAction(
     () => transferSpotifyPlayback(device.id),
     () => {
       set((state) => ({
@@ -492,10 +497,12 @@ function setConnected(next: boolean): void {
 export type SpotifyPlaybackController = {
   playback: SpotifyPlaybackState | null;
   deviceOptions: SpotifyPlaybackDevice[];
+  devicesLoading: boolean;
+  devicesError: string | null;
   isTrackLiked: boolean;
   contextName: string | null;
   pendingActions: Set<SpotifyPendingAction>;
-  error: string | null;
+  error: SpotifyPlaybackError | null;
   isLoading: boolean;
   displayedProgressMs: number;
   volumePercent: number;
@@ -528,6 +535,8 @@ export function useSpotifyPlayback(connectedArg: boolean): SpotifyPlaybackContro
     useShallow((s) => ({
       playback: s.playback,
       devices: s.devices,
+      devicesLoading: s.devicesLoading,
+      devicesError: s.devicesError,
       pendingActions: s.pendingActions,
       error: s.error,
       isLoading: s.isLoading,
@@ -553,6 +562,8 @@ export function useSpotifyPlayback(connectedArg: boolean): SpotifyPlaybackContro
   return {
     playback,
     deviceOptions,
+    devicesLoading: state.devicesLoading,
+    devicesError: state.devicesError,
     isTrackLiked:
       playback !== null &&
       state.likedTrack?.trackId === playback.track.id &&

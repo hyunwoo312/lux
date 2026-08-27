@@ -2,6 +2,7 @@ import {
   refreshPolledResource,
   useFreshness,
   useResourceGroup,
+  type PolledResource,
 } from "@/widgets/core/usePolledResource";
 import { WidgetRefreshButton } from "@/widgets/core/WidgetRefreshButton";
 import { useCurrentLeague } from "@/widgets/sports/hooks/useCurrentLeague";
@@ -13,12 +14,7 @@ import { type League } from "@/widgets/sports/lib/leagues";
 import { followedLeagues } from "@/widgets/sports/lib/roster";
 import { SPORTS_SYNC_COOLDOWN_MS, useSports } from "@/widgets/sports/useSportsStore";
 
-type Resource = {
-  refresh: () => void;
-  isRefreshing: boolean;
-  lastSyncedAt: number;
-  freshness: Parameters<typeof WidgetRefreshButton>[0]["freshness"];
-};
+type Resource = Omit<PolledResource<unknown>, "state">;
 
 function Button({ resource }: { resource: Resource }) {
   return (

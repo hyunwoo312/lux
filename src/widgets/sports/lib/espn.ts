@@ -3,6 +3,7 @@ import { espnUrl, fetchEspn } from "@/widgets/sports/lib/espnApi";
 import {
   MATCH_EVENT_KINDS,
   MATCH_STATES,
+  STATE_ORDER,
   type Match,
   type MatchEvent,
   type MatchEventKind,
@@ -92,7 +93,7 @@ function toStats(home: RawCompetitor, away: RawCompetitor): MatchStat[] {
     const awayValue = statValue(away, name);
     if (homeValue == null || awayValue == null) return [];
     if (homeValue === 0 && awayValue === 0) return [];
-    return [{ label, home: homeValue, away: awayValue, ...(suffix ? { suffix } : {}) }];
+    return [{ label, home: homeValue, away: awayValue, suffix }];
   });
 }
 
@@ -252,8 +253,6 @@ function toMatch(raw: unknown): Match | null {
     stats: state === "pre" ? [] : toStats(home, away),
   };
 }
-
-const STATE_ORDER: Record<MatchState, number> = { in: 0, pre: 1, post: 2 };
 
 function toMatches(events: readonly unknown[]): Match[] {
   return events

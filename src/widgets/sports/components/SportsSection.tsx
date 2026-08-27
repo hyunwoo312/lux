@@ -12,21 +12,19 @@ const LABEL: Record<SectionTone, string> = {
   league: "text-ink-2 text-caption font-semibold",
 };
 
-export function SectionHeading({
-  label,
-  count,
-  className,
-}: {
-  label: string;
-  count?: number;
-  className?: string;
-}) {
+export function ShowMoreButton({ onClick }: { onClick: () => void }) {
   return (
-    <h4 className={cn("flex items-center gap-2 px-2 pt-1", className)}>
-      <span className={TYPE.eyebrow}>{label}</span>
-      {count !== undefined && <Count value={count} />}
-      <span aria-hidden className="bg-foreground/8 h-px flex-1" />
-    </h4>
+    <button
+      type="button"
+      onClick={onClick}
+      className="
+        press focus-ring text-ink-3
+        hover:bg-foreground/5 hover:text-ink
+        mx-2 cursor-pointer rounded-md py-1 text-caption transition-colors
+      "
+    >
+      Show more
+    </button>
   );
 }
 

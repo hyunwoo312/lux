@@ -4,7 +4,6 @@ import { Slider } from "@/components/ui/slider";
 
 type SpotifyVolumeProps = {
   volumePercent: number;
-  disabled: boolean;
   onChange: (volumePercent: number) => void;
   onCommit: () => void;
 };
@@ -15,29 +14,26 @@ function VolumeIcon({ volumePercent }: { volumePercent: number }) {
   return <Volume2 className="size-4" aria-hidden />;
 }
 
-export function SpotifyVolume({ volumePercent, disabled, onChange, onCommit }: SpotifyVolumeProps) {
+export function SpotifyVolume({ volumePercent, onChange, onCommit }: SpotifyVolumeProps) {
   return (
     <Popover>
       <PopoverTrigger
         aria-label={`Adjust volume, currently ${Math.round(volumePercent)} percent`}
-        disabled={disabled}
         className="
           focus-ring text-ink-3 inline-flex size-8 items-center justify-center rounded-full
           transition-colors
           hover:text-ink
-          disabled:pointer-events-none disabled:opacity-40
         "
       >
         <VolumeIcon volumePercent={volumePercent} />
       </PopoverTrigger>
-      <PopoverContent align="center" side="top" padding="panel" className={"w-44"}>
+      <PopoverContent align="center" side="top" padding="panel" className="w-44">
         <Slider
           value={[Math.round(volumePercent)]}
           min={0}
           max={100}
           step={1}
           aria-label="Volume"
-          disabled={disabled}
           onValueChange={(values) => onChange(values[0] ?? 0)}
           onValueCommit={onCommit}
         />

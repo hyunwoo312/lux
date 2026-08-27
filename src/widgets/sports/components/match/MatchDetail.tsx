@@ -51,7 +51,7 @@ function FlashBox({ on, children }: { on: boolean; children: ReactNode }) {
   return (
     <span
       className={cn(
-        "-m-0.5 rounded p-0.5 ring-1 ring-transparent transition-colors duration-300",
+        "-m-0.5 rounded-xs p-0.5 ring-1 ring-transparent transition-colors duration-300",
         on && "bg-primary/15 ring-primary/40",
       )}
     >
@@ -158,7 +158,7 @@ export function MatchDetail({ match, sport }: { match: Match; sport: Sport }) {
             <span
               aria-hidden
               className={cn(
-                "text-micro rounded font-semibold tabular-nums transition-colors duration-300",
+                "text-micro rounded-xs font-semibold tabular-nums transition-colors duration-300",
                 countChanged ? "bg-primary/15 text-primary" : "text-ink",
               )}
             >

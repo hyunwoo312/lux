@@ -30,9 +30,9 @@ export function finishedWhen(match: Match, now: number, hour12: boolean): string
 
   const since = now - start;
   if (since >= 0 && since < RECENT_MS) {
-    const hours = Math.floor(since / 3_600_000);
-    if (hours < 1) return `${Math.max(1, Math.round(since / 60_000))}m ago`;
-    return `${hours}h ago`;
+    const minutes = Math.round(since / 60_000);
+    if (minutes < 60) return `${Math.max(1, minutes)}m ago`;
+    return `${Math.round(minutes / 60)}h ago`;
   }
 
   const date = new Date(start);

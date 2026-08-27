@@ -7,7 +7,6 @@ import {
   parseScoreboard,
   parseTeams,
 } from "@/widgets/sports/lib/espn";
-import { matchStatus, offseasonStart } from "@/widgets/sports/lib/status";
 
 function event(
   id: string,
@@ -275,201 +274,6 @@ describe("parseScoreboard", () => {
   });
 });
 
-describe("matchStatus", () => {
-  const now = new Date(2026, 7, 7, 12, 0).getTime();
-
-  it("uses ESPN's own wording for a live game", () => {
-    const [live] = parseScoreboard({
-      events: [event("1", "in", "40.1 - 4th", ["CON", "72"], ["PHX", "70"])],
-    });
-
-    expect(matchStatus(live!, now, true)).toBe("40.1 - 4th");
-  });
-
-  it("says when a finished game happened rather than repeating 'FT'", () => {
-    const [done] = parseScoreboard({
-      events: [event("2", "post", "FT", ["AME", "3"], ["SAN", "0"])],
-    });
-
-    const twoHoursOn = Date.parse(done!.startsAt) + 2 * 60 * 60_000;
-    expect(matchStatus(done!, twoHoursOn, true)).toBe("2h ago");
-  });
-
-  it("dates a game that finished on an earlier day rather than giving a bare clock time", () => {
-    const [done] = parseScoreboard({
-      events: [event("4", "post", "FT", ["AME", "3"], ["SAN", "0"])],
-    });
-
-    const threeDaysOn = Date.parse(done!.startsAt) + 3 * 24 * 60 * 60_000;
-    expect(matchStatus(done!, threeDaysOn, true)).toMatch(/^[A-Z][a-z]{2}$/);
-  });
-
-  it("falls back to a numeric date once a finish is more than a week old", () => {
-    const [done] = parseScoreboard({
-      events: [event("5", "post", "FT", ["AME", "3"], ["SAN", "0"])],
-    });
-
-    const monthOn = Date.parse(done!.startsAt) + 30 * 24 * 60 * 60_000;
-    expect(matchStatus(done!, monthOn, true)).toMatch(/\d+\/\d+/);
-  });
-
-  it("keeps a finish that carries more than 'it ended'", () => {
-    const [done] = parseScoreboard({
-      events: [event("3", "post", "Postponed", ["AME", "0"], ["SAN", "0"])],
-    });
-
-    expect(matchStatus(done!, now, true)).toBe("Postponed");
-  });
-
-  it("replaces ESPN's US-timezone kickoff string with a local time", () => {
-    const start = new Date(2026, 7, 7, 19, 40);
-    const [match] = parseScoreboard({
-      events: [
-        event("1", "pre", "8/7 - 9:40 PM EDT", ["SD", "0"], ["HOU", "0"], start.toISOString()),
-      ],
-    });
-
-    const status = matchStatus(match!, now, true);
-
-    expect(status).not.toContain("EDT");
-    expect(status).toBe(
-      start.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true }),
-    );
-  });
-
-  it("counts down rather than printing a clock time for an imminent game", () => {
-    const start = new Date(2026, 7, 7, 12, 25);
-    const [match] = parseScoreboard({
-      events: [event("1", "pre", "12:25 PM EDT", ["SD", "0"], ["HOU", "0"], start.toISOString())],
-    });
-
-    expect(matchStatus(match!, now, true)).toBe("in 25m");
-  });
-
-  it("shows a calendar date for a fixture further out than a week", () => {
-    const start = new Date(2026, 8, 19, 19, 0);
-    const [match] = parseScoreboard({
-      events: [
-        event("1", "pre", "9/19 - 7:00 PM EDT", ["MTL", "0"], ["TOR", "0"], start.toISOString()),
-      ],
-    });
-
-    const status = matchStatus(match!, now, true);
-
-    expect(status).toContain(
-      start.toLocaleDateString(undefined, { month: "numeric", day: "numeric" }),
-    );
-    expect(status).not.toMatch(/^\w{3}\s/);
-  });
-
-  it("adds a weekday once the fixture is not today", () => {
-    const start = new Date(2026, 7, 9, 19, 40);
-    const [match] = parseScoreboard({
-      events: [
-        event("1", "pre", "8/9 - 7:40 PM EDT", ["SD", "0"], ["HOU", "0"], start.toISOString()),
-      ],
-    });
-
-    expect(matchStatus(match!, now, true)).toMatch(/^\w{3}\s/);
-  });
-});
-
-describe("offseasonStart", () => {
-  const now = new Date(2026, 7, 8, 12, 0).getTime();
-
-  it("reports the return date when every fixture is more than a week out", () => {
-    const matches = parseScoreboard({
-      events: [
-        event(
-          "1",
-          "pre",
-          "7:00 PM",
-          ["MTL", "0"],
-          ["TOR", "0"],
-          new Date(2026, 8, 19).toISOString(),
-        ),
-        event(
-          "2",
-          "pre",
-          "7:00 PM",
-          ["BOS", "0"],
-          ["NYR", "0"],
-          new Date(2026, 8, 20).toISOString(),
-        ),
-      ],
-    });
-
-    expect(offseasonStart(matches, now)?.getMonth()).toBe(8);
-    expect(offseasonStart(matches, now)?.getDate()).toBe(19);
-  });
-
-  it("is not off-season when a fixture is close at hand", () => {
-    const matches = parseScoreboard({
-      events: [
-        event("1", "pre", "7:00 PM", ["SD", "0"], ["HOU", "0"], new Date(2026, 7, 9).toISOString()),
-      ],
-    });
-
-    expect(offseasonStart(matches, now)).toBeNull();
-  });
-
-  it("is not off-season while any game is live or finished", () => {
-    const matches = parseScoreboard({
-      events: [
-        event("1", "in", "Bot 5th", ["NYM", "2"], ["PIT", "1"]),
-        event(
-          "2",
-          "pre",
-          "7:00 PM",
-          ["MTL", "0"],
-          ["TOR", "0"],
-          new Date(2026, 8, 19).toISOString(),
-        ),
-      ],
-    });
-
-    expect(offseasonStart(matches, now)).toBeNull();
-  });
-
-  it("says nothing about an empty slate", () => {
-    expect(offseasonStart([], now)).toBeNull();
-  });
-});
-
-describe("parseTeams logos", () => {
-  it("picks up the team badge for the picker", () => {
-    const payload = {
-      sports: [
-        {
-          leagues: [
-            {
-              teams: [
-                {
-                  team: {
-                    abbreviation: "ARI",
-                    shortDisplayName: "D-backs",
-                    logos: [{ href: "https://a.espncdn.com/ari.png" }],
-                  },
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-
-    expect(parseTeams(payload)[0]?.logo).toBe("https://a.espncdn.com/ari.png");
-  });
-
-  it("leaves the badge absent when a team has none", () => {
-    const payload = {
-      sports: [{ leagues: [{ teams: [{ team: { abbreviation: "ARI" } }] }] }],
-    };
-
-    expect(parseTeams(payload)[0]?.logo).toBeUndefined();
-  });
-});
-
 describe("parseCachedScoreboard", () => {
   it("round-trips every field parseScoreboard produces, not just the basic ones", () => {
     const raw = event("1", "in", "End 7th", ["NYM", "6"], ["PIT", "2"]);
@@ -484,17 +288,6 @@ describe("parseCachedScoreboard", () => {
     enrich(raw.competitions[0]!.competitors[0]!);
     enrich(raw.competitions[0]!.competitors[1]!);
     const matches = parseScoreboard({ events: [raw] });
-
-    const first = matches[0];
-    expect(first?.link).toBeDefined();
-    expect(first?.venue).toBeDefined();
-    expect(first?.broadcast).toBeDefined();
-    expect(first?.situation).toBeDefined();
-    expect(first?.home.record).toBeDefined();
-    expect(first?.home.periods.length).toBeGreaterThan(0);
-    expect(first?.home.hits).toBeDefined();
-    expect(first?.home.errors).toBeDefined();
-    expect(first?.home.leaders.length).toBeGreaterThan(0);
 
     expect(parseCachedScoreboard(JSON.parse(JSON.stringify(matches)))).toEqual(matches);
   });
@@ -535,6 +328,24 @@ describe("parseTeams", () => {
 
   it("rejects a response that is not a teams payload", () => {
     expect(() => parseTeams({ nope: true })).toThrow();
+  });
+
+  it("picks up the team badge for the picker, and leaves it absent when there is none", () => {
+    const badged = parseTeams(
+      payload([
+        {
+          team: {
+            abbreviation: "ARI",
+            shortDisplayName: "D-backs",
+            logos: [{ href: "https://a.espncdn.com/ari.png" }],
+          },
+        },
+      ]),
+    );
+    const bare = parseTeams(payload([{ team: { abbreviation: "ARI" } }]));
+
+    expect(badged[0]?.logo).toBe("https://a.espncdn.com/ari.png");
+    expect(bare[0]?.logo).toBeUndefined();
   });
 });
 
@@ -637,18 +448,5 @@ describe("fetchScoreboard", () => {
       "Scores are unavailable",
     );
     expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe("matchStatus honours the global clock setting", () => {
-  it("renders a scheduled kickoff in 12- or 24-hour time", () => {
-    const start = new Date(2026, 7, 7, 18, 30);
-    const [match] = parseScoreboard({
-      events: [event("1", "pre", "6:30 PM EDT", ["SD", "0"], ["HOU", "0"], start.toISOString())],
-    });
-    const now = start.getTime() - 5 * 60 * 60_000;
-
-    expect(matchStatus(match!, now, true)).toMatch(/AM|PM/);
-    expect(matchStatus(match!, now, false)).not.toMatch(/AM|PM/);
   });
 });

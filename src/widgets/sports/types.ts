@@ -5,12 +5,12 @@ export const SPORTS_TINT: AccentPreset = "violet";
 export const SPORTS_TABS = ["discover", "favorites"] as const;
 export type SportsTab = (typeof SPORTS_TABS)[number];
 
-export type SportsPanel = "leagues" | null;
-
 export type LeagueFollowing = { teams: string[]; tour?: boolean };
 
 export const MATCH_STATES = ["pre", "in", "post"] as const;
 export type MatchState = (typeof MATCH_STATES)[number];
+
+export const STATE_ORDER: Record<MatchState, number> = { in: 0, pre: 1, post: 2 };
 
 export type MatchLeader = {
   label?: string;

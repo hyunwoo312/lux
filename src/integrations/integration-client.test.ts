@@ -139,3 +139,28 @@ describe("refreshing a Spotify token", () => {
     expect(account?.token?.refreshToken).toBe("rotated-refresh-token");
   });
 });
+
+describe("provider rate limiting", () => {
+  it("skips requests while the provider is rate limited, and resumes after the window", async () => {
+    vi.useFakeTimers();
+    const limitedResponse = () =>
+      new Response("", { status: 429, headers: { "retry-after": "30" } });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(tokenResponse())
+      .mockResolvedValue(limitedResponse());
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect((await integrationFetch("spotify", API_URL)).status).toBe(429);
+
+    const callsWhenLimited = fetchMock.mock.calls.length;
+    await expect(integrationFetch("spotify", API_URL)).rejects.toThrow(/rate limited/i);
+    expect(fetchMock.mock.calls.length).toBe(callsWhenLimited);
+
+    vi.setSystemTime(Date.now() + 31_000);
+    fetchMock.mockResolvedValue(new Response("{}", { status: 200 }));
+    expect((await integrationFetch("spotify", API_URL)).status).toBe(200);
+
+    vi.useRealTimers();
+  });
+});

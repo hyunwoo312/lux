@@ -6,7 +6,6 @@ type SpotifyProgressProps = {
   leftLabel: string;
   rightLabel: string;
   showLabels?: boolean;
-  disabled: boolean;
   onChange: (positionMs: number) => void;
   onCommit: () => void;
 };
@@ -17,7 +16,6 @@ export function SpotifyProgress({
   leftLabel,
   rightLabel,
   showLabels = true,
-  disabled,
   onChange,
   onCommit,
 }: SpotifyProgressProps) {
@@ -29,7 +27,6 @@ export function SpotifyProgress({
         max={durationMs || 1}
         step={1000}
         aria-label="Track progress"
-        disabled={disabled}
         onValueChange={(values) => onChange(values[0] ?? 0)}
         onValueCommit={onCommit}
       />

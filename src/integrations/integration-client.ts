@@ -6,9 +6,14 @@ import {
   launchWebAuthFlow,
   parseAuthCodeCallback,
 } from "@/integrations/oauth";
-import { withTimeout } from "@/lib/net";
 import { IntegrationReconnectRequiredError } from "@/integrations/errors";
-import { InvalidResponseError, TemporaryAuthError } from "@/lib/net";
+import {
+  InvalidResponseError,
+  RateLimitError,
+  rateLimitError,
+  TemporaryAuthError,
+  withTimeout,
+} from "@/lib/net";
 import { anilistProvider } from "@/integrations/providers/anilist";
 import { githubProvider } from "@/integrations/providers/github";
 import { googleProvider } from "@/integrations/providers/google";
@@ -28,6 +33,8 @@ import type {
 } from "@/integrations/types";
 
 const TOKEN_REFRESH_BUFFER_MS = 300_000;
+
+const rateLimitedUntil = new Map<IntegrationProviderId, number>();
 
 const providers: Record<IntegrationProviderId, IntegrationProvider> = {
   google: googleProvider,
@@ -259,6 +266,24 @@ async function markProviderNeedsReconnect(providerId: IntegrationProviderId): Pr
   }
 }
 
+function assertNotRateLimited(providerId: IntegrationProviderId): void {
+  const until = rateLimitedUntil.get(providerId);
+  if (until === undefined) return;
+  const waitMs = until - Date.now();
+  if (waitMs <= 0) {
+    rateLimitedUntil.delete(providerId);
+    return;
+  }
+  throw new RateLimitError(waitMs);
+}
+
+function recordRateLimit(providerId: IntegrationProviderId, response: Response): Response {
+  const limited = rateLimitError(response);
+  if (limited) rateLimitedUntil.set(providerId, Date.now() + limited.retryAfterMs);
+  else rateLimitedUntil.delete(providerId);
+  return response;
+}
+
 function authorize(init: RequestInit, accessToken: string): RequestInit {
   const headers = new Headers(init.headers);
   headers.set("Authorization", `Bearer ${accessToken}`);
@@ -270,15 +295,17 @@ export async function integrationFetch(
   input: RequestInfo | URL,
   init: RequestInit = {},
 ): Promise<Response> {
+  assertNotRateLimited(providerId);
+
   const accessToken = await getProviderAccessToken(providerId);
-  const response = await fetch(input, authorize(init, accessToken));
+  const response = recordRateLimit(providerId, await fetch(input, authorize(init, accessToken)));
 
   if (response.status !== 401) {
     return response;
   }
 
   const refreshedToken = await getProviderAccessToken(providerId, accessToken);
-  const retried = await fetch(input, authorize(init, refreshedToken));
+  const retried = recordRateLimit(providerId, await fetch(input, authorize(init, refreshedToken)));
 
   if (retried.status === 401) {
     await markProviderNeedsReconnect(providerId);

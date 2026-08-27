@@ -12,14 +12,10 @@ import { useItemActions } from "@/widgets/quick-access/hooks/useItemActions";
 import { useHistorySearch } from "@/widgets/quick-access/hooks/useHistorySearch";
 import { SearchField } from "@/components/SearchField";
 import { filterItems } from "@/widgets/quick-access/lib/search";
-import type { ItemSource, QuickAccessTab } from "@/widgets/quick-access/types";
+import type { QuickAccessTab } from "@/widgets/quick-access/types";
 import { useQuickAccess } from "@/widgets/quick-access/useQuickAccessStore";
 
 type BrowserTabKey = Exclude<QuickAccessTab, "home">;
-
-const TAB_NOUN: Record<Exclude<BrowserTabKey, "bookmarks">, string> = {
-  history: "recent sites",
-};
 
 const TAB_GATE: Record<
   BrowserTabKey,
@@ -27,7 +23,6 @@ const TAB_GATE: Record<
     permissions: chrome.runtime.ManifestPermission[];
     highlight: chrome.runtime.ManifestPermission;
     message: string;
-    partlyGrantedMessage?: string;
   }
 > = {
   bookmarks: {
@@ -50,53 +45,51 @@ type BrowserTabProps = {
 export function BrowserTab({ tab, editing }: BrowserTabProps) {
   const gate = TAB_GATE[tab];
   const granted = useGrantedPermissions();
+  if (granted === null) return null;
   const missing = gate.permissions.filter((permission) => !granted.has(permission));
 
   if (isPermissionsManageable() && missing.length > 0) {
-    const partlyGranted = missing.length < gate.permissions.length;
     return (
       <PermissionPrompt
         permissions={gate.permissions}
-        message={
-          partlyGranted && gate.partlyGrantedMessage ? gate.partlyGrantedMessage : gate.message
-        }
+        message={gate.message}
         onOpenSettings={() => useSettingsStore.getState().openPermissions(gate.highlight)}
       />
     );
   }
 
   if (tab === "bookmarks") return <BookmarksView editing={editing} />;
-  return <ItemsView tab={tab} editing={editing} />;
+  return <HistoryView editing={editing} />;
 }
 
-function ItemsView({ tab, editing }: { tab: ItemSource & BrowserTabKey; editing: boolean }) {
-  const state = useBrowserItems(tab);
+function HistoryView({ editing }: { editing: boolean }) {
+  const state = useBrowserItems("history");
   const view = useQuickAccess((d) => d.view);
   const { pinnedUrls, openBehavior, open, togglePin } = useItemActions();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
-  const searched = useHistorySearch(tab === "history" ? query : "");
+  const searched = useHistorySearch(query);
 
   const items =
     state.status === "ready"
-      ? tab === "history" && query.trim()
+      ? query.trim()
         ? (searched ?? [])
         : filterItems(state.items, query)
       : [];
-  const searching = tab === "history" && Boolean(query.trim()) && searched === null;
+  const searching = Boolean(query.trim()) && searched === null;
 
   return (
     <div className="flex h-full flex-col">
       <div className="shrink-0 px-0.5 pt-1 pb-1.5">
-        <SearchField value={query} onChange={setQuery} label={`Search ${TAB_NOUN[tab]}`} />
+        <SearchField value={query} onChange={setQuery} label="Search recent sites" />
       </div>
       <div ref={scrollRef} className="scroll-fade min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
-        {state.status === "loading" && <StateMessage message={`Loading ${TAB_NOUN[tab]}…`} />}
+        {state.status === "loading" && <StateMessage message="Loading recent sites…" />}
         {state.status === "error" && (
           <StateMessage
             icon={AlertCircle}
             tone="error"
-            message={`Couldn’t load ${TAB_NOUN[tab]}.`}
+            message="Couldn’t load recent sites."
             action={<RetryButton onRetry={state.retry} retrying={false} />}
           />
         )}
@@ -105,9 +98,7 @@ function ItemsView({ tab, editing }: { tab: ItemSource & BrowserTabKey; editing:
             <StateMessage message="Searching…" />
           ) : items.length === 0 ? (
             <StateMessage
-              message={
-                query.trim() ? `No matches for “${query.trim()}”` : `No ${TAB_NOUN[tab]} yet`
-              }
+              message={query.trim() ? `No matches for “${query.trim()}”` : "No recent sites yet"}
             />
           ) : (
             <BrowserList

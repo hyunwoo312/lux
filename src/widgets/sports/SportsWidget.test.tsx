@@ -13,22 +13,15 @@ import { SportsWidget } from "@/widgets/sports/SportsWidget";
 import { useSportsStore } from "@/widgets/sports/useSportsStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import { clearPolledResources } from "@/widgets/core/usePolledResource";
-import { match, team } from "@/widgets/sports/lib/fixtures";
+import { match, seedSportsInstance, team } from "@/widgets/sports/lib/fixtures";
 
 const fetchMock = vi.mocked(fetchScoreboard);
 
 function renderWidget(instanceId: string, leagueId: string, teams: string[] = []) {
-  useSportsStore.setState({
-    byInstance: {
-      [instanceId]: {
-        tab: "discover" as const,
-        collapsed: [],
-        leagueId,
-        following: { [leagueId]: { teams } },
-        states: ["in", "pre", "post"] as const,
-        window: "today" as const,
-      },
-    },
+  seedSportsInstance(instanceId, {
+    leagueId,
+    following: { [leagueId]: { teams } },
+    window: "today",
   });
   render(
     <WidgetInstanceContext.Provider value={instanceId}>

@@ -48,7 +48,7 @@ export function DiscoverTab() {
 
       <LeagueBar
         league={league}
-        panel={layer === "leagues" ? "leagues" : null}
+        leaguesOpen={layer === "leagues"}
         onOpenSports={() => openLeagues(null)}
         onOpenLeagues={() => openLeagues(league.sport)}
       />

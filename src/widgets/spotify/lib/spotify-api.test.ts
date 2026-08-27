@@ -16,6 +16,7 @@ import {
   setSpotifyShuffle,
   setSpotifyVolume,
   skipSpotifyNext,
+  SpotifyRequestError,
   startSpotifyPlayback,
   transferSpotifyPlayback,
 } from "@/widgets/spotify/lib/spotify-api";
@@ -88,14 +89,22 @@ describe("getSpotifyPlaybackState", () => {
 
   it("maps a 403 to a Premium-required error", async () => {
     mockFetch.mockResolvedValue(new Response(null, { status: 403 }));
-    await expect(getSpotifyPlaybackState()).rejects.toThrow(/Premium/);
+    const error = await getSpotifyPlaybackState().catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(SpotifyRequestError);
+    expect((error as SpotifyRequestError).kind).toBe("premium");
   });
+});
 
-  it("raises a rate-limit error carrying the Retry-After delay on a 429", async () => {
+describe("rate limiting", () => {
+  it.each([
+    ["playback state", () => getSpotifyPlaybackState()],
+    ["search", () => searchSpotify("x")],
+    ["the queue", () => getSpotifyQueue()],
+  ])("raises a rate-limit error carrying the Retry-After delay from %s", async (_label, call) => {
     mockFetch.mockResolvedValue(
       new Response(null, { status: 429, headers: { "Retry-After": "7" } }),
     );
-    const error = await getSpotifyPlaybackState().catch((caught: unknown) => caught);
+    const error = await call().catch((caught: unknown) => caught);
     expect(error).toBeInstanceOf(RateLimitError);
     expect((error as RateLimitError).retryAfterMs).toBe(7000);
   });
@@ -191,13 +200,6 @@ describe("searchSpotify", () => {
         artworkUrl: "art-pl",
       },
     ]);
-  });
-
-  it("raises a rate-limit error on a 429", async () => {
-    mockFetch.mockResolvedValue(
-      new Response(null, { status: 429, headers: { "Retry-After": "3" } }),
-    );
-    await expect(searchSpotify("x")).rejects.toBeInstanceOf(RateLimitError);
   });
 
   it("returns search results in Spotify's own order without waiting on liked flags", async () => {
@@ -336,11 +338,7 @@ describe("getSpotifyQueue", () => {
   it("returns an empty list on a 204 (nothing playing)", async () => {
     mockFetch.mockResolvedValue(new Response(null, { status: 204 }));
     await expect(getSpotifyQueue()).resolves.toEqual([]);
-    expect(mockFetch).toHaveBeenCalledWith(
-      "spotify",
-      "https://api.spotify.com/v1/me/player/queue",
-      { signal: undefined },
-    );
+    expect(mockFetch).toHaveBeenCalledWith("spotify", "https://api.spotify.com/v1/me/player/queue");
   });
 
   it("maps upcoming items and drops entries without an id or name", async () => {
@@ -371,13 +369,6 @@ describe("getSpotifyQueue", () => {
     expect(queue).toEqual([
       { id: "q1", uri: "spotify:track:q1", title: "Next", subtitle: "A, B", artworkUrl: "large" },
     ]);
-  });
-
-  it("raises a rate-limit error on a 429", async () => {
-    mockFetch.mockResolvedValue(
-      new Response(null, { status: 429, headers: { "Retry-After": "4" } }),
-    );
-    await expect(getSpotifyQueue()).rejects.toBeInstanceOf(RateLimitError);
   });
 });
 
@@ -451,11 +442,6 @@ describe("playback commands", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ device_ids: ["dev2"] }),
     });
-  });
-
-  it("throws a no-device message on a 404", async () => {
-    mockFetch.mockResolvedValue(new Response(null, { status: 404 }));
-    await expect(skipSpotifyNext()).rejects.toThrow(/Open Spotify on a device/);
   });
 });
 

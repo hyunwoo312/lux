@@ -1,10 +1,8 @@
 import { useEffect, useId, useState } from "react";
-import { RemoteImage } from "@/components/media/RemoteImage";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
-import { Check, Heart, ListPlus, Music, Play } from "lucide-react";
 import { ExpandingSearch } from "@/components/ExpandingSearch";
-import { Tooltip } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { SpotifyDeviceChooser } from "@/widgets/spotify/components/SpotifyDeviceChooser";
+import { SpotifySearchRow } from "@/widgets/spotify/components/SpotifySearchRow";
 import { useSpotifySearchResults } from "@/widgets/spotify/hooks/useSpotifySearchResults";
 import {
   addSpotifyToQueue,
@@ -179,39 +177,13 @@ export function SpotifySearch() {
       activeDescendantId={hasOptions ? optionId(active) : undefined}
       className="-ml-1.5"
     >
-      <div
-        className={cn("border-input bg-popover w-full overflow-hidden rounded-sm border shadow-md")}
-      >
+      <div className="border-input bg-popover w-full overflow-hidden rounded-sm border shadow-md">
         <div className="max-h-72 overflow-y-auto p-1">
-          {devices.length === 0 && (
-            <p className="border-border/60 text-ink-3 border-b px-2 py-2 text-caption">
-              Open Spotify on a device to start playback.
-            </p>
-          )}
-          {needsDeviceChoice && (
-            <div
-              className="
-                border-border/60 flex flex-wrap items-center gap-1 border-b px-2 pt-1.5 pb-2
-              "
-            >
-              <span className="text-ink-3 text-micro mr-0.5">Play on</span>
-              {devices.map((device) => (
-                <button
-                  key={device.id}
-                  type="button"
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => setTargetDeviceId(device.id)}
-                  className="
-                    press cursor-pointer focus-ring border-border text-ink-3 rounded-full border
-                    px-2 py-0.5 text-micro
-                    hover:text-ink hover:border-foreground/40
-                  "
-                >
-                  {device.name}
-                </button>
-              ))}
-            </div>
-          )}
+          <SpotifyDeviceChooser
+            devices={devices}
+            needsChoice={needsDeviceChoice}
+            onSelect={setTargetDeviceId}
+          />
           {error ? (
             <p className="text-ink-3 px-2 py-2 text-caption">{error}</p>
           ) : isSearch && searching && rows.length === 0 ? (
@@ -227,106 +199,28 @@ export function SpotifySearch() {
           ) : (
             <ul role="listbox" id={listboxId} aria-label="Search results" className="flex flex-col">
               {groups.map((group) => (
-                <li key={group.key}>
+                <li key={group.key} role="group" aria-label={group.label}>
                   <p
+                    aria-hidden
                     className="
                       text-ink-3 px-2 pt-2 pb-1 text-micro font-medium tracking-wide uppercase
                     "
                   >
                     {group.label}
                   </p>
-                  <ul className="flex flex-col gap-0.5">
+                  <ul role="none" className="flex flex-col gap-0.5">
                     {group.items.map(({ result, index }) => (
-                      <li key={result.id}>
-                        <div
+                      <li key={result.id} role="none">
+                        <SpotifySearchRow
                           id={optionId(index)}
-                          role="option"
-                          aria-selected={index === active}
-                          onMouseMove={() => setActive(index)}
-                          onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => pick(result)}
-                          className={cn(
-                            `
-                              group flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2
-                              py-1.5 text-left transition-colors
-                            `,
-                            index === active ? "bg-accent text-primary" : "hover:bg-accent/60",
-                          )}
-                        >
-                          {result.artworkUrl ? (
-                            <RemoteImage
-                              src={result.artworkUrl}
-                              alt=""
-                              className="size-9 shrink-0 rounded-md object-cover"
-                            />
-                          ) : (
-                            <span
-                              className="
-                                bg-foreground/5 grid size-9 shrink-0 place-items-center rounded-md
-                              "
-                            >
-                              <Music className="text-ink-3 size-4" aria-hidden />
-                            </span>
-                          )}
-                          <span className="flex min-w-0 flex-1 flex-col">
-                            <span className="text-ink truncate text-body leading-tight">
-                              {result.title}
-                            </span>
-                            <span className="text-ink-3 truncate text-caption leading-tight">
-                              {result.subtitle}
-                            </span>
-                          </span>
-                          {result.liked && (
-                            <Heart
-                              className="text-primary size-3.5 shrink-0 fill-current"
-                              aria-hidden
-                            />
-                          )}
-                          {result.kind === "track" && (
-                            <Tooltip
-                              content={queuedIds.has(result.id) ? "Added to queue" : "Add to queue"}
-                              side="top"
-                            >
-                              <button
-                                type="button"
-                                aria-label={
-                                  queuedIds.has(result.id) ? "Added to queue" : "Add to queue"
-                                }
-                                disabled={queueingId === result.id || queuedIds.has(result.id)}
-                                onMouseDown={(event) => event.preventDefault()}
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  addToQueue(result);
-                                }}
-                                className={cn(
-                                  "press cursor-pointer",
-                                  `
-                                    focus-ring grid size-6 shrink-0 place-items-center rounded-sm
-                                    transition-colors
-                                    disabled:pointer-events-none
-                                  `,
-                                  queuedIds.has(result.id)
-                                    ? "text-primary"
-                                    : "text-ink-3 hover:text-ink",
-                                  queueingId === result.id && "opacity-50",
-                                )}
-                              >
-                                {queuedIds.has(result.id) ? (
-                                  <Check className="size-3.5" aria-hidden />
-                                ) : (
-                                  <ListPlus className="size-3.5" aria-hidden />
-                                )}
-                              </button>
-                            </Tooltip>
-                          )}
-                          <Play
-                            className={cn(
-                              "size-3.5 shrink-0 transition-opacity",
-                              index === active ? "opacity-100" : "opacity-0",
-                            )}
-                            aria-hidden
-                          />
-                        </div>
+                          result={result}
+                          active={index === active}
+                          queueing={queueingId === result.id}
+                          queued={queuedIds.has(result.id)}
+                          onActivate={() => setActive(index)}
+                          onPick={() => pick(result)}
+                          onAddToQueue={() => addToQueue(result)}
+                        />
                       </li>
                     ))}
                   </ul>

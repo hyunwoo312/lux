@@ -2,6 +2,7 @@ import { EASE_OUT } from "@/lib/motion";
 import { type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useSettingsStore } from "@/settings";
+import { Button } from "@/components/ui/button";
 import { useElementSize } from "@/hooks/useElementSize";
 import { SpotifyDeviceMenu } from "@/widgets/spotify/components/SpotifyDeviceMenu";
 import { SpotifyEmptyState } from "@/widgets/spotify/components/SpotifyEmptyState";
@@ -11,41 +12,28 @@ import { SpotifyQueuePanel } from "@/widgets/spotify/components/SpotifyQueuePane
 import { useSpotifyConnection } from "@/widgets/spotify/hooks/useSpotifyConnection";
 import { useSpotifyPlayback } from "@/widgets/spotify/hooks/useSpotifyPlayback";
 import { useSpotify } from "@/widgets/spotify/useSpotifyStore";
-import type { ElementSize } from "@/hooks/useElementSize";
-import type { SpotifyResponsiveView } from "@/widgets/spotify/types";
+import type { SpotifyPlaybackError } from "@/widgets/spotify/types";
 
 const STACKED_MIN_HEIGHT = 260;
 const ROOMY_MIN_WIDTH = 320;
 
-function getViewMode({ height }: ElementSize): SpotifyResponsiveView {
-  return height >= STACKED_MIN_HEIGHT ? "stacked" : "bar";
-}
+type ErrorCopy = { title: string; message: string };
 
-type ErrorCopy = { title: string; message: string; reconnect: boolean };
-
-function getErrorCopy(error: string): ErrorCopy {
-  if (error.includes("Premium")) {
-    return {
-      title: "Premium required",
-      message: "Spotify requires Premium to control playback from other apps.",
-      reconnect: false,
-    };
+function getErrorCopy(error: SpotifyPlaybackError): ErrorCopy {
+  switch (error.kind) {
+    case "premium":
+      return {
+        title: "Premium required",
+        message: "Spotify requires Premium to control playback from other apps.",
+      };
+    case "noDevice":
+      return {
+        title: "No active device",
+        message: "Open Spotify on a device, start playback, then refresh.",
+      };
+    case "unknown":
+      return { title: "Spotify unavailable", message: error.message };
   }
-  if (error.includes("Open Spotify on a device")) {
-    return {
-      title: "No active device",
-      message: "Open Spotify on a device, start playback, then refresh.",
-      reconnect: false,
-    };
-  }
-  if (error.includes("reconnected") || error.includes("not connected")) {
-    return {
-      title: "Reconnect Spotify",
-      message: "Your Spotify session needs a fresh connection.",
-      reconnect: true,
-    };
-  }
-  return { title: "Spotify unavailable", message: error, reconnect: false };
 }
 
 export function SpotifyWidget() {
@@ -54,11 +42,11 @@ export function SpotifyWidget() {
   const { account, loaded } = useSpotifyConnection();
   const openAccounts = () => useSettingsStore.getState().openSettings("accounts");
   const connected = account?.status === "connected";
-  const controller = useSpotifyPlayback(Boolean(connected));
+  const controller = useSpotifyPlayback(connected);
   const timeDisplayMode = useSpotify((d) => d.timeDisplayMode);
   const queueView = useSpotify((d) => d.queueView);
 
-  const view = getViewMode(size);
+  const view = size.height >= STACKED_MIN_HEIGHT ? "stacked" : "bar";
   const roomy = size.width >= ROOMY_MIN_WIDTH;
 
   let content: ReactNode;
@@ -69,7 +57,7 @@ export function SpotifyWidget() {
       <SpotifyEmptyState
         title="Connect Spotify"
         message="Connect Spotify to see and control playback."
-        action={{ label: "Connect Spotify", onClick: openAccounts }}
+        action={<Button onClick={openAccounts}>Connect Spotify</Button>}
       />
     );
   } else if (!connected) {
@@ -77,7 +65,7 @@ export function SpotifyWidget() {
       <SpotifyEmptyState
         title="Reconnect Spotify"
         message={account.lastError ?? "Spotify needs a fresh connection."}
-        action={{ label: "Reconnect", onClick: openAccounts }}
+        action={<Button onClick={openAccounts}>Reconnect</Button>}
       />
     );
   } else if (controller.isLoading) {
@@ -89,13 +77,12 @@ export function SpotifyWidget() {
         title={copy.title}
         message={copy.message}
         action={
-          copy.reconnect
-            ? { label: "Reconnect", onClick: openAccounts }
-            : {
-                label: controller.pendingActions.has("refresh") ? "Refreshing…" : "Retry",
-                onClick: () => void controller.refresh(),
-                disabled: controller.pendingActions.has("refresh"),
-              }
+          <Button
+            onClick={() => void controller.refresh()}
+            disabled={controller.pendingActions.has("refresh")}
+          >
+            {controller.pendingActions.has("refresh") ? "Refreshing…" : "Retry"}
+          </Button>
         }
       />
     );
@@ -135,19 +122,24 @@ export function SpotifyWidget() {
       <SpotifyEmptyState
         title="Nothing playing"
         message="Pick a device, or start Spotify anywhere to begin."
-        action={{
-          label: controller.pendingActions.has("refresh") ? "Refreshing…" : "Refresh",
-          onClick: () => void controller.refresh(),
-          disabled: controller.pendingActions.has("refresh"),
-        }}
-        extra={
-          <SpotifyDeviceMenu
-            devices={controller.deviceOptions}
-            activeId=""
-            disabled={false}
-            onSelect={controller.transferDevice}
-            onOpen={() => void controller.loadDevices()}
-          />
+        action={
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => void controller.refresh()}
+              disabled={controller.pendingActions.has("refresh")}
+            >
+              {controller.pendingActions.has("refresh") ? "Refreshing…" : "Refresh"}
+            </Button>
+            <SpotifyDeviceMenu
+              devices={controller.deviceOptions}
+              activeId=""
+              disabled={false}
+              loading={controller.devicesLoading}
+              error={controller.devicesError}
+              onSelect={controller.transferDevice}
+              onOpen={() => void controller.loadDevices()}
+            />
+          </div>
         }
       />
     );

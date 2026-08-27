@@ -6,7 +6,6 @@ import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
-import { firstGrapheme } from "@/widgets/quick-access/lib/icon";
 import { hostnameOf, normalizeUrl } from "@/widgets/quick-access/lib/url";
 import { showToast } from "@/stores/useToastStore";
 import type {
@@ -39,17 +38,11 @@ type QuickAccessData = {
 type QuickAccessState = {
   byInstance: Record<string, QuickAccessData>;
   removed: Record<string, RemovedLink | undefined>;
-  addLink: (instanceId: string, title: string, url: string, icon: string) => LinkResult;
-  editLink: (
-    instanceId: string,
-    id: string,
-    title: string,
-    url: string,
-    icon: string,
-  ) => LinkResult;
+  addLink: (instanceId: string, title: string, url: string) => LinkResult;
+  editLink: (instanceId: string, id: string, title: string, url: string) => LinkResult;
   removeLink: (instanceId: string, id: string) => void;
   undoRemove: (instanceId: string) => void;
-  dismissRemoved: (instanceId: string, linkId?: string) => void;
+  dismissRemoved: (instanceId: string, linkId: string) => void;
   togglePin: (instanceId: string, title: string, url: string) => void;
   setLinks: (instanceId: string, links: QuickLink[]) => void;
   setActiveTab: (instanceId: string, tab: QuickAccessTab) => void;
@@ -144,7 +137,7 @@ export const useQuickAccessStore = create<QuickAccessState>()(
     (set, get) => ({
       byInstance: {},
       removed: {},
-      addLink: (instanceId, title, url, icon) => {
+      addLink: (instanceId, title, url) => {
         const normalized = normalizeUrl(url);
         if (!normalized) return "invalid";
         const data = get().byInstance[instanceId] ?? DEFAULT_DATA;
@@ -153,7 +146,6 @@ export const useQuickAccessStore = create<QuickAccessState>()(
           id: crypto.randomUUID(),
           title: title.trim() || hostnameOf(normalized),
           url: normalized,
-          icon: firstGrapheme(icon) || undefined,
         };
         set((state) =>
           update(state, instanceId, (current) => ({
@@ -163,7 +155,7 @@ export const useQuickAccessStore = create<QuickAccessState>()(
         );
         return "ok";
       },
-      editLink: (instanceId, id, title, url, icon) => {
+      editLink: (instanceId, id, title, url) => {
         const normalized = normalizeUrl(url);
         if (!normalized) return "invalid";
         const data = get().byInstance[instanceId] ?? DEFAULT_DATA;
@@ -174,12 +166,7 @@ export const useQuickAccessStore = create<QuickAccessState>()(
             ...current,
             links: current.links.map((link) =>
               link.id === id
-                ? {
-                    ...link,
-                    title: title.trim() || hostnameOf(normalized),
-                    url: normalized,
-                    icon: firstGrapheme(icon) || undefined,
-                  }
+                ? { ...link, title: title.trim() || hostnameOf(normalized), url: normalized }
                 : link,
             ),
           })),
@@ -216,26 +203,27 @@ export const useQuickAccessStore = create<QuickAccessState>()(
       dismissRemoved: (instanceId, linkId) =>
         set((state) => {
           const entry = state.removed[instanceId];
-          if (!entry || (linkId !== undefined && entry.link.id !== linkId)) return state;
+          if (!entry || entry.link.id !== linkId) return state;
           return { removed: { ...state.removed, [instanceId]: undefined } };
         }),
-      togglePin: (instanceId, title, url) =>
-        set((state) => {
-          const normalized = normalizeUrl(url);
-          if (!normalized) return state;
-          const data = state.byInstance[instanceId] ?? DEFAULT_DATA;
-          const existing = data.links.find((link) => link.url === normalized);
-          if (existing) return removeById(state, instanceId, existing.id);
-          const link: QuickLink = {
-            id: crypto.randomUUID(),
-            title: title.trim() || hostnameOf(normalized),
-            url: normalized,
-          };
-          return update(state, instanceId, (current) => ({
-            ...current,
-            links: [...current.links, link],
-          }));
-        }),
+      togglePin: (instanceId, title, url) => {
+        const normalized = normalizeUrl(url);
+        if (!normalized) return;
+        const data = get().byInstance[instanceId] ?? DEFAULT_DATA;
+        const existing = data.links.find((link) => link.url === normalized);
+        if (existing) {
+          get().removeLink(instanceId, existing.id);
+          return;
+        }
+        const link: QuickLink = {
+          id: crypto.randomUUID(),
+          title: title.trim() || hostnameOf(normalized),
+          url: normalized,
+        };
+        set((state) =>
+          update(state, instanceId, (current) => ({ ...current, links: [...current.links, link] })),
+        );
+      },
       setLinks: (instanceId, links) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, links }))),
       setActiveTab: (instanceId, activeTab) =>

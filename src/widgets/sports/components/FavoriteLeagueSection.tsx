@@ -33,6 +33,7 @@ export function FavoriteLeagueSection({
   const { state } = useLeagueScoreboard(league, dayWindow);
   const clock24h = useAppSettingsStore((s) => s.clock24h);
   const open = useSports((d) => !d.collapsed.includes(league.id));
+  const states = useSports((d) => d.states);
   const setSectionOpen = useSportsStore((s) => s.setSectionOpen);
 
   const all: Match[] = state.status === "success" ? state.data : [];
@@ -48,7 +49,8 @@ export function FavoriteLeagueSection({
 
   if (needle !== "" && shownTeams.length === 0) return null;
 
-  const { matches, idle } = followedView(all, all, shownTeams);
+  const rows = all.filter((match) => states.includes(match.state));
+  const { matches, idle } = followedView(rows, all, shownTeams);
 
   return (
     <CollapsibleSection
@@ -58,7 +60,7 @@ export function FavoriteLeagueSection({
       open={open}
       onToggle={(next) => setSectionOpen(instanceId, league.id, next)}
     >
-      {state.status === "loading" && matches.length === 0 ? (
+      {state.status === "loading" ? (
         <p className="text-ink-3 px-2 text-caption">Loading…</p>
       ) : state.status === "error" ? (
         <p className="text-ink-3 px-2 text-caption">Scores unavailable.</p>

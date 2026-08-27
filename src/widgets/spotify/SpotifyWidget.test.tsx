@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 vi.mock("@/widgets/spotify/lib/spotify-api", () => ({
   getSpotifyPlaybackState: vi.fn(),
   getSpotifyDevices: vi.fn().mockResolvedValue([]),
   getSpotifySavedTrackFlags: vi.fn().mockResolvedValue(new Set<string>()),
   getSpotifyContextName: vi.fn().mockResolvedValue(null),
-  SpotifyRateLimitError: class SpotifyRateLimitError extends Error {},
+  SpotifyRequestError: class SpotifyRequestError extends Error {},
   pauseSpotifyPlayback: vi.fn(),
   resumeSpotifyPlayback: vi.fn(),
   skipSpotifyNext: vi.fn(),
@@ -97,6 +97,8 @@ beforeEach(() => {
   useSpotifyPlaybackStore.setState({
     playback: null,
     devices: [],
+    devicesLoading: false,
+    devicesError: null,
     pendingActions: new Set(),
     volumeDraft: null,
     progressDraftMs: null,
@@ -134,5 +136,15 @@ describe("SpotifyWidget", () => {
     await waitFor(() => expect(playbackMock.mock.calls.length).toBeGreaterThan(1));
 
     expect(savedFlagsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("explains an empty device list instead of showing an empty menu", async () => {
+    setAccount("connected");
+    renderWidget();
+
+    await screen.findByText("Nothing playing");
+    fireEvent.click(screen.getByRole("button", { name: "Choose playback device" }));
+
+    expect(await screen.findByText("Open Spotify on a device to see it here.")).toBeInTheDocument();
   });
 });
