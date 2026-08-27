@@ -139,18 +139,6 @@ describe("normalizeGoogleEvent", () => {
 });
 
 describe("normalizeGoogleCalendar", () => {
-  it("selects the primary calendar when nothing is stored", () => {
-    const calendar = normalizeGoogleCalendar({ id: "p", summary: "Primary", primary: true }, []);
-    expect(calendar).toMatchObject({ id: "p", primary: true, selected: true });
-  });
-
-  it("respects stored selection over primary", () => {
-    const calendar = normalizeGoogleCalendar({ id: "p", summary: "Primary", primary: true }, [
-      "other",
-    ]);
-    expect(calendar?.selected).toBe(false);
-  });
-
   it("drops calendars missing an id or summary", () => {
     expect(normalizeGoogleCalendar({ summary: "No id" })).toBeNull();
     expect(normalizeGoogleCalendar({ id: "no-summary" })).toBeNull();

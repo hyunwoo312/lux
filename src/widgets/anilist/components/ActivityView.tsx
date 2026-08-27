@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ROW } from "@/lib/row";
 import { Heart, Users } from "lucide-react";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
@@ -9,7 +9,6 @@ import { fetchActivityPage, toggleActivityLike } from "@/widgets/anilist/lib/api
 import { parseCachedActivity } from "@/widgets/anilist/lib/api/cache";
 import { writeFailureMessage } from "@/widgets/anilist/lib/load-failure";
 import { FeedList } from "@/widgets/anilist/components/FeedList";
-import { FeedThumb } from "@/widgets/anilist/components/FeedThumb";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
 import { AnilistWriteNotice } from "@/widgets/anilist/components/AnilistWriteNotice";
@@ -51,10 +50,8 @@ export function ActivityView({
 
   const [likes, setLikes] = useState<Record<number, boolean>>({});
   const [likeError, setLikeError] = useState("");
-  const likesRef = useRef(likes);
-  likesRef.current = likes;
-  const toggleLike = useCallback((activity: AnilistActivity) => {
-    const current = likesRef.current[activity.id] ?? activity.isLiked;
+  const toggleLike = (activity: AnilistActivity) => {
+    const current = likes[activity.id] ?? activity.isLiked;
     setLikes((prev) => ({ ...prev, [activity.id]: !current }));
     setLikeError("");
     toggleActivityLike(activity.id).then(
@@ -64,7 +61,7 @@ export function ActivityView({
         setLikeError(writeFailureMessage(error, "Couldn’t update your like. Try again."));
       },
     );
-  }, []);
+  };
 
   const items = state.status === "success" ? state.items : [];
   const pagedIn = items.length > ANILIST_PAGE_SIZE;
@@ -172,7 +169,13 @@ function ActivityRow({
             />
           </span>
         ) : (
-          <FeedThumb variant="avatar" src={activity.userAvatar} title={activity.userName} />
+          <span className="flex h-12 w-9 shrink-0 items-center justify-center">
+            <MediaCover
+              src={activity.userAvatar}
+              title={activity.userName}
+              className="size-9 rounded-full"
+            />
+          </span>
         )}
         <div className="min-w-0 flex-1">
           <p className="text-ink line-clamp-2 text-caption leading-snug">

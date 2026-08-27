@@ -35,6 +35,8 @@ export function FilterMenu<T extends string>({
   const reduced = useReducedMotion();
   const active = options.find((option) => option.value === value) ?? options[0];
   const ActiveIcon = active?.icon ?? Filter;
+  const enterTransition = { duration: reduced ? 0 : DURATION.fast, ease: EASE_OUT };
+  const exitTransition = { duration: reduced ? 0 : DURATION.instant, ease: EASE_OUT };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -45,16 +47,19 @@ export function FilterMenu<T extends string>({
               key={value}
               className="flex"
               initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.5, rotate: -20 }}
-              animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.5, rotate: 20 }}
-              transition={{ duration: reduced ? 0 : DURATION.fast, ease: EASE_OUT }}
+              animate={{ opacity: 1, scale: 1, rotate: 0, transition: enterTransition }}
+              exit={
+                reduced
+                  ? { opacity: 0, transition: exitTransition }
+                  : { opacity: 0, scale: 0.5, rotate: 20, transition: exitTransition }
+              }
             >
               <ActiveIcon className="size-3.5" aria-hidden />
             </motion.span>
           </AnimatePresence>
         </PopoverTrigger>
       </Tooltip>
-      <PopoverContent align="end" className={"w-auto min-w-40"}>
+      <PopoverContent align="end" className="w-auto min-w-40">
         <div role="menu" aria-label={ariaLabel} className="flex flex-col">
           {options.map((option, index) => {
             const Icon = option.icon;
@@ -71,11 +76,7 @@ export function FilterMenu<T extends string>({
                 }}
                 initial={reduced ? false : { opacity: 0, x: -4 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{
-                  duration: reduced ? 0 : DURATION.fast,
-                  delay: reduced ? 0 : index * STAGGER_STEP,
-                  ease: EASE_OUT,
-                }}
+                transition={{ ...enterTransition, delay: reduced ? 0 : index * STAGGER_STEP }}
                 className={cn(ROW.option, "text-ink", selected && "font-medium")}
               >
                 <Icon className="size-3.5 shrink-0 opacity-70" aria-hidden />

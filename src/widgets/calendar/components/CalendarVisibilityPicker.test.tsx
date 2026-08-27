@@ -4,8 +4,11 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIntegrationStore } from "@/integrations";
 import { CalendarVisibilityPicker } from "@/widgets/calendar/components/CalendarVisibilityPicker";
-import { getDateKey } from "@/widgets/calendar/lib/dates";
-import { useCalendarStore, type CalendarData } from "@/widgets/calendar/useCalendarStore";
+import {
+  createDefaultData,
+  useCalendarStore,
+  type CalendarData,
+} from "@/widgets/calendar/useCalendarStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import type { ConnectedCalendar } from "@/widgets/calendar/types";
 
@@ -19,28 +22,7 @@ function calendar(id: string, summary: string): ConnectedCalendar {
 }
 
 function baseData(over: Partial<CalendarData> = {}): CalendarData {
-  const now = new Date();
-  return {
-    events: [],
-    lookaheadDays: 7,
-    enabled: true,
-    view: "agenda",
-    density: "comfortable",
-    google: { calendars: [], enabledCalendarIds: [], failedCalendarIds: [] },
-    microsoft: { calendars: [], enabledCalendarIds: [], failedCalendarIds: [] },
-    primarySource: "google",
-    refreshIntervalHours: 6,
-    status: "idle",
-    syncing: [],
-    resyncPending: [],
-    visibleMonth: new Date(now.getFullYear(), now.getMonth(), 1),
-    mode: "month",
-    selectedDay: null,
-    focusRowIndex: 0,
-    listAnchor: now,
-    listAnchorSetOn: getDateKey(now),
-    ...over,
-  };
+  return { ...createDefaultData(), view: "agenda", ...over };
 }
 
 function seed(over: Partial<CalendarData> = {}) {

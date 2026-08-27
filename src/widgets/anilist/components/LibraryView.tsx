@@ -70,19 +70,20 @@ export function LibraryView({ enabled, userId, newTab }: LibraryViewProps) {
   );
   useAnilistSync(refresh, isRefreshing, lastSyncedAt);
   const reduced = useReducedMotion();
+  const enterTransition = { duration: reduced ? 0 : DURATION.fast, ease: EASE_OUT };
+  const exitTransition = { duration: reduced ? 0 : DURATION.instant, ease: EASE_OUT };
 
   return (
     <div className="flex h-full flex-col gap-2 p-1">
       <LibraryControls />
       <div className="relative min-h-0 flex-1">
-        <AnimatePresence initial={false} mode="wait">
+        <AnimatePresence initial={false} mode="popLayout">
           <motion.div
             key={listFilter}
-            className="flex h-full min-h-0 flex-col"
-            initial={reduced ? { opacity: 0 } : { opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduced ? { opacity: 0 } : { opacity: 0, y: -4 }}
-            transition={{ duration: reduced ? 0 : DURATION.fast, ease: EASE_OUT }}
+            className="absolute inset-0 flex flex-col"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, transition: enterTransition }}
+            exit={{ opacity: 0, transition: exitTransition }}
           >
             {state.status === "loading" ? (
               <AnilistSkeleton variant={viewMode} label="Loading your list…" />
@@ -98,9 +99,7 @@ export function LibraryView({ enabled, userId, newTab }: LibraryViewProps) {
                 }
               />
             ) : (
-              <>
-                <ListBody data={state.data} newTab={newTab} lang={lang} userId={userId} />
-              </>
+              <ListBody data={state.data} newTab={newTab} lang={lang} userId={userId} />
             )}
           </motion.div>
         </AnimatePresence>

@@ -16,6 +16,7 @@ export function useAnilistSync(refresh: () => void, isRefreshing: boolean, synce
 
   useEffect(() => {
     setSyncing(isRefreshing);
+    if (!isRefreshing) return;
     return () => setSyncing(false);
   }, [isRefreshing, setSyncing]);
 

@@ -14,7 +14,6 @@ import { endOfDay, getDateKey, getRangeEndDate, startOfDay } from "@/widgets/cal
 import {
   buildTimeline,
   describeNextAfterToday,
-  getTimelineDays,
   getRangeStart,
   splitTimelineEvents,
 } from "@/widgets/calendar/lib/timeline";
@@ -39,27 +38,26 @@ export function AgendaView({ events, colors, status }: AgendaViewProps) {
   const listAnchor = useCalendar((d) => d.listAnchor);
   const [ref, size] = useElementSize<HTMLDivElement>();
   const hour12 = !clock24h;
-  const days = getTimelineDays(lookaheadDays);
   const rangeStart = useMemo(() => getRangeStart(listAnchor, now), [listAnchor, now]);
 
   const { allDay, timed } = useMemo(
-    () => splitTimelineEvents(events, rangeStart, days),
-    [events, rangeStart, days],
+    () => splitTimelineEvents(events, rangeStart, lookaheadDays),
+    [events, rangeStart, lookaheadDays],
   );
   const segments = useMemo(() => buildTimeline(timed, rangeStart, now), [timed, rangeStart, now]);
   const nextLater = useMemo(() => {
-    const until = endOfDay(getRangeEndDate(rangeStart, days)).getTime();
+    const until = endOfDay(getRangeEndDate(rangeStart, lookaheadDays)).getTime();
     const beyond = events.filter((event) => getEventStartDate(event).getTime() > until);
     return describeNextAfterToday(beyond, rangeStart, hour12);
-  }, [events, rangeStart, days, hour12]);
+  }, [events, rangeStart, lookaheadDays, hour12]);
   const hadEventsInRange = useMemo(() => {
     const from = startOfDay(rangeStart).getTime();
-    const until = endOfDay(getRangeEndDate(rangeStart, days)).getTime();
+    const until = endOfDay(getRangeEndDate(rangeStart, lookaheadDays)).getTime();
     return events.some((event) => {
       const start = getEventStartDate(event).getTime();
       return start >= from && start <= until;
     });
-  }, [events, rangeStart, days]);
+  }, [events, rangeStart, lookaheadDays]);
 
   const compact = size.width > 0 && size.width < TIMELINE_MIN_WIDTH;
   const anchorKey = getDateKey(rangeStart);
@@ -82,7 +80,7 @@ export function AgendaView({ events, colors, status }: AgendaViewProps) {
             <EmptyAgenda
               events={events}
               status={status}
-              days={days}
+              days={lookaheadDays}
               hadEventsInRange={hadEventsInRange}
               hasUntimed={allDay.length > 0}
               nextLater={nextLater}

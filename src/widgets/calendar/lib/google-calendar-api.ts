@@ -1,7 +1,13 @@
 import { z } from "zod";
 import { integrationFetch } from "@/integrations";
 import { ensureOk, parseResponse } from "@/lib/net";
-import { fanOutCalendars, parseCalendarItems } from "@/widgets/calendar/lib/provider-fetch";
+import {
+  fanOutCalendars,
+  MAX_EVENT_PAGES,
+  parseAllDayDate,
+  parseCalendarItems,
+  toIsoString,
+} from "@/widgets/calendar/lib/provider-fetch";
 import {
   MAX_CALENDAR_EVENTS,
   type CalendarEvent,
@@ -12,7 +18,6 @@ import {
 } from "@/widgets/calendar/types";
 
 const API_BASE_URL = "https://www.googleapis.com/calendar/v3";
-const MAX_EVENT_PAGES = 10;
 
 const googleCalendarListEntrySchema = z.object({
   id: z.string().optional(),
@@ -78,15 +83,6 @@ function googleRsvp(event: GoogleCalendarEvent): RsvpStatus | undefined {
   return self?.responseStatus ? GOOGLE_RSVP[self.responseStatus] : undefined;
 }
 
-function toIsoString(date: Date): string | null {
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
-}
-
-function parseAllDayDate(value: string): string | null {
-  const [year = 0, month = 1, day = 1] = value.split("-").map(Number);
-  return toIsoString(new Date(year, month - 1, day));
-}
-
 function normalizeDateTime(value: GoogleCalendarDateTime | undefined): string | null {
   if (value?.dateTime) return toIsoString(new Date(value.dateTime));
   if (value?.date) return parseAllDayDate(value.date);
@@ -95,21 +91,15 @@ function normalizeDateTime(value: GoogleCalendarDateTime | undefined): string | 
 
 export function normalizeGoogleCalendar(
   calendar: GoogleCalendarListEntry,
-  selectedCalendarIds: readonly string[] = [],
 ): ConnectedCalendar | null {
   if (!calendar.id || !calendar.summary) return null;
-
-  const selected =
-    selectedCalendarIds.length > 0
-      ? selectedCalendarIds.includes(calendar.id)
-      : Boolean(calendar.primary);
 
   return {
     id: calendar.id,
     summary: calendar.summary,
     backgroundColor: calendar.backgroundColor,
     primary: Boolean(calendar.primary),
-    selected,
+    selected: false,
   };
 }
 
@@ -186,9 +176,7 @@ async function fetchEventsForCalendar(
   return events;
 }
 
-export async function fetchGoogleCalendars(
-  selectedCalendarIds: readonly string[] = [],
-): Promise<ConnectedCalendar[]> {
+export async function fetchGoogleCalendars(): Promise<ConnectedCalendar[]> {
   const response = await integrationFetch("google", `${API_BASE_URL}/users/me/calendarList`);
 
   ensureOk(response, "Google calendar list request failed");
@@ -200,7 +188,7 @@ export async function fetchGoogleCalendars(
   );
 
   return parseCalendarItems(googleCalendarListEntrySchema, payload.items ?? [])
-    .map((calendar) => normalizeGoogleCalendar(calendar, selectedCalendarIds))
+    .map((calendar) => normalizeGoogleCalendar(calendar))
     .filter((calendar): calendar is ConnectedCalendar => Boolean(calendar));
 }
 

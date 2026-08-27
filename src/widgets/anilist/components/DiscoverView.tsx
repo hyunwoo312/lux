@@ -9,7 +9,7 @@ import { fetchDiscover } from "@/widgets/anilist/lib/api/discover";
 import { parseCachedDiscover } from "@/widgets/anilist/lib/api/cache";
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
-import { AlertCircle, SearchX } from "lucide-react";
+import { SearchX } from "lucide-react";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { writeFailureMessage } from "@/widgets/anilist/lib/load-failure";
 import { AnilistWriteNotice } from "@/widgets/anilist/components/AnilistWriteNotice";
@@ -95,7 +95,7 @@ export function DiscoverView() {
   const openAccounts = () => useSettingsStore.getState().openSettings("accounts");
 
   const adds = usePlanningAdds();
-  const search = useDiscoverSearch(query, lang, type, connected);
+  const search = useDiscoverSearch(trimmedQuery, lang, type, connected);
 
   const { state, isRefreshing, refresh, lastSyncedAt } = usePolledResource(
     (signal) => fetchDiscover(lang, feed, type, connected, signal),
@@ -200,22 +200,19 @@ function SearchBody({
   if (state.status === "idle" || state.status === "loading")
     return <AnilistSkeleton variant={viewMode} label="Searching…" />;
   if (state.status === "error")
-    return <StateMessage icon={AlertCircle} tone="error" message={state.message} />;
+    return <ErrorState error={state.error} service="AniList" subject="search results" />;
   if (state.status === "empty")
     return <StateMessage icon={SearchX} message={`No results for “${query}”.`} />;
 
   return (
-    <div className="flex h-full flex-col">
-      <AnilistWriteNotice message={adds.writeError ?? ""} />
-      <DiscoverList
-        label="Search results"
-        media={state.data}
-        viewMode={viewMode}
-        newTab={newTab}
-        connected={connected}
-        adds={adds}
-      />
-    </div>
+    <DiscoverList
+      label="Search results"
+      media={state.data}
+      viewMode={viewMode}
+      newTab={newTab}
+      connected={connected}
+      adds={adds}
+    />
   );
 }
 
@@ -239,17 +236,14 @@ function DiscoverBody({
   if (state.status === "empty") return <StateMessage message="Nothing to show here right now." />;
 
   return (
-    <div className="flex h-full flex-col">
-      <AnilistWriteNotice message={adds.writeError ?? ""} />
-      <DiscoverList
-        label="Discover"
-        media={state.data}
-        viewMode={viewMode}
-        newTab={newTab}
-        connected={connected}
-        adds={adds}
-      />
-    </div>
+    <DiscoverList
+      label="Discover"
+      media={state.data}
+      viewMode={viewMode}
+      newTab={newTab}
+      connected={connected}
+      adds={adds}
+    />
   );
 }
 
@@ -271,36 +265,39 @@ function DiscoverList({
   const list = viewMode === "list";
 
   return (
-    <ul
-      aria-label={label}
-      className={cn(
-        "scroll-fade min-h-0 flex-1 overflow-y-auto py-1",
-        list ? "flex flex-col gap-0.5 px-1" : cn(COVER_GRID, "content-start px-1.5"),
-      )}
-    >
-      {media.map((entry) =>
-        list ? (
-          <DiscoverRow
-            key={entry.id}
-            media={entry}
-            newTab={newTab}
-            listStatus={adds.statusOf(entry)}
-            canAdd={connected}
-            pending={adds.isPending(entry)}
-            onAdd={() => adds.add(entry)}
-          />
-        ) : (
-          <DiscoverTile
-            key={entry.id}
-            media={entry}
-            newTab={newTab}
-            listStatus={adds.statusOf(entry)}
-            canAdd={connected}
-            pending={adds.isPending(entry)}
-            onAdd={() => adds.add(entry)}
-          />
-        ),
-      )}
-    </ul>
+    <div className="flex h-full flex-col">
+      <AnilistWriteNotice message={adds.writeError ?? ""} />
+      <ul
+        aria-label={label}
+        className={cn(
+          "scroll-fade min-h-0 flex-1 overflow-y-auto py-1",
+          list ? "flex flex-col gap-0.5 px-1" : cn(COVER_GRID, "content-start px-1.5"),
+        )}
+      >
+        {media.map((entry) =>
+          list ? (
+            <DiscoverRow
+              key={entry.id}
+              media={entry}
+              newTab={newTab}
+              listStatus={adds.statusOf(entry)}
+              canAdd={connected}
+              pending={adds.isPending(entry)}
+              onAdd={() => adds.add(entry)}
+            />
+          ) : (
+            <DiscoverTile
+              key={entry.id}
+              media={entry}
+              newTab={newTab}
+              listStatus={adds.statusOf(entry)}
+              canAdd={connected}
+              pending={adds.isPending(entry)}
+              onAdd={() => adds.add(entry)}
+            />
+          ),
+        )}
+      </ul>
+    </div>
   );
 }

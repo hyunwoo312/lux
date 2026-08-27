@@ -1,34 +1,17 @@
 import { motion } from "motion/react";
 import { ROW } from "@/lib/row";
-import { Video } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { GoogleCalendarServiceIcon, OutlookServiceIcon } from "@/components/icons/service-icons";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
-import { EASE_OUT, TAP } from "@/lib/motion";
+import { EASE_OUT } from "@/lib/motion";
+import { CalendarEventActions } from "@/widgets/calendar/components/CalendarEventActions";
 import {
   formatEventRelativeTime,
   formatEventTime,
   getEventStartDate,
   getEventTitle,
 } from "@/widgets/calendar/lib/agenda";
-import type { CalendarProviderId, DisplayCalendarEvent } from "@/widgets/calendar/types";
-
-type OpenLink = { provider: CalendarProviderId; sourceUrl: string };
-
-const PROVIDER_META: Record<
-  CalendarProviderId,
-  { label: string; Icon: typeof GoogleCalendarServiceIcon; iconClass: string }
-> = {
-  google: { label: "Google Calendar", Icon: GoogleCalendarServiceIcon, iconClass: "size-5" },
-  microsoft: { label: "Outlook", Icon: OutlookServiceIcon, iconClass: "size-[17px]" },
-};
-
-const ACTION_BUTTON = "focus-ring flex cursor-pointer items-center justify-center rounded-sm";
-
-function openUrl(url: string) {
-  window.open(url, "_blank", "noopener,noreferrer");
-}
+import type { DisplayCalendarEvent } from "@/widgets/calendar/types";
 
 type CalendarEventItemProps = {
   event: DisplayCalendarEvent;
@@ -56,12 +39,9 @@ export function CalendarEventItem({
   const startsInMs = getEventStartDate(event).getTime() - now.getTime();
   const imminent = startsInMs >= 0 && startsInMs <= 60 * 60_000;
   const relative = emphasized || imminent ? formatEventRelativeTime(event, now) : null;
-  const openLinks = event.links.filter((link): link is OpenLink => Boolean(link.sourceUrl));
-  const joinUrl = event.joinUrl;
   const needsResponse = event.rsvp === "needsAction";
   const declined = event.rsvp === "declined";
-  const pinActions = Boolean(joinUrl) && imminent;
-  const hasActions = openLinks.length > 0 || Boolean(joinUrl);
+  const pinActions = Boolean(event.joinUrl) && imminent;
 
   return (
     <motion.div
@@ -107,48 +87,16 @@ export function CalendarEventItem({
           {relative}
         </span>
       )}
-      {hasActions && (
-        <div
-          className={cn(
-            `
-              flex flex-none items-center gap-1 transition-opacity duration-200
-              group-hover:opacity-100
-              group-focus-within:opacity-100
-            `,
-            pinActions ? "opacity-100" : "opacity-60",
-          )}
-        >
-          {joinUrl && (
-            <Tooltip content="Join meeting">
-              <motion.button
-                type="button"
-                {...(reduced ? {} : TAP.icon)}
-                aria-label={`Join ${title}`}
-                onClick={() => openUrl(joinUrl)}
-                className={cn(ACTION_BUTTON, "size-7", "text-primary")}
-              >
-                <Video className="size-4" aria-hidden />
-              </motion.button>
-            </Tooltip>
-          )}
-          {openLinks.map((link) => {
-            const { label, Icon, iconClass } = PROVIDER_META[link.provider];
-            return (
-              <Tooltip key={link.provider} content={`Open in ${label}`}>
-                <motion.button
-                  type="button"
-                  {...(reduced ? {} : TAP.icon)}
-                  aria-label={`Open ${title} in ${label}`}
-                  onClick={() => openUrl(link.sourceUrl)}
-                  className={cn(ACTION_BUTTON, "size-7")}
-                >
-                  <Icon className={iconClass} />
-                </motion.button>
-              </Tooltip>
-            );
-          })}
-        </div>
-      )}
+      <CalendarEventActions
+        event={event}
+        title={title}
+        reduced={reduced}
+        size="md"
+        className={cn(
+          "transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100",
+          pinActions ? "opacity-100" : "opacity-60",
+        )}
+      />
     </motion.div>
   );
 }

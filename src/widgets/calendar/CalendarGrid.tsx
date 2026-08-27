@@ -26,7 +26,6 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
   const selectedDay = useCalendar((d) => d.selectedDay);
   const focusRowIndex = useCalendar((d) => d.focusRowIndex);
   const [hover, setHover] = useState<{ row: number; col: number } | null>(null);
-  const hoverRectRef = useRef<DOMRect | null>(null);
 
   const now = useNow();
   const todayKey = getDateKey(now);
@@ -106,12 +105,9 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
           const next = cells[cells.indexOf(target) + delta];
           next?.focus();
         }}
-        onMouseEnter={(event) => {
-          hoverRectRef.current = event.currentTarget.getBoundingClientRect();
-        }}
         onMouseMove={(event) => {
           if (rowHeight <= 0 || cellWidth <= 0) return;
-          const rect = hoverRectRef.current ?? event.currentTarget.getBoundingClientRect();
+          const rect = event.currentTarget.getBoundingClientRect();
           const col = Math.min(6, Math.max(0, Math.floor((event.clientX - rect.left) / cellWidth)));
           const localY = event.clientY - rect.top;
           if (mode === "week") {
@@ -147,16 +143,15 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
               style={{
                 width: Math.max(0, cellWidth - 4),
                 height: Math.max(0, rowHeight - 4),
-                left: 2,
-                top: 2,
               }}
-              className="bg-foreground/5 pointer-events-none absolute rounded-md"
+              className="bg-foreground/5 pointer-events-none absolute top-0.5 left-0.5 rounded-md"
             />
           )}
         </AnimatePresence>
         <AnimatePresence mode="popLayout" initial={false} custom={monthDirection}>
           <motion.div
             key={visibleMonthIndex}
+            role="presentation"
             custom={monthDirection}
             variants={verticalSlide}
             initial="enter"
@@ -171,16 +166,18 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
               return (
                 <motion.div
                   key={index}
+                  role="presentation"
                   initial={false}
                   animate={{ height: collapsed ? 0 : rowHeight, opacity: collapsed ? 0 : 1 }}
                   transition={transition}
                   className="shrink-0 overflow-hidden"
                 >
                   {isFocusRow ? (
-                    <div className="relative h-full overflow-hidden">
+                    <div role="presentation" className="relative h-full overflow-hidden">
                       <AnimatePresence mode="popLayout" initial={false} custom={weekDirection}>
                         <motion.div
                           key={weekTime}
+                          role="presentation"
                           custom={weekDirection}
                           variants={horizontalSlide}
                           initial="enter"
@@ -189,12 +186,16 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
                           transition={transition}
                           className="absolute inset-0"
                         >
-                          <MonthWeek week={focusedWeek ?? week} {...cellProps} />
+                          <MonthWeek
+                            week={focusedWeek ?? week}
+                            collapsed={collapsed}
+                            {...cellProps}
+                          />
                         </motion.div>
                       </AnimatePresence>
                     </div>
                   ) : (
-                    <MonthWeek week={week} {...cellProps} />
+                    <MonthWeek week={week} collapsed={collapsed} {...cellProps} />
                   )}
                 </motion.div>
               );

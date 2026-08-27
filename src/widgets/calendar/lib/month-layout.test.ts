@@ -142,23 +142,17 @@ describe("getMonthMetrics", () => {
     const metrics = getMonthMetrics(CONTENT_WIDTH(6), GRID_HEIGHT(6));
 
     expect(metrics.maxRows).toBe(0);
-    expect(metrics.summaryMode).toBe(true);
   });
 
   it("budgets event rows at the default size", () => {
     const metrics = getMonthMetrics(CONTENT_WIDTH(8), GRID_HEIGHT(9));
 
     expect(metrics.maxRows).toBe(2);
-    expect(metrics.summaryMode).toBe(false);
   });
 
   it("gains a row for every extra unit of height", () => {
     expect(getMonthMetrics(CONTENT_WIDTH(8), GRID_HEIGHT(7)).maxRows).toBe(1);
     expect(getMonthMetrics(CONTENT_WIDTH(8), GRID_HEIGHT(14)).maxRows).toBe(4);
-  });
-
-  it("reports summary mode before the grid has been measured", () => {
-    expect(getMonthMetrics(0, 0).summaryMode).toBe(true);
   });
 });
 

@@ -111,7 +111,7 @@ export function CalendarRangePicker({ onSelect }: CalendarRangePickerProps) {
   );
 
   const anchorTime = startOfDay(listAnchor).getTime();
-  const endTime = addDays(listAnchor, Math.max(1, lookaheadDays) - 1).getTime();
+  const endTime = addDays(listAnchor, lookaheadDays - 1).getTime();
   const nextMonth = getMonthOffset(viewMonth, 1);
 
   const handleSelect = (date: Date) => {
@@ -120,7 +120,7 @@ export function CalendarRangePicker({ onSelect }: CalendarRangePickerProps) {
   };
 
   return (
-    <div className={"flex flex-col gap-3 p-3"}>
+    <div className="flex flex-col gap-3 p-3">
       <div className="flex justify-center">
         <ConfigSegmented
           label="Date range"

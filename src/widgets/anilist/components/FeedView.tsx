@@ -1,11 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { CheckCheck } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Tooltip } from "@/components/ui/tooltip";
-import { invalidatePolledResource } from "@/widgets/core/usePolledResource";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { markAllNotificationsRead } from "@/widgets/anilist/lib/api/feed";
-import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { ActivityView } from "@/widgets/anilist/components/ActivityView";
 import { InboxView } from "@/widgets/anilist/components/InboxView";
 import { AnilistWriteNotice } from "@/widgets/anilist/components/AnilistWriteNotice";
@@ -26,37 +24,36 @@ export function FeedView({ enabled, userId, newTab }: FeedViewProps) {
   const setFeedSource = useAnilistStore((s) => s.setFeedSource);
   const unseen = useActivityUnseenCount(enabled, userId);
 
-  const { count: liveUnread, refresh: unreadRefresh } = useUnreadCount(enabled, userId);
+  const {
+    count: liveUnread,
+    refresh: unreadRefresh,
+    lastSyncedAt,
+  } = useUnreadCount(enabled, userId);
 
-  const [unreadOverride, setUnreadOverride] = useState<number | null>(null);
+  const [markedReadAt, setMarkedReadAt] = useState(0);
   const [marking, setMarking] = useState(false);
   const [markError, setMarkError] = useState("");
 
   const markRead = useCallback(() => {
     setMarking(true);
     setMarkError("");
-    setUnreadOverride(0);
+    setMarkedReadAt(Date.now());
     markAllNotificationsRead().then(
       () => {
         setMarking(false);
-        invalidatePolledResource(anilistKeys.unread(userId));
         unreadRefresh();
       },
       (error: unknown) => {
         setMarking(false);
-        setUnreadOverride(null);
+        setMarkedReadAt(0);
         setMarkError(
           writeFailureMessage(error, "Couldn’t mark your notifications read. Try again."),
         );
       },
     );
-  }, [unreadRefresh, userId]);
+  }, [unreadRefresh]);
 
-  useEffect(() => {
-    if (unreadOverride !== null && liveUnread === 0) setUnreadOverride(null);
-  }, [unreadOverride, liveUnread]);
-
-  const unreadCount = unreadOverride ?? liveUnread;
+  const unreadCount = lastSyncedAt > markedReadAt ? liveUnread : 0;
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2 p-1">

@@ -2,25 +2,10 @@ import type { ReactNode } from "react";
 import { Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/tooltip";
-import { windowLabel } from "@/widgets/github/lib/heatmap";
+import { formatDay, windowLabel } from "@/widgets/github/lib/heatmap";
 import type { ContributionsData, DateRange } from "@/widgets/github/types";
 
-const MONTHS_SHORT = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
-export function Stats({
+export function ContributionsStats({
   data,
   total,
   weeks,
@@ -64,11 +49,6 @@ export function Stats({
       </div>
     </div>
   );
-}
-
-function formatDay(date: string): string {
-  const monthName = MONTHS_SHORT[Number(date.slice(5, 7)) - 1] ?? "";
-  return `${monthName} ${Number(date.slice(8, 10))}`;
 }
 
 function streakDetail(days: number, range: DateRange | undefined): string {

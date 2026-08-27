@@ -1,4 +1,4 @@
-import { formatClock, formatHourMark } from "@/lib/clock";
+import { formatClock } from "@/lib/clock";
 import {
   formatEventRelativeTime,
   getEventDisplayEndDate,
@@ -6,10 +6,11 @@ import {
   getEventTitle,
   isMultiDayEvent,
 } from "@/widgets/calendar/lib/agenda";
-import { addDays, endOfDay, getDateKey, startOfDay } from "@/widgets/calendar/lib/dates";
+import { addDays, endOfDay, startOfDay } from "@/widgets/calendar/lib/dates";
 import type { CalendarEvent } from "@/widgets/calendar/types";
 
 const MINUTE_MS = 60_000;
+const DAY_MS = 24 * 60 * MINUTE_MS;
 
 const MIN_WINDOW_HOURS = 3;
 const MIN_GAP_MINUTES = 20;
@@ -30,6 +31,14 @@ export type TimedBlock<T extends CalendarEvent> = {
 export type FreeGap = { startMin: number; endMin: number; minutes: number; trailing: boolean };
 
 export type EventUrgency = "past" | "now" | "imminent" | "soon" | "later";
+
+export const URGENCY_RING: Record<EventUrgency, string | undefined> = {
+  past: undefined,
+  later: undefined,
+  soon: "ring-primary/40 ring-1",
+  now: "ring-primary/60 ring-2",
+  imminent: "ring-primary ring-2",
+};
 
 export function getWindowStart(now: Date): Date {
   const start = new Date(now);
@@ -210,13 +219,13 @@ export function describeNextAfterToday(
   if (!next) return null;
 
   const start = getEventStartDate(next);
-  const withinWeek = start.getTime() - dayEnd <= 7 * 24 * 60 * MINUTE_MS;
+  const daysAhead = Math.round((startOfDay(start).getTime() - startOfDay(now).getTime()) / DAY_MS);
   const day =
-    getDateKey(start) === getDateKey(addDays(now, 1))
+    daysAhead === 1
       ? "tomorrow"
       : new Intl.DateTimeFormat(
           undefined,
-          withinWeek ? { weekday: "long" } : { month: "short", day: "numeric" },
+          daysAhead <= 6 ? { weekday: "long" } : { month: "short", day: "numeric" },
         ).format(start);
   const when = next.isAllDay ? day : `${day} at ${formatClock(start, hour12)}`;
   return `Next up: ${getEventTitle(next)}, ${when}.`;
@@ -251,7 +260,7 @@ export type TimelineSkip = {
 export type TimelineSegment<T extends CalendarEvent> = TimelineRun<T> | TimelineSkip;
 
 function windowEnd(now: Date, lookaheadDays: number): Date {
-  return endOfDay(addDays(now, Math.max(0, lookaheadDays - 1)));
+  return endOfDay(addDays(now, lookaheadDays - 1));
 }
 
 export function getRangeStart(anchor: Date, now: Date): Date {
@@ -384,10 +393,6 @@ export function formatDayHeading(day: Date, now: Date): string {
   }).format(day);
 }
 
-export function getTimelineDays(lookaheadDays: number): number {
-  return Math.max(1, lookaheadDays);
-}
-
 export function isTimelineRun<T extends CalendarEvent>(
   segment: TimelineSegment<T>,
 ): segment is TimelineRun<T> {
@@ -403,5 +408,3 @@ export function getRunGaps<T extends CalendarEvent>(run: TimelineRun<T>, now: Da
   if (fromMin <= 0) return run.gaps;
   return getFreeGaps(run.blocks, run.minutes, fromMin);
 }
-
-export { formatClock, formatHourMark };

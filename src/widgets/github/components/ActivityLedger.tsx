@@ -17,9 +17,6 @@ const TYPE_TOTALS: { key: keyof ContributionTotals; icon: LucideIcon; label: str
   { key: "reviews", icon: Eye, label: "reviews" },
 ];
 
-const LEDGER_SCROLLER =
-  "scroll-fade flex min-h-0 flex-1 flex-col gap-0.5 overflow-x-hidden overflow-y-auto";
-
 export function ActivityLedger({ activity, totals, login, newTab }: ActivityLedgerProps) {
   const max = activity[0]?.total ?? 0;
 
@@ -37,7 +34,11 @@ export function ActivityLedger({ activity, totals, login, newTab }: ActivityLedg
           )}
         </div>
       )}
-      <div className={LEDGER_SCROLLER}>
+      <div
+        className="
+          scroll-fade flex min-h-0 flex-1 flex-col gap-0.5 overflow-x-hidden overflow-y-auto
+        "
+      >
         {activity.map((repo) => (
           <RepoRow key={repo.repo} repo={repo} max={max} login={login} newTab={newTab} />
         ))}

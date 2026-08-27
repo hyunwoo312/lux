@@ -18,8 +18,29 @@ import { Spinner } from "@/components/ui/spinner";
 import { Tooltip } from "@/components/ui/tooltip";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { CiBadge, ReviewBadge } from "@/widgets/github/components/inbox/InboxBadges";
-import { CI_LABEL, REVIEW_LABEL } from "@/widgets/github/lib/inbox-labels";
-import type { InboxIssue, InboxNotification, InboxPullRequest } from "@/widgets/github/types";
+import type {
+  InboxIssue,
+  InboxNotification,
+  InboxPullRequest,
+  IssueKind,
+  PullRequestCi,
+  PullRequestKind,
+  PullRequestReview,
+} from "@/widgets/github/types";
+
+const CI_LABEL: Record<PullRequestCi, string> = {
+  success: "Checks passing",
+  failure: "Checks failing",
+  pending: "Checks running",
+  none: "No checks",
+};
+
+const REVIEW_LABEL: Record<PullRequestReview, string> = {
+  approved: "Approved",
+  changesRequested: "Changes requested",
+  reviewRequired: "Review required",
+  none: "",
+};
 
 const NOTIFICATION_ICONS: Record<string, LucideIcon> = {
   review_requested: Eye,
@@ -42,7 +63,7 @@ export type NotificationActions = {
   onMarkAllRead: () => void;
 };
 
-const KIND_LABEL: Record<string, string> = {
+const KIND_LABEL: Record<PullRequestKind | IssueKind, string> = {
   reviewRequested: "Review requested",
   mine: "Yours",
   assigned: "Assigned",

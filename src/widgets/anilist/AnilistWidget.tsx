@@ -28,7 +28,8 @@ export function AnilistWidget() {
   if (!connected) return <DiscoverView />;
 
   const userId = Number(account.providerAccountId);
-  const transition = { duration: reduced ? 0 : DURATION.fast, ease: EASE_OUT };
+  const enterTransition = { duration: reduced ? 0 : DURATION.fast, ease: EASE_OUT };
+  const exitTransition = { duration: reduced ? 0 : DURATION.instant, ease: EASE_OUT };
 
   return (
     <div className="relative h-full min-h-0">
@@ -37,9 +38,8 @@ export function AnilistWidget() {
           key={activeTab}
           className="absolute inset-0"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={transition}
+          animate={{ opacity: 1, transition: enterTransition }}
+          exit={{ opacity: 0, transition: exitTransition }}
         >
           {activeTab === "library" ? (
             <LibraryView enabled={connected} userId={userId} newTab={newTab} />

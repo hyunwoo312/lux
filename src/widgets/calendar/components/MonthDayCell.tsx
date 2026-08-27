@@ -1,12 +1,9 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { getDateKey } from "@/widgets/calendar/lib/dates";
 import {
   DAY_NUMBER_HEIGHT,
   type MonthDayCell as MonthDay,
 } from "@/widgets/calendar/lib/month-layout";
-import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
-import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 const headingFormatter = new Intl.DateTimeFormat(undefined, {
   weekday: "long",
@@ -17,6 +14,9 @@ const headingFormatter = new Intl.DateTimeFormat(undefined, {
 type MonthDayCellProps = {
   day: MonthDay;
   eventCount: number;
+  isSelected: boolean;
+  collapsed: boolean;
+  onActivate: () => void;
   children: ReactNode;
 };
 
@@ -26,25 +26,22 @@ function formatDayLabel(date: Date, eventCount: number): string {
   return `${heading}, ${eventCount === 1 ? "1 event" : `${eventCount} events`}`;
 }
 
-export function MonthDayCell({ day, eventCount, children }: MonthDayCellProps) {
-  const instanceId = useWidgetInstanceId();
-  const mode = useCalendar((d) => d.mode);
-  const selectedDay = useCalendar((d) => d.selectedDay);
-  const focusDay = useCalendarStore((s) => s.focusDay);
-  const selectDay = useCalendarStore((s) => s.selectDay);
-
-  const isSelected =
-    mode === "week" && selectedDay !== null && getDateKey(selectedDay) === day.dateKey;
-
+export function MonthDayCell({
+  day,
+  eventCount,
+  isSelected,
+  collapsed,
+  onActivate,
+  children,
+}: MonthDayCellProps) {
   return (
     <button
       type="button"
       role="gridcell"
+      tabIndex={collapsed ? -1 : undefined}
       aria-label={formatDayLabel(day.date, eventCount)}
       aria-selected={isSelected || undefined}
-      onClick={() =>
-        mode === "week" ? selectDay(instanceId, day.date) : focusDay(instanceId, day.date)
-      }
+      onClick={onActivate}
       className={cn(
         "press cursor-pointer",
         "focus-ring focus-visible:bg-foreground/5",

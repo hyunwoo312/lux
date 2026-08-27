@@ -3,9 +3,11 @@ import type { MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import {
+  formatDayLong,
   heatmapWidth,
   LEGEND_H,
   MONTH_ROW_H,
+  MONTHS_SHORT,
   WEEKDAY_W,
   windowLabel,
   type HeatmapMetrics,
@@ -15,34 +17,6 @@ import type { ContributionDay } from "@/widgets/github/types";
 const LEVEL_CLASS = ["heat-0", "heat-1", "heat-2", "heat-3", "heat-4"];
 const LEGEND_SWATCH = 9;
 
-const MONTHS_SHORT = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-const MONTHS_FULL = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
 const WEEKDAYS = [
   { id: "sun", label: "" },
   { id: "mon", label: "Mon" },
@@ -78,13 +52,11 @@ function monthLabelsFor(weeks: ContributionDay[][]): (string | null)[] {
 }
 
 function dayTitle(day: ContributionDay, todayKey: string): string {
-  const monthName = MONTHS_FULL[Number(day.date.slice(5, 7)) - 1] ?? "";
-  const dayNum = Number(day.date.slice(8, 10));
   const amount =
     day.count === 0
       ? "No contributions"
       : `${day.count} ${day.count === 1 ? "contribution" : "contributions"}`;
-  const when = day.date === todayKey ? "today" : `on ${monthName} ${dayNum}`;
+  const when = day.date === todayKey ? "today" : `on ${formatDayLong(day.date)}`;
   return `${amount} ${when}.`;
 }
 
@@ -184,14 +156,13 @@ const HeatmapGrid = memo(function HeatmapGrid({
   todayKey: string;
 }) {
   const { cell, gap, showWeekdays } = metrics;
-  const shown = weeks.slice(-metrics.weeks);
   const showMonths = showWeekdays;
-  const months = showMonths ? monthLabelsFor(shown) : [];
+  const months = showMonths ? monthLabelsFor(weeks) : [];
 
   return (
     <div
       role="img"
-      aria-label={`Contribution heatmap: ${total.toLocaleString()} ${windowLabel(shown.length)}`}
+      aria-label={`Contribution heatmap: ${total.toLocaleString()} ${windowLabel(weeks.length)}`}
       className="flex flex-col"
       style={{ gap }}
     >
@@ -199,7 +170,7 @@ const HeatmapGrid = memo(function HeatmapGrid({
         <div className="flex" style={{ gap, height: MONTH_ROW_H }}>
           <div style={{ width: WEEKDAY_W }} />
           <div className="flex" style={{ gap }}>
-            {shown.map((week, index) => (
+            {weeks.map((week, index) => (
               <div key={week[0]?.date ?? index} className="relative" style={{ width: cell }}>
                 {months[index] && (
                   <span
@@ -230,7 +201,7 @@ const HeatmapGrid = memo(function HeatmapGrid({
           </div>
         )}
         <div className="flex" style={{ gap }}>
-          {shown.map((week, index) => (
+          {weeks.map((week, index) => (
             <div key={week[0]?.date ?? index} className="flex flex-col" style={{ gap }}>
               {week.map((day) => (
                 <span

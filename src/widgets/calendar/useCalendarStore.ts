@@ -36,6 +36,8 @@ import {
   MAX_LOOKAHEAD_DAYS,
   MIN_LOOKAHEAD_DAYS,
   type CalendarEvent,
+  type CalendarEventsResult,
+  type CalendarEventWindow,
   type CalendarMode,
   type CalendarProviderId,
   type CalendarSyncStatus,
@@ -122,21 +124,10 @@ const EMPTY_PROVIDER: ProviderCalendarSettings = {
 
 function freshNav(): Pick<
   CalendarData,
-  | "status"
-  | "syncing"
-  | "resyncPending"
-  | "visibleMonth"
-  | "mode"
-  | "selectedDay"
-  | "focusRowIndex"
-  | "listAnchor"
-  | "listAnchorSetOn"
+  "visibleMonth" | "mode" | "selectedDay" | "focusRowIndex" | "listAnchor" | "listAnchorSetOn"
 > {
   const now = new Date();
   return {
-    status: "idle",
-    syncing: [],
-    resyncPending: [],
     visibleMonth: new Date(now.getFullYear(), now.getMonth(), 1),
     mode: "month",
     selectedDay: null,
@@ -159,7 +150,7 @@ function anchorFor(
     : { listAnchor: today, listAnchorSetOn: todayKey };
 }
 
-function createDefaultData(): CalendarData {
+export function createDefaultData(): CalendarData {
   return {
     events: [],
     lookaheadDays: 7,
@@ -170,6 +161,9 @@ function createDefaultData(): CalendarData {
     microsoft: EMPTY_PROVIDER,
     primarySource: "google",
     refreshIntervalHours: 6,
+    status: "idle",
+    syncing: [],
+    resyncPending: [],
     ...freshNav(),
   };
 }
@@ -270,20 +264,13 @@ function resolveEnabledCalendarIds(
 }
 
 async function syncProvider(
-  connected: boolean,
   current: ProviderCalendarSettings,
-  fetchCalendars: (ids: readonly string[]) => Promise<ConnectedCalendar[]>,
-  fetchEvents: (window: {
-    calendarIds: string[];
-    timeMin: Date;
-    timeMax: Date;
-  }) => Promise<{ events: CalendarEvent[]; failedCalendarIds: string[] }>,
+  fetchCalendars: () => Promise<ConnectedCalendar[]>,
+  fetchEvents: (window: CalendarEventWindow) => Promise<CalendarEventsResult>,
   syncWindow: SyncWindow,
 ): Promise<ProviderSyncResult> {
-  if (!connected) return { settings: current, events: [], failed: false };
-
   try {
-    const calendars = await fetchCalendars(current.enabledCalendarIds);
+    const calendars = await fetchCalendars();
     const enabledCalendarIds = resolveEnabledCalendarIds(
       calendars,
       current.enabledCalendarIds,
@@ -428,7 +415,6 @@ export const useCalendarStore = create<CalendarState>()(
           targets.map(async (providerId) => {
             const [fetchCalendars, fetchEvents] = fetchers[providerId];
             const result = await syncProvider(
-              true,
               getCalendarData(instanceId)[providerId],
               fetchCalendars,
               fetchEvents,
@@ -452,15 +438,11 @@ export const useCalendarStore = create<CalendarState>()(
               else microsoft = settings;
             }
 
-            const refreshed = new Set(
-              results.filter((entry) => !entry.result.failed).map((entry) => entry.providerId),
-            );
+            const refreshed = results
+              .filter((entry) => !entry.result.failed)
+              .map((entry) => entry.providerId);
             const keptEvents = current.events.filter(
-              (event) =>
-                !targets.some(
-                  (providerId) =>
-                    refreshed.has(providerId) && event.id.startsWith(`${providerId}-`),
-                ),
+              (event) => !refreshed.some((providerId) => event.id.startsWith(`${providerId}-`)),
             );
             const events = capCalendarEvents([
               ...keptEvents,
@@ -628,6 +610,9 @@ export const useCalendarStore = create<CalendarState>()(
               events: capCalendarEvents(config.events),
               lookaheadDays: clampLookahead(config.lookaheadDays),
               refreshIntervalHours: clampRefreshInterval(config.refreshIntervalHours),
+              status: "idle",
+              syncing: [],
+              resyncPending: [],
               ...freshNav(),
               ...anchorFor(config.listAnchorKey, config.listAnchorSetOn),
             };

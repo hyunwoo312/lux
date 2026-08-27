@@ -68,9 +68,6 @@ describe("getEventTitle", () => {
     expect(getEventTitle(createEvent({ title: "Divorce lawyer", visibility: "busy" }))).toBe(
       "Busy",
     );
-  });
-
-  it("shows the real title for anything not marked busy", () => {
     expect(getEventTitle(createEvent({ title: "Standup" }))).toBe("Standup");
   });
 });

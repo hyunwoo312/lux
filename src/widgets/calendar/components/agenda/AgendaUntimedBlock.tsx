@@ -1,19 +1,18 @@
 import { useState, type WheelEvent } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { DURATION, EASE_OUT } from "@/lib/motion";
-import { AgendaEventActions } from "@/widgets/calendar/components/agenda/AgendaEventActions";
-import { CalendarClock, CalendarRange } from "lucide-react";
+import { CalendarEventActions } from "@/widgets/calendar/components/CalendarEventActions";
+import { CalendarRange } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip } from "@/components/ui/tooltip";
-import { CalendarNavButton } from "@/widgets/calendar/components/CalendarNavButton";
+import { TodayButton } from "@/widgets/calendar/components/CalendarNavButton";
 import { CalendarRangePicker } from "@/widgets/calendar/components/CalendarRangePicker";
 import { formatEventDateRange, getEventTitle } from "@/widgets/calendar/lib/agenda";
 import { getEventColor } from "@/widgets/calendar/lib/colors";
 import { formatDayRange, getRangeEndDate } from "@/widgets/calendar/lib/dates";
-import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
-import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import { MAX_LOOKAHEAD_DAYS, type DisplayCalendarEvent } from "@/widgets/calendar/types";
+import { useCalendar } from "@/widgets/calendar/useCalendarStore";
+import type { DisplayCalendarEvent } from "@/widgets/calendar/types";
 
 const ROW_COUNT = 2;
 const TITLE_MAX_CHARS = 20;
@@ -29,7 +28,7 @@ function RangeTrigger() {
   const [open, setOpen] = useState(false);
   const listAnchor = useCalendar((d) => d.listAnchor);
   const lookaheadDays = useCalendar((d) => d.lookaheadDays);
-  const rangeEnd = getRangeEndDate(listAnchor, Math.min(MAX_LOOKAHEAD_DAYS, lookaheadDays));
+  const rangeEnd = getRangeEndDate(listAnchor, lookaheadDays);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -55,19 +54,6 @@ function RangeTrigger() {
   );
 }
 
-function TodayButton() {
-  const instanceId = useWidgetInstanceId();
-  const goToToday = useCalendarStore((s) => s.goToToday);
-
-  return (
-    <CalendarNavButton
-      label="Go to today"
-      icon={CalendarClock}
-      onClick={() => goToToday(instanceId)}
-    />
-  );
-}
-
 type UntimedItemProps = {
   event: DisplayCalendarEvent;
   color: string;
@@ -83,7 +69,7 @@ function UntimedItem({ event, color, index, reduced }: UntimedItemProps) {
   const title = getEventTitle(event);
   const range = formatEventDateRange(event);
   const actionCount = (event.joinUrl ? 1 : 0) + event.links.filter((link) => link.sourceUrl).length;
-  const actionPadding = ACTION_PADDING[Math.min(actionCount, 3)];
+  const actionPadding = ACTION_PADDING[actionCount];
 
   return (
     <motion.div
@@ -131,7 +117,7 @@ function UntimedItem({ event, color, index, reduced }: UntimedItemProps) {
             group-focus-within/untimed:translate-x-0 group-focus-within/untimed:opacity-100
           "
         >
-          <AgendaEventActions event={event} title={title} reduced={reduced} onColor={false} />
+          <CalendarEventActions event={event} title={title} reduced={reduced} size="sm" />
         </span>
       )}
     </motion.div>

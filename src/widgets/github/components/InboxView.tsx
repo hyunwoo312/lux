@@ -8,12 +8,21 @@ import {
   unsubscribeGithubThread,
 } from "@/widgets/github/lib/api/inbox";
 import { Inbox } from "lucide-react";
+import { loadErrorMessage } from "@/lib/net";
+import { showToast } from "@/stores/useToastStore";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { InboxList } from "@/widgets/github/components/inbox/InboxList";
 import type { NotificationActions } from "@/widgets/github/components/inbox/InboxRows";
 import { useGithub } from "@/widgets/github/useGithubStore";
 import { useGithubSync } from "@/widgets/github/useGithubSync";
-import { INBOX_CACHE_KEY, INBOX_REFRESH_MS } from "@/widgets/github/types";
+import { INBOX_CACHE_KEY, INBOX_REFRESH_MS, INBOX_ZERO } from "@/widgets/github/types";
+
+function reportWriteFailure(error: unknown, fallback: string): void {
+  showToast({
+    key: "github-inbox-write",
+    message: error instanceof Error ? loadErrorMessage(error, fallback) : fallback,
+  });
+}
 
 export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPrivate: boolean }) {
   const newTab = useGithub((d) => d.openBehavior === "newTab");
@@ -34,15 +43,25 @@ export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPriv
     refresh();
   };
 
+  const clearPending = (id: string) =>
+    setPending((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+
   const runThread = (id: string, run: () => Promise<unknown>) => {
     if (pending[id]) return;
     setPending((prev) => ({ ...prev, [id]: true }));
     run().then(
       () => {
         reconcile();
-        setPending((prev) => ({ ...prev, [id]: false }));
+        clearPending(id);
       },
-      () => setPending((prev) => ({ ...prev, [id]: false })),
+      (error: unknown) => {
+        clearPending(id);
+        reportWriteFailure(error, "Couldn’t update that notification.");
+      },
     );
   };
 
@@ -54,7 +73,10 @@ export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPriv
         reconcile();
         setMarking(false);
       },
-      () => setMarking(false),
+      (error: unknown) => {
+        setMarking(false);
+        reportWriteFailure(error, "Couldn’t mark your notifications read.");
+      },
     );
   };
 
@@ -69,8 +91,7 @@ export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPriv
         retrying={isRefreshing}
       />
     );
-  if (state.status === "empty")
-    return <StateMessage icon={Inbox} message="Inbox zero — nothing waiting." />;
+  if (state.status === "empty") return <StateMessage icon={Inbox} message={INBOX_ZERO} />;
 
   const actions: NotificationActions = {
     pending,

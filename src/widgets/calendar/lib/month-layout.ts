@@ -3,17 +3,15 @@ import {
   getEventStartDate,
   isMultiDayEvent,
 } from "@/widgets/calendar/lib/agenda";
-import { getDateKey, startOfDay } from "@/widgets/calendar/lib/dates";
+import { getDateKey, GRID_LENGTH, startOfDay, WEEK_LENGTH } from "@/widgets/calendar/lib/dates";
 import type { CalendarEvent } from "@/widgets/calendar/types";
 
 const DAY_MS = 86_400_000;
-const GRID_DAYS = 42;
 
 export const DAY_NUMBER_HEIGHT = 18;
 export const EVENT_ROW_HEIGHT = 18;
 
 const WEEKS_PER_GRID = 6;
-const COLUMNS_PER_WEEK = 7;
 const BAR_INSET = 4;
 const BAR_TITLE_MIN_WIDTH = 40;
 
@@ -65,11 +63,11 @@ function getRangedSpans(events: CalendarEvent[], gridStart: Date): RangedSpan[] 
       startIndex: getGridIndex(getEventStartDate(event), gridStart),
       endIndex: getGridIndex(getEventDisplayEndDate(event), gridStart),
     }))
-    .filter((entry) => entry.endIndex >= 0 && entry.startIndex <= GRID_DAYS - 1)
+    .filter((entry) => entry.endIndex >= 0 && entry.startIndex <= GRID_LENGTH - 1)
     .map((entry) => ({
       event: entry.event,
       startIndex: Math.max(0, entry.startIndex),
-      endIndex: Math.min(GRID_DAYS - 1, entry.endIndex),
+      endIndex: Math.min(GRID_LENGTH - 1, entry.endIndex),
     }));
 }
 
@@ -119,7 +117,7 @@ export function computeMonthLayout(
   for (const event of events) {
     if (isSpanningEvent(event)) continue;
     const index = getGridIndex(getEventStartDate(event), gridStart);
-    if (index < 0 || index > GRID_DAYS - 1) continue;
+    if (index < 0 || index > GRID_LENGTH - 1) continue;
     timedByIndex.set(index, [...(timedByIndex.get(index) ?? []), event]);
   }
   for (const list of timedByIndex.values()) {
@@ -127,12 +125,12 @@ export function computeMonthLayout(
   }
 
   const weeks: MonthWeek[] = [];
-  for (let week = 0; week < GRID_DAYS / 7; week++) {
-    const weekStart = week * 7;
-    const weekEnd = weekStart + 6;
+  for (let week = 0; week < WEEKS_PER_GRID; week++) {
+    const weekStart = week * WEEK_LENGTH;
+    const weekEnd = weekStart + WEEK_LENGTH - 1;
     const days: MonthDayCell[] = [];
 
-    for (let column = 0; column < 7; column++) {
+    for (let column = 0; column < WEEK_LENGTH; column++) {
       const index = weekStart + column;
       const date = monthDays[index];
       if (!date) continue;
@@ -158,14 +156,13 @@ export type MonthMetrics = {
   rowHeight: number;
   cellWidth: number;
   maxRows: number;
-  summaryMode: boolean;
 };
 
 export function getMonthMetrics(width: number, height: number): MonthMetrics {
   const rowHeight = height / WEEKS_PER_GRID;
-  const cellWidth = width / COLUMNS_PER_WEEK;
+  const cellWidth = width / WEEK_LENGTH;
   const maxRows = Math.max(0, Math.floor((rowHeight - DAY_NUMBER_HEIGHT) / EVENT_ROW_HEIGHT));
-  return { rowHeight, cellWidth, maxRows, summaryMode: maxRows < 1 };
+  return { rowHeight, cellWidth, maxRows };
 }
 
 export function shouldShowBarTitle(span: number, cellWidth: number): boolean {

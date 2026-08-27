@@ -1,5 +1,5 @@
-const WEEK_LENGTH = 7;
-const GRID_LENGTH = 42;
+export const WEEK_LENGTH = 7;
+export const GRID_LENGTH = 42;
 
 type WeekInfo = { firstDay: number };
 type LocaleWeekInfo = Intl.Locale & { getWeekInfo?: () => WeekInfo; weekInfo?: WeekInfo };
@@ -78,7 +78,7 @@ export function getMonthGridDays(monthDate: Date): Date[] {
 }
 
 export function getRangeEndDate(startDate: Date, lookaheadDays: number): Date {
-  return addDays(startDate, Math.max(1, lookaheadDays) - 1);
+  return addDays(startDate, lookaheadDays - 1);
 }
 
 export function formatDayRange(start: Date, end: Date): string {

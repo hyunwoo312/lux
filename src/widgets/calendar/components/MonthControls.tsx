@@ -1,8 +1,8 @@
 import { EASE_OUT } from "@/lib/motion";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ArrowLeft, CalendarClock, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatedHeaderText } from "@/widgets/calendar/components/AnimatedHeaderText";
-import { CalendarNavButton } from "@/widgets/calendar/components/CalendarNavButton";
+import { CalendarNavButton, TodayButton } from "@/widgets/calendar/components/CalendarNavButton";
 import { addDays, formatDayRange, startOfWeek } from "@/widgets/calendar/lib/dates";
 import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
@@ -17,7 +17,6 @@ export function MonthControls() {
   const selectedDay = useCalendar((d) => d.selectedDay);
   const shiftMonth = useCalendarStore((s) => s.shiftMonth);
   const shiftWeek = useCalendarStore((s) => s.shiftWeek);
-  const goToToday = useCalendarStore((s) => s.goToToday);
   const exitWeek = useCalendarStore((s) => s.exitWeek);
 
   const inWeek = mode === "week" && selectedDay !== null;
@@ -63,11 +62,7 @@ export function MonthControls() {
         icon={ChevronRight}
         onClick={() => shift(1)}
       />
-      <CalendarNavButton
-        label="Go to today"
-        icon={CalendarClock}
-        onClick={() => goToToday(instanceId)}
-      />
+      <TodayButton />
     </div>
   );
 }

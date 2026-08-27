@@ -9,7 +9,7 @@ import { ActivityLedger } from "@/widgets/github/components/ActivityLedger";
 import { Activity } from "lucide-react";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { Heatmap, HeatmapLegend } from "@/widgets/github/components/ContributionsChart";
-import { Stats } from "@/widgets/github/components/contributions/ContributionsStats";
+import { ContributionsStats } from "@/widgets/github/components/ContributionsStats";
 import { heatmapHeight, heatmapMetrics, localDayKey } from "@/widgets/github/lib/heatmap";
 import { visibleItems } from "@/widgets/github/lib/visibility";
 import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
@@ -50,6 +50,11 @@ export function ContributionsView({ enabled }: { enabled: boolean }) {
     () => visibleItems(data?.activity ?? [], showPrivate),
     [data?.activity, showPrivate],
   );
+  const metrics = useMemo(() => heatmapMetrics(size.width), [size.width]);
+  const shownWeeks = useMemo(
+    () => (data ? data.weeks.slice(-metrics.weeks) : []),
+    [data, metrics.weeks],
+  );
   const ledgerTotals = useMemo(() => {
     if (showPrivate) return data?.totals;
     return ledgerActivity.reduce(
@@ -76,20 +81,18 @@ export function ContributionsView({ enabled }: { enabled: boolean }) {
     );
   if (!data) return <StateMessage icon={Activity} message="No contributions yet." />;
 
-  const metrics = heatmapMetrics(size.width);
   const todayKey = localDayKey(new Date());
-  const shownWeeks = data.weeks.slice(-metrics.weeks);
   const shownTotal = metrics.weeks >= data.weeks.length ? data.total : sumCounts(shownWeeks);
   const showLedger =
     size.height >= heatmapHeight(metrics) + LEDGER_MIN && ledgerActivity.length > 0;
 
   return (
     <div className="flex h-full flex-col gap-3 p-1">
-      <Stats data={data} total={shownTotal} weeks={metrics.weeks} />
+      <ContributionsStats data={data} total={shownTotal} weeks={metrics.weeks} />
       <div ref={ref} className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
         <div className="shrink-0">
           <Heatmap
-            weeks={data.weeks}
+            weeks={shownWeeks}
             metrics={metrics}
             total={shownTotal}
             todayKey={todayKey}

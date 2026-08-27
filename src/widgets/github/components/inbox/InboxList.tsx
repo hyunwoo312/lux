@@ -16,7 +16,12 @@ import {
 import { groupByRepo, matchesFilter, type InboxEntry } from "@/widgets/github/lib/inbox-groups";
 import { visibleItems } from "@/widgets/github/lib/visibility";
 import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
-import { INBOX_FILTERS, type InboxData, type InboxFilter } from "@/widgets/github/types";
+import {
+  INBOX_FILTERS,
+  INBOX_ZERO,
+  type InboxData,
+  type InboxFilter,
+} from "@/widgets/github/types";
 
 const FILTER_LABEL: Record<InboxFilter, string> = {
   all: "All",
@@ -105,11 +110,7 @@ export function InboxList({
       {emptyForFilter ? (
         <StateMessage
           icon={Inbox}
-          message={
-            filter === "all"
-              ? "Inbox zero — nothing waiting."
-              : `Nothing under ${FILTER_LABEL[filter]}.`
-          }
+          message={filter === "all" ? INBOX_ZERO : `Nothing under ${FILTER_LABEL[filter]}.`}
         />
       ) : (
         <div className="scroll-fade flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1">

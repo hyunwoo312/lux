@@ -1,4 +1,5 @@
 import { useEffect, useRef, type Ref } from "react";
+import { formatClock, formatHourMark } from "@/lib/clock";
 import { ListGroupHeading } from "@/components/ListGroupHeading";
 import { AgendaEventBlock } from "@/widgets/calendar/components/agenda/AgendaEventBlock";
 import { AgendaSkipRow } from "@/widgets/calendar/components/agenda/AgendaSkipRow";
@@ -6,10 +7,8 @@ import { NowLine } from "@/widgets/calendar/components/agenda/NowLine";
 import { getEventColor } from "@/widgets/calendar/lib/colors";
 import { getDateKey } from "@/widgets/calendar/lib/dates";
 import {
-  formatClock,
   formatDayHeading,
   formatGapLabel,
-  formatHourMark,
   formatSkipLabel,
   getEventCountdown,
   getEventUrgency,

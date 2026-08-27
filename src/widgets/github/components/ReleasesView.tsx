@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
@@ -60,7 +60,7 @@ export function ReleaseList({
   newTab: boolean;
   markSeen?: boolean;
 }) {
-  const lastSeenAt = useGithubStore((s) => s.lastSeenReleaseAt);
+  const [lastSeenAt] = useState(() => useGithubStore.getState().lastSeenReleaseAt);
   const markReleasesSeen = useGithubStore((s) => s.markReleasesSeen);
   const releases = useMemo(
     () => visibleItems(data.releases, showPrivate),
@@ -141,7 +141,7 @@ function ReleaseRow({
         <p className="text-ink-3 text-micro truncate">{detail}</p>
       </div>
       {release.isPrerelease && (
-        <span className="border-border text-ink-3 text-micro shrink-0 rounded border px-1 py-px">
+        <span className="border-border text-ink-3 text-micro shrink-0 rounded-xs border px-1 py-px">
           Pre-release
         </span>
       )}

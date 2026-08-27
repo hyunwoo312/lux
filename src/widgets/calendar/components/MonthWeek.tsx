@@ -30,6 +30,7 @@ type MonthWeekProps = {
   eventsByDate: Map<string, CalendarEvent[]>;
   colors: Map<string, string>;
   metrics: MonthMetrics;
+  collapsed: boolean;
 };
 
 function EventBar({
@@ -145,7 +146,7 @@ function DayBottom({
   );
 }
 
-export function MonthWeek({ week, eventsByDate, colors, metrics }: MonthWeekProps) {
+export function MonthWeek({ week, eventsByDate, colors, metrics, collapsed }: MonthWeekProps) {
   const reduced = useReducedMotion();
   const instanceId = useWidgetInstanceId();
   const mode = useCalendar((d) => d.mode);
@@ -159,11 +160,12 @@ export function MonthWeek({ week, eventsByDate, colors, metrics }: MonthWeekProp
       ? week.days.findIndex((day) => day.dateKey === getDateKey(selectedDay))
       : -1;
 
-  const { summaryMode, cellWidth } = metrics;
+  const { cellWidth } = metrics;
+  const summaryMode = metrics.maxRows === 0;
   const { bandRows, bottomRows } = getWeekRowBudget(week, metrics.maxRows);
 
   return (
-    <div className="border-border/30 relative h-full min-h-0 border-t">
+    <div role="presentation" className="border-border/30 relative h-full min-h-0 border-t">
       <div aria-hidden className="pointer-events-none absolute inset-0 grid grid-cols-7">
         {Array.from({ length: 7 }, (_, column) => (
           <div key={column} className="border-border/30 border-r last:border-r-0" />
@@ -173,7 +175,14 @@ export function MonthWeek({ week, eventsByDate, colors, metrics }: MonthWeekProp
         {week.days.map((day, column) => {
           const dayEvents = eventsByDate.get(day.dateKey) ?? [];
           return (
-            <MonthDayCell key={day.dateKey} day={day} eventCount={dayEvents.length}>
+            <MonthDayCell
+              key={day.dateKey}
+              day={day}
+              eventCount={dayEvents.length}
+              isSelected={column === selectedCol}
+              collapsed={collapsed}
+              onActivate={() => activateDay(day.date)}
+            >
               {summaryMode ? (
                 <DaySummary events={dayEvents} colors={colors} />
               ) : (
@@ -200,8 +209,10 @@ export function MonthWeek({ week, eventsByDate, colors, metrics }: MonthWeekProp
             opacity: { duration: reduced ? 0 : 0.2 },
             x: reduced ? { duration: 0 } : SPRING_CRISP,
           }}
-          style={{ width: Math.max(0, cellWidth - 4), left: 2, top: 2, bottom: 2 }}
-          className="border-primary pointer-events-none absolute rounded-md border-2"
+          style={{ width: Math.max(0, cellWidth - 4) }}
+          className="
+            border-primary pointer-events-none absolute inset-y-0.5 left-0.5 rounded-md border-2
+          "
         />
       )}
       {!summaryMode && (

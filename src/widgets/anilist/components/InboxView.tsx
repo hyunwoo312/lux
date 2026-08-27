@@ -6,7 +6,7 @@ import { usePagedResource } from "@/widgets/core/usePagedResource";
 import { fetchInboxPage } from "@/widgets/anilist/lib/api/feed";
 import { parseCachedInbox } from "@/widgets/anilist/lib/api/cache";
 import { FeedList } from "@/widgets/anilist/components/FeedList";
-import { FeedThumb } from "@/widgets/anilist/components/FeedThumb";
+import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
@@ -88,12 +88,7 @@ function NotificationRow({
   const className = notification.url ? ROW.itemAction : ROW.item;
   const body = (
     <>
-      <FeedThumb
-        variant={notification.imageKind === "avatar" ? "avatar" : "cover"}
-        src={notification.imageUrl}
-        title={notification.text}
-        fallback={<Bell className="size-4" aria-hidden />}
-      />
+      <NotificationThumb notification={notification} />
       <div className="min-w-0 flex-1">
         <p className="text-ink line-clamp-2 text-caption">{notification.text}</p>
         <p className="text-ink-3 text-micro flex items-center gap-1">
@@ -117,5 +112,40 @@ function NotificationRow({
     >
       {body}
     </a>
+  );
+}
+
+function NotificationThumb({ notification }: { notification: AnilistNotification }) {
+  if (!notification.imageUrl) {
+    return (
+      <span
+        className="
+          bg-foreground/10 text-ink-3 flex h-12 w-9 shrink-0 items-center justify-center rounded-md
+        "
+        aria-hidden
+      >
+        <Bell className="size-4" aria-hidden />
+      </span>
+    );
+  }
+
+  if (notification.imageKind === "avatar") {
+    return (
+      <span className="flex h-12 w-9 shrink-0 items-center justify-center">
+        <MediaCover
+          src={notification.imageUrl}
+          title={notification.text}
+          className="size-9 rounded-full"
+        />
+      </span>
+    );
+  }
+
+  return (
+    <MediaCover
+      src={notification.imageUrl}
+      title={notification.text}
+      className="h-12 w-9 rounded-md"
+    />
   );
 }

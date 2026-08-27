@@ -1,8 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from "vitest";
-import { HttpError, RateLimitError } from "@/lib/net";
-import { classifyLoadError } from "@/lib/net";
-import { loadFailureMessage } from "@/widgets/anilist/lib/load-failure";
+import { classifyLoadError, HttpError, RateLimitError } from "@/lib/net";
 
 const setOnline = (value: boolean) =>
   Object.defineProperty(navigator, "onLine", { value, configurable: true });
@@ -48,39 +46,5 @@ describe("classifyLoadError", () => {
 
   it("does not blame AniList when our own parser rejects the payload", () => {
     expect(classifyLoadError(new Error("Unexpected AniList list response"))).toBe("other");
-  });
-});
-
-describe("loadFailureMessage", () => {
-  it("passes a rate-limit message through so the wait is visible", () => {
-    expect(loadFailureMessage(new RateLimitError(30_000), "your feed")).toBe(
-      "Rate limited — try again in 30s.",
-    );
-  });
-
-  it("says the user is offline without naming what failed", () => {
-    setOnline(false);
-    expect(loadFailureMessage(new Error("boom"), "your feed")).toBe(
-      "You’re offline. Reconnect to see the latest.",
-    );
-  });
-
-  it("names AniList and clears the user of blame when the service is down", () => {
-    const message = loadFailureMessage(new HttpError(502, "boom"), "your inbox");
-    expect(message).toContain("AniList isn’t responding");
-    expect(message).toContain("your inbox");
-    expect(message).toContain("their end");
-  });
-
-  it("falls back to naming what could not load", () => {
-    expect(loadFailureMessage(new Error("Unexpected AniList list response"), "your list")).toBe(
-      "Couldn’t load your list.",
-    );
-  });
-
-  it("tells a rejected account to reconnect rather than blaming the load", () => {
-    const message = loadFailureMessage(new HttpError(401, "nope"), "your list");
-    expect(message).toContain("Reconnect your account");
-    expect(message).not.toContain("Couldn’t load");
   });
 });

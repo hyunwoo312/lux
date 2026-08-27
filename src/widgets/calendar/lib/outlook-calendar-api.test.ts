@@ -172,7 +172,6 @@ describe("normalizeOutlookCalendar", () => {
       summary: "Work",
       backgroundColor: "#FF0000",
       primary: true,
-      selected: true,
     });
   });
 

@@ -9,6 +9,7 @@ import {
 } from "@/widgets/calendar/lib/google-calendar-api";
 import {
   capCalendarEvents,
+  createDefaultData,
   useCalendarStore,
   type CalendarData,
 } from "@/widgets/calendar/useCalendarStore";
@@ -46,28 +47,7 @@ function createEvent(): CalendarEvent {
 }
 
 function baseData(over: Partial<CalendarData> = {}): CalendarData {
-  const now = new Date();
-  return {
-    events: [],
-    lookaheadDays: 7,
-    enabled: true,
-    view: "calendar",
-    density: "comfortable",
-    google: { calendars: [], enabledCalendarIds: [], failedCalendarIds: [] },
-    microsoft: { calendars: [], enabledCalendarIds: [], failedCalendarIds: [] },
-    primarySource: "google",
-    refreshIntervalHours: 6,
-    status: "idle",
-    syncing: [],
-    resyncPending: [],
-    visibleMonth: new Date(now.getFullYear(), now.getMonth(), 1),
-    mode: "month",
-    selectedDay: null,
-    focusRowIndex: 0,
-    listAnchor: now,
-    listAnchorSetOn: getDateKey(now),
-    ...over,
-  };
+  return { ...createDefaultData(), view: "calendar", ...over };
 }
 
 function seed(over: Partial<CalendarData> = {}) {
@@ -203,6 +183,35 @@ describe("useCalendarStore.sync", () => {
     expect(data()?.events).toHaveLength(1);
   });
 
+  it("keeps an in-flight sync running when the user jumps to today", async () => {
+    let resolveEvents:
+      | ((value: { events: CalendarEvent[]; failedCalendarIds: string[] }) => void)
+      | undefined;
+    fetchCalendarsMock.mockResolvedValue([createCalendar()]);
+    fetchEventsMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveEvents = resolve;
+        }),
+    );
+
+    const first = useCalendarStore.getState().sync(ID);
+    expect(data()?.syncing).toEqual(["google"]);
+
+    await useCalendarStore.getState().sync(ID, { bypassCooldown: true, providerId: "google" });
+    useCalendarStore.getState().goToToday(ID);
+
+    expect(data()?.syncing).toEqual(["google"]);
+    expect(data()?.resyncPending).toEqual(["google"]);
+    expect(data()?.status).toBe("syncing");
+
+    await vi.waitFor(() => expect(resolveEvents).toBeDefined());
+    resolveEvents?.({ events: [], failedCalendarIds: [] });
+    await first;
+
+    await vi.waitFor(() => expect(fetchEventsMock).toHaveBeenCalledTimes(2));
+  });
+
   it("keeps instances independent when syncing", async () => {
     seed();
     useCalendarStore.setState((state) => ({
@@ -252,12 +261,6 @@ describe("useCalendarStore selection + clear", () => {
     expect(d?.events).toEqual([]);
     expect(d?.google.enabledCalendarIds).toEqual([]);
     expect(d?.google.calendars).toEqual([]);
-  });
-
-  it("drops an instance on cleanup", () => {
-    seed();
-    useCalendarStore.getState().removeInstance(ID);
-    expect(data()).toBeUndefined();
   });
 });
 

@@ -2,7 +2,7 @@ import { syncCooldownMessage, syncCooldownRemainingMs } from "@/widgets/core/syn
 
 export const CALENDAR_SYNC_COOLDOWN_MS = 60_000;
 
-function toEpochMs(lastSyncedAt: string | undefined): number | undefined {
+export function toEpochMs(lastSyncedAt: string | undefined): number | undefined {
   if (!lastSyncedAt) return undefined;
   const time = new Date(lastSyncedAt).getTime();
   return Number.isFinite(time) ? time : undefined;

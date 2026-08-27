@@ -1,7 +1,13 @@
 import { z } from "zod";
 import { integrationFetch } from "@/integrations";
 import { ensureOk, parseResponse } from "@/lib/net";
-import { fanOutCalendars, parseCalendarItems } from "@/widgets/calendar/lib/provider-fetch";
+import {
+  fanOutCalendars,
+  MAX_EVENT_PAGES,
+  parseAllDayDate,
+  parseCalendarItems,
+  toIsoString,
+} from "@/widgets/calendar/lib/provider-fetch";
 import {
   MAX_CALENDAR_EVENTS,
   type CalendarEvent,
@@ -12,7 +18,6 @@ import {
 } from "@/widgets/calendar/types";
 
 const API_BASE_URL = "https://graph.microsoft.com/v1.0";
-const MAX_EVENT_PAGES = 10;
 
 const graphCalendarSchema = z.object({
   id: z.string().optional(),
@@ -87,40 +92,25 @@ function outlookRsvp(event: GraphEvent): RsvpStatus | undefined {
   return response ? GRAPH_RSVP[response] : undefined;
 }
 
-function toIsoString(date: Date): string | null {
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
-}
-
-function parseAllDayDate(value: string): string | null {
-  const datePart = value.split("T")[0] ?? value;
-  const [year = 0, month = 1, day = 1] = datePart.split("-").map(Number);
-  return toIsoString(new Date(year, month - 1, day));
-}
-
 function normalizeDateTime(value: GraphDateTime | undefined, isAllDay: boolean): string | null {
   if (!value?.dateTime) return null;
   if (isAllDay) return parseAllDayDate(value.dateTime);
+  if (value.timeZone !== undefined && value.timeZone !== "UTC") {
+    return toIsoString(new Date(value.dateTime));
+  }
   const utc = value.dateTime.endsWith("Z") ? value.dateTime : `${value.dateTime}Z`;
   return toIsoString(new Date(utc));
 }
 
-export function normalizeOutlookCalendar(
-  calendar: GraphCalendar,
-  selectedCalendarIds: readonly string[] = [],
-): ConnectedCalendar | null {
+export function normalizeOutlookCalendar(calendar: GraphCalendar): ConnectedCalendar | null {
   if (!calendar.id || !calendar.name) return null;
-
-  const selected =
-    selectedCalendarIds.length > 0
-      ? selectedCalendarIds.includes(calendar.id)
-      : Boolean(calendar.isDefaultCalendar);
 
   return {
     id: calendar.id,
     summary: calendar.name,
     backgroundColor: resolveCalendarColor(calendar),
     primary: Boolean(calendar.isDefaultCalendar),
-    selected,
+    selected: false,
   };
 }
 
@@ -194,9 +184,7 @@ async function fetchEventsForCalendar(
   return events;
 }
 
-export async function fetchOutlookCalendars(
-  selectedCalendarIds: readonly string[] = [],
-): Promise<ConnectedCalendar[]> {
+export async function fetchOutlookCalendars(): Promise<ConnectedCalendar[]> {
   const response = await integrationFetch("microsoft", `${API_BASE_URL}/me/calendars`);
 
   ensureOk(response, "Outlook calendar list request failed");
@@ -208,7 +196,7 @@ export async function fetchOutlookCalendars(
   );
 
   return parseCalendarItems(graphCalendarSchema, payload.value ?? [])
-    .map((calendar) => normalizeOutlookCalendar(calendar, selectedCalendarIds))
+    .map((calendar) => normalizeOutlookCalendar(calendar))
     .filter((calendar): calendar is ConnectedCalendar => Boolean(calendar));
 }
 

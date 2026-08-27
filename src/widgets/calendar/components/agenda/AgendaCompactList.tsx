@@ -2,17 +2,16 @@ import type { ReactNode } from "react";
 import { motion } from "motion/react";
 import { TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatClock } from "@/lib/clock";
 import { EASE_OUT } from "@/lib/motion";
 import { ListGroupHeading } from "@/components/ListGroupHeading";
-import { AgendaEventActions } from "@/widgets/calendar/components/agenda/AgendaEventActions";
+import { CalendarEventActions } from "@/widgets/calendar/components/CalendarEventActions";
 import { AgendaSkipRow } from "@/widgets/calendar/components/agenda/AgendaSkipRow";
 import { NowLine } from "@/widgets/calendar/components/agenda/NowLine";
-import { URGENCY_RING } from "@/widgets/calendar/components/agenda/urgency";
 import { getEventTitle } from "@/widgets/calendar/lib/agenda";
 import { getEventColor } from "@/widgets/calendar/lib/colors";
 import { getDateKey } from "@/widgets/calendar/lib/dates";
 import {
-  formatClock,
   formatDayHeading,
   formatGapLabel,
   formatSkipLabel,
@@ -22,6 +21,7 @@ import {
   getRunGaps,
   isTimelineRun,
   runHoldsNow,
+  URGENCY_RING,
   type FreeGap,
   type TimedBlock,
   type TimelineRun,
@@ -99,7 +99,7 @@ function CompactRow({ block, color, now, hour12, index, reduced }: CompactRowPro
             {countdown}
           </span>
         )}
-        <AgendaEventActions event={event} title={title} reduced={reduced} onColor={false} />
+        <CalendarEventActions event={event} title={title} reduced={reduced} size="sm" />
       </span>
     </motion.li>
   );

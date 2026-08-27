@@ -28,7 +28,7 @@ export function useActivityUnseenCount(enabled: boolean, viewerId: number): numb
   return activity.state.items.filter((item) => item.createdAt > lastSeen).length;
 }
 
-export type UnreadSignal = { count: number; refresh: () => void };
+export type UnreadSignal = { count: number; refresh: () => void; lastSyncedAt: number };
 
 export function useUnreadCount(enabled: boolean, viewerId: number): UnreadSignal {
   const unread = usePolledResource(fetchUnreadCount, {
@@ -41,5 +41,6 @@ export function useUnreadCount(enabled: boolean, viewerId: number): UnreadSignal
   return {
     count: unread.state.status === "success" ? unread.state.data : 0,
     refresh: unread.refresh,
+    lastSyncedAt: unread.lastSyncedAt,
   };
 }

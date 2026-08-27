@@ -6,6 +6,20 @@ import type {
 } from "@/widgets/calendar/types";
 import { getDateKey, startOfDay } from "@/widgets/calendar/lib/dates";
 
+const monthDayFormatter = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
+
+const time12Formatter = new Intl.DateTimeFormat(undefined, {
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+});
+
+const time24Formatter = new Intl.DateTimeFormat(undefined, {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
 function getEventProvider(event: CalendarEvent): CalendarProviderId {
   return event.provider ?? (event.id.startsWith("microsoft-") ? "microsoft" : "google");
 }
@@ -95,11 +109,7 @@ export function getEventsByDate<T extends CalendarEvent>(events: T[]): Map<strin
 
 export function formatEventTime(event: CalendarEvent, hour12: boolean): string {
   if (event.isAllDay) return "All day";
-  return new Intl.DateTimeFormat(undefined, {
-    hour: hour12 ? "numeric" : "2-digit",
-    minute: "2-digit",
-    hour12,
-  }).format(new Date(event.startsAt));
+  return (hour12 ? time12Formatter : time24Formatter).format(new Date(event.startsAt));
 }
 
 export function formatEventRelativeTime(event: CalendarEvent, now: Date): string | null {
@@ -113,9 +123,8 @@ export function formatEventRelativeTime(event: CalendarEvent, now: Date): string
 }
 
 export function formatEventDateRange(event: CalendarEvent): string {
-  const formatter = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
   const startsAt = getEventStartDate(event);
   const endsAt = getEventDisplayEndDate(event);
-  if (getDateKey(startsAt) === getDateKey(endsAt)) return formatter.format(startsAt);
-  return `${formatter.format(startsAt)} – ${formatter.format(endsAt)}`;
+  if (getDateKey(startsAt) === getDateKey(endsAt)) return monthDayFormatter.format(startsAt);
+  return `${monthDayFormatter.format(startsAt)} – ${monthDayFormatter.format(endsAt)}`;
 }

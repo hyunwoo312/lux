@@ -5,6 +5,7 @@ export const GITHUB_TINT: AccentPreset = "violet";
 export const GITHUB_VIEWS = ["contributions", "inbox", "releases"] as const;
 
 export const INBOX_FILTERS = ["all", "reviews", "issues", "notifications"] as const;
+export const INBOX_ZERO = "Inbox zero — nothing waiting.";
 export type InboxFilter = (typeof INBOX_FILTERS)[number];
 
 export const INBOX_CACHE_KEY = "github:inbox";

@@ -9,9 +9,9 @@ const CI_META = {
   none: { icon: CircleSlash, tone: "text-ink-3" },
 } as const;
 
-export function CiBadge({ ci, className }: { ci: PullRequestCi; className?: string }) {
+export function CiBadge({ ci }: { ci: PullRequestCi }) {
   const { icon: Icon, tone } = CI_META[ci];
-  return <Icon className={cn("size-3.5 shrink-0", tone, className)} aria-hidden />;
+  return <Icon className={cn("size-3.5 shrink-0", tone)} aria-hidden />;
 }
 
 export function ReviewBadge({ review }: { review: PullRequestReview }) {

@@ -1,8 +1,7 @@
+import { z } from "zod";
 import type { AccentPreset } from "@/widgets/core/accent";
 
 export const CALENDAR_TINT: AccentPreset = "orange";
-
-import { z } from "zod";
 
 export const MIN_LOOKAHEAD_DAYS = 1;
 export const MAX_LOOKAHEAD_DAYS = 30;
