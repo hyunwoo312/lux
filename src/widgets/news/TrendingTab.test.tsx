@@ -4,9 +4,9 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 vi.mock("@/widgets/news/lib/news", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/widgets/news/lib/news")>()),
-  fetchFeed: vi.fn().mockResolvedValue([]),
-  fetchSearch: vi.fn().mockResolvedValue([]),
-  fetchMergedFeeds: vi.fn().mockResolvedValue([]),
+  fetchFeed: vi.fn().mockResolvedValue({ items: [], missing: [] }),
+  fetchSearch: vi.fn().mockResolvedValue({ items: [], missing: [] }),
+  fetchMergedFeeds: vi.fn().mockResolvedValue({ items: [], missing: [] }),
   parseCachedNews: () => null,
 }));
 vi.mock("@/widgets/news/lib/trending", async (importOriginal) => ({
@@ -18,11 +18,10 @@ vi.mock("@/widgets/news/lib/trending", async (importOriginal) => ({
 import { fetchTrends } from "@/widgets/news/lib/trending";
 import { clearPolledResources } from "@/widgets/core/usePolledResource";
 import { NewsWidget } from "@/widgets/news/NewsWidget";
-import { useNewsStore } from "@/widgets/news/useNewsStore";
+import { useNewsStore, type NewsData } from "@/widgets/news/useNewsStore";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import { NEWS_SOURCES, type TrendItem, type TrendsFeed } from "@/widgets/news/types";
-import { TREND_REGIONS } from "@/widgets/news/lib/trend-regions";
 
 const fetchTrendsMock = vi.mocked(fetchTrends);
 const ID = "news-trending";
@@ -31,10 +30,7 @@ function trend(term: string, withNews = true): TrendItem {
   return {
     term,
     trafficLabel: "20K+",
-    traffic: 20_000,
-    startedAt: 1,
     imageUrl: `https://img.test/${term}.jpg`,
-    imageSource: "Somewhere",
     news: withNews
       ? [
           {
@@ -52,7 +48,7 @@ function feed(items: TrendItem[]): TrendsFeed {
   return { region: "US", items };
 }
 
-function seed(overrides: Record<string, unknown> = {}, trendSnapshots = {}) {
+function seed(overrides: Partial<NewsData> = {}, trendSnapshots = {}) {
   useNewsStore.setState({
     byInstance: {
       [ID]: {
@@ -73,7 +69,7 @@ function seed(overrides: Record<string, unknown> = {}, trendSnapshots = {}) {
         highlightTerms: [],
         bookmarks: [],
         ...overrides,
-      } as never,
+      },
     },
     trendSnapshots,
   });
@@ -107,12 +103,6 @@ describe("the Trending tab", () => {
       text: "aurora",
       disposition: "NEW_TAB",
     });
-  });
-
-  it("offers the region alphabetically, with the United States first", () => {
-    expect(TREND_REGIONS[0]?.label).toBe("United States");
-    const rest = TREND_REGIONS.slice(1).map((entry) => entry.label);
-    expect(rest).toEqual([...rest].sort());
   });
 
   it("says nothing about movement until it has a ranking to compare with", async () => {

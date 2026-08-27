@@ -6,10 +6,7 @@ function item(term: string): TrendItem {
   return {
     term,
     trafficLabel: "200+",
-    traffic: 200,
-    startedAt: null,
     imageUrl: null,
-    imageSource: null,
     news: [],
   };
 }

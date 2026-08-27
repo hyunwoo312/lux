@@ -245,11 +245,26 @@ describe("mergeFeeds", () => {
     expect(merged).toHaveLength(1);
     expect(merged[0]?.source).toBe("BBC News");
     expect(merged[0]?.related.map((entry) => entry.source)).toEqual(["Google News", "NPR"]);
+    expect(merged[0]?.related.map((entry) => entry.link)).toEqual([
+      "https://example.com/g",
+      "https://example.com/n",
+    ]);
   });
 
   it("records nothing when a headline has a single source", () => {
     const merged = mergeFeeds([[mergedItem("a", { source: "NPR" })]]);
     expect(merged[0]?.related).toEqual([]);
+  });
+
+  it("does not list the same source twice when a feed repeats a story", () => {
+    const merged = mergeFeeds([
+      [
+        mergedItem("x", { title: "Same story", source: "BBC News" }),
+        mergedItem("x2", { title: "Same story", source: "BBC News" }),
+      ],
+      [mergedItem("n", { title: "Same story", source: "NPR" })],
+    ]);
+    expect(merged[0]?.related).toHaveLength(1);
   });
 });
 
@@ -290,7 +305,7 @@ describe("parseCachedNews", () => {
         related: [],
       },
     ];
-    expect(parseCachedNews(valid)).toEqual(valid);
+    expect(parseCachedNews(valid)).toEqual({ items: valid, missing: [] });
     expect(parseCachedNews([{ id: "a" }])).toBeNull();
     expect(parseCachedNews("nope")).toBeNull();
   });
@@ -311,7 +326,10 @@ describe("parseCachedNews", () => {
       },
     ];
 
-    expect(parseCachedNews(JSON.parse(JSON.stringify(populated)))).toEqual(populated);
+    expect(parseCachedNews(JSON.parse(JSON.stringify(populated)))).toEqual({
+      items: populated,
+      missing: [],
+    });
   });
 
   it("rejects cached items whose link is not an http(s) URL", () => {
@@ -333,53 +351,7 @@ describe("parseCachedNews", () => {
     const cached = parseCachedNews([
       { id: "a", title: "t", link: "https://x.test", source: "s", publishedAt: null },
     ]);
-    expect(cached?.[0]?.image).toBeNull();
-  });
-});
-
-describe("mergeFeeds clustering", () => {
-  const from = (source: string, link: string, title: string): NewsItem => ({
-    id: link,
-    title,
-    link,
-    source,
-    sourceKey: null,
-    sourceUrl: null,
-    publishedAt: 1,
-    image: null,
-    dek: null,
-    related: [],
-  });
-
-  it("keeps a link back to each other source running the same story", () => {
-    const merged = mergeFeeds([
-      [from("BBC News", "https://bbc/x", "Same story")],
-      [from("NPR", "https://npr/x", "Same story")],
-      [from("Guardian", "https://guardian/x", "Same  story")],
-    ]);
-
-    expect(merged).toHaveLength(1);
-    expect(merged[0]?.related.map((entry) => entry.source)).toEqual(["NPR", "Guardian"]);
-    expect(merged[0]?.related.map((entry) => entry.link)).toEqual([
-      "https://npr/x",
-      "https://guardian/x",
-    ]);
-  });
-
-  it("leaves a story carried by one source with nothing to expand", () => {
-    const merged = mergeFeeds([[from("BBC News", "https://bbc/y", "Only here")]]);
-    expect(merged[0]?.related).toEqual([]);
-  });
-
-  it("does not list the same source twice when a feed repeats a story", () => {
-    const merged = mergeFeeds([
-      [
-        from("BBC News", "https://bbc/x", "Same story"),
-        from("BBC News", "https://bbc/x2", "Same story"),
-      ],
-      [from("NPR", "https://npr/x", "Same story")],
-    ]);
-    expect(merged[0]?.related).toHaveLength(1);
+    expect(cached?.items[0]?.image).toBeNull();
   });
 });
 
@@ -387,16 +359,13 @@ describe("compactTime", () => {
   const NOW = Date.parse("2026-08-23T12:00:00.000Z");
   const ago = (ms: number) => compactTime(NOW - ms, NOW);
 
-  it("drops the word 'ago' so a tile caption keeps its width for the headline", () => {
-    expect(ago(2 * 60 * 60 * 1000)).toBe("2h");
-  });
-
   it("says 'now' rather than a zero", () => {
     expect(ago(0)).toBe("now");
   });
 
   it("steps through minutes, hours, days and weeks", () => {
     expect(ago(5 * 60 * 1000)).toBe("5m");
+    expect(ago(2 * 60 * 60 * 1000)).toBe("2h");
     expect(ago(3 * 24 * 60 * 60 * 1000)).toBe("3d");
     expect(ago(21 * 24 * 60 * 60 * 1000)).toBe("3w");
   });

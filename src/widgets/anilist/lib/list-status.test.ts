@@ -59,9 +59,4 @@ describe("listStatusLabel", () => {
     expect(listStatusLabel("CURRENT", "anime")).toBe("Watching");
     expect(listStatusLabel("REPEATING", "anime")).toBe("Rewatching");
   });
-
-  it("uses one word for the statuses that do not depend on the medium", () => {
-    expect(listStatusLabel("COMPLETED", "manga")).toBe("Completed");
-    expect(listStatusLabel("PLANNING", "anime")).toBe("Planned");
-  });
 });

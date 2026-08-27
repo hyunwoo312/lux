@@ -1,8 +1,8 @@
 import { Layers } from "lucide-react";
 import { WidgetTabs, type WidgetTab } from "@/widgets/core/WidgetTabs";
-import { resolveNewsTab, sourceTab } from "@/widgets/news/lib/news";
+import { orderedSources, resolveNewsTab, sourceTab } from "@/widgets/news/lib/news";
 import { SOURCE_ICONS } from "@/widgets/news/components/sourceIcons";
-import { NEWS_SOURCES, type NewsTab } from "@/widgets/news/types";
+import { type NewsTab } from "@/widgets/news/types";
 import { useNews, useNewsStore } from "@/widgets/news/useNewsStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
@@ -12,7 +12,7 @@ export function NewsSourceBar() {
   const enabledSources = useNews((d) => d.enabledSources);
   const setActiveSource = useNewsStore((s) => s.setActiveSource);
 
-  const sources = NEWS_SOURCES.filter((source) => enabledSources.includes(source));
+  const sources = orderedSources(enabledSources);
   if (sources.length < 2) return null;
   const value = resolveNewsTab(activeSource, sources);
 

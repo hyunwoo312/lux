@@ -119,14 +119,18 @@ describe("DiscoverView", () => {
     expect(screen.queryByLabelText("Add Frieren to Planning")).not.toBeInTheDocument();
   });
 
-  it("keeps the add button outside the link so it is not nested in an anchor", async () => {
-    discoverMock.mockResolvedValue([media()]);
-    renderView();
+  it.each(["grid", "list"] as const)(
+    "keeps the add button outside the link so it is not nested in an anchor in the %s layout",
+    async (viewMode) => {
+      useAnilistStore.getState().setViewMode(ID, viewMode);
+      discoverMock.mockResolvedValue([media()]);
+      renderView();
 
-    const button = await screen.findByLabelText("Add Frieren to Planning");
+      const button = await screen.findByLabelText("Add Frieren to Planning");
 
-    expect(button.closest("a")).toBeNull();
-  });
+      expect(button.closest("a")).toBeNull();
+    },
+  );
 
   it("tells the user when adding to Planning failed", async () => {
     discoverMock.mockResolvedValue([media()]);
@@ -146,21 +150,6 @@ describe("DiscoverView", () => {
     renderView();
 
     expect(await screen.findByText(/AniList isn’t responding/)).toBeInTheDocument();
-  });
-});
-
-describe("DiscoverView list view", () => {
-  beforeEach(() => {
-    useAnilistStore.getState().setViewMode(ID, "list");
-  });
-
-  it("keeps the add button outside the link so it is not nested in an anchor", async () => {
-    discoverMock.mockResolvedValue([media()]);
-    renderView();
-
-    const button = await screen.findByLabelText("Add Frieren to Planning");
-
-    expect(button.closest("a")).toBeNull();
   });
 });
 

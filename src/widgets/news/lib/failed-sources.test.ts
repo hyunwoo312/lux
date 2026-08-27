@@ -1,12 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-vi.mock("@/lib/net", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/net")>("@/lib/net");
-  return { ...actual };
-});
-
-import { fetchMergedFeeds, readFailedSources } from "@/widgets/news/lib/news";
+import { fetchMergedFeeds } from "@/widgets/news/lib/news";
 
 const FEED = `<?xml version="1.0"?><rss><channel><item>
   <title>Headline</title><link>https://example.com/a</link><guid>a</guid>
@@ -24,34 +18,25 @@ beforeEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("readFailedSources", () => {
-  it("names the sources that did not answer", async () => {
+describe("fetchMergedFeeds", () => {
+  it("names the sources that did not answer alongside the headlines that did", async () => {
     respondWith(new Set(["bbci.co.uk"]));
 
-    await fetchMergedFeeds(["bbc", "guardian"], "us", "top", undefined, "key-1");
+    const payload = await fetchMergedFeeds(["bbc", "guardian"], "us", "top");
 
-    expect(readFailedSources("key-1")).toEqual(["bbc"]);
+    expect(payload.missing).toEqual(["bbc"]);
+    expect(payload.items).not.toHaveLength(0);
   });
 
   it("reports nothing once every source answers again", async () => {
-    respondWith(new Set(["bbci.co.uk"]));
-    await fetchMergedFeeds(["bbc", "guardian"], "us", "top", undefined, "key-2");
-    expect(readFailedSources("key-2")).toEqual(["bbc"]);
-
     respondWith(new Set());
-    await fetchMergedFeeds(["bbc", "guardian"], "us", "top", undefined, "key-2");
-    expect(readFailedSources("key-2")).toEqual([]);
+
+    expect((await fetchMergedFeeds(["bbc", "guardian"], "us", "top")).missing).toEqual([]);
   });
 
   it("still throws when every source fails, rather than reporting a quiet partial", async () => {
     respondWith(new Set(["bbci.co.uk", "theguardian.com"]));
 
-    await expect(
-      fetchMergedFeeds(["bbc", "guardian"], "us", "top", undefined, "key-3"),
-    ).rejects.toThrow();
-  });
-
-  it("knows nothing about a key it has never fetched", () => {
-    expect(readFailedSources("never-used")).toEqual([]);
+    await expect(fetchMergedFeeds(["bbc", "guardian"], "us", "top")).rejects.toThrow();
   });
 });

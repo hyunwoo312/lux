@@ -3,7 +3,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
-import { ART_SCRIM, ART_SCRIM_ACTIONS } from "@/widgets/anilist/components/coverGrid";
+import { ART_ACTION, ART_SCRIM, ART_SCRIM_ACTIONS } from "@/widgets/anilist/components/coverGrid";
 import { listStatusLabel } from "@/widgets/anilist/lib/list-status";
 import type { DiscoverMedia, ListStatus } from "@/widgets/anilist/types";
 
@@ -75,12 +75,10 @@ export function DiscoverTile({
             aria-label={`Add ${media.title} to Planning`}
             disabled={pending}
             onClick={onAdd}
-            className="
-              press focus-ring absolute inset-x-1.5 bottom-1 flex h-6 cursor-pointer items-center
-              justify-center rounded-sm bg-white/15 text-white
-              hover:bg-white/30
-              disabled:pointer-events-none disabled:opacity-50
-            "
+            className={cn(
+              ART_ACTION,
+              "absolute inset-x-1.5 bottom-1 disabled:pointer-events-none disabled:opacity-50",
+            )}
           >
             {pending ? <Spinner className="size-3.5" /> : <Plus className="size-3.5" aria-hidden />}
           </button>

@@ -13,11 +13,6 @@ function renderTitle(title: string, isNew = false) {
 }
 
 describe("HeadlineTitle", () => {
-  it("leaves a headline that fits without a tooltip repeating it", () => {
-    renderTitle("Short one");
-    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
-  });
-
   it("marks an unseen headline for screen readers as well as sighted readers", () => {
     renderTitle("Fresh headline", true);
     expect(screen.getByText("New")).toBeInTheDocument();

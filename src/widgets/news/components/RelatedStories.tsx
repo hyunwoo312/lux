@@ -1,5 +1,4 @@
 import { useState } from "react";
-import type { MouseEvent } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { OpenBehavior } from "@/lib/open-url";
@@ -21,17 +20,11 @@ export function RelatedStories({
   const extra = related.length - 1;
   const summary = extra > 0 ? `also on ${first} +${extra}` : `also on ${first}`;
 
-  const toggle = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setOpen((value) => !value);
-  };
-
   return (
     <span className="flex min-w-0 flex-col gap-0.5">
       <button
         type="button"
-        onClick={toggle}
+        onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-label={`${summary} — show the other reports of “${title}”`}
         className="
@@ -54,7 +47,6 @@ export function RelatedStories({
               href={story.link}
               target={openBehavior === "newTab" ? "_blank" : undefined}
               rel="noreferrer"
-              onClick={(event) => event.stopPropagation()}
               className="
                 press focus-ring text-ink-3 truncate rounded-sm text-caption
                 hover:text-primary

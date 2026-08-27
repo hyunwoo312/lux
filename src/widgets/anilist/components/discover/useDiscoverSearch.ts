@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { searchDiscover } from "@/widgets/anilist/lib/api/discover";
-import { loadFailureMessage } from "@/widgets/anilist/lib/load-failure";
 import type { DiscoverMedia, DiscoverType, TitleLanguage } from "@/widgets/anilist/types";
 
 export const SEARCH_DEBOUNCE_MS = 300;
@@ -8,7 +7,7 @@ export const SEARCH_DEBOUNCE_MS = 300;
 export type DiscoverSearchState =
   | { status: "idle" }
   | { status: "loading" }
-  | { status: "error"; message: string }
+  | { status: "error"; error: Error }
   | { status: "empty" }
   | { status: "success"; data: DiscoverMedia[] };
 
@@ -24,15 +23,14 @@ export function useDiscoverSearch(
   useEffect(() => {
     requestRef.current += 1;
     const requestId = requestRef.current;
-    const trimmed = query.trim();
-    if (trimmed.length === 0) {
+    if (query.length === 0) {
       setState({ status: "idle" });
       return;
     }
     setState({ status: "loading" });
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
-      searchDiscover(lang, trimmed, type, authed, controller.signal)
+      searchDiscover(lang, query, type, authed, controller.signal)
         .then((results) => {
           if (requestRef.current !== requestId) return;
           setState(
@@ -44,10 +42,7 @@ export function useDiscoverSearch(
           if (error instanceof DOMException && error.name === "AbortError") return;
           setState({
             status: "error",
-            message:
-              error instanceof Error
-                ? loadFailureMessage(error, "search results")
-                : "Couldn’t search AniList.",
+            error: error instanceof Error ? error : new Error("Couldn’t search AniList."),
           });
         });
     }, SEARCH_DEBOUNCE_MS);

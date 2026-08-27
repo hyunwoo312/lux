@@ -28,8 +28,10 @@ export function searchWeb(query: string, behavior: OpenBehavior): void {
     openUrl(`${FALLBACK_SEARCH_URL}${encodeURIComponent(term)}`, behavior);
     return;
   }
-  void chrome.search.query({
-    text: term,
-    disposition: behavior === "newTab" ? "NEW_TAB" : "CURRENT_TAB",
-  });
+  void chrome.search
+    .query({
+      text: term,
+      disposition: behavior === "newTab" ? "NEW_TAB" : "CURRENT_TAB",
+    })
+    .catch(() => openUrl(`${FALLBACK_SEARCH_URL}${encodeURIComponent(term)}`, behavior));
 }

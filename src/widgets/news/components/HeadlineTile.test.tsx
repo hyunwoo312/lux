@@ -42,8 +42,13 @@ function renderTile(overrides: Partial<NewsItem> = {}, isSaved = false) {
 }
 
 describe("HeadlineTile", () => {
-  it("marks an already-saved headline as pressed", () => {
+  it("keeps the save control out of the headline link, so each is its own target", () => {
     renderTile({}, true);
-    expect(screen.getByRole("button", { name: /remove/i })).toHaveAttribute("aria-pressed", "true");
+
+    const save = screen.getByRole("button", { name: /remove/i });
+    const link = screen.getByRole("link");
+
+    expect(link).not.toContainElement(save);
+    expect(link).toHaveAccessibleName(/^Markets rally as inflation cools/);
   });
 });

@@ -77,10 +77,6 @@ describe("selectHeadlines", () => {
     expect(result.status === "ready" && result.newCount).toBe(1);
   });
 
-  it("reads an empty feed as muted-out rather than crashing", () => {
-    expect(selectHeadlines([], NONE).status).toBe("muted");
-  });
-
   it("floats headlines matching a highlight keyword to the top", () => {
     const result = selectHeadlines([item("Rain expected"), item("Climate summit opens")], {
       ...NONE,

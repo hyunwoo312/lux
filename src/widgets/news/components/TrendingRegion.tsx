@@ -6,7 +6,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 import { TREND_REGIONS, type TrendRegion } from "@/widgets/news/lib/trend-regions";
 import { useNews, useNewsStore } from "@/widgets/news/useNewsStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
@@ -26,7 +25,7 @@ export function TrendingRegion() {
     >
       <SelectTrigger
         aria-label="Trending in"
-        className={cn("w-48 max-w-full gap-2 [&>[data-slot=select-value]]:truncate")}
+        className={"w-48 max-w-full gap-2 [&>[data-slot=select-value]]:truncate"}
       >
         <Globe className="text-ink-3 size-3.5 shrink-0" aria-hidden />
         <SelectValue />

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { ANILIST_SYNC_COOLDOWN_MS, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
+import { useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 
 const store = () => useAnilistStore.getState();
 
@@ -49,15 +49,12 @@ describe("useAnilistStore", () => {
     expect(store().lastSeenActivityAt).toBe(100);
   });
 
-  it("shares sync state and honors the cooldown", () => {
-    const first = store().requestSync("english", 1);
-    expect(first).toEqual({ ok: true, remainingMs: 0 });
+  it("ignores a second sync request inside the cooldown", () => {
+    store().requestSync("a", 1);
     expect(store().syncNonce).toBe(1);
 
-    const second = store().requestSync("romaji", 1);
-    expect(second.ok).toBe(false);
-    expect(second.remainingMs).toBeGreaterThan(0);
-    expect(second.remainingMs).toBeLessThanOrEqual(ANILIST_SYNC_COOLDOWN_MS);
+    store().requestSync("a", 1);
+    expect(store().syncNonce).toBe(1);
   });
 
   describe("merge", () => {

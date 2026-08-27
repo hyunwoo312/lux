@@ -1,14 +1,10 @@
 import { useState } from "react";
 import { RemoteImage } from "@/components/media/RemoteImage";
 import { cn } from "@/lib/utils";
+import { TILE_CAPTION_CLASS } from "@/widgets/news/components/tileStyles";
 import { TrendMovementBadge } from "@/widgets/news/components/TrendMovementBadge";
 import { searchWeb, type OpenBehavior } from "@/lib/open-url";
 import type { TrendItem, TrendMovement } from "@/widgets/news/types";
-
-const CAPTION = `
-  art-scrim absolute inset-x-0 bottom-0 block h-[calc(2lh+0.5rem)] px-2 py-1 text-caption
-  leading-snug font-medium
-`;
 
 export function TrendingTile({
   item,
@@ -57,7 +53,7 @@ export function TrendingTile({
       <span className="absolute top-2 right-2">
         <TrendMovementBadge movement={movement} onArt={hasImage} />
       </span>
-      <span className={CAPTION}>
+      <span className={TILE_CAPTION_CLASS}>
         <span className={cn("line-clamp-2", hasImage ? "text-white" : "text-ink")}>
           {item.term}
         </span>

@@ -44,17 +44,10 @@ describe("parseTrends", () => {
     ]);
   });
 
-  it("reads the namespaced traffic, picture and source", () => {
+  it("reads the namespaced traffic label and picture", () => {
     const [first] = parseTrends(FEED, "US").items;
     expect(first?.trafficLabel).toBe("20K+");
-    expect(first?.traffic).toBe(20_000);
     expect(first?.imageUrl).toBe("https://encrypted-tbn0.gstatic.com/images?q=one");
-    expect(first?.imageSource).toBe("CBS Sports");
-  });
-
-  it("reads when the term started trending", () => {
-    const [first] = parseTrends(FEED, "US").items;
-    expect(first?.startedAt).toBe(Date.parse("Mon, 24 Aug 2026 19:40:00 -0700"));
   });
 
   it("keeps the related headlines with their source", () => {

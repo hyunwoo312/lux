@@ -4,7 +4,12 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { AiringBadge } from "@/widgets/anilist/components/library/AiringBadge";
-import { ART_SCRIM, ART_SCRIM_ACTIONS } from "@/widgets/anilist/components/coverGrid";
+import {
+  ART_ACTION,
+  ART_ACTION_SHAPE,
+  ART_SCRIM,
+  ART_SCRIM_ACTIONS,
+} from "@/widgets/anilist/components/coverGrid";
 import {
   progressSpeech,
   promoteAction,
@@ -94,11 +99,7 @@ export function LibraryTile({
       {hasActions && (
         <div className="absolute inset-x-1.5 bottom-1 flex gap-1">
           {pending ? (
-            <span
-              className="
-                flex h-6 flex-1 items-center justify-center rounded-sm bg-white/15 text-white
-              "
-            >
+            <span className={cn(ART_ACTION_SHAPE, "flex-1")}>
               <Spinner className="size-3.5" />
             </span>
           ) : inProgress ? (
@@ -151,11 +152,7 @@ function TileButton({
         type="button"
         onClick={onClick}
         aria-label={label}
-        className="
-          press focus-ring flex h-6 min-w-6 flex-1 cursor-pointer items-center justify-center
-          rounded-sm bg-white/15 text-white
-          hover:bg-white/30
-        "
+        className={cn(ART_ACTION, "min-w-6 flex-1")}
       >
         <Icon className="size-3.5" aria-hidden />
       </button>

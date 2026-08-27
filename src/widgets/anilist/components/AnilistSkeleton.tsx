@@ -2,16 +2,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { COVER_GRID } from "@/widgets/anilist/components/coverGrid";
 import type { ViewMode } from "@/widgets/anilist/types";
 
-const DEFAULT_COUNT: Record<ViewMode, number> = { grid: 12, list: 6 };
-
 type AnilistSkeletonProps = {
   variant: ViewMode;
   label: string;
-  count?: number;
 };
 
-export function AnilistSkeleton({ variant, label, count }: AnilistSkeletonProps) {
-  const length = count ?? DEFAULT_COUNT[variant];
+export function AnilistSkeleton({ variant, label }: AnilistSkeletonProps) {
+  const length = variant === "grid" ? 12 : 6;
 
   return (
     <div

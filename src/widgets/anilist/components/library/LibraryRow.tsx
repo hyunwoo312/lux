@@ -59,10 +59,8 @@ export function LibraryRow({
           className="h-12 w-9 rounded-md"
         />
         <span className="min-w-0 flex-1">
-          <span className="flex min-w-0 items-center gap-1.5">
-            <span className="text-ink min-w-0 truncate text-caption font-medium">
-              {entry.title}
-            </span>
+          <span className="text-ink block min-w-0 truncate text-caption font-medium">
+            {entry.title}
           </span>
           <span className="text-ink-3 text-micro flex min-w-0 items-center gap-1.5">
             <span className="shrink-0 tabular-nums" aria-hidden>

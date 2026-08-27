@@ -1,15 +1,9 @@
 import { WidgetRefreshButton } from "@/widgets/core/WidgetRefreshButton";
 import type { Freshness } from "@/widgets/core/usePolledResource";
-import { CALENDAR_SYNC_COOLDOWN_MS } from "@/widgets/calendar/lib/cooldown";
+import { CALENDAR_SYNC_COOLDOWN_MS, toEpochMs } from "@/widgets/calendar/lib/cooldown";
 import { useCalendarConnection } from "@/widgets/calendar/hooks/useCalendarConnection";
 import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-
-function toEpoch(iso: string | undefined): number | undefined {
-  if (!iso) return undefined;
-  const time = new Date(iso).getTime();
-  return Number.isFinite(time) ? time : undefined;
-}
 
 export function CalendarRefreshButton() {
   const instanceId = useWidgetInstanceId();
@@ -27,13 +21,12 @@ export function CalendarRefreshButton() {
   if (!connected) return null;
 
   const lastSyncAt =
-    Math.max(toEpoch(googleSyncedAt) ?? 0, toEpoch(microsoftSyncedAt) ?? 0) || undefined;
+    Math.max(toEpochMs(googleSyncedAt) ?? 0, toEpochMs(microsoftSyncedAt) ?? 0) || undefined;
 
   const syncError = googleError ?? microsoftError;
-  const freshness: Freshness =
-    syncError && lastSyncAt !== undefined
-      ? { status: "failing", error: new Error(syncError), failures: 1, since: lastSyncAt }
-      : { status: "current" };
+  const freshness: Freshness = syncError
+    ? { status: "failing", error: new Error(syncError), failures: 1, since: lastSyncAt ?? 0 }
+    : { status: "current" };
 
   return (
     <WidgetRefreshButton
