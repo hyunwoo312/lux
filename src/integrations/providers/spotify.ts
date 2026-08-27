@@ -2,7 +2,7 @@ import { z } from "zod";
 import { readSpotifyClientId } from "@/integrations/provider-config";
 import { ensureOk, withTimeout, parseResponse } from "@/lib/net";
 import { createPkceProvider } from "@/integrations/providers/pkce-provider";
-import type { IntegrationProvider } from "@/integrations/types";
+import type { CodeAuthProvider } from "@/integrations/types";
 
 const PROFILE_ENDPOINT = "https://api.spotify.com/v1/me";
 
@@ -20,7 +20,7 @@ const spotifyProfileSchema = z.object({
   images: z.array(z.object({ url: z.string().optional() })).optional(),
 });
 
-export const spotifyProvider: IntegrationProvider = createPkceProvider({
+export const spotifyProvider: CodeAuthProvider = createPkceProvider({
   id: "spotify",
   label: "Spotify",
   scopes: SCOPES,

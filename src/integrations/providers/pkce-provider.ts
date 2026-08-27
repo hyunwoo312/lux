@@ -6,8 +6,8 @@ import {
 import { ensureOk, fetchTokenEndpoint, TemporaryAuthError, parseResponse } from "@/lib/net";
 import { buildPkceAuthorizeUrl, parseScopes } from "@/integrations/providers/pkce";
 import type {
+  CodeAuthProvider,
   IntegrationProfile,
-  IntegrationProvider,
   IntegrationProviderId,
   IntegrationTokenResponse,
 } from "@/integrations/types";
@@ -28,14 +28,12 @@ type PkceProviderConfig = {
   scopes: string[];
   authorizationEndpoint: string;
   tokenEndpoint: string;
-  clientIdEnvKey?: string;
   loadClientId?: () => Promise<string | undefined>;
   authParams?: Record<string, string>;
-  includeScopeOnRefresh?: boolean;
   fetchProfile: (accessToken: string) => Promise<IntegrationProfile>;
 };
 
-export function createPkceProvider(config: PkceProviderConfig): IntegrationProvider {
+export function createPkceProvider(config: PkceProviderConfig): CodeAuthProvider {
   const toTokenResponse = (payload: PkceTokenPayload): IntegrationTokenResponse => ({
     accessToken: payload.access_token,
     refreshToken: payload.refresh_token,
@@ -48,8 +46,8 @@ export function createPkceProvider(config: PkceProviderConfig): IntegrationProvi
     id: config.id,
     label: config.label,
     scopes: config.scopes,
-    clientIdEnvKey: config.clientIdEnvKey,
     loadClientId: config.loadClientId,
+    auth: "code",
     buildPkceAuthUrl: (params) =>
       buildPkceAuthorizeUrl(
         { authorizationEndpoint: config.authorizationEndpoint, authParams: config.authParams },
@@ -78,9 +76,6 @@ export function createPkceProvider(config: PkceProviderConfig): IntegrationProvi
         grant_type: "refresh_token",
         refresh_token: refreshToken,
       });
-      if (config.includeScopeOnRefresh) {
-        body.set("scope", config.scopes.join(" "));
-      }
 
       const response = await fetchTokenEndpoint(config.label, config.tokenEndpoint, {
         method: "POST",

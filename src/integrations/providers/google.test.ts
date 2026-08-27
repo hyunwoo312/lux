@@ -26,7 +26,7 @@ afterEach(() => {
 
 describe("googleProvider.acquireToken", () => {
   it("returns the token Chrome issued and the scopes it actually granted", async () => {
-    const token = await googleProvider.acquireToken!(params);
+    const token = await googleProvider.acquireToken(params);
 
     expect(token.accessToken).toBe("fresh-token");
     expect(token.scopes).toEqual([...GOOGLE_SCOPES]);
@@ -34,7 +34,7 @@ describe("googleProvider.acquireToken", () => {
   });
 
   it("evicts a stale token before asking Chrome, so the cache cannot serve it again", async () => {
-    await googleProvider.acquireToken!({ ...params, staleToken: "expired-token" });
+    await googleProvider.acquireToken({ ...params, staleToken: "expired-token" });
 
     expect(identityMock().removeCachedAuthToken).toHaveBeenCalledWith({ token: "expired-token" });
     expect(identityMock().getAuthToken).toHaveBeenCalled();
@@ -46,7 +46,7 @@ describe("googleProvider.acquireToken", () => {
       grantedScopes: ["https://www.googleapis.com/auth/userinfo.email"],
     });
 
-    await expect(googleProvider.acquireToken!(params)).rejects.toBeInstanceOf(
+    await expect(googleProvider.acquireToken(params)).rejects.toBeInstanceOf(
       IntegrationReconnectRequiredError,
     );
     expect(identityMock().removeCachedAuthToken).toHaveBeenCalledWith({ token: "partial-token" });
@@ -55,7 +55,7 @@ describe("googleProvider.acquireToken", () => {
   it("asks for a reconnect when a silent refresh cannot produce a token", async () => {
     identityMock().getAuthToken.mockRejectedValue(new Error("not signed in"));
 
-    await expect(googleProvider.acquireToken!(params)).rejects.toBeInstanceOf(
+    await expect(googleProvider.acquireToken(params)).rejects.toBeInstanceOf(
       IntegrationReconnectRequiredError,
     );
   });
@@ -63,9 +63,9 @@ describe("googleProvider.acquireToken", () => {
   it("reports a failed sign-in rather than a reconnect when the user was prompted", async () => {
     identityMock().getAuthToken.mockRejectedValue(new Error("cancelled"));
 
-    const error = await googleProvider.acquireToken!({ ...params, interactive: true }).catch(
-      (reason: unknown) => reason,
-    );
+    const error = await googleProvider
+      .acquireToken({ ...params, interactive: true })
+      .catch((reason: unknown) => reason);
 
     expect(error).toBeInstanceOf(Error);
     expect(error).not.toBeInstanceOf(IntegrationReconnectRequiredError);

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createRelayProvider } from "@/integrations/providers/relay-provider";
 import { ensureOk, withTimeout, parseResponse } from "@/lib/net";
-import type { IntegrationProvider } from "@/integrations/types";
+import type { CodeAuthProvider } from "@/integrations/types";
 
 const PROFILE_ENDPOINT = "https://api.github.com/user";
 
@@ -17,7 +17,7 @@ const githubProfileSchema = z.object({
   avatar_url: z.string().optional(),
 });
 
-export const githubProvider: IntegrationProvider = createRelayProvider({
+export const githubProvider: CodeAuthProvider = createRelayProvider({
   id: "github",
   label: "GitHub",
   scopes: SCOPES,

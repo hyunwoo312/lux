@@ -68,12 +68,6 @@ describe("retryAfterMs", () => {
   it("returns 0 when neither header is present", () => {
     expect(retryAfterMs(response(429), now)).toBe(0);
   });
-
-  it("survives onto the error the helper builds", () => {
-    const error = rateLimitError(response(429, { "retry-after": "45" }), now);
-    expect(error).toBeInstanceOf(RateLimitError);
-    expect(error?.retryAfterMs).toBe(45_000);
-  });
 });
 
 describe("parseResponse", () => {

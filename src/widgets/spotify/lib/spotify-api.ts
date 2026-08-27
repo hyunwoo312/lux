@@ -4,6 +4,7 @@ import { parseResponse, RateLimitError, retryAfterMs } from "@/lib/net";
 
 const DEFAULT_RETRY_AFTER_MS = 5_000;
 import type {
+  SpotifyErrorKind,
   SpotifyPlaybackContext,
   SpotifyPlaybackDevice,
   SpotifyPlaybackState,
@@ -85,16 +86,6 @@ type SpotifySearchPayload = {
   playlists?: { items?: Array<SpotifySearchPlaylistItem | null> };
 };
 
-function getSpotifyErrorMessage(response: Response): string {
-  if (response.status === 403) {
-    return "Spotify Premium is required for playback controls.";
-  }
-  if (response.status === 404) {
-    return "Open Spotify on a device, then try again.";
-  }
-  return "Spotify request failed.";
-}
-
 function isJsonObject(value: unknown): boolean {
   return typeof value === "object" && value !== null;
 }
@@ -112,11 +103,26 @@ const playlistsEnvelope = z.object({
   items: z.array(z.custom<SpotifySearchPlaylistItem | null>()).optional(),
 });
 
+export class SpotifyRequestError extends Error {
+  readonly kind: SpotifyErrorKind;
+  constructor(kind: SpotifyErrorKind, message: string) {
+    super(message);
+    this.name = "SpotifyRequestError";
+    this.kind = kind;
+  }
+}
+
 function spotifyError(response: Response): Error {
   if (response.status === 429) {
     return new RateLimitError(retryAfterMs(response) || DEFAULT_RETRY_AFTER_MS);
   }
-  return new Error(getSpotifyErrorMessage(response));
+  if (response.status === 403) {
+    return new SpotifyRequestError("premium", "Spotify Premium is required for playback controls.");
+  }
+  if (response.status === 404) {
+    return new SpotifyRequestError("noDevice", "Open Spotify on a device, then try again.");
+  }
+  return new SpotifyRequestError("unknown", "Spotify request failed.");
 }
 
 function selectArtworkUrl(images: SpotifyImage[] = []): string | undefined {
@@ -222,11 +228,7 @@ function mapPlaybackPayload(payload: SpotifyPlaybackPayload): SpotifyPlaybackSta
     track: {
       id: payload.item.id,
       title: payload.item.name,
-      artist:
-        payload.item.artists
-          ?.map((artist) => artist.name)
-          .filter((name): name is string => Boolean(name))
-          .join(", ") || "Unknown artist",
+      artist: joinArtistNames(payload.item.artists),
       album: payload.item.album?.name || "Unknown album",
       artworkUrl: selectArtworkUrl(payload.item.album?.images),
       durationMs: payload.item.duration_ms ?? 0,
@@ -236,7 +238,7 @@ function mapPlaybackPayload(payload: SpotifyPlaybackPayload): SpotifyPlaybackSta
 
 async function sendSpotifyCommand(path: string, init: RequestInit): Promise<void> {
   const response = await integrationFetch("spotify", `${SPOTIFY_API_BASE_URL}${path}`, init);
-  if (!response.ok && response.status !== 204) {
+  if (!response.ok) {
     throw spotifyError(response);
   }
 }
@@ -262,28 +264,20 @@ const CONTEXT_PATHS: Record<SpotifyPlaybackContext["kind"], string> = {
   artist: "artists",
 };
 
-const contextNameCache = new Map<string, string>();
-
 export async function getSpotifyContextName(
   context: SpotifyPlaybackContext,
-  signal?: AbortSignal,
 ): Promise<string | null> {
-  const cached = contextNameCache.get(context.uri);
-  if (cached !== undefined) return cached;
-
   const id = context.uri.split(":").pop();
   if (!id) return null;
   const response = await integrationFetch(
     "spotify",
     `${SPOTIFY_API_BASE_URL}/${CONTEXT_PATHS[context.kind]}/${encodeURIComponent(id)}`,
-    { signal },
   );
   if (!response.ok) {
     throw spotifyError(response);
   }
-  const payload = parseResponse("Spotify device", nameEnvelope, await response.json());
+  const payload = parseResponse("Spotify context", nameEnvelope, await response.json());
   if (typeof payload.name !== "string" || payload.name.length === 0) return null;
-  contextNameCache.set(context.uri, payload.name);
   return payload.name;
 }
 
@@ -310,10 +304,8 @@ function mapQueueItem(item: SpotifyQueueTrackPayload | null): SpotifyQueueItem |
   };
 }
 
-export async function getSpotifyQueue(signal?: AbortSignal): Promise<SpotifyQueueItem[]> {
-  const response = await integrationFetch("spotify", `${SPOTIFY_API_BASE_URL}/me/player/queue`, {
-    signal,
-  });
+export async function getSpotifyQueue(): Promise<SpotifyQueueItem[]> {
+  const response = await integrationFetch("spotify", `${SPOTIFY_API_BASE_URL}/me/player/queue`);
   if (response.status === 204) {
     return [];
   }
@@ -389,12 +381,11 @@ export async function getSpotifySavedTrackFlags(
   return liked;
 }
 
-export async function getMySpotifyPlaylists(signal?: AbortSignal): Promise<SpotifySearchResult[]> {
+export async function getMySpotifyPlaylists(): Promise<SpotifySearchResult[]> {
   const params = new URLSearchParams({ limit: "50" });
   const response = await integrationFetch(
     "spotify",
     `${SPOTIFY_API_BASE_URL}/me/playlists?${params.toString()}`,
-    { signal },
   );
   if (!response.ok) {
     throw spotifyError(response);
