@@ -2,11 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
-vi.mock("@/widgets/stocks/lib/symbols", () => ({
-  searchSymbols: vi.fn(),
-  fetchTrendingSymbols: vi.fn(),
-  parseCachedTrending: () => null,
-}));
+vi.mock("@/widgets/stocks/lib/symbols", () => ({ searchSymbols: vi.fn() }));
 
 import { searchSymbols } from "@/widgets/stocks/lib/symbols";
 import { StocksSearch } from "@/widgets/stocks/StocksSearch";

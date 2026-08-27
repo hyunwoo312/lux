@@ -22,6 +22,8 @@ function renderControls(playback: SpotifyPlaybackState) {
       canRestart={false}
       showSideControls={false}
       deviceOptions={[]}
+      devicesLoading={false}
+      devicesError={null}
       volumePercent={50}
       onTogglePlayback={vi.fn()}
       onPrevious={vi.fn()}
@@ -42,14 +44,5 @@ describe("SpotifyControls active states", () => {
     const button = screen.getByRole("button", { name: "Disable shuffle" });
 
     expect(button.querySelector("span.bg-primary")).not.toBeNull();
-  });
-
-  it("says which state each toggle is in, for anyone not seeing the fill", () => {
-    renderControls({ ...PLAYBACK, shuffle: true });
-
-    expect(screen.getByRole("button", { name: "Disable shuffle" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
   });
 });

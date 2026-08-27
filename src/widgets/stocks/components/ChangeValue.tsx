@@ -2,9 +2,10 @@ import { Triangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatChange } from "@/widgets/stocks/lib/format";
 import { changeTone, directionOf } from "@/widgets/stocks/lib/quote";
+import type { ChangeDirection } from "@/widgets/stocks/lib/quote";
 import type { ChangeMode } from "@/widgets/stocks/types";
 
-const CHIP_FILL: Record<string, string> = {
+const CHIP_FILL: Record<ChangeDirection, string> = {
   up: "bg-success text-success-foreground",
   down: "bg-destructive text-destructive-foreground",
   flat: "bg-foreground/10 text-ink-2",

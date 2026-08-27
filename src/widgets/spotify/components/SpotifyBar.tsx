@@ -49,7 +49,7 @@ export function SpotifyBar({
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-2">
         <SpotifyTrackTitle title={playback.track.title} liked={controller.isTrackLiked} />
 
-        <p className={cn(TYPE.rowSubtitle, "truncate")}>
+        <p className={cn(TYPE.rowMeta, "truncate")}>
           {roomy && controller.contextName
             ? `${playback.track.artist} · ${controller.contextName}`
             : playback.track.artist}
@@ -62,6 +62,8 @@ export function SpotifyBar({
           showSideControls={roomy}
           compact
           deviceOptions={controller.deviceOptions}
+          devicesLoading={controller.devicesLoading}
+          devicesError={controller.devicesError}
           volumePercent={controller.volumePercent}
           onTogglePlayback={controller.togglePlayback}
           onPrevious={controller.previousTrack}
@@ -80,7 +82,6 @@ export function SpotifyBar({
           leftLabel={leftLabel}
           rightLabel={rightLabel}
           showLabels={roomy}
-          disabled={controller.pendingActions.has("seek")}
           onChange={controller.changeProgress}
           onCommit={controller.commitProgress}
         />

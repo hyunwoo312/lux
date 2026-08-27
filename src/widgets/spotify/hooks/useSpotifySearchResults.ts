@@ -55,6 +55,7 @@ export function useSpotifySearchResults(open: boolean): SpotifySearchResults {
     if (trimmed.length < MIN_QUERY_LENGTH) {
       setResults([]);
       setSearching(false);
+      setError(null);
       return;
     }
 

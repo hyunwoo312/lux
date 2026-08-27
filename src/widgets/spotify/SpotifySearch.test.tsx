@@ -132,6 +132,23 @@ describe("SpotifySearch device targeting", () => {
     await waitFor(() => expect(queueMock).toHaveBeenCalledWith(TRACK.uri, "d2"));
   });
 
+  it("clears a failed search message when the query is cleared", async () => {
+    devicesMock.mockResolvedValue([device("d1", "Desk", true)]);
+    searchMock.mockRejectedValue(new Error("boom"));
+    renderSearch();
+
+    fireEvent.click(screen.getByRole("button", { name: "Search Spotify" }));
+    const input = await screen.findByRole("combobox", { name: "Search Spotify" });
+    fireEvent.change(input, { target: { value: "lullaby" } });
+    await screen.findByText("Couldn't search Spotify.", undefined, { timeout: 3000 });
+
+    fireEvent.change(input, { target: { value: "" } });
+
+    await waitFor(() =>
+      expect(screen.queryByText("Couldn't search Spotify.")).not.toBeInTheDocument(),
+    );
+  });
+
   it("renders results before liked flags resolve, then marks them without reordering", async () => {
     devicesMock.mockResolvedValue([device("d1", "Desk", true)]);
     let resolveFlags: (liked: Set<string>) => void = () => {};

@@ -21,10 +21,10 @@ import { fetchQuote } from "@/widgets/stocks/lib/quotes";
 import { fetchTrendingSymbols } from "@/widgets/stocks/lib/symbols";
 import { clearPolledResources } from "@/widgets/core/usePolledResource";
 import { StocksWidget } from "@/widgets/stocks/StocksWidget";
-import { useStocksStore } from "@/widgets/stocks/useStocksStore";
+import { useStocksStore, type StocksData } from "@/widgets/stocks/useStocksStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import type { Quote, SparkSeries, StockView } from "@/widgets/stocks/types";
+import type { Quote, SparkSeries } from "@/widgets/stocks/types";
 
 const fetchSparksMock = vi.mocked(fetchSparks);
 const fetchQuoteMock = vi.mocked(fetchQuote);
@@ -80,7 +80,7 @@ function quote(symbol: string, price: number, previousClose: number): Quote {
   };
 }
 
-function seed(instanceId: string, overrides: Partial<Record<string, unknown>> = {}) {
+function seed(instanceId: string, overrides: Partial<StocksData> = {}) {
   useStocksStore.setState({
     byInstance: {
       [instanceId]: {
@@ -88,12 +88,12 @@ function seed(instanceId: string, overrides: Partial<Record<string, unknown>> = 
         range: "1d",
         showName: true,
         indexSymbols: [],
-        view: "list" as StockView,
+        view: "list",
         changeMode: "percent",
         chartStyle: "line",
         selectedSymbol: null,
         ...overrides,
-      } as never,
+      },
     },
   });
 }

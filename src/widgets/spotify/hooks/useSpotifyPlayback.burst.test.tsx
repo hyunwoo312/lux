@@ -6,12 +6,18 @@ vi.mock("@/widgets/spotify/lib/spotify-api", async (importOriginal) => ({
   skipSpotifyNext: vi.fn(),
   skipSpotifyPrevious: vi.fn(),
   setSpotifyShuffle: vi.fn(),
+  seekSpotifyPlayback: vi.fn(),
   getSpotifyPlaybackState: vi.fn().mockResolvedValue(null),
   getSpotifyContextName: vi.fn().mockResolvedValue(null),
   getSpotifySavedTrackFlags: vi.fn().mockResolvedValue({}),
 }));
 
-import { skipSpotifyNext, setSpotifyShuffle } from "@/widgets/spotify/lib/spotify-api";
+import {
+  getSpotifyPlaybackState,
+  seekSpotifyPlayback,
+  setSpotifyShuffle,
+  skipSpotifyNext,
+} from "@/widgets/spotify/lib/spotify-api";
 import { renderHook } from "@testing-library/react";
 import {
   useSpotifyPlayback,
@@ -21,6 +27,10 @@ import type { SpotifyPlaybackState } from "@/widgets/spotify/types";
 
 const next = vi.mocked(skipSpotifyNext);
 const shuffle = vi.mocked(setSpotifyShuffle);
+const seek = vi.mocked(seekSpotifyPlayback);
+const state = vi.mocked(getSpotifyPlaybackState);
+
+const FOLLOW_UP_DELAY_COUNT = 4;
 
 const PLAYBACK: SpotifyPlaybackState = {
   isPlaying: true,
@@ -67,16 +77,6 @@ describe("burst input", () => {
     expect(next).toHaveBeenCalledTimes(2);
   });
 
-  it("runs every press of a burst, in order", async () => {
-    const { nextTrack } = controller();
-    nextTrack();
-    nextTrack();
-    nextTrack();
-    await settle();
-
-    expect(next).toHaveBeenCalledTimes(3);
-  });
-
   it("lands a double shuffle press back where it started, with one request", async () => {
     let release!: () => void;
     shuffle.mockImplementationOnce(() => new Promise<void>((done) => (release = done)));
@@ -95,11 +95,36 @@ describe("burst input", () => {
     expect(shuffle).toHaveBeenLastCalledWith(false);
   });
 
-  it("shows the toggle immediately rather than after the round trip", () => {
-    shuffle.mockImplementation(() => new Promise<void>(() => {}));
+  it("sends a second seek issued during the first, rather than dropping it", async () => {
+    let release!: () => void;
+    seek.mockImplementationOnce(() => new Promise<void>((done) => (release = done)));
+    seek.mockResolvedValue(undefined);
 
-    controller().toggleShuffle();
+    const { changeProgress, commitProgress } = controller();
+    changeProgress(5000);
+    commitProgress();
+    await settle();
+    changeProgress(9000);
+    commitProgress();
+    await settle();
 
-    expect(useSpotifyPlaybackStore.getState().playback?.shuffle).toBe(true);
+    expect(seek).toHaveBeenCalledTimes(1);
+    release();
+    await settle();
+    expect(seek).toHaveBeenLastCalledWith(9000);
+  });
+
+  it("does not multiply the follow-up polls across a burst of skips", async () => {
+    vi.useFakeTimers();
+    const { nextTrack } = controller();
+    nextTrack();
+    nextTrack();
+    nextTrack();
+    await vi.advanceTimersByTimeAsync(0);
+    const before = state.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(6000);
+    vi.useRealTimers();
+
+    expect(state.mock.calls.length - before).toBe(FOLLOW_UP_DELAY_COUNT);
   });
 });

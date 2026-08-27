@@ -2,21 +2,12 @@ import { z } from "zod";
 import { fetchYahoo } from "@/widgets/stocks/lib/yahooApi";
 import {
   INSTRUMENT_TYPES,
+  RANGE_INTERVAL,
   type Dividend,
   type PriceBar,
   type Quote,
   type StockRange,
 } from "@/widgets/stocks/types";
-
-const RANGE_INTERVAL: Record<StockRange, string> = {
-  "1d": "5m",
-  "5d": "30m",
-  "1mo": "1d",
-  "6mo": "1d",
-  ytd: "1d",
-  "1y": "1d",
-  "5y": "1wk",
-};
 
 const instrumentTypeSchema = z.enum(INSTRUMENT_TYPES).nullable().catch(null);
 

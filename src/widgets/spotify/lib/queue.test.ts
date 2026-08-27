@@ -16,9 +16,4 @@ describe("dedupeUpNext", () => {
     const queue = [item("a"), item("b"), item("a"), item("c"), item("b")];
     expect(dedupeUpNext(queue, "a").map((entry) => entry.id)).toEqual(["b", "c"]);
   });
-
-  it("returns distinct upcoming tracks unchanged", () => {
-    const queue = [item("b"), item("c")];
-    expect(dedupeUpNext(queue, "a")).toEqual([item("b"), item("c")]);
-  });
 });

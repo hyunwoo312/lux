@@ -28,6 +28,8 @@ function controller(contextName: string | null): SpotifyPlaybackController {
   return {
     playback: playback(),
     deviceOptions: [],
+    devicesLoading: false,
+    devicesError: null,
     isTrackLiked: false,
     contextName,
     pendingActions: new Set(),
@@ -74,5 +76,11 @@ describe("SpotifyPlayer context label", () => {
     renderPlayer(null);
 
     expect(screen.getByText("Album")).toBeInTheDocument();
+  });
+
+  it("exposes the track title to screen readers", () => {
+    renderPlayer(null);
+
+    expect(screen.getByText("Lullaby")).not.toHaveAttribute("aria-hidden");
   });
 });

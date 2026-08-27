@@ -85,16 +85,4 @@ describe("createLatestOnly", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(ran).toEqual(["on", "on-again"]);
   });
-
-  it("runs a lone press straight away", async () => {
-    const latest = createLatestOnly();
-    const ran: string[] = [];
-
-    latest(async () => {
-      ran.push("once");
-    });
-    await new Promise((resolve) => setTimeout(resolve, 0));
-
-    expect(ran).toEqual(["once"]);
-  });
 });

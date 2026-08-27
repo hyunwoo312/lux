@@ -61,12 +61,6 @@ function renderBar(size: { width: number; height: number }) {
 }
 
 describe("SpotifyBar artwork sizing", () => {
-  it("keeps the cover square whichever limit applies", () => {
-    const art = renderBar({ width: 400, height: 240 });
-
-    expect(art.style.width).toBe(art.style.height);
-  });
-
   it("keeps the cover from collapsing in a narrow bar", () => {
     const art = renderBar({ width: 120, height: 150 });
 

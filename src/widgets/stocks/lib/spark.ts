@@ -1,16 +1,6 @@
 import { z } from "zod";
 import { fetchYahoo } from "@/widgets/stocks/lib/yahooApi";
-import type { SparkSeries, StockRange } from "@/widgets/stocks/types";
-
-const SPARK_INTERVAL: Record<StockRange, string> = {
-  "1d": "5m",
-  "5d": "30m",
-  "1mo": "1d",
-  "6mo": "1d",
-  ytd: "1d",
-  "1y": "1d",
-  "5y": "1wk",
-};
+import { RANGE_INTERVAL, type SparkSeries, type StockRange } from "@/widgets/stocks/types";
 
 const entrySchema = z.object({
   symbol: z.string(),
@@ -49,7 +39,7 @@ export async function fetchSparks(
   if (symbols.length === 0) return {};
   const raw = await fetchYahoo(
     `/v8/finance/spark?symbols=${encodeURIComponent(symbols.join(","))}` +
-      `&range=${range}&interval=${SPARK_INTERVAL[range]}`,
+      `&range=${range}&interval=${RANGE_INTERVAL[range]}`,
     signal,
   );
   return sparksFromResponse(raw);
