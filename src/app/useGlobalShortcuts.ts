@@ -15,16 +15,8 @@ import { useGuideStore } from "@/guide";
 import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
 
 const HANDLERS: Record<ShortcutAction, () => void> = {
-  openSettings: () => {
-    const settings = useSettingsStore.getState();
-    if (settings.open) settings.closeSettings();
-    else settings.openSettings();
-  },
-  openGuide: () => {
-    const guide = useGuideStore.getState();
-    if (guide.open) guide.closeGuide();
-    else guide.openGuide();
-  },
+  openSettings: () => useSettingsStore.getState().openSettings(),
+  openGuide: () => useGuideStore.getState().openGuide(),
   toggleTheme: () => useThemeStore.getState().toggle(),
   editLayout: () => useDashboardStore.getState().toggleEditing(),
   addWidget: () => useWidgetPaletteStore.getState().toggle(),

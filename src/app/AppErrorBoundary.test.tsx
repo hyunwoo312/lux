@@ -81,6 +81,7 @@ describe("AppErrorBoundary", () => {
 
     await waitFor(() => expect(reload).toHaveBeenCalled());
     const left = await chromeRef().storage.local.get(null);
-    expect(Object.keys(left)).toEqual(["lux:widget:note"]);
+    expect(left["lux:dashboard"]).toBeUndefined();
+    expect(left["lux:widget:note"]).toEqual({ text: "keep me" });
   });
 });

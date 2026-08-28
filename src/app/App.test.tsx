@@ -9,17 +9,11 @@ describe("App", () => {
     useOnboardingStore.setState({ welcomeOpen: false });
   });
 
-  it("lays the page out as a banner over one scroll region", () => {
-    render(<App />);
-
-    expect(screen.getByRole("banner")).toBeInTheDocument();
-    expect(screen.getByRole("main")).toBeInTheDocument();
-  });
-
   it("holds the board back until the saved layout is in hand", async () => {
     render(<App />);
     const board = screen.getByRole("main").parentElement;
 
+    expect(screen.getByRole("banner")).toBeInTheDocument();
     expect(board).toHaveStyle({ opacity: "0" });
 
     await waitFor(() => expect(useDashboardStore.persist.hasHydrated()).toBe(true));

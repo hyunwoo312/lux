@@ -1,5 +1,5 @@
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { BookOpen, Check, MessageSquarePlus, Pencil, ScrollText, Settings } from "lucide-react";
 import { POP } from "@/lib/motion";
@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
-import { clockOptions, formatClockDate } from "@/lib/clock";
+import { clockFormatter, formatClockDate } from "@/lib/clock";
 import { useNow } from "@/hooks/useNow";
 import { ChangelogDialog, consumeChangelogAutoShow, useHasUnseenRelease } from "@/changelog";
 import { GuideDialog, useGuideStore } from "@/guide";
@@ -36,14 +36,13 @@ export function Header() {
     toolbarButtons().forEach((button, index) => {
       button.tabIndex = index === toolbarIndex ? 0 : -1;
     });
-  });
+  }, [toolbarIndex]);
 
   const handleToolbarKeys = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
     const jump = event.key === "Home" ? "first" : event.key === "End" ? "last" : null;
     if (step === 0 && jump === null) return;
     const buttons = toolbarButtons();
-    if (buttons.length === 0) return;
     event.preventDefault();
     const current = buttons.indexOf(document.activeElement as HTMLButtonElement);
     const last = buttons.length - 1;
@@ -173,10 +172,7 @@ export function Header() {
 function HeaderClock({ className }: { className?: string }) {
   const clock24h = useAppSettingsStore((s) => s.clock24h);
   const clockDate = useAppSettingsStore((s) => s.clockDate);
-  const formatter = useMemo(
-    () => new Intl.DateTimeFormat(undefined, clockOptions(!clock24h)),
-    [clock24h],
-  );
+  const formatter = clockFormatter(!clock24h);
   const now = useNow();
 
   const parts = formatter.formatToParts(now);

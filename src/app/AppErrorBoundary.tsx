@@ -152,7 +152,7 @@ function CrashDetail({ detail }: { detail: string }) {
           {stage === "copied" ? "Copied" : "Copy"}
         </Button>
       </div>
-      <pre className={cn(TYPE.rowSubtitle, "mt-1 max-h-32 overflow-auto whitespace-pre-wrap")}>
+      <pre className={cn(TYPE.rowMeta, "mt-1 max-h-32 overflow-auto whitespace-pre-wrap")}>
         {detail}
       </pre>
       {stage === "failed" && (
