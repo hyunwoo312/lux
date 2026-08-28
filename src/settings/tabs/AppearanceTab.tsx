@@ -4,6 +4,7 @@ import { AccentPicker } from "@/settings/components/AccentPicker";
 import { WallpaperSetting } from "@/settings/components/WallpaperSetting";
 import { SettingsRow } from "@/settings/components/SettingsRow";
 import { SettingsSection } from "@/settings/components/SettingsSection";
+import { SettingsTabBody } from "@/settings/components/SettingsTabBody";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import type { ClockDateFormat } from "@/lib/clock";
 import { useThemeStore } from "@/stores/useThemeStore";
@@ -37,7 +38,7 @@ export function AppearanceTab() {
   const isThemePersisted = useThemeStore((s) => s.isPersisted);
 
   return (
-    <div className="flex flex-col gap-6">
+    <SettingsTabBody>
       <SettingsSection title="Theme">
         <SettingsRow
           title="Light or dark"
@@ -98,6 +99,6 @@ export function AppearanceTab() {
           }
         />
       </SettingsSection>
-    </div>
+    </SettingsTabBody>
   );
 }

@@ -1,20 +1,15 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { z } from "zod";
-import { SETTINGS_TABS } from "@/settings/tabsMeta";
+import { useSettingsStore } from "@/settings/useSettingsStore";
 
-const tabSchema = z.enum(SETTINGS_TABS).catch("appearance");
+const merge = useSettingsStore.persist.getOptions().merge;
 
 describe("persisted settings tab", () => {
-  it("falls back instead of wiping when a stored tab no longer exists", () => {
-    expect(tabSchema.parse("help")).toBe("appearance");
-  });
+  it("sends a profile parked on a tab that no longer exists back to Appearance", () => {
+    const merged = merge?.({ tab: "general" }, { ...useSettingsStore.getState() }) as ReturnType<
+      typeof useSettingsStore.getState
+    >;
 
-  it("sends a profile parked on the renamed General tab to Appearance", () => {
-    expect(tabSchema.parse("general")).toBe("appearance");
-  });
-
-  it("still keeps a tab that does exist", () => {
-    expect(tabSchema.parse("accounts")).toBe("accounts");
+    expect(merged.tab).toBe("appearance");
   });
 });

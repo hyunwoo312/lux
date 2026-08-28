@@ -21,7 +21,7 @@ const CHANGE_AREAS = [
   "Weather",
 ] as const;
 
-export type ChangeArea = (typeof CHANGE_AREAS)[number];
+type ChangeArea = (typeof CHANGE_AREAS)[number];
 
 export type ReleaseChange = {
   type: ChangeType;
@@ -30,7 +30,7 @@ export type ReleaseChange = {
   highlight?: true;
 };
 
-export type AreaGroup = { area: ChangeArea; changes: ReleaseChange[] };
+type AreaGroup = { area: ChangeArea; changes: ReleaseChange[] };
 
 export type Release = {
   version: string;
@@ -64,7 +64,7 @@ export function groupByArea(changes: readonly ReleaseChange[]): AreaGroup[] {
   }
   return [...groups].map(([area, list]) => ({
     area,
-    changes: [...list].sort(
+    changes: list.sort(
       (a, b) => CHANGE_TYPE_ORDER.indexOf(a.type) - CHANGE_TYPE_ORDER.indexOf(b.type),
     ),
   }));

@@ -3,7 +3,8 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EASE_OUT } from "@/lib/motion";
+import { cn } from "@/lib/utils";
+import { EASE_OUT, panelVariants } from "@/lib/motion";
 import {
   breakdownOf,
   clearResourceCaches,
@@ -49,7 +50,10 @@ function Footprint({ usage }: { usage: StorageUsage }) {
           <li key={part.label} className="flex items-baseline gap-2.5">
             <span
               aria-hidden
-              className={`mt-1.5 size-2 shrink-0 rounded-xs ${SEGMENT_TONES[index] ?? "bg-primary/20"}`}
+              className={cn(
+                "mt-1.5 size-2 shrink-0 rounded-xs",
+                SEGMENT_TONES[index] ?? "bg-primary/20",
+              )}
             />
             <span className="text-ink min-w-0 flex-1 text-caption">
               {part.label}
@@ -66,6 +70,7 @@ function Footprint({ usage }: { usage: StorageUsage }) {
 }
 
 export function StorageSection() {
+  const reduced = useReducedMotion() ?? false;
   const [usage, setUsage] = useState<StorageUsage | null>(null);
   const [failed, setFailed] = useState(false);
   const mounted = useRef(true);
@@ -104,25 +109,31 @@ export function StorageSection() {
       }
     >
       <AnimatePresence mode="wait" initial={false}>
-        {failed ? (
-          <p key="error" className="text-ink-3 text-caption">
-            Storage usage couldn't be measured.
-          </p>
-        ) : !usage ? (
-          <div key="loading" className="flex flex-col gap-3">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-16" />
-          </div>
-        ) : (
-          <div key="usage" className="flex flex-col gap-4">
-            <Footprint usage={usage} />
-            <p className="text-ink-3 text-caption">
-              Lux holds the unlimited-storage permission, so the browser sets no fixed cap. Clearing
-              the cache removes only data your widgets can fetch again — notes, tasks and links
-              stay.
-            </p>
-          </div>
-        )}
+        <motion.div
+          key={failed ? "error" : !usage ? "loading" : "usage"}
+          variants={panelVariants(reduced)}
+          initial="hidden"
+          animate="show"
+          exit="exit"
+        >
+          {failed ? (
+            <p className="text-ink-3 text-caption">Storage usage couldn't be measured.</p>
+          ) : !usage ? (
+            <div className="flex flex-col gap-3">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-16" />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <Footprint usage={usage} />
+              <p className="text-ink-3 text-caption">
+                Lux holds the unlimited-storage permission, so the browser sets no fixed cap.
+                Clearing the cache removes only data your widgets can fetch again — notes, tasks and
+                links stay.
+              </p>
+            </div>
+          )}
+        </motion.div>
       </AnimatePresence>
     </SettingsSection>
   );

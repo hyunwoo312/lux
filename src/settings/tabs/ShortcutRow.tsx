@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
@@ -12,12 +12,11 @@ import {
   type ModifierState,
   type Shortcut,
 } from "@/lib/shortcuts";
-import { ClearButton } from "@/settings/tabs/shortcuts/shared";
 import { DURATION, EASE_OUT_STRONG, SPRING_CRISP } from "@/lib/motion";
 
 const NO_MODIFIERS: ModifierState = { mod: false, shift: false, alt: false };
 
-function useShortcutRecorder(onCommit: (shortcut: Shortcut) => void) {
+function useShortcutRecorder(onCommit: (shortcut: Shortcut) => boolean) {
   const [recording, setRecording] = useState(false);
   const [held, setHeld] = useState<ModifierState>(NO_MODIFIERS);
   const [invalid, setInvalid] = useState(false);
@@ -49,7 +48,10 @@ function useShortcutRecorder(onCommit: (shortcut: Shortcut) => void) {
         setInvalid(true);
         return;
       }
-      commitRef.current(shortcut);
+      if (!commitRef.current(shortcut)) {
+        setInvalid(true);
+        return;
+      }
       setRecording(false);
     }
     window.addEventListener("keydown", onKeyDown, true);
@@ -137,7 +139,7 @@ export function ShortcutDisplay({
   label,
 }: {
   value: Shortcut;
-  onChange: (shortcut: Shortcut) => void;
+  onChange: (shortcut: Shortcut) => boolean;
   onClear: () => void;
   label: string;
 }) {
@@ -180,7 +182,7 @@ export function ShortcutDisplay({
             transition={SPRING_CRISP}
           >
             {shortcutKeyParts(value).map((part, index) => (
-              <Fragment key={index}>
+              <Fragment key={part}>
                 {index > 0 && <MiniPlus />}
                 <KeyText>{part}</KeyText>
               </Fragment>
@@ -197,7 +199,7 @@ export function AddShortcutControl({
   onAdd,
   label,
 }: {
-  onAdd: (shortcut: Shortcut) => void;
+  onAdd: (shortcut: Shortcut) => boolean;
   label: string;
 }) {
   const reduced = useReducedMotion();
@@ -242,5 +244,25 @@ export function AddShortcutControl({
         <Plus className="size-4" aria-hidden />
       </motion.button>
     </Tooltip>
+  );
+}
+
+function ClearButton({ onClear, label }: { onClear: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClear}
+      aria-label={`Clear ${label}`}
+      className="
+        cursor-pointer focus-ring text-ink-4
+        hover:text-destructive
+        ml-1 grid size-4 shrink-0 scale-90 place-items-center rounded-xs opacity-0
+        transition-[opacity,transform]
+        group-hover:scale-100 group-hover:opacity-100
+        focus-visible:scale-100 focus-visible:opacity-100
+      "
+    >
+      <X className="size-3.5" aria-hidden />
+    </button>
   );
 }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Layers } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ConfigSegmented } from "@/components/config/WidgetConfig";
 import { SettingsRow } from "@/settings/components/SettingsRow";
@@ -61,6 +62,8 @@ export function SurfaceDefault() {
         title={pending === "solid" ? "Make every widget solid?" : "Make every widget glass?"}
         description={pending ? describe(pending, widgets.length) : ""}
         confirmLabel={pending === "solid" ? "Make all solid" : "Make all glass"}
+        icon={<Layers className="size-5" />}
+        tone="default"
         onConfirm={() => {
           if (pending)
             applyToAll(

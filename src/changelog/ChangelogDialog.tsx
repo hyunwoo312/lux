@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { DIALOG_RAIL, DialogHeaderBar } from "@/components/DialogChrome";
-import { DURATION, EASE_OUT, SPRING_CRISP } from "@/lib/motion";
+import { rowVariants, SPRING_CRISP } from "@/lib/motion";
 import { TYPE } from "@/lib/type";
 import {
   CHANGE_TYPE_LABEL,
@@ -122,10 +122,10 @@ export function ChangelogDialog({ open, onOpenChange }: Props) {
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={release?.version}
-                  initial={reduced ? { opacity: 0 } : { opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, transition: { duration: reduced ? 0 : DURATION.instant } }}
-                  transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}
+                  variants={rowVariants(reduced)}
+                  initial="hidden"
+                  animate="show"
+                  exit="exit"
                   className="flex flex-col gap-8"
                 >
                   {release && <ReleaseBody release={release} showcase={isNewest} />}

@@ -4,6 +4,7 @@ import { ChevronLeft, Settings } from "lucide-react";
 import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { DIALOG_RAIL } from "@/components/DialogChrome";
 import { SearchField } from "@/components/SearchField";
+import { SearchResults } from "@/settings/components/SearchResults";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -57,7 +58,7 @@ export function SettingsSidebar({ open }: { open: boolean }) {
       className={cn(
         DIALOG_RAIL,
         "overflow-hidden transition-[width] duration-200 ease-out",
-        effectiveCollapsed ? "w-[3.25rem]" : "w-56",
+        effectiveCollapsed ? "w-13" : "w-56",
       )}
     >
       <div className="relative flex h-12 shrink-0 items-center px-4">
@@ -91,31 +92,13 @@ export function SettingsSidebar({ open }: { open: boolean }) {
 
       {searching ? (
         <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2">
-          {results.length === 0 ? (
-            <p className="text-ink-4 px-2 py-3 text-caption">No settings match that.</p>
-          ) : (
-            results.map((entry) => (
-              <button
-                key={`${entry.tab}-${entry.label}`}
-                type="button"
-                onClick={() => {
-                  setTab(entry.tab);
-                  setQuery("");
-                }}
-                className="
-                  press-row focus-ring
-                  hover:bg-accent/50
-                  flex w-full cursor-pointer flex-col items-start gap-0.5 rounded-lg px-2 py-1.5
-                  text-left transition-colors
-                "
-              >
-                <span className="text-ink text-caption font-medium">{entry.label}</span>
-                <span className="text-ink-4 text-micro">
-                  {SETTINGS_TAB_META[entry.tab].label} · {entry.section}
-                </span>
-              </button>
-            ))
-          )}
+          <SearchResults
+            results={results}
+            onSelect={(next) => {
+              setTab(next);
+              setQuery("");
+            }}
+          />
         </div>
       ) : (
         <nav

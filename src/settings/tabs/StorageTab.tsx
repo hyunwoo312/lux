@@ -1,15 +1,17 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { exportSettings, importSettings } from "@/lib/backup";
-import { ResetControl } from "@/settings/components/ResetControl";
 import { SettingsRow } from "@/settings/components/SettingsRow";
 import { SettingsSection } from "@/settings/components/SettingsSection";
+import { SettingsTabBody } from "@/settings/components/SettingsTabBody";
 import { StorageSection } from "@/settings/components/StorageSection";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useShortcutsStore } from "@/stores/useShortcutsStore";
 import { useAccentStore } from "@/stores/useAccentStore";
 import { useThemeStore } from "@/stores/useThemeStore";
 import { useOnboardingStore } from "@/onboarding";
+import { showToast } from "@/stores/useToastStore";
 import { clearWallpaperAssets, useWallpaperStore } from "@/stores/useWallpaperStore";
 
 function resetAllSettings() {
@@ -20,12 +22,14 @@ function resetAllSettings() {
   void clearWallpaperAssets();
   useWallpaperStore.getState().reset();
   useOnboardingStore.getState().replayOnNextOpen();
+  showToast({ key: "settings-reset", message: "Settings reset" });
 }
 
 export function StorageTab() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | undefined>(undefined);
   const [pendingImport, setPendingImport] = useState<File | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   function handleFileSelected(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -50,7 +54,7 @@ export function StorageTab() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <SettingsTabBody>
       <StorageSection />
 
       <SettingsSection title="Backup & restore">
@@ -100,15 +104,21 @@ export function StorageTab() {
           title="Reset all settings"
           description="Clears theme, shortcuts and background images, and shows the welcome again. Widgets, their content and your accounts are kept."
           control={
-            <ResetControl
-              onReset={resetAllSettings}
-              label="Reset"
-              confirmMessage="Reset all settings? Clears theme, shortcuts, and background images, and shows the welcome again. Widgets, content, and accounts are kept."
-              doneMessage="Settings reset"
-            />
+            <Button variant="ghost-destructive" onClick={() => setConfirmReset(true)}>
+              Reset
+            </Button>
           }
         />
       </SettingsSection>
-    </div>
+
+      <ConfirmDialog
+        open={confirmReset}
+        onOpenChange={setConfirmReset}
+        title="Reset all settings?"
+        description="Clears theme, shortcuts, and background images, and shows the welcome again. Widgets, content, and accounts are kept."
+        confirmLabel="Reset all"
+        onConfirm={resetAllSettings}
+      />
+    </SettingsTabBody>
   );
 }

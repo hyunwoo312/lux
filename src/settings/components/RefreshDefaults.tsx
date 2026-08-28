@@ -10,16 +10,16 @@ import {
 import { accentClass } from "@/widgets/core/accent";
 import { widgetPlugins } from "@/widgets/registry";
 
-const OPTIONS: { value: RefreshCadence; label: string }[] = [
+const OPTIONS: { value: RefreshCadence; label: string; disabled?: boolean }[] = [
   { value: "default", label: "Default" },
   { value: "relaxed", label: "Relaxed" },
-  { value: "custom", label: "Custom" },
+  { value: "custom", label: "Custom", disabled: true },
 ];
 
 const tunable = () => widgetPlugins.filter((plugin) => plugin.refreshMs !== undefined);
 
 function duration(ms: number): string {
-  const minutes = Math.round(ms / 60_000);
+  const minutes = Number((ms / 60_000).toFixed(1));
   if (minutes < 60) return `${minutes} min`;
   const hours = minutes / 60;
   return hours === 1 ? "1 hour" : `${Number(hours.toFixed(1))} h`;
@@ -54,8 +54,8 @@ export function RefreshDefaults() {
         }
       >
         <p className="text-ink-4 text-caption">
-          Adjusting any widget below moves this to Custom. Default is as frequent as Lux goes — the
-          built-in rates are set against each service’s own limits.
+          Adjusting any widget below moves this to Custom. Default is each widget’s built-in rate,
+          set against its own service’s limits.
         </p>
       </SettingsRow>
 
@@ -96,9 +96,9 @@ export function RefreshDefaults() {
       </ul>
 
       <p className="text-ink-4 text-caption">
-        Sports, Spotify and Stocks are not listed: they change their own rate as they go — faster
-        while a game is live or a market is open — so there is no single interval to set. They still
-        follow the preset above.
+        Calendar, Sports, Spotify and Stocks are not listed. Calendar keeps its own interval in the
+        widget’s settings; the other three change their rate as they go — faster while a game is
+        live or a market is open — so there is no single interval to set.
       </p>
     </>
   );

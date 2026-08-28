@@ -1,16 +1,21 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Spinner } from "@/components/ui/spinner";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Check, Copy, ExternalLink } from "lucide-react";
+import { Check, ChevronRight, Copy, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { DURATION, EASE_IN_OUT, EASE_OUT } from "@/lib/motion";
+import { accentClass } from "@/widgets/core/accent";
+import { getWidgetPlugin } from "@/widgets/registry";
 
 const SPOTIFY_DASHBOARD_URL = "https://developer.spotify.com/dashboard";
 const SPOTIFY_POLICY_URL =
   "https://developer.spotify.com/blog/2025-04-15-updating-the-criteria-for-web-api-extended-access";
 const FEEDBACK_MS = 1600;
-const LINK_CLASS = "text-emerald-700 underline underline-offset-2 dark:text-emerald-300";
+const LINK_CLASS = "text-primary underline underline-offset-2";
+
+const MotionButton = motion.create(Button);
 
 const STEPS: ReactNode[] = [
   <>
@@ -86,20 +91,18 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
   }
 
   return (
-    <div className="relative ml-9">
+    <div className={cn("relative ml-9", accentClass(getWidgetPlugin("spotify")?.tint))}>
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
             key="backing"
             aria-hidden
             className="
-              absolute inset-0 rounded-2xl border border-emerald-500/30 bg-emerald-500/10
-              dark:border-emerald-400/30 dark:bg-emerald-500/20
+              border-primary/30 bg-primary/10 absolute inset-0 origin-top-left rounded-2xl border
             "
             initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
-            style={{ transformOrigin: "top left" }}
             transition={transition}
           />
         )}
@@ -122,7 +125,15 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
           aria-expanded={open}
           className="press cursor-pointer text-ink flex items-center gap-2 text-body font-semibold"
         >
-          <SetupTriangle open={open} transition={transition} />
+          <motion.span
+            aria-hidden
+            className="flex"
+            initial={false}
+            animate={{ rotate: open ? 90 : 0 }}
+            transition={transition}
+          >
+            <ChevronRight className="text-ink-3 size-3.5 shrink-0" />
+          </motion.span>
           How to set up Spotify
         </button>
 
@@ -160,10 +171,8 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
                       <span
                         aria-hidden
                         className="
-                          grid size-[1.375rem] place-items-center rounded-full border
-                          border-emerald-500/40 bg-emerald-500/15 text-micro font-bold
-                          text-emerald-700
-                          dark:border-emerald-300/40 dark:bg-emerald-400/15 dark:text-emerald-200
+                          border-primary/40 bg-primary/15 text-ink grid size-5.5 place-items-center
+                          rounded-full border text-micro font-bold
                         "
                       >
                         {index + 1}
@@ -195,7 +204,7 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
                         onClick={handleCopy}
                       >
                         {copied ? (
-                          <Check className="size-4 text-emerald-600 dark:text-emerald-300" />
+                          <Check className="text-primary size-4" />
                         ) : (
                           <Copy className="size-4" />
                         )}
@@ -210,17 +219,15 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
 
                 <Field label="Client ID">
                   <div className="flex items-center gap-2">
-                    <input
+                    <Input
                       value={value}
                       onChange={(event) => setValue(event.target.value)}
                       placeholder="Paste your Spotify Client ID"
+                      aria-label="Spotify Client ID"
                       spellCheck={false}
                       autoComplete="off"
-                      className="
-                        focus-ring border-border bg-background/40 text-ink
-                        placeholder:text-ink-4
-                        min-w-0 flex-1 rounded-lg border px-3 py-2 text-body
-                      "
+                      size="lg"
+                      className="flex-1 rounded-lg"
                     />
                     <SaveButton
                       status={status}
@@ -237,7 +244,7 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
                     </p>
                   ) : isSaved && clientId ? (
                     <p className="text-ink-3 text-micro inline-flex items-center gap-1">
-                      <Check className="size-3 text-emerald-600 dark:text-emerald-300" />
+                      <Check className="text-primary size-3" />
                       Saved
                     </p>
                   ) : null}
@@ -248,28 +255,6 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
         </AnimatePresence>
       </motion.div>
     </div>
-  );
-}
-
-function SetupTriangle({
-  open,
-  transition,
-}: {
-  open: boolean;
-  transition: { duration: number; ease?: typeof EASE_OUT };
-}) {
-  return (
-    <motion.svg
-      viewBox="0 0 12 12"
-      aria-hidden
-      className="size-2.5 shrink-0 fill-current"
-      initial={false}
-      animate={{ rotate: open ? 90 : 0 }}
-      transition={transition}
-      style={{ transformOrigin: "center" }}
-    >
-      <path d="M4 2 L9.5 6 L4 10 Z" />
-    </motion.svg>
   );
 }
 
@@ -291,7 +276,7 @@ function SaveButton({
   const bare = status !== "idle";
   const content: ReactNode =
     status === "saving" ? (
-      <Spinner className="text-emerald-600 dark:text-emerald-300" />
+      <Spinner className="text-primary" />
     ) : status === "success" ? (
       <DrawnCheck reduced={reduced} />
     ) : status === "error" ? (
@@ -301,24 +286,17 @@ function SaveButton({
     );
 
   return (
-    <motion.button
+    <MotionButton
       type="button"
+      variant={bare ? "ghost" : "default"}
       onClick={onSave}
       disabled={!canSave}
       initial={false}
       animate={{ width: bare ? 32 : 80 }}
       transition={transition}
       className={cn(
-        "press",
-        `
-          focus-ring relative inline-flex h-8 shrink-0 cursor-pointer items-center justify-center
-          overflow-hidden rounded-md text-body font-medium transition-colors
-          disabled:pointer-events-none
-          [&_svg]:size-4 [&_svg]:shrink-0
-        `,
-        bare
-          ? "bg-transparent"
-          : "bg-emerald-500 hover:bg-emerald-600 px-3 text-white disabled:opacity-50",
+        "relative overflow-hidden",
+        bare && "aria-disabled:opacity-100 hover:bg-transparent",
       )}
     >
       <AnimatePresence initial={false} mode="popLayout">
@@ -327,13 +305,13 @@ function SaveButton({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: reduced ? 0 : 0.15 }}
+          transition={{ duration: reduced ? 0 : DURATION.fast }}
           className="absolute inset-0 grid place-items-center"
         >
           {content}
         </motion.span>
       </AnimatePresence>
-    </motion.button>
+    </MotionButton>
   );
 }
 
@@ -341,7 +319,7 @@ function DrawnCheck({ reduced }: { reduced: boolean | null }) {
   return (
     <motion.svg
       viewBox="0 0 24 24"
-      className="size-5 text-emerald-600 dark:text-emerald-300"
+      className="text-primary size-5"
       fill="none"
       stroke="currentColor"
       strokeWidth={3}

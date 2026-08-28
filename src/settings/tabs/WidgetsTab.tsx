@@ -1,10 +1,11 @@
 import { SettingsSection } from "@/settings/components/SettingsSection";
+import { SettingsTabBody } from "@/settings/components/SettingsTabBody";
 import { SurfaceDefault } from "@/settings/components/SurfaceDefault";
 import { RefreshDefaults } from "@/settings/components/RefreshDefaults";
 
 export function WidgetsTab() {
   return (
-    <div className="flex flex-col gap-6">
+    <SettingsTabBody>
       <SettingsSection title="Defaults for every widget">
         <SurfaceDefault />
       </SettingsSection>
@@ -16,6 +17,6 @@ export function WidgetsTab() {
       <p className="text-ink-3 text-caption">
         Each widget keeps its own settings behind the gear in its header, on the dashboard.
       </p>
-    </div>
+    </SettingsTabBody>
   );
 }

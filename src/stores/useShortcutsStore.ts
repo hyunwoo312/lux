@@ -15,7 +15,7 @@ export { SHORTCUT_DEFAULTS, SHORTCUT_DEFINITIONS, type ShortcutAction };
 export const MAX_SHORTCUT_SLOTS = 2;
 
 type ShortcutsState = Record<ShortcutAction, Shortcut[]> & {
-  setShortcutSlot: (action: ShortcutAction, slot: number, shortcut: Shortcut) => void;
+  setShortcutSlot: (action: ShortcutAction, slot: number, shortcut: Shortcut) => boolean;
   clearShortcutSlot: (action: ShortcutAction, slot: number) => void;
   resetShortcut: (action: ShortcutAction) => void;
   resetAll: () => void;
@@ -61,19 +61,19 @@ const gatedStorage = createGatedChromeStorage();
 
 export const useShortcutsStore = create<ShortcutsState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...initialBindings(),
-      setShortcutSlot: (action, slot, shortcut) =>
-        set((state) => {
-          const current = state[action];
-          if (current.some((held, index) => index !== slot && shortcutsEqual(held, shortcut))) {
-            return {};
-          }
-          const next = [...current];
-          if (slot < next.length) next[slot] = shortcut;
-          else if (slot === next.length && next.length < MAX_SHORTCUT_SLOTS) next.push(shortcut);
-          return { [action]: next };
-        }),
+      setShortcutSlot: (action, slot, shortcut) => {
+        const current = get()[action];
+        if (current.some((held, index) => index !== slot && shortcutsEqual(held, shortcut))) {
+          return false;
+        }
+        const next = [...current];
+        if (slot < next.length) next[slot] = shortcut;
+        else if (next.length < MAX_SHORTCUT_SLOTS) next.push(shortcut);
+        set(() => ({ [action]: next }));
+        return true;
+      },
       clearShortcutSlot: (action, slot) =>
         set((state) => ({ [action]: state[action].filter((_, index) => index !== slot) })),
       resetShortcut: (action) => set({ [action]: SHORTCUT_DEFAULTS[action] }),

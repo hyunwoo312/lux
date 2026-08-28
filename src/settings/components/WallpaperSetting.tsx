@@ -26,38 +26,36 @@ export function WallpaperSetting() {
   const setSource = useWallpaperStore((s) => s.setSource);
 
   return (
-    <>
-      <div className="flex flex-col gap-4">
-        <SettingsRow
-          title="Type"
-          description="A pattern Lux draws, one of ours, or an image of your own"
-          control={
-            <ConfigSegmented
-              label="Wallpaper type"
-              value={source}
-              options={SOURCE_OPTIONS}
-              onChange={setSource}
-            />
-          }
-        />
+    <div className="flex flex-col gap-4">
+      <SettingsRow
+        title="Type"
+        description="A pattern Lux draws, one of ours, or an image of your own"
+        control={
+          <ConfigSegmented
+            label="Wallpaper type"
+            value={source}
+            options={SOURCE_OPTIONS}
+            onChange={setSource}
+          />
+        }
+      />
 
-        {source === "generated" && <WallpaperGeneratedPanel />}
+      {source === "generated" && <WallpaperGeneratedPanel />}
 
-        {source === "gallery" && (
-          <>
-            <WallpaperGalleryPanel />
-            <WallpaperImageOptions />
-          </>
-        )}
+      {source === "gallery" && (
+        <>
+          <WallpaperGalleryPanel />
+          <WallpaperImageOptions />
+        </>
+      )}
 
-        {source === "custom" && (
-          <>
-            <CustomUploadPanel />
-            <WallpaperImageOptions />
-          </>
-        )}
-      </div>
-    </>
+      {source === "custom" && (
+        <>
+          <CustomUploadPanel />
+          <WallpaperImageOptions />
+        </>
+      )}
+    </div>
   );
 }
 

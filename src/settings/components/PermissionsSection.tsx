@@ -49,13 +49,15 @@ export function PermissionsSection() {
           rowRef={registerRow(permission.id)}
           permission={permission}
           highlighted={highlight === permission.id}
-          checked={permissionsOf(permission).every((name) => granted.has(name))}
-          disabled={!available}
-          onToggle={(enabled) =>
-            void setPermissionsGranted(permissionsOf(permission), enabled, {
-              reopenSettings: true,
-            })
-          }
+          toggle={{
+            checked:
+              granted !== null && permissionsOf(permission).every((name) => granted.has(name)),
+            disabled: !available,
+            onToggle: (enabled) =>
+              void setPermissionsGranted(permissionsOf(permission), enabled, {
+                reopenSettings: true,
+              }),
+          }}
         />
       ))}
 
@@ -66,7 +68,7 @@ export function PermissionsSection() {
           rowRef={registerRow(permission.id)}
           permission={permission}
           highlighted={highlight === permission.id}
-          required
+          toggle={null}
         />
       ))}
     </SettingsSection>
@@ -86,22 +88,22 @@ function SubLabel({ children }: { children: ReactNode }) {
   );
 }
 
+type PermissionToggle = {
+  checked: boolean;
+  disabled: boolean;
+  onToggle: (enabled: boolean) => void;
+};
+
 function PermissionRow({
   rowRef,
   permission,
   highlighted,
-  checked = false,
-  disabled = false,
-  required = false,
-  onToggle,
+  toggle,
 }: {
   rowRef?: (el: HTMLDivElement | null) => void;
   permission: PermissionItem;
   highlighted: boolean;
-  checked?: boolean;
-  disabled?: boolean;
-  required?: boolean;
-  onToggle?: (enabled: boolean) => void;
+  toggle: PermissionToggle | null;
 }) {
   const Icon = permission.icon;
   return (
@@ -116,13 +118,13 @@ function PermissionRow({
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex items-center gap-1.5">
           <span className="text-body font-medium">{permission.name}</span>
-          <span className="bg-muted/70 text-ink-3 rounded px-1 py-px text-micro font-medium">
+          <span className="bg-muted/70 text-ink-3 rounded-xs px-1 py-px text-micro font-medium">
             {permission.usedBy}
           </span>
         </span>
         <span className="text-ink-3 text-caption">{permission.description}</span>
       </div>
-      {required ? (
+      {toggle === null ? (
         <span
           className="
             border-border/60 text-ink-3 text-micro shrink-0 rounded-full border px-2 py-0.5
@@ -133,9 +135,9 @@ function PermissionRow({
         </span>
       ) : (
         <Switch
-          checked={checked}
-          disabled={disabled}
-          onCheckedChange={(value) => onToggle?.(value === true)}
+          checked={toggle.checked}
+          disabled={toggle.disabled}
+          onCheckedChange={(value) => toggle.onToggle(value === true)}
           aria-label={`Allow ${permission.name.toLowerCase()}`}
         />
       )}

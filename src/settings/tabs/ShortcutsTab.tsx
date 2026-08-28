@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
-import { RotateCcw, Search, TriangleAlert } from "lucide-react";
+import { RotateCcw, TriangleAlert } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SearchField } from "@/components/SearchField";
 import { Tooltip } from "@/components/ui/tooltip";
 import { shortcutsEqual, type Shortcut } from "@/lib/shortcuts";
 import { SettingsSection } from "@/settings/components/SettingsSection";
+import { SettingsTabBody } from "@/settings/components/SettingsTabBody";
 import {
   MAX_SHORTCUT_SLOTS,
   SHORTCUT_DEFAULTS,
@@ -14,9 +15,8 @@ import {
   useShortcutsStore,
   type ShortcutAction,
 } from "@/stores/useShortcutsStore";
-import { CustomizeRow } from "@/settings/tabs/shortcuts/shared";
 import { DURATION, EASE_OUT_STRONG, SPRING_CRISP } from "@/lib/motion";
-import { AddShortcutControl, ShortcutDisplay } from "@/settings/tabs/shortcuts/ShortcutRow";
+import { AddShortcutControl, ShortcutDisplay } from "@/settings/tabs/ShortcutRow";
 
 function sameBindings(a: Shortcut[], b: Shortcut[]): boolean {
   if (a.length !== b.length) return false;
@@ -44,25 +44,13 @@ export function ShortcutsTab() {
   const reduced = useReducedMotion();
 
   const needle = query.trim().toLowerCase();
-  const matches = (...parts: string[]) => !needle || parts.join(" ").toLowerCase().includes(needle);
-
   const visibleShortcuts = SHORTCUT_DEFINITIONS.filter((action) =>
-    matches(action.label, action.description),
+    `${action.label} ${action.description}`.toLowerCase().includes(needle),
   );
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="relative">
-        <Search className="text-ink-3 pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-        <Input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search shortcuts"
-          spellCheck={false}
-          size="lg"
-          className="rounded-lg pl-9"
-        />
-      </div>
+    <SettingsTabBody>
+      <SearchField value={query} onChange={setQuery} label="Search shortcuts" />
 
       {visibleShortcuts.length > 0 ? (
         <SettingsSection
@@ -173,6 +161,34 @@ export function ShortcutsTab() {
       ) : (
         <p className="text-ink-3 py-8 text-center text-body">No shortcuts match “{query}”.</p>
       )}
+    </SettingsTabBody>
+  );
+}
+
+function CustomizeRow({
+  icon,
+  name,
+  description,
+  children,
+}: {
+  icon: ReactNode;
+  name: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className="
+        hover:bg-accent/40
+        -mx-2 flex items-center gap-3 rounded-lg px-2 py-2 transition-colors
+      "
+    >
+      {icon}
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="truncate text-body font-medium">{name}</span>
+        <span className="text-ink-3 truncate text-caption">{description}</span>
+      </div>
+      <div className="flex shrink-0 items-center gap-1.5">{children}</div>
     </div>
   );
 }

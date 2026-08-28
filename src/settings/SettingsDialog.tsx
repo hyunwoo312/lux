@@ -107,7 +107,6 @@ export function SettingsDialog() {
               className="
                 relative min-h-0 flex-1 overflow-x-hidden scroll-fade scrollbar-inset-b
                 overflow-y-auto px-6 py-5
-                [&_section:first-child>:first-child]:hidden
               "
             >
               <AnimatePresence mode="popLayout" custom={direction} initial={false}>

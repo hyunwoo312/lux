@@ -10,7 +10,7 @@ export type RefreshCadence = (typeof REFRESH_CADENCES)[number];
 
 export const REFRESH_STEPS = [0.5, 1, 2, 4] as const;
 
-const PRESET_SCALE: Partial<Record<RefreshCadence, number>> = { default: 1, relaxed: 2 };
+const PRESET_SCALE: Record<Exclude<RefreshCadence, "custom">, number> = { default: 1, relaxed: 2 };
 
 type AppSettingsState = {
   clock24h: boolean;
@@ -58,7 +58,7 @@ export const useAppSettingsStore = create<AppSettingsState>()(
       setShowGridLines: (value) => set({ showGridLines: value }),
       applyRefreshPreset: (types, cadence) =>
         set(() => {
-          const scale = PRESET_SCALE[cadence] ?? 1;
+          const scale = PRESET_SCALE[cadence];
           const widgetRefresh: Record<string, number> = {};
           for (const type of types) widgetRefresh[type] = scale;
           return { widgetRefresh, refreshCadence: cadence };
