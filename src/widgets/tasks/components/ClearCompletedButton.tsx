@@ -36,38 +36,41 @@ export function ClearCompletedButton() {
   }
 
   return (
-    <AnimatePresence initial={false} mode="popLayout">
-      {cleared.length > 0 ? (
-        <motion.div key="undo" {...POP}>
-          <Tooltip
-            content={`Restore ${cleared.length} cleared ${cleared.length === 1 ? "task" : "tasks"}`}
-            sticky
-          >
-            <Button
-              variant="ghost"
-              size="xs"
-              className="text-primary hover:text-primary font-semibold"
-              onClick={handleUndo}
+    <div className="flex items-center gap-1">
+      <AnimatePresence initial={false} mode="popLayout">
+        {cleared.length > 0 && (
+          <motion.div key="undo" {...POP}>
+            <Tooltip
+              content={`Restore ${cleared.length} cleared ${cleared.length === 1 ? "task" : "tasks"}`}
+              sticky
             >
-              Undo
-            </Button>
-          </Tooltip>
-        </motion.div>
-      ) : hasCompleted ? (
-        <motion.div key="clear" {...POP}>
-          <Tooltip content="Clear completed" sticky>
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              className={WIDGET_HEADER_ACTION}
-              aria-label="Clear completed tasks"
-              onClick={handleClear}
-            >
-              <Eraser />
-            </Button>
-          </Tooltip>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>
+              <Button
+                variant="ghost"
+                size="xs"
+                className="text-primary hover:text-primary font-semibold"
+                onClick={handleUndo}
+              >
+                Undo
+              </Button>
+            </Tooltip>
+          </motion.div>
+        )}
+        {hasCompleted && (
+          <motion.div key="clear" {...POP}>
+            <Tooltip content="Clear completed" sticky>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                className={WIDGET_HEADER_ACTION}
+                aria-label="Clear completed tasks"
+                onClick={handleClear}
+              >
+                <Eraser />
+              </Button>
+            </Tooltip>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

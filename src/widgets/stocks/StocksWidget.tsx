@@ -7,7 +7,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { GRID_MODIFIERS, VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
-import { EASE_OUT } from "@/lib/motion";
+import { DURATION, EASE_OUT } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useElementSize } from "@/hooks/useElementSize";
 import { SortableRow } from "@/widgets/core/SortableRow";
@@ -19,8 +19,6 @@ import { StocksEmptyState } from "@/widgets/stocks/components/StocksEmptyState";
 import { useWatchlistSparks } from "@/widgets/stocks/hooks/useSparks";
 import { useDetailSymbol } from "@/widgets/stocks/hooks/useDetailSymbol";
 import { gridColumns, showsSparkline } from "@/widgets/stocks/lib/layout";
-
-const VIEW_SWAP_MS = 0.22;
 import { useStocks, useStocksStore } from "@/widgets/stocks/useStocksStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
@@ -98,7 +96,7 @@ export function StocksWidget() {
                   key={view}
                   initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 6 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ duration: reduced ? 0 : VIEW_SWAP_MS, ease: EASE_OUT }}
+                  transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}
                 >
                   <DndContext
                     sensors={sensors}
@@ -120,11 +118,13 @@ export function StocksWidget() {
                             : undefined
                         }
                       >
-                        {symbols.map((symbol) => (
-                          <SortableRow key={symbol} id={symbol}>
-                            {renderItem(symbol)}
-                          </SortableRow>
-                        ))}
+                        <AnimatePresence initial={false} mode="popLayout">
+                          {symbols.map((symbol) => (
+                            <SortableRow key={symbol} id={symbol}>
+                              {renderItem(symbol)}
+                            </SortableRow>
+                          ))}
+                        </AnimatePresence>
                       </ul>
                     </SortableContext>
                   </DndContext>

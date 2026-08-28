@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import { LineChart, Sparkles } from "lucide-react";
 import { StateMessage } from "@/components/StateMessage";
 import { usePolledResource } from "@/widgets/core/usePolledResource";
@@ -11,8 +10,7 @@ const TRENDING_INTERVAL_MS = 60 * 60_000;
 const MAX_SUGGESTIONS = 8;
 
 export function StocksEmptyState({ onAdd }: { onAdd: (symbol: string) => void }) {
-  const fetcher = useCallback((signal: AbortSignal) => fetchTrendingSymbols(signal), []);
-  const { state } = usePolledResource(fetcher, {
+  const { state } = usePolledResource(fetchTrendingSymbols, {
     intervalMs: TRENDING_INTERVAL_MS,
     cacheKey: TRENDING_KEY,
     persist: true,

@@ -53,11 +53,8 @@ const dataSchema = z.object({
 const persistedSchema = z.object({ byInstance: tolerantRecord(dataSchema) });
 
 function looksLikeLegacySingleton(value: unknown): boolean {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    Array.isArray((value as { tasks?: unknown }).tasks)
-  );
+  if (typeof value !== "object" || value === null) return false;
+  return "tasks" in value && Array.isArray(value.tasks);
 }
 
 const gatedStorage = createGatedChromeStorage();

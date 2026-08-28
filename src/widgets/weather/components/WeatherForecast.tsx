@@ -1,13 +1,12 @@
 import { TYPE } from "@/lib/type";
 import { cn } from "@/lib/utils";
-import { formatTemperature, formatWeekday } from "@/widgets/weather/lib/forecast";
+import { formatTemperature, formatWeekday, shownChance } from "@/widgets/weather/lib/forecast";
 import { WeatherHourly } from "@/widgets/weather/components/WeatherHourly";
 import { WeatherIcon } from "@/widgets/weather/components/WeatherIcon";
 import { useWeather } from "@/widgets/weather/useWeatherStore";
 import type { WeatherData, WeatherDay } from "@/widgets/weather/types";
 
 const HOURLY_COUNT = 24;
-const DAILY_CHANCE_MIN = 20;
 
 type WeatherForecastProps = {
   data: WeatherData;
@@ -40,9 +39,7 @@ export function WeatherForecast({ data, showHourly, showDaily }: WeatherForecast
 
   const low = days.length > 0 ? Math.min(...days.map((day) => day.min)) : 0;
   const high = days.length > 0 ? Math.max(...days.map((day) => day.max)) : 0;
-  const showChance = days.some(
-    (day) => day.precipitationChance != null && day.precipitationChance >= DAILY_CHANCE_MIN,
-  );
+  const showChance = days.some((day) => shownChance(day.precipitationChance) !== null);
 
   return (
     <div className="flex flex-col gap-2">
@@ -54,28 +51,27 @@ export function WeatherForecast({ data, showHourly, showDaily }: WeatherForecast
 
       {showDaily && days.length > 0 && (
         <ul className="border-border/50 flex flex-col gap-1.5 border-t pt-2">
-          {days.map((day) => (
-            <li key={day.date} className="flex items-center gap-2 text-caption">
-              <span className={cn(TYPE.rowSubtitle, "w-9 shrink-0")}>
-                {formatWeekday(day.date)}
-              </span>
-              <WeatherIcon code={day.weatherCode} isDay className="text-ink-3 size-4" />
-              {showChance && (
-                <span className="text-info w-8 shrink-0 text-micro tabular-nums slashed-zero">
-                  {day.precipitationChance != null && day.precipitationChance >= DAILY_CHANCE_MIN
-                    ? `${day.precipitationChance}%`
-                    : ""}
+          {days.map((day) => {
+            const chance = shownChance(day.precipitationChance);
+            return (
+              <li key={day.date} className="flex items-center gap-2 text-caption">
+                <span className={cn(TYPE.rowMeta, "w-9 shrink-0")}>{formatWeekday(day.date)}</span>
+                <WeatherIcon code={day.weatherCode} isDay className="text-ink-3 size-4" />
+                {showChance && (
+                  <span className="text-info w-8 shrink-0 text-micro tabular-nums slashed-zero">
+                    {chance !== null ? `${chance}%` : ""}
+                  </span>
+                )}
+                <span className="text-ink-3 w-7 shrink-0 text-right tabular-nums slashed-zero">
+                  {formatTemperature(day.min)}
                 </span>
-              )}
-              <span className="text-ink-3 w-7 shrink-0 text-right tabular-nums slashed-zero">
-                {formatTemperature(day.min)}
-              </span>
-              <RangeBar day={day} low={low} high={high} />
-              <span className="text-ink w-7 shrink-0 text-right tabular-nums slashed-zero">
-                {formatTemperature(day.max)}
-              </span>
-            </li>
-          ))}
+                <RangeBar day={day} low={low} high={high} />
+                <span className="text-ink w-7 shrink-0 text-right tabular-nums slashed-zero">
+                  {formatTemperature(day.max)}
+                </span>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

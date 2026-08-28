@@ -26,6 +26,14 @@ import {
 export const MAX_LOCATIONS = 10;
 export const WEATHER_SYNC_COOLDOWN_MS = 300_000;
 
+export function detailLocation(
+  locations: WeatherLocation[],
+  selectedId: string | null,
+): WeatherLocation | null {
+  if (locations.length === 1) return locations[0] ?? null;
+  return locations.find((entry) => entry.id === selectedId) ?? null;
+}
+
 type WeatherData = {
   locations: WeatherLocation[];
   units: WeatherUnits;
@@ -34,7 +42,6 @@ type WeatherData = {
   rainAlert: WeatherRainAlert;
   metrics: WeatherMetric[];
   selectedId: string | null;
-  searchOpen: boolean;
 };
 
 type WeatherState = {
@@ -53,8 +60,6 @@ type WeatherState = {
   setForecastDays: (instanceId: string, forecastDays: WeatherForecastDays) => void;
   setRainAlert: (instanceId: string, rainAlert: WeatherRainAlert) => void;
   setMetrics: (instanceId: string, metrics: WeatherMetric[]) => void;
-  openSearch: (instanceId: string) => void;
-  closeSearch: (instanceId: string) => void;
   beginSync: (instanceId: string) => void;
   endSync: (instanceId: string) => void;
   reportSynced: (instanceId: string, at: number) => void;
@@ -77,7 +82,6 @@ const DEFAULT_DATA: WeatherData = {
   rainAlert: "likely",
   metrics: [...WEATHER_METRICS],
   selectedId: DEFAULT_LOCATION.id,
-  searchOpen: false,
 };
 
 const locationSchema = z.object({
@@ -193,10 +197,6 @@ export const useWeatherStore = create<WeatherState>()(
         set((state) => update(state, instanceId, (data) => ({ ...data, rainAlert }))),
       setMetrics: (instanceId, metrics) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, metrics }))),
-      openSearch: (instanceId) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, searchOpen: true }))),
-      closeSearch: (instanceId) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, searchOpen: false }))),
       beginSync: (instanceId) =>
         set((state) => ({
           syncing: { ...state.syncing, [instanceId]: (state.syncing[instanceId] ?? 0) + 1 },
@@ -272,15 +272,17 @@ export const useWeatherStore = create<WeatherState>()(
         mergePersisted("widget:weather", persistedSchema, persisted, current, (parsed) => {
           const byInstance: Record<string, WeatherData> = {};
           for (const [id, data] of Object.entries(parsed.byInstance)) {
+            const locations = data.locations.slice(0, MAX_LOCATIONS);
             byInstance[id] = {
-              locations: data.locations.slice(0, MAX_LOCATIONS),
+              locations,
               units: data.units,
               windUnit: data.windUnit,
               forecastDays: data.forecastDays,
               rainAlert: data.rainAlert,
               metrics: data.metrics,
-              selectedId: data.selectedId,
-              searchOpen: false,
+              selectedId: locations.some((entry) => entry.id === data.selectedId)
+                ? data.selectedId
+                : null,
             };
           }
           return { ...current, byInstance };

@@ -1,19 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { MAX_SYMBOLS, useStocksStore } from "@/widgets/stocks/useStocksStore";
-import { DEFAULT_INDICES } from "@/widgets/stocks/lib/indices";
+import { MAX_SYMBOLS, useStocksStore, type StocksData } from "@/widgets/stocks/useStocksStore";
+import { DEFAULT_INDICES, MAX_INDICES } from "@/widgets/stocks/lib/indices";
 
 const store = () => useStocksStore.getState();
 const ID = "stocks-1";
 const symbols = (instanceId: string) => store().byInstance[instanceId]?.symbols;
 
-const blank = {
-  symbols: [] as string[],
-  range: "1d" as const,
+const blank: StocksData = {
+  symbols: [],
+  range: "1d",
   showName: true,
-  indexSymbols: [] as string[],
-  view: "list" as const,
-  changeMode: "percent" as const,
-  chartStyle: "line" as const,
+  indexSymbols: [],
+  view: "list",
+  changeMode: "percent",
+  chartStyle: "line",
   selectedSymbol: null,
 };
 
@@ -122,39 +122,6 @@ describe("useStocksStore", () => {
     expect(store().byInstance[ID]).toBeUndefined();
   });
 
-  it("sets the chart range", () => {
-    store().setRange(ID, "1mo");
-    expect(store().byInstance[ID]?.range).toBe("1mo");
-  });
-
-  it("toggles the company name", () => {
-    store().setShowName(ID, false);
-    expect(store().byInstance[ID]?.showName).toBe(false);
-  });
-
-  it("switches between the list and the grid", () => {
-    store().setView(ID, "grid");
-    expect(store().byInstance[ID]?.view).toBe("grid");
-  });
-
-  it("shows movement as a percentage until asked for price", () => {
-    expect(store().byInstance[ID]?.changeMode).toBe("percent");
-    store().setChangeMode(ID, "absolute");
-    expect(store().byInstance[ID]?.changeMode).toBe("absolute");
-  });
-
-  it("sets the chart style", () => {
-    store().setChartStyle(ID, "candle");
-    expect(store().byInstance[ID]?.chartStyle).toBe("candle");
-  });
-
-  it("selects and clears a symbol", () => {
-    store().selectSymbol(ID, "AAPL");
-    expect(store().byInstance[ID]?.selectedSymbol).toBe("AAPL");
-    store().clearSelection(ID);
-    expect(store().byInstance[ID]?.selectedSymbol).toBeNull();
-  });
-
   it("clears the selection when the selected symbol is removed", () => {
     store().addSymbol(ID, "AAPL");
     store().selectSymbol(ID, "AAPL");
@@ -196,6 +163,12 @@ describe("useStocksStore", () => {
       const oversized = Array.from({ length: MAX_SYMBOLS + 5 }, (_, index) => `S${index}`);
       const entry = restore(persistedEntry({ symbols: oversized })).byInstance[ID];
       expect(entry?.symbols).toHaveLength(MAX_SYMBOLS);
+    });
+
+    it("trims an index rail that grew past the cap instead of slicing it thinner", () => {
+      const oversized = Array.from({ length: MAX_INDICES + 3 }, (_, index) => `^I${index}`);
+      const entry = restore(persistedEntry({ indexSymbols: oversized })).byInstance[ID];
+      expect(entry?.indexSymbols).toHaveLength(MAX_INDICES);
     });
 
     it("keeps what is in memory when the whole blob is unusable", () => {

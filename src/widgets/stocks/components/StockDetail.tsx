@@ -2,6 +2,7 @@ import { CandlestickChart, LineChart } from "lucide-react";
 import { IconActionButton } from "@/components/IconActionButton";
 import { RetryButton, StateMessage } from "@/components/StateMessage";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
+import { useNow } from "@/hooks/useNow";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TYPE } from "@/lib/type";
 import { cn } from "@/lib/utils";
@@ -10,6 +11,7 @@ import {
   formatExchangeTime,
   formatNumber,
   formatPrice,
+  formatSigned,
   formatVolume,
 } from "@/widgets/stocks/lib/format";
 import {
@@ -79,7 +81,7 @@ function RangeMeter({
 
 function MarketStatus({ data }: { data: Quote }) {
   const clock24h = useAppSettingsStore((state) => state.clock24h);
-  const now = Date.now();
+  const now = useNow().getTime();
   const state = isAlwaysOpen(data) ? "open" : marketState(data, now);
   const opensInMs = data.sessionStart != null ? data.sessionStart * 1000 - now : null;
   const asOf =
@@ -133,11 +135,12 @@ function DetailBody({ data, range }: { data: Quote; range: StockRange }) {
   const chartStyle = useStocks((d) => d.chartStyle);
   const setRange = useStocksStore((s) => s.setRange);
   const setChartStyle = useStocksStore((s) => s.setChartStyle);
+  const now = useNow().getTime();
 
   const reference = referencePrice(data, range);
   const { change, percent } = changeOf(data.price, reference);
   const direction = directionOf(change);
-  const extended = extendedSession(data, Date.now());
+  const extended = extendedSession(data, now);
   const candles = chartStyle === "candle";
 
   return (
@@ -145,7 +148,7 @@ function DetailBody({ data, range }: { data: Quote; range: StockRange }) {
       <div className="flex shrink-0 flex-col gap-1 pr-8">
         <div className="flex items-baseline gap-2">
           <span className={cn(TYPE.title, "shrink-0")}>{data.symbol}</span>
-          <span className={cn(TYPE.rowSubtitle, "min-w-0 truncate")}>{data.name}</span>
+          <span className={cn(TYPE.rowMeta, "min-w-0 truncate")}>{data.name}</span>
         </div>
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
           <span className="text-ink text-heading leading-none font-semibold tabular-nums slashed-zero">
@@ -170,8 +173,7 @@ function DetailBody({ data, range }: { data: Quote; range: StockRange }) {
                   changeTone(directionOf(extended.change)),
                 )}
               >
-                {extended.percent >= 0 ? "+" : "−"}
-                {Math.abs(extended.percent).toFixed(2)}%
+                {formatSigned(extended.percent)}%
               </span>
             </span>
           ) : null}

@@ -70,20 +70,28 @@ export function PriceChart({
     if (shown.length === 0) return;
     const rect = event.currentTarget.getBoundingClientRect();
     const fraction = (event.clientX - rect.left) / rect.width;
-    setActive(Math.max(0, Math.min(shown.length - 1, Math.round(fraction * (shown.length - 1)))));
+    const position = candles
+      ? Math.floor(fraction * shown.length)
+      : Math.round(fraction * (shown.length - 1));
+    setActive(Math.max(0, Math.min(shown.length - 1, position)));
   };
 
   const dividendByBar = new Map<number, number>();
   if (range !== "1d" && range !== "5d") {
+    let cursor = 0;
+    let current = shown[0];
     for (const dividend of dividends) {
-      const closest = shown.reduce(
-        (best, entry, entryIndex) =>
-          Math.abs(entry.time - dividend.time) < Math.abs(shown[best]!.time - dividend.time)
-            ? entryIndex
-            : best,
-        0,
-      );
-      if (shown.length > 0) dividendByBar.set(closest, dividend.amount);
+      if (current === undefined) break;
+      let next = shown[cursor + 1];
+      while (
+        next !== undefined &&
+        Math.abs(next.time - dividend.time) < Math.abs(current.time - dividend.time)
+      ) {
+        cursor += 1;
+        current = next;
+        next = shown[cursor + 1];
+      }
+      dividendByBar.set(cursor, dividend.amount);
     }
   }
 
@@ -104,7 +112,7 @@ export function PriceChart({
               y1={baselineY}
               x2={width}
               y2={baselineY}
-              className="stroke-ink-4/35"
+              className="stroke-ink-3"
               strokeWidth={1}
               strokeDasharray="3 3"
               vectorEffect="non-scaling-stroke"
@@ -183,7 +191,8 @@ export function PriceChart({
               cx={xForBar(barIndex)}
               cy={priceHeight - 3}
               r={2}
-              className="fill-ink-4"
+              className="stroke-background fill-ink-3"
+              strokeWidth={1.5}
             />
           ))}
 
@@ -194,7 +203,16 @@ export function PriceChart({
                 y1={0}
                 x2={xForBar(index)}
                 y2={height}
-                className="stroke-ink-4/50"
+                className="stroke-background"
+                strokeWidth={3}
+                vectorEffect="non-scaling-stroke"
+              />
+              <line
+                x1={xForBar(index)}
+                y1={0}
+                x2={xForBar(index)}
+                y2={height}
+                className="stroke-ink-3"
                 strokeWidth={1}
                 vectorEffect="non-scaling-stroke"
               />

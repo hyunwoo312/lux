@@ -53,10 +53,6 @@ const forecastSchema = z.object({
     wind_direction_10m: z.number(),
     is_day: z.number(),
   }),
-  current_units: z.object({
-    temperature_2m: z.string(),
-    wind_speed_10m: z.string(),
-  }),
   minutely_15: z
     .object({
       time: z.array(z.string()),
@@ -69,7 +65,6 @@ const forecastSchema = z.object({
     temperature_2m: z.array(z.number()),
     weather_code: z.array(z.number()),
     precipitation_probability: z.array(z.number().nullable()),
-    is_day: z.array(z.number()),
   }),
   daily: z.object({
     time: z.array(z.string()),
@@ -79,7 +74,6 @@ const forecastSchema = z.object({
     sunrise: z.array(z.string()),
     sunset: z.array(z.string()),
     uv_index_max: z.array(z.number().nullable()),
-    precipitation_sum: z.array(z.number().nullable()).optional(),
     precipitation_probability_max: z.array(z.number().nullable()).optional(),
   }),
 });
@@ -90,7 +84,6 @@ function buildDays(daily: z.infer<typeof forecastSchema>["daily"]): WeatherDay[]
     weatherCode: daily.weather_code[index] ?? 0,
     max: daily.temperature_2m_max[index] ?? 0,
     min: daily.temperature_2m_min[index] ?? 0,
-    precipitationSum: daily.precipitation_sum?.[index] ?? null,
     precipitationChance: daily.precipitation_probability_max?.[index] ?? null,
   }));
 }
@@ -108,10 +101,10 @@ export async function fetchWeather(
       "temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m," +
       "wind_gusts_10m,wind_direction_10m,is_day",
     minutely_15: "precipitation,precipitation_probability",
-    hourly: "temperature_2m,weather_code,precipitation_probability,is_day",
+    hourly: "temperature_2m,weather_code,precipitation_probability",
     daily:
       "weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max," +
-      "precipitation_sum,precipitation_probability_max",
+      "precipitation_probability_max",
     temperature_unit: units === "imperial" ? "fahrenheit" : "celsius",
     wind_speed_unit: windSpeedUnit(units, windUnit),
     timezone: "auto",
@@ -124,7 +117,7 @@ export async function fetchWeather(
   ensureOk(response, "Weather request failed");
   const parsed = parseResponse("weather", forecastSchema, await response.json());
 
-  const { current, current_units, hourly, daily } = parsed;
+  const { current, hourly, daily } = parsed;
   const days = buildDays(daily);
   const today = days[0];
   if (!today) {
@@ -152,7 +145,6 @@ export async function fetchWeather(
       temperature: hourly.temperature_2m[index] ?? 0,
       weatherCode: hourly.weather_code[index] ?? 0,
       precipitationProbability: hourly.precipitation_probability[index] ?? 0,
-      isDay: hourly.is_day[index] === 1,
     })),
     minutely: (parsed.minutely_15?.time ?? []).map((time, index) => ({
       time,
@@ -160,10 +152,7 @@ export async function fetchWeather(
       probability: parsed.minutely_15?.precipitation_probability[index] ?? 0,
     })),
     daily: days,
-    unitLabels: {
-      temperature: current_units.temperature_2m,
-      windSpeed: windSpeedLabel(units, windUnit),
-    },
+    unitLabels: { windSpeed: windSpeedLabel(units, windUnit) },
   };
 }
 
@@ -222,7 +211,6 @@ const weatherDaySchema = z.object({
   weatherCode: z.number(),
   max: z.number(),
   min: z.number(),
-  precipitationSum: z.number().nullable(),
   precipitationChance: z.number().nullable(),
 });
 
@@ -231,7 +219,6 @@ const weatherHourSchema = z.object({
   temperature: z.number(),
   weatherCode: z.number(),
   precipitationProbability: z.number(),
-  isDay: z.boolean(),
 });
 
 const weatherDataSchema = z.object({
@@ -245,7 +232,7 @@ const weatherDataSchema = z.object({
     z.object({ time: z.string(), precipitation: z.number(), probability: z.number() }),
   ),
   daily: z.array(weatherDaySchema),
-  unitLabels: z.object({ temperature: z.string(), windSpeed: z.string() }),
+  unitLabels: z.object({ windSpeed: z.string() }),
 });
 
 export function parseCachedWeather(raw: unknown): WeatherData | null {

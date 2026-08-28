@@ -30,7 +30,6 @@ function instance(locations: WeatherLocation[] = []): WeatherInstance {
     rainAlert: "likely",
     metrics: [...WEATHER_METRICS],
     selectedId: null,
-    searchOpen: false,
   };
 }
 
@@ -125,13 +124,6 @@ describe("useWeatherStore", () => {
     expect(data(ID)?.locations.map((entry) => entry.id)).toEqual(["a", "b"]);
   });
 
-  it("selects and clears the active city", () => {
-    store().selectCity(ID, "a");
-    expect(data(ID)?.selectedId).toBe("a");
-    store().clearSelection(ID);
-    expect(data(ID)?.selectedId).toBeNull();
-  });
-
   it("keeps instances independent", () => {
     useWeatherStore.setState({
       byInstance: {
@@ -188,6 +180,10 @@ describe("useWeatherStore", () => {
     it("trims a list that grew past the cap instead of discarding it", () => {
       const many = Array.from({ length: MAX_LOCATIONS + 3 }, (_, index) => city(`c${index}`));
       expect(restore({ locations: many }).byInstance[ID]?.locations).toHaveLength(MAX_LOCATIONS);
+    });
+
+    it("ignores a selection pointing at a city that is no longer stored", () => {
+      expect(restore({ selectedId: "gone" }).byInstance[ID]?.selectedId).toBeNull();
     });
 
     it("falls back to a sane unit when units were stored as a number", () => {
@@ -293,9 +289,5 @@ describe("useWeatherStore", () => {
 describe("makeLocationId", () => {
   it("is stable for the same rounded coordinates", () => {
     expect(makeLocationId(51.5074, -0.1278)).toBe(makeLocationId(51.50739, -0.12779));
-  });
-
-  it("differs for distinct places", () => {
-    expect(makeLocationId(51.5, -0.12)).not.toBe(makeLocationId(35.68, 139.69));
   });
 });

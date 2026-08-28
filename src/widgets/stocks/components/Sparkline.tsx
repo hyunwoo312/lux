@@ -44,7 +44,7 @@ export function Sparkline({ points, direction, baseline, className }: SparklineP
               y1={baselineY}
               x2={width}
               y2={baselineY}
-              className="stroke-ink-4/30"
+              className="stroke-ink-3"
               strokeWidth={1}
               strokeDasharray="2 3"
               vectorEffect="non-scaling-stroke"

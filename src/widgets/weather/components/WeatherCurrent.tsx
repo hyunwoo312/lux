@@ -52,11 +52,11 @@ export function WeatherCurrent({ data, name }: WeatherCurrentProps) {
   const rainAlert = useWeather((d) => d.rainAlert);
   const { current, today, hourly, minutely, sunrise, sunset, uvIndex, unitLabels } = data;
   const condition = wmoInfo(current.weatherCode, current.isDay);
-  const threshold = rainAlert === "off" ? 0 : RAIN_THRESHOLD[rainAlert];
+  const threshold = rainAlert === "off" ? null : RAIN_THRESHOLD[rainAlert];
 
-  const nowcast = rainAlert === "off" ? null : findNowcast(minutely, current.time, { threshold });
+  const nowcast = threshold === null ? null : findNowcast(minutely, current.time, threshold);
   const imminent =
-    rainAlert === "off" || nowcast ? null : findImminentPrecip(hourly, current.time, { threshold });
+    threshold === null || nowcast ? null : findImminentPrecip(hourly, current.time, threshold);
   const alert = nowcast
     ? { text: nowcastLabel(nowcast), probability: nowcast.probability }
     : imminent
@@ -74,6 +74,7 @@ export function WeatherCurrent({ data, name }: WeatherCurrentProps) {
   };
   const visible = metrics.filter(hasValue);
   const shows = (metric: WeatherMetric) => visible.includes(metric);
+  const uv = shows("uv") ? uvIndex : null;
 
   return (
     <div className="flex flex-col gap-2">
@@ -88,7 +89,7 @@ export function WeatherCurrent({ data, name }: WeatherCurrentProps) {
           <span className={cn(TYPE.display, "text-ink")}>
             {formatTemperature(current.temperature)}
           </span>
-          <span className={cn(TYPE.rowSubtitle, "truncate")}>{condition.label}</span>
+          <span className={cn(TYPE.rowMeta, "truncate")}>{condition.label}</span>
         </div>
         <div className="ml-auto flex flex-col items-end gap-0.5 text-body tabular-nums slashed-zero">
           <span className="text-ink">H {formatTemperature(today.max)}</span>
@@ -142,10 +143,10 @@ export function WeatherCurrent({ data, name }: WeatherCurrentProps) {
               />
             </Reading>
           )}
-          {shows("uv") && uvIndex !== null && (
+          {uv !== null && (
             <Reading label="UV index">
               <Sun className="size-3.5 shrink-0" aria-hidden />
-              {Math.round(uvIndex)}
+              {Math.round(uv)}
             </Reading>
           )}
           {shows("sunrise") && (

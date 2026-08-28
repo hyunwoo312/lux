@@ -7,6 +7,16 @@ export type StockRange = (typeof STOCK_RANGES)[number];
 
 export const DAY_RANGE: StockRange = "1d";
 
+export const RANGE_INTERVAL: Record<StockRange, string> = {
+  "1d": "5m",
+  "5d": "30m",
+  "1mo": "1d",
+  "6mo": "1d",
+  ytd: "1d",
+  "1y": "1d",
+  "5y": "1wk",
+};
+
 export const RANGE_LABEL: Record<StockRange, string> = {
   "1d": "1D",
   "5d": "5D",

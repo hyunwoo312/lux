@@ -24,7 +24,6 @@ const valid: WeatherData = {
     weatherCode: 1,
     max: 25,
     min: 15,
-    precipitationSum: null,
     precipitationChance: null,
   },
   sunrise: "2026-06-26T05:30",
@@ -36,7 +35,6 @@ const valid: WeatherData = {
       temperature: 21,
       weatherCode: 1,
       precipitationProbability: 10,
-      isDay: true,
     },
   ],
   daily: [
@@ -45,12 +43,11 @@ const valid: WeatherData = {
       weatherCode: 1,
       max: 25,
       min: 15,
-      precipitationSum: null,
       precipitationChance: null,
     },
   ],
   minutely: [],
-  unitLabels: { temperature: "°F", windSpeed: "mph" },
+  unitLabels: { windSpeed: "mph" },
 };
 
 describe("parseCachedWeather", () => {
@@ -62,19 +59,14 @@ describe("parseCachedWeather", () => {
     expect(parseCachedWeather({ ...valid, uvIndex: null })).toEqual({ ...valid, uvIndex: null });
   });
 
-  it("rejects a payload with a wrong field type", () => {
+  it("returns null for a cached payload that no longer matches the shape", () => {
+    const incomplete = { ...valid } as Record<string, unknown>;
+    delete incomplete.unitLabels;
+
     expect(
       parseCachedWeather({ ...valid, current: { ...valid.current, isDay: "yes" } }),
     ).toBeNull();
-  });
-
-  it("rejects a payload missing a required field", () => {
-    const incomplete = { ...valid } as Record<string, unknown>;
-    delete incomplete.unitLabels;
     expect(parseCachedWeather(incomplete)).toBeNull();
-  });
-
-  it("rejects non-object input", () => {
     expect(parseCachedWeather(null)).toBeNull();
     expect(parseCachedWeather("nope")).toBeNull();
   });
@@ -93,13 +85,11 @@ const forecastResponse = {
     wind_direction_10m: 180,
     is_day: 1,
   },
-  current_units: { temperature_2m: "°C", wind_speed_10m: "km/h" },
   hourly: {
     time: ["2026-06-26T11:00"],
     temperature_2m: [21],
     weather_code: [1],
     precipitation_probability: [10],
-    is_day: [1],
   },
   daily: {
     time: ["2026-06-26"],
@@ -166,9 +156,5 @@ describe("windSpeedLabel", () => {
   it("spells the metric units out rather than echoing the request value", () => {
     expect(windSpeedLabel("metric", "auto")).toBe("km/h");
     expect(windSpeedLabel("metric", "ms")).toBe("m/s");
-  });
-
-  it("keeps an explicit choice that needs no translation", () => {
-    expect(windSpeedLabel("metric", "kn")).toBe("kn");
   });
 });

@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import {
   Banknote,
@@ -49,9 +49,11 @@ export function StocksSearch() {
 
   const expanded = open || symbols.length === 0;
   const atCap = symbols.length >= MAX_SYMBOLS;
-  const addedSymbols = useMemo(() => new Set(symbols), [symbols]);
-  const addedSymbolsRef = useRef(addedSymbols);
-  addedSymbolsRef.current = addedSymbols;
+  const symbolsRef = useRef(symbols);
+
+  useEffect(() => {
+    symbolsRef.current = symbols;
+  }, [symbols]);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -71,7 +73,7 @@ export function StocksSearch() {
           setActive(
             Math.max(
               0,
-              found.findIndex((result) => !addedSymbolsRef.current.has(result.symbol)),
+              found.findIndex((result) => !symbolsRef.current.includes(result.symbol)),
             ),
           );
           setSearching(false);
@@ -88,7 +90,7 @@ export function StocksSearch() {
     };
   }, [query]);
 
-  const isAdded = (result: SymbolSearchResult) => addedSymbols.has(result.symbol);
+  const isAdded = (result: SymbolSearchResult) => symbols.includes(result.symbol);
 
   const pick = (result: SymbolSearchResult) => {
     if (atCap || isAdded(result)) return;
@@ -171,9 +173,7 @@ export function StocksSearch() {
       listboxId={hasOptions ? listboxId : undefined}
       activeDescendantId={hasOptions ? optionId(active) : undefined}
     >
-      <div
-        className={cn("border-input bg-popover w-full overflow-hidden rounded-sm border shadow-md")}
-      >
+      <div className="border-input bg-popover w-full overflow-hidden rounded-sm border shadow-md">
         <div className="max-h-56 overflow-y-auto p-1">
           {atCap ? (
             <p className="text-ink-3 px-2 py-2 text-caption">
@@ -197,7 +197,7 @@ export function StocksSearch() {
                 const Icon = result.instrumentType ? TYPE_ICON[result.instrumentType] : ChartLine;
                 const meta = [result.exchange, result.sector].filter(Boolean).join(" · ");
                 return (
-                  <li key={result.symbol}>
+                  <li key={result.symbol} role="presentation">
                     <button
                       type="button"
                       id={optionId(index)}
@@ -223,7 +223,7 @@ export function StocksSearch() {
                       <span className="flex min-w-0 flex-1 flex-col">
                         <span className="flex min-w-0 items-baseline gap-1.5">
                           <span className="shrink-0 font-medium">{result.symbol}</span>
-                          <span className={cn(TYPE.rowSubtitle, "min-w-0 truncate")}>
+                          <span className={cn(TYPE.rowMeta, "min-w-0 truncate")}>
                             {result.name}
                           </span>
                         </span>

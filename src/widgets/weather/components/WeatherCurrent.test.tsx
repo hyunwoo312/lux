@@ -32,7 +32,6 @@ function weather(overrides: Partial<WeatherData> = {}): WeatherData {
       weatherCode: 1,
       max: 25,
       min: 15,
-      precipitationSum: null,
       precipitationChance: null,
     },
     sunrise: "2026-06-26T05:30",
@@ -44,7 +43,6 @@ function weather(overrides: Partial<WeatherData> = {}): WeatherData {
         temperature: 21,
         weatherCode: 61,
         precipitationProbability: 35,
-        isDay: true,
       },
     ],
     daily: [
@@ -53,12 +51,11 @@ function weather(overrides: Partial<WeatherData> = {}): WeatherData {
         weatherCode: 1,
         max: 25,
         min: 15,
-        precipitationSum: null,
         precipitationChance: null,
       },
     ],
     minutely: [],
-    unitLabels: { temperature: "°C", windSpeed: "mph" },
+    unitLabels: { windSpeed: "mph" },
     ...overrides,
   };
 }
@@ -74,7 +71,6 @@ function seed(metrics: WeatherMetric[], rainAlert: WeatherRainAlert = "likely") 
         rainAlert,
         metrics,
         selectedId: null,
-        searchOpen: false,
       },
     },
   });
@@ -88,10 +84,6 @@ function renderCurrent(data: WeatherData = weather()) {
       </WidgetInstanceContext.Provider>
     </TooltipProvider>,
   );
-}
-
-function readingsRow(): HTMLElement | null {
-  return document.querySelector(".flex-wrap");
 }
 
 beforeEach(() => {
@@ -111,14 +103,16 @@ describe("WeatherCurrent readings", () => {
     seed([]);
     renderCurrent();
 
-    expect(readingsRow()).toBeNull();
+    for (const label of ["Feels like", "Humidity", "Wind", "UV index", "Sunrise", "Sunset"]) {
+      expect(screen.queryByText(label)).not.toBeInTheDocument();
+    }
   });
 
   it("hides the whole row when the only chosen reading has no value", () => {
     seed(["uv"]);
     renderCurrent(weather({ uvIndex: null }));
 
-    expect(readingsRow()).toBeNull();
+    expect(screen.queryByText("UV index")).not.toBeInTheDocument();
   });
 });
 

@@ -1,18 +1,16 @@
 import { DURATION, EASE_OUT } from "@/lib/motion";
-import type { FormEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from "motion/react";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { ListChecks } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { StateMessage } from "@/components/StateMessage";
 import { VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
-import { BorderTrail } from "@/widgets/tasks/components/BorderTrail";
 import { orderTasks } from "@/widgets/tasks/lib/order";
 import { getTaskData, useTasks, useTasksStore } from "@/widgets/tasks/useTasksStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
+import { TaskComposer } from "@/widgets/tasks/components/TaskComposer";
 import { TaskRow } from "@/widgets/tasks/components/TaskRow";
 
 const REMOVE_DELAY_MS = 900;
@@ -23,17 +21,13 @@ export function TasksWidget() {
   const autoSort = useTasks((d) => d.autoSort);
   const completedPosition = useTasks((d) => d.completedPosition);
   const removeOnCompletion = useTasks((d) => d.removeOnCompletion);
-  const addTask = useTasksStore((s) => s.addTask);
   const toggleTask = useTasksStore((s) => s.toggleTask);
   const editTask = useTasksStore((s) => s.editTask);
   const removeTask = useTasksStore((s) => s.removeTask);
   const reorderTasks = useTasksStore((s) => s.reorderTasks);
   const reduced = useReducedMotion();
 
-  const [newTitle, setNewTitle] = useState("");
   const [revealingId, setRevealingId] = useState<string | null>(null);
-  const [focused, setFocused] = useState(false);
-  const pulse = useAnimationControls();
   const donePulse = useAnimationControls();
   const removalTimers = useRef(new Map<string, number>());
 
@@ -59,7 +53,6 @@ export function TasksWidget() {
   };
 
   const handleToggle = (taskId: string) => {
-    const before = getTaskData(instanceId).tasks;
     toggleTask(instanceId, taskId);
     const after = getTaskData(instanceId).tasks;
     const toggled = after.find((task) => task.id === taskId);
@@ -75,28 +68,10 @@ export function TasksWidget() {
     }
     if (!toggled?.done) cancelRemoval(taskId);
 
-    const allDoneNow = after.length > 0 && after.every((task) => task.done);
-    const allDoneBefore = before.length > 0 && before.every((task) => task.done);
-    if (!reduced && allDoneNow && !allDoneBefore) {
+    if (!reduced && after.length > 0 && after.every((task) => task.done)) {
       donePulse.start({
         scale: [1, 1.015, 1],
         transition: { duration: DURATION.slow, ease: EASE_OUT },
-      });
-    }
-  };
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!newTitle.trim()) return;
-
-    const id = crypto.randomUUID();
-    addTask(instanceId, newTitle, id);
-    if (!reduced) setRevealingId(id);
-    setNewTitle("");
-    if (!reduced) {
-      pulse.start({
-        scale: [1, 1.015, 1],
-        transition: { duration: DURATION.base, ease: EASE_OUT },
       });
     }
   };
@@ -110,20 +85,7 @@ export function TasksWidget() {
 
   return (
     <div className="flex h-full flex-col gap-2">
-      <form onSubmit={handleSubmit} className="shrink-0">
-        <motion.div animate={pulse} className="relative overflow-hidden rounded-md">
-          <Input
-            size="lg"
-            value={newTitle}
-            onChange={(event) => setNewTitle(event.target.value)}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            placeholder="Add a task…"
-            aria-label="Add a task"
-          />
-          {!reduced && <BorderTrail active={focused} />}
-        </motion.div>
-      </form>
+      <TaskComposer onAdded={setRevealingId} />
       {showEmpty ? (
         <StateMessage icon={ListChecks} message="No tasks yet" />
       ) : (

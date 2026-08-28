@@ -7,20 +7,16 @@ export type ImminentPrecip = {
   probability: number;
 };
 
-type ImminentOptions = {
-  withinHours?: number;
-  threshold?: number;
-};
+const WITHIN_HOURS = 6;
 
 export function findImminentPrecip(
   hourly: WeatherHour[],
   fromIso: string,
-  options: ImminentOptions = {},
+  threshold: number,
 ): ImminentPrecip | null {
-  const { withinHours = 6, threshold = 50 } = options;
   const start = hourly.findIndex((hour) => hour.time > fromIso);
   if (start === -1) return null;
-  const end = Math.min(start + withinHours, hourly.length);
+  const end = Math.min(start + WITHIN_HOURS, hourly.length);
   for (let index = start; index < end; index += 1) {
     const hour = hourly[index];
     if (!hour) continue;
@@ -45,6 +41,55 @@ export function forecastVisibility(
     showHourly: room >= SECTION_GAP + HOURLY_H,
     showDaily: room >= SECTION_GAP + HOURLY_H + SECTION_GAP + DAILY_MIN_H,
   };
+}
+
+const TICK_EVERY = 6;
+const MIN_TICK_GAP = 38;
+
+export type HourlyTick = { key: string; x: number; midnight: boolean; label: string };
+
+export function hourlyTicks(
+  hours: WeatherHour[],
+  xFor: (index: number) => number,
+  clock24h: boolean,
+): { ticks: HourlyTick[]; midnights: HourlyTick[] } {
+  const candidates = hours.flatMap((hour, index) => {
+    const midnight = index > 0 && hour.time.slice(11, 13) === "00";
+    const rank = index === 0 ? 0 : midnight ? 1 : 2;
+    if (rank === 2 && index % TICK_EVERY !== 0) return [];
+    return [
+      {
+        key: hour.time,
+        rank,
+        x: xFor(index),
+        midnight,
+        label:
+          index === 0
+            ? "Now"
+            : midnight
+              ? formatWeekday(hour.time.slice(0, 10))
+              : formatHour(hour.time, !clock24h),
+      },
+    ];
+  });
+
+  const ticks = candidates
+    .slice()
+    .sort((a, b) => a.rank - b.rank || a.x - b.x)
+    .reduce<typeof candidates>((kept, tick) => {
+      if (kept.some((other) => Math.abs(other.x - tick.x) < MIN_TICK_GAP)) return kept;
+      kept.push(tick);
+      return kept;
+    }, [])
+    .sort((a, b) => a.x - b.x);
+
+  return { ticks, midnights: candidates.filter((tick) => tick.midnight) };
+}
+
+export const PRECIP_MIN_CHANCE = 20;
+
+export function shownChance(chance: number | null): number | null {
+  return chance !== null && chance >= PRECIP_MIN_CHANCE ? chance : null;
 }
 
 export function formatTemperature(value: number): string {

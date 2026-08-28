@@ -48,7 +48,7 @@ export function StockRow({ symbol, spark, showSparkline, onSelect, onRemove }: S
         >
           <span className="text-ink truncate text-body leading-tight font-semibold">{symbol}</span>
           {showName && quote?.name ? (
-            <span className={cn(TYPE.rowSubtitle, "truncate leading-tight")}>{quote.name}</span>
+            <span className={cn(TYPE.rowMeta, "truncate leading-tight")}>{quote.name}</span>
           ) : null}
         </span>
 

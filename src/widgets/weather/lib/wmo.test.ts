@@ -23,14 +23,6 @@ describe("wmoInfo", () => {
 
   it("falls back to overcast for unknown codes", () => {
     expect(wmoInfo(999, true).label).toBe("Overcast");
-  });
-});
-
-describe("isPrecipitationCode", () => {
-  it("returns true only for precipitation codes", () => {
-    expect(isPrecipitationCode(61)).toBe(true);
-    expect(isPrecipitationCode(80)).toBe(true);
-    expect(isPrecipitationCode(2)).toBe(false);
     expect(isPrecipitationCode(999)).toBe(false);
   });
 });

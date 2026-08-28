@@ -6,9 +6,10 @@ import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from 
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
 import { SortableRow } from "@/widgets/core/SortableRow";
-import { WeatherCard } from "@/widgets/weather/components/WeatherCard";
+import { WeatherDetail } from "@/widgets/weather/components/WeatherDetail";
+import { WeatherRow } from "@/widgets/weather/components/WeatherRow";
 import { EASE_OUT } from "@/lib/motion";
-import { useWeather, useWeatherStore } from "@/widgets/weather/useWeatherStore";
+import { detailLocation, useWeather, useWeatherStore } from "@/widgets/weather/useWeatherStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 export function WeatherWidget() {
@@ -24,8 +25,7 @@ export function WeatherWidget() {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
-  const selected = selectedId ? (locations.find((entry) => entry.id === selectedId) ?? null) : null;
-  const detail = locations.length === 1 ? (locations[0] ?? null) : selected;
+  const detail = detailLocation(locations, selectedId);
 
   const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT };
   const offset = reduced ? 0 : "4%";
@@ -52,11 +52,10 @@ export function WeatherWidget() {
               exit={{ opacity: 0, y: reduced ? 0 : "-4%" }}
               transition={transition}
             >
-              <WeatherCard
+              <WeatherDetail
                 location={detail}
                 units={units}
                 windUnit={windUnit}
-                mode="detailed"
                 onRemove={() => removeLocation(instanceId, detail.id)}
               />
             </motion.div>
@@ -83,11 +82,10 @@ export function WeatherWidget() {
                     <AnimatePresence initial={false} mode="popLayout">
                       {locations.map((location) => (
                         <SortableRow key={location.id} id={location.id}>
-                          <WeatherCard
+                          <WeatherRow
                             location={location}
                             units={units}
                             windUnit={windUnit}
-                            mode="compact"
                             onSelect={() => selectCity(instanceId, location.id)}
                             onRemove={() => removeLocation(instanceId, location.id)}
                           />

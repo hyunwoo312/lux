@@ -4,12 +4,13 @@ import { motion, useAnimationControls, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 type BorderTrailProps = {
-  active?: boolean;
-  size?: number;
-  duration?: number;
+  active: boolean;
 };
 
-export function BorderTrail({ active = true, size = 52, duration = 7 }: BorderTrailProps) {
+const TRAIL_SIZE = 52;
+const TRAIL_DURATION_S = 7;
+
+export function BorderTrail({ active }: BorderTrailProps) {
   const controls = useAnimationControls();
   const reduced = useReducedMotion() ?? false;
   const running = active && !reduced;
@@ -21,9 +22,9 @@ export function BorderTrail({ active = true, size = 52, duration = 7 }: BorderTr
     }
     controls.start({
       offsetDistance: ["0%", "100%"],
-      transition: { repeat: Infinity, duration, ease: "linear" },
+      transition: { repeat: Infinity, duration: TRAIL_DURATION_S, ease: "linear" },
     });
-  }, [running, controls, duration]);
+  }, [running, controls]);
 
   return (
     <div
@@ -39,7 +40,12 @@ export function BorderTrail({ active = true, size = 52, duration = 7 }: BorderTr
     >
       <motion.div
         className="bg-primary absolute aspect-square rounded-full blur-[1px]"
-        style={{ width: size, offsetPath: `rect(0 auto auto 0 round ${size}px)` } as CSSProperties}
+        style={
+          {
+            width: TRAIL_SIZE,
+            offsetPath: `rect(0 auto auto 0 round ${TRAIL_SIZE}px)`,
+          } as CSSProperties
+        }
         animate={controls}
       />
     </div>

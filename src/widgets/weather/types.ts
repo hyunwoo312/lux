@@ -52,7 +52,6 @@ export type WeatherHour = {
   temperature: number;
   weatherCode: number;
   precipitationProbability: number;
-  isDay: boolean;
 };
 
 export type WeatherDay = {
@@ -60,7 +59,6 @@ export type WeatherDay = {
   weatherCode: number;
   max: number;
   min: number;
-  precipitationSum: number | null;
   precipitationChance: number | null;
 };
 
@@ -71,7 +69,6 @@ export type WeatherMinute = {
 };
 
 export type WeatherUnitLabels = {
-  temperature: string;
   windSpeed: string;
 };
 

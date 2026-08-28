@@ -16,8 +16,8 @@ import type { Task } from "@/widgets/tasks/types";
 type TaskRowProps = {
   task: Task;
   sortable: boolean;
-  revealing?: boolean;
-  onRevealed?: () => void;
+  revealing: boolean;
+  onRevealed: () => void;
   onToggle: () => void;
   onEdit: (title: string) => void;
   onRemove: () => void;
@@ -28,7 +28,7 @@ const ROW_TRANSITION: Transition = { duration: DURATION.base, ease: EASE_OUT };
 export function TaskRow({
   task,
   sortable,
-  revealing = false,
+  revealing,
   onRevealed,
   onToggle,
   onEdit,
@@ -36,7 +36,6 @@ export function TaskRow({
 }: TaskRowProps) {
   const reduced = useReducedMotion();
   const [editing, setEditing] = useState(false);
-  const [revealActive, setRevealActive] = useState(revealing);
   const [truncated, setTruncated] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const observer = useRef<ResizeObserver | null>(null);
@@ -137,14 +136,12 @@ export function TaskRow({
                 ref={measureRef}
                 onDoubleClick={() => setEditing(true)}
                 onAnimationEnd={() => {
-                  if (!revealActive) return;
-                  setRevealActive(false);
-                  onRevealed?.();
+                  if (revealing) onRevealed();
                 }}
                 className={cn(
                   "block truncate text-body",
                   task.done && "text-ink-3",
-                  revealActive && "task-reveal",
+                  revealing && "task-reveal",
                 )}
               >
                 {task.title}

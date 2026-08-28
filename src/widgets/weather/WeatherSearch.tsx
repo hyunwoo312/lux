@@ -4,7 +4,12 @@ import { Check, ChevronLeft, MapPin } from "lucide-react";
 import { ExpandingSearch } from "@/components/ExpandingSearch";
 import { cn } from "@/lib/utils";
 import { searchPlaces } from "@/widgets/weather/lib/open-meteo";
-import { MAX_LOCATIONS, useWeather, useWeatherStore } from "@/widgets/weather/useWeatherStore";
+import {
+  detailLocation,
+  MAX_LOCATIONS,
+  useWeather,
+  useWeatherStore,
+} from "@/widgets/weather/useWeatherStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { makeLocationId, type GeocodeResult } from "@/widgets/weather/types";
 
@@ -15,10 +20,8 @@ export function WeatherSearch() {
   const selectedId = useWeather((d) => d.selectedId);
   const addLocation = useWeatherStore((s) => s.addLocation);
   const clearSelection = useWeatherStore((s) => s.clearSelection);
-  const searchOpen = useWeather((d) => d.searchOpen);
-  const openSearch = useWeatherStore((s) => s.openSearch);
-  const closeSearch = useWeatherStore((s) => s.closeSearch);
 
+  const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<GeocodeResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -26,11 +29,17 @@ export function WeatherSearch() {
   const [active, setActive] = useState(0);
   const debounceRef = useRef<number | undefined>(undefined);
 
-  const inDetail = locations.length > 1 && selectedId !== null;
+  const detail = detailLocation(locations, selectedId);
+  const inDetail = detail !== null && locations.length > 1;
   const expanded = !inDetail && (searchOpen || locations.length === 0);
 
   const atCap = locations.length >= MAX_LOCATIONS;
   const addedIds = useMemo(() => new Set(locations.map((entry) => entry.id)), [locations]);
+  const addedIdsRef = useRef(addedIds);
+
+  useEffect(() => {
+    addedIdsRef.current = addedIds;
+  }, [addedIds]);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -47,7 +56,15 @@ export function WeatherSearch() {
       searchPlaces(trimmed, controller.signal)
         .then((found) => {
           setResults(found);
-          setActive(0);
+          setActive(
+            Math.max(
+              0,
+              found.findIndex(
+                (result) =>
+                  !addedIdsRef.current.has(makeLocationId(result.latitude, result.longitude)),
+              ),
+            ),
+          );
           setSearching(false);
         })
         .catch((caught: unknown) => {
@@ -88,16 +105,28 @@ export function WeatherSearch() {
     document.getElementById(optionId(index))?.scrollIntoView({ block: "nearest" });
   };
 
+  const stepActive = (direction: 1 | -1) => {
+    let index = active;
+    for (let step = 0; step < results.length; step += 1) {
+      index = (index + direction + results.length) % results.length;
+      const result = results[index];
+      if (result && !isAdded(result)) {
+        moveActive(index);
+        return;
+      }
+    }
+  };
+
   const onInputKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
     if (!hasOptions) return;
     switch (event.key) {
       case "ArrowDown":
         event.preventDefault();
-        moveActive((active + 1) % results.length);
+        stepActive(1);
         return;
       case "ArrowUp":
         event.preventDefault();
-        moveActive((active - 1 + results.length) % results.length);
+        stepActive(-1);
         return;
       case "Enter": {
         event.preventDefault();
@@ -128,7 +157,7 @@ export function WeatherSearch() {
   return (
     <ExpandingSearch
       open={expanded}
-      onOpenChange={(next) => (next ? openSearch(instanceId) : closeSearch(instanceId))}
+      onOpenChange={setSearchOpen}
       value={query}
       onValueChange={setQuery}
       onInputKeyDown={onInputKeyDown}
@@ -138,9 +167,7 @@ export function WeatherSearch() {
       listboxId={hasOptions ? listboxId : undefined}
       activeDescendantId={hasOptions ? optionId(active) : undefined}
     >
-      <div
-        className={cn("border-input bg-popover w-full overflow-hidden rounded-sm border shadow-md")}
-      >
+      <div className="border-input bg-popover w-full overflow-hidden rounded-sm border shadow-md">
         <div className="max-h-56 overflow-y-auto p-1">
           {atCap ? (
             <p className="text-ink-3 px-2 py-2 text-caption">
@@ -162,7 +189,7 @@ export function WeatherSearch() {
               {results.map((result, index) => {
                 const added = isAdded(result);
                 return (
-                  <li key={result.id}>
+                  <li key={result.id} role="none">
                     <button
                       type="button"
                       id={optionId(index)}

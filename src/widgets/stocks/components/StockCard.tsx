@@ -57,7 +57,7 @@ export function StockCard({ symbol, spark, onSelect, onRemove }: StockCardProps)
         <span className="flex min-w-0 flex-col">
           <span className="text-ink truncate text-body leading-tight font-semibold">{symbol}</span>
           {showName && quote?.name ? (
-            <span className={cn(TYPE.rowSubtitle, "truncate leading-tight")}>{quote.name}</span>
+            <span className={cn(TYPE.rowMeta, "truncate leading-tight")}>{quote.name}</span>
           ) : null}
         </span>
 

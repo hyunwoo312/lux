@@ -9,7 +9,7 @@ import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { invalidatePolledResource } from "@/widgets/core/usePolledResource";
 import { syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
 import { quoteKey, sparkKey } from "@/widgets/stocks/lib/cacheKeys";
-import { DEFAULT_INDICES } from "@/widgets/stocks/lib/indices";
+import { DEFAULT_INDICES, MAX_INDICES } from "@/widgets/stocks/lib/indices";
 import {
   CHANGE_MODES,
   CHART_STYLES,
@@ -25,7 +25,7 @@ import {
 export const MAX_SYMBOLS = 20;
 export const STOCKS_SYNC_COOLDOWN_MS = 60_000;
 
-type StocksData = {
+export type StocksData = {
   symbols: string[];
   range: StockRange;
   showName: boolean;
@@ -141,7 +141,12 @@ export const useStocksStore = create<StocksState>()(
       setShowName: (instanceId, showName) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, showName }))),
       setIndexSymbols: (instanceId, indexSymbols) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, indexSymbols }))),
+        set((state) =>
+          update(state, instanceId, (data) => ({
+            ...data,
+            indexSymbols: indexSymbols.slice(0, MAX_INDICES),
+          })),
+        ),
       setView: (instanceId, view) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, view }))),
       setChangeMode: (instanceId, changeMode) =>
@@ -232,7 +237,7 @@ export const useStocksStore = create<StocksState>()(
               showName: data.showName,
               indexSymbols:
                 data.indexSymbols.length > 0
-                  ? data.indexSymbols
+                  ? data.indexSymbols.slice(0, MAX_INDICES)
                   : data.showIndices
                     ? DEFAULT_INDICES
                     : [],
