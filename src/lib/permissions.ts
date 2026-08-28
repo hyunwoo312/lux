@@ -1,7 +1,7 @@
 type Listener = () => void;
 
 const listeners = new Set<Listener>();
-let granted = new Set<chrome.runtime.ManifestPermission>();
+let granted: ReadonlySet<chrome.runtime.ManifestPermission> | null = null;
 let initialized = false;
 
 export function isPermissionsManageable(): boolean {
@@ -13,16 +13,25 @@ function notify() {
 }
 
 function refresh() {
-  if (!isPermissionsManageable()) return;
-  void chrome.permissions.getAll().then((result) => {
-    granted = new Set(result.permissions ?? []);
-    notify();
-  });
+  void chrome.permissions.getAll().then(
+    (result) => {
+      granted = new Set(result.permissions ?? []);
+      notify();
+    },
+    () => {
+      granted = new Set();
+      notify();
+    },
+  );
 }
 
 function ensureInitialized() {
-  if (initialized || !isPermissionsManageable()) return;
+  if (initialized) return;
   initialized = true;
+  if (!isPermissionsManageable()) {
+    granted = new Set();
+    return;
+  }
   chrome.permissions.onAdded.addListener(refresh);
   chrome.permissions.onRemoved.addListener(refresh);
   refresh();
@@ -36,20 +45,26 @@ export function subscribePermissions(listener: Listener): () => void {
   };
 }
 
-export function getGrantedPermissions(): Set<chrome.runtime.ManifestPermission> {
+export function getGrantedPermissions(): ReadonlySet<chrome.runtime.ManifestPermission> | null {
   return granted;
 }
+
+ensureInitialized();
 
 const APPLIED_ONLY_AFTER_RELOAD: ReadonlySet<chrome.runtime.ManifestPermission> = new Set(["tabs"]);
 
 const REOPEN_PERMISSIONS_KEY = "lux:reopen-permissions";
 
-function reloadPage(reopenSettingsAt: chrome.runtime.ManifestPermission | undefined): void {
+function rememberHighlight(name: chrome.runtime.ManifestPermission): void {
   try {
-    if (reopenSettingsAt) sessionStorage.setItem(REOPEN_PERMISSIONS_KEY, reopenSettingsAt);
+    sessionStorage.setItem(REOPEN_PERMISSIONS_KEY, name);
   } catch {
-    void 0;
+    return;
   }
+}
+
+function reloadPage(reopenSettingsAt: chrome.runtime.ManifestPermission | undefined): void {
+  if (reopenSettingsAt) rememberHighlight(reopenSettingsAt);
   window.location.reload();
 }
 

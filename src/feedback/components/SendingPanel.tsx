@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { animate, motion, useMotionValue, useReducedMotion, useTransform } from "motion/react";
 import { EASE_OUT, EASE_OUT_STRONG } from "@/lib/motion";
 import { FEEDBACK_TIMEOUT_MS } from "@/lib/net";
@@ -18,27 +18,19 @@ export function SendingPanel({ settling, onSettled }: Props) {
   const progress = useMotionValue(0);
   const percent = useTransform(progress, (value) => Math.round(value));
   const fillX = useTransform(progress, (value) => `${value - 100}%`);
-  const settledRef = useRef(onSettled);
-  settledRef.current = onSettled;
-
   useEffect(() => {
-    if (settling) return;
-    const controls = animate(progress, IN_FLIGHT_CEILING, {
-      duration: reduced ? 0 : FEEDBACK_TIMEOUT_MS / 1000,
-      ease: EASE_OUT_STRONG,
-    });
+    const controls = settling
+      ? animate(progress, 100, {
+          duration: reduced ? 0 : SETTLE_MS / 1000,
+          ease: EASE_OUT,
+          onComplete: onSettled,
+        })
+      : animate(progress, IN_FLIGHT_CEILING, {
+          duration: reduced ? 0 : FEEDBACK_TIMEOUT_MS / 1000,
+          ease: EASE_OUT_STRONG,
+        });
     return () => controls.stop();
-  }, [settling, progress, reduced]);
-
-  useEffect(() => {
-    if (!settling) return;
-    const controls = animate(progress, 100, {
-      duration: reduced ? 0 : SETTLE_MS / 1000,
-      ease: EASE_OUT,
-      onComplete: () => settledRef.current(),
-    });
-    return () => controls.stop();
-  }, [settling, progress, reduced]);
+  }, [settling, progress, reduced, onSettled]);
 
   return (
     <div className="flex min-h-52 flex-col justify-center gap-6 p-8">

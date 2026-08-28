@@ -8,6 +8,7 @@ const ENDPOINT = `${RELAY_BASE_URL}/feedback/submit`;
 const RETRYABLE_MESSAGE = "Couldn’t reach us just now. Your message is safe — try again.";
 const TERMINAL_MESSAGE = "Something went wrong sending that. Your message is safe.";
 const DISABLED_MESSAGE = "Feedback is paused right now. Please try again later.";
+const UNCONFIRMED_MESSAGE = "We couldn’t confirm that went through — please don’t resend just yet.";
 
 const relayResponseSchema = z.object({
   ok: z.boolean().optional(),
@@ -22,19 +23,19 @@ function failure(retryable: boolean, message: string): SubmitResult {
   return { ok: false, retryable, message };
 }
 
-export async function submitFeedback(
-  submission: FeedbackSubmission,
-  signal?: AbortSignal,
-): Promise<SubmitResult> {
+export async function submitFeedback(submission: FeedbackSubmission): Promise<SubmitResult> {
   let response: Response;
   try {
     response = await fetch(ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(submission),
-      signal: withTimeout(signal, FEEDBACK_TIMEOUT_MS),
+      signal: withTimeout(undefined, FEEDBACK_TIMEOUT_MS),
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "TimeoutError") {
+      return failure(false, UNCONFIRMED_MESSAGE);
+    }
     return failure(true, RETRYABLE_MESSAGE);
   }
 
@@ -42,7 +43,7 @@ export async function submitFeedback(
   try {
     payload = parseResponse("feedback", relayResponseSchema, await response.json());
   } catch {
-    payload = {};
+    return failure(false, response.ok ? UNCONFIRMED_MESSAGE : TERMINAL_MESSAGE);
   }
 
   if (response.ok && payload.ok && typeof payload.id === "string") {

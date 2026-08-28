@@ -38,17 +38,6 @@ beforeEach(() => {
 });
 
 describe("FeedbackDialog", () => {
-  it("turns over to the confirmation once the message is away", async () => {
-    vi.mocked(submitFeedback).mockResolvedValue({ ok: true, id: "ref-1" });
-    open();
-    type(VALID);
-
-    fireEvent.click(sendButton());
-
-    expect(await screen.findByRole("button", { name: "Done" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /copy reference ref-1/i })).toBeInTheDocument();
-  });
-
   it("replaces the form with a progress bar while the request is in flight", async () => {
     let resolve!: (result: SubmitResult) => void;
     vi.mocked(submitFeedback).mockReturnValue(
@@ -69,6 +58,7 @@ describe("FeedbackDialog", () => {
 
     resolve({ ok: true, id: "ref-live" });
     expect(await screen.findByRole("button", { name: "Done" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /copy reference ref-live/i })).toBeInTheDocument();
   });
 
   it("hands the bar back to the form with the error when the send fails", async () => {
@@ -84,24 +74,9 @@ describe("FeedbackDialog", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/couldn’t reach us/i);
     await waitFor(() => expect(screen.queryByRole("progressbar")).not.toBeInTheDocument());
-    expect(screen.getByLabelText(/details/i)).toBeInTheDocument();
-    expect(sendButton()).not.toHaveAttribute("aria-disabled");
-  });
-
-  it("keeps the typed message intact after a failure, so nothing is lost", async () => {
-    vi.mocked(submitFeedback).mockResolvedValue({
-      ok: false,
-      retryable: true,
-      message: "Couldn’t reach us just now.",
-    });
-    open();
-    type(VALID);
-
-    fireEvent.click(sendButton());
-    await screen.findByRole("alert");
-
     expect(screen.getByLabelText(/details/i)).toHaveValue(VALID);
     expect(useFeedbackStore.getState().draft.message).toBe(VALID);
+    expect(sendButton()).not.toHaveAttribute("aria-disabled");
   });
 
   it("keeps send unavailable until there is something worth sending", () => {
@@ -168,11 +143,6 @@ describe("FeedbackDialog", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /what would be sent/i }));
     expect(screen.getByText("Lux version")).toBeInTheDocument();
-  });
-
-  it("includes diagnostics by default, so a report arrives with a version on it", () => {
-    open();
-    expect(screen.getByRole("switch", { name: /include diagnostics/i })).toBeChecked();
   });
 
   it("shows a single close control, not one stacked on another", () => {

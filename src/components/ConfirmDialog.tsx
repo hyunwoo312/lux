@@ -1,7 +1,9 @@
+import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 const ARM_MS = 400;
 
@@ -12,6 +14,8 @@ type ConfirmDialogProps = {
   description: string;
   confirmLabel: string;
   onConfirm: () => void;
+  icon?: ReactNode;
+  tone?: "destructive" | "default";
 };
 
 export function ConfirmDialog({
@@ -21,6 +25,8 @@ export function ConfirmDialog({
   description,
   confirmLabel,
   onConfirm,
+  icon = <Trash2 className="size-5" />,
+  tone = "destructive",
 }: ConfirmDialogProps) {
   const [armed, setArmed] = useState(false);
 
@@ -38,19 +44,20 @@ export function ConfirmDialog({
       <DialogContent
         showClose={false}
         overDialog
-        overlayClassName="backdrop-blur-[6px]"
         className="dialog-pop w-[min(22rem,calc(100vw-2rem))] p-5"
       >
         <div className="flex flex-col gap-4">
           <div className="flex items-start gap-3">
             <span
               aria-hidden
-              className="
-                bg-destructive/10 text-destructive flex size-9 shrink-0 items-center justify-center
-                rounded-lg
-              "
+              className={cn(
+                "flex size-9 shrink-0 items-center justify-center rounded-lg",
+                tone === "destructive"
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-primary/10 text-primary",
+              )}
             >
-              <Trash2 className="size-5" />
+              {icon}
             </span>
             <div className="flex min-w-0 flex-col gap-1">
               <DialogTitle>{title}</DialogTitle>
@@ -63,7 +70,7 @@ export function ConfirmDialog({
             </Button>
             <Button
               size="lg"
-              variant="destructive"
+              variant={tone === "destructive" ? "destructive" : "default"}
               disabled={!armed}
               onClick={() => {
                 onOpenChange(false);

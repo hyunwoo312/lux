@@ -78,4 +78,22 @@ describe("setPermissionsGranted", () => {
     expect(takePendingPermissionHighlight()).toBe("sessions");
     expect(takePendingPermissionHighlight()).toBeNull();
   });
+
+  it("survives a permissions request the browser rejects", async () => {
+    chromeRef().permissions.request = vi.fn(async () => {
+      throw new Error("not an optional permission");
+    }) as unknown as typeof chrome.permissions.request;
+
+    await expect(setPermissionsGranted(["sessions", "tabs"], true)).resolves.toBeUndefined();
+    expect(reload).not.toHaveBeenCalled();
+  });
+});
+
+describe("takePendingPermissionHighlight", () => {
+  it("ignores a stored highlight that is not an optional permission", () => {
+    sessionStorage.setItem("lux:reopen-permissions", "management");
+
+    expect(takePendingPermissionHighlight()).toBeNull();
+    expect(sessionStorage.getItem("lux:reopen-permissions")).toBeNull();
+  });
 });

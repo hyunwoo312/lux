@@ -73,7 +73,7 @@ export function GuideNav({ articleId, onSelect }: Props) {
                   <button
                     type="button"
                     onClick={() =>
-                      setCollapsed((state) => ({ ...state, [group.id]: !collapsed[group.id] }))
+                      setCollapsed((state) => ({ ...state, [group.id]: !state[group.id] }))
                     }
                     aria-expanded={open}
                     className="

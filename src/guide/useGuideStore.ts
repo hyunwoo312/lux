@@ -3,7 +3,7 @@ import { getLocal, setLocal } from "@/lib/local-store";
 import { FIRST_ARTICLE_ID } from "@/guide/content";
 import { showToast, useToastStore } from "@/stores/useToastStore";
 
-export const GUIDE_NUDGED_KEY = "lux.guide.nudged";
+const GUIDE_NUDGED_KEY = "lux.guide.nudged";
 const NUDGE_KEY = "guide-nudge";
 
 type HelpState = {

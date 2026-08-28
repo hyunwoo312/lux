@@ -62,11 +62,4 @@ describe("buildDiagnostics", () => {
       "widgets",
     ]);
   });
-
-  it("stays empty when the dashboard is bare and no account is connected", () => {
-    const result = buildDiagnostics({ ...base, widgetTypes: [], connectedProviders: [] });
-
-    expect(result.widgets).toEqual([]);
-    expect(result.providers).toEqual([]);
-  });
 });

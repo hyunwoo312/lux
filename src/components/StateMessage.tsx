@@ -1,7 +1,7 @@
 import type { ComponentType, ReactNode } from "react";
 import { AlertCircle, Lock, RotateCw, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { classifyLoadError } from "@/lib/net";
+import { classifyLoadError, loadFailureMessage } from "@/lib/net";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -72,16 +72,7 @@ export function ErrorState({ error, service, subject, onRetry, retrying }: Error
   const failure = error instanceof Error ? classifyLoadError(error) : "other";
   const thing = subject ?? service;
 
-  const message =
-    failure === "offline"
-      ? "You’re offline — this will load when your connection is back."
-      : failure === "rateLimited" && error instanceof Error
-        ? error.message
-        : failure === "auth"
-          ? `${service} turned down the request. Reconnect your account in Settings.`
-          : failure === "unreachable"
-            ? `${service} isn’t responding, so ${thing} couldn’t load. Try again shortly.`
-            : `Couldn’t load ${thing}.`;
+  const message = loadFailureMessage(error, service, thing);
 
   const icon = failure === "offline" ? WifiOff : failure === "auth" ? Lock : AlertCircle;
   const tone: StateTone =

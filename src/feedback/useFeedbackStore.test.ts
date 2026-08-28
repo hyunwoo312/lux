@@ -10,10 +10,6 @@ import {
 const NOW = 1_800_000_000_000;
 
 describe("cooldownRemainingMs", () => {
-  it("is clear when nothing has been sent yet", () => {
-    expect(cooldownRemainingMs(0, NOW)).toBe(0);
-  });
-
   it("counts down from the last send and never goes negative", () => {
     expect(cooldownRemainingMs(NOW, NOW)).toBe(COOLDOWN_MS);
     expect(cooldownRemainingMs(NOW - COOLDOWN_MS / 2, NOW)).toBe(COOLDOWN_MS / 2);

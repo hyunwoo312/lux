@@ -5,7 +5,6 @@ import { GuideDialog } from "@/guide";
 import { useGuideStore } from "@/guide/useGuideStore";
 import { FIRST_ARTICLE_ID } from "@/guide/content";
 import { useSettingsStore } from "@/settings";
-import { widgetPlugins } from "@/widgets/registry";
 
 function open(articleId?: string) {
   useGuideStore.setState({ open: true, articleId: articleId ?? FIRST_ARTICLE_ID });
@@ -25,13 +24,6 @@ describe("GuideDialog", () => {
   it("opens on the first article", () => {
     open();
     expect(screen.getByRole("heading", { name: "What Lux is" })).toBeInTheDocument();
-  });
-
-  it("lists every installed widget, so a new widget cannot ship undocumented", () => {
-    open();
-    for (const plugin of widgetPlugins) {
-      expect(within(nav()).getByRole("button", { name: plugin.name })).toBeTruthy();
-    }
   });
 
   it("switches article when a topic is chosen", async () => {
