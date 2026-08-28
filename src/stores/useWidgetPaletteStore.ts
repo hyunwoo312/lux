@@ -14,5 +14,6 @@ export const useWidgetPaletteStore = create<WidgetPaletteState>((set) => ({
   previewType: null,
   setOpen: (open) => set(open ? { open } : { open, previewType: null }),
   toggle: () => set((state) => ({ open: !state.open, previewType: null })),
-  setPreviewType: (previewType) => set({ previewType }),
+  setPreviewType: (previewType) =>
+    set((state) => (state.open || previewType === null ? { previewType } : state)),
 }));

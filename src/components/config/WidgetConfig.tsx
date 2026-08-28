@@ -125,8 +125,6 @@ export function WidgetConfigSubItem({
 type ConfigOption<T extends string> = {
   value: T;
   label: string;
-  icon?: ComponentType<{ className?: string }>;
-  disabled?: boolean;
 };
 
 type SelectControlProps<T extends string> = {
@@ -176,7 +174,7 @@ export function ConfigSelect<T extends string>({
 
 type SegmentedProps<T extends string> = {
   value: T;
-  options: ConfigOption<T>[];
+  options: (ConfigOption<T> & { disabled?: boolean })[];
   onChange: (value: T) => void;
   disabled?: boolean;
   label: string;
@@ -238,7 +236,7 @@ export function ConfigSegmented<T extends string>({
 
 type MultiToggleProps<T extends string> = {
   values: T[];
-  options: ConfigOption<T>[];
+  options: (ConfigOption<T> & { icon?: ComponentType<{ className?: string }> })[];
   onChange: (values: T[]) => void;
   disabled?: boolean;
   maxSelected?: number;
@@ -272,11 +270,6 @@ export function ConfigMultiToggle<T extends string>({
             value={option.value}
             disabled={atCap && !active}
             variant="chip"
-            className={cn(
-              active
-                ? "border-primary/40 bg-primary/10 text-ink"
-                : "border-border text-ink-3 hover:bg-accent/60",
-            )}
           >
             {Icon && <Icon className="shrink-0 object-contain" />}
             {option.label}

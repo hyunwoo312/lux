@@ -1,5 +1,5 @@
 import type { CSSProperties, Ref } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { GridLayout, useContainerWidth, setTopLeft } from "react-grid-layout";
 import type { Compactor, EventCallback, Position } from "react-grid-layout";
@@ -14,6 +14,7 @@ import {
   resolveLayoutCollisions,
   resolveLocalDisplacement,
 } from "@/widgets/core/layout-engine";
+import { getScrollParent, useEdgeAutoScroll } from "@/widgets/core/useEdgeAutoScroll";
 import { useWidgetDragStore } from "@/widgets/core/useWidgetDragStore";
 import { WidgetHost } from "@/widgets/core/WidgetHost";
 import { getWidgetPlugin } from "@/widgets/registry";
@@ -29,21 +30,16 @@ const topLeftStrategy = {
 
 const RESIZE_HANDLES = ["n", "s", "w", "e", "nw", "ne", "sw", "se"] as const;
 
+const compactor: Compactor = {
+  type: null,
+  allowOverlap: true,
+  preventCollision: false,
+  compact: clampLayout,
+};
+
 const MIN_ROWS = 8;
 const EDIT_ROW_BUFFER = 1;
 const BOTTOM_GUTTER = 16;
-const EDGE_ZONE = 60;
-const EDGE_MAX_SPEED = 18;
-
-function getScrollParent(node: HTMLElement | null): HTMLElement | null {
-  let el = node?.parentElement ?? null;
-  while (el) {
-    const overflowY = getComputedStyle(el).overflowY;
-    if (overflowY === "auto" || overflowY === "scroll") return el;
-    el = el.parentElement;
-  }
-  return null;
-}
 
 export function WidgetGrid() {
   const widgets = useDashboardStore((s) => s.widgets);
@@ -64,38 +60,7 @@ export function WidgetGrid() {
   const [liveSize, setLiveSize] = useState<{ id: string; w: number; h: number } | null>(null);
   const [availableRows, setAvailableRows] = useState(MIN_ROWS);
   const activeWidgetId = useRef<string | null>(null);
-  const pointerY = useRef<number | null>(null);
-  const scrollFrame = useRef<number | null>(null);
-  const scrollerRef = useRef<HTMLElement | null>(null);
-
-  const autoScroll = useCallback(() => {
-    if (!activeWidgetId.current) {
-      scrollFrame.current = null;
-      return;
-    }
-    const y = pointerY.current;
-    const scroller = scrollerRef.current;
-    if (y !== null && scroller) {
-      const rect = scroller.getBoundingClientRect();
-      const fromBottom = rect.bottom - y;
-      const fromTop = y - rect.top;
-      if (fromBottom < EDGE_ZONE) {
-        const intensity = Math.min(1, (EDGE_ZONE - fromBottom) / EDGE_ZONE);
-        scroller.scrollBy({ top: EDGE_MAX_SPEED * intensity * intensity });
-      } else if (fromTop < EDGE_ZONE && scroller.scrollTop > 0) {
-        const intensity = Math.min(1, (EDGE_ZONE - fromTop) / EDGE_ZONE);
-        scroller.scrollBy({ top: -EDGE_MAX_SPEED * intensity * intensity });
-      }
-    }
-    scrollFrame.current = requestAnimationFrame(autoScroll);
-  }, []);
-
-  useEffect(
-    () => () => {
-      if (scrollFrame.current !== null) cancelAnimationFrame(scrollFrame.current);
-    },
-    [],
-  );
+  const edgeScroll = useEdgeAutoScroll();
 
   useEffect(() => {
     const el = containerRef.current;
@@ -136,22 +101,11 @@ export function WidgetGrid() {
     };
   }, [containerRef, mounted, gw, cols, setGeometry, dragging]);
 
-  const compactor = useMemo<Compactor>(
-    () => ({
-      type: null,
-      allowOverlap: true,
-      preventCollision: false,
-      compact: (input, columns) => clampLayout(input, columns),
-    }),
-    [],
-  );
-
   const handleStart: EventCallback = (_layout, _oldItem, newItem, _placeholder, event) => {
     if (!newItem) return;
     activeWidgetId.current = newItem.i;
-    scrollerRef.current = getScrollParent(containerRef.current);
-    pointerY.current = event instanceof MouseEvent ? event.clientY : null;
-    if (scrollFrame.current === null) scrollFrame.current = requestAnimationFrame(autoScroll);
+    edgeScroll.begin(containerRef.current);
+    if (event instanceof MouseEvent) edgeScroll.track(event.clientY);
   };
 
   const handleMove: EventCallback = (next, _oldItem, newItem, _placeholder, event) => {
@@ -161,19 +115,14 @@ export function WidgetGrid() {
           ? prev
           : { id: newItem.i, w: newItem.w, h: newItem.h },
       );
-    if (event instanceof MouseEvent) pointerY.current = event.clientY;
+    if (event instanceof MouseEvent) edgeScroll.track(event.clientY);
     setPreviewRows(getLayoutBottom(next) + EDIT_ROW_BUFFER);
   };
 
   const handleStop: EventCallback = (next) => {
     setPreviewRows(null);
     setLiveSize(null);
-    pointerY.current = null;
-    scrollerRef.current = null;
-    if (scrollFrame.current !== null) {
-      cancelAnimationFrame(scrollFrame.current);
-      scrollFrame.current = null;
-    }
+    edgeScroll.end();
     const draggedId = activeWidgetId.current;
     const basis = Math.max(cols, layoutColumnSpan(layout));
     const merged = applyDragWithinNarrowView(layout, next, draggedId, cols);
@@ -271,7 +220,7 @@ export function WidgetGrid() {
               style={
                 {
                   minHeight: workspaceHeight,
-                  ...(showGrid ? { "--cell": `${UNIT}px` } : {}),
+                  ...(showGrid ? { "--grid-unit": `${UNIT}px` } : {}),
                 } as CSSProperties
               }
               className={cn(showGrid && "grid-lines")}
@@ -310,14 +259,16 @@ function PlacementPreview({ placement, ref }: { placement: Placement; ref?: Ref<
       ref={ref}
       aria-hidden
       style={{
-        position: "absolute",
         left: PAD + placement.x * UNIT,
         top: PAD + placement.y * UNIT,
         width: placement.w * UNIT - GAP,
         height: placement.h * UNIT - GAP,
       }}
       className={cn(
-        "border-primary bg-primary/15 pointer-events-none rounded-2xl border-2 border-dashed",
+        `
+          border-primary bg-primary/15 pointer-events-none absolute rounded-2xl border-2
+          border-dashed
+        `,
         "shadow-glow-accent",
       )}
     />

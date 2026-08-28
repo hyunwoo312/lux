@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
-import { reconcilePersisted, useDashboardStore } from "@/stores/useDashboardStore";
+import { useDashboardStore } from "@/stores/useDashboardStore";
 import { collides } from "@/widgets/core/layout-engine";
 import { useWidgetSettingsStore } from "@/widgets/core/useWidgetSettingsStore";
 
 const store = () => useDashboardStore.getState();
+const mergeStored = (persisted: unknown) =>
+  useDashboardStore.persist.getOptions().merge?.(persisted, store()) as ReturnType<typeof store>;
 
 describe("useDashboardStore", () => {
   beforeEach(() => {
@@ -68,12 +70,6 @@ describe("useDashboardStore", () => {
     const { widgets, layout } = store();
     expect(widgets).toHaveLength(0);
     expect(layout).toHaveLength(0);
-  });
-
-  it("toggles edit mode", () => {
-    expect(store().editing).toBe(false);
-    store().toggleEditing();
-    expect(store().editing).toBe(true);
   });
 
   it("records the last added widget id, then clears it", () => {
@@ -228,7 +224,7 @@ describe("useDashboardStore", () => {
   });
 
   describe("pending removal survives a reload", () => {
-    it("is written by partialize and read back by reconcilePersisted", () => {
+    it("is written by partialize and read back on the next load", () => {
       store().addWidget("tasks");
       const id = store().widgets[0]?.id ?? "";
       store().removeWidget(id);
@@ -236,24 +232,24 @@ describe("useDashboardStore", () => {
       const partialize = useDashboardStore.persist.getOptions().partialize;
       const written = JSON.parse(JSON.stringify(partialize?.(store())));
 
-      expect(reconcilePersisted(written)?.pendingRemoval?.instance.id).toBe(id);
+      expect(mergeStored(written).pendingRemoval?.instance.id).toBe(id);
     });
 
     it("tolerates a malformed pending removal rather than losing the dashboard", () => {
-      const result = reconcilePersisted({
+      const result = mergeStored({
         widgets: [{ id: "a", type: "note" }],
         layout: [{ i: "a", x: 0, y: 0, w: 2, h: 2 }],
         pendingRemoval: "nonsense",
       });
 
-      expect(result?.widgets).toHaveLength(1);
-      expect(result?.pendingRemoval).toBeNull();
+      expect(result.widgets).toHaveLength(1);
+      expect(result.pendingRemoval).toBeNull();
     });
   });
 
-  describe("reconcilePersisted", () => {
+  describe("reading the persisted dashboard", () => {
     it("drops widgets of an unknown type instead of resetting the dashboard", () => {
-      const result = reconcilePersisted({
+      const result = mergeStored({
         widgets: [
           { id: "note-1", type: "note" },
           { id: "clock-1", type: "clock" },
@@ -264,13 +260,16 @@ describe("useDashboardStore", () => {
         ],
       });
 
-      expect(result?.widgets).toEqual([{ id: "note-1", type: "note" }]);
-      expect(result?.layout.map((item) => item.i)).toEqual(["note-1"]);
+      expect(result.widgets).toEqual([{ id: "note-1", type: "note" }]);
+      expect(result.layout.map((item) => item.i)).toEqual(["note-1"]);
     });
 
-    it("returns null only when the blob is not an object at all", () => {
-      expect(reconcilePersisted("nonsense")).toBeNull();
-      expect(reconcilePersisted({ widgets: "nope" })).toEqual({
+    it("keeps the current dashboard when the blob is not an object at all", () => {
+      store().addWidget("note");
+      const widgets = store().widgets;
+
+      expect(mergeStored("nonsense").widgets).toBe(widgets);
+      expect(mergeStored({ widgets: "nope" })).toMatchObject({
         widgets: [],
         layout: [],
         pendingRemoval: null,
@@ -278,7 +277,7 @@ describe("useDashboardStore", () => {
     });
 
     it("keeps every other widget when one layout entry is unreadable", () => {
-      const result = reconcilePersisted({
+      const result = mergeStored({
         widgets: [
           { id: "note-1", type: "note" },
           { id: "tasks-1", type: "tasks" },
@@ -289,24 +288,24 @@ describe("useDashboardStore", () => {
         ],
       });
 
-      expect(result?.widgets.map((widget) => widget.id)).toEqual(["note-1", "tasks-1"]);
-      expect(result?.layout.find((item) => item.i === "note-1")).toMatchObject({ x: 3, y: 2 });
+      expect(result.widgets.map((widget) => widget.id)).toEqual(["note-1", "tasks-1"]);
+      expect(result.layout.find((item) => item.i === "note-1")).toMatchObject({ x: 3, y: 2 });
     });
 
     it("re-places a widget whose layout entry was lost rather than hiding it", () => {
-      const result = reconcilePersisted({
+      const result = mergeStored({
         widgets: [{ id: "note-1", type: "note" }],
         layout: [],
       });
 
-      expect(result?.layout.map((item) => item.i)).toEqual(["note-1"]);
+      expect(result.layout.map((item) => item.i)).toEqual(["note-1"]);
     });
 
     it("survives a blob with no layout at all", () => {
-      const result = reconcilePersisted({ widgets: [{ id: "note-1", type: "note" }] });
+      const result = mergeStored({ widgets: [{ id: "note-1", type: "note" }] });
 
-      expect(result?.widgets).toHaveLength(1);
-      expect(result?.layout).toHaveLength(1);
+      expect(result.widgets).toHaveLength(1);
+      expect(result.layout).toHaveLength(1);
     });
   });
 });

@@ -1,4 +1,4 @@
-import { RESOURCE_CACHE_PREFIXES } from "@/lib/local-store";
+import { isResourceCacheKey } from "@/lib/local-store";
 
 const DEFAULT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -16,7 +16,7 @@ export function sweepStaleResourceCaches(now: number, maxAgeMs: number = DEFAULT
   try {
     for (let index = 0; index < localStorage.length; index += 1) {
       const key = localStorage.key(index);
-      if (!key || !RESOURCE_CACHE_PREFIXES.some((prefix) => key.startsWith(prefix))) continue;
+      if (!key || !isResourceCacheKey(key)) continue;
       const raw = localStorage.getItem(key);
       if (raw !== null && isStale(raw, now, maxAgeMs)) removable.push(key);
     }
@@ -27,7 +27,7 @@ export function sweepStaleResourceCaches(now: number, maxAgeMs: number = DEFAULT
     try {
       localStorage.removeItem(key);
     } catch {
-      return;
+      continue;
     }
   }
 }

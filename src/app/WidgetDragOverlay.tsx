@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -8,8 +8,16 @@ import { useWidgetDragStore, type DropMorph } from "@/widgets/core/useWidgetDrag
 import { getWidgetPlugin } from "@/widgets/registry";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 
+const MORPH_BACKSTOP_MS = 1200;
+
 function DropMorphGhost({ morph, onDone }: { morph: DropMorph; onDone: () => void }) {
   const reduced = useReducedMotion();
+
+  useEffect(() => {
+    const timer = window.setTimeout(onDone, MORPH_BACKSTOP_MS);
+    return () => window.clearTimeout(timer);
+  }, [onDone]);
+
   const plugin = getWidgetPlugin(morph.type);
   const Icon = plugin?.icon;
   return (
@@ -53,11 +61,15 @@ export function WidgetDragOverlay() {
   const endMorph = useWidgetDragStore((s) => s.endMorph);
   const layout = useDashboardStore((s) => s.layout);
 
-  if (dropMorph) {
-    return createPortal(<DropMorphGhost morph={dropMorph} onDone={endMorph} />, document.body);
-  }
+  const morph = dropMorph ? (
+    <DropMorphGhost
+      key={`${dropMorph.type}-${dropMorph.to.x}-${dropMorph.to.y}`}
+      morph={dropMorph}
+      onDone={endMorph}
+    />
+  ) : null;
 
-  if (!type) return null;
+  if (!type) return morph === null ? null : createPortal(morph, document.body);
   const plugin = getWidgetPlugin(type);
   if (!plugin) return null;
   const Icon = plugin.icon;
@@ -83,6 +95,7 @@ export function WidgetDragOverlay() {
 
   return createPortal(
     <>
+      {morph}
       {placeholder}
       <div
         style={{

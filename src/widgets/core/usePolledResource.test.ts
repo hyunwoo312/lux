@@ -18,17 +18,11 @@ afterEach(() => {
 });
 
 describe("backoffDelayMs", () => {
-  it("has no delay before any failure", () => {
+  it("backs off exponentially from the base and caps", () => {
     expect(backoffDelayMs(0)).toBe(0);
-  });
-
-  it("doubles from the base with each consecutive failure", () => {
     expect(backoffDelayMs(1)).toBe(60_000);
     expect(backoffDelayMs(2)).toBe(120_000);
     expect(backoffDelayMs(3)).toBe(240_000);
-  });
-
-  it("caps at the maximum", () => {
     expect(backoffDelayMs(20)).toBe(30 * 60_000);
   });
 });
@@ -108,6 +102,19 @@ describe("usePolledResource", () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(fetcher).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(1000);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it("waits out a rate limit's retry-after before polling again", async () => {
+    vi.useFakeTimers();
+    const fetcher = vi.fn().mockRejectedValue(new RateLimitError(45_000));
+    renderHook(() => usePolledResource(fetcher, { intervalMs: 10_000 }));
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(40_000);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(10_000);
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 

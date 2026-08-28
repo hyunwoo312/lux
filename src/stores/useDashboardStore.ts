@@ -52,7 +52,7 @@ function starterTiles(columns: number): { type: WidgetType; x: number; y: number
   );
 }
 
-export type PendingRemoval = { instance: WidgetInstance; layoutItem: LayoutItem };
+type PendingRemoval = { instance: WidgetInstance; layoutItem: LayoutItem };
 
 type DashboardState = {
   widgets: WidgetInstance[];
@@ -119,11 +119,6 @@ function reconcile(parsed: z.infer<typeof persistedSchema>): ReconciledDashboard
   }
 
   return { widgets, layout, pendingRemoval: parsed.pendingRemoval ?? null };
-}
-
-export function reconcilePersisted(persisted: unknown): ReconciledDashboard | null {
-  const parsed = persistedSchema.safeParse(persisted);
-  return parsed.success ? reconcile(parsed.data) : null;
 }
 
 function placeLayoutItem(

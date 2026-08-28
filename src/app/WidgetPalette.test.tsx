@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { WidgetPalette } from "@/app/WidgetPalette";
 import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
 import { useDashboardStore } from "@/stores/useDashboardStore";
+import { useWidgetHighlightStore } from "@/widgets/core/useWidgetHighlightStore";
 import { widgetPlugins } from "@/widgets/registry";
 import { WIDGET_CATEGORIES, WIDGET_CATEGORY_LABELS } from "@/widgets/core/types";
 
@@ -124,6 +125,23 @@ describe("WidgetPalette", () => {
     expect(screen.getByRole("button", { name: /GitHub/ })).toHaveTextContent("Needs an account");
     expect(screen.getByRole("button", { name: /Note/ })).not.toHaveTextContent("Needs an account");
   });
+
+  it("clears the highlight and the search when the shortcut closes it, not only a dismissal", async () => {
+    useDashboardStore.getState().addWidget("note");
+    await openPalette();
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search widgets" }), {
+      target: { value: "scratchpad" },
+    });
+    fireEvent.focus(screen.getByRole("button", { name: /^Note/ }));
+    expect(useWidgetHighlightStore.getState().highlighted).toBe("note");
+
+    act(() => useWidgetPaletteStore.getState().toggle());
+    expect(useWidgetHighlightStore.getState().highlighted).toBeNull();
+
+    act(() => useWidgetPaletteStore.getState().toggle());
+    await screen.findByText("Widgets");
+    expect(screen.getByRole("searchbox", { name: "Search widgets" })).toHaveValue("");
+  });
 });
 
 describe("finding a widget among many", () => {
@@ -156,5 +174,19 @@ describe("finding a widget among many", () => {
     });
 
     expect(screen.getByText(/No widget matches/)).toBeInTheDocument();
+  });
+
+  it("moves across to the rows a search left behind, not the ones it removed", async () => {
+    await openPalette();
+
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search widgets" }), {
+      target: { value: "you" },
+    });
+
+    const quickAccess = screen.getByRole("button", { name: /^Quick Access/ });
+    quickAccess.focus();
+    fireEvent.keyDown(quickAccess, { key: "ArrowRight" });
+
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: /^AniList/ }));
   });
 });

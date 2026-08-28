@@ -366,8 +366,7 @@ class SharedResource<T> {
         if (generation !== this.generation) return;
         const error = caught instanceof Error ? caught : new Error("Request failed");
         this.failureCount += 1;
-        this.retryAt =
-          Date.now() + backoffDelayMs(this.failureCount) + Math.random() * RETRY_BASE_MS;
+        this.retryAt = Date.now() + retryDelayMs(error, this.failureCount);
         this.patch(
           this.snapshot.hasLoaded
             ? { isRefreshing: false, refreshError: error, failureCount: this.failureCount }

@@ -24,6 +24,27 @@ describe("ConfigSegmented", () => {
     fireEvent.click(renderSegmented(onChange));
     expect(onChange).toHaveBeenCalledWith("dark");
   });
+
+  it("refuses a click on an option marked unavailable, rather than silently ignoring it", () => {
+    const onChange = vi.fn();
+    render(
+      <ConfigSegmented
+        label="Theme"
+        value="light"
+        options={[
+          { value: "light", label: "Light" },
+          { value: "dark", label: "Dark" },
+          { value: "mixed", label: "Mixed", disabled: true },
+        ]}
+        onChange={onChange}
+      />,
+    );
+
+    const mixed = screen.getByRole("radio", { name: "Mixed" });
+    expect(mixed).toBeDisabled();
+    fireEvent.click(mixed);
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });
 
 describe('ConfigSegmented fit="line"', () => {
@@ -46,40 +67,11 @@ describe('ConfigSegmented fit="line"', () => {
     );
   }
 
-  it("refuses a click on an option marked unavailable, rather than silently ignoring it", () => {
-    const onChange = vi.fn();
-    render(
-      <ConfigSegmented
-        label="Theme"
-        value="light"
-        options={[
-          { value: "light", label: "Light" },
-          { value: "dark", label: "Dark" },
-          { value: "mixed", label: "Mixed", disabled: true },
-        ]}
-        onChange={onChange}
-      />,
-    );
-
-    const mixed = screen.getByRole("radio", { name: "Mixed" });
-    expect(mixed).toBeDisabled();
-    fireEvent.click(mixed);
-    expect(onChange).not.toHaveBeenCalled();
-  });
-
-  it("never wraps to a second row", () => {
+  it("gives the chosen option room and lets the others give way on one line", () => {
     renderLine();
     expect(screen.getByRole("radiogroup", { name: "Filter" })).toHaveClass("flex-nowrap");
-  });
-
-  it("keeps the chosen option at full width while the rest give way", () => {
-    renderLine();
     expect(screen.getByRole("radio", { name: "Pull requests" })).toHaveClass("shrink-0");
     expect(screen.getByRole("radio", { name: "All" })).toHaveClass("flex-1");
-  });
-
-  it("truncates only the options that gave way", () => {
-    renderLine();
     expect(screen.getByText("Issues")).toHaveClass("truncate");
     expect(screen.getByText("Pull requests")).not.toHaveClass("truncate");
   });
@@ -132,26 +124,22 @@ describe("WidgetConfigDisclosure", () => {
 });
 
 describe("WidgetConfigSubItem", () => {
-  it("puts a disabled row out of keyboard reach, not just out of pointer reach", () => {
+  it("puts a disabled row out of keyboard reach and leaves an enabled one interactive", () => {
     render(
-      <WidgetConfigSubItem
-        title="Interval"
-        disabled
-        control={<Switch aria-label="Rotate on a timer" onCheckedChange={vi.fn()} />}
-      />,
+      <>
+        <WidgetConfigSubItem
+          title="Interval"
+          disabled
+          control={<Switch aria-label="Rotate on a timer" onCheckedChange={vi.fn()} />}
+        />
+        <WidgetConfigSubItem
+          title="Captions"
+          control={<Switch aria-label="Show captions" onCheckedChange={vi.fn()} />}
+        />
+      </>,
     );
 
     expect(screen.getByText("Interval").closest("[inert]")).not.toBeNull();
-  });
-
-  it("leaves an enabled row interactive", () => {
-    render(
-      <WidgetConfigSubItem
-        title="Interval"
-        control={<Switch aria-label="Rotate on a timer" onCheckedChange={vi.fn()} />}
-      />,
-    );
-
-    expect(screen.getByText("Interval").closest("[inert]")).toBeNull();
+    expect(screen.getByText("Captions").closest("[inert]")).toBeNull();
   });
 });
