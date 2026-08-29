@@ -28,7 +28,7 @@ type RelayProviderConfig = {
   id: IntegrationProviderId;
   label: string;
   scopes: string[];
-  clientIdEnvKey?: string;
+  clientId?: string;
   loadClientId?: () => Promise<string | undefined>;
   authorizationEndpoint: string;
   authParams?: Record<string, string>;
@@ -88,7 +88,7 @@ export function createRelayProvider(config: RelayProviderConfig): CodeAuthProvid
     id: config.id,
     label: config.label,
     scopes: config.scopes,
-    clientIdEnvKey: config.clientIdEnvKey,
+    clientId: config.clientId,
     loadClientId: config.loadClientId,
     auth: "code",
     buildPkceAuthUrl: (params) =>

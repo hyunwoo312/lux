@@ -24,7 +24,7 @@ export const microsoftProvider: CodeAuthProvider = createRelayProvider({
   id: "microsoft",
   label: "Outlook Calendar",
   scopes: SCOPES,
-  clientIdEnvKey: "VITE_MICROSOFT_CLIENT_ID",
+  clientId: import.meta.env.VITE_MICROSOFT_CLIENT_ID,
   authorizationEndpoint: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
   authParams: { prompt: "select_account" },
   supportsRefresh: true,

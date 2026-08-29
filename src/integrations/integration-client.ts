@@ -57,8 +57,7 @@ async function resolveClientId(provider: IntegrationProvider): Promise<string> {
     return clientId;
   }
 
-  const env = import.meta.env as Record<string, string | undefined>;
-  const clientId = provider.clientIdEnvKey ? env[provider.clientIdEnvKey]?.trim() : undefined;
+  const clientId = provider.clientId?.trim();
 
   if (!clientId) {
     throw new Error(`Add a ${provider.label} client ID to connect`);

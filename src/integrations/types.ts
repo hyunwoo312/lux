@@ -83,7 +83,7 @@ type IntegrationProviderBase = {
   id: IntegrationProviderId;
   label: string;
   scopes: string[];
-  clientIdEnvKey?: string;
+  clientId?: string;
   loadClientId?: () => Promise<string | undefined>;
   fetchProfile: (accessToken: string) => Promise<IntegrationProfile>;
 };

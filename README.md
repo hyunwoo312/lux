@@ -13,8 +13,8 @@
 </div>
 
 <p align="center">
-  <img src="public/guide/preview-default.webp" alt="Lux new tab dashboard — default look" width="49%" />
-  <img src="public/guide/preview-custom.webp" alt="Lux new tab dashboard — custom wallpaper and layout" width="49%" />
+  <img src=".github/media/preview-default.webp" alt="Lux new tab dashboard — default look" width="49%" />
+  <img src=".github/media/preview-custom.webp" alt="Lux new tab dashboard — custom wallpaper and layout" width="49%" />
 </p>
 
 ## What it is
@@ -45,7 +45,7 @@ Everything lives on the new tab. The toolbar has theme, add widget, edit layout,
 notes, the guide, and feedback; the rest of the page is your dashboard.
 
 <p align="center">
-  <img src="public/guide/using-add-widget.webp" alt="Opening the add-widget menu and dropping a widget onto the grid" width="100%" />
+  <img src=".github/media/using-add-widget.webp" alt="Opening the add-widget menu and dropping a widget onto the grid" width="100%" />
 </p>
 
 Add a widget and click to drop it, hit edit to drag and resize, and open a widget's own header gear

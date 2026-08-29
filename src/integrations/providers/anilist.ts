@@ -149,7 +149,7 @@ export const anilistProvider: BrowserAuthProvider = {
   id: "anilist",
   label: "AniList",
   scopes: [],
-  clientIdEnvKey: "VITE_ANILIST_CLIENT_ID",
+  clientId: import.meta.env.VITE_ANILIST_CLIENT_ID,
   auth: "browser",
   acquireToken,
   fetchProfile: async (accessToken) => {

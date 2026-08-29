@@ -21,7 +21,7 @@ export const githubProvider: CodeAuthProvider = createRelayProvider({
   id: "github",
   label: "GitHub",
   scopes: SCOPES,
-  clientIdEnvKey: "VITE_GITHUB_CLIENT_ID",
+  clientId: import.meta.env.VITE_GITHUB_CLIENT_ID,
   authorizationEndpoint: "https://github.com/login/oauth/authorize",
   supportsRefresh: false,
   defaultExpiresIn: NON_EXPIRING_TTL_SECONDS,
