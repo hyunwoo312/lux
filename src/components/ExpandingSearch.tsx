@@ -81,14 +81,6 @@ export function ExpandingSearch({
     };
   }, [open, onOpenChange]);
 
-  const handleKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Escape") {
-      onOpenChange(false);
-      return;
-    }
-    onInputKeyDown?.(event);
-  };
-
   const handleClose = () => {
     if (value.length > 0) {
       onValueChange("");
@@ -107,7 +99,7 @@ export function ExpandingSearch({
   });
 
   return (
-    <Popover open={Boolean(popupOpen)} onOpenChange={() => {}}>
+    <Popover open={Boolean(popupOpen)}>
       <PopoverAnchor asChild>
         <div ref={setRoot} className={cn("relative h-7", className)}>
           <motion.div
@@ -163,7 +155,7 @@ export function ExpandingSearch({
               transition={contentIn(0.12)}
               value={value}
               onChange={(event) => onValueChange(event.target.value)}
-              onKeyDown={handleKeyDown}
+              onKeyDown={onInputKeyDown}
               placeholder={placeholder}
               role="combobox"
               aria-label={ariaLabel}

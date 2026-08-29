@@ -7,15 +7,15 @@ type FieldSize = "sm" | "md";
 
 const SIZES: Record<FieldSize, { icon: string; input: string; clear: string; cross: string }> = {
   sm: {
-    icon: "text-ink-3 size-3.5",
+    icon: "size-3.5",
     input: "text-caption",
-    clear: "text-ink-3 right-2.5 size-5 rounded-xs",
+    clear: "right-2.5 size-5 rounded-xs",
     cross: "size-3.5",
   },
   md: {
-    icon: "text-ink-3 size-4",
+    icon: "size-4",
     input: "text-body",
-    clear: "text-ink-3 right-2 size-6 rounded-sm",
+    clear: "right-2 size-6 rounded-sm",
     cross: "size-4",
   },
 };
@@ -59,7 +59,7 @@ export function SearchField({
       <Search
         aria-hidden
         className={cn(
-          "pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2",
+          "text-ink-3 pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2",
           styles.icon,
         )}
       />
@@ -83,7 +83,7 @@ export function SearchField({
           aria-label="Clear search"
           className={cn(
             `
-              press focus-ring absolute top-1/2 grid -translate-y-1/2 cursor-pointer
+              text-ink-3 press focus-ring absolute top-1/2 grid -translate-y-1/2 cursor-pointer
               place-items-center
               hover:text-ink
             `,

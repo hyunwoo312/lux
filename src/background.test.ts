@@ -86,11 +86,17 @@ describe("background worker — AniList callback", () => {
     expect(chromeMock().tabs.remove).toHaveBeenCalledWith(7);
   });
 
-  it("closes the tab even when the state does not match a live request", async () => {
+  it("drops callback fields that are not strings", async () => {
     const listener = await loadWorker();
-    listener(oauthMessage({ state: "someone-elses-state" }), { tab: { id: 5 } }, vi.fn());
+    listener(
+      oauthMessage({ accessToken: { token: "tok" }, expiresIn: 3600 }),
+      { tab: { id: 11 } },
+      vi.fn(),
+    );
     await flush();
-    expect(chromeMock().tabs.remove).toHaveBeenCalledWith(5);
+
+    const stored = await chromeMock().storage.session.get(CALLBACK_KEY);
+    expect(stored[CALLBACK_KEY]).toEqual({ state: STATE });
   });
 
   it("still closes the tab when the stash write fails", async () => {

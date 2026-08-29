@@ -27,30 +27,32 @@ export function ImageUploadButton({
   };
 
   return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={() => inputRef.current?.click()}
-      className="
-        press-row transition-colors border-border/60 bg-background/30
-        hover:border-foreground/40 hover:text-ink
-        text-ink-3 focus-ring relative flex w-full cursor-pointer items-center gap-3 rounded-lg
-        border border-dashed px-3 py-2.5 text-left
-        disabled:cursor-default disabled:opacity-60
-      "
-    >
-      <span
+    <>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => inputRef.current?.click()}
         className="
-          bg-foreground/5 flex size-8 shrink-0 items-center justify-center rounded-md
-          [&_svg]:size-4
+          press-row transition-colors border-border/60 bg-background/30
+          hover:border-foreground/40 hover:text-ink
+          text-ink-3 focus-ring flex w-full cursor-pointer items-center gap-3 rounded-lg border
+          border-dashed px-3 py-2.5 text-left
+          disabled:cursor-default disabled:opacity-60
         "
       >
-        <Upload aria-hidden />
-      </span>
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <strong className="text-ink text-body font-medium">{title}</strong>
-        <span className="text-ink-3 truncate text-caption">{description}</span>
-      </span>
+        <span
+          className="
+            bg-foreground/5 flex size-8 shrink-0 items-center justify-center rounded-md
+            [&_svg]:size-4
+          "
+        >
+          <Upload aria-hidden />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <strong className="text-ink text-body font-medium">{title}</strong>
+          <span className="text-ink-3 truncate text-caption">{description}</span>
+        </span>
+      </button>
       <input
         ref={inputRef}
         type="file"
@@ -58,8 +60,8 @@ export function ImageUploadButton({
         multiple={multiple}
         disabled={disabled}
         onChange={onChange}
-        className="pointer-events-none absolute size-px opacity-0"
+        className="hidden"
       />
-    </button>
+    </>
   );
 }
