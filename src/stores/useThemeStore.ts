@@ -24,11 +24,11 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   theme: resolveTheme(initialMode),
   isPersisted: true,
   setMode: (mode) => {
-    set({ mode, theme: resolveTheme(mode), isPersisted: applyTheme(mode, true) });
+    set({ mode, ...applyTheme(mode) });
   },
   toggle: () => {
     const next: ThemeMode = get().theme === "dark" ? "light" : "dark";
-    set({ mode: next, theme: next, isPersisted: applyTheme(next, true) });
+    set({ mode: next, ...applyTheme(next) });
   },
 }));
 

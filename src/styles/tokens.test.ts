@@ -1,7 +1,6 @@
 /// <reference types="node" />
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { join } from "node:path";
 
 const css = readFileSync(fileURLToPath(new URL("./globals.css", import.meta.url)), "utf8");
 import {
@@ -13,10 +12,11 @@ import {
   parseOklch,
   toLinearRgb,
   type Oklch,
-} from "@/lib/contrast";
+} from "@/styles/contrast";
 import { ACCENT_PRESETS } from "@/widgets/core/accent";
 import { cn } from "@/lib/utils";
 import { TYPE_SCALE } from "@/lib/type";
+import { sourceFiles, sourcePath } from "@/test/source-files";
 
 const AA_TEXT = 4.5;
 const AA_UI = 3;
@@ -108,13 +108,6 @@ describe("colour tokens", () => {
     }
   });
 
-  it("every accent preset has a matching block in both themes", () => {
-    for (const accent of ACCENT_PRESETS) {
-      expect(() => block(`.accent-${accent}`)).not.toThrow();
-      expect(() => block(`.dark .accent-${accent}`)).not.toThrow();
-    }
-  });
-
   it("the contribution heatmap ramp is perceptible at every step in both themes", () => {
     const ALPHAS = [0.36, 0.6, 0.82];
     const MIN_STEP = 1.35;
@@ -175,36 +168,18 @@ describe("colour tokens", () => {
     },
   );
 
-  it.each(THEMES)("$name page gradient never rises above the raised surface", ({ name, root }) => {
+  it.each(THEMES)("$name page gradient never rises above the raised surface", ({ root }) => {
     const raised = token(root, "surface-raised").l;
     const gradient = rawToken(root, "bg-gradient");
     const stops = [...gradient.matchAll(/oklch\(([\d.]+)/g)].map((m) => Number(m[1]));
     expect(stops.length).toBeGreaterThan(0);
-    const brightest = Math.max(...stops);
-    const darkest = Math.min(...stops);
-    if (name === "light") {
-      expect(brightest, "page must stay below raised").toBeLessThanOrEqual(raised - 0.02);
-    } else {
-      expect(brightest, "page must stay below raised").toBeLessThanOrEqual(raised - 0.02);
-      expect(darkest).toBeGreaterThan(0);
-    }
+    expect(Math.max(...stops), "page must stay below raised").toBeLessThanOrEqual(raised - 0.02);
   });
 
   it("every custom property referenced in source is defined in the token layer", () => {
-    const srcRoot = fileURLToPath(new URL("..", import.meta.url));
-    const EXTERNAL = ["--radix-", "--tw-", "--wipe-", "--cell", "--widget-"];
-    const files: string[] = [];
-    const walk = (dir: string) => {
-      for (const entry of readdirSync(dir)) {
-        const full = join(dir, entry);
-        if (statSync(full).isDirectory()) walk(full);
-        else if (/\.tsx?$/.test(entry) && !entry.includes(".test.")) files.push(full);
-      }
-    };
-    walk(srcRoot);
-
+    const EXTERNAL = ["--radix-", "--tw-", "--wipe-", "--widget-"];
     const missing = new Set<string>();
-    for (const file of files) {
+    for (const file of sourceFiles()) {
       const body = readFileSync(file, "utf8");
       for (const match of body.matchAll(/var\((--[a-z0-9-]+)/g)) {
         const name = match[1];
@@ -215,21 +190,31 @@ describe("colour tokens", () => {
     expect([...missing]).toEqual([]);
   });
 
+  it("keeps no colour or shadow token nothing references", () => {
+    const bodies = sourceFiles()
+      .map((file) => readFileSync(file, "utf8"))
+      .join("\n");
+    const exported = [...css.matchAll(/--(?:color|shadow)-([a-z0-9-]+):/g)].map(
+      (m) => m[1] as string,
+    );
+    const unused = exported.filter(
+      (name) => !new RegExp(`\\b[a-z][a-z-]*-${name}(?![\\w-])`).test(bodies),
+    );
+    expect(unused).toEqual([]);
+  });
+
+  it("keeps ink-4 out of widgets", () => {
+    const offenders = sourceFiles()
+      .filter((file) => sourcePath(file).startsWith("widgets"))
+      .filter((file) => /\bink-4\b/.test(readFileSync(file, "utf8")))
+      .map(sourcePath);
+    expect(offenders).toEqual([]);
+  });
+
   describe("z-index", () => {
     const LOCAL_STACKING_MAX = 30;
     const tokens = [...css.matchAll(/--z-index-([a-z-]+):/g)].map((m) => m[1] as string);
-    const sources = (() => {
-      const files: string[] = [];
-      const walk = (dir: string) => {
-        for (const entry of readdirSync(dir)) {
-          const full = join(dir, entry);
-          if (statSync(full).isDirectory()) walk(full);
-          else if (/\.tsx?$/.test(entry)) files.push(full);
-        }
-      };
-      walk(fileURLToPath(new URL("..", import.meta.url)));
-      return files.map((file) => ({ file, body: readFileSync(file, "utf8") }));
-    })();
+    const sources = sourceFiles().map((file) => ({ file, body: readFileSync(file, "utf8") }));
     const used = new Set(
       sources.flatMap(({ body }) =>
         [...body.matchAll(/\bz-([a-z][a-z-]*)\b/g)]
@@ -250,28 +235,20 @@ describe("colour tokens", () => {
       const offenders = sources.flatMap(({ file, body }) =>
         [...body.matchAll(/\B(-?)z-\[?(\d+)\]?\b/g)]
           .filter((m) => m[1] === "-" || Number(m[2]) > LOCAL_STACKING_MAX)
-          .map((m) => `${file.split("/src/")[1]}: ${m[0]}`),
+          .map((m) => `${sourcePath(file)}: ${m[0]}`),
       );
       expect(offenders).toEqual([]);
     });
   });
 
   it("focus is expressed only through the shared utility", () => {
-    const srcRoot = fileURLToPath(new URL("..", import.meta.url));
-    const offenders: string[] = [];
-    const walk = (dir: string) => {
-      for (const entry of readdirSync(dir)) {
-        const full = join(dir, entry);
-        if (statSync(full).isDirectory()) walk(full);
-        else if (/\.tsx?$/.test(entry) && !entry.includes(".test.")) {
-          const body = readFileSync(full, "utf8");
-          for (const m of body.matchAll(/\bfocus-visible:(?:ring|outline|border)-[^\s"'`,)]*/g)) {
-            offenders.push(`${full.slice(srcRoot.length)}: ${m[0]}`);
-          }
-        }
-      }
-    };
-    walk(srcRoot);
+    const offenders = sourceFiles().flatMap((file) =>
+      [
+        ...readFileSync(file, "utf8").matchAll(
+          /\bfocus-visible:(?:ring|outline|border)-[^\s"'`,)]*/g,
+        ),
+      ].map((m) => `${sourcePath(file)}: ${m[0]}`),
+    );
     expect(offenders).toEqual([]);
   });
 

@@ -2,10 +2,7 @@ import { ResponseTooLargeError } from "@/lib/net/errors";
 
 const MAX_RESPONSE_BYTES = 5_000_000;
 
-export async function readCappedText(
-  response: Response,
-  maxBytes = MAX_RESPONSE_BYTES,
-): Promise<string> {
+export async function readCappedText(response: Response): Promise<string> {
   const reader = response.body?.getReader();
   if (!reader) return response.text();
 
@@ -15,9 +12,9 @@ export async function readCappedText(
     const { done, value } = await reader.read();
     if (done) break;
     total += value.byteLength;
-    if (total > maxBytes) {
+    if (total > MAX_RESPONSE_BYTES) {
       await reader.cancel();
-      throw new ResponseTooLargeError(maxBytes);
+      throw new ResponseTooLargeError(MAX_RESPONSE_BYTES);
     }
     chunks.push(value);
   }

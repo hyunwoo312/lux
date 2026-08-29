@@ -1,5 +1,4 @@
 import type { ComponentProps } from "react";
-import { forwardRef } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
@@ -10,18 +9,15 @@ function Dialog(props: ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
 
-const DialogOverlay = forwardRef<HTMLDivElement, ComponentProps<typeof DialogPrimitive.Overlay>>(
-  function DialogOverlay({ className, ...props }, ref) {
-    return (
-      <DialogPrimitive.Overlay
-        ref={ref}
-        data-slot="dialog-overlay"
-        className={cn("dialog-overlay bg-scrim fixed inset-0", className)}
-        {...props}
-      />
-    );
-  },
-);
+function DialogOverlay({ className, ...props }: ComponentProps<typeof DialogPrimitive.Overlay>) {
+  return (
+    <DialogPrimitive.Overlay
+      data-slot="dialog-overlay"
+      className={cn("dialog-overlay bg-scrim fixed inset-0", className)}
+      {...props}
+    />
+  );
+}
 
 const dialogContentVariants = cva(
   `
@@ -31,12 +27,12 @@ const dialogContentVariants = cva(
   {
     variants: {
       layout: {
-        padded: "",
+        default: "",
         flush: "flex flex-col gap-0 overflow-hidden p-0",
       },
     },
     defaultVariants: {
-      layout: "padded",
+      layout: "default",
     },
   },
 );
@@ -45,7 +41,6 @@ type DialogContentProps = ComponentProps<typeof DialogPrimitive.Content> &
   VariantProps<typeof dialogContentVariants> & {
     showClose?: boolean;
     dismissOnClickOutside?: boolean;
-    overlayClassName?: string;
     overDialog?: boolean;
   };
 
@@ -55,16 +50,13 @@ function DialogContent({
   layout,
   showClose = true,
   dismissOnClickOutside = true,
-  overlayClassName,
   overDialog = false,
   onInteractOutside,
   ...props
 }: DialogContentProps) {
-  const overlay = cn(overDialog ? "z-modal" : "z-overlay", overlayClassName);
-
   return (
     <DialogPrimitive.Portal>
-      <DialogOverlay className={overlay} />
+      <DialogOverlay className={overDialog ? "z-modal" : "z-overlay"} />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         onInteractOutside={(event) => {

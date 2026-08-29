@@ -11,14 +11,6 @@ describe("withTimeout", () => {
     expect(signal.aborted).toBe(true);
   });
 
-  it("always composes its own signal, with or without a caller's", () => {
-    const controller = new AbortController();
-
-    expect(withTimeout()).toBeInstanceOf(AbortSignal);
-    expect(withTimeout(null)).toBeInstanceOf(AbortSignal);
-    expect(withTimeout(controller.signal)).not.toBe(controller.signal);
-  });
-
   it("is already aborted when the caller's signal aborted first", () => {
     const controller = new AbortController();
     controller.abort();
@@ -26,9 +18,12 @@ describe("withTimeout", () => {
     expect(withTimeout(controller.signal).aborted).toBe(true);
   });
 
-  it("aborts on its own deadline when there is no caller signal", async () => {
-    const signal = withTimeout(null, 10);
+  it("aborts on its own deadline, with or without a caller's signal", async () => {
+    const controller = new AbortController();
+    const alone = withTimeout(null, 10);
+    const composed = withTimeout(controller.signal, 10);
+
     await new Promise((resolve) => setTimeout(resolve, 60));
-    expect(signal.aborted).toBe(true);
+    expect([alone.aborted, composed.aborted]).toEqual([true, true]);
   });
 });

@@ -22,7 +22,7 @@ function Slider({ className, ...props }: ComponentProps<typeof SliderPrimitive.R
         data-slot="slider-thumb"
         className="
           border-primary focus-ring block size-4 shrink-0 cursor-grab rounded-full border-2 bg-white
-          shadow-[var(--elev-1)] transition-transform
+          shadow-elev-1 transition-transform
           hover:scale-110
           active:cursor-grabbing active:scale-105
           disabled:pointer-events-none

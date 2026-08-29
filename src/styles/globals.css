@@ -52,12 +52,10 @@
   --ink-3: var(--muted-foreground);
   --ink-4: oklch(0.52 0.02 285);
 
-  --surface-1: oklch(0.93 0.01 290);
   --surface-2: oklch(0.9 0.01 290);
   --surface-3: oklch(0.86 0.01 290);
   --scrim: oklch(0.26 0.03 285 / 0.45);
 
-  --edge-1: oklch(0 0 0 / 0.05);
   --edge-2: oklch(0 0 0 / 0.1);
   --edge-3: oklch(0 0 0 / 0.15);
   --edge-4: oklch(0 0 0 / 0.2);
@@ -142,12 +140,10 @@
   --ink-3: var(--muted-foreground);
   --ink-4: oklch(0.61 0.02 285);
 
-  --surface-1: oklch(0.25 0.03 285);
   --surface-2: oklch(0.28 0.03 285);
   --surface-3: oklch(0.31 0.03 285);
   --scrim: oklch(0.08 0.01 285 / 0.6);
 
-  --edge-1: oklch(1 0 0 / 0.1);
   --edge-2: oklch(1 0 0 / 0.15);
   --edge-3: oklch(1 0 0 / 0.2);
   --edge-4: oklch(1 0 0 / 0.25);
@@ -290,30 +286,20 @@
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-info: var(--info);
-  --color-info-foreground: var(--info-foreground);
 
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-ink-3: var(--ink-3);
   --color-ink-4: var(--ink-4);
 
-  --color-surface-1: var(--surface-1);
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
   --color-scrim: var(--scrim);
-  --color-surface-page: var(--surface-page);
   --color-surface-raised: var(--surface-raised);
-  --color-surface-overlay: var(--surface-overlay);
-  --color-surface-modal: var(--surface-modal);
-  --color-edge-1: var(--edge-1);
   --color-edge-2: var(--edge-2);
   --color-edge-3: var(--edge-3);
-  --color-edge-4: var(--edge-4);
   --shadow-glow-accent: 0 0 22px -2px var(--primary);
   --shadow-elev-1: var(--elev-1);
-  --shadow-elev-2: var(--elev-2);
-  --shadow-elev-3: var(--elev-3);
-  --shadow-elev-4: var(--elev-4);
   --color-bloom: var(--bloom);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -548,6 +534,10 @@
     transform: scale(0.97);
   }
 
+  &[aria-disabled="true"]:active {
+    transform: none;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     &:active {
       transform: none;
@@ -592,7 +582,6 @@
 
 @utility glass-solid {
   background-color: var(--surface-raised);
-  backdrop-filter: none;
   border: 1px solid var(--edge-2);
   box-shadow: var(--elev-1), var(--rim);
 }
@@ -647,11 +636,6 @@
   box-shadow: var(--elev-3), var(--rim);
 }
 
-@utility elev-4 {
-  border: 1px solid var(--edge-4);
-  box-shadow: var(--elev-4), var(--rim);
-}
-
 @utility widget-sheen {
   background-image: radial-gradient(
     120% 80% at 50% -20%,
@@ -685,7 +669,7 @@
       var(--grid-line) 0 var(--grid-line-width),
       transparent var(--grid-line-width)
     );
-  background-size: var(--cell) var(--cell);
+  background-size: var(--grid-unit) var(--grid-unit);
   background-clip: content-box;
   padding: var(--grid-line-width);
 }
@@ -987,7 +971,6 @@
   opacity: 0.18;
 }
 
-/* Every edge and corner resizes. Only the se corner shows a grip; the rest are grab zones. */
 .react-grid-item > .react-resizable-handle {
   opacity: 1;
 }

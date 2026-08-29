@@ -3,19 +3,12 @@ import { cn } from "@/lib/utils";
 
 type SeparatorProps = HTMLAttributes<HTMLDivElement> & {
   orientation?: "horizontal" | "vertical";
-  decorative?: boolean;
 };
 
-export function Separator({
-  className,
-  orientation = "horizontal",
-  decorative = true,
-  ...props
-}: SeparatorProps) {
+export function Separator({ className, orientation = "horizontal", ...props }: SeparatorProps) {
   return (
     <div
-      role={decorative ? "none" : "separator"}
-      aria-orientation={!decorative && orientation === "vertical" ? "vertical" : undefined}
+      role="none"
       data-orientation={orientation}
       className={cn(
         "bg-border shrink-0",

@@ -1,5 +1,5 @@
 import { TemporaryAuthError } from "@/lib/net/errors";
-import { REQUEST_TIMEOUT_MS, withTimeout } from "@/lib/net/policy";
+import { withTimeout } from "@/lib/net/policy";
 
 export async function fetchTokenEndpoint(
   label: string,
@@ -7,9 +7,8 @@ export async function fetchTokenEndpoint(
   init: RequestInit,
 ): Promise<Response> {
   try {
-    return await fetch(input, { ...init, signal: withTimeout(null, REQUEST_TIMEOUT_MS) });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") throw error;
+    return await fetch(input, { ...init, signal: withTimeout() });
+  } catch {
     throw new TemporaryAuthError(`${label} could not be reached`);
   }
 }

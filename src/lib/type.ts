@@ -16,7 +16,6 @@ export const TYPE = {
   heading: "text-heading font-semibold tracking-[-0.015em] text-ink",
   title: "text-title font-semibold tracking-[-0.005em] text-ink",
 
-  rowSubtitle: "text-caption text-ink-3",
   rowMeta: "text-caption text-ink-3",
 
   label: "text-body font-medium text-ink-2",

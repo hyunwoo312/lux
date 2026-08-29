@@ -1,9 +1,8 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import manifestRaw from "@/../public/manifest.json?raw";
-import { ENDPOINTS } from "@/lib/net";
+import { ENDPOINTS } from "@/lib/net/endpoints";
+import { sourceFiles, sourcePath } from "@/test/source-files";
 
 const manifestHosts: string[] = (JSON.parse(manifestRaw) as { host_permissions: string[] })
   .host_permissions;
@@ -38,22 +37,10 @@ describe("endpoint registry parity with the manifest", () => {
 });
 
 describe("endpoint registry parity with the code", () => {
-  const SRC = fileURLToPath(new URL("../..", import.meta.url));
-
   function networkModules(): { file: string; body: string }[] {
-    const found: { file: string; body: string }[] = [];
-    const walk = (dir: string) => {
-      for (const entry of readdirSync(dir)) {
-        const full = join(dir, entry);
-        if (statSync(full).isDirectory()) walk(full);
-        else if (/\.ts$/.test(entry) && !entry.includes(".test.")) {
-          const body = readFileSync(full, "utf8");
-          if (/\bfetch\(/.test(body)) found.push({ file: full, body });
-        }
-      }
-    };
-    walk(SRC);
-    return found;
+    return sourceFiles()
+      .map((file) => ({ file: sourcePath(file), body: readFileSync(file, "utf8") }))
+      .filter(({ body }) => /\bfetch\(/.test(body));
   }
 
   it("names every host the code actually reaches for", () => {
@@ -65,7 +52,7 @@ describe("endpoint registry parity with the code", () => {
       for (const match of body.matchAll(/https:\/\/([a-z0-9.-]+)/g)) {
         const host = match[1] ?? "";
         const known = registered.some((entry) => host === entry || host.endsWith(`.${entry}`));
-        if (!known) strays.push(`${file.split(/[/\\]src[/\\]/)[1] ?? file}: ${host}`);
+        if (!known) strays.push(`${file}: ${host}`);
       }
     }
     expect([...new Set(strays)]).toEqual([]);

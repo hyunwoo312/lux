@@ -51,7 +51,6 @@ function prefersReducedMotion(): boolean {
 type WipeOrigin = { x: number; y: number };
 
 const WIPE_BASE_MS = 800;
-const WIPE_MIN_MS = 680;
 const WIPE_MAX_MS = 1000;
 
 function triggerOrigin(): WipeOrigin {
@@ -73,10 +72,7 @@ function setWipeOrigin(origin: WipeOrigin): void {
     Math.max(origin.y, height - origin.y),
   );
   const centreRadius = Math.hypot(width, height) / 2;
-  const duration = Math.min(
-    WIPE_MAX_MS,
-    Math.max(WIPE_MIN_MS, WIPE_BASE_MS * Math.sqrt(radius / centreRadius)),
-  );
+  const duration = Math.min(WIPE_MAX_MS, WIPE_BASE_MS * Math.sqrt(radius / centreRadius));
   const root = document.documentElement;
   root.style.setProperty("--wipe-x", `${origin.x}px`);
   root.style.setProperty("--wipe-y", `${origin.y}px`);
@@ -111,13 +107,9 @@ export function transitionThemeClass(theme: ResolvedTheme): void {
   }
 }
 
-export function applyTheme(mode: ThemeMode, animate: boolean): boolean {
+export function applyTheme(mode: ThemeMode): { theme: ResolvedTheme; isPersisted: boolean } {
   const isPersisted = setLocal(THEME_STORAGE_KEY, mode);
   const theme = resolveTheme(mode);
-  if (animate) {
-    transitionThemeClass(theme);
-  } else {
-    applyThemeClass(theme);
-  }
-  return isPersisted;
+  transitionThemeClass(theme);
+  return { theme, isPersisted };
 }

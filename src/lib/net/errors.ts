@@ -88,6 +88,22 @@ export function classifyLoadError(error: Error): LoadFailure {
   return "other";
 }
 
+export function loadFailureMessage(error: unknown, service: string, subject = service): string {
+  const failure = error instanceof Error ? classifyLoadError(error) : "other";
+  switch (failure) {
+    case "offline":
+      return "You’re offline — this will load when your connection is back.";
+    case "rateLimited":
+      return error instanceof Error ? error.message : `Couldn’t load ${subject}.`;
+    case "auth":
+      return `${service} turned down the request. Reconnect your account in Settings.`;
+    case "unreachable":
+      return `${service} isn’t responding, so ${subject} couldn’t load. Try again shortly.`;
+    default:
+      return `Couldn’t load ${subject}.`;
+  }
+}
+
 export function loadErrorMessage(error: Error, fallback: string): string {
   return error instanceof RateLimitError ? error.message : fallback;
 }
