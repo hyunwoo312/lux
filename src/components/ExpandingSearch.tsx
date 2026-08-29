@@ -167,18 +167,17 @@ export function ExpandingSearch({
               aria-activedescendant={activeDescendantId}
               aria-autocomplete="list"
               aria-hidden={!open}
-              tabIndex={open ? 0 : -1}
+              inert={!open}
               className={cn(
                 "placeholder:text-ink-3 text-ink",
                 "relative h-full min-w-0 flex-1 bg-transparent text-body outline-none",
-                !open && "pointer-events-none",
               )}
             />
             <motion.button
               type="button"
               aria-label="Close search"
               aria-hidden={!open}
-              tabIndex={open ? 0 : -1}
+              inert={!open}
               onClick={handleClose}
               initial={false}
               animate={{ opacity: open ? 1 : 0, scale: open ? 1 : 0.6 }}
@@ -191,7 +190,6 @@ export function ExpandingSearch({
                   relative mr-1 grid size-6 shrink-0 place-items-center rounded-sm
                   [&_svg]:size-3.5
                 `,
-                !open && "pointer-events-none",
               )}
             >
               <X aria-hidden />
