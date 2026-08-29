@@ -15,8 +15,16 @@ import { useGuideStore } from "@/guide";
 import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
 
 const HANDLERS: Record<ShortcutAction, () => void> = {
-  openSettings: () => useSettingsStore.getState().openSettings(),
-  openGuide: () => useGuideStore.getState().openGuide(),
+  openSettings: () => {
+    const settings = useSettingsStore.getState();
+    if (settings.open) settings.closeSettings();
+    else settings.openSettings();
+  },
+  openGuide: () => {
+    const guide = useGuideStore.getState();
+    if (guide.open) guide.closeGuide();
+    else guide.openGuide();
+  },
   toggleTheme: () => useThemeStore.getState().toggle(),
   editLayout: () => useDashboardStore.getState().toggleEditing(),
   addWidget: () => useWidgetPaletteStore.getState().toggle(),
@@ -24,10 +32,11 @@ const HANDLERS: Record<ShortcutAction, () => void> = {
     const settings = useAppSettingsStore.getState();
     settings.setShowGridLines(!settings.showGridLines);
   },
-  undo: () => {
-    const toasts = useToastStore.getState();
-    if (toasts.toast?.action?.kind === "undo") toasts.runAction();
-  },
+};
+
+const OWN_DIALOG_OPEN: Partial<Record<ShortcutAction, () => boolean>> = {
+  openSettings: () => useSettingsStore.getState().open,
+  openGuide: () => useGuideStore.getState().open,
 };
 
 function dismissTopLayer(): boolean {
@@ -47,21 +56,21 @@ function dismissTopLayer(): boolean {
 export function useGlobalShortcuts() {
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.defaultPrevented || isModalLayerOpen()) return;
-      if (isEditableTarget(event.target)) return;
+      if (event.defaultPrevented || isEditableTarget(event.target)) return;
+      const modalOpen = isModalLayerOpen();
 
       if (event.key === "Escape") {
-        if (dismissTopLayer()) event.preventDefault();
+        if (!modalOpen && dismissTopLayer()) event.preventDefault();
         return;
       }
 
       const bindings = useShortcutsStore.getState();
       for (const definition of SHORTCUT_DEFINITIONS) {
-        if (matchesAnyShortcut(event, bindings[definition.id])) {
-          event.preventDefault();
-          HANDLERS[definition.id]();
-          return;
-        }
+        if (!matchesAnyShortcut(event, bindings[definition.id])) continue;
+        if (modalOpen && !OWN_DIALOG_OPEN[definition.id]?.()) return;
+        event.preventDefault();
+        HANDLERS[definition.id]();
+        return;
       }
     }
     window.addEventListener("keydown", onKeyDown);

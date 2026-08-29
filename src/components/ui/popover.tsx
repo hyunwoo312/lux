@@ -17,8 +17,8 @@ function PopoverAnchor(props: ComponentProps<typeof PopoverPrimitive.Anchor>) {
 
 const popoverContentVariants = cva(
   `
-    bg-popover text-popover-foreground border-border overlay-pop z-popover rounded-xl border elev-3
-    outline-none origin-[var(--radix-popover-content-transform-origin)]
+    bg-popover text-popover-foreground border-border overlay-pop z-popover overflow-hidden
+    rounded-xl border elev-3 outline-none origin-[var(--radix-popover-content-transform-origin)]
   `,
   {
     variants: {

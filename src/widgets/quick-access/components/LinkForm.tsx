@@ -122,57 +122,59 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
           side="bottom"
           onOpenAutoFocus={(event) => event.preventDefault()}
           onCloseAutoFocus={(event) => event.preventDefault()}
-          className="max-h-60 w-[var(--radix-popover-trigger-width)] overflow-y-auto"
+          className="w-[var(--radix-popover-trigger-width)]"
         >
-          <ul id={listboxId} role="listbox">
-            {matches.map((item, index) => {
-              const rowClass =
-                "focus-ring flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left";
-              const label = (
-                <>
-                  <Favicon url={item.url} size={32} className="size-4 shrink-0 rounded-xs" />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-body">{item.title}</span>
-                    <span className="text-ink-3 block truncate text-caption">
-                      {hostnameOf(item.url)}
+          <div className="max-h-60 overflow-y-auto rounded-lg">
+            <ul id={listboxId} role="listbox">
+              {matches.map((item, index) => {
+                const rowClass =
+                  "focus-ring flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left";
+                const label = (
+                  <>
+                    <Favicon url={item.url} size={32} className="size-4 shrink-0 rounded-xs" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-body">{item.title}</span>
+                      <span className="text-ink-3 block truncate text-caption">
+                        {hostnameOf(item.url)}
+                      </span>
                     </span>
-                  </span>
-                </>
-              );
-              return (
-                <li key={item.id}>
-                  {item.pinned ? (
-                    <div
-                      id={`${listboxId}-${index}`}
-                      role="option"
-                      aria-selected={false}
-                      aria-disabled
-                      className={cn(rowClass, "opacity-50")}
-                    >
-                      {label}
-                      <Pin className="text-primary size-3.5 shrink-0 fill-current" />
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      id={`${listboxId}-${index}`}
-                      role="option"
-                      aria-selected={index === activeIndex}
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => choose(item)}
-                      className={cn(
-                        "press cursor-pointer",
-                        rowClass,
-                        index === activeIndex ? "bg-accent" : "hover:bg-accent/60",
-                      )}
-                    >
-                      {label}
-                    </button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+                  </>
+                );
+                return (
+                  <li key={item.id}>
+                    {item.pinned ? (
+                      <div
+                        id={`${listboxId}-${index}`}
+                        role="option"
+                        aria-selected={false}
+                        aria-disabled
+                        className={cn(rowClass, "opacity-50")}
+                      >
+                        {label}
+                        <Pin className="text-primary size-3.5 shrink-0 fill-current" />
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        id={`${listboxId}-${index}`}
+                        role="option"
+                        aria-selected={index === activeIndex}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => choose(item)}
+                        className={cn(
+                          "press cursor-pointer",
+                          rowClass,
+                          index === activeIndex ? "bg-accent" : "hover:bg-accent/60",
+                        )}
+                      >
+                        {label}
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </PopoverContent>
       </Popover>
       <Input

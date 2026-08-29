@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { render } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { useGlobalShortcuts } from "@/app/useGlobalShortcuts";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { useToastStore } from "@/stores/useToastStore";
 import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
+import { useSettingsStore } from "@/settings";
 
 function Host() {
   useGlobalShortcuts();
@@ -22,6 +23,7 @@ beforeEach(() => {
   useDashboardStore.setState({ editing: false });
   useWidgetPaletteStore.setState({ open: false });
   useToastStore.setState({ toast: null });
+  useSettingsStore.setState({ open: false });
 });
 
 afterEach(() => {
@@ -56,26 +58,14 @@ describe("global shortcuts", () => {
     input.remove();
   });
 
-  it("reverses the removal the toast is offering", () => {
-    const run = vi.fn();
-    useToastStore.setState({
-      toast: { key: "a", message: "Removed", action: { kind: "undo", run } },
-    });
+  it("closes the dialog its own shortcut opened", () => {
+    press(",", { ctrlKey: true });
+    expect(useSettingsStore.getState().open).toBe(true);
 
-    press("z", { ctrlKey: true });
+    document.body.style.pointerEvents = "none";
+    press(",", { ctrlKey: true });
 
-    expect(run).toHaveBeenCalledOnce();
-  });
-
-  it("leaves a toast that offers no reversal alone", () => {
-    const run = vi.fn();
-    useToastStore.setState({
-      toast: { key: "a", message: "Hi", action: { kind: "action", label: "Reopen", run } },
-    });
-
-    press("z", { ctrlKey: true });
-
-    expect(run).not.toHaveBeenCalled();
+    expect(useSettingsStore.getState().open).toBe(false);
   });
 
   it("dismisses the toast before leaving edit mode", () => {

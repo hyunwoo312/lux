@@ -101,8 +101,8 @@ export function CalendarVisibilityPicker() {
           </Button>
         </PopoverTrigger>
       </Tooltip>
-      <PopoverContent align="end" padding="none" className="w-60">
-        <div className="scroll-fade max-h-64 overflow-y-auto p-1">
+      <PopoverContent align="end" className="w-60">
+        <div className="scroll-fade max-h-64 overflow-y-auto rounded-lg">
           {groups.map((group) => (
             <div key={group.providerId} className="flex flex-col">
               {groups.length > 1 && (
