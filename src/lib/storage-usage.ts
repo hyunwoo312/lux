@@ -1,5 +1,5 @@
 import { measureAllAssets } from "@/lib/asset-store";
-import { RESOURCE_CACHE_PREFIXES } from "@/lib/local-store";
+import { isResourceCacheKey } from "@/lib/local-store";
 
 export type StorageUsage = {
   localBytes: number;
@@ -34,10 +34,6 @@ export function breakdownOf(usage: StorageUsage): StorageBreakdown[] {
 
 export function totalOf(usage: StorageUsage): number {
   return breakdownOf(usage).reduce((sum, part) => sum + part.bytes, 0);
-}
-
-function isResourceCacheKey(key: string): boolean {
-  return RESOURCE_CACHE_PREFIXES.some((prefix) => key.startsWith(prefix));
 }
 
 export function measureLocalStorage(): { totalBytes: number; cacheBytes: number } {

@@ -1,13 +1,7 @@
 import type { MediaImageItem, StoredAsset } from "@/lib/asset-store";
 import { withTimeout } from "@/lib/net";
-import { findGalleryWallpaper } from "@/lib/wallpaper-gallery";
+import { findGalleryWallpaper, galleryAssetId } from "@/lib/wallpaper-gallery";
 import { wallpaperAssets } from "@/stores/useWallpaperStore";
-
-const PREFIX = "gallery-";
-
-export function galleryAssetId(galleryId: string): string {
-  return `${PREFIX}${galleryId}`;
-}
 
 export function galleryItemFor(galleryId: string): MediaImageItem | null {
   const wallpaper = findGalleryWallpaper(galleryId);

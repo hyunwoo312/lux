@@ -13,20 +13,14 @@ beforeEach(() => {
 });
 
 describe("formatBytes", () => {
-  it("keeps small values in bytes", () => {
+  it("scales from bytes to kilobytes to megabytes", () => {
     expect(formatBytes(512)).toBe("512 B");
-  });
-
-  it("switches to kilobytes and then megabytes", () => {
     expect(formatBytes(2048)).toBe("2 KB");
     expect(formatBytes(1024 * 1024 * 2.5)).toBe("2.5 MB");
   });
 
-  it("drops the decimal once the number is large enough to not need it", () => {
+  it("shows a decimal only while it carries information", () => {
     expect(formatBytes(1024 * 1024 * 12.4)).toBe("12 MB");
-  });
-
-  it("never shows a pointless trailing zero", () => {
     expect(formatBytes(1024 * 1024 * 5)).toBe("5 MB");
   });
 });
@@ -94,7 +88,7 @@ describe("breakdownOf", () => {
     expect(totalOf(usage)).toBe(1000 + 200 + 7 * 1024 * 1024);
   });
 
-  it("reports nothing rather than dividing by zero on an empty profile", () => {
+  it("totals an empty profile as zero", () => {
     expect(
       totalOf({ localBytes: 0, localCacheBytes: 0, chromeBytes: 0, imageBytes: 0, imageCount: 0 }),
     ).toBe(0);

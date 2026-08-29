@@ -3,9 +3,9 @@ export const DASHBOARD_SEEDED_KEY = "lux.dashboard.seeded";
 
 export const POLLED_CACHE_PREFIX = "lux:polled:";
 export const PAGED_CACHE_PREFIX = "lux:paged:";
-export const RESOURCE_CACHE_PREFIXES = [POLLED_CACHE_PREFIX, PAGED_CACHE_PREFIX];
+const RESOURCE_CACHE_PREFIXES = [POLLED_CACHE_PREFIX, PAGED_CACHE_PREFIX];
 
-function isResourceCacheKey(key: string): boolean {
+export function isResourceCacheKey(key: string): boolean {
   return RESOURCE_CACHE_PREFIXES.some((prefix) => key.startsWith(prefix));
 }
 
@@ -48,12 +48,20 @@ export function getLocal(key: string): string | null {
   }
 }
 
+function isQuotaError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "QuotaExceededError";
+}
+
 export function setLocal(key: string, value: string): boolean {
   for (;;) {
     try {
       localStorage.setItem(key, value);
       return true;
-    } catch {
+    } catch (error) {
+      if (!isQuotaError(error)) {
+        console.warn(`Failed to write "${key}" to local storage`, error);
+        return false;
+      }
       if (!evictOldestResourceCache()) return false;
     }
   }

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { DURATION, EASE_STANDARD } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -25,7 +25,10 @@ export function Wallpaper({ imageUrl }: { imageUrl: string | null }) {
 
   const hasShownImage = useRef(false);
   const crossfade = hasShownImage.current && !reduced;
-  if (showImage) hasShownImage.current = true;
+
+  useEffect(() => {
+    if (showImage) hasShownImage.current = true;
+  }, [showImage]);
 
   const bleed = blur * BLEED_PER_BLUR_PX;
 
@@ -53,10 +56,16 @@ export function Wallpaper({ imageUrl }: { imageUrl: string | null }) {
             }}
           />
         )}
+        {showImage && dim > 0 && (
+          <motion.div
+            key="dim"
+            initial={false}
+            animate={{ opacity: dim, transition: { duration: 0 } }}
+            exit={{ opacity: 0, transition: { duration: DURATION.slow, ease: EASE_STANDARD } }}
+            className="absolute inset-0 bg-black"
+          />
+        )}
       </AnimatePresence>
-      {showImage && dim > 0 && (
-        <div className="absolute inset-0 bg-black" style={{ opacity: dim }} />
-      )}
     </div>
   );
 }

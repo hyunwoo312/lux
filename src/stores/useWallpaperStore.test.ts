@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { encodeToWebp } from "@/lib/image-encode";
+import { galleryAssetId } from "@/lib/wallpaper-gallery";
 import {
   activeWallpaperIds,
   MAX_WALLPAPER_IMAGES,
@@ -98,18 +99,7 @@ describe("optimizeAssets", () => {
     expect(store().items[0]).toMatchObject({ mimeType: "image/jpeg", size: 1000 });
   });
 
-  it("only sweeps once a day so a stubborn image is not retried every new tab", async () => {
-    await seedAsset("a", jpeg(1000));
-    useWallpaperStore.setState({ items: [item("a", "image/jpeg", 1000)] });
-    encodeMock.mockImplementation(async (blob) => blob);
-
-    await store().optimizeAssets();
-    await store().optimizeAssets();
-
-    expect(encodeMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("sweeps again once the interval has elapsed", async () => {
+  it("only ever sweeps once, however long the profile lives", async () => {
     await seedAsset("a", jpeg(1000));
     useWallpaperStore.setState({ items: [item("a", "image/jpeg", 1000)] });
     encodeMock.mockImplementation(async (blob) => blob);
@@ -119,7 +109,7 @@ describe("optimizeAssets", () => {
     localStorage.setItem("lux.wallpaper.optimized-at", String(twoDaysAgo));
     await store().optimizeAssets();
 
-    expect(encodeMock).toHaveBeenCalledTimes(2);
+    expect(encodeMock).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -285,5 +275,29 @@ describe("veil and blur limits", () => {
     expect(store().blur).toBe(WALLPAPER_MAX_BLUR);
     store().setBlur(Number.NaN);
     expect(store().blur).toBe(0);
+  });
+});
+
+describe("sanitizeAssets", () => {
+  beforeEach(() => {
+    wallpaperAssets.clearMemoryForTest();
+    useWallpaperStore.setState({
+      source: "custom",
+      mode: "single",
+      single: null,
+      items: [],
+      gallerySingle: "wp1",
+      galleryItems: ["wp1"],
+    });
+  });
+
+  it("forgets a gallery image once it is deselected, and keeps the ones still chosen", async () => {
+    await seedAsset(galleryAssetId("wp1"), webp(100));
+    await seedAsset(galleryAssetId("wp2"), webp(100));
+
+    await store().sanitizeAssets();
+
+    expect(await wallpaperAssets.read(galleryAssetId("wp1"))).not.toBeNull();
+    expect(await wallpaperAssets.read(galleryAssetId("wp2"))).toBeNull();
   });
 });

@@ -174,14 +174,18 @@ describe("createGatedChromeStorage", () => {
     expect(storage.open(handle)).toBe("resync");
   });
 
-  it("ignores another store's key", async () => {
-    const { storage, rehydrate, handle } = makeStore();
-    await storage.getItem("gated");
-    storage.open(handle);
+  it("stays shut when the profile ledger could not finish, so nothing is overwritten", async () => {
+    const stored = { state: { draft: "keep me" } };
+    await chrome.storage.local.set({ "lux:lux:feedback": stored });
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(chrome.storage.local, "set").mockRejectedValueOnce(new Error("write down"));
+    vi.resetModules();
+    const { createGatedChromeStorage: freshGatedStorage } = await import("@/lib/storage");
+    const storage = freshGatedStorage<{ n: number }>();
 
-    await chrome.storage.local.set({ "lux:elsewhere": { state: {}, version: 1 } });
-    await settled();
+    expect(await storage.getItem("feedback")).toBeNull();
+    await storage.setItem("feedback", { state: { n: 0 }, version: 1 });
 
-    expect(rehydrate).not.toHaveBeenCalled();
+    expect(await chrome.storage.local.get(null)).toEqual({ "lux:lux:feedback": stored });
   });
 });

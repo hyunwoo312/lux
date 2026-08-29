@@ -62,6 +62,19 @@ describe("local-store", () => {
     expect(getLocal("lux:polled:b")).toBeNull();
   });
 
+  it("does not evict caches when the write fails for a reason other than quota", () => {
+    localStorage.setItem("lux:polled:weather", JSON.stringify({ at: 1 }));
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("denied", "SecurityError");
+    });
+
+    expect(setLocal("lux.theme", "light")).toBe(false);
+
+    vi.restoreAllMocks();
+    expect(getLocal("lux:polled:weather")).not.toBeNull();
+  });
+
   it("reports failure when there is nothing left to evict", () => {
     localStorage.setItem("widget:tasks", "kept");
     failWrites(Number.POSITIVE_INFINITY);

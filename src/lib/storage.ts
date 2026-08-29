@@ -32,12 +32,9 @@ export async function read<T>(name: string, schema: ZodType<T>, fallback: T): Pr
 }
 
 export async function write(name: string, value: unknown): Promise<void> {
-  try {
-    await profileReady();
-    await chrome.storage.local.set({ [namespaced(name)]: value });
-  } catch (error) {
+  await writeOrThrow(name, value).catch((error: unknown) => {
     console.warn(`Failed to write "${name}" to storage`, error);
-  }
+  });
 }
 
 export async function writeOrThrow(name: string, value: unknown): Promise<void> {

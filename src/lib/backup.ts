@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { setLocal } from "@/lib/local-store";
 
 const CHROME_PREFIX = "lux:";
@@ -13,6 +14,13 @@ type Backup = {
   chromeLocal: Record<string, unknown>;
   local: Record<string, string>;
 };
+
+const backupSchema = z.object({
+  marker: z.literal(MARKER),
+  version: z.number().optional(),
+  chromeLocal: z.record(z.string(), z.unknown()),
+  local: z.record(z.string(), z.string()),
+});
 
 function isBackupKey(key: string): boolean {
   return key.startsWith(CHROME_PREFIX) && !EXCLUDED.has(key);
@@ -69,12 +77,16 @@ function pruneLocalKeysMissingFrom(replacement: Record<string, string>): void {
   for (const key of staleLocalKeys) localStorage.removeItem(key);
 }
 
-function parseBackupFile(text: string): Partial<Backup> {
+function parseBackupFile(text: string): z.infer<typeof backupSchema> {
+  let raw: unknown;
   try {
-    return JSON.parse(text) as Partial<Backup>;
+    raw = JSON.parse(text);
   } catch {
     throw new Error("Not a valid Lux settings file.");
   }
+  const parsed = backupSchema.safeParse(raw);
+  if (!parsed.success) throw new Error("Not a valid Lux settings file.");
+  return parsed.data;
 }
 
 export async function importSettings(file: File): Promise<void> {
@@ -82,10 +94,7 @@ export async function importSettings(file: File): Promise<void> {
     throw new Error("That file is too large to be a Lux settings backup.");
   }
   const parsed = parseBackupFile(await file.text());
-  if (parsed.marker !== MARKER || !parsed.chromeLocal || !parsed.local) {
-    throw new Error("Not a valid Lux settings file.");
-  }
-  if (typeof parsed.version === "number" && parsed.version > BACKUP_VERSION) {
+  if (parsed.version !== undefined && parsed.version > BACKUP_VERSION) {
     throw new Error(
       "This backup was created by a newer version of Lux. Update Lux, then try again.",
     );
@@ -97,7 +106,7 @@ export async function importSettings(file: File): Promise<void> {
   }
   const localEntries: Record<string, string> = {};
   for (const [key, value] of Object.entries(parsed.local)) {
-    if (key.startsWith(LOCAL_PREFIX) && typeof value === "string") localEntries[key] = value;
+    if (key.startsWith(LOCAL_PREFIX)) localEntries[key] = value;
   }
 
   await chrome.storage.local.set(chromeEntries);

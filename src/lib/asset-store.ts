@@ -104,13 +104,16 @@ export function createAssetStore(databaseName: string): AssetStore {
         new Promise<TValue>((resolve, reject) => {
           const transaction = database.transaction(STORE_NAME, mode);
           const request = operation(transaction.objectStore(STORE_NAME));
-          request.onerror = () => reject(request.error ?? new Error("Asset storage failed"));
-          request.onsuccess = () => resolve(request.result);
-          transaction.oncomplete = () => database.close();
-          transaction.onerror = () => {
+          const fail = () => {
             database.close();
-            reject(transaction.error ?? new Error("Asset storage failed"));
+            reject(transaction.error ?? request.error ?? new Error("Asset storage failed"));
           };
+          transaction.oncomplete = () => {
+            database.close();
+            resolve(request.result);
+          };
+          transaction.onerror = fail;
+          transaction.onabort = fail;
         }),
     );
   }

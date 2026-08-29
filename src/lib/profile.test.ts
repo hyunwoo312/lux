@@ -47,6 +47,17 @@ describe("upgrading a profile", () => {
     expect(await all()).toEqual(afterFirst);
   });
 
+  it("does not mistake an update-only marker for an older profile", async () => {
+    await chrome.storage.local.set({ "lux:changelog-pending": "2.0.0" });
+    const get = vi.spyOn(chrome.storage.local, "get");
+
+    await upgradeProfile();
+
+    expect(await stamp()).toEqual({ version: PROFILE_VERSION });
+    expect(get.mock.calls.filter(([keys]) => Array.isArray(keys))).toEqual([]);
+    get.mockRestore();
+  });
+
   it("leaves a profile written by a newer Lux alone", async () => {
     const future = { "lux:profile": { version: PROFILE_VERSION + 5 }, "lux:something-new": 1 };
     await chrome.storage.local.set(future);
@@ -56,7 +67,7 @@ describe("upgrading a profile", () => {
     expect(await all()).toEqual(future);
   });
 
-  it("keeps the old key when the new one is already there", async () => {
+  it("prefers the value already at the new key and drops the old one", async () => {
     await chrome.storage.local.set({
       "lux:lux:feedback": { state: { draft: "old" } },
       "lux:feedback": { state: { draft: "new" } },
@@ -138,7 +149,7 @@ describe("when the ledger cannot finish", () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.spyOn(chrome.storage.local, "get").mockRejectedValue(new Error("storage down"));
 
-    await expect(profileReady()).resolves.toBeUndefined();
+    await expect(profileReady()).rejects.toThrow("storage down");
   });
 
   it("does not stamp when a migration could not finish, so it retries", async () => {

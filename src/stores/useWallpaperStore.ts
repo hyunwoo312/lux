@@ -7,7 +7,7 @@ import { getLocal, setLocal } from "@/lib/local-store";
 import { getNextSequentialIndex, getRandomIndexExcluding } from "@/lib/media-rotation";
 import { keepPersisted, mergePersisted, tolerantArray } from "@/lib/persist";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { GALLERY_WALLPAPERS } from "@/lib/wallpaper-gallery";
+import { GALLERY_ASSET_PREFIX, GALLERY_WALLPAPERS, galleryAssetId } from "@/lib/wallpaper-gallery";
 
 const WALLPAPER_MODES = ["single", "multi"] as const;
 export type WallpaperMode = (typeof WALLPAPER_MODES)[number];
@@ -85,16 +85,8 @@ type WallpaperState = {
 };
 
 const OPTIMIZE_CHECKED_KEY = "lux.wallpaper.optimized-at";
-const OPTIMIZE_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 type AssetEncoding = Pick<MediaImageItem, "mimeType" | "size">;
-
-function isOptimizeDue(now: number): boolean {
-  const stored = getLocal(OPTIMIZE_CHECKED_KEY);
-  if (stored === null) return true;
-  const last = Number(stored);
-  return !Number.isFinite(last) || now - last >= OPTIMIZE_INTERVAL_MS;
-}
 
 async function reencodeStoredAsset(assetId: string): Promise<AssetEncoding | null> {
   try {
@@ -266,18 +258,29 @@ export const useWallpaperStore = create<WallpaperState>()(
           return { currentIndex: next };
         }),
       sanitizeAssets: async () => {
-        const { single, items } = get();
+        const { single, items, gallerySingle, galleryItems } = get();
         const missing = await missingAssetIds(wallpaperAssets, [single, ...items]);
-        if (!missing.size) return;
-        set((state) => ({
-          single: state.single && missing.has(state.single.assetId) ? null : state.single,
-          items: state.items.filter((item) => !missing.has(item.assetId)),
-        }));
+        if (missing.size) {
+          set((state) => ({
+            single: state.single && missing.has(state.single.assetId) ? null : state.single,
+            items: state.items.filter((item) => !missing.has(item.assetId)),
+          }));
+        }
+        const keep = new Set(
+          [gallerySingle, ...galleryItems]
+            .filter((id): id is string => id !== null)
+            .map(galleryAssetId),
+        );
+        const stored = await wallpaperAssets.keys().catch(() => new Set<string>());
+        for (const key of stored) {
+          if (key.startsWith(GALLERY_ASSET_PREFIX) && !keep.has(key)) {
+            await wallpaperAssets.remove(key).catch(() => undefined);
+          }
+        }
       },
       optimizeAssets: async () => {
-        const now = Date.now();
-        if (!isOptimizeDue(now)) return;
-        setLocal(OPTIMIZE_CHECKED_KEY, String(now));
+        if (getLocal(OPTIMIZE_CHECKED_KEY) !== null) return;
+        setLocal(OPTIMIZE_CHECKED_KEY, String(Date.now()));
         const { single, items } = get();
         const stale = [single, ...items].filter(
           (item): item is MediaImageItem => item !== null && !isOptimizedMimeType(item.mimeType),

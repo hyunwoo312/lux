@@ -23,13 +23,7 @@ describe("scaledDimensions", () => {
 
   it("scales the longest edge down to the cap and preserves aspect ratio", () => {
     expect(scaledDimensions(5120, 2560, CAP)).toEqual({ width: CAP, height: CAP / 2 });
-  });
-
-  it("scales a portrait source by its longest edge", () => {
     expect(scaledDimensions(2160, 3840, CAP)).toEqual({ width: 1440, height: CAP });
-  });
-
-  it("scales to whichever cap the caller passed", () => {
     expect(scaledDimensions(7680, 4320, 3840)).toEqual({ width: 3840, height: 2160 });
   });
 });

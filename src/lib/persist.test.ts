@@ -51,11 +51,13 @@ describe("mergePersisted", () => {
     expect(next.items).toHaveLength(1);
   });
 
-  it("warns and returns the current state when the blob cannot be read at all", () => {
+  it("warns about what was wrong and returns the current state when the blob cannot be read", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const current = { items: [{ id: "kept", n: 0 }] };
+
     expect(mergePersisted("test", schema, "not-an-object", current, (p) => p)).toBe(current);
-    expect(warn).toHaveBeenCalled();
+
+    expect(String(warn.mock.calls[0]?.[0])).toMatch(/\(root\)/);
     warn.mockRestore();
   });
 
@@ -66,15 +68,6 @@ describe("mergePersisted", () => {
     expect(mergePersisted("test", schema, undefined, current, (p) => p)).toBe(current);
 
     expect(warn).not.toHaveBeenCalled();
-    warn.mockRestore();
-  });
-
-  it("names what was wrong instead of printing an opaque object", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-
-    mergePersisted("test", schema, "not-an-object", { items: [] }, (p) => p);
-
-    expect(String(warn.mock.calls[0]?.[0])).toMatch(/\(root\)/);
     warn.mockRestore();
   });
 });

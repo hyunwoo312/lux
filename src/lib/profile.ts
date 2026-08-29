@@ -116,9 +116,13 @@ async function readStampedVersion(): Promise<number | null> {
   return typeof version === "number" && Number.isInteger(version) ? version : null;
 }
 
+const NON_PROFILE_KEYS = new Set([PROFILE_KEY, "lux:changelog-pending"]);
+
 async function hasEarlierProfile(): Promise<boolean> {
   const stored = await chrome.storage.local.get(null);
-  return Object.keys(stored).some((key) => key.startsWith(NAMESPACE_PREFIX) && key !== PROFILE_KEY);
+  return Object.keys(stored).some(
+    (key) => key.startsWith(NAMESPACE_PREFIX) && !NON_PROFILE_KEYS.has(key),
+  );
 }
 
 export async function upgradeProfile(): Promise<void> {
@@ -139,7 +143,9 @@ let upgrade: Promise<void> | undefined;
 
 export function profileReady(): Promise<void> {
   upgrade ??= upgradeProfile().catch((error: unknown) => {
-    console.warn("Profile upgrade did not finish — retrying on next open", error);
+    console.warn("Profile upgrade did not finish — retrying on next read", error);
+    upgrade = undefined;
+    throw error;
   });
   return upgrade;
 }
