@@ -1,5 +1,10 @@
 import { z } from "zod";
 import { IntegrationReconnectRequiredError } from "@/integrations/errors";
+import {
+  ANILIST_CALLBACK_KEY,
+  anilistCallbackSchema,
+  type AnilistCallback,
+} from "@/lib/extension-keys";
 import { ensureOk, withTimeout, parseResponse } from "@/lib/net";
 import type {
   AcquireTokenParams,
@@ -11,7 +16,6 @@ const AUTHORIZE_ENDPOINT = "https://anilist.co/api/v2/oauth/authorize";
 const GRAPHQL_ENDPOINT = "https://graphql.anilist.co";
 const ONE_YEAR_SECONDS = 365 * 24 * 60 * 60;
 const SIGN_IN_TIMEOUT_MS = 5 * 60 * 1000;
-const CALLBACK_KEY = "lux:anilist-callback";
 
 const VIEWER_QUERY = `query { Viewer { id name avatar { large } } }`;
 
@@ -29,22 +33,19 @@ const viewerPayloadSchema = z.object({
     .nullish(),
 });
 
-type AnilistCallback = {
-  accessToken?: string;
-  tokenType?: string;
-  expiresIn?: string;
-  state?: string;
-  error?: string;
-};
+function parseCallback(value: unknown): AnilistCallback | null {
+  const parsed = anilistCallbackSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
 
 async function readCallback(): Promise<AnilistCallback | null> {
-  const stored = await chrome.storage.session.get(CALLBACK_KEY);
-  return (stored[CALLBACK_KEY] as AnilistCallback | undefined) ?? null;
+  const stored = await chrome.storage.session.get(ANILIST_CALLBACK_KEY);
+  return parseCallback(stored[ANILIST_CALLBACK_KEY]);
 }
 
 async function clearCallback(): Promise<void> {
   try {
-    await chrome.storage.session.remove(CALLBACK_KEY);
+    await chrome.storage.session.remove(ANILIST_CALLBACK_KEY);
   } catch (error) {
     console.warn("Could not clear the stashed AniList sign-in callback", error);
   }
@@ -113,7 +114,7 @@ function acquireToken({
       areaName: chrome.storage.AreaName,
     ) {
       if (areaName !== "session") return;
-      const next = changes[CALLBACK_KEY]?.newValue as AnilistCallback | undefined;
+      const next = parseCallback(changes[ANILIST_CALLBACK_KEY]?.newValue);
       if (next) settleFrom(next);
     }
 

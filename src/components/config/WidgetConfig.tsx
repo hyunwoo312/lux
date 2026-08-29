@@ -241,6 +241,7 @@ type MultiToggleProps<T extends string> = {
   onChange: (values: T[]) => void;
   disabled?: boolean;
   maxSelected?: number;
+  minSelected?: number;
   label: string;
 };
 
@@ -250,9 +251,11 @@ export function ConfigMultiToggle<T extends string>({
   onChange,
   disabled = false,
   maxSelected,
+  minSelected,
   label,
 }: MultiToggleProps<T>) {
   const atCap = maxSelected !== undefined && values.length >= maxSelected;
+  const atFloor = minSelected !== undefined && values.length <= minSelected;
   return (
     <ToggleGroup
       type="multiple"
@@ -269,7 +272,8 @@ export function ConfigMultiToggle<T extends string>({
           <ToggleGroupItem
             key={option.value}
             value={option.value}
-            disabled={atCap && !active}
+            disabled={active ? atFloor : atCap}
+            className={cn(active && atFloor && "disabled:opacity-100")}
             variant="chip"
           >
             {Icon && <Icon className="shrink-0 object-contain" />}

@@ -17,7 +17,7 @@ import { clearWallpaperAssets, useWallpaperStore } from "@/stores/useWallpaperSt
 function resetAllSettings() {
   useShortcutsStore.getState().resetAll();
   useAppSettingsStore.getState().reset();
-  useThemeStore.getState().setMode("dark");
+  useThemeStore.getState().reset();
   useAccentStore.getState().reset();
   void clearWallpaperAssets();
   useWallpaperStore.getState().reset();

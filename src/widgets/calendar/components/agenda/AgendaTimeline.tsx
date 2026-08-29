@@ -1,11 +1,10 @@
 import { useEffect, useRef, type Ref } from "react";
-import { formatClock, formatHourMark } from "@/lib/clock";
+import { formatClock, formatHourMark, localDayKey } from "@/lib/clock";
 import { ListGroupHeading } from "@/components/ListGroupHeading";
 import { AgendaEventBlock } from "@/widgets/calendar/components/agenda/AgendaEventBlock";
 import { AgendaSkipRow } from "@/widgets/calendar/components/agenda/AgendaSkipRow";
 import { NowLine } from "@/widgets/calendar/components/agenda/NowLine";
 import { getEventColor } from "@/widgets/calendar/lib/colors";
-import { getDateKey } from "@/widgets/calendar/lib/dates";
 import {
   formatDayHeading,
   formatGapLabel,
@@ -163,7 +162,7 @@ export function AgendaTimeline({
 
   const runs = segments.filter(isTimelineRun);
   const lastRun = runs[runs.length - 1];
-  const spansDays = runs.some((run) => getDateKey(run.day) !== getDateKey(now));
+  const spansDays = runs.some((run) => localDayKey(run.day) !== localDayKey(now));
   let previousDay: Date | null = null;
 
   return (
@@ -180,7 +179,7 @@ export function AgendaTimeline({
             );
           }
           const heading = previousDay
-            ? getDateKey(segment.day) !== getDateKey(previousDay)
+            ? localDayKey(segment.day) !== localDayKey(previousDay)
             : spansDays;
           previousDay = segment.day;
           return (

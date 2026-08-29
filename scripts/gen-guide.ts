@@ -115,6 +115,14 @@ function renderSizes(): string {
 const expected = renderGuide();
 const expectedSizes = renderSizes();
 
+const unusedMedia = [...shippedMedia].filter((media) => !usedMedia.has(media)).sort();
+if (unusedMedia.length > 0) {
+  process.stderr.write(
+    `public/guide ships in every install, so nothing there may go undisplayed. No figure uses: ${unusedMedia.join(", ")}.\n`,
+  );
+  process.exit(1);
+}
+
 if (process.argv.slice(2).includes("--check")) {
   const stale = [
     readFileSync(guidePath, "utf8") === expected ? null : "GUIDE.md",

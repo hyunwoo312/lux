@@ -10,6 +10,7 @@ import { enterTween, exitTween, iconSwap, pop } from "@/lib/motion";
 import type { WidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
 import { HEADER_LABEL, WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { WidgetChromeContext } from "@/widgets/core/useWidgetChrome";
+import { WidgetTitle } from "@/widgets/core/WidgetTitle";
 import { FauxGlassBackdrop } from "@/widgets/core/FauxGlassBackdrop";
 import { useWallpaperStore } from "@/stores/useWallpaperStore";
 
@@ -49,7 +50,7 @@ export function BaseWidget({
   const reduced = useReducedMotion();
   const livePattern = useWallpaperStore((s) => s.source === "generated");
   const [configOpen, setConfigOpen] = useState(false);
-  const chrome = useMemo(() => ({ openConfig: () => setConfigOpen(true) }), []);
+  const chrome = useMemo(() => ({ title, openConfig: () => setConfigOpen(true) }), [title]);
   const showConfig = configOpen && !editing;
 
   const hasBackdrop = Boolean(backdrop);
@@ -147,7 +148,7 @@ export function BaseWidget({
                 {showConfig ? (
                   <span className={HEADER_LABEL}>Settings</span>
                 ) : (
-                  (headline ?? <span className={HEADER_LABEL}>{title}</span>)
+                  (headline ?? <WidgetTitle />)
                 )}
               </motion.div>
             </AnimatePresence>

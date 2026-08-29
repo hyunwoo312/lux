@@ -6,17 +6,13 @@ import {
   WidgetConfigItem,
 } from "@/components/config/WidgetConfig";
 import { useSettingsStore } from "@/settings";
+import { OPEN_BEHAVIOR_OPTIONS } from "@/lib/open-url";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { useEmail, useEmailStore } from "@/widgets/email/useEmailStore";
 import { useMailAccounts } from "@/widgets/email/useMailAccounts";
 import { BATCH_SIZES, MAIL_PROVIDERS, MAIL_PROVIDER_LABELS } from "@/widgets/email/types";
 
 const BATCH_OPTIONS = BATCH_SIZES.map((value) => ({ value, label: value }));
-
-const OPEN_OPTIONS = [
-  { value: "currentTab", label: "This tab" },
-  { value: "newTab", label: "New tab" },
-];
 
 export function EmailConfig() {
   const instanceId = useWidgetInstanceId();
@@ -79,7 +75,7 @@ export function EmailConfig() {
             <ConfigSegmented
               label="Open messages in"
               value={newTab ? "newTab" : "currentTab"}
-              options={OPEN_OPTIONS}
+              options={OPEN_BEHAVIOR_OPTIONS}
               onChange={(value) => setNewTab(instanceId, value === "newTab")}
             />
           }

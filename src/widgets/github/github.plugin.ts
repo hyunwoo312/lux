@@ -7,6 +7,7 @@ import { GithubConfig } from "@/widgets/github/GithubConfig";
 import { GithubHeaderActions } from "@/widgets/github/GithubHeaderActions";
 import { GithubTabs } from "@/widgets/github/GithubTabs";
 import { GITHUB_TINT } from "@/widgets/github/types";
+import { useGithubStore } from "@/widgets/github/useGithubStore";
 
 export const githubPlugin: WidgetPlugin = {
   type: "github",
@@ -17,6 +18,7 @@ export const githubPlugin: WidgetPlugin = {
   brandIcon: true,
   defaultLayout: { w: 8, h: 7, minW: 6, minH: 6, maxW: 10, maxH: 10 },
   component: GithubWidget,
+  clearInstance: (instanceId) => useGithubStore.getState().removeInstance(instanceId),
   configComponent: GithubConfig,
   statusComponent: GithubTabs,
   headerActionComponent: GithubHeaderActions,

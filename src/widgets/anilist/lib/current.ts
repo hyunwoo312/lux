@@ -1,3 +1,4 @@
+import { localDayKey } from "@/lib/clock";
 import type { CurrentEntry, CurrentSort, MediaKind, ScoreFormat } from "@/widgets/anilist/types";
 
 export function sortCurrentEntries(entries: CurrentEntry[], sort: CurrentSort): CurrentEntry[] {
@@ -73,16 +74,12 @@ export type AiringGroup = { key: string; label: string; entries: CurrentEntry[] 
 
 const WEEKDAY_FORMATTER = new Intl.DateTimeFormat(undefined, { weekday: "long" });
 
-function dayKey(date: Date): string {
-  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-}
-
 export function groupByAiringDay(entries: CurrentEntry[], now = Date.now()): AiringGroup[] {
   const today = new Date(now);
-  const todayKey = dayKey(today);
+  const todayKey = localDayKey(today);
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowKey = dayKey(tomorrow);
+  const tomorrowKey = localDayKey(tomorrow);
 
   const groups: AiringGroup[] = [];
   const byKey = new Map<string, AiringGroup>();
@@ -90,7 +87,7 @@ export function groupByAiringDay(entries: CurrentEntry[], now = Date.now()): Air
   for (const entry of entries) {
     if (!entry.nextEpisode) continue;
     const airsAt = new Date(entry.nextEpisode.airingAt * 1000);
-    const key = dayKey(airsAt);
+    const key = localDayKey(airsAt);
     let group = byKey.get(key);
     if (!group) {
       const label =

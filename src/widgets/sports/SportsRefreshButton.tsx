@@ -1,5 +1,6 @@
 import {
   refreshPolledResource,
+  staleSinceOf,
   useFreshness,
   useResourceGroup,
   type PolledResource,
@@ -23,7 +24,7 @@ function Button({ resource }: { resource: Resource }) {
       syncing={resource.isRefreshing}
       lastSyncAt={resource.lastSyncedAt}
       updatedAt={resource.lastSyncedAt}
-      freshness={resource.freshness}
+      staleSince={staleSinceOf(resource.freshness)}
       cooldownMs={SPORTS_SYNC_COOLDOWN_MS}
       onRefresh={resource.refresh}
     />
@@ -46,7 +47,7 @@ function DrawRefresh({ league }: { league: League }) {
 function FavoritesRefresh() {
   const following = useSports((d) => d.following);
   const dayWindow = useSports((d) => d.window);
-  const freshness = useFreshness("sports:");
+  const staleSince = staleSinceOf(useFreshness("sports:"));
   const keys = followedLeagues(following).map(({ league }) => scoreboardKey(league, dayWindow));
   const { isRefreshing, lastSyncedAt } = useResourceGroup(keys);
 
@@ -56,7 +57,7 @@ function FavoritesRefresh() {
       syncing={isRefreshing}
       lastSyncAt={lastSyncedAt}
       updatedAt={lastSyncedAt}
-      freshness={freshness}
+      staleSince={staleSince}
       cooldownMs={SPORTS_SYNC_COOLDOWN_MS}
       onRefresh={() => keys.forEach(refreshPolledResource)}
     />

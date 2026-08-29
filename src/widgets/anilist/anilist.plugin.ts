@@ -6,6 +6,7 @@ import { AnilistWidget } from "@/widgets/anilist/AnilistWidget";
 import { AnilistConfig } from "@/widgets/anilist/AnilistConfig";
 import { AnilistHeaderActions } from "@/widgets/anilist/AnilistHeaderActions";
 import { AnilistTabs } from "@/widgets/anilist/AnilistTabs";
+import { useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 
 export const anilistPlugin: WidgetPlugin = {
   type: "anilist",
@@ -16,6 +17,7 @@ export const anilistPlugin: WidgetPlugin = {
   brandIcon: true,
   defaultLayout: { w: 8, h: 9, minW: 6, minH: 7, maxW: 12, maxH: 12 },
   component: AnilistWidget,
+  clearInstance: (instanceId) => useAnilistStore.getState().removeInstance(instanceId),
   configComponent: AnilistConfig,
   statusComponent: AnilistTabs,
   headerActionComponent: AnilistHeaderActions,

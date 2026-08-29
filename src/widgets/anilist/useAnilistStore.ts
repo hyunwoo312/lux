@@ -1,12 +1,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
-import { mergePersisted, tolerantRecord } from "@/lib/persist";
+import { looksLikeLegacySingleton, mergePersisted, tolerantRecord } from "@/lib/persist";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
-import type { OpenBehavior } from "@/lib/open-url";
+import { openBehaviorSchema, type OpenBehavior } from "@/lib/open-url";
 import { stalePolledResource } from "@/widgets/core/usePolledResource";
 import { stalePagedResource } from "@/widgets/core/usePagedResource";
 import {
@@ -92,7 +91,7 @@ const configSchema = z.object({
   currentSort: z.enum(CURRENT_SORTS).catch("score"),
   listFilter: z.enum(LIST_FILTERS).catch("all"),
   titleLanguage: z.enum(TITLE_LANGUAGES).catch("english"),
-  openBehavior: z.enum(["currentTab", "newTab"]).catch("currentTab"),
+  openBehavior: openBehaviorSchema,
   discoverFeed: z.enum(DISCOVER_FEEDS).catch("trending"),
   discoverType: z.enum(DISCOVER_TYPES).catch("anime"),
 });
@@ -144,11 +143,6 @@ const LEGACY_KEYS = [
   "mediaFilter",
   "openBehavior",
 ] as const;
-
-function looksLikeLegacySingleton(persisted: unknown): boolean {
-  if (!persisted || typeof persisted !== "object") return false;
-  return LEGACY_KEYS.some((key) => key in persisted);
-}
 
 function migrateLegacyFields(persisted: unknown): unknown {
   if (!persisted || typeof persisted !== "object") return persisted;
@@ -239,7 +233,7 @@ export const useAnilistStore = create<AnilistStoreState>()(
         ) {
           return normalised;
         }
-        if (!looksLikeLegacySingleton(persisted)) return { byInstance: {} };
+        if (!looksLikeLegacySingleton(persisted, LEGACY_KEYS)) return { byInstance: {} };
         const legacy = legacySchema.safeParse(migrateLegacyFields(persisted));
         if (!legacy.success) return { byInstance: {} };
         const { lastSeenActivityAt, ...config } = legacy.data;
@@ -260,7 +254,5 @@ export const useAnilistStore = create<AnilistStoreState>()(
     },
   ),
 );
-
-registerInstanceCleanup((instanceId) => useAnilistStore.getState().removeInstance(instanceId));
 
 export const useAnilist = createInstanceSelector(useAnilistStore, DEFAULT_DATA);

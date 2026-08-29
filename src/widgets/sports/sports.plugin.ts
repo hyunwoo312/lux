@@ -5,6 +5,7 @@ import { SportsConfig } from "@/widgets/sports/SportsConfig";
 import { SportsTabs } from "@/widgets/sports/components/SportsTabs";
 import { SportsRefreshButton } from "@/widgets/sports/SportsRefreshButton";
 import { SPORTS_TINT } from "@/widgets/sports/types";
+import { useSportsStore } from "@/widgets/sports/useSportsStore";
 
 export const sportsPlugin: WidgetPlugin = {
   type: "sports",
@@ -14,6 +15,7 @@ export const sportsPlugin: WidgetPlugin = {
   icon: Trophy,
   defaultLayout: { w: 8, h: 8, minW: 8, minH: 8, maxW: 14, maxH: 14 },
   component: SportsWidget,
+  clearInstance: (instanceId) => useSportsStore.getState().removeInstance(instanceId),
   configComponent: SportsConfig,
   statusComponent: SportsTabs,
   headerActionComponent: SportsRefreshButton,

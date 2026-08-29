@@ -3,7 +3,6 @@ import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { mergePersisted, tolerantRecord } from "@/lib/persist";
-import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { SPOTIFY_TIME_DISPLAY_MODES, type SpotifyTimeDisplayMode } from "@/widgets/spotify/types";
@@ -89,7 +88,5 @@ export const useSpotifyStore = create<SpotifyState>()(
     },
   ),
 );
-
-registerInstanceCleanup((instanceId) => useSpotifyStore.getState().removeInstance(instanceId));
 
 export const useSpotify = createInstanceSelector(useSpotifyStore, DEFAULT_DATA);

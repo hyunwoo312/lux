@@ -1,11 +1,11 @@
 import { WidgetRefreshButton } from "@/widgets/core/WidgetRefreshButton";
-import { useFreshness } from "@/widgets/core/usePolledResource";
+import { staleSinceOf, useFreshness } from "@/widgets/core/usePolledResource";
 import { useEmailStore } from "@/widgets/email/useEmailStore";
 import { useEmailSyncStatus } from "@/widgets/email/useEmailSync";
 import { EMAIL_SYNC_COOLDOWN_MS } from "@/widgets/email/types";
 
 export function EmailRefreshButton() {
-  const freshness = useFreshness("email:");
+  const staleSince = staleSinceOf(useFreshness("email:"));
   const status = useEmailSyncStatus();
   const requestSync = useEmailStore((s) => s.requestSync);
 
@@ -13,7 +13,7 @@ export function EmailRefreshButton() {
     <WidgetRefreshButton
       label="Mail"
       {...status}
-      freshness={freshness}
+      staleSince={staleSince}
       cooldownMs={EMAIL_SYNC_COOLDOWN_MS}
       onRefresh={requestSync}
     />

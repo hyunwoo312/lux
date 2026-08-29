@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { usePagedResource } from "@/widgets/core/usePagedResource";
 import { SearchField } from "@/components/SearchField";
 import { ErrorState } from "@/components/StateMessage";
-import { isOnline } from "@/lib/net";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { EmailSkeleton } from "@/widgets/email/components/EmailSkeleton";
 import { MessageList } from "@/widgets/email/components/MessageList";
@@ -48,37 +47,20 @@ export function EmailWidget() {
     [search, view, batch],
   );
 
-  const {
-    state,
-    hasMore,
-    isLoadingMore,
-    isRefreshing,
-    loadMore,
-    refresh,
-    autoRefresh,
-    lastSyncedAt,
-  } = usePagedResource((page, signal) => fetchMailPage(page, request, signal), {
-    enabled,
-    intervalMs: EMAIL_REFRESH_MS,
-    maxItems: MAX_MESSAGES,
-    cacheKey: mailCacheKey(request),
-    persist: search.length === 0,
-    resumePaging: false,
-    getKey: messageKey,
-    parsePersisted: parseCachedMail,
-  });
+  const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh, lastSyncedAt } =
+    usePagedResource((page, signal) => fetchMailPage(page, request, signal), {
+      enabled,
+      intervalMs: EMAIL_REFRESH_MS,
+      staleMs: EMAIL_SYNC_COOLDOWN_MS,
+      maxItems: MAX_MESSAGES,
+      cacheKey: mailCacheKey(request),
+      persist: search.length === 0,
+      resumePaging: false,
+      getKey: messageKey,
+      parsePersisted: parseCachedMail,
+    });
   useEmailSync(refresh, isRefreshing, lastSyncedAt);
   useUnreadCounts(connected, lastSyncedAt);
-
-  useEffect(() => {
-    const reconcile = () => {
-      if (document.visibilityState !== "visible" || !isOnline()) return;
-      if (Date.now() - lastSyncedAt < EMAIL_SYNC_COOLDOWN_MS) return;
-      autoRefresh();
-    };
-    document.addEventListener("visibilitychange", reconcile);
-    return () => document.removeEventListener("visibilitychange", reconcile);
-  }, [lastSyncedAt, autoRefresh]);
 
   const messages = state.status === "success" ? state.items : [];
 

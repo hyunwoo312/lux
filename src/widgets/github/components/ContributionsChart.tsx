@@ -162,7 +162,7 @@ const HeatmapGrid = memo(function HeatmapGrid({
   return (
     <div
       role="img"
-      aria-label={`Contribution heatmap: ${total.toLocaleString()} ${windowLabel(weeks.length)}`}
+      aria-label={`${total.toLocaleString()} ${windowLabel(weeks.length)}`}
       className="flex flex-col"
       style={{ gap }}
     >

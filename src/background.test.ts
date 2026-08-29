@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { anilistProvider } from "@/integrations/providers/anilist";
+import { ANILIST_CALLBACK_KEY, CHANGELOG_PENDING_KEY } from "@/lib/extension-keys";
+import { EXTENSION_LOCAL_KEYS, EXTENSION_SESSION_KEYS } from "@/lib/profile";
 
-const CALLBACK_KEY = "lux:anilist-callback";
 const STATE = "state-abc";
 
 type MessageListener = (
@@ -69,8 +70,8 @@ describe("background worker — AniList callback", () => {
     );
     await flush();
 
-    const stored = await chromeMock().storage.session.get(CALLBACK_KEY);
-    expect(stored[CALLBACK_KEY]).toMatchObject({ accessToken: "tok", state: STATE });
+    const stored = await chromeMock().storage.session.get(ANILIST_CALLBACK_KEY);
+    expect(stored[ANILIST_CALLBACK_KEY]).toMatchObject({ accessToken: "tok", state: STATE });
     expect(chromeMock().tabs.remove).toHaveBeenCalledWith(42);
     expect(sendResponse).toHaveBeenCalledWith({ received: true });
   });
@@ -86,17 +87,22 @@ describe("background worker — AniList callback", () => {
     expect(chromeMock().tabs.remove).toHaveBeenCalledWith(7);
   });
 
-  it("drops callback fields that are not strings", async () => {
+  it("ignores a callback that carries neither a token nor an error", async () => {
     const listener = await loadWorker();
-    listener(
-      oauthMessage({ accessToken: { token: "tok" }, expiresIn: 3600 }),
-      { tab: { id: 11 } },
-      vi.fn(),
-    );
+    listener({ type: "anilist-oauth", state: STATE }, { tab: { id: 11 } }, vi.fn());
     await flush();
 
-    const stored = await chromeMock().storage.session.get(CALLBACK_KEY);
-    expect(stored[CALLBACK_KEY]).toEqual({ state: STATE });
+    expect(await chromeMock().storage.session.get(ANILIST_CALLBACK_KEY)).toEqual({});
+    expect(chromeMock().tabs.remove).not.toHaveBeenCalled();
+  });
+
+  it("ignores a callback whose fields are not strings", async () => {
+    const listener = await loadWorker();
+    listener(oauthMessage({ accessToken: { token: "tok" } }), { tab: { id: 11 } }, vi.fn());
+    await flush();
+
+    expect(await chromeMock().storage.session.get(ANILIST_CALLBACK_KEY)).toEqual({});
+    expect(chromeMock().tabs.remove).not.toHaveBeenCalled();
   });
 
   it("still closes the tab when the stash write fails", async () => {
@@ -151,8 +157,8 @@ describe("background worker — install and update", () => {
     onInstalled({ reason: "update" });
     await flush();
 
-    expect(await chrome.storage.local.get("lux:changelog-pending")).toEqual({
-      "lux:changelog-pending": "9.9.9",
+    expect(await chrome.storage.local.get(CHANGELOG_PENDING_KEY)).toEqual({
+      [CHANGELOG_PENDING_KEY]: "9.9.9",
     });
   });
 
@@ -162,6 +168,13 @@ describe("background worker — install and update", () => {
     onInstalled({ reason: "install" });
     await flush();
 
-    expect(await chrome.storage.local.get("lux:changelog-pending")).toEqual({});
+    expect(await chrome.storage.local.get(CHANGELOG_PENDING_KEY)).toEqual({});
+  });
+});
+
+describe("background worker — storage keys", () => {
+  it("writes only keys the profile registry knows about", () => {
+    expect(EXTENSION_SESSION_KEYS).toContain(ANILIST_CALLBACK_KEY);
+    expect(EXTENSION_LOCAL_KEYS).toContain(CHANGELOG_PENDING_KEY);
   });
 });

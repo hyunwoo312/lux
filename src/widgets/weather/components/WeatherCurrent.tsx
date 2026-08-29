@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { TYPE } from "@/lib/type";
 import {
   findImminentPrecip,
-  formatClock,
+  formatIsoClock,
   formatTemperature,
   windCardinal,
 } from "@/widgets/weather/lib/forecast";
@@ -152,13 +152,13 @@ export function WeatherCurrent({ data, name }: WeatherCurrentProps) {
           {shows("sunrise") && (
             <Reading label="Sunrise">
               <Sunrise className="size-3.5 shrink-0" aria-hidden />
-              {formatClock(sunrise, !clock24h)}
+              {formatIsoClock(sunrise, !clock24h)}
             </Reading>
           )}
           {shows("sunset") && (
             <Reading label="Sunset">
               <Sunset className="size-3.5 shrink-0" aria-hidden />
-              {formatClock(sunset, !clock24h)}
+              {formatIsoClock(sunset, !clock24h)}
             </Reading>
           )}
         </div>

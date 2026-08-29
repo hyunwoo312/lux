@@ -7,14 +7,9 @@ import {
 } from "@/components/config/WidgetConfig";
 import { useProviderAccount } from "@/integrations";
 import { useSettingsStore } from "@/settings";
-import type { OpenBehavior } from "@/lib/open-url";
+import { OPEN_BEHAVIOR_OPTIONS } from "@/lib/open-url";
 import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-
-const OPEN_OPTIONS: { value: OpenBehavior; label: string }[] = [
-  { value: "currentTab", label: "This tab" },
-  { value: "newTab", label: "New tab" },
-];
 
 const PRIVACY_OPTIONS: { value: "all" | "public"; label: string }[] = [
   { value: "all", label: "All" },
@@ -67,7 +62,7 @@ export function GithubConfig() {
             <ConfigSegmented
               label="Open links in"
               value={openBehavior}
-              options={OPEN_OPTIONS}
+              options={OPEN_BEHAVIOR_OPTIONS}
               onChange={(value) => setOpenBehavior(instanceId, value)}
             />
           }

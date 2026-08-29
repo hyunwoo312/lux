@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { Switch } from "@/components/ui/switch";
 import {
+  ConfigMultiToggle,
   ConfigSegmented,
   WidgetConfigDisclosure,
   WidgetConfigSubItem,
@@ -44,6 +45,27 @@ describe("ConfigSegmented", () => {
     expect(mixed).toBeDisabled();
     fireEvent.click(mixed);
     expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("ConfigMultiToggle", () => {
+  it("refuses to deselect the last chosen option, rather than ignoring the click", () => {
+    const onChange = vi.fn();
+    render(
+      <ConfigMultiToggle
+        label="Sources"
+        values={["light"]}
+        options={OPTIONS}
+        minSelected={1}
+        onChange={onChange}
+      />,
+    );
+
+    const last = screen.getByRole("button", { name: "Light" });
+    expect(last).toBeDisabled();
+    fireEvent.click(last);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Dark" })).toBeEnabled();
   });
 });
 

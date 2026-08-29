@@ -32,8 +32,8 @@ export function AccountRow({
   const identity = account?.email ?? account?.displayName ?? "Connected";
   const subline =
     status === "connected"
-      ? account?.lastSyncedAt
-        ? `${identity} · synced ${formatRelativeTime(account.lastSyncedAt)}`
+      ? account?.lastAuthorizedAt
+        ? `${identity} · authorized ${formatRelativeTime(account.lastAuthorizedAt)}`
         : identity
       : status === "needsReconnect"
         ? "Reconnect to continue"

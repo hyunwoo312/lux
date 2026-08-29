@@ -15,19 +15,27 @@ export function tolerantArray<T>(schema: z.ZodType<T>) {
     .default([] as T[]);
 }
 
-export function tolerantRecord<T>(schema: z.ZodType<T>, normalise?: (value: unknown) => unknown) {
+export function tolerantRecord<T>(schema: z.ZodType<T, unknown>) {
   return z
     .unknown()
     .transform((raw) => {
       const kept: Record<string, T> = {};
       if (!raw || typeof raw !== "object" || Array.isArray(raw)) return kept;
       for (const [key, value] of Object.entries(raw)) {
-        const parsed = schema.safeParse(normalise ? normalise(value) : value);
+        const parsed = schema.safeParse(value);
         if (parsed.success) kept[key] = parsed.data;
       }
       return kept;
     })
     .default({} as Record<string, T>);
+}
+
+export function looksLikeLegacySingleton(
+  persisted: unknown,
+  legacyKeys: readonly string[],
+): boolean {
+  if (!persisted || typeof persisted !== "object") return false;
+  return legacyKeys.some((key) => key in persisted);
 }
 
 export function keepPersisted(persisted: unknown): unknown {

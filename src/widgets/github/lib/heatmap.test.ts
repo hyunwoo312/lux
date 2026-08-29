@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  heatmapHeight,
-  heatmapMetrics,
-  localDayKey,
-  windowLabel,
-} from "@/widgets/github/lib/heatmap";
+import { heatmapHeight, heatmapMetrics, windowLabel } from "@/widgets/github/lib/heatmap";
 
 const WIDGET_INNER = { w6: 248, w8: 348, w10: 448, wide: 1000 };
 
@@ -61,12 +56,5 @@ describe("windowLabel", () => {
   it("says how much is actually shown when the window is short", () => {
     expect(windowLabel(27)).toBe("contributions in the last 6 months");
     expect(windowLabel(4)).toBe("contributions in the last 4 weeks");
-  });
-});
-
-describe("localDayKey", () => {
-  it("reads the day in the viewer's own timezone, not UTC", () => {
-    expect(localDayKey(new Date(2026, 7, 23, 23, 30))).toBe("2026-08-23");
-    expect(localDayKey(new Date(2026, 0, 5, 0, 15))).toBe("2026-01-05");
   });
 });

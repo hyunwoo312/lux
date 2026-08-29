@@ -4,7 +4,8 @@ import type {
   CalendarProviderId,
   DisplayCalendarEvent,
 } from "@/widgets/calendar/types";
-import { getDateKey, startOfDay } from "@/widgets/calendar/lib/dates";
+import { localDayKey } from "@/lib/clock";
+import { startOfDay } from "@/widgets/calendar/lib/dates";
 
 const monthDayFormatter = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
 
@@ -51,10 +52,10 @@ export function compareEventsByStart(first: CalendarEvent, second: CalendarEvent
 function getDedupeKey(event: CalendarEvent): string {
   const title = getEventTitle(event).trim().toLowerCase().replace(/\s+/g, " ");
   const startsAt = event.isAllDay
-    ? getDateKey(getEventStartDate(event))
+    ? localDayKey(getEventStartDate(event))
     : new Date(event.startsAt).toISOString();
   const endsAt = event.isAllDay
-    ? getDateKey(getEventDisplayEndDate(event))
+    ? localDayKey(getEventDisplayEndDate(event))
     : new Date(event.endsAt).toISOString();
   return [title, startsAt, endsAt, event.isAllDay ? "all-day" : "timed"].join("|");
 }
@@ -99,7 +100,7 @@ export function getEventsByDate<T extends CalendarEvent>(events: T[]): Map<strin
       cursor <= eventEnd;
       cursor.setDate(cursor.getDate() + 1)
     ) {
-      const dateKey = getDateKey(cursor);
+      const dateKey = localDayKey(cursor);
       byDate.set(dateKey, [...(byDate.get(dateKey) ?? []), event]);
     }
   }
@@ -125,6 +126,6 @@ export function formatEventRelativeTime(event: CalendarEvent, now: Date): string
 export function formatEventDateRange(event: CalendarEvent): string {
   const startsAt = getEventStartDate(event);
   const endsAt = getEventDisplayEndDate(event);
-  if (getDateKey(startsAt) === getDateKey(endsAt)) return monthDayFormatter.format(startsAt);
+  if (localDayKey(startsAt) === localDayKey(endsAt)) return monthDayFormatter.format(startsAt);
   return `${monthDayFormatter.format(startsAt)} – ${monthDayFormatter.format(endsAt)}`;
 }

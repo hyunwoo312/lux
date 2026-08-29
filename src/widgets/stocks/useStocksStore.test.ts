@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MAX_SYMBOLS, useStocksStore, type StocksData } from "@/widgets/stocks/useStocksStore";
-import { DEFAULT_INDICES, MAX_INDICES } from "@/widgets/stocks/lib/indices";
+import { MAX_INDICES } from "@/widgets/stocks/lib/indices";
 
 const store = () => useStocksStore.getState();
 const ID = "stocks-1";
@@ -178,21 +178,6 @@ describe("useStocksStore", () => {
     it("reads an object blob with no watchlists at all", () => {
       expect(restore({}).byInstance).toEqual({});
     });
-  });
-
-  it("seeds the index rail from the old show/hide flag", () => {
-    const shown = restore(persistedEntry({ showIndices: true, indexSymbols: [] })).byInstance[ID];
-    expect(shown?.indexSymbols).toEqual(DEFAULT_INDICES);
-
-    const hidden = restore(persistedEntry({ showIndices: false, indexSymbols: [] })).byInstance[ID];
-    expect(hidden?.indexSymbols).toEqual([]);
-  });
-
-  it("keeps an explicit index choice over the old flag", () => {
-    const entry = restore(persistedEntry({ showIndices: true, indexSymbols: ["^VIX"] })).byInstance[
-      ID
-    ];
-    expect(entry?.indexSymbols).toEqual(["^VIX"]);
   });
 
   describe("requestSync", () => {

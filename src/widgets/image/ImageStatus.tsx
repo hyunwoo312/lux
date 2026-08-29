@@ -1,4 +1,4 @@
-import { HEADER_LABEL } from "@/widgets/core/chromeStyles";
+import { WidgetTitle } from "@/widgets/core/WidgetTitle";
 import { useImage } from "@/widgets/image/useImageStore";
 
 export function ImageStatus() {
@@ -9,5 +9,5 @@ export function ImageStatus() {
 
   if (hasImage) return null;
 
-  return <span className={HEADER_LABEL}>Image</span>;
+  return <WidgetTitle />;
 }

@@ -1,5 +1,5 @@
-import { useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useIsOverflowing } from "@/hooks/useIsOverflowing";
 import { Tooltip } from "@/components/ui/tooltip";
 import { HighlightedTitle } from "@/widgets/news/components/HighlightedTitle";
 
@@ -14,19 +14,7 @@ export function HeadlineTitle({
   isNew: boolean;
   className?: string;
 }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const [clamped, setClamped] = useState(false);
-
-  useLayoutEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    const measure = () => setClamped(element.scrollHeight > element.clientHeight + 1);
-    measure();
-    if (typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [title]);
+  const [ref, clamped] = useIsOverflowing<HTMLSpanElement>("vertical", title);
 
   const body = (
     <span ref={ref} className={cn("line-clamp-2", className)}>

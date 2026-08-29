@@ -4,14 +4,9 @@ import {
   WidgetConfigGroup,
   WidgetConfigItem,
 } from "@/components/config/WidgetConfig";
-import type { OpenBehavior } from "@/widgets/quick-access/types";
+import { OPEN_BEHAVIOR_OPTIONS } from "@/lib/open-url";
 import { useQuickAccess, useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-
-const OPEN_OPTIONS: { value: OpenBehavior; label: string }[] = [
-  { value: "currentTab", label: "This tab" },
-  { value: "newTab", label: "New tab" },
-];
 
 export function QuickAccessConfig() {
   const instanceId = useWidgetInstanceId();
@@ -33,7 +28,7 @@ export function QuickAccessConfig() {
           <ConfigSegmented
             label="Open links in"
             value={openBehavior}
-            options={OPEN_OPTIONS}
+            options={OPEN_BEHAVIOR_OPTIONS}
             onChange={(value) => setOpenBehavior(instanceId, value)}
           />
         }

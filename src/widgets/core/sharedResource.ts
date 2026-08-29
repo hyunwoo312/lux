@@ -166,6 +166,10 @@ export function freshnessOf(snapshot: {
     : { status: "current" };
 }
 
+export function staleSinceOf(freshness: Freshness): number | undefined {
+  return freshness.status === "failing" ? freshness.since : undefined;
+}
+
 export type Cadence = { staleMs: number; intervalMs?: number };
 
 export function effectiveCadence(cadences: Iterable<Cadence>, fallback: Cadence): Cadence {
@@ -529,6 +533,7 @@ type ResourceParams<D, R extends SharedResource<D>> = {
   cacheKey: string | undefined;
   enabled: boolean;
   intervalMs: number | undefined;
+  staleMs: number | undefined;
   seed: () => Snapshot<D>;
   create: (identity: ResourceIdentity) => R;
   adopt: (resource: R) => void;
@@ -537,8 +542,11 @@ type ResourceParams<D, R extends SharedResource<D>> = {
 export function useResource<D, R extends SharedResource<D>>(
   params: ResourceParams<D, R>,
 ): { snapshot: Snapshot<D>; resource: RefObject<R | null> } {
-  const { scope, cacheKey, enabled, intervalMs } = params;
-  const { staleMs, intervalMs: scaledIntervalMs } = useScaledCadence(intervalMs, DEFAULT_STALE_MS);
+  const { scope, cacheKey, enabled, intervalMs, staleMs: declaredStaleMs } = params;
+  const { staleMs, intervalMs: scaledIntervalMs } = useScaledCadence(
+    declaredStaleMs ?? intervalMs ?? DEFAULT_STALE_MS,
+    intervalMs,
+  );
 
   const autoKeyRef = useRef("");
   if (!autoKeyRef.current) autoKeyRef.current = `${scope}#${(nextAutoKey += 1)}`;

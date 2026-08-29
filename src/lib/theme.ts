@@ -4,7 +4,7 @@ export type ThemeMode = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
 
 const THEME_STORAGE_KEY = "lux.theme";
-const DEFAULT_MODE: ThemeMode = "dark";
+export const DEFAULT_MODE: ThemeMode = "dark";
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
 function isThemeMode(value: unknown): value is ThemeMode {

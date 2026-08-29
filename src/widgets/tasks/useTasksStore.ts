@@ -1,9 +1,14 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
-import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
+import {
+  looksLikeLegacySingleton,
+  mergePersisted,
+  tolerantArray,
+  tolerantRecord,
+} from "@/lib/persist";
+import { moveById } from "@/lib/dnd";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import type { CompletedPosition, Task } from "@/widgets/tasks/types";
@@ -51,11 +56,6 @@ const dataSchema = z.object({
 });
 
 const persistedSchema = z.object({ byInstance: tolerantRecord(dataSchema) });
-
-function looksLikeLegacySingleton(value: unknown): boolean {
-  if (typeof value !== "object" || value === null) return false;
-  return "tasks" in value && Array.isArray(value.tasks);
-}
 
 const gatedStorage = createGatedChromeStorage();
 
@@ -121,13 +121,8 @@ export const useTasksStore = create<TasksState>()(
       reorderTasks: (instanceId, activeId, overId) =>
         set((state) => {
           const data = state.byInstance[instanceId] ?? DEFAULT_TASKS;
-          const from = data.tasks.findIndex((task) => task.id === activeId);
-          const to = data.tasks.findIndex((task) => task.id === overId);
-          if (from === -1 || to === -1 || from === to) return state;
-          const tasks = [...data.tasks];
-          const [moved] = tasks.splice(from, 1);
-          if (!moved) return state;
-          tasks.splice(to, 0, moved);
+          const tasks = moveById(data.tasks, activeId, overId, (task) => task.id);
+          if (!tasks) return state;
           return update(state, instanceId, (current) => ({ ...current, tasks }));
         }),
       setAutoSort: (instanceId, autoSort) =>
@@ -147,7 +142,7 @@ export const useTasksStore = create<TasksState>()(
       partialize: (state) => ({ byInstance: state.byInstance }),
       migrate: (persisted, version) => {
         if (version >= 2) return persisted;
-        if (!looksLikeLegacySingleton(persisted)) return { byInstance: {} };
+        if (!looksLikeLegacySingleton(persisted, ["tasks"])) return { byInstance: {} };
         const legacy = dataSchema.safeParse(persisted);
         return { byInstance: legacy.success ? { tasks: legacy.data } : {} };
       },
@@ -166,8 +161,6 @@ export const useTasksStore = create<TasksState>()(
     },
   ),
 );
-
-registerInstanceCleanup((instanceId) => useTasksStore.getState().removeInstance(instanceId));
 
 export const useTasks = createInstanceSelector(useTasksStore, DEFAULT_TASKS);
 

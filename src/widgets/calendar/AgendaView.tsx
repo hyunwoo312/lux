@@ -4,13 +4,14 @@ import { CalendarClock, CloudOff, Sunrise } from "lucide-react";
 import { StateMessage } from "@/components/StateMessage";
 import { useElementSize } from "@/hooks/useElementSize";
 import { useNow } from "@/hooks/useNow";
+import { localDayKey } from "@/lib/clock";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { AgendaCompactList } from "@/widgets/calendar/components/agenda/AgendaCompactList";
 import { AgendaTimeline } from "@/widgets/calendar/components/agenda/AgendaTimeline";
 import { AgendaUntimedBlock } from "@/widgets/calendar/components/agenda/AgendaUntimedBlock";
 import { getEventStartDate } from "@/widgets/calendar/lib/agenda";
 import { enterTween, exitTween } from "@/lib/motion";
-import { endOfDay, getDateKey, getRangeEndDate, startOfDay } from "@/widgets/calendar/lib/dates";
+import { endOfDay, getRangeEndDate, startOfDay } from "@/widgets/calendar/lib/dates";
 import {
   buildTimeline,
   describeNextAfterToday,
@@ -60,7 +61,7 @@ export function AgendaView({ events, colors, status }: AgendaViewProps) {
   }, [events, rangeStart, lookaheadDays]);
 
   const compact = size.width > 0 && size.width < TIMELINE_MIN_WIDTH;
-  const anchorKey = getDateKey(rangeStart);
+  const anchorKey = localDayKey(rangeStart);
   const direction = useTravelDirection(anchorKey, rangeStart.getTime());
   const shift = reduced ? 0 : 14;
 

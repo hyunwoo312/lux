@@ -1,10 +1,15 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
+import { dateFromDayKey, localDayKey } from "@/lib/clock";
 import { loadErrorMessage } from "@/lib/net";
-import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
+import {
+  looksLikeLegacySingleton,
+  mergePersisted,
+  tolerantArray,
+  tolerantRecord,
+} from "@/lib/persist";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { isConnected, useIntegrationStore } from "@/integrations";
@@ -19,13 +24,11 @@ import {
 import { compareEventsByStart } from "@/widgets/calendar/lib/agenda";
 import {
   addDays,
-  dateFromKey,
-  getDateKey,
   getMonthGridDays,
   getMonthOffset,
   startOfDay,
 } from "@/widgets/calendar/lib/dates";
-import { isCalendarSyncCoolingDown } from "@/widgets/calendar/lib/cooldown";
+import { syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
 import {
   CALENDAR_DENSITIES,
   CALENDAR_PROVIDER_IDS,
@@ -47,6 +50,8 @@ import {
   type ConnectedCalendar,
 } from "@/widgets/calendar/types";
 
+export const CALENDAR_SYNC_COOLDOWN_MS = 60_000;
+
 const SYNC_PAST_MONTHS = 12;
 const SYNC_FUTURE_MONTHS = 12;
 
@@ -56,7 +61,7 @@ type ProviderCalendarSettings = {
   selectionChosen?: boolean;
   failedCalendarIds: string[];
   lastError?: string;
-  lastSyncedAt?: string;
+  lastSyncedAt?: number;
 };
 
 type SyncWindow = { timeMin: Date; timeMax: Date };
@@ -134,7 +139,7 @@ function freshNav(): Pick<
     selectedDay: null,
     focusRowIndex: 0,
     listAnchor: startOfDay(now),
-    listAnchorSetOn: getDateKey(now),
+    listAnchorSetOn: localDayKey(now),
   };
 }
 
@@ -143,9 +148,9 @@ function anchorFor(
   setOn: string | undefined,
 ): Pick<CalendarData, "listAnchor" | "listAnchorSetOn"> {
   const today = startOfDay(new Date());
-  const todayKey = getDateKey(today);
+  const todayKey = localDayKey(today);
   if (!key || setOn !== todayKey) return { listAnchor: today, listAnchorSetOn: todayKey };
-  const stored = dateFromKey(key);
+  const stored = dateFromDayKey(key);
   return stored
     ? { listAnchor: startOfDay(stored), listAnchorSetOn: setOn }
     : { listAnchor: today, listAnchorSetOn: todayKey };
@@ -177,7 +182,7 @@ const providerSettingsSchema = z.object({
   failedCalendarIds: tolerantArray(z.string()),
   selectionChosen: z.boolean().optional().catch(undefined),
   lastError: z.string().optional().catch(undefined),
-  lastSyncedAt: z.string().optional().catch(undefined),
+  lastSyncedAt: z.number().optional().catch(undefined),
 });
 
 const configSchema = z.object({
@@ -195,7 +200,7 @@ const configSchema = z.object({
 });
 
 const persistedSchema = z.object({
-  byInstance: tolerantRecord(configSchema, normaliseConfig),
+  byInstance: tolerantRecord(z.preprocess(normaliseConfig, configSchema)),
 });
 
 const LEGACY_KEYS = [
@@ -207,11 +212,6 @@ const LEGACY_KEYS = [
   "primarySource",
   "refreshIntervalHours",
 ] as const;
-
-function looksLikeLegacySingleton(persisted: unknown): boolean {
-  if (!persisted || typeof persisted !== "object") return false;
-  return LEGACY_KEYS.some((key) => key in persisted);
-}
 
 function normaliseConfig(value: unknown): unknown {
   if (!value || typeof value !== "object") return value;
@@ -344,7 +344,7 @@ export const useCalendarStore = create<CalendarState>()(
               ...data,
               view,
               listAnchor: startOfDay(data.selectedDay),
-              listAnchorSetOn: getDateKey(new Date()),
+              listAnchorSetOn: localDayKey(new Date()),
             };
           }),
         ),
@@ -353,7 +353,7 @@ export const useCalendarStore = create<CalendarState>()(
           update(state, instanceId, (data) => ({
             ...data,
             listAnchor: startOfDay(date),
-            listAnchorSetOn: getDateKey(new Date()),
+            listAnchorSetOn: localDayKey(new Date()),
           })),
         ),
       setLookaheadDays: (instanceId, days) =>
@@ -375,7 +375,9 @@ export const useCalendarStore = create<CalendarState>()(
         const targets = requested.filter(
           (providerId) =>
             !data.syncing.includes(providerId) &&
-            (options.bypassCooldown || !isCalendarSyncCoolingDown(data[providerId].lastSyncedAt)),
+            (options.bypassCooldown ||
+              syncCooldownRemainingMs(data[providerId].lastSyncedAt, CALENDAR_SYNC_COOLDOWN_MS) ===
+                0),
         );
         if (options.bypassCooldown && busy.length > 0) {
           set((state) =>
@@ -422,7 +424,7 @@ export const useCalendarStore = create<CalendarState>()(
         const pendingBeforeCompletion = getCalendarData(instanceId).resyncPending;
         set((state) =>
           update(state, instanceId, (current) => {
-            const now = new Date().toISOString();
+            const now = Date.now();
             let google = current.google;
             let microsoft = current.microsoft;
             for (const { providerId, result } of results) {
@@ -509,14 +511,14 @@ export const useCalendarStore = create<CalendarState>()(
           update(state, instanceId, (data) => {
             if (data.view !== "calendar") {
               const today = startOfDay(new Date());
-              return { ...data, listAnchor: today, listAnchorSetOn: getDateKey(today) };
+              return { ...data, listAnchor: today, listAnchorSetOn: localDayKey(today) };
             }
             if (data.mode !== "week") return { ...data, ...freshNav() };
             const today = startOfDay(new Date());
             const visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-            const todayKey = getDateKey(today);
+            const todayKey = localDayKey(today);
             const index = getMonthGridDays(visibleMonth).findIndex(
-              (day) => getDateKey(day) === todayKey,
+              (day) => localDayKey(day) === todayKey,
             );
             return {
               ...data,
@@ -530,8 +532,8 @@ export const useCalendarStore = create<CalendarState>()(
         set((state) =>
           update(state, instanceId, (data) => {
             const grid = getMonthGridDays(data.visibleMonth);
-            const key = getDateKey(date);
-            const index = grid.findIndex((day) => getDateKey(day) === key);
+            const key = localDayKey(date);
+            const index = grid.findIndex((day) => localDayKey(day) === key);
             return {
               ...data,
               mode: "week",
@@ -584,7 +586,7 @@ export const useCalendarStore = create<CalendarState>()(
               microsoft: data.microsoft,
               primarySource: data.primarySource,
               refreshIntervalHours: data.refreshIntervalHours,
-              listAnchorKey: getDateKey(data.listAnchor),
+              listAnchorKey: localDayKey(data.listAnchor),
               listAnchorSetOn: data.listAnchorSetOn,
             },
           ]),
@@ -592,7 +594,7 @@ export const useCalendarStore = create<CalendarState>()(
       }),
       migrate: (persisted, version) => {
         if (version >= 2) return persisted;
-        if (!looksLikeLegacySingleton(persisted)) return { byInstance: {} };
+        if (!looksLikeLegacySingleton(persisted, LEGACY_KEYS)) return { byInstance: {} };
         const legacy = configSchema.safeParse(normaliseConfig(persisted));
         return { byInstance: legacy.success ? { calendar: legacy.data } : {} };
       },
@@ -617,7 +619,5 @@ export const useCalendarStore = create<CalendarState>()(
     },
   ),
 );
-
-registerInstanceCleanup((instanceId) => useCalendarStore.getState().removeInstance(instanceId));
 
 export const useCalendar = createInstanceSelector(useCalendarStore, DEFAULT_DATA);

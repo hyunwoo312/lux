@@ -9,10 +9,9 @@ import {
 import type { RankMap } from "@/widgets/news/lib/trend-movement";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { keepPersisted, mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
-import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
-import type { OpenBehavior } from "@/lib/open-url";
+import { openBehaviorSchema, type OpenBehavior } from "@/lib/open-url";
 import {
   NEWS_LAYOUTS,
   NEWS_REGIONS,
@@ -151,7 +150,7 @@ const dataSchema = z.object({
     const valid = sources.filter(isNewsSource);
     return valid.length > 0 ? valid : DEFAULT_ENABLED_SOURCES;
   }),
-  openBehavior: z.enum(["currentTab", "newTab"]).catch("currentTab"),
+  openBehavior: openBehaviorSchema,
   loadImages: z.boolean().catch(true),
   sortByLatest: z.boolean().catch(true),
   readTitles: tolerantArray(z.string()),
@@ -317,7 +316,5 @@ export const useNewsStore = create<NewsState>()(
     },
   ),
 );
-
-registerInstanceCleanup((instanceId) => useNewsStore.getState().removeInstance(instanceId));
 
 export const useNews = createInstanceSelector(useNewsStore, DEFAULT_DATA);

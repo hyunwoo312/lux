@@ -1,24 +1,15 @@
 import { motion, useReducedMotion } from "motion/react";
 import { Check, Copy, Star } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { springPop } from "@/lib/motion";
 import { CWS_REVIEW_URL } from "@/lib/links";
 import { openUrl } from "@/lib/open-url";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 
 export function SentPanel({ id, onClose }: { id: string; onClose: () => void }) {
   const reduced = useReducedMotion() ?? false;
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timer = window.setTimeout(() => setCopied(false), 2000);
-    return () => window.clearTimeout(timer);
-  }, [copied]);
-
-  const copy = () => {
-    void navigator.clipboard?.writeText(id).then(() => setCopied(true));
-  };
+  const { status, copy } = useCopyToClipboard();
+  const copied = status === "copied";
 
   return (
     <div className="flex flex-col items-center gap-3 px-6 py-10 text-center">
@@ -35,7 +26,7 @@ export function SentPanel({ id, onClose }: { id: string; onClose: () => void }) 
         <Button
           size="xs"
           variant="ghost"
-          onClick={copy}
+          onClick={() => copy(id)}
           aria-label={`Copy reference ${id}`}
           className="text-ink-3 hover:text-ink gap-1.5"
         >

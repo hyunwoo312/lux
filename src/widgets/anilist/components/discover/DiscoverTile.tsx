@@ -3,7 +3,11 @@ import { Spinner } from "@/components/ui/spinner";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
-import { ART_ACTION, ART_SCRIM, ART_SCRIM_ACTIONS } from "@/widgets/anilist/components/coverGrid";
+import {
+  ART_ACTION,
+  COVER_SCRIM,
+  COVER_SCRIM_ACTIONS,
+} from "@/widgets/anilist/components/coverGrid";
 import { listStatusLabel } from "@/widgets/anilist/lib/list-status";
 import type { DiscoverMedia, ListStatus } from "@/widgets/anilist/types";
 
@@ -52,7 +56,7 @@ export function DiscoverTile({
               {listStatusLabel(listStatus, media.kind)}
             </span>
           )}
-          <span className={cn(ART_SCRIM, showAdd && ART_SCRIM_ACTIONS)}>
+          <span className={cn(COVER_SCRIM, showAdd && COVER_SCRIM_ACTIONS)}>
             <span className="text-micro block truncate leading-snug font-medium text-white">
               {media.title}
             </span>

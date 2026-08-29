@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BaseWidget } from "@/widgets/core/BaseWidget";
+import { WidgetTitle } from "@/widgets/core/WidgetTitle";
 
 function editingWidget(onRemove: () => void, editing = true) {
   return (
@@ -24,6 +25,18 @@ describe("BaseWidget", () => {
     expect(onRemove).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(screen.queryByText("Remove Notes?")).not.toBeInTheDocument();
+  });
+
+  it("lets a headline hand the title back", () => {
+    render(
+      <TooltipProvider>
+        <BaseWidget title="Notes" editing={false} headline={<WidgetTitle />} onRemove={() => {}}>
+          <p>content</p>
+        </BaseWidget>
+      </TooltipProvider>,
+    );
+
+    expect(screen.getByText("Notes")).toBeInTheDocument();
   });
 
   it("offers no remove control outside edit mode", () => {

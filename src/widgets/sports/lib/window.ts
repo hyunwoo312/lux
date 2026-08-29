@@ -1,3 +1,4 @@
+import { localDayKey } from "@/lib/clock";
 import type { Sport } from "@/widgets/sports/lib/leagues";
 
 export const DAY_WINDOWS = ["today", "day", "week", "wide"] as const;
@@ -35,16 +36,14 @@ export function livePollFloorMs(sport: Sport, window: DayWindow): number {
   return Math.max(SPORT_FLOOR_MS[sport], WINDOW_FLOOR_MS[window]);
 }
 
-function stamp(date: Date): string {
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-  return `${date.getFullYear()}${month}${day}`;
-}
-
 function shiftDays(from: Date, days: number): Date {
   const next = new Date(from);
   next.setDate(next.getDate() + days);
   return next;
+}
+
+function stamp(date: Date): string {
+  return localDayKey(date).replaceAll("-", "");
 }
 
 export function datesParam(window: DayWindow, now: Date): string | null {

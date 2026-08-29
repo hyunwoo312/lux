@@ -14,6 +14,7 @@ import {
   fade,
   stagger,
 } from "@/lib/motion";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { accentClass } from "@/widgets/core/accent";
 import { getWidgetPlugin } from "@/widgets/registry";
 
@@ -51,21 +52,14 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
   const [open, setOpen] = useState(!clientId);
   const [value, setValue] = useState(clientId ?? "");
   const [status, setStatus] = useState<SaveStatus>("idle");
-  const [copied, setCopied] = useState(false);
+  const { status: copyStatus, copy } = useCopyToClipboard();
   const statusTimeout = useRef<number | undefined>(undefined);
-  const copiedTimeout = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     setValue(clientId ?? "");
   }, [clientId]);
 
-  useEffect(
-    () => () => {
-      window.clearTimeout(statusTimeout.current);
-      window.clearTimeout(copiedTimeout.current);
-    },
-    [],
-  );
+  useEffect(() => () => window.clearTimeout(statusTimeout.current), []);
 
   const trimmed = value.trim();
   const isSaved = trimmed === (clientId ?? "");
@@ -86,20 +80,8 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
     statusTimeout.current = window.setTimeout(() => setStatus("idle"), FEEDBACK_MS);
   }
 
-  async function handleCopy() {
-    if (!redirectUri) return;
-    try {
-      await navigator.clipboard.writeText(redirectUri);
-    } catch {
-      return;
-    }
-    setCopied(true);
-    window.clearTimeout(copiedTimeout.current);
-    copiedTimeout.current = window.setTimeout(() => setCopied(false), FEEDBACK_MS);
-  }
-
   return (
-    <div className={cn("relative ml-9", accentClass(getWidgetPlugin("spotify")?.tint))}>
+    <div className={cn("relative ml-9", accentClass(getWidgetPlugin("spotify").tint))}>
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
@@ -205,9 +187,9 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
                         size="icon"
                         variant="outline"
                         aria-label="Copy redirect URI"
-                        onClick={handleCopy}
+                        onClick={() => copy(redirectUri)}
                       >
-                        {copied ? (
+                        {copyStatus === "copied" ? (
                           <Check className="text-primary size-4" />
                         ) : (
                           <Copy className="size-4" />

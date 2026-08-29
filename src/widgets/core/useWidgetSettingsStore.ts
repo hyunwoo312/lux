@@ -3,7 +3,6 @@ import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { keepPersisted, mergePersisted, tolerantRecord } from "@/lib/persist";
-import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance } from "@/widgets/core/byInstance";
 
 export type WidgetBackground = "glass" | "solid";
@@ -73,8 +72,6 @@ export const useWidgetSettingsStore = create<WidgetSettingsState>()(
     },
   ),
 );
-
-registerInstanceCleanup((id) => useWidgetSettingsStore.getState().removeInstance(id));
 
 export function useWidgetBackground(id: string): WidgetBackground {
   return useWidgetSettingsStore((s) => {

@@ -99,9 +99,3 @@ export function formatDay(date: string): string {
 export function formatDayLong(date: string): string {
   return `${MONTHS_FULL[Number(date.slice(5, 7)) - 1] ?? ""} ${Number(date.slice(8, 10))}`;
 }
-
-export function localDayKey(now: Date): string {
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${now.getFullYear()}-${month}-${day}`;
-}

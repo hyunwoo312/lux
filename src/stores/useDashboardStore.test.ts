@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { useDashboardStore } from "@/stores/useDashboardStore";
+import { boardWidth, gridColumns } from "@/widgets/core/grid";
 import { collides } from "@/widgets/core/layout-engine";
 import { useWidgetSettingsStore } from "@/widgets/core/useWidgetSettingsStore";
 
@@ -324,7 +325,7 @@ describe("the starter board", () => {
   it("lays every widget out in a block that lines up and stays centred", () => {
     for (const viewport of viewports) {
       const layout = seedAt(viewport);
-      const columns = store().columns;
+      const columns = gridColumns(boardWidth(viewport));
       const left = Math.min(...layout.map((item) => item.x));
       const right = Math.max(...layout.map((item) => item.x + item.w));
 

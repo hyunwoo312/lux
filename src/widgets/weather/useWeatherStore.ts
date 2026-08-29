@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
-import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
+import { moveById } from "@/lib/dnd";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { stalePolledResource } from "@/widgets/core/usePolledResource";
@@ -169,13 +169,8 @@ export const useWeatherStore = create<WeatherState>()(
       reorderLocations: (instanceId, activeId, overId) =>
         set((state) => {
           const data = state.byInstance[instanceId] ?? DEFAULT_DATA;
-          const from = data.locations.findIndex((entry) => entry.id === activeId);
-          const to = data.locations.findIndex((entry) => entry.id === overId);
-          if (from === -1 || to === -1 || from === to) return state;
-          const locations = [...data.locations];
-          const [moved] = locations.splice(from, 1);
-          if (!moved) return state;
-          locations.splice(to, 0, moved);
+          const locations = moveById(data.locations, activeId, overId, (entry) => entry.id);
+          if (!locations) return state;
           return update(state, instanceId, (current) => ({ ...current, locations }));
         }),
       selectCity: (instanceId, id) =>
@@ -259,7 +254,5 @@ export const useWeatherStore = create<WeatherState>()(
     },
   ),
 );
-
-registerInstanceCleanup((instanceId) => useWeatherStore.getState().removeInstance(instanceId));
 
 export const useWeather = createInstanceSelector(useWeatherStore, DEFAULT_DATA);

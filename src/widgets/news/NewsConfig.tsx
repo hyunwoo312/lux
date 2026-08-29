@@ -10,7 +10,7 @@ import {
   WidgetConfigGroup,
   WidgetConfigItem,
 } from "@/components/config/WidgetConfig";
-import type { OpenBehavior } from "@/lib/open-url";
+import { OPEN_BEHAVIOR_OPTIONS } from "@/lib/open-url";
 import { orderedSources, sourceTab } from "@/widgets/news/lib/news";
 import { TREND_REGIONS, type TrendRegion } from "@/widgets/news/lib/trend-regions";
 import { SOURCE_ICONS } from "@/widgets/news/components/sourceIcons";
@@ -61,11 +61,6 @@ const SOURCE_OPTIONS = NEWS_SOURCES.map((source) => ({
   label: sourceTab(source),
   icon: SOURCE_ICONS[source],
 }));
-
-const OPEN_OPTIONS: { value: OpenBehavior; label: string }[] = [
-  { value: "currentTab", label: "This tab" },
-  { value: "newTab", label: "New tab" },
-];
 
 const TREND_REGION_OPTIONS: { value: TrendRegion; label: string }[] = TREND_REGIONS.map(
   (entry) => ({ value: entry.code as TrendRegion, label: entry.label }),
@@ -124,7 +119,7 @@ export function NewsConfig() {
             <ConfigSegmented
               label="Open headlines in"
               value={openBehavior}
-              options={OPEN_OPTIONS}
+              options={OPEN_BEHAVIOR_OPTIONS}
               onChange={(value) => setOpenBehavior(instanceId, value)}
             />
           }
@@ -186,13 +181,14 @@ export function NewsConfig() {
       <WidgetConfigGroup label="Sources">
         <WidgetConfigItem
           title="Show"
-          description={`Which sources appear as tabs (up to ${MAX_ENABLED_SOURCES})`}
+          description={`Which sources appear as tabs (one to ${MAX_ENABLED_SOURCES})`}
         >
           <ConfigMultiToggle
             label="Sources"
             values={orderedEnabled}
             options={SOURCE_OPTIONS}
             maxSelected={MAX_ENABLED_SOURCES}
+            minSelected={1}
             onChange={(values) => setEnabledSources(instanceId, values)}
           />
         </WidgetConfigItem>

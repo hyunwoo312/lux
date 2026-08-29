@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { anilistProvider } from "@/integrations/providers/anilist";
 import { IntegrationReconnectRequiredError } from "@/integrations/errors";
+import { ANILIST_CALLBACK_KEY } from "@/lib/extension-keys";
 
-const CALLBACK_KEY = "lux:anilist-callback";
 const STATE = "state-abc";
 
 type Removed = (tabId: number) => void;
@@ -46,6 +46,12 @@ async function flush() {
   await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
+function stash(callback: Record<string, unknown>) {
+  return chromeMock().storage.session.set({
+    [ANILIST_CALLBACK_KEY]: { type: "anilist-oauth", ...callback },
+  });
+}
+
 describe("anilistProvider.acquireToken", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -63,9 +69,7 @@ describe("anilistProvider.acquireToken", () => {
     const pending = acquire();
     await flush();
 
-    await chromeMock().storage.session.set({
-      [CALLBACK_KEY]: { accessToken: "token-1", expiresIn: "3600", state: STATE },
-    });
+    await stash({ accessToken: "token-1", expiresIn: "3600", state: STATE });
 
     await expect(pending).resolves.toMatchObject({
       accessToken: "token-1",
@@ -84,9 +88,7 @@ describe("anilistProvider.acquireToken", () => {
       () => (settled = true),
     );
 
-    await chromeMock().storage.session.set({
-      [CALLBACK_KEY]: { accessToken: "token-2", state: "someone-elses-state" },
-    });
+    await stash({ accessToken: "token-2", state: "someone-elses-state" });
     await flush();
 
     expect(settled).toBe(false);
@@ -98,9 +100,7 @@ describe("anilistProvider.acquireToken", () => {
 
     const onRemoved = chromeMock().tabs.onRemoved.addListener.mock.calls[0]?.[0] as Removed;
 
-    await chromeMock().storage.session.set({
-      [CALLBACK_KEY]: { accessToken: "token-3", state: STATE },
-    });
+    await stash({ accessToken: "token-3", state: STATE });
     onRemoved(1);
 
     await expect(pending).resolves.toMatchObject({ accessToken: "token-3" });
@@ -121,23 +121,19 @@ describe("anilistProvider.acquireToken", () => {
     await flush();
 
     const onRemoved = chromeMock().tabs.onRemoved.addListener.mock.calls[0]?.[0] as Removed;
-    await chromeMock().storage.session.set({
-      [CALLBACK_KEY]: { accessToken: "token-4", state: "someone-elses-state" },
-    });
+    await stash({ accessToken: "token-4", state: "someone-elses-state" });
     onRemoved(1);
 
     await expect(pending).rejects.toThrow(/cancelled/i);
     await flush();
-    expect(await chromeMock().storage.session.get(CALLBACK_KEY)).toEqual({});
+    expect(await chromeMock().storage.session.get(ANILIST_CALLBACK_KEY)).toEqual({});
   });
 
   it("rejects when the callback carries an error", async () => {
     const pending = acquire();
     await flush();
 
-    await chromeMock().storage.session.set({
-      [CALLBACK_KEY]: { error: "access_denied", state: STATE },
-    });
+    await stash({ error: "access_denied", state: STATE });
 
     await expect(pending).rejects.toThrow(/could not be completed/i);
   });

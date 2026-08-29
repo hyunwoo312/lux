@@ -3,7 +3,6 @@ import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { DEFAULT_LEAGUE_ID, LEAGUES } from "@/widgets/sports/lib/leagues";
@@ -189,8 +188,6 @@ export const useSportsStore = create<SportsState>()(
     },
   ),
 );
-
-registerInstanceCleanup((instanceId) => useSportsStore.getState().removeInstance(instanceId));
 
 export const useSports = createInstanceSelector(useSportsStore, DEFAULT_DATA);
 

@@ -1,11 +1,8 @@
-type InstanceCleanup = (instanceId: string) => void;
+import type { WidgetInstance } from "@/widgets/core/types";
+import { useWidgetSettingsStore } from "@/widgets/core/useWidgetSettingsStore";
+import { getWidgetPlugin } from "@/widgets/registry";
 
-const cleanups = new Set<InstanceCleanup>();
-
-export function registerInstanceCleanup(cleanup: InstanceCleanup): void {
-  cleanups.add(cleanup);
-}
-
-export function pruneInstance(instanceId: string): void {
-  for (const cleanup of cleanups) cleanup(instanceId);
+export function pruneInstance(instance: WidgetInstance): void {
+  getWidgetPlugin(instance.type).clearInstance(instance.id);
+  useWidgetSettingsStore.getState().removeInstance(instance.id);
 }

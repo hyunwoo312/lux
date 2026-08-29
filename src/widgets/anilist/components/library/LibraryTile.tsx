@@ -7,8 +7,8 @@ import { AiringBadge } from "@/widgets/anilist/components/library/AiringBadge";
 import {
   ART_ACTION,
   ART_ACTION_SHAPE,
-  ART_SCRIM,
-  ART_SCRIM_ACTIONS,
+  COVER_SCRIM,
+  COVER_SCRIM_ACTIONS,
 } from "@/widgets/anilist/components/coverGrid";
 import {
   progressSpeech,
@@ -85,7 +85,7 @@ export function LibraryTile({
               "
             />
           )}
-          <span className={cn(ART_SCRIM, hasActions && ART_SCRIM_ACTIONS)}>
+          <span className={cn(COVER_SCRIM, hasActions && COVER_SCRIM_ACTIONS)}>
             <span className="text-micro block truncate leading-snug font-medium text-white">
               {entry.title}
             </span>

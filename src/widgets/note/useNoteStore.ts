@@ -3,7 +3,6 @@ import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { mergePersisted, tolerantRecord } from "@/lib/persist";
-import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { NOTE_FONT_SIZES, type NoteFontSize } from "@/widgets/note/types";
 
@@ -68,8 +67,6 @@ export const useNoteStore = create<NoteState>()(
     },
   ),
 );
-
-registerInstanceCleanup((id) => useNoteStore.getState().removeInstance(id));
 
 export function useNote(id: string): NoteData {
   return useNoteStore((s) => s.byInstance[id] ?? DEFAULT_NOTE);

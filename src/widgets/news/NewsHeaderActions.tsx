@@ -1,6 +1,7 @@
 import { LayoutGrid, List } from "lucide-react";
 import { ViewToggleButton } from "@/widgets/core/ViewToggleButton";
 import { WidgetRefreshButton } from "@/widgets/core/WidgetRefreshButton";
+import { staleSinceOf } from "@/widgets/core/usePolledResource";
 import { useNewsResource } from "@/widgets/news/hooks/useNewsResource";
 import { useTrendingResource } from "@/widgets/news/hooks/useTrendingResource";
 import { NEWS_SYNC_COOLDOWN_MS, useNews, useNewsStore } from "@/widgets/news/useNewsStore";
@@ -22,7 +23,7 @@ export function NewsHeaderActions() {
         syncing={active.isRefreshing}
         lastSyncAt={active.lastSyncedAt}
         cooldownMs={NEWS_SYNC_COOLDOWN_MS}
-        freshness={active.freshness}
+        staleSince={staleSinceOf(active.freshness)}
         onRefresh={active.refresh}
       />
       <span className="bg-border/50 mx-0.5 h-4 w-px shrink-0" aria-hidden />

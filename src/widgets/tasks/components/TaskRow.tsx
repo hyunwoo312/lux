@@ -7,6 +7,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Pencil, X } from "lucide-react";
 import { ItemActionButton } from "@/components/ItemActionButton";
+import { useIsOverflowing } from "@/hooks/useIsOverflowing";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -33,9 +34,8 @@ export function TaskRow({
 }: TaskRowProps) {
   const reduced = useReducedMotion();
   const [editing, setEditing] = useState(false);
-  const [truncated, setTruncated] = useState(false);
+  const [measureRef, truncated] = useIsOverflowing<HTMLSpanElement>("horizontal", task.title);
   const inputRef = useRef<HTMLInputElement>(null);
-  const observer = useRef<ResizeObserver | null>(null);
 
   const {
     attributes,
@@ -58,17 +58,6 @@ export function TaskRow({
     },
     [setNodeRef, setActivatorNodeRef],
   );
-
-  const measureRef = useCallback((node: HTMLSpanElement | null) => {
-    observer.current?.disconnect();
-    if (!node) return;
-    const measure = () => setTruncated(node.scrollWidth > node.clientWidth);
-    measure();
-    observer.current = new ResizeObserver(measure);
-    observer.current.observe(node);
-  }, []);
-
-  useEffect(() => () => observer.current?.disconnect(), []);
 
   useEffect(() => {
     if (editing) {

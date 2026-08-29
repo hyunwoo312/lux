@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { anilistCallbackSchema } from "@/lib/extension-keys";
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -20,13 +21,15 @@ describe("AniList callback page", () => {
     await import("@/anilist-callback");
     await flush();
 
-    expect(sendMessageMock()).toHaveBeenCalledWith({
-      type: "anilist-oauth",
-      accessToken: "tok",
-      tokenType: "Bearer",
-      expiresIn: "3600",
-      state: "state-abc",
-      error: undefined,
+    const message: unknown = sendMessageMock().mock.calls[0]?.[0];
+    expect(anilistCallbackSchema.safeParse(message)).toMatchObject({
+      success: true,
+      data: {
+        accessToken: "tok",
+        tokenType: "Bearer",
+        expiresIn: "3600",
+        state: "state-abc",
+      },
     });
     expect(window.location.hash).toBe("");
   });

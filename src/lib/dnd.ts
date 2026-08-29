@@ -5,7 +5,7 @@ import {
   restrictToParentElement,
   restrictToVerticalAxis,
 } from "@dnd-kit/modifiers";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 
 export const VERTICAL_LIST_MODIFIERS: Modifier[] = [
   restrictToVerticalAxis,
@@ -28,4 +28,16 @@ export function useSortableSensors() {
       keyboardCodes: KEYBOARD_CODES,
     }),
   );
+}
+
+export function moveById<T>(
+  items: readonly T[],
+  activeId: string,
+  overId: string,
+  getId: (item: T) => string,
+): T[] | null {
+  const from = items.findIndex((item) => getId(item) === activeId);
+  const to = items.findIndex((item) => getId(item) === overId);
+  if (from === -1 || to === -1 || from === to) return null;
+  return arrayMove([...items], from, to);
 }

@@ -16,6 +16,7 @@ export const tasksPlugin: WidgetPlugin = {
   icon: ListTodo,
   defaultLayout: { w: 6, h: 6, minW: 6, minH: 6, maxW: 12, maxH: 12 },
   component: TasksWidget,
+  clearInstance: (instanceId) => useTasksStore.getState().removeInstance(instanceId),
   configComponent: TasksConfig,
   statusComponent: TasksStatus,
   headerActionComponent: ClearCompletedButton,

@@ -619,7 +619,7 @@
 
 @utility art-scrim {
   background-color: oklch(0 0 0 / 0.6);
-  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
   border-top: 1px solid oklch(1 0 0 / 0.12);
 }
 

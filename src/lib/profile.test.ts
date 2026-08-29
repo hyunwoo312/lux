@@ -144,6 +144,90 @@ describe("moving Google off the relay", () => {
   });
 });
 
+describe("settling three persisted field names", () => {
+  const calendarBlob = (entry: Record<string, unknown>) => ({
+    "lux:widget:calendar": { state: { byInstance: { one: entry } }, version: 2 },
+  });
+  const read = async (key: string) =>
+    (await all())[key] as { state: { byInstance: Record<string, Record<string, unknown>> } };
+
+  it("pads a calendar anchor written with a zero-based month, keeping the rest", async () => {
+    await chrome.storage.local.set(
+      calendarBlob({ listAnchorKey: "2026-7-29", listAnchorSetOn: "2026-7-29", lookaheadDays: 14 }),
+    );
+
+    await upgradeProfile();
+
+    expect((await read("lux:widget:calendar")).state.byInstance.one).toEqual({
+      listAnchorKey: "2026-08-29",
+      listAnchorSetOn: "2026-08-29",
+      lookaheadDays: 14,
+    });
+  });
+
+  it("leaves an anchor that is already padded alone, however often it runs", async () => {
+    await chrome.storage.local.set(
+      calendarBlob({ listAnchorKey: "2026-08-29", listAnchorSetOn: "2026-08-29" }),
+    );
+
+    await upgradeProfile();
+    await chrome.storage.local.set({ "lux:profile": { version: 3 } });
+    await upgradeProfile();
+
+    expect((await read("lux:widget:calendar")).state.byInstance.one).toEqual({
+      listAnchorKey: "2026-08-29",
+      listAnchorSetOn: "2026-08-29",
+    });
+  });
+
+  it("turns the old stocks show/hide flag into the index rail it now means", async () => {
+    await chrome.storage.local.set({
+      "lux:widget:stocks": {
+        state: {
+          byInstance: {
+            shown: { showIndices: true, indexSymbols: [] },
+            picked: { showIndices: true, indexSymbols: ["^VIX"] },
+            hidden: { showIndices: false, indexSymbols: [] },
+          },
+        },
+        version: 1,
+      },
+    });
+
+    await upgradeProfile();
+    const { byInstance } = (await read("lux:widget:stocks")).state;
+
+    expect(byInstance.shown).toEqual({ indexSymbols: ["^GSPC", "^IXIC", "^DJI"] });
+    expect(byInstance.picked).toEqual({ indexSymbols: ["^VIX"] });
+    expect(byInstance.hidden).toEqual({ indexSymbols: [] });
+  });
+
+  it("renames the account stamp to what it has always recorded", async () => {
+    await chrome.storage.local.set({
+      "lux:integrations": {
+        accounts: {
+          "spotify-1": {
+            id: "spotify-1",
+            providerId: "spotify",
+            lastSyncedAt: "2026-08-01T00:00:00.000Z",
+          },
+        },
+      },
+    });
+
+    await upgradeProfile();
+    const stored = (await all())["lux:integrations"] as {
+      accounts: Record<string, Record<string, unknown>>;
+    };
+
+    expect(stored.accounts["spotify-1"]).toEqual({
+      id: "spotify-1",
+      providerId: "spotify",
+      lastAuthorizedAt: "2026-08-01T00:00:00.000Z",
+    });
+  });
+});
+
 describe("when the ledger cannot finish", () => {
   it("never leaves stores waiting when the ledger itself fails", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});

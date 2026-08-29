@@ -63,6 +63,7 @@ export type WidgetPlugin = {
   brandIcon?: boolean;
   defaultLayout: { w: number; h: number; minW: number; minH: number; maxW: number; maxH: number };
   component: ComponentType<WidgetContentProps>;
+  clearInstance: (instanceId: string) => void;
   configComponent?: ComponentType;
   statusComponent?: ComponentType;
   headerActionComponent?: ComponentType;

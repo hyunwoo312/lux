@@ -15,6 +15,7 @@ export const stocksPlugin: WidgetPlugin = {
   icon: ChartCandlestick,
   defaultLayout: { w: 6, h: 6, minW: 6, minH: 6, maxW: 14, maxH: 14 },
   component: StocksWidget,
+  clearInstance: (instanceId) => useStocksStore.getState().removeInstance(instanceId),
   configComponent: StocksConfig,
   statusComponent: StocksSearch,
   headerActionComponent: StocksHeaderActions,

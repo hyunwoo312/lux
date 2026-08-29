@@ -5,7 +5,8 @@ import { ContributionsStats } from "@/widgets/github/components/ContributionsSta
 import { InboxList } from "@/widgets/github/components/inbox/InboxList";
 import { ReleaseList } from "@/widgets/github/components/ReleasesView";
 import { buildContributions } from "@/widgets/github/lib/contributions";
-import { heatmapMetrics, localDayKey } from "@/widgets/github/lib/heatmap";
+import { localDayKey } from "@/lib/clock";
+import { heatmapMetrics } from "@/widgets/github/lib/heatmap";
 import { useGithub } from "@/widgets/github/useGithubStore";
 import type {
   ContributionDay,

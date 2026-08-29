@@ -25,7 +25,7 @@ export const integrationAccountSchema = z.object({
   status: integrationAccountStatusSchema,
   token: integrationTokenSchema.optional(),
   connectedAt: z.string().datetime({ offset: true }),
-  lastSyncedAt: z.string().datetime({ offset: true }).optional(),
+  lastAuthorizedAt: z.string().datetime({ offset: true }).optional(),
   lastError: z.string().max(240).optional(),
 });
 export type IntegrationAccount = z.infer<typeof integrationAccountSchema>;

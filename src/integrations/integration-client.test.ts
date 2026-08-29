@@ -120,6 +120,24 @@ describe("refreshing a Spotify token", () => {
     expect(account?.token?.accessToken).toBe("stale-access-token");
   });
 
+  it("refreshes once when two requests find the token expired at the same time", async () => {
+    let tokenRequests = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        if (!String(input).includes("accounts.spotify.com")) {
+          return new Response("{}", { status: 200 });
+        }
+        tokenRequests += 1;
+        return tokenResponse();
+      }),
+    );
+
+    await Promise.all([integrationFetch("spotify", API_URL), integrationFetch("spotify", API_URL)]);
+
+    expect(tokenRequests).toBe(1);
+  });
+
   it("refreshes and stores the rotated token on success", async () => {
     vi.stubGlobal(
       "fetch",

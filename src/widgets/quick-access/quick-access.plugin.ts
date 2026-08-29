@@ -16,6 +16,7 @@ export const quickAccessPlugin: WidgetPlugin = {
   icon: MousePointer2,
   defaultLayout: { w: 6, h: 6, minW: 6, minH: 6, maxW: 12, maxH: 12 },
   component: QuickAccessWidget,
+  clearInstance: (instanceId) => useQuickAccessStore.getState().removeInstance(instanceId),
   configComponent: QuickAccessConfig,
   statusComponent: QuickAccessTabs,
   headerActionComponent: QuickAccessHeaderActions,

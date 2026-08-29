@@ -12,14 +12,13 @@ const MORPH_BACKSTOP_MS = 1200;
 
 function DropMorphGhost({ morph, onDone }: { morph: DropMorph; onDone: () => void }) {
   const reduced = useReducedMotion();
+  const Icon = getWidgetPlugin(morph.type).icon;
 
   useEffect(() => {
     const timer = window.setTimeout(onDone, MORPH_BACKSTOP_MS);
     return () => window.clearTimeout(timer);
   }, [onDone]);
 
-  const plugin = getWidgetPlugin(morph.type);
-  const Icon = plugin?.icon;
   return (
     <motion.div
       initial={{
@@ -45,7 +44,7 @@ function DropMorphGhost({ morph, onDone }: { morph: DropMorph; onDone: () => voi
         [&_svg]:size-7
       "
     >
-      {Icon && <Icon />}
+      <Icon />
     </motion.div>
   );
 }
@@ -71,7 +70,6 @@ export function WidgetDragOverlay() {
 
   if (!type) return morph === null ? null : createPortal(morph, document.body);
   const plugin = getWidgetPlugin(type);
-  if (!plugin) return null;
   const Icon = plugin.icon;
 
   let placeholder: ReactNode = null;

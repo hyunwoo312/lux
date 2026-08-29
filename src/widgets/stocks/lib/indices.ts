@@ -21,8 +21,6 @@ export const INDEX_CATALOGUE: { symbol: string; label: string }[] = [
   { symbol: "ETH-USD", label: "Ethereum" },
 ];
 
-export const DEFAULT_INDICES = ["^GSPC", "^IXIC", "^DJI"];
-
 const BY_SYMBOL = new Map(INDEX_CATALOGUE.map((index) => [index.symbol, index]));
 
 export function indexLabel(symbol: string): string {

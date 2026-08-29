@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { localDayKey } from "@/lib/clock";
 import { cn } from "@/lib/utils";
 import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { ConfigSegmented } from "@/components/config/WidgetConfig";
 import { WeekdayHeader } from "@/widgets/calendar/components/WeekdayHeader";
 import {
   addDays,
-  getDateKey,
   getMonthGridDays,
   getMonthOffset,
   startOfDay,
@@ -57,7 +57,7 @@ function MiniMonth({ month, anchorTime, endTime, onSelect }: MiniMonthProps) {
           const isEnd = time === endTime;
           return (
             <button
-              key={getDateKey(day)}
+              key={localDayKey(day)}
               type="button"
               aria-label={fullDateFormatter.format(day)}
               aria-pressed={isStart}

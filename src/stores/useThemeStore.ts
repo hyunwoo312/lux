@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import {
   applyTheme,
+  DEFAULT_MODE,
   getStoredMode,
   resolveTheme,
   transitionThemeClass,
@@ -15,6 +16,7 @@ type ThemeState = {
   isPersisted: boolean;
   setMode: (mode: ThemeMode) => void;
   toggle: () => void;
+  reset: () => void;
 };
 
 const initialMode = getStoredMode();
@@ -29,6 +31,9 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   toggle: () => {
     const next: ThemeMode = get().theme === "dark" ? "light" : "dark";
     set({ mode: next, ...applyTheme(next) });
+  },
+  reset: () => {
+    set({ mode: DEFAULT_MODE, ...applyTheme(DEFAULT_MODE) });
   },
 }));
 

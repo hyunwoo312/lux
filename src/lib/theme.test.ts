@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { DEFAULT_MODE } from "@/lib/theme";
 
 const preface = readFileSync(
   fileURLToPath(new URL("../../public/theme-init.js", import.meta.url)),
@@ -14,10 +15,6 @@ describe("the pre-paint theme preface", () => {
   });
 
   it("falls back to the same theme the app would choose", () => {
-    const themeModule = readFileSync(fileURLToPath(new URL("./theme.ts", import.meta.url)), "utf8");
-    const fallback = /const DEFAULT_MODE: ThemeMode = "(\w+)"/.exec(themeModule)?.[1];
-
-    expect(fallback).toBeDefined();
-    expect(preface).toContain(`mode = "${fallback}"`);
+    expect(preface).toContain(`mode = "${DEFAULT_MODE}"`);
   });
 });

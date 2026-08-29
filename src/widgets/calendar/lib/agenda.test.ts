@@ -113,7 +113,7 @@ describe("getEventsByDate", () => {
       }),
     ]);
 
-    expect([...byDate.keys()]).toEqual(["2026-5-20", "2026-5-21", "2026-5-22"]);
+    expect([...byDate.keys()]).toEqual(["2026-06-20", "2026-06-21", "2026-06-22"]);
   });
 
   it("groups same-day events together rather than replacing one another", () => {
@@ -122,7 +122,7 @@ describe("getEventsByDate", () => {
       createEvent({ id: "b", startsAt: localAt(20, 14), endsAt: localAt(20, 15) }),
     ]);
 
-    expect(byDate.get("2026-5-20")?.map((event) => event.id)).toEqual(["a", "b"]);
+    expect(byDate.get("2026-06-20")?.map((event) => event.id)).toEqual(["a", "b"]);
   });
 });
 

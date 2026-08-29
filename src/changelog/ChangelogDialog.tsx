@@ -49,11 +49,7 @@ export function ChangelogDialog({ open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        layout="flush"
-        showClose={false}
-        className="h-[90dvh] w-[min(46rem,calc(100vw-2rem))]"
-      >
+      <DialogContent layout="flush" showClose={false} width="lg" className="h-[90dvh]">
         <div className="flex min-h-0 flex-1">
           <nav aria-label="Releases" className={cn(DIALOG_RAIL, "w-52")}>
             <p className={cn(TYPE.eyebrow, "mx-2 px-2.5 pt-5 pb-3")}>Release history</p>

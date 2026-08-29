@@ -1,6 +1,15 @@
 import { z } from "zod";
 
-export type OpenBehavior = "currentTab" | "newTab";
+const OPEN_BEHAVIORS = ["currentTab", "newTab"] as const;
+
+export type OpenBehavior = (typeof OPEN_BEHAVIORS)[number];
+
+export const openBehaviorSchema = z.enum(OPEN_BEHAVIORS).catch("currentTab");
+
+export const OPEN_BEHAVIOR_OPTIONS: { value: OpenBehavior; label: string }[] = [
+  { value: "currentTab", label: "This tab" },
+  { value: "newTab", label: "New tab" },
+];
 
 const OPENABLE_SCHEMES = new Set(["http:", "https:"]);
 

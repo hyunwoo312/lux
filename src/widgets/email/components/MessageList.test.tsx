@@ -1,8 +1,19 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MessageList } from "@/widgets/email/components/MessageList";
 import type { MailMessage } from "@/widgets/email/types";
+
+const NOON = new Date("2026-01-15T12:00:00");
+
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(NOON);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 const hoursAgo = (hours: number) => new Date(Date.now() - hours * 3_600_000).toISOString();
 

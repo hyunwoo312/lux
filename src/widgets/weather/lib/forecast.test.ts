@@ -3,7 +3,7 @@ import {
   findImminentPrecip,
   hourlyTicks,
   forecastVisibility,
-  formatClock,
+  formatIsoClock,
   formatHour,
   formatTemperature,
   formatWeekday,
@@ -103,15 +103,15 @@ describe("formatters", () => {
   });
 
   it("formats clock times with minutes in 12-hour time", () => {
-    expect(formatClock("2026-06-25T06:04", true)).toBe("6:04 AM");
-    expect(formatClock("2026-06-25T00:30", true)).toBe("12:30 AM");
-    expect(formatClock("2026-06-25T20:09", true)).toBe("8:09 PM");
+    expect(formatIsoClock("2026-06-25T06:04", true)).toBe("6:04 AM");
+    expect(formatIsoClock("2026-06-25T00:30", true)).toBe("12:30 AM");
+    expect(formatIsoClock("2026-06-25T20:09", true)).toBe("8:09 PM");
   });
 
   it("formats clock times with minutes in 24-hour time", () => {
-    expect(formatClock("2026-06-25T06:04", false)).toBe("06:04");
-    expect(formatClock("2026-06-25T00:30", false)).toBe("00:30");
-    expect(formatClock("2026-06-25T20:09", false)).toBe("20:09");
+    expect(formatIsoClock("2026-06-25T06:04", false)).toBe("06:04");
+    expect(formatIsoClock("2026-06-25T00:30", false)).toBe("00:30");
+    expect(formatIsoClock("2026-06-25T20:09", false)).toBe("20:09");
   });
 
   it("maps wind bearings to the nearest compass point", () => {

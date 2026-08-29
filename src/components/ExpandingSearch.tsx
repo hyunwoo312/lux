@@ -48,7 +48,11 @@ export function ExpandingSearch({
   const setRoot = useCallback(
     (node: HTMLDivElement | null) => {
       rootRef.current = node;
-      sizeRef(node);
+      const disconnect = sizeRef(node);
+      return () => {
+        disconnect?.();
+        rootRef.current = null;
+      };
     },
     [sizeRef],
   );

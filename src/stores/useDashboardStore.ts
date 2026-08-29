@@ -10,7 +10,7 @@ import {
   findNearestOpenPosition,
   resolveLayoutCollisions,
 } from "@/widgets/core/layout-engine";
-import { gridColumns } from "@/widgets/core/grid";
+import { boardWidth, gridColumns } from "@/widgets/core/grid";
 import { pruneInstance } from "@/widgets/core/instanceCleanup";
 import type { WidgetInstance, WidgetPlugin, WidgetType } from "@/widgets/core/types";
 import { WIDGET_TYPES } from "@/widgets/core/types";
@@ -18,8 +18,6 @@ import { getWidgetPlugin } from "@/widgets/registry";
 import { showToast } from "@/stores/useToastStore";
 
 const DEFAULT_COLUMNS = 12;
-const CONTENT_MAX_WIDTH = 2400;
-const CONTENT_INSET = 100;
 
 const STARTER_ROWS: WidgetType[][] = [
   ["quickAccess", "weather"],
@@ -34,8 +32,7 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function starterColumns(): number {
-  const contentWidth = Math.min(CONTENT_MAX_WIDTH, window.innerWidth - CONTENT_INSET);
-  return gridColumns(contentWidth);
+  return gridColumns(boardWidth(window.innerWidth));
 }
 
 function starterTiles(columns: number): { type: WidgetType; x: number; y: number; w: number }[] {
@@ -113,9 +110,9 @@ function reconcile(parsed: z.infer<typeof persistedSchema>): ReconciledDashboard
 
   for (const widget of widgets) {
     if (placed.has(widget.id)) continue;
-    const plugin = getWidgetPlugin(widget.type);
-    if (!plugin) continue;
-    layout.push(placeLayoutItem(layout, DEFAULT_COLUMNS, widget.id, plugin, undefined));
+    layout.push(
+      placeLayoutItem(layout, DEFAULT_COLUMNS, widget.id, getWidgetPlugin(widget.type), undefined),
+    );
   }
 
   return { widgets, layout, pendingRemoval: parsed.pendingRemoval ?? null };
@@ -164,7 +161,6 @@ export const useDashboardStore = create<DashboardState>()(
       addWidget: (type, position) =>
         set((state) => {
           const plugin = getWidgetPlugin(type);
-          if (!plugin) return state;
           const id = createInstanceId(type);
           const item = placeLayoutItem(state.layout, state.columns, id, plugin, position);
           return {
@@ -187,8 +183,8 @@ export const useDashboardStore = create<DashboardState>()(
         const plugin = getWidgetPlugin(instance.type);
         showToast({
           key: instance.id,
-          message: `${plugin?.name ?? "Widget"} removed`,
-          note: plugin?.removalNote?.(instance.id) ?? undefined,
+          message: `${plugin.name} removed`,
+          note: plugin.removalNote?.(instance.id) ?? undefined,
           action: { kind: "undo", run: () => get().undoRemove() },
           onExpire: () => get().settlePendingRemoval(instance.id),
         });
@@ -209,7 +205,7 @@ export const useDashboardStore = create<DashboardState>()(
         const pending = get().pendingRemoval;
         if (!pending) return;
         if (id !== undefined && pending.instance.id !== id) return;
-        pruneInstance(pending.instance.id);
+        pruneInstance(pending.instance);
         set({ pendingRemoval: null });
       },
       setLayout: (layout) => set({ layout }),
@@ -226,7 +222,6 @@ export const useDashboardStore = create<DashboardState>()(
           const raw: LayoutItem[] = [];
           for (const tile of starterTiles(cols)) {
             const plugin = getWidgetPlugin(tile.type);
-            if (!plugin) continue;
             const id = createInstanceId(tile.type);
             const { minW, minH, maxW, maxH } = plugin.defaultLayout;
             const w = clamp(tile.w, minW, maxW);

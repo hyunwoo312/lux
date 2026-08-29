@@ -85,7 +85,7 @@ export function AccountsTab() {
                 account={account}
                 busy={busy}
                 connectDisabled={connectDisabled}
-                brand={isSpotify ? getWidgetPlugin("spotify")?.tint : undefined}
+                brand={isSpotify ? getWidgetPlugin("spotify").tint : undefined}
                 onConnect={() => run(provider.id, "connecting", () => connect(provider.id))}
                 onDisconnect={() => setConfirmDisconnect(provider.id)}
               />

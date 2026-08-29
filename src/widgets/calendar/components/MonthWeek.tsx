@@ -1,12 +1,12 @@
 import { enterTween, springCrisp } from "@/lib/motion";
 import type { MouseEvent } from "react";
 import { motion, useReducedMotion } from "motion/react";
+import { localDayKey } from "@/lib/clock";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/tooltip";
 import { MonthDayCell } from "@/widgets/calendar/components/MonthDayCell";
 import { getEventColor, getReadableTextColor } from "@/widgets/calendar/lib/colors";
 import { getEventTitle } from "@/widgets/calendar/lib/agenda";
-import { getDateKey } from "@/widgets/calendar/lib/dates";
 import {
   countHiddenBars,
   DAY_NUMBER_HEIGHT,
@@ -157,7 +157,7 @@ export function MonthWeek({ week, eventsByDate, colors, metrics, collapsed }: Mo
     mode === "week" ? selectDay(instanceId, date) : focusDay(instanceId, date);
   const selectedCol =
     mode === "week" && selectedDay
-      ? week.days.findIndex((day) => day.dateKey === getDateKey(selectedDay))
+      ? week.days.findIndex((day) => day.dateKey === localDayKey(selectedDay))
       : -1;
 
   const { cellWidth } = metrics;

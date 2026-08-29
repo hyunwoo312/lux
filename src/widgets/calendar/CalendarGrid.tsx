@@ -2,13 +2,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Variants } from "motion/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useElementSize } from "@/hooks/useElementSize";
+import { localDayKey } from "@/lib/clock";
 import { useNow } from "@/hooks/useNow";
 import { DayPreview } from "@/widgets/calendar/components/DayPreview";
 import { MonthControls } from "@/widgets/calendar/components/MonthControls";
 import { MonthWeek } from "@/widgets/calendar/components/MonthWeek";
 import { WeekdayHeader } from "@/widgets/calendar/components/WeekdayHeader";
 import { getEventsByDate } from "@/widgets/calendar/lib/agenda";
-import { getDateKey, getMonthGridDays, startOfWeek } from "@/widgets/calendar/lib/dates";
+import { getMonthGridDays, startOfWeek } from "@/widgets/calendar/lib/dates";
 import { computeMonthLayout, getMonthMetrics } from "@/widgets/calendar/lib/month-layout";
 import { enterTween, exitTween, springCrisp } from "@/lib/motion";
 import { useCalendar } from "@/widgets/calendar/useCalendarStore";
@@ -28,7 +29,7 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
   const [hover, setHover] = useState<{ row: number; col: number } | null>(null);
 
   const now = useNow();
-  const todayKey = getDateKey(now);
+  const todayKey = localDayKey(now);
 
   const monthDays = useMemo(() => getMonthGridDays(visibleMonth), [visibleMonth]);
   const layout = useMemo(
@@ -57,7 +58,7 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
   const { rowHeight, cellWidth } = metrics;
   const cellProps = { eventsByDate, colors, metrics };
 
-  const selectedKey = selectedDay ? getDateKey(selectedDay) : null;
+  const selectedKey = selectedDay ? localDayKey(selectedDay) : null;
   const focusedWeek = useMemo(() => {
     if (mode !== "week" || !selectedDay || !selectedKey) return null;
     const inGrid = layout.weeks.find((week) =>

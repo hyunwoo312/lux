@@ -6,6 +6,12 @@ import { changeTone } from "@/widgets/stocks/lib/quote";
 import type { ChangeDirection } from "@/widgets/stocks/lib/quote";
 import type { PricePoint } from "@/widgets/stocks/types";
 
+const TREND_LABEL: Record<ChangeDirection, string> = {
+  up: "Price trending up",
+  down: "Price trending down",
+  flat: "Price flat",
+};
+
 type SparklineProps = {
   points: PricePoint[];
   direction: ChangeDirection;
@@ -26,9 +32,13 @@ export function Sparkline({ points, direction, baseline, className }: SparklineP
   const baselineY = geometry && baseline != null ? geometry.yFor(baseline) : null;
 
   return (
-    <span ref={ref} className={cn("relative block", className)} aria-hidden>
+    <span ref={ref} className={cn("relative block", className)}>
       {geometry && last ? (
-        <svg className={cn("absolute inset-0 size-full", changeTone(direction))}>
+        <svg
+          className={cn("absolute inset-0 size-full", changeTone(direction))}
+          role="img"
+          aria-label={TREND_LABEL[direction]}
+        >
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="currentColor" stopOpacity={0.24} />

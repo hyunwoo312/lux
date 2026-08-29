@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useBoardWidth } from "@/app/useBoardWidth";
@@ -19,21 +19,7 @@ import { takePendingPermissionHighlight } from "@/lib/permissions";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { useSettingsStore } from "@/settings";
 import { sweepStaleResourceCaches } from "@/widgets/core/resourceCacheSweep";
-
-type Hydratable = {
-  persist: { hasHydrated: () => boolean; onFinishHydration: (fn: () => void) => () => void };
-};
-
-function useHydrated(store: Hydratable): boolean {
-  const [hydrated, setHydrated] = useState(() => store.persist.hasHydrated());
-
-  useEffect(() => {
-    if (hydrated) return;
-    return store.persist.onFinishHydration(() => setHydrated(true));
-  }, [store, hydrated]);
-
-  return hydrated;
-}
+import { usePersistHydrated } from "@/hooks/usePersistHydrated";
 
 export function App() {
   useGlobalShortcuts();
@@ -41,7 +27,7 @@ export function App() {
   const wallpaperSource = useWallpaperStore((s) => s.source);
   const isPattern = wallpaperSource === "generated";
   const { imageUrl, frostUrl } = useActiveWallpaper(!isPattern);
-  const boardReady = useHydrated(useDashboardStore);
+  const boardReady = usePersistHydrated(useDashboardStore);
   const reduced = useReducedMotion();
 
   useEffect(() => {

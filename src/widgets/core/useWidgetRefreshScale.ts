@@ -11,17 +11,14 @@ export function useWidgetRefreshScale(): number {
 
 export type ScaledCadence = { staleMs: number; intervalMs: number | undefined };
 
-export function useScaledCadence(
-  intervalMs: number | undefined,
-  fallbackStaleMs: number,
-): ScaledCadence {
+export function useScaledCadence(staleMs: number, intervalMs: number | undefined): ScaledCadence {
   const scale = useWidgetRefreshScale();
 
   return useMemo(
     () => ({
-      staleMs: (intervalMs ?? fallbackStaleMs) * scale,
+      staleMs: staleMs * scale,
       intervalMs: intervalMs === undefined ? undefined : intervalMs * scale,
     }),
-    [intervalMs, fallbackStaleMs, scale],
+    [staleMs, intervalMs, scale],
   );
 }

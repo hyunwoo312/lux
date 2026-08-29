@@ -2,12 +2,12 @@ import type { CSSProperties } from "react";
 import { useCallback } from "react";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { closestCenter, DndContext } from "@dnd-kit/core";
-import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable";
+import { rectSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ImageIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/tooltip";
-import { GRID_MODIFIERS, useSortableSensors } from "@/lib/dnd";
+import { GRID_MODIFIERS, moveById, useSortableSensors } from "@/lib/dnd";
 import { useAssetThumbUrl, type AssetStore, type MediaImageItem } from "@/lib/asset-store";
 import { getMetadataLabel } from "@/lib/media-format";
 
@@ -28,13 +28,10 @@ export function MultiImageItems({
 }: MultiImageItemsProps) {
   const sensors = useSortableSensors();
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = items.findIndex((item) => item.assetId === active.id);
-    const newIndex = items.findIndex((item) => item.assetId === over.id);
-    if (oldIndex === -1 || newIndex === -1) return;
-    onReorder(arrayMove(items, oldIndex, newIndex));
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over) return;
+    const reordered = moveById(items, String(active.id), String(over.id), (item) => item.assetId);
+    if (reordered) onReorder(reordered);
   };
 
   return (

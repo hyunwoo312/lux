@@ -1,12 +1,16 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
-import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
+import {
+  looksLikeLegacySingleton,
+  mergePersisted,
+  tolerantArray,
+  tolerantRecord,
+} from "@/lib/persist";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
-import type { OpenBehavior } from "@/lib/open-url";
+import { openBehaviorSchema, type OpenBehavior } from "@/lib/open-url";
 import { stalePolledResource } from "@/widgets/core/usePolledResource";
 import {
   bumpSyncNonce,
@@ -69,7 +73,7 @@ const configSchema = z.object({
   showDrafts: z.boolean().catch(true),
   inboxFilter: z.enum(INBOX_FILTERS).catch("all"),
   collapsedRepos: tolerantArray(z.string()),
-  openBehavior: z.enum(["currentTab", "newTab"]).catch("currentTab"),
+  openBehavior: openBehaviorSchema,
 });
 
 const persistedSchema = z.object({
@@ -79,11 +83,6 @@ const persistedSchema = z.object({
 });
 
 const LEGACY_KEYS = ["view", "showPrivate", "openBehavior", "contributions"] as const;
-
-function looksLikeLegacySingleton(persisted: unknown): boolean {
-  if (!persisted || typeof persisted !== "object") return false;
-  return LEGACY_KEYS.some((key) => key in persisted);
-}
 
 const gatedStorage = createGatedChromeStorage();
 
@@ -151,7 +150,7 @@ export const useGithubStore = create<GithubStoreState>()(
       }),
       migrate: (persisted, version) => {
         if (version >= 2) return persisted;
-        if (!looksLikeLegacySingleton(persisted)) return { byInstance: {} };
+        if (!looksLikeLegacySingleton(persisted, LEGACY_KEYS)) return { byInstance: {} };
         const legacy = configSchema.safeParse(persisted);
         return { byInstance: legacy.success ? { github: legacy.data } : {} };
       },
@@ -165,7 +164,5 @@ export const useGithubStore = create<GithubStoreState>()(
     },
   ),
 );
-
-registerInstanceCleanup((instanceId) => useGithubStore.getState().removeInstance(instanceId));
 
 export const useGithub = createInstanceSelector(useGithubStore, DEFAULT_DATA);

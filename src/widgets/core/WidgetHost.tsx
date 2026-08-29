@@ -4,7 +4,7 @@ import { useReducedMotion } from "motion/react";
 import { BaseWidget } from "@/widgets/core/BaseWidget";
 import { WidgetErrorBoundary } from "@/widgets/core/WidgetErrorBoundary";
 import { CommonWidgetConfig } from "@/widgets/core/CommonWidgetConfig";
-import { ConnectOverlay } from "@/components/ConnectOverlay";
+import { ConnectOverlay } from "@/widgets/core/ConnectOverlay";
 import { WidgetConfig } from "@/components/config/WidgetConfig";
 import type { WidgetInstance } from "@/widgets/core/types";
 import { useWidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
@@ -31,9 +31,9 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
   const [pulse, setPulse] = useState(isLastAdded);
   const containerRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
-  const useBare = plugin?.frame?.useBare ?? useNoBare;
+  const useBare = plugin.frame?.useBare ?? useNoBare;
   const bare = useBare(instance.id);
-  const useLock = plugin?.useLock ?? useNoLock;
+  const useLock = plugin.useLock ?? useNoLock;
   const lock = useLock(instance.id);
 
   useEffect(() => {
@@ -49,8 +49,6 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
     }, 1600);
     return () => window.clearTimeout(timer);
   }, [pulse, reduced, instance.id]);
-
-  if (!plugin) return null;
 
   const Widget = plugin.component;
   const ConfigComponent = plugin.configComponent;

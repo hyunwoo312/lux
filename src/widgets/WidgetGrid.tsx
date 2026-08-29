@@ -136,9 +136,8 @@ export function WidgetGrid() {
     const typeById = new Map(widgets.map((widget) => [widget.id, widget.type]));
     return layout.map((item) => {
       const type = typeById.get(item.i);
-      const plugin = type ? getWidgetPlugin(type) : undefined;
-      if (!plugin) return item;
-      const { minW, minH, maxW, maxH } = plugin.defaultLayout;
+      if (!type) return item;
+      const { minW, minH, maxW, maxH } = getWidgetPlugin(type).defaultLayout;
       return {
         ...item,
         minW,
@@ -156,9 +155,7 @@ export function WidgetGrid() {
   );
   const previewPlacement = useMemo(() => {
     if (!previewType) return null;
-    const plugin = getWidgetPlugin(previewType);
-    if (!plugin) return null;
-    const { w, h } = plugin.defaultLayout;
+    const { w, h } = getWidgetPlugin(previewType).defaultLayout;
     const spot = findFirstOpenPosition({ i: "__preview__", x: 0, y: 0, w, h }, displayLayout, cols);
     return { x: spot.x, y: spot.y, w, h };
   }, [previewType, displayLayout, cols]);

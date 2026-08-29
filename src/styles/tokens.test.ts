@@ -17,6 +17,7 @@ import { ACCENT_PRESETS } from "@/widgets/core/accent";
 import { cn } from "@/lib/utils";
 import { TYPE_SCALE } from "@/lib/type";
 import { sourceFiles, sourcePath } from "@/test/source-files";
+import * as motion from "@/lib/motion";
 
 const AA_TEXT = 4.5;
 const AA_UI = 3;
@@ -309,5 +310,33 @@ describe("colour tokens", () => {
     for (const { root } of THEMES) {
       expect(rawToken(root, "focus-gap")).toMatch(/^oklch\(/);
     }
+  });
+});
+
+describe("motion tokens", () => {
+  it("keeps every easing and duration it shares with CSS identical on both sides", () => {
+    const declared = new Set(
+      [...css.matchAll(/--((?:ease|duration)-[a-z-]+):/g)].map((m) => m[1] as string),
+    );
+    const shared: string[] = [];
+    const forked: string[] = [];
+
+    function compare(name: string, expected: string): void {
+      if (!declared.has(name)) return;
+      shared.push(name);
+      const actual = rawToken("@theme inline", name);
+      if (actual !== expected) forked.push(`--${name}: ${actual} in CSS, ${expected} in motion.ts`);
+    }
+
+    for (const [key, curve] of Object.entries(motion)) {
+      if (!key.startsWith("EASE_") || !Array.isArray(curve)) continue;
+      compare(key.toLowerCase().replaceAll("_", "-"), `cubic-bezier(${curve.join(", ")})`);
+    }
+    for (const [step, seconds] of Object.entries(motion.DURATION)) {
+      compare(`duration-${step}`, `${Math.round(seconds * 1000)}ms`);
+    }
+
+    expect(forked).toEqual([]);
+    expect(shared.length, "nothing compared — the CSS scan is broken").toBeGreaterThan(0);
   });
 });

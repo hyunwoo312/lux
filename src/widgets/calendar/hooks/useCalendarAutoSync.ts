@@ -20,8 +20,7 @@ function oldestSyncedAt(instanceId: string): number {
   if (connected.length === 0) return Date.now();
   let oldest = Number.POSITIVE_INFINITY;
   for (const providerId of connected) {
-    const lastSyncedAt = data[providerId].lastSyncedAt;
-    oldest = Math.min(oldest, lastSyncedAt === undefined ? 0 : new Date(lastSyncedAt).getTime());
+    oldest = Math.min(oldest, data[providerId].lastSyncedAt ?? 0);
   }
   return oldest;
 }

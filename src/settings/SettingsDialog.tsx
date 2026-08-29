@@ -67,7 +67,8 @@ export function SettingsDialog() {
         showClose={false}
         onOpenAutoFocus={(event) => event.preventDefault()}
         layout="flush"
-        className="h-[90dvh] w-[min(52rem,calc(100vw-2rem))]"
+        width="xl"
+        className="h-[90dvh]"
       >
         <div className="flex min-h-0 flex-1">
           <SettingsSidebar open={open} />

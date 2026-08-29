@@ -23,12 +23,13 @@ export function SportsConfig() {
       <WidgetConfigGroup label="Scores">
         <WidgetConfigItem
           title="Show"
-          description="Which games appear in the list"
+          description="Which games appear in the list (at least one)"
           control={
             <ConfigMultiToggle
               label="Game states"
               values={states}
               options={STATE_OPTIONS}
+              minSelected={1}
               onChange={(next) => setStates(instanceId, next)}
             />
           }

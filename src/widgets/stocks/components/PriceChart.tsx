@@ -6,15 +6,34 @@ import { useElementSize } from "@/hooks/useElementSize";
 import { areaPath, chartGeometry, linePath } from "@/lib/chart";
 import { aggregateBars } from "@/widgets/stocks/lib/chart";
 import { tooltipLeft } from "@/widgets/stocks/lib/layout";
-import { changeTone, directionOf } from "@/widgets/stocks/lib/quote";
+import { changeOf, changeTone, directionOf } from "@/widgets/stocks/lib/quote";
 import type { ChangeDirection } from "@/widgets/stocks/lib/quote";
 import { formatChartTime, formatNumber, formatVolume } from "@/widgets/stocks/lib/format";
-import type { ChartStyle, Dividend, PriceBar, StockRange } from "@/widgets/stocks/types";
+import {
+  RANGE_LABEL,
+  type ChartStyle,
+  type Dividend,
+  type PriceBar,
+  type StockRange,
+} from "@/widgets/stocks/types";
 
 const MIN_CANDLE_SLOT = 4;
 const VOLUME_SHARE = 0.22;
 const VOLUME_MAX_HEIGHT = 44;
 const BAND_GAP = 6;
+
+function chartSummary(bars: PriceBar[], range: StockRange, priceHint: number): string {
+  const first = bars[0];
+  const last = bars.at(-1);
+  const span = `Price over ${RANGE_LABEL[range]}`;
+  if (!first || !last) return span;
+  const { change, percent } = changeOf(last.close, first.close);
+  if (change === 0) return `${span}, unchanged at ${formatNumber(last.close, priceHint)}`;
+  const move = `${directionOf(change)} ${Math.abs(percent).toFixed(2)}%`;
+  const from = formatNumber(first.close, priceHint);
+  const to = formatNumber(last.close, priceHint);
+  return `${span}, ${move}, from ${from} to ${to}`;
+}
 
 type PriceChartProps = {
   bars: PriceBar[];
@@ -98,7 +117,11 @@ export function PriceChart({
   return (
     <div ref={ref} className={cn("relative min-h-0", className)}>
       {geometry ? (
-        <svg className={cn("absolute inset-0 size-full", changeTone(direction))} aria-hidden>
+        <svg
+          className={cn("absolute inset-0 size-full", changeTone(direction))}
+          role="img"
+          aria-label={chartSummary(shown, range, priceHint)}
+        >
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="currentColor" stopOpacity={0.2} />

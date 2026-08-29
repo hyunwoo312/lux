@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RateLimitError } from "@/lib/net";
-import { addDays, getDateKey, startOfDay } from "@/widgets/calendar/lib/dates";
+import { localDayKey } from "@/lib/clock";
+import { addDays, startOfDay } from "@/widgets/calendar/lib/dates";
 import { MAX_CALENDAR_EVENTS } from "@/widgets/calendar/types";
 import { useIntegrationStore } from "@/integrations";
 import {
@@ -140,7 +141,7 @@ describe("useCalendarStore.sync", () => {
         calendars: [],
         enabledCalendarIds: [],
         failedCalendarIds: [],
-        lastSyncedAt: new Date().toISOString(),
+        lastSyncedAt: Date.now(),
       },
     });
 
@@ -381,7 +382,7 @@ describe("useCalendarStore.merge", () => {
   });
 
   it("keeps the sync stamp so a new tab reads the cache instead of refetching", () => {
-    const lastSyncedAt = new Date().toISOString();
+    const lastSyncedAt = Date.now();
     const merged = mergeInto({
       byInstance: {
         a: {
@@ -482,8 +483,8 @@ describe("the agenda anchor is scoped to the day it was chosen", () => {
   it("restores the date the user was looking at earlier the same day", () => {
     const chosen = addDays(today, 3);
     const merged = mergeInto({
-      listAnchorKey: getDateKey(chosen),
-      listAnchorSetOn: getDateKey(today),
+      listAnchorKey: localDayKey(chosen),
+      listAnchorSetOn: localDayKey(today),
     });
 
     expect(merged.byInstance["one"]?.listAnchor).toEqual(startOfDay(chosen));
@@ -491,8 +492,8 @@ describe("the agenda anchor is scoped to the day it was chosen", () => {
 
   it("falls back to today when the choice was made on an earlier day", () => {
     const merged = mergeInto({
-      listAnchorKey: getDateKey(addDays(today, 3)),
-      listAnchorSetOn: getDateKey(addDays(today, -1)),
+      listAnchorKey: localDayKey(addDays(today, 3)),
+      listAnchorSetOn: localDayKey(addDays(today, -1)),
     });
 
     expect(merged.byInstance["one"]?.listAnchor).toEqual(today);
@@ -506,6 +507,6 @@ describe("the agenda anchor is scoped to the day it was chosen", () => {
     useCalendarStore.setState({ byInstance: {} });
     useCalendarStore.getState().setListAnchor("one", addDays(today, 2));
 
-    expect(useCalendarStore.getState().byInstance["one"]?.listAnchorSetOn).toBe(getDateKey(today));
+    expect(useCalendarStore.getState().byInstance["one"]?.listAnchorSetOn).toBe(localDayKey(today));
   });
 });

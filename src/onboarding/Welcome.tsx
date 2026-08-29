@@ -21,10 +21,7 @@ export function Welcome() {
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && closeWelcome()}>
-      <DialogContent
-        onOpenAutoFocus={(event) => event.preventDefault()}
-        className="w-[min(28rem,calc(100vw-2rem))] p-6"
-      >
+      <DialogContent onOpenAutoFocus={(event) => event.preventDefault()} width="sm" className="p-6">
         <div className="flex flex-col">
           <motion.img
             src="/logo.svg"

@@ -3,7 +3,8 @@ import {
   getEventStartDate,
   isMultiDayEvent,
 } from "@/widgets/calendar/lib/agenda";
-import { getDateKey, GRID_LENGTH, startOfDay, WEEK_LENGTH } from "@/widgets/calendar/lib/dates";
+import { localDayKey } from "@/lib/clock";
+import { GRID_LENGTH, startOfDay, WEEK_LENGTH } from "@/widgets/calendar/lib/dates";
 import type { CalendarEvent } from "@/widgets/calendar/types";
 
 const DAY_MS = 86_400_000;
@@ -134,7 +135,7 @@ export function computeMonthLayout(
       const index = weekStart + column;
       const date = monthDays[index];
       if (!date) continue;
-      const dateKey = getDateKey(date);
+      const dateKey = localDayKey(date);
       days.push({
         date,
         dateKey,

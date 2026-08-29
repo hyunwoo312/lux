@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion, type TargetAndTransition } f
 import { ImageOff } from "lucide-react";
 import { clamp01, cn } from "@/lib/utils";
 import { StateMessage } from "@/components/StateMessage";
+import { ART_SCRIM } from "@/widgets/core/chromeStyles";
 import { useActiveImage } from "@/widgets/image/hooks/useActiveImage";
 import { type ImageBrightness, type ImageFit, type ImageTransition } from "@/widgets/image/types";
 import { useImage } from "@/widgets/image/useImageStore";
@@ -132,7 +133,7 @@ export function ImageBackdrop() {
         <div className={cn("absolute inset-0 z-10", BRIGHTNESS_OVERLAY[brightness])} aria-hidden />
       )}
       {caption && (
-        <div className="art-scrim absolute inset-x-0 bottom-0 z-20 px-3 py-1.5">
+        <div className={cn(ART_SCRIM, "z-20 px-3 py-1.5")}>
           <p className="line-clamp-2 text-center text-caption font-medium text-white">{caption}</p>
         </div>
       )}

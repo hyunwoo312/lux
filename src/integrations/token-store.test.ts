@@ -18,7 +18,7 @@ function createAccount(): IntegrationAccount {
     email: "ada@example.com",
     status: "connected",
     connectedAt: now,
-    lastSyncedAt: now,
+    lastAuthorizedAt: now,
     token: {
       accessToken: "secret-token",
       expiresAt: Date.now() + 3_600_000,

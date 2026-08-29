@@ -6,6 +6,7 @@ import { SpotifyStatus } from "@/widgets/spotify/SpotifyStatus";
 import { SpotifyHeaderActions } from "@/widgets/spotify/SpotifyHeaderActions";
 import { SpotifyBackdrop } from "@/widgets/spotify/components/SpotifyBackdrop";
 import { SPOTIFY_TINT } from "@/widgets/spotify/types";
+import { useSpotifyStore } from "@/widgets/spotify/useSpotifyStore";
 
 export const spotifyPlugin: WidgetPlugin = {
   type: "spotify",
@@ -16,6 +17,7 @@ export const spotifyPlugin: WidgetPlugin = {
   brandIcon: true,
   defaultLayout: { w: 8, h: 5, minW: 8, minH: 5, maxW: 14, maxH: 14 },
   component: SpotifyWidget,
+  clearInstance: (instanceId) => useSpotifyStore.getState().removeInstance(instanceId),
   configComponent: SpotifyConfig,
   statusComponent: SpotifyStatus,
   headerActionComponent: SpotifyHeaderActions,

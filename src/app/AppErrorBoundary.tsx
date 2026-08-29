@@ -7,6 +7,7 @@ import { panelVariants } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { exportSettings } from "@/lib/backup";
 import { remove } from "@/lib/storage";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 
 type AppErrorBoundaryProps = { children: ReactNode };
 type AppErrorBoundaryState = { detail: string | null };
@@ -124,23 +125,8 @@ function CrashCard({ detail }: { detail: string }) {
   );
 }
 
-type CopyStage = "idle" | "copied" | "failed";
-
 function CrashDetail({ detail }: { detail: string }) {
-  const [stage, setStage] = useState<CopyStage>("idle");
-
-  useEffect(() => {
-    if (stage !== "copied") return;
-    const timer = window.setTimeout(() => setStage("idle"), 2000);
-    return () => window.clearTimeout(timer);
-  }, [stage]);
-
-  const copyDetail = () => {
-    navigator.clipboard.writeText(detail).then(
-      () => setStage("copied"),
-      () => setStage("failed"),
-    );
-  };
+  const { status, copy } = useCopyToClipboard();
 
   return (
     <div className="mt-4 border-t pt-3">
@@ -148,15 +134,15 @@ function CrashDetail({ detail }: { detail: string }) {
         <span className="text-ink-3 text-micro font-medium tracking-wide uppercase">
           What went wrong
         </span>
-        <Button variant="ghost" onClick={copyDetail} aria-label="Copy error details">
-          {stage === "copied" ? <Check aria-hidden /> : <Copy aria-hidden />}
-          {stage === "copied" ? "Copied" : "Copy"}
+        <Button variant="ghost" onClick={() => copy(detail)} aria-label="Copy error details">
+          {status === "copied" ? <Check aria-hidden /> : <Copy aria-hidden />}
+          {status === "copied" ? "Copied" : "Copy"}
         </Button>
       </div>
       <pre className={cn(TYPE.rowMeta, "mt-1 max-h-32 overflow-auto whitespace-pre-wrap")}>
         {detail}
       </pre>
-      {stage === "failed" && (
+      {status === "failed" && (
         <p className="text-destructive mt-1 text-caption">
           Couldn't copy — select the text instead.
         </p>

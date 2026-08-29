@@ -9,7 +9,7 @@ import { submitFeedback } from "@/feedback/lib/submit";
 import { FeedbackForm } from "@/feedback/components/FeedbackForm";
 import { SentPanel } from "@/feedback/components/SentPanel";
 import { SendingPanel } from "@/feedback/components/SendingPanel";
-import { useMeasuredHeight } from "@/feedback/lib/useMeasuredHeight";
+import { useElementSize } from "@/hooks/useElementSize";
 import { messageHash, useFeedbackStore } from "@/feedback/useFeedbackStore";
 
 type Props = { open: boolean; onOpenChange: (open: boolean) => void };
@@ -54,7 +54,7 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [restored, setRestored] = useState(false);
   const diagnostics = useDiagnostics();
-  const [viewRef, viewHeight] = useMeasuredHeight<HTMLDivElement>();
+  const [viewRef, { height: viewHeight }] = useElementSize<HTMLDivElement>();
 
   useEffect(() => {
     if (!open) return;
@@ -106,16 +106,11 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
         onOpenChange(next);
       }}
     >
-      <DialogContent
-        layout="flush"
-        showClose={false}
-        dismissOnClickOutside={!inFlight}
-        className="w-[min(32.5rem,calc(100vw-2rem))]"
-      >
+      <DialogContent layout="flush" showClose={false} dismissOnClickOutside={!inFlight} width="md">
         <motion.div
           className="relative overflow-hidden"
           initial={false}
-          animate={{ height: viewHeight ?? "auto" }}
+          animate={{ height: viewHeight || "auto" }}
           transition={springSoft(reduced)}
         >
           <div ref={viewRef}>

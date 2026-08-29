@@ -14,11 +14,9 @@ import {
   WidgetConfigSubItem,
 } from "@/components/config/WidgetConfig";
 import { useCalendarConnection } from "@/widgets/calendar/hooks/useCalendarConnection";
+import { syncCooldownMessage, syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
 import {
-  getCalendarSyncCooldownMessage,
-  isCalendarSyncCoolingDown,
-} from "@/widgets/calendar/lib/cooldown";
-import {
+  CALENDAR_SYNC_COOLDOWN_MS,
   REFRESH_INTERVAL_OPTIONS,
   useCalendar,
   useCalendarStore,
@@ -45,8 +43,8 @@ const SOURCE_OPTIONS: { value: CalendarProviderId; label: string }[] = [
   { value: "microsoft", label: "Outlook" },
 ];
 
-function formatLastSynced(value: string | undefined, hour12: boolean): string | null {
-  if (!value) return null;
+function formatLastSynced(value: number | undefined, hour12: boolean): string | null {
+  if (value === undefined) return null;
   const date = new Date(value);
   const day = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(date);
   return `Last synced ${day}, ${formatClock(date, hour12)}`;
@@ -76,8 +74,11 @@ function CalendarProviderConfig({
   const [now, setNow] = useState(() => Date.now());
   const connected = Boolean(account);
   const needsReconnect = account?.status === "needsReconnect";
-  const coolingDown =
-    connected && !needsReconnect && isCalendarSyncCoolingDown(settings.lastSyncedAt, now);
+  const cooldownRemainingMs =
+    connected && !needsReconnect
+      ? syncCooldownRemainingMs(settings.lastSyncedAt, CALENDAR_SYNC_COOLDOWN_MS, now)
+      : 0;
+  const coolingDown = cooldownRemainingMs > 0;
 
   useEffect(() => {
     if (!coolingDown) return;
@@ -109,9 +110,7 @@ function CalendarProviderConfig({
   }
 
   const syncDisabled = isSyncing || coolingDown;
-  const syncTooltip = coolingDown
-    ? getCalendarSyncCooldownMessage(settings.lastSyncedAt, now)
-    : "Sync now";
+  const syncTooltip = coolingDown ? syncCooldownMessage(cooldownRemainingMs) : "Sync now";
   const lastSyncedLabel = formatLastSynced(settings.lastSyncedAt, !clock24h);
   const providerNote = getProviderNote(
     settings.calendars.length,

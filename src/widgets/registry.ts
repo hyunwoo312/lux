@@ -33,6 +33,6 @@ export const widgetPlugins: WidgetPlugin[] = Object.values(plugins).sort((a, b) 
   a.name.localeCompare(b.name),
 );
 
-export function getWidgetPlugin(type: WidgetType): WidgetPlugin | undefined {
+export function getWidgetPlugin(type: WidgetType): WidgetPlugin {
   return plugins[type];
 }

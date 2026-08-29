@@ -27,6 +27,7 @@ export {
   freshnessOf,
   peekFreshness,
   retryDelayMs,
+  staleSinceOf,
   useFreshness,
   useResourceGroup,
   type Cadence,
@@ -53,6 +54,7 @@ type Fetcher<T> = (signal: AbortSignal) => Promise<T>;
 type Options<T> = {
   enabled?: boolean;
   intervalMs?: number;
+  staleMs?: number;
   isEmpty?: (data: T) => boolean;
   cacheKey?: string;
   persist?: boolean;
@@ -148,6 +150,7 @@ export function usePolledResource<T>(
   const {
     enabled = true,
     intervalMs,
+    staleMs,
     isEmpty = defaultIsEmpty,
     cacheKey,
     persist = false,
@@ -163,6 +166,7 @@ export function usePolledResource<T>(
     cacheKey,
     enabled,
     intervalMs,
+    staleMs,
     seed: (): Snapshot<T | undefined> =>
       seedSnapshot(
         enabled && cacheKey

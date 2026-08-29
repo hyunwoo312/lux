@@ -1,14 +1,13 @@
-import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, Copy, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { pop } from "@/lib/motion";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { getNoteData, useNote } from "@/widgets/note/useNoteStore";
 
-const COPIED_MS = 1600;
 const FILE_NAME_WORDS = 6;
 const FILE_NAME_MAX = 40;
 
@@ -28,23 +27,10 @@ export function NoteHeaderActions() {
   const reduced = useReducedMotion();
   const instanceId = useWidgetInstanceId();
   const hasText = useNote(instanceId).text.trim().length > 0;
-  const [copied, setCopied] = useState(false);
-  const copiedTimer = useRef<number | undefined>(undefined);
-
-  useEffect(() => () => window.clearTimeout(copiedTimer.current), []);
+  const { status, copy } = useCopyToClipboard();
+  const copied = status === "copied";
 
   if (!hasText) return null;
-
-  async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(getNoteData(instanceId).text);
-    } catch {
-      return;
-    }
-    setCopied(true);
-    window.clearTimeout(copiedTimer.current);
-    copiedTimer.current = window.setTimeout(() => setCopied(false), COPIED_MS);
-  }
 
   function handleDownload() {
     const { text } = getNoteData(instanceId);
@@ -64,7 +50,7 @@ export function NoteHeaderActions() {
           size="icon-xs"
           className={WIDGET_HEADER_ACTION}
           aria-label="Copy note"
-          onClick={() => void handleCopy()}
+          onClick={() => copy(getNoteData(instanceId).text)}
         >
           <AnimatePresence initial={false} mode="popLayout">
             {copied ? (

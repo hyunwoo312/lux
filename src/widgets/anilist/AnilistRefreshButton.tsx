@@ -1,12 +1,12 @@
 import { useProviderAccount } from "@/integrations";
 import { WidgetRefreshButton } from "@/widgets/core/WidgetRefreshButton";
-import { useFreshness } from "@/widgets/core/usePolledResource";
+import { staleSinceOf, useFreshness } from "@/widgets/core/usePolledResource";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { ANILIST_SYNC_COOLDOWN_MS, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { useAnilistSyncStatus } from "@/widgets/anilist/useAnilistSync";
 
 export function AnilistRefreshButton() {
-  const freshness = useFreshness("anilist:");
+  const staleSince = staleSinceOf(useFreshness("anilist:"));
   const status = useAnilistSyncStatus();
   const requestSync = useAnilistStore((s) => s.requestSync);
   const instanceId = useWidgetInstanceId();
@@ -17,7 +17,7 @@ export function AnilistRefreshButton() {
     <WidgetRefreshButton
       label="AniList"
       {...status}
-      freshness={freshness}
+      staleSince={staleSince}
       cooldownMs={ANILIST_SYNC_COOLDOWN_MS}
       onRefresh={() => requestSync(instanceId, viewerId)}
     />

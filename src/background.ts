@@ -1,42 +1,22 @@
-const ANILIST_CALLBACK_KEY = "lux:anilist-callback";
-
-type AnilistCallback = {
-  accessToken?: string;
-  tokenType?: string;
-  expiresIn?: string;
-  state?: string;
-  error?: string;
-};
+import {
+  ANILIST_CALLBACK_KEY,
+  CHANGELOG_PENDING_KEY,
+  anilistCallbackSchema,
+  type AnilistCallback,
+} from "@/lib/extension-keys";
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason !== "update") return;
-  void chrome.storage.local.set({
-    "lux:changelog-pending": chrome.runtime.getManifest().version,
-  });
+  void chrome.storage.local
+    .set({ [CHANGELOG_PENDING_KEY]: chrome.runtime.getManifest().version })
+    .catch(() => undefined);
 });
 
-function anilistCallbackFrom(message: unknown): AnilistCallback | null {
-  if (typeof message !== "object" || message === null) return null;
-  const fields = message as Record<string, unknown>;
-  if (fields.type !== "anilist-oauth") return null;
-
-  const text = (name: keyof AnilistCallback) =>
-    typeof fields[name] === "string" ? fields[name] : undefined;
-
-  return {
-    accessToken: text("accessToken"),
-    tokenType: text("tokenType"),
-    expiresIn: text("expiresIn"),
-    state: text("state"),
-    error: text("error"),
-  };
-}
-
 chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
-  const callback = anilistCallbackFrom(message);
-  if (!callback) return undefined;
+  const callback = anilistCallbackSchema.safeParse(message);
+  if (!callback.success) return undefined;
 
-  void stashAnilistCallback(callback, sender.tab?.id);
+  void stashAnilistCallback(callback.data, sender.tab?.id);
   sendResponse({ received: true });
   return undefined;
 });

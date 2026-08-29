@@ -1,3 +1,5 @@
+import { dateFromDayKey, localDayKey } from "@/lib/clock";
+
 const PROFILE_KEY = "lux:profile";
 const NAMESPACE_PREFIX = "lux:";
 
@@ -57,6 +59,33 @@ export const ASSET_DATABASES = ["lux.wallpaper-media", "lux.image-media"];
 
 type Migration = { toVersion: number; run: () => Promise<void> };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+async function mapInstances(
+  key: string,
+  fn: (entry: Record<string, unknown>) => Record<string, unknown> | null,
+): Promise<void> {
+  const stored = await chrome.storage.local.get(key);
+  const blob: unknown = stored[key];
+  if (!isRecord(blob) || !isRecord(blob.state) || !isRecord(blob.state.byInstance)) return;
+
+  let changed = false;
+  const next: Record<string, unknown> = {};
+  for (const [id, value] of Object.entries(blob.state.byInstance)) {
+    const mapped = isRecord(value) ? fn(value) : null;
+    next[id] = mapped ?? value;
+    changed ||= mapped !== null;
+  }
+
+  if (changed) {
+    await chrome.storage.local.set({
+      [key]: { ...blob, state: { ...blob.state, byInstance: next } },
+    });
+  }
+}
+
 async function renameKey(from: string, to: string): Promise<void> {
   const stored = await chrome.storage.local.get([from, to]);
   if (stored[from] === undefined) return;
@@ -70,24 +99,72 @@ async function requireGoogleReconnect(): Promise<void> {
   const key = "lux:integrations";
   const stored = await chrome.storage.local.get(key);
   const blob: unknown = stored[key];
-  if (typeof blob !== "object" || blob === null) return;
-
-  const accounts = (blob as { accounts?: unknown }).accounts;
-  if (typeof accounts !== "object" || accounts === null) return;
+  if (!isRecord(blob) || !isRecord(blob.accounts)) return;
 
   let changed = false;
   const next: Record<string, unknown> = {};
 
-  for (const [id, value] of Object.entries(accounts as Record<string, unknown>)) {
-    const account = value as { providerId?: unknown };
-    if (typeof value !== "object" || value === null || account.providerId !== "google") {
+  for (const [id, value] of Object.entries(blob.accounts)) {
+    if (!isRecord(value) || value.providerId !== "google") {
       next[id] = value;
       continue;
     }
     const withoutToken = Object.fromEntries(
-      Object.entries(value as Record<string, unknown>).filter(([field]) => field !== "token"),
+      Object.entries(value).filter(([field]) => field !== "token"),
     );
     next[id] = { ...withoutToken, status: "needsReconnect", lastError: RELAY_GOOGLE_NOTICE };
+    changed = true;
+  }
+
+  if (changed) await chrome.storage.local.set({ [key]: { ...blob, accounts: next } });
+}
+
+const LEGACY_STOCK_INDICES = ["^GSPC", "^IXIC", "^DJI"];
+
+function fromLegacyDayKey(value: unknown): string | undefined {
+  if (typeof value !== "string" || dateFromDayKey(value) !== null) return undefined;
+  const parts = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(value);
+  if (!parts) return undefined;
+  return localDayKey(new Date(Number(parts[1]), Number(parts[2]), Number(parts[3])));
+}
+
+function padCalendarAnchors(entry: Record<string, unknown>): Record<string, unknown> | null {
+  const listAnchorKey = fromLegacyDayKey(entry.listAnchorKey);
+  const listAnchorSetOn = fromLegacyDayKey(entry.listAnchorSetOn);
+  if (listAnchorKey === undefined && listAnchorSetOn === undefined) return null;
+  return {
+    ...entry,
+    ...(listAnchorKey === undefined ? {} : { listAnchorKey }),
+    ...(listAnchorSetOn === undefined ? {} : { listAnchorSetOn }),
+  };
+}
+
+function adoptStockIndexSymbols(entry: Record<string, unknown>): Record<string, unknown> | null {
+  if (!("showIndices" in entry)) return null;
+  const { showIndices, indexSymbols, ...rest } = entry;
+  const chosen = Array.isArray(indexSymbols) ? indexSymbols : [];
+  return {
+    ...rest,
+    indexSymbols: chosen.length > 0 ? chosen : showIndices === true ? LEGACY_STOCK_INDICES : [],
+  };
+}
+
+async function renameSyncStampToAuthorized(): Promise<void> {
+  const key = "lux:integrations";
+  const stored = await chrome.storage.local.get(key);
+  const blob: unknown = stored[key];
+  if (!isRecord(blob) || !isRecord(blob.accounts)) return;
+
+  let changed = false;
+  const next: Record<string, unknown> = {};
+
+  for (const [id, value] of Object.entries(blob.accounts)) {
+    if (!isRecord(value) || !("lastSyncedAt" in value)) {
+      next[id] = value;
+      continue;
+    }
+    const { lastSyncedAt, ...rest } = value;
+    next[id] = "lastAuthorizedAt" in rest ? rest : { ...rest, lastAuthorizedAt: lastSyncedAt };
     changed = true;
   }
 
@@ -104,7 +181,12 @@ const MIGRATIONS: Migration[] = [
   },
   {
     toVersion: 3,
-    run: requireGoogleReconnect,
+    run: async () => {
+      await requireGoogleReconnect();
+      await renameSyncStampToAuthorized();
+      await mapInstances("lux:widget:calendar", padCalendarAnchors);
+      await mapInstances("lux:widget:stocks", adoptStockIndexSymbols);
+    },
   },
 ];
 

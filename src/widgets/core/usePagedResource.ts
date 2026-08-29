@@ -34,12 +34,12 @@ export type PagedResource<T> = {
   freshness: Freshness;
   loadMore: () => void;
   refresh: () => void;
-  autoRefresh: () => void;
 };
 
 type Options<T> = {
   enabled?: boolean;
   intervalMs?: number;
+  staleMs?: number;
   maxItems: number;
   cacheKey?: string;
   getKey: (item: T) => string | number;
@@ -156,6 +156,7 @@ export function usePagedResource<T>(
   {
     enabled = true,
     intervalMs,
+    staleMs,
     maxItems,
     cacheKey,
     getKey,
@@ -176,6 +177,7 @@ export function usePagedResource<T>(
     cacheKey,
     enabled,
     intervalMs,
+    staleMs,
     seed: (): Snapshot<PagedData<T>> => {
       const entry =
         enabled && cacheKey
@@ -213,10 +215,6 @@ export function usePagedResource<T>(
     resource.current?.refresh();
   }, [resource]);
 
-  const autoRefresh = useCallback(() => {
-    resource.current?.pollRefresh();
-  }, [resource]);
-
   let state: PagedResourceState<T>;
   if (!snapshot.hasLoaded) {
     state = snapshot.error ? { status: "error", error: snapshot.error } : { status: "loading" };
@@ -235,6 +233,5 @@ export function usePagedResource<T>(
     freshness: freshnessOf(snapshot),
     loadMore,
     refresh,
-    autoRefresh,
   };
 }

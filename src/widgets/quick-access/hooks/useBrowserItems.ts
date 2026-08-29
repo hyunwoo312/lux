@@ -30,19 +30,13 @@ const TABS_DEBOUNCE_MS = 150;
 
 const REFRESH_MS = 60_000;
 
-function useRefreshOnMount(refresh: () => void, enabled: boolean): void {
-  useEffect(() => {
-    if (enabled) refresh();
-  }, [enabled, refresh]);
-}
-
 export function useBrowserItems(tab: PolledSource, enabled = true): BrowserState {
   const { state, refresh } = usePolledResource(() => FETCHERS[tab](), {
     enabled,
     intervalMs: REFRESH_MS,
+    staleMs: 0,
     cacheKey: `quickAccess:${tab}`,
   });
-  useRefreshOnMount(refresh, enabled);
 
   return useMemo(() => {
     if (state.status === "success") return { status: "ready", items: state.data, retry: refresh };
@@ -56,9 +50,9 @@ export function useBookmarkTree(enabled = true): BookmarkTreeState {
   const { state, refresh } = usePolledResource(fetchBookmarkTree, {
     enabled,
     intervalMs: REFRESH_MS,
+    staleMs: 0,
     cacheKey: "quickAccess:bookmarks",
   });
-  useRefreshOnMount(refresh, enabled);
 
   return useMemo(() => {
     if (state.status === "success") return { status: "ready", root: state.data, retry: refresh };
@@ -71,9 +65,9 @@ export function useOpenTabs(enabled: boolean): BrowserState {
   const { state, refresh } = usePolledResource(fetchOpenTabs, {
     enabled,
     intervalMs: REFRESH_MS,
+    staleMs: 0,
     cacheKey: "quickAccess:openTabs",
   });
-  useRefreshOnMount(refresh, enabled);
 
   useEffect(() => {
     if (!enabled) return;

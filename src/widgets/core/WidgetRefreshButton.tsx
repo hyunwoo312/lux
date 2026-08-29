@@ -9,7 +9,6 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { cn } from "@/lib/utils";
 import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
-import type { Freshness } from "@/widgets/core/usePolledResource";
 import { syncCooldownMessage, syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
 
 type WidgetRefreshButtonProps = {
@@ -17,7 +16,7 @@ type WidgetRefreshButtonProps = {
   lastSyncAt: number | undefined;
   updatedAt?: number;
   cooldownMs: number;
-  freshness?: Freshness;
+  staleSince?: number;
   label: string;
   onRefresh: () => void;
 };
@@ -27,7 +26,7 @@ export function WidgetRefreshButton({
   lastSyncAt,
   updatedAt,
   cooldownMs,
-  freshness,
+  staleSince,
   label,
   onRefresh,
 }: WidgetRefreshButtonProps) {
@@ -46,11 +45,11 @@ export function WidgetRefreshButton({
 
   const spinning = syncing && !reduced;
   const disabled = syncing || coolingDown;
-  const failing = freshness?.status === "failing";
-  const staleSince = failing && freshness.since ? formatRelativeTime(freshness.since, now) : null;
+  const failing = staleSince !== undefined;
+  const staleAgo = staleSince ? formatRelativeTime(staleSince, now) : null;
   const staleNotice = failing
-    ? staleSince
-      ? `${label} last updated ${staleSince}. Refreshing is failing, retrying automatically.`
+    ? staleAgo
+      ? `${label} last updated ${staleAgo}. Refreshing is failing, retrying automatically.`
       : `${label} isn’t refreshing. Retrying automatically.`
     : null;
 

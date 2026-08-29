@@ -1,7 +1,6 @@
 import type { DragEndEvent } from "@dnd-kit/core";
 import { closestCenter, DndContext } from "@dnd-kit/core";
 import {
-  arrayMove,
   rectSortingStrategy,
   SortableContext,
   verticalListSortingStrategy,
@@ -10,7 +9,7 @@ import type { Transition } from "motion/react";
 import { motion } from "motion/react";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { GRID_MODIFIERS, useSortableSensors, VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
+import { GRID_MODIFIERS, moveById, useSortableSensors, VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
 import { SectionHeader } from "@/widgets/quick-access/components/HomeSection";
 import { SortablePin } from "@/widgets/quick-access/components/SortablePin";
 import {
@@ -41,13 +40,10 @@ export function PinnedSection({ editing, formOpen, morph, onAdd, onEdit }: Pinne
   const sensors = useSortableSensors();
   const isGrid = view === "grid";
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = links.findIndex((link) => link.id === active.id);
-    const newIndex = links.findIndex((link) => link.id === over.id);
-    if (oldIndex === -1 || newIndex === -1) return;
-    setLinks(instanceId, arrayMove(links, oldIndex, newIndex));
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over) return;
+    const reordered = moveById(links, String(active.id), String(over.id), (link) => link.id);
+    if (reordered) setLinks(instanceId, reordered);
   };
 
   return (

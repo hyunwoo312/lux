@@ -60,6 +60,7 @@ export function ImageRotationGroup() {
           label="Rotation triggers"
           values={triggerValues}
           options={ROTATION_OPTIONS}
+          minSelected={1}
           onChange={applyTriggers}
         />
         <WidgetConfigSubItem

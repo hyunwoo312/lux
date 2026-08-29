@@ -16,6 +16,7 @@ export const weatherPlugin: WidgetPlugin = {
   icon: CloudSun,
   defaultLayout: { w: 6, h: 6, minW: 6, minH: 6, maxW: 12, maxH: 12 },
   component: WeatherWidget,
+  clearInstance: (instanceId) => useWeatherStore.getState().removeInstance(instanceId),
   configComponent: WeatherConfig,
   statusComponent: WeatherSearch,
   headerActionComponent: WeatherRefreshButton,

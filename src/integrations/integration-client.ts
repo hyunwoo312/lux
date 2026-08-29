@@ -129,7 +129,7 @@ export async function connectIntegration(
     avatarUrl: profile.avatarUrl,
     status: "connected",
     connectedAt: now,
-    lastSyncedAt: now,
+    lastAuthorizedAt: now,
     token: {
       accessToken: token.accessToken,
       refreshToken: token.refreshToken,
@@ -159,8 +159,6 @@ async function markNeedsReconnect(account: IntegrationAccount, message: string):
   });
 }
 
-const refreshingTokens = new Map<IntegrationProviderId, Promise<string>>();
-
 function tokenNeedsRefresh(
   token: NonNullable<IntegrationAccount["token"]>,
   staleToken: string | undefined,
@@ -170,10 +168,7 @@ function tokenNeedsRefresh(
 }
 
 function withRefreshLock<T>(providerId: IntegrationProviderId, task: () => Promise<T>): Promise<T> {
-  if (typeof navigator !== "undefined" && navigator.locks?.request) {
-    return navigator.locks.request(`lux:token-refresh:${providerId}`, task);
-  }
-  return task();
+  return navigator.locks.request(`lux:token-refresh:${providerId}`, task);
 }
 
 async function getProviderAccessToken(
@@ -191,10 +186,7 @@ async function getProviderAccessToken(
     return account.token.accessToken;
   }
 
-  const inFlight = refreshingTokens.get(providerId);
-  if (inFlight) return inFlight;
-
-  const refresh = withRefreshLock(providerId, async () => {
+  return withRefreshLock(providerId, async () => {
     const current = await getAccountByProvider(providerId);
     if (!current?.token || current.status !== "connected") {
       throw new Error(`${provider.label} is not connected`);
@@ -203,11 +195,7 @@ async function getProviderAccessToken(
       return current.token.accessToken;
     }
     return refreshProviderToken(provider, current);
-  }).finally(() => {
-    refreshingTokens.delete(providerId);
   });
-  refreshingTokens.set(providerId, refresh);
-  return refresh;
 }
 
 async function refreshProviderToken(
@@ -245,7 +233,7 @@ async function refreshProviderToken(
     ...account,
     status: "connected",
     lastError: undefined,
-    lastSyncedAt: new Date().toISOString(),
+    lastAuthorizedAt: new Date().toISOString(),
     token: {
       accessToken: token.accessToken,
       refreshToken: token.refreshToken ?? account.token?.refreshToken,

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { motion } from "motion/react";
 import { TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatClock } from "@/lib/clock";
+import { formatClock, localDayKey } from "@/lib/clock";
 import { enterTween, stagger } from "@/lib/motion";
 import { ListGroupHeading } from "@/components/ListGroupHeading";
 import { CalendarEventActions } from "@/widgets/calendar/components/CalendarEventActions";
@@ -10,7 +10,6 @@ import { AgendaSkipRow } from "@/widgets/calendar/components/agenda/AgendaSkipRo
 import { NowLine } from "@/widgets/calendar/components/agenda/NowLine";
 import { getEventTitle } from "@/widgets/calendar/lib/agenda";
 import { getEventColor } from "@/widgets/calendar/lib/colors";
-import { getDateKey } from "@/widgets/calendar/lib/dates";
 import {
   formatDayHeading,
   formatGapLabel,
@@ -188,7 +187,7 @@ export function AgendaCompactList({
 }: AgendaCompactListProps) {
   const runs = segments.filter(isTimelineRun);
   const lastRun = runs[runs.length - 1];
-  const spansDays = runs.some((run) => getDateKey(run.day) !== getDateKey(now));
+  const spansDays = runs.some((run) => localDayKey(run.day) !== localDayKey(now));
   const rows: ReactNode[] = [];
   let previousDay: Date | null = null;
 
@@ -203,7 +202,7 @@ export function AgendaCompactList({
       );
       continue;
     }
-    const heading = previousDay ? getDateKey(segment.day) !== getDateKey(previousDay) : spansDays;
+    const heading = previousDay ? localDayKey(segment.day) !== localDayKey(previousDay) : spansDays;
     previousDay = segment.day;
     if (heading) {
       rows.push(

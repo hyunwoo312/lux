@@ -19,7 +19,8 @@ export function GuideDialog() {
         showClose={false}
         onOpenAutoFocus={(event) => event.preventDefault()}
         aria-label="Lux guide"
-        className="h-[90dvh] w-[min(60rem,calc(100vw-2rem))]"
+        width="2xl"
+        className="h-[90dvh]"
       >
         <div className="flex min-h-0 flex-1">
           <GuideNav articleId={location?.article.id ?? ""} onSelect={setArticle} />

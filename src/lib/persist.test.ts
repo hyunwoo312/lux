@@ -23,11 +23,14 @@ describe("tolerantRecord", () => {
     expect(schema.parse({ a: { id: "a", n: 1 }, b: "junk" })).toEqual({ a: { id: "a", n: 1 } });
   });
 
-  it("normalises each value before parsing it", () => {
-    const schema = tolerantRecord(entry, (value) =>
-      typeof value === "object" && value ? { ...value, n: 9 } : value,
+  it("runs a composed preprocess per value, not once over the whole record", () => {
+    const schema = tolerantRecord(
+      z.preprocess(
+        (value) => (typeof value === "object" && value ? { ...value, n: 9 } : value),
+        entry,
+      ),
     );
-    expect(schema.parse({ a: { id: "a", n: "bad" } })).toEqual({ a: { id: "a", n: 9 } });
+    expect(schema.parse({ a: { id: "a", n: "bad" }, b: "junk" })).toEqual({ a: { id: "a", n: 9 } });
   });
 
   it("reads a missing or non-object value as empty", () => {

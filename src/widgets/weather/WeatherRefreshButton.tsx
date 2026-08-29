@@ -1,5 +1,5 @@
 import { WidgetRefreshButton } from "@/widgets/core/WidgetRefreshButton";
-import { useFreshness } from "@/widgets/core/usePolledResource";
+import { staleSinceOf, useFreshness } from "@/widgets/core/usePolledResource";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { useWeatherSyncStatus } from "@/widgets/weather/hooks/useWeatherSync";
 import {
@@ -9,7 +9,7 @@ import {
 } from "@/widgets/weather/useWeatherStore";
 
 export function WeatherRefreshButton() {
-  const freshness = useFreshness("weather:");
+  const staleSince = staleSinceOf(useFreshness("weather:"));
   const instanceId = useWidgetInstanceId();
   const locations = useWeather((d) => d.locations);
   const status = useWeatherSyncStatus();
@@ -21,7 +21,7 @@ export function WeatherRefreshButton() {
     <WidgetRefreshButton
       label="Weather"
       {...status}
-      freshness={freshness}
+      staleSince={staleSince}
       cooldownMs={WEATHER_SYNC_COOLDOWN_MS}
       onRefresh={() => requestSync(instanceId)}
     />

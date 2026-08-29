@@ -153,6 +153,18 @@ describe("usePolledResource", () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
+  it("refetches on remount when staleMs declares the cache stale at once", async () => {
+    const fetcher = vi.fn().mockResolvedValue([1, 2]);
+    const options = { cacheKey: "test:cache:stale-now", intervalMs: 600_000, staleMs: 0 };
+    const first = renderHook(() => usePolledResource(fetcher, options));
+    await waitFor(() => expect(first.result.current.state.status).toBe("success"));
+    first.unmount();
+
+    renderHook(() => usePolledResource(fetcher, options));
+    await act(async () => {});
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
   it("shares one fetch and live state across hooks with the same cacheKey", async () => {
     const fetcher = vi.fn().mockResolvedValueOnce([1]).mockResolvedValue([1, 2]);
     const cacheKey = "test:cache:shared";

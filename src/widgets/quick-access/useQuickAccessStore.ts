@@ -2,9 +2,13 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { httpUrlSchema } from "@/lib/open-url";
-import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
-import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
+import { httpUrlSchema, openBehaviorSchema } from "@/lib/open-url";
+import {
+  looksLikeLegacySingleton,
+  mergePersisted,
+  tolerantArray,
+  tolerantRecord,
+} from "@/lib/persist";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { hostnameOf, normalizeUrl } from "@/widgets/quick-access/lib/url";
@@ -86,7 +90,7 @@ function normaliseData(value: unknown): unknown {
 const dataSchema = z.object({
   links: tolerantArray(linkSchema),
   activeTab: z.enum(["home", "bookmarks", "history"]).catch("home"),
-  openBehavior: z.enum(["currentTab", "newTab"]).catch("currentTab"),
+  openBehavior: openBehaviorSchema,
   view: z.enum(["grid", "list"]).catch("grid"),
   bookmarkPath: z.array(z.string()).catch([]),
   showTopSites: z.boolean().catch(true),
@@ -95,15 +99,10 @@ const dataSchema = z.object({
 });
 
 const persistedSchema = z.object({
-  byInstance: tolerantRecord(dataSchema, normaliseData),
+  byInstance: tolerantRecord(z.preprocess(normaliseData, dataSchema)),
 });
 
 const LEGACY_KEYS = ["links", "activeTab", "openBehavior", "view", "showTopSites"] as const;
-
-function looksLikeLegacySingleton(persisted: unknown): boolean {
-  if (!persisted || typeof persisted !== "object") return false;
-  return LEGACY_KEYS.some((key) => key in persisted);
-}
 
 const gatedStorage = createGatedChromeStorage();
 
@@ -255,7 +254,7 @@ export const useQuickAccessStore = create<QuickAccessState>()(
       partialize: (state) => ({ byInstance: state.byInstance }),
       migrate: (persisted, version) => {
         if (version >= 2) return persisted;
-        if (!looksLikeLegacySingleton(persisted)) return { byInstance: {} };
+        if (!looksLikeLegacySingleton(persisted, LEGACY_KEYS)) return { byInstance: {} };
         const legacy = dataSchema.safeParse(persisted);
         return { byInstance: legacy.success ? { quickAccess: legacy.data } : {} };
       },
@@ -267,8 +266,6 @@ export const useQuickAccessStore = create<QuickAccessState>()(
     },
   ),
 );
-
-registerInstanceCleanup((instanceId) => useQuickAccessStore.getState().removeInstance(instanceId));
 
 export const useQuickAccess = createInstanceSelector(useQuickAccessStore, DEFAULT_DATA);
 

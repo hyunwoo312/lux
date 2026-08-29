@@ -1,4 +1,4 @@
-import { formatClock as clockLabel } from "@/lib/clock";
+import { formatClock } from "@/lib/clock";
 import { isPrecipitationCode } from "@/widgets/weather/lib/wmo";
 import type { WeatherHour } from "@/widgets/weather/types";
 
@@ -116,9 +116,9 @@ export function formatWeekday(date: string): string {
   return parsed ? format(parsed, { weekday: "short" }) : "";
 }
 
-export function formatClock(iso: string, hour12: boolean): string {
+export function formatIsoClock(iso: string, hour12: boolean): string {
   const date = localDate(iso);
-  return date ? clockLabel(date, hour12) : "";
+  return date ? formatClock(date, hour12) : "";
 }
 
 const COMPASS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;

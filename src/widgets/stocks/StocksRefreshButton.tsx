@@ -1,5 +1,5 @@
 import { WidgetRefreshButton } from "@/widgets/core/WidgetRefreshButton";
-import { useFreshness } from "@/widgets/core/usePolledResource";
+import { staleSinceOf, useFreshness } from "@/widgets/core/usePolledResource";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { useStocksSyncStatus } from "@/widgets/stocks/hooks/useStocksSync";
 import {
@@ -9,7 +9,7 @@ import {
 } from "@/widgets/stocks/useStocksStore";
 
 export function StocksRefreshButton() {
-  const freshness = useFreshness("stocks:");
+  const staleSince = staleSinceOf(useFreshness("stocks:"));
   const instanceId = useWidgetInstanceId();
   const symbols = useStocks((d) => d.symbols);
   const status = useStocksSyncStatus();
@@ -21,7 +21,7 @@ export function StocksRefreshButton() {
     <WidgetRefreshButton
       label="Stocks"
       {...status}
-      freshness={freshness}
+      staleSince={staleSince}
       cooldownMs={STOCKS_SYNC_COOLDOWN_MS}
       onRefresh={() => requestSync(instanceId)}
     />

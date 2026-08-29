@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { tolerantArray, tolerantRecord } from "@/lib/persist";
+import { looksLikeLegacySingleton, tolerantArray, tolerantRecord } from "@/lib/persist";
 import { missingAssetIds } from "@/lib/asset-store";
 import {
   clearNewtabQueue,
@@ -10,7 +10,6 @@ import {
   getRandomIndexExcluding,
   normalizeIndex,
 } from "@/lib/media-rotation";
-import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector, useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { deleteImageAsset, imageAssetStore, imageNewtabQueueKey } from "@/widgets/image/media";
@@ -121,11 +120,6 @@ const persistedSchema = z.object({
 });
 
 const LEGACY_KEYS = ["mode", "single", "items", "fit", "brightness", "hideFrame"] as const;
-
-function looksLikeLegacySingleton(persisted: unknown): boolean {
-  if (!persisted || typeof persisted !== "object") return false;
-  return LEGACY_KEYS.some((key) => key in persisted);
-}
 
 function clampInterval(seconds: number): number {
   if (!Number.isFinite(seconds)) return 30;
@@ -282,7 +276,7 @@ export const useImageStore = create<ImageState>()(
       partialize: (state) => ({ byInstance: state.byInstance }),
       migrate: (persisted, version) => {
         if (version >= 2) return persisted;
-        if (!looksLikeLegacySingleton(persisted)) return { byInstance: {} };
+        if (!looksLikeLegacySingleton(persisted, LEGACY_KEYS)) return { byInstance: {} };
         const legacy = configSchema.safeParse(persisted);
         return { byInstance: legacy.success ? { image: legacy.data } : {} };
       },
@@ -306,8 +300,6 @@ export const useImageStore = create<ImageState>()(
     },
   ),
 );
-
-registerInstanceCleanup((instanceId) => useImageStore.getState().removeInstance(instanceId));
 
 export const useImage = createInstanceSelector(useImageStore, DEFAULT_IMAGE_CONFIG);
 

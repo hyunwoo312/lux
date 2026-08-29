@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { keepPersisted, mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
-import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
+import { moveById } from "@/lib/dnd";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { stalePolledResource } from "@/widgets/core/usePolledResource";
@@ -14,7 +14,7 @@ import {
   type SyncSlice,
 } from "@/widgets/core/syncSlice";
 import { quoteKey, sparkKey } from "@/widgets/stocks/lib/cacheKeys";
-import { DEFAULT_INDICES, MAX_INDICES } from "@/widgets/stocks/lib/indices";
+import { MAX_INDICES } from "@/widgets/stocks/lib/indices";
 import {
   CHANGE_MODES,
   CHART_STYLES,
@@ -73,7 +73,6 @@ const dataSchema = z.object({
   symbols: tolerantArray(z.string()),
   range: z.enum(STOCK_RANGES).catch("1d"),
   showName: z.boolean().catch(true),
-  showIndices: z.boolean().catch(false).default(false),
   indexSymbols: tolerantArray(z.string()),
   view: z.enum(STOCK_VIEWS).catch("list"),
   changeMode: z.enum(CHANGE_MODES).catch("percent"),
@@ -122,13 +121,8 @@ export const useStocksStore = create<StocksState>()(
       reorderSymbols: (instanceId, activeSymbol, overSymbol) =>
         set((state) => {
           const data = state.byInstance[instanceId] ?? DEFAULT_DATA;
-          const from = data.symbols.indexOf(activeSymbol);
-          const to = data.symbols.indexOf(overSymbol);
-          if (from === -1 || to === -1 || from === to) return state;
-          const symbols = [...data.symbols];
-          const [moved] = symbols.splice(from, 1);
-          if (moved === undefined) return state;
-          symbols.splice(to, 0, moved);
+          const symbols = moveById(data.symbols, activeSymbol, overSymbol, (symbol) => symbol);
+          if (!symbols) return state;
           return update(state, instanceId, (current) => ({ ...current, symbols }));
         }),
       setRange: (instanceId, range) =>
@@ -202,12 +196,7 @@ export const useStocksStore = create<StocksState>()(
               symbols: data.symbols.slice(0, MAX_SYMBOLS),
               range: data.range,
               showName: data.showName,
-              indexSymbols:
-                data.indexSymbols.length > 0
-                  ? data.indexSymbols.slice(0, MAX_INDICES)
-                  : data.showIndices
-                    ? DEFAULT_INDICES
-                    : [],
+              indexSymbols: data.indexSymbols.slice(0, MAX_INDICES),
               view: data.view,
               changeMode: data.changeMode,
               chartStyle: data.chartStyle,
@@ -219,7 +208,5 @@ export const useStocksStore = create<StocksState>()(
     },
   ),
 );
-
-registerInstanceCleanup((instanceId) => useStocksStore.getState().removeInstance(instanceId));
 
 export const useStocks = createInstanceSelector(useStocksStore, DEFAULT_DATA);

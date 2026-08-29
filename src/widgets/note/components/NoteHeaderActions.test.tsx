@@ -51,20 +51,6 @@ describe("NoteHeaderActions", () => {
     expect(writeText).toHaveBeenCalledWith("remember the milk");
   });
 
-  it("survives a rejected clipboard write", async () => {
-    const writeText = vi.fn().mockRejectedValue(new Error("denied"));
-    stubClipboard(writeText);
-    seed("remember the milk");
-    renderActions();
-
-    await act(async () => {
-      fireEvent.click(screen.getByLabelText("Copy note"));
-    });
-
-    expect(writeText).toHaveBeenCalled();
-    expect(screen.getByLabelText("Copy note")).toBeInTheDocument();
-  });
-
   it("downloads the note as a named text file", async () => {
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
     const createObjectURL = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:note");

@@ -12,6 +12,7 @@ import { SavedList, SavedToggle } from "@/widgets/news/components/SavedList";
 import { useNewsResource } from "@/widgets/news/hooks/useNewsResource";
 import { useNews, useNewsStore } from "@/widgets/news/useNewsStore";
 import { useNow } from "@/hooks/useNow";
+import { usePersistHydrated } from "@/hooks/usePersistHydrated";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { MAX_BOOKMARKS, type NewsItem } from "@/widgets/news/types";
 
@@ -32,11 +33,7 @@ export function NewsWidget() {
   const markRead = useNewsStore((s) => s.markRead);
   const markSeen = useNewsStore((s) => s.markSeen);
 
-  const [hydrated, setHydrated] = useState(() => useNewsStore.persist.hasHydrated());
-  useEffect(() => {
-    if (hydrated) return;
-    return useNewsStore.persist.onFinishHydration(() => setHydrated(true));
-  }, [hydrated]);
+  const hydrated = usePersistHydrated(useNewsStore);
 
   const [seenSnapshot, setSeenSnapshot] = useState<Set<string> | null>(null);
   useEffect(() => {

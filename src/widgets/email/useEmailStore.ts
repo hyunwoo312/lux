@@ -3,7 +3,6 @@ import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { mergePersisted, tolerantRecord } from "@/lib/persist";
-import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import {
@@ -151,7 +150,5 @@ export const useEmailStore = create<EmailState>()(
     },
   ),
 );
-
-registerInstanceCleanup((instanceId) => useEmailStore.getState().removeInstance(instanceId));
 
 export const useEmail = createInstanceSelector(useEmailStore, DEFAULT_DATA);
