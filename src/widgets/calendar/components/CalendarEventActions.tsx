@@ -32,8 +32,7 @@ const SIZES: Record<ActionSize, { gap: string; button: string; joinIcon: string 
   md: { gap: "gap-1", button: "size-7", joinIcon: "size-4" },
 };
 
-const BUTTON =
-  "focus-ring press flex flex-none cursor-pointer items-center justify-center rounded-sm";
+const BUTTON = "focus-ring flex flex-none cursor-pointer items-center justify-center rounded-sm";
 
 type CalendarEventActionsProps = {
   event: DisplayCalendarEvent;
@@ -65,7 +64,7 @@ export function CalendarEventActions({
         <Tooltip content="Join meeting">
           <motion.button
             type="button"
-            {...tap(reduced, "icon")}
+            {...tap(reduced, size === "sm" ? "glyph" : "control")}
             aria-label={`Join ${title}`}
             onClick={() => openUrl(joinUrl, "newTab")}
             className={cn(BUTTON, scale.button, hover, !onColor && "text-primary")}
@@ -80,7 +79,7 @@ export function CalendarEventActions({
           <Tooltip key={link.provider} content={`Open in ${label}`}>
             <motion.button
               type="button"
-              {...tap(reduced, "icon")}
+              {...tap(reduced, size === "sm" ? "glyph" : "control")}
               aria-label={`Open ${title} in ${label}`}
               onClick={() => openUrl(link.sourceUrl, "newTab")}
               className={cn(BUTTON, scale.button, hover)}

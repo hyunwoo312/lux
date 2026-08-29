@@ -1,16 +1,11 @@
-const EXECUTABLE_SCHEMES = new Set(["javascript:", "data:", "vbscript:"]);
+import { isHttpUrl } from "@/lib/open-url";
 
 export function normalizeUrl(input: string): string | null {
   const trimmed = input.trim();
   if (!trimmed) return null;
   const withProtocol = /^[a-z]+:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-  try {
-    const parsed = new URL(withProtocol);
-    if (EXECUTABLE_SCHEMES.has(parsed.protocol)) return null;
-    return parsed.toString();
-  } catch {
-    return null;
-  }
+  if (!isHttpUrl(withProtocol)) return null;
+  return new URL(withProtocol).toString();
 }
 
 export function keyOf(url: string): string {

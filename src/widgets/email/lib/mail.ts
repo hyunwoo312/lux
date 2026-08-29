@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { connectedProviders, useIntegrationStore } from "@/integrations";
-import { classifyLoadError } from "@/lib/net";
+import { describeFailure } from "@/lib/net";
+import { httpUrlSchema } from "@/lib/open-url";
+import { tolerantArray } from "@/lib/persist";
 import { fetchGmail } from "@/widgets/email/lib/gmail";
 import { createMerge, type Merge, type SourceFetcher } from "@/widgets/email/lib/merge";
 import { fetchOutlookMail } from "@/widgets/email/lib/outlook";
@@ -8,6 +10,7 @@ import { useEmailStore } from "@/widgets/email/useEmailStore";
 import {
   CACHED_MESSAGES,
   EMAIL_CACHE_KEY,
+  MAIL_PROVIDER_LABELS,
   MAIL_PROVIDERS,
   type EmailView,
   type MailMessage,
@@ -52,26 +55,16 @@ function mergeFor(
   return merge;
 }
 
-function describeFailure(error: Error): string {
-  switch (classifyLoadError(error)) {
-    case "offline":
-      return "You’re offline.";
-    case "auth":
-      return "Reconnect this account in Settings.";
-    case "rateLimited":
-      return error.message;
-    case "unreachable":
-      return "Not responding — retrying shortly.";
-    default:
-      return "Messages couldn’t be loaded.";
-  }
-}
-
 function report(providers: MailProvider[], failures: readonly (Error | undefined)[]): void {
   const reasons: Partial<Record<MailProvider, string>> = {};
   providers.forEach((provider, index) => {
     const error = failures[index];
-    if (error) reasons[provider] = describeFailure(error);
+    if (!error) return;
+    reasons[provider] = describeFailure(error, {
+      service: MAIL_PROVIDER_LABELS[provider],
+      subject: "messages",
+      register: "short",
+    }).message;
   });
   useEmailStore.getState().reportFailures(providers, reasons);
 }
@@ -120,11 +113,12 @@ const messageSchema = z.object({
   preview: z.string().catch(""),
   unread: z.boolean(),
   hasAttachment: z.boolean().catch(false),
-  url: z.string(),
+  url: httpUrlSchema,
 });
+
+const cachedMailSchema = tolerantArray(messageSchema);
 
 export function parseCachedMail(raw: unknown): MailMessage[] | null {
   if (!Array.isArray(raw)) return null;
-  const parsed = z.array(messageSchema).safeParse(raw);
-  return parsed.success ? parsed.data.slice(0, CACHED_MESSAGES) : null;
+  return cachedMailSchema.parse(raw).slice(0, CACHED_MESSAGES);
 }

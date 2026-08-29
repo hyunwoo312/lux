@@ -2,9 +2,9 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { MapPin } from "lucide-react";
 import { StateMessage } from "@/components/StateMessage";
 import type { DragEndEvent } from "@dnd-kit/core";
-import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { closestCenter, DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
+import { useSortableSensors, VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
 import { SortableRow } from "@/widgets/core/SortableRow";
 import { WeatherDetail } from "@/widgets/weather/components/WeatherDetail";
 import { WeatherRow } from "@/widgets/weather/components/WeatherRow";
@@ -23,7 +23,7 @@ export function WeatherWidget() {
   const removeLocation = useWeatherStore((s) => s.removeLocation);
   const reorderLocations = useWeatherStore((s) => s.reorderLocations);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const sensors = useSortableSensors();
 
   const detail = detailLocation(locations, selectedId);
 

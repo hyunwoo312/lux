@@ -7,7 +7,7 @@ import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import type { OpenBehavior } from "@/lib/open-url";
-import { invalidatePolledResource } from "@/widgets/core/usePolledResource";
+import { stalePolledResource } from "@/widgets/core/usePolledResource";
 import {
   bumpSyncNonce,
   createSyncSlice,
@@ -135,7 +135,7 @@ export const useGithubStore = create<GithubStoreState>()(
       },
       requestSync: () => {
         if (isSyncCoolingDown(get(), GITHUB_SYNC_KEY, GITHUB_SYNC_COOLDOWN_MS)) return;
-        for (const cacheKey of CACHE_KEYS) invalidatePolledResource(cacheKey);
+        for (const cacheKey of CACHE_KEYS) stalePolledResource(cacheKey);
         set((state) => bumpSyncNonce(state, GITHUB_SYNC_KEY));
       },
     }),

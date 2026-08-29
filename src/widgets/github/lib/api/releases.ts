@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { httpUrlSchema } from "@/lib/open-url";
 import { tolerantArray } from "@/lib/persist";
 import { graphql } from "@/widgets/github/lib/api/client";
 import type { Release, ReleasesData } from "@/widgets/github/types";
@@ -25,7 +26,7 @@ const watchedRepoSchema = z.object({
     .object({
       name: z.string().nullable(),
       tagName: z.string(),
-      url: z.string(),
+      url: httpUrlSchema,
       publishedAt: z.string().nullable(),
       isPrerelease: z.boolean(),
     })
@@ -78,7 +79,7 @@ const cachedReleaseSchema = z.object({
   isPrivate: z.boolean(),
   name: z.string(),
   tagName: z.string(),
-  url: z.string(),
+  url: httpUrlSchema,
   publishedAt: z.string(),
   isPrerelease: z.boolean().catch(false),
 });

@@ -2,11 +2,11 @@ import { DURATION, EASE_OUT } from "@/lib/motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from "motion/react";
 import type { DragEndEvent } from "@dnd-kit/core";
-import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { closestCenter, DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { ListChecks } from "lucide-react";
 import { StateMessage } from "@/components/StateMessage";
-import { VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
+import { useSortableSensors, VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
 import { orderTasks } from "@/widgets/tasks/lib/order";
 import { getTaskData, useTasks, useTasksStore } from "@/widgets/tasks/useTasksStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
@@ -31,7 +31,7 @@ export function TasksWidget() {
   const donePulse = useAnimationControls();
   const removalTimers = useRef(new Map<string, number>());
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const sensors = useSortableSensors();
 
   useEffect(() => {
     const timers = removalTimers.current;

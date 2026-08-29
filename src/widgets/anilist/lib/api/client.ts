@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ensureOk, withTimeout } from "@/lib/net";
+import { httpUrlSchema } from "@/lib/open-url";
 import { integrationFetch } from "@/integrations";
 import type { ScoreFormat, TitleLanguage } from "@/widgets/anilist/types";
 
@@ -71,7 +72,7 @@ export const mediaSchema = z.object({
   episodes: z.number().nullable(),
   chapters: z.number().nullable(),
   format: z.string().nullable(),
-  siteUrl: z.string().nullable(),
+  siteUrl: httpUrlSchema.nullable().catch(null),
   nextAiringEpisode: z.object({ episode: z.number(), airingAt: z.number() }).nullable(),
 });
 

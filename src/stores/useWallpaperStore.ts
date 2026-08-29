@@ -39,6 +39,7 @@ const WALLPAPER_MIN_INTERVAL = 15;
 const WALLPAPER_MAX_INTERVAL = 300;
 export const WALLPAPER_MAX_DIM = 0.85;
 export const WALLPAPER_MAX_BLUR = 24;
+export const WALLPAPER_BLEED_PER_BLUR_PX = 2;
 
 export const wallpaperAssets = createAssetStore("lux.wallpaper-media");
 

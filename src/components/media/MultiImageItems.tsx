@@ -1,12 +1,13 @@
 import type { CSSProperties } from "react";
+import { useCallback } from "react";
 import type { DragEndEvent } from "@dnd-kit/core";
-import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { closestCenter, DndContext } from "@dnd-kit/core";
 import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ImageIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/tooltip";
-import { GRID_MODIFIERS } from "@/lib/dnd";
+import { GRID_MODIFIERS, useSortableSensors } from "@/lib/dnd";
 import { useAssetThumbUrl, type AssetStore, type MediaImageItem } from "@/lib/asset-store";
 import { getMetadataLabel } from "@/lib/media-format";
 
@@ -25,7 +26,7 @@ export function MultiImageItems({
   onRemove,
   onReorder,
 }: MultiImageItemsProps) {
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const sensors = useSortableSensors();
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -68,9 +69,23 @@ type SortableImageProps = {
 };
 
 function SortableImage({ item, assetStore, disabled, onRemove }: SortableImageProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: item.assetId,
-  });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.assetId, attributes: { role: "listitem" } });
+
+  const tileRef = useCallback(
+    (node: HTMLLIElement | null) => {
+      setNodeRef(node);
+      setActivatorNodeRef(node);
+    },
+    [setNodeRef, setActivatorNodeRef],
+  );
   const url = useAssetThumbUrl(assetStore, item.assetId);
   const meta = getMetadataLabel(item.mimeType, item.size);
 
@@ -91,7 +106,7 @@ function SortableImage({ item, assetStore, disabled, onRemove }: SortableImagePr
       }
     >
       <li
-        ref={setNodeRef}
+        ref={tileRef}
         style={style}
         {...attributes}
         {...listeners}

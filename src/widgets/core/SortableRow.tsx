@@ -1,5 +1,6 @@
 import { enterTween, exitTween } from "@/lib/motion";
 import type { CSSProperties, ReactNode } from "react";
+import { useCallback } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -15,7 +16,23 @@ export function SortableRow({
   children: ReactNode;
 }) {
   const reduced = useReducedMotion();
-  const { setNodeRef, listeners, transform, transition, isDragging } = useSortable({ id });
+  const {
+    setNodeRef,
+    setActivatorNodeRef,
+    attributes,
+    listeners,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id, attributes: { role: "listitem" } });
+
+  const ref = useCallback(
+    (node: HTMLLIElement | null) => {
+      setNodeRef(node);
+      setActivatorNodeRef(node);
+    },
+    [setNodeRef, setActivatorNodeRef],
+  );
 
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -25,14 +42,15 @@ export function SortableRow({
 
   return (
     <motion.li
-      ref={setNodeRef}
+      ref={ref}
       style={style}
+      {...attributes}
       {...listeners}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1, transition: enterTween(reduced) }}
       exit={{ opacity: 0, scale: reduced ? 1 : 0.95, transition: exitTween(reduced) }}
       className={cn(
-        "touch-none",
+        "focus-ring rounded-lg touch-none",
         isDragging ? "cursor-grabbing opacity-60" : "cursor-grab",
         className,
       )}

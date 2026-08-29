@@ -7,8 +7,8 @@ import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import type { OpenBehavior } from "@/lib/open-url";
-import { invalidatePolledResource } from "@/widgets/core/usePolledResource";
-import { invalidatePagedResource } from "@/widgets/core/usePagedResource";
+import { stalePolledResource } from "@/widgets/core/usePolledResource";
+import { stalePagedResource } from "@/widgets/core/usePagedResource";
 import {
   bumpSyncNonce,
   createSyncSlice,
@@ -212,11 +212,11 @@ export const useAnilistStore = create<AnilistStoreState>()(
         if (isSyncCoolingDown(get(), ANILIST_SYNC_KEY, ANILIST_SYNC_COOLDOWN_MS)) return;
         const { titleLanguage, discoverFeed, discoverType } =
           get().byInstance[instanceId] ?? DEFAULT_DATA;
-        invalidatePolledResource(anilistKeys.discover(titleLanguage, discoverFeed, discoverType));
-        invalidatePolledResource(anilistKeys.library(viewerId, titleLanguage));
-        invalidatePolledResource(anilistKeys.unread(viewerId));
-        invalidatePagedResource(anilistKeys.activity(viewerId, titleLanguage));
-        invalidatePagedResource(anilistKeys.inbox(viewerId, titleLanguage));
+        stalePolledResource(anilistKeys.discover(titleLanguage, discoverFeed, discoverType));
+        stalePolledResource(anilistKeys.library(viewerId, titleLanguage));
+        stalePolledResource(anilistKeys.unread(viewerId));
+        stalePagedResource(anilistKeys.activity(viewerId, titleLanguage));
+        stalePagedResource(anilistKeys.inbox(viewerId, titleLanguage));
         set((state) => bumpSyncNonce(state, ANILIST_SYNC_KEY));
       },
     }),

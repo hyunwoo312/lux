@@ -9,6 +9,7 @@ import {
   refreshResource,
   seedSnapshot,
   seededEntry,
+  staleResource,
   storeEntry,
   useResource,
   type Decode,
@@ -134,6 +135,10 @@ export function refreshPolledResource(cacheKey: string): void {
 
 export function invalidatePolledResource(cacheKey: string): void {
   invalidateResource("polled", cacheKey);
+}
+
+export function stalePolledResource(cacheKey: string): void {
+  staleResource("polled", cacheKey);
 }
 
 export function usePolledResource<T>(

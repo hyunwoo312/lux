@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { ROW } from "@/lib/row";
 import { Heart, Users } from "lucide-react";
+import { loadErrorMessage } from "@/lib/net";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { usePagedResource } from "@/widgets/core/usePagedResource";
 import { fetchActivityPage, toggleActivityLike } from "@/widgets/anilist/lib/api/feed";
 import { parseCachedActivity } from "@/widgets/anilist/lib/api/cache";
-import { writeFailureMessage } from "@/widgets/anilist/lib/load-failure";
 import { FeedList } from "@/widgets/anilist/components/FeedList";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
@@ -58,7 +58,7 @@ export function ActivityView({
       (isLiked) => setLikes((prev) => ({ ...prev, [activity.id]: isLiked })),
       (error: Error) => {
         setLikes((prev) => ({ ...prev, [activity.id]: current }));
-        setLikeError(writeFailureMessage(error, "Couldn’t update your like. Try again."));
+        setLikeError(loadErrorMessage(error, "Couldn’t update your like. Try again."));
       },
     );
   };

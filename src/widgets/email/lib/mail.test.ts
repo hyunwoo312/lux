@@ -11,7 +11,7 @@ const message = (over: Partial<MailMessage>): MailMessage => ({
   preview: "a short preview line",
   unread: false,
   hasAttachment: false,
-  url: "#",
+  url: "https://mail.google.com/mail/u/0/#inbox/1",
   ...over,
 });
 
@@ -23,8 +23,13 @@ const request = (over: Partial<Parameters<typeof mailCacheKey>[0]> = {}) => ({
 });
 
 describe("reading the persisted inbox", () => {
-  it("returns null rather than a half-built inbox when an entry is malformed", () => {
-    expect(parseCachedMail([{ id: "a" }])).toBeNull();
+  it("drops a message whose link is not a web address, keeping the rest of the inbox", () => {
+    const good = message({});
+    const stored = JSON.parse(
+      JSON.stringify([message({ id: "google:2", url: "javascript:alert(1)" }), good]),
+    ) as unknown;
+
+    expect(parseCachedMail(stored)).toEqual([good]);
   });
 
   it("round-trips what the fetcher produces", () => {

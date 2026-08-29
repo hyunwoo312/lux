@@ -6,7 +6,7 @@ import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
-import { invalidatePolledResource } from "@/widgets/core/usePolledResource";
+import { stalePolledResource } from "@/widgets/core/usePolledResource";
 import {
   bumpSyncNonce,
   createSyncSlice,
@@ -197,7 +197,7 @@ export const useWeatherStore = create<WeatherState>()(
         const inst = get().byInstance[instanceId];
         if (!inst) return;
         for (const location of inst.locations) {
-          invalidatePolledResource(weatherCacheKey(location, inst.units, inst.windUnit));
+          stalePolledResource(weatherCacheKey(location, inst.units, inst.windUnit));
         }
         set((state) => bumpSyncNonce(state, instanceId));
       },

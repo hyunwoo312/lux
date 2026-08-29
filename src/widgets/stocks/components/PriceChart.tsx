@@ -107,16 +107,28 @@ export function PriceChart({
           </defs>
 
           {baselineY != null && (
-            <line
-              x1={0}
-              y1={baselineY}
-              x2={width}
-              y2={baselineY}
-              className="stroke-ink-3"
-              strokeWidth={1}
-              strokeDasharray="3 3"
-              vectorEffect="non-scaling-stroke"
-            />
+            <>
+              <line
+                x1={0}
+                y1={baselineY}
+                x2={width}
+                y2={baselineY}
+                className="stroke-background"
+                strokeWidth={3}
+                strokeDasharray="3 3"
+                vectorEffect="non-scaling-stroke"
+              />
+              <line
+                x1={0}
+                y1={baselineY}
+                x2={width}
+                y2={baselineY}
+                className="stroke-ink-3"
+                strokeWidth={1}
+                strokeDasharray="3 3"
+                vectorEffect="non-scaling-stroke"
+              />
+            </>
           )}
 
           {line && line.points.length > 1 && (

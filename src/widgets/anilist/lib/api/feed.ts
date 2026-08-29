@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { httpUrlSchema } from "@/lib/open-url";
 import {
   TITLE_SELECTION,
   anilistGraphQL,
@@ -75,14 +76,14 @@ const notificationNodeSchema = z.object({
     .object({
       title: titleSchema,
       coverImage: z.object({ medium: z.string().nullable() }).nullable(),
-      siteUrl: z.string().nullable(),
+      siteUrl: httpUrlSchema.nullable().catch(null),
     })
     .nullish(),
   user: z
     .object({
       name: z.string().nullable(),
       avatar: z.object({ medium: z.string().nullable() }).nullable(),
-      siteUrl: z.string().nullish(),
+      siteUrl: httpUrlSchema.nullish().catch(null),
     })
     .nullish(),
 });
@@ -195,7 +196,7 @@ const activityNodeSchema = z.object({
   status: z.string().nullish(),
   progress: z.string().nullish(),
   text: z.string().nullish(),
-  siteUrl: z.string().nullable(),
+  siteUrl: httpUrlSchema.nullable().catch(null),
   isLiked: z.boolean().nullish(),
   user: z
     .object({

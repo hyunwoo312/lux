@@ -1,4 +1,4 @@
-import { springPop, tap } from "@/lib/motion";
+import { tap } from "@/lib/motion";
 import { Check } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -9,8 +9,8 @@ import { MAX_WALLPAPER_IMAGES, useWallpaperStore } from "@/stores/useWallpaperSt
 const BADGE =
   "bg-primary text-primary-foreground absolute top-1 right-1 grid size-4 place-items-center rounded-full";
 
-const TILE =
-  "focus-ring border-edge-3 relative aspect-video cursor-pointer overflow-hidden rounded-md border";
+const TILE = `focus-ring border-edge-3 hover:border-foreground/40 relative aspect-video cursor-pointer
+   overflow-hidden rounded-md border`;
 
 export function WallpaperGalleryPanel() {
   const mode = useWallpaperStore((s) => s.mode);
@@ -58,7 +58,6 @@ export function WallpaperGalleryPanel() {
               disabled={isDisabled}
               onClick={() => toggle(wallpaper.id)}
               {...tap(reduced || isDisabled, "surface")}
-              transition={springPop(reduced)}
               className={cn(
                 TILE,
                 isSelected && "ring-primary ring-2",

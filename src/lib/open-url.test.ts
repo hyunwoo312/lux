@@ -1,9 +1,23 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { searchWeb } from "@/lib/open-url";
+import { openUrl, searchWeb } from "@/lib/open-url";
 
 const searchMock = () =>
   (globalThis.chrome as unknown as { search: { query: ReturnType<typeof vi.fn> } }).search.query;
+
+describe("openUrl", () => {
+  beforeEach(() => {
+    vi.spyOn(window, "open").mockReturnValue(null);
+  });
+
+  it("refuses every scheme outside http and https", () => {
+    for (const url of ["javascript:alert(1)", "data:text/html,x", "file:///etc/passwd", "nope"]) {
+      openUrl(url, "newTab");
+    }
+
+    expect(window.open).not.toHaveBeenCalled();
+  });
+});
 
 describe("searchWeb", () => {
   beforeEach(() => {

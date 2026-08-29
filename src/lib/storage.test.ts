@@ -146,6 +146,48 @@ describe("createGatedChromeStorage", () => {
     expect(rehydrate).not.toHaveBeenCalled();
   });
 
+  it("skips a write that would not change what is stored", async () => {
+    const { storage } = makeStore();
+    await storage.getItem("gated");
+    const set = vi.spyOn(chrome.storage.local, "set");
+
+    await storage.setItem("gated", { state: { n: 1 }, version: 1 });
+    await storage.setItem("gated", { state: { n: 1 }, version: 1 });
+    await storage.setItem("gated", { state: { n: 2 }, version: 1 });
+
+    expect(set).toHaveBeenCalledTimes(2);
+    expect(await chrome.storage.local.get("lux:gated")).toEqual({
+      "lux:gated": { state: { n: 2 }, version: 1 },
+    });
+  });
+
+  it("retries an identical write after the previous one failed", async () => {
+    const { storage } = makeStore();
+    await storage.getItem("gated");
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(chrome.storage.local, "set").mockRejectedValueOnce(new Error("transient"));
+
+    await storage.setItem("gated", { state: { n: 5 }, version: 1 });
+    await storage.setItem("gated", { state: { n: 5 }, version: 1 });
+
+    expect(await chrome.storage.local.get("lux:gated")).toEqual({
+      "lux:gated": { state: { n: 5 }, version: 1 },
+    });
+  });
+
+  it("writes again after a removal, even with the value it last wrote", async () => {
+    const { storage } = makeStore();
+    await storage.getItem("gated");
+
+    await storage.setItem("gated", { state: { n: 8 }, version: 1 });
+    await storage.removeItem("gated");
+    await storage.setItem("gated", { state: { n: 8 }, version: 1 });
+
+    expect(await chrome.storage.local.get("lux:gated")).toEqual({
+      "lux:gated": { state: { n: 8 }, version: 1 },
+    });
+  });
+
   it("lets a migration reach disk, so it does not run again forever", async () => {
     await chrome.storage.local.set({ "lux:migrated": { state: { old: 1 }, version: 1 } });
     const gated = createGatedChromeStorage<{ fresh: number }>();

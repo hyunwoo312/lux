@@ -1,6 +1,10 @@
 import { useShallow } from "zustand/react/shallow";
 import { useFrostImage } from "@/lib/frost-image";
-import { useWallpaperStore, type WallpaperFit } from "@/stores/useWallpaperStore";
+import {
+  useWallpaperStore,
+  WALLPAPER_BLEED_PER_BLUR_PX,
+  type WallpaperFit,
+} from "@/stores/useWallpaperStore";
 
 const FIT_SIZE: Record<WallpaperFit, string> = {
   cover: "cover",
@@ -17,15 +21,20 @@ export function FauxGlassBackdrop() {
 
   if (!frostUrl) return null;
 
+  const bleed = blur * WALLPAPER_BLEED_PER_BLUR_PX;
+
   return (
     <div aria-hidden className="frost-layer pointer-events-none absolute inset-0 z-0">
       <div
-        className="absolute inset-0 bg-fixed bg-center bg-no-repeat"
+        className="absolute bg-fixed bg-center bg-no-repeat"
         style={{
+          top: -bleed,
+          left: -bleed,
+          width: `calc(100% + ${bleed * 2}px)`,
+          height: `calc(100% + ${bleed * 2}px)`,
           backgroundImage: `url("${frostUrl}")`,
           backgroundSize: FIT_SIZE[fit],
-          filter: blur > 0 ? `blur(${blur}px)` : undefined,
-          transform: blur > 0 ? "scale(1.06)" : undefined,
+          ...(blur > 0 ? { filter: `blur(${blur}px)` } : {}),
         }}
       />
       {dim > 0 && <div className="absolute inset-0 bg-black" style={{ opacity: dim }} />}

@@ -8,6 +8,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { SearchField } from "@/components/SearchField";
+import type { RovingItemProps } from "@/hooks/useRovingFocus";
 import { WidgetRow } from "@/app/WidgetRow";
 import { useDragWidgetToGrid } from "@/app/useDragWidgetToGrid";
 import {
@@ -22,7 +23,7 @@ import { useDashboardStore } from "@/stores/useDashboardStore";
 import { useIntegrationStore } from "@/integrations";
 import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
 
-export function WidgetPalette() {
+export function WidgetPalette(roving: RovingItemProps) {
   const open = useWidgetPaletteStore((s) => s.open);
   const setOpen = useWidgetPaletteStore((s) => s.setOpen);
   const previewType = useWidgetPaletteStore((s) => s.previewType);
@@ -141,7 +142,7 @@ export function WidgetPalette() {
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
       <Tooltip content="Add widget" disabled={open}>
         <PopoverPrimitive.Trigger asChild>
-          <Button variant="ghost" size="icon-lg" aria-label="Add widget">
+          <Button {...roving} variant="ghost" size="icon-lg" aria-label="Add widget">
             <motion.span
               animate={{ rotate: open ? 45 : 0 }}
               transition={enterTween(reduced)}

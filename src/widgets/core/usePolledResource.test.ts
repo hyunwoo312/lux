@@ -7,6 +7,7 @@ import {
   effectiveCadence,
   patchPolledResource,
   retryDelayMs,
+  stalePolledResource,
   usePolledResource,
 } from "@/widgets/core/usePolledResource";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
@@ -246,6 +247,27 @@ describe("usePolledResource persistence", () => {
 
     expect(result.current.state).toEqual({ status: "success", data: { value: 2 } });
     expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("keeps an unmounted resource's cache when it is marked stale, then refetches on remount", async () => {
+    const fetcher = vi.fn().mockResolvedValueOnce({ value: 1 }).mockResolvedValue({ value: 2 });
+    const options = { cacheKey: "persist-stale", persist: true, intervalMs: 10_000 };
+    const first = renderHook(() => usePolledResource(fetcher, options));
+
+    await waitFor(() =>
+      expect(first.result.current.state).toEqual({ status: "success", data: { value: 1 } }),
+    );
+    first.unmount();
+    act(() => stalePolledResource("persist-stale"));
+
+    expect(localStorage.getItem("lux:polled:persist-stale")).toContain('"value":1');
+
+    const second = renderHook(() => usePolledResource(fetcher, options));
+
+    expect(second.result.current.state).toEqual({ status: "success", data: { value: 1 } });
+    await waitFor(() =>
+      expect(second.result.current.state).toEqual({ status: "success", data: { value: 2 } }),
+    );
   });
 
   it("ignores a persisted entry rejected by the validator", async () => {

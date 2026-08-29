@@ -127,6 +127,25 @@ export function dropEntry(scope: Scope, cacheKey: string): void {
   removePersisted(scope, cacheKey);
 }
 
+function stalePersisted(scope: Scope, cacheKey: string): void {
+  const key = CACHE_PREFIX[scope] + cacheKey;
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return;
+    const stored: unknown = JSON.parse(raw);
+    if (typeof stored !== "object" || stored === null || Array.isArray(stored)) return;
+    setLocal(key, JSON.stringify({ ...stored, at: 0 }));
+  } catch {
+    return;
+  }
+}
+
+function staleEntry(scope: Scope, cacheKey: string): void {
+  const entry = caches[scope].get(cacheKey);
+  if (entry) caches[scope].set(cacheKey, { ...entry, at: 0 });
+  stalePersisted(scope, cacheKey);
+}
+
 export type Freshness =
   | { status: "current" }
   | { status: "failing"; error: Error; failures: number; since: number };
@@ -469,6 +488,12 @@ export function refreshResource(key: string): void {
 
 export function invalidateResource(scope: Scope, cacheKey: string): void {
   dropEntry(scope, cacheKey);
+  carriedBackoff.delete(cacheKey);
+  liveResources.get(cacheKey)?.markStale();
+}
+
+export function staleResource(scope: Scope, cacheKey: string): void {
+  staleEntry(scope, cacheKey);
   carriedBackoff.delete(cacheKey);
   liveResources.get(cacheKey)?.markStale();
 }

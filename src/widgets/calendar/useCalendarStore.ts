@@ -297,10 +297,7 @@ async function syncProvider(
       failed,
     };
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? loadErrorMessage(error, "Couldn’t sync your calendar.")
-        : "Couldn’t sync your calendar.";
+    const message = loadErrorMessage(error, "Couldn’t sync your calendar.");
     return {
       settings: { ...current, failedCalendarIds: current.enabledCalendarIds, lastError: message },
       events: [],

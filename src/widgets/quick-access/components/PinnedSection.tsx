@@ -1,5 +1,5 @@
 import type { DragEndEvent } from "@dnd-kit/core";
-import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { closestCenter, DndContext } from "@dnd-kit/core";
 import {
   arrayMove,
   rectSortingStrategy,
@@ -10,7 +10,7 @@ import type { Transition } from "motion/react";
 import { motion } from "motion/react";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { GRID_MODIFIERS, VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
+import { GRID_MODIFIERS, useSortableSensors, VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
 import { SectionHeader } from "@/widgets/quick-access/components/HomeSection";
 import { SortablePin } from "@/widgets/quick-access/components/SortablePin";
 import {
@@ -38,7 +38,7 @@ export function PinnedSection({ editing, formOpen, morph, onAdd, onEdit }: Pinne
   const setLinks = useQuickAccessStore((s) => s.setLinks);
   const removeLink = useQuickAccessStore((s) => s.removeLink);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const sensors = useSortableSensors();
   const isGrid = view === "grid";
 
   const handleDragEnd = (event: DragEndEvent) => {

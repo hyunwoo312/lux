@@ -39,16 +39,28 @@ export function Sparkline({ points, direction, baseline, className }: SparklineP
             <path d={areaPath(geometry.points, height)} fill={`url(#${gradientId})`} />
           )}
           {baselineY != null && (
-            <line
-              x1={0}
-              y1={baselineY}
-              x2={width}
-              y2={baselineY}
-              className="stroke-ink-3"
-              strokeWidth={1}
-              strokeDasharray="2 3"
-              vectorEffect="non-scaling-stroke"
-            />
+            <>
+              <line
+                x1={0}
+                y1={baselineY}
+                x2={width}
+                y2={baselineY}
+                className="stroke-background"
+                strokeWidth={3}
+                strokeDasharray="2 3"
+                vectorEffect="non-scaling-stroke"
+              />
+              <line
+                x1={0}
+                y1={baselineY}
+                x2={width}
+                y2={baselineY}
+                className="stroke-ink-3"
+                strokeWidth={1}
+                strokeDasharray="2 3"
+                vectorEffect="non-scaling-stroke"
+              />
+            </>
           )}
           {geometry.points.length > 1 && (
             <path

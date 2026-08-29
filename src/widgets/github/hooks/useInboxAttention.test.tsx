@@ -38,7 +38,7 @@ function inboxResponses() {
                   {
                     id: "pr1",
                     title: "Fix it",
-                    url: "#",
+                    url: "https://github.com/o/r/pull/1",
                     number: 1,
                     isDraft: false,
                     updatedAt: "2026-08-01T00:00:00Z",

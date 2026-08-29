@@ -2,9 +2,9 @@ import { useCallback, useRef } from "react";
 import {
   SharedResource,
   freshnessOf,
-  invalidateResource,
   seedSnapshot,
   seededEntry,
+  staleResource,
   useResource,
   type Cadence,
   type Decode,
@@ -147,8 +147,8 @@ class PagedSource<T> extends SharedResource<PagedData<T>> {
   }
 }
 
-export function invalidatePagedResource(cacheKey: string): void {
-  invalidateResource("paged", cacheKey);
+export function stalePagedResource(cacheKey: string): void {
+  staleResource("paged", cacheKey);
 }
 
 export function usePagedResource<T>(

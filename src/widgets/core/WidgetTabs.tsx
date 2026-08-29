@@ -1,8 +1,8 @@
 import { collapse, springCrisp } from "@/lib/motion";
-import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { useRovingFocus } from "@/hooks/useRovingFocus";
 import type { WidgetIcon } from "@/widgets/core/types";
 
 export type WidgetTab<T extends string> = {
@@ -61,37 +61,20 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
     return () => observer.disconnect();
   }, [measure, tabKey]);
 
-  const focusTab = (next: T) => {
-    onSelect(next);
-    buttons.current.get(next)?.focus();
-  };
-
-  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    const order = tabs.map((tab) => tab.value);
-    const current = order.indexOf(value);
-    if (current === -1) return;
-    const last = order.length - 1;
-    const next =
-      event.key === "ArrowRight"
-        ? order[current === last ? 0 : current + 1]
-        : event.key === "ArrowLeft"
-          ? order[current === 0 ? last : current - 1]
-          : event.key === "Home"
-            ? order[0]
-            : event.key === "End"
-              ? order[last]
-              : undefined;
-    if (next === undefined) return;
-    event.preventDefault();
-    focusTab(next);
-  };
+  const roving = useRovingFocus({
+    count: tabs.length,
+    activeIndex: tabs.findIndex((tab) => tab.value === value),
+    onActivate: (index) => {
+      const next = tabs[index];
+      if (next) onSelect(next.value);
+    },
+  });
 
   return (
     <div
       ref={ref}
       role="tablist"
-      aria-orientation="horizontal"
-      onKeyDown={handleKeyDown}
+      {...roving.containerProps}
       className="relative flex w-full items-center gap-0.5"
     >
       <div
@@ -130,23 +113,25 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
           transition={springCrisp(reduced)}
         />
       )}
-      {tabs.map((tab) => {
+      {tabs.map((tab, index) => {
         const isActive = tab.value === value;
         const Icon = tab.icon;
+        const item = roving.itemProps(index);
         return (
           <Fragment key={tab.value}>
             {tab.separated && (
               <span className="bg-border/60 mx-1 h-3.5 w-px shrink-0" aria-hidden />
             )}
             <button
+              {...item}
               ref={(el) => {
                 if (el) buttons.current.set(tab.value, el);
                 else buttons.current.delete(tab.value);
+                item.ref?.(el);
               }}
               type="button"
               role="tab"
               aria-selected={isActive}
-              tabIndex={isActive ? 0 : -1}
               aria-label={tab.badge ? `${tab.label} (${tab.badge})` : tab.label}
               onClick={() => onSelect(tab.value)}
               className={cn(

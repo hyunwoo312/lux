@@ -1,10 +1,11 @@
-import { springCrisp, springPop, tap } from "@/lib/motion";
+import { springCrisp, tap } from "@/lib/motion";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useAccentStore } from "@/stores/useAccentStore";
 import { ACCENT_LABELS, ACCENT_PRESETS, accentClass } from "@/widgets/core/accent";
 
-const SWATCH = "focus-ring relative grid size-7 cursor-pointer place-items-center rounded-full";
+const SWATCH =
+  "focus-ring hover:bg-accent relative grid size-7 cursor-pointer place-items-center rounded-full";
 
 const DOT = "bg-primary size-5 rounded-full shadow-[inset_0_1px_0_0_oklch(1_0_0/0.25)]";
 
@@ -27,7 +28,6 @@ export function AccentPicker() {
             title={ACCENT_LABELS[name]}
             onClick={() => setAccent(name)}
             {...tap(reduced, "control")}
-            transition={springPop(reduced)}
             className={cn(accentClass(name), SWATCH)}
           >
             {selected && (

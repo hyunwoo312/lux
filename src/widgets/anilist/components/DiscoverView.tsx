@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { loadErrorMessage } from "@/lib/net";
 import { Button } from "@/components/ui/button";
 import { ConfigSegmented, ConfigSelect } from "@/components/config/WidgetConfig";
 import { useProviderAccount } from "@/integrations";
@@ -11,7 +12,6 @@ import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { SearchX } from "lucide-react";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
-import { writeFailureMessage } from "@/widgets/anilist/lib/load-failure";
 import { AnilistWriteNotice } from "@/widgets/anilist/components/AnilistWriteNotice";
 import { cn } from "@/lib/utils";
 import { COVER_GRID } from "@/widgets/anilist/components/coverGrid";
@@ -51,7 +51,7 @@ function usePlanningAdds(): PlanningAdds {
       .then((status) => setAdded((prev) => ({ ...prev, [media.id]: status })))
       .catch((error: unknown) =>
         setWriteError(
-          writeFailureMessage(error, `Couldn’t add ${media.title} to Planning. Try again.`),
+          loadErrorMessage(error, `Couldn’t add ${media.title} to Planning. Try again.`),
         ),
       )
       .finally(() => setPending((prev) => ({ ...prev, [media.id]: false })));

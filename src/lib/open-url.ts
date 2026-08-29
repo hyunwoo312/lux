@@ -1,17 +1,21 @@
+import { z } from "zod";
+
 export type OpenBehavior = "currentTab" | "newTab";
 
-const EXECUTABLE_SCHEMES = new Set(["javascript:", "data:", "vbscript:"]);
+const OPENABLE_SCHEMES = new Set(["http:", "https:"]);
 
-function isSafeToOpen(url: string): boolean {
+export function isHttpUrl(url: string): boolean {
   try {
-    return !EXECUTABLE_SCHEMES.has(new URL(url).protocol);
+    return OPENABLE_SCHEMES.has(new URL(url).protocol);
   } catch {
     return false;
   }
 }
 
+export const httpUrlSchema = z.string().refine(isHttpUrl);
+
 export function openUrl(url: string, behavior: OpenBehavior): void {
-  if (!isSafeToOpen(url)) return;
+  if (!isHttpUrl(url)) return;
   if (behavior === "newTab") {
     window.open(url, "_blank", "noopener,noreferrer");
   } else {

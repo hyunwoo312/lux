@@ -49,7 +49,7 @@ describe("motion", () => {
     ];
     expect(transitions.filter((transition) => transition !== STILL)).toEqual([]);
     expect(stagger(true)).toBe(0);
-    expect(tap(true, "icon")).toEqual({});
+    expect(tap(true, "glyph")).toEqual({});
   });
 
   it("agrees with the easing and duration tokens in globals.css", () => {

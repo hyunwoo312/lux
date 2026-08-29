@@ -1,4 +1,4 @@
-import { springPop, tap } from "@/lib/motion";
+import { tap } from "@/lib/motion";
 import type { ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import type { LucideIcon } from "lucide-react";
@@ -31,8 +31,7 @@ export function IconActionButton({
         onClick={disabled ? undefined : onClick}
         aria-disabled={disabled || undefined}
         aria-label={label}
-        {...tap(reduced || disabled, "icon")}
-        transition={springPop(reduced)}
+        {...tap(reduced || disabled, "control")}
         className="
           focus-ring cursor-pointer text-ink-3
           hover:text-ink

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { tolerantArray } from "@/lib/persist";
 import { ensureOk, readCappedText, withTimeout } from "@/lib/net";
+import { httpUrlSchema, isHttpUrl } from "@/lib/open-url";
 import {
   NEWS_SOURCES,
   type NewsItem,
@@ -170,15 +171,6 @@ const THUMBNAIL_SOURCES = new Set<NewsSource>(["nyt", "bbc", "guardian", "yahoo"
 
 export function hasThumbnails(source: NewsSource): boolean {
   return THUMBNAIL_SOURCES.has(source);
-}
-
-function isHttpUrl(url: string): boolean {
-  try {
-    const { protocol } = new URL(url);
-    return protocol === "http:" || protocol === "https:";
-  } catch {
-    return false;
-  }
 }
 
 function stripSourceSuffix(title: string, source: string): string {
@@ -383,8 +375,6 @@ export async function fetchMergedFeeds(
     missing: sources.filter((_, index) => results[index]?.status === "rejected"),
   };
 }
-
-const httpUrlSchema = z.string().refine(isHttpUrl);
 
 const itemSchema = z.object({
   id: z.string(),

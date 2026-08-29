@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { integrationFetch } from "@/integrations";
+import { httpUrlSchema } from "@/lib/open-url";
 import { ensureOk, parseResponse } from "@/lib/net";
 import {
   PREVIEW_CHARS,
@@ -23,7 +24,7 @@ const messageSchema = z.object({
   isRead: z.boolean().nullish(),
   bodyPreview: z.string().nullish(),
   hasAttachments: z.boolean().nullish(),
-  webLink: z.string().nullish(),
+  webLink: httpUrlSchema.nullish().catch(null),
 });
 
 const payloadSchema = z.object({

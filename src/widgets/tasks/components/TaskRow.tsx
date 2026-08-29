@@ -37,10 +37,27 @@ export function TaskRow({
   const inputRef = useRef<HTMLInputElement>(null);
   const observer = useRef<ResizeObserver | null>(null);
 
-  const { listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: task.id,
     disabled: !sortable || editing,
+    attributes: { role: "listitem", tabIndex: sortable ? 0 : -1 },
   });
+
+  const rowRef = useCallback(
+    (node: HTMLLIElement | null) => {
+      setNodeRef(node);
+      setActivatorNodeRef(node);
+    },
+    [setNodeRef, setActivatorNodeRef],
+  );
 
   const measureRef = useCallback((node: HTMLSpanElement | null) => {
     observer.current?.disconnect();
@@ -86,15 +103,16 @@ export function TaskRow({
 
   return (
     <motion.li
-      ref={setNodeRef}
+      ref={rowRef}
       style={style}
+      {...attributes}
       {...listeners}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1, transition: enterTween(reduced) }}
       exit={{ opacity: 0, scale: reduced ? 1 : 0.95, transition: exitTween(reduced) }}
       className={cn(
         ROW.item,
-        "group relative",
+        "focus-ring group relative",
         editing && "hover:bg-transparent",
         sortable && "touch-none",
         sortable && !editing && "cursor-grab active:cursor-grabbing",

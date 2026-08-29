@@ -5,7 +5,10 @@ vi.mock("@/widgets/quick-access/browser", () => ({
   focusTab: vi.fn(),
   restoreSession: vi.fn(async () => true),
 }));
-vi.mock("@/lib/open-url", () => ({ openUrl: vi.fn() }));
+vi.mock("@/lib/open-url", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/open-url")>()),
+  openUrl: vi.fn(),
+}));
 
 import { renderHook } from "@testing-library/react";
 import { openUrl } from "@/lib/open-url";

@@ -1,10 +1,12 @@
 export {
   classifyLoadError,
+  describeFailure,
   ensureOk,
+  type FailureCopy,
+  type FailureTone,
   HttpError,
   InvalidResponseError,
   loadErrorMessage,
-  loadFailureMessage,
   parseResponse,
   RateLimitError,
   rateLimitError,

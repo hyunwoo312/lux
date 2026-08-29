@@ -1,3 +1,5 @@
+import type { ComponentType } from "react";
+import { AlertCircle, Lock, WifiOff } from "lucide-react";
 import type { ZodIssue, ZodType } from "zod";
 import { isOnline } from "@/lib/net/online";
 
@@ -88,23 +90,62 @@ export function classifyLoadError(error: Error): LoadFailure {
   return "other";
 }
 
-export function loadFailureMessage(error: unknown, service: string, subject = service): string {
+export type FailureTone = "neutral" | "warning" | "error";
+
+export type FailureCopy = {
+  message: string;
+  icon: ComponentType<{ className?: string }>;
+  tone: FailureTone;
+};
+
+type DescribeFailureOptions = {
+  service: string;
+  subject?: string;
+  register?: "full" | "short";
+};
+
+export function describeFailure(error: unknown, options: DescribeFailureOptions): FailureCopy {
+  const { service, subject = service, register = "full" } = options;
+  const short = register === "short";
   const failure = error instanceof Error ? classifyLoadError(error) : "other";
+
   switch (failure) {
     case "offline":
-      return "You’re offline — this will load when your connection is back.";
-    case "rateLimited":
-      return error instanceof Error ? error.message : `Couldn’t load ${subject}.`;
+      return {
+        message: short
+          ? "You’re offline."
+          : "You’re offline — this will load when your connection is back.",
+        icon: WifiOff,
+        tone: "neutral",
+      };
     case "auth":
-      return `${service} turned down the request. Reconnect your account in Settings.`;
+      return {
+        message: short
+          ? "Reconnect this account in Settings."
+          : `${service} turned down the request. Reconnect your account in Settings.`,
+        icon: Lock,
+        tone: "warning",
+      };
+    case "rateLimited":
+      return {
+        message: error instanceof Error ? error.message : `Couldn’t load ${subject}.`,
+        icon: AlertCircle,
+        tone: "error",
+      };
     case "unreachable":
-      return `${service} isn’t responding, so ${subject} couldn’t load. Try again shortly.`;
-    default:
-      return `Couldn’t load ${subject}.`;
+      return {
+        message: short
+          ? "Not responding — retrying shortly."
+          : `${service} isn’t responding, so ${subject} couldn’t load. Try again shortly.`,
+        icon: AlertCircle,
+        tone: "error",
+      };
+    case "other":
+      return { message: `Couldn’t load ${subject}.`, icon: AlertCircle, tone: "error" };
   }
 }
 
-export function loadErrorMessage(error: Error, fallback: string): string {
+export function loadErrorMessage(error: unknown, fallback: string): string {
   return error instanceof RateLimitError ? error.message : fallback;
 }
 

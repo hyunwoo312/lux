@@ -548,7 +548,7 @@ export const GUIDE_GROUPS: readonly GuideGroup[] = [
       {
         id: "connecting-accounts",
         title: "Connecting an account",
-        lead: "Calendar, Spotify, GitHub and AniList can pull in what is yours. Each asks separately, and only when you tell it to.",
+        lead: "Calendar, Mail, Spotify, GitHub and AniList can pull in what is yours. Each asks separately, and only when you tell it to.",
         blocks: [
           {
             kind: "prose",
@@ -559,12 +559,12 @@ export const GUIDE_GROUPS: readonly GuideGroup[] = [
             kind: "list",
             items: [
               {
-                title: "Google Calendar",
-                text: "Read-only access to your calendars, plus your email address so the widget can show which account it is using. It cannot create, move or delete anything.",
+                title: "Google",
+                text: "Read-only access to your calendars and, if you add the Mail widget, read-only access to your Gmail messages — plus your email address so the widget can show which account it is using. It cannot send, create, move or delete anything.",
               },
               {
                 title: "Outlook",
-                text: "The same read-only calendar access, through Microsoft.",
+                text: "The same read-only calendar and mail access, through Microsoft.",
               },
               {
                 title: "Spotify",

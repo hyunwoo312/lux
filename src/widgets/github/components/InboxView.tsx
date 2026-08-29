@@ -20,7 +20,7 @@ import { INBOX_CACHE_KEY, INBOX_REFRESH_MS, INBOX_ZERO } from "@/widgets/github/
 function reportWriteFailure(error: unknown, fallback: string): void {
   showToast({
     key: "github-inbox-write",
-    message: error instanceof Error ? loadErrorMessage(error, fallback) : fallback,
+    message: loadErrorMessage(error, fallback),
   });
 }
 

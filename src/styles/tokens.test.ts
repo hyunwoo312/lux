@@ -203,12 +203,48 @@ describe("colour tokens", () => {
     expect(unused).toEqual([]);
   });
 
-  it("keeps ink-4 out of widgets", () => {
-    const offenders = sourceFiles()
+  describe("the ink ladder inside widgets", () => {
+    const HAIRLINE = /\b(?:stroke|border|ring|outline|divide)-ink(?:-[0-9])?(?![\w-])/g;
+    const ANCHOR = /\b(?:stroke|bg|ring-offset)-background\b/;
+    const ANCHOR_REACH_LINES = 12;
+
+    type Mark = { at: string; lines: string[]; index: number };
+
+    const widgetSources = sourceFiles()
       .filter((file) => sourcePath(file).startsWith("widgets"))
-      .filter((file) => /\bink-4\b/.test(readFileSync(file, "utf8")))
-      .map(sourcePath);
-    expect(offenders).toEqual([]);
+      .map((file) => ({ path: sourcePath(file), lines: readFileSync(file, "utf8").split("\n") }));
+
+    function marks(pattern: RegExp): Mark[] {
+      return widgetSources.flatMap(({ path, lines }) =>
+        lines.flatMap((line, index) =>
+          [...line.matchAll(pattern)].map((match) => ({
+            at: `${path}:${index + 1}: ${match[0]}`,
+            lines,
+            index,
+          })),
+        ),
+      );
+    }
+
+    function isAnchored({ lines, index }: Mark): boolean {
+      const beneath = lines.slice(Math.max(0, index - ANCHOR_REACH_LINES), index + 1);
+      return ANCHOR.test(beneath.join("\n"));
+    }
+
+    it("bans the faintest rung on fills, strokes and borders, not only on text", () => {
+      expect(marks(/[a-z][a-z-]*-ink-4(?![\w-])/g).map((mark) => mark.at)).toEqual([]);
+    });
+
+    it("never thins a rung with an opacity modifier, which lands below the banned rung", () => {
+      expect(marks(/[a-z][a-z-]*-ink(?:-[0-9])?\/\d+/g).map((mark) => mark.at)).toEqual([]);
+    });
+
+    it("anchors a hairline drawn with a line property, whose rung cannot carry it alone", () => {
+      const unanchored = marks(HAIRLINE)
+        .filter((mark) => !isAnchored(mark))
+        .map((mark) => mark.at);
+      expect(unanchored).toEqual([]);
+    });
   });
 
   describe("z-index", () => {

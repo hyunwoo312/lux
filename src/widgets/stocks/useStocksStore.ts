@@ -6,7 +6,7 @@ import { keepPersisted, mergePersisted, tolerantArray, tolerantRecord } from "@/
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
-import { invalidatePolledResource } from "@/widgets/core/usePolledResource";
+import { stalePolledResource } from "@/widgets/core/usePolledResource";
 import {
   bumpSyncNonce,
   createSyncSlice,
@@ -156,13 +156,13 @@ export const useStocksStore = create<StocksState>()(
         if (isSyncCoolingDown(get(), instanceId, STOCKS_SYNC_COOLDOWN_MS)) return;
         const data = get().byInstance[instanceId];
         if (!data) return;
-        invalidatePolledResource(sparkKey(data.symbols, DAY_RANGE));
+        stalePolledResource(sparkKey(data.symbols, DAY_RANGE));
         for (const symbol of data.symbols) {
-          invalidatePolledResource(quoteKey(symbol, DAY_RANGE));
-          if (data.range !== DAY_RANGE) invalidatePolledResource(quoteKey(symbol, data.range));
+          stalePolledResource(quoteKey(symbol, DAY_RANGE));
+          if (data.range !== DAY_RANGE) stalePolledResource(quoteKey(symbol, data.range));
         }
         if (data.indexSymbols.length > 0) {
-          invalidatePolledResource(sparkKey(data.indexSymbols, DAY_RANGE));
+          stalePolledResource(sparkKey(data.indexSymbols, DAY_RANGE));
         }
         set((state) => bumpSyncNonce(state, instanceId));
       },

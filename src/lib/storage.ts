@@ -78,6 +78,7 @@ export function createGatedChromeStorage<S>(): GatedStorage<S> {
   let opened = false;
   let watching = false;
   let storeName: string | undefined;
+  let lastWritten: { name: string; encoded: string } | null = null;
   const selfWrites: string[] = [];
   return {
     getItem: async (name) => {
@@ -101,11 +102,20 @@ export function createGatedChromeStorage<S>(): GatedStorage<S> {
     },
     setItem: async (name, value) => {
       if (!readable) return;
-      selfWrites.push(serialize(value));
-      await write(name, value);
+      const encoded = serialize(value);
+      if (lastWritten?.name === name && lastWritten.encoded === encoded) return;
+      lastWritten = { name, encoded };
+      selfWrites.push(encoded);
+      try {
+        await writeOrThrow(name, value);
+      } catch (error) {
+        lastWritten = null;
+        console.warn(`Failed to write "${name}" to storage`, error);
+      }
     },
     removeItem: async (name) => {
       if (!readable) return;
+      lastWritten = null;
       selfWrites.push(serialize(undefined));
       await remove(name);
     },

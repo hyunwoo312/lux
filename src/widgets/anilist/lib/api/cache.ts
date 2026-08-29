@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { httpUrlSchema } from "@/lib/open-url";
 import { tolerantArray } from "@/lib/persist";
 import { DEFAULT_SCORE_FORMAT, HEX_COLOR } from "@/widgets/anilist/lib/api/client";
 import {
@@ -19,7 +20,7 @@ const currentEntrySchema = z.object({
   coverImage: z.string().optional(),
   coverImageSmall: z.string().optional(),
   coverColor: coverColorSchema,
-  siteUrl: z.string(),
+  siteUrl: httpUrlSchema,
   progress: z.number(),
   total: z.number().nullable(),
   behind: z.number().nullable(),
@@ -42,7 +43,7 @@ const discoverMediaSchema = z.object({
   coverImageSmall: z.string().optional(),
   coverColor: coverColorSchema,
   format: z.string().optional(),
-  siteUrl: z.string(),
+  siteUrl: httpUrlSchema,
   averageScore: z.number().optional(),
   genres: z.array(z.string()).optional(),
   episodes: z.number().optional(),
@@ -55,7 +56,7 @@ const notificationSchema = z.object({
   createdAt: z.string(),
   imageUrl: z.string().optional(),
   imageKind: z.enum(["cover", "avatar"]).optional(),
-  url: z.string().optional(),
+  url: httpUrlSchema.optional().catch(undefined),
 });
 
 const activitySchema = z.object({
@@ -67,7 +68,7 @@ const activitySchema = z.object({
   text: z.string(),
   mediaTitle: z.string().optional(),
   coverImage: z.string().optional(),
-  siteUrl: z.string(),
+  siteUrl: httpUrlSchema,
   isLiked: z.boolean(),
 });
 

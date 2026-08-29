@@ -479,14 +479,14 @@ Each widget carries a settings control in its own header, outside edit mode. Tha
 
 <a id="connecting-accounts"></a>
 
-_Calendar, Spotify, GitHub and AniList can pull in what is yours. Each asks separately, and only when you tell it to._
+_Calendar, Mail, Spotify, GitHub and AniList can pull in what is yours. Each asks separately, and only when you tell it to._
 
 A widget that needs an account shows a **Connect** button. Press it and you sign in on the provider's own site — your password never touches Lux, and all that comes back is a token.
 
 #### What each one is allowed to see
 
-- **Google Calendar** — Read-only access to your calendars, plus your email address so the widget can show which account it is using. It cannot create, move or delete anything.
-- **Outlook** — The same read-only calendar access, through Microsoft.
+- **Google** — Read-only access to your calendars and, if you add the Mail widget, read-only access to your Gmail messages — plus your email address so the widget can show which account it is using. It cannot send, create, move or delete anything.
+- **Outlook** — The same read-only calendar and mail access, through Microsoft.
 - **Spotify** — What is playing, control over it, and your library and playlists so search and the queue work. Controlling playback needs Premium — Spotify's rule for every app, not ours.
 - **GitHub** — Your profile, notifications, and repository access — the broad-sounding one on GitHub's consent screen, which is what lets private contributions count towards your heatmap. Lux only reads with it.
 - **AniList** — Your list, progress and notifications. The only one that writes as well as reads — liking something or bumping an episode count, and only when you do it.

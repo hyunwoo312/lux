@@ -1,5 +1,4 @@
-import type { KeyboardEvent as ReactKeyboardEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { BookOpen, Check, MessageSquarePlus, Pencil, ScrollText, Settings } from "lucide-react";
 import { pop } from "@/lib/motion";
@@ -10,6 +9,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { clockFormatter, formatClockDate } from "@/lib/clock";
 import { useNow } from "@/hooks/useNow";
+import { useRovingFocus } from "@/hooks/useRovingFocus";
 import { ChangelogDialog, consumeChangelogAutoShow, useHasUnseenRelease } from "@/changelog";
 import { GuideDialog, useGuideStore } from "@/guide";
 import { FeedbackDialog } from "@/feedback";
@@ -17,6 +17,8 @@ import { WidgetPalette } from "@/app/WidgetPalette";
 import { useSettingsStore } from "@/settings";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useDashboardStore } from "@/stores/useDashboardStore";
+
+const TOOLBAR_BUTTONS = 7;
 
 export function Header() {
   const reduced = useReducedMotion();
@@ -28,36 +30,7 @@ export function Header() {
   const openGuide = useGuideStore((s) => s.openGuide);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const showClock = useAppSettingsStore((s) => s.showClock);
-  const toolbarRef = useRef<HTMLDivElement>(null);
-  const [toolbarIndex, setToolbarIndex] = useState(0);
-
-  const toolbarButtons = () => [...(toolbarRef.current?.querySelectorAll("button") ?? [])];
-
-  useEffect(() => {
-    toolbarButtons().forEach((button, index) => {
-      button.tabIndex = index === toolbarIndex ? 0 : -1;
-    });
-  }, [toolbarIndex]);
-
-  const handleToolbarKeys = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
-    const jump = event.key === "Home" ? "first" : event.key === "End" ? "last" : null;
-    if (step === 0 && jump === null) return;
-    const buttons = toolbarButtons();
-    event.preventDefault();
-    const current = buttons.indexOf(document.activeElement as HTMLButtonElement);
-    const last = buttons.length - 1;
-    const next =
-      jump === "first"
-        ? 0
-        : jump === "last"
-          ? last
-          : current === -1
-            ? 0
-            : (current + step + buttons.length) % buttons.length;
-    setToolbarIndex(next);
-    buttons[next]?.focus();
-  };
+  const toolbar = useRovingFocus({ count: TOOLBAR_BUTTONS });
 
   useEffect(() => {
     let active = true;
@@ -72,22 +45,16 @@ export function Header() {
   return (
     <header className="grid grid-cols-3 items-center gap-4 pr-(--scrollbar-width)">
       <div
-        ref={toolbarRef}
         role="toolbar"
         aria-label="Dashboard actions"
-        aria-orientation="horizontal"
-        onKeyDown={handleToolbarKeys}
-        onFocusCapture={(event) => {
-          const button = (event.target as Element).closest("button");
-          const index = button ? toolbarButtons().indexOf(button) : -1;
-          if (index !== -1) setToolbarIndex(index);
-        }}
+        {...toolbar.containerProps}
         className="glass col-start-2 flex items-center gap-1 justify-self-center rounded-lg p-1"
       >
-        <ThemeToggle />
-        <WidgetPalette />
+        <ThemeToggle {...toolbar.itemProps(0)} />
+        <WidgetPalette {...toolbar.itemProps(1)} />
         <Tooltip content={editing ? "Done" : "Edit mode"} sticky>
           <Button
+            {...toolbar.itemProps(2)}
             variant="ghost"
             size="icon-lg"
             className={cn(editing && "bg-accent text-ink")}
@@ -107,6 +74,7 @@ export function Header() {
         </Tooltip>
         <Tooltip content="Settings">
           <Button
+            {...toolbar.itemProps(3)}
             variant="ghost"
             size="icon-lg"
             aria-label="Settings"
@@ -118,6 +86,7 @@ export function Header() {
         <Separator orientation="vertical" className="mx-1 h-6" />
         <Tooltip content="What's new">
           <Button
+            {...toolbar.itemProps(4)}
             variant="ghost"
             size="icon-lg"
             className="relative"
@@ -135,6 +104,7 @@ export function Header() {
         </Tooltip>
         <Tooltip content="Guide">
           <Button
+            {...toolbar.itemProps(5)}
             variant="ghost"
             size="icon-lg"
             aria-label="Open the Lux guide"
@@ -145,6 +115,7 @@ export function Header() {
         </Tooltip>
         <Tooltip content="Send feedback">
           <Button
+            {...toolbar.itemProps(6)}
             variant="ghost"
             size="icon-lg"
             aria-label="Send feedback"

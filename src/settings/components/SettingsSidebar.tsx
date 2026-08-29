@@ -1,4 +1,4 @@
-import { useEffect, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { ChevronLeft, Settings } from "lucide-react";
 import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { springCrisp } from "@/lib/motion";
+import { useRovingFocus } from "@/hooks/useRovingFocus";
 import { searchSettings } from "@/settings/searchIndex";
 import { SETTINGS_TAB_META } from "@/settings/tabsMeta";
 import { SETTINGS_TABS, useSettingsStore } from "@/settings/useSettingsStore";
@@ -37,21 +38,17 @@ export function SettingsSidebar({ open }: { open: boolean }) {
 
   const results = searchSettings(query);
   const searching = query.trim().length > 0;
-  const tabIndex = SETTINGS_TABS.indexOf(tab);
   const effectiveCollapsed = isNarrow || collapsed;
 
-  const onTabKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
-    const step = event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0;
-    const jump = event.key === "Home" ? 0 : event.key === "End" ? SETTINGS_TABS.length - 1 : null;
-    if (step === 0 && jump === null) return;
-
-    event.preventDefault();
-    const index = jump ?? (tabIndex + step + SETTINGS_TABS.length) % SETTINGS_TABS.length;
-    const next = SETTINGS_TABS[index];
-    if (!next) return;
-    setTab(next);
-    document.getElementById(`settings-tab-${next}`)?.focus();
-  };
+  const roving = useRovingFocus({
+    count: SETTINGS_TABS.length,
+    orientation: "vertical",
+    activeIndex: SETTINGS_TABS.indexOf(tab),
+    onActivate: (index) => {
+      const next = SETTINGS_TABS[index];
+      if (next) setTab(next);
+    },
+  });
 
   return (
     <aside
@@ -103,22 +100,21 @@ export function SettingsSidebar({ open }: { open: boolean }) {
       ) : (
         <nav
           role="tablist"
-          aria-orientation="vertical"
           aria-label="Settings sections"
-          onKeyDown={onTabKeyDown}
+          {...roving.containerProps}
           className="flex flex-1 flex-col gap-1 overflow-x-hidden overflow-y-auto p-2"
         >
-          {SETTINGS_TABS.map((id) => {
+          {SETTINGS_TABS.map((id, index) => {
             const { label, icon: Icon } = SETTINGS_TAB_META[id];
             const isActive = id === tab;
             const button = (
               <button
+                {...roving.itemProps(index)}
                 type="button"
                 role="tab"
                 id={`settings-tab-${id}`}
                 aria-selected={isActive}
                 aria-controls="settings-panel"
-                tabIndex={isActive ? 0 : -1}
                 onClick={() => setTab(id)}
                 className={cn(
                   "press-row focus-ring transition-colors cursor-pointer",

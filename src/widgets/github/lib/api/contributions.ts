@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { httpUrlSchema } from "@/lib/open-url";
 import { tolerantArray } from "@/lib/persist";
 import { graphql } from "@/widgets/github/lib/api/client";
 import {
@@ -45,7 +46,7 @@ const repoBreakdownSchema = tolerantArray(
   z.object({
     repository: z.object({
       nameWithOwner: z.string(),
-      url: z.string(),
+      url: httpUrlSchema,
       isPrivate: z.boolean(),
     }),
     contributions: z.object({ totalCount: z.number() }),
@@ -135,7 +136,7 @@ const contributionDaySchema = z.object({
 
 const repoActivitySchema = z.object({
   repo: z.string(),
-  url: z.string(),
+  url: httpUrlSchema,
   isPrivate: z.boolean(),
   commits: z.number(),
   prs: z.number(),

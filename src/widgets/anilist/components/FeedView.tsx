@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { CheckCheck } from "lucide-react";
+import { loadErrorMessage } from "@/lib/net";
 import { Spinner } from "@/components/ui/spinner";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
@@ -8,7 +9,6 @@ import { ActivityView } from "@/widgets/anilist/components/ActivityView";
 import { InboxView } from "@/widgets/anilist/components/InboxView";
 import { AnilistWriteNotice } from "@/widgets/anilist/components/AnilistWriteNotice";
 import { FeedSourceSelector } from "@/widgets/anilist/components/FeedSourceSelector";
-import { writeFailureMessage } from "@/widgets/anilist/lib/load-failure";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { useActivityUnseenCount, useUnreadCount } from "@/widgets/anilist/useAnilistSignals";
 
@@ -46,9 +46,7 @@ export function FeedView({ enabled, userId, newTab }: FeedViewProps) {
       (error: unknown) => {
         setMarking(false);
         setMarkedReadAt(0);
-        setMarkError(
-          writeFailureMessage(error, "Couldn’t mark your notifications read. Try again."),
-        );
+        setMarkError(loadErrorMessage(error, "Couldn’t mark your notifications read. Try again."));
       },
     );
   }, [unreadRefresh]);

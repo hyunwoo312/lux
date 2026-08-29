@@ -3,7 +3,11 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { EASE_STANDARD, enterTween, STILL } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { GeneratedWallpaper } from "@/app/wallpaper/GeneratedWallpaper";
-import { useWallpaperStore, type WallpaperFit } from "@/stores/useWallpaperStore";
+import {
+  useWallpaperStore,
+  WALLPAPER_BLEED_PER_BLUR_PX,
+  type WallpaperFit,
+} from "@/stores/useWallpaperStore";
 
 const FIT_CLASS: Record<WallpaperFit, string> = {
   cover: "object-cover",
@@ -11,8 +15,6 @@ const FIT_CLASS: Record<WallpaperFit, string> = {
   fill: "object-fill",
   "scale-down": "object-scale-down",
 };
-
-const BLEED_PER_BLUR_PX = 2;
 
 export function Wallpaper({ imageUrl }: { imageUrl: string | null }) {
   const source = useWallpaperStore((s) => s.source);
@@ -30,7 +32,7 @@ export function Wallpaper({ imageUrl }: { imageUrl: string | null }) {
     if (showImage) hasShownImage.current = true;
   }, [showImage]);
 
-  const bleed = blur * BLEED_PER_BLUR_PX;
+  const bleed = blur * WALLPAPER_BLEED_PER_BLUR_PX;
   const layerCrossfade = enterTween(reduced, "slow", EASE_STANDARD);
 
   return (

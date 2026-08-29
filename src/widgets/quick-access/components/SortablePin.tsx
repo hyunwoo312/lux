@@ -18,9 +18,15 @@ type SortablePinProps = {
 };
 
 export function SortablePin({ link, view, openBehavior, onEdit, onRemove }: SortablePinProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: link.id,
-  });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: link.id, attributes: { role: "link" } });
 
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -37,6 +43,7 @@ export function SortablePin({ link, view, openBehavior, onEdit, onRemove }: Sort
           if (isDragging) event.preventDefault();
         }}
         className={cn("focus-ring", qaTileClass(view))}
+        ref={setActivatorNodeRef}
         {...attributes}
         {...listeners}
       >

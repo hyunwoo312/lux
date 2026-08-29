@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { loadErrorMessage } from "@/lib/net";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { Button } from "@/components/ui/button";
 import { fade } from "@/lib/motion";
@@ -9,7 +10,6 @@ import { fetchList, saveListStatus, saveProgress } from "@/widgets/anilist/lib/a
 import { parseCachedCurrent } from "@/widgets/anilist/lib/api/cache";
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { computeBehind, progressLabel, sortCurrentEntries } from "@/widgets/anilist/lib/current";
-import { writeFailureMessage } from "@/widgets/anilist/lib/load-failure";
 import {
   emptyListMessage,
   listStatusLabel,
@@ -149,7 +149,7 @@ function ListBody({
         .then((status) => patchEntry(entry, (item) => ({ ...item, status })))
         .catch((error: unknown) =>
           setWriteError(
-            writeFailureMessage(
+            loadErrorMessage(
               error,
               `Couldn’t move ${entry.title} to ${listStatusLabel("CURRENT", entry.kind)}. Try again.`,
             ),
@@ -176,10 +176,7 @@ function ListBody({
         .catch((error: unknown) => {
           patchEntry(entry, (item) => withProgress(item, entry.progress));
           setWriteError(
-            writeFailureMessage(
-              error,
-              `Couldn’t save your progress for ${entry.title}. Try again.`,
-            ),
+            loadErrorMessage(error, `Couldn’t save your progress for ${entry.title}. Try again.`),
           );
         })
         .finally(() => setPending((prev) => ({ ...prev, [entry.id]: false })));

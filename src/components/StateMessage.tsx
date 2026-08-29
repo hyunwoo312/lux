@@ -1,13 +1,11 @@
 import type { ComponentType, ReactNode } from "react";
-import { AlertCircle, Lock, RotateCw, WifiOff } from "lucide-react";
+import { RotateCw } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { classifyLoadError, loadFailureMessage } from "@/lib/net";
+import { describeFailure, type FailureTone } from "@/lib/net";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 
-type StateTone = "neutral" | "warning" | "error";
-
-const TONE_ICON: Record<StateTone, string> = {
+const TONE_ICON: Record<FailureTone, string> = {
   neutral: "text-ink-3",
   warning: "text-warning",
   error: "text-destructive",
@@ -17,7 +15,7 @@ type StateMessageProps = {
   icon?: ComponentType<{ className?: string }>;
   title?: ReactNode;
   message: ReactNode;
-  tone?: StateTone;
+  tone?: FailureTone;
   compact?: boolean;
   action?: ReactNode;
 };
@@ -69,14 +67,7 @@ type ErrorStateProps = {
 };
 
 export function ErrorState({ error, service, subject, onRetry, retrying }: ErrorStateProps) {
-  const failure = error instanceof Error ? classifyLoadError(error) : "other";
-  const thing = subject ?? service;
-
-  const message = loadFailureMessage(error, service, thing);
-
-  const icon = failure === "offline" ? WifiOff : failure === "auth" ? Lock : AlertCircle;
-  const tone: StateTone =
-    failure === "offline" ? "neutral" : failure === "auth" ? "warning" : "error";
+  const { message, icon, tone } = describeFailure(error, { service, subject });
 
   return (
     <StateMessage

@@ -77,21 +77,21 @@ export function springPop(reduced: Reduced): Transition {
   return reduced ? STILL : SPRING_POP;
 }
 
-const TAP = {
-  icon: { whileHover: { scale: 1.18 }, whileTap: { scale: 0.85 } },
-  control: { whileHover: { scale: 1.12 }, whileTap: { scale: 0.9 } },
-  surface: { whileHover: { scale: 1.04 }, whileTap: { scale: 0.96 } },
+const PRESS = {
+  glyph: 0.94,
+  control: 0.97,
+  surface: 0.98,
 } as const;
 
-type TapKind = keyof typeof TAP;
+type PressScale = keyof typeof PRESS;
 
 type TapProps = {
-  whileHover?: TargetAndTransition;
   whileTap?: TargetAndTransition;
+  transition?: Transition;
 };
 
-export function tap(reduced: Reduced, kind: TapKind): TapProps {
-  return reduced ? {} : TAP[kind];
+export function tap(reduced: Reduced, scale: PressScale): TapProps {
+  return reduced ? {} : { whileTap: { scale: PRESS[scale] }, transition: SPRING_POP };
 }
 
 type Presence = {

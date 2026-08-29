@@ -302,7 +302,7 @@ function LogoMark() {
       type="button"
       aria-label="Lux"
       onClick={celebrate}
-      whileHover={{ ...lift.whileHover, y: -5 }}
+      whileHover={{ y: -5 }}
       whileTap={lift.whileTap}
       transition={springPop(reduced)}
       className="focus-ring relative grid size-16 cursor-pointer place-items-center rounded-xl"

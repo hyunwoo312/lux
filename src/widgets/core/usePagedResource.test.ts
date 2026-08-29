@@ -2,7 +2,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { invalidatePagedResource, usePagedResource } from "@/widgets/core/usePagedResource";
+import { stalePagedResource, usePagedResource } from "@/widgets/core/usePagedResource";
 import { useFreshness } from "@/widgets/core/usePolledResource";
 
 afterEach(() => {
@@ -184,7 +184,7 @@ describe("usePagedResource", () => {
     expect(result.current.state).toEqual({ status: "success", items: [1, 2, 3, 4] });
   });
 
-  it("refetches an expanded list after its cache is invalidated", async () => {
+  it("refetches an expanded list after its cache is marked stale", async () => {
     const fetcher = vi
       .fn()
       .mockResolvedValueOnce({ items: [1, 2], hasNextPage: true })
@@ -206,7 +206,7 @@ describe("usePagedResource", () => {
       expect(result.current.state).toEqual({ status: "success", items: [1, 2, 3, 4] }),
     );
 
-    act(() => invalidatePagedResource(cacheKey));
+    act(() => stalePagedResource(cacheKey));
     act(() => void window.dispatchEvent(new Event("focus")));
 
     await waitFor(() => expect(result.current.state).toEqual({ status: "success", items: [9] }));

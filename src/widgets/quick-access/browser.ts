@@ -1,3 +1,4 @@
+import { isHttpUrl } from "@/lib/open-url";
 import type { BookmarkFolder, BrowserItem } from "@/widgets/quick-access/types";
 
 const RECENTLY_CLOSED_REQUEST = 25;
@@ -16,8 +17,9 @@ export function toBookmarkFolder(
   const folders: BookmarkFolder[] = [];
   const items: BrowserItem[] = [];
   for (const child of node.children ?? []) {
-    if (child.url) items.push({ id: child.id, title: child.title || child.url, url: child.url });
-    else folders.push(toBookmarkFolder(child, UNTITLED_FOLDER));
+    if (!child.url) folders.push(toBookmarkFolder(child, UNTITLED_FOLDER));
+    else if (isHttpUrl(child.url))
+      items.push({ id: child.id, title: child.title || child.url, url: child.url });
   }
   return { id: node.id, title: node.title || fallbackTitle, folders, items };
 }
@@ -36,7 +38,7 @@ export function resolveFolderTrail(root: BookmarkFolder, path: string[]): Bookma
 
 export function sessionToItem(session: chrome.sessions.Session): BrowserItem | null {
   const tab = session.tab ?? session.window?.tabs?.find((entry) => Boolean(entry.url));
-  if (!tab?.url) return null;
+  if (!tab?.url || !isHttpUrl(tab.url)) return null;
   return {
     id: `closed-${tab.sessionId ?? tab.url}`,
     title: tab.title || tab.url,
@@ -56,7 +58,7 @@ export async function restoreSession(sessionId: string): Promise<boolean> {
 }
 
 export function historyToItem(item: chrome.history.HistoryItem): BrowserItem | null {
-  if (!item.url) return null;
+  if (!item.url || !isHttpUrl(item.url)) return null;
   return { id: item.id, title: item.title || item.url, url: item.url };
 }
 
@@ -75,9 +77,7 @@ export async function fetchHistory(): Promise<BrowserItem[]> {
 export async function fetchRecentlyClosed(): Promise<BrowserItem[]> {
   if (typeof chrome === "undefined" || !chrome.sessions?.getRecentlyClosed) return [];
   const sessions = await chrome.sessions.getRecentlyClosed({ maxResults: RECENTLY_CLOSED_REQUEST });
-  return sessions
-    .map(sessionToItem)
-    .filter((item): item is BrowserItem => item !== null && /^https?:\/\//.test(item.url));
+  return sessions.map(sessionToItem).filter((item): item is BrowserItem => item !== null);
 }
 
 export async function searchHistory(
@@ -90,7 +90,7 @@ export async function searchHistory(
   const items: BrowserItem[] = [];
   for (const entry of raw) {
     const item = historyToItem(entry);
-    if (!item || !/^https?:\/\//.test(item.url) || seen.has(item.url)) continue;
+    if (!item || seen.has(item.url)) continue;
     seen.add(item.url);
     items.push(item);
     if (items.length >= limit) break;
@@ -159,6 +159,6 @@ export async function fetchTopSites(): Promise<BrowserItem[]> {
   if (typeof chrome === "undefined" || !chrome.topSites?.get) return [];
   const sites = await chrome.topSites.get();
   return sites
-    .filter((site) => /^https?:\/\//.test(site.url))
+    .filter((site) => isHttpUrl(site.url))
     .map((site) => ({ id: `top-${site.url}`, title: site.title || site.url, url: site.url }));
 }

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { integrationFetch } from "@/integrations";
 import { ensureOk, loadErrorMessage, parseResponse } from "@/lib/net";
+import { httpUrlSchema } from "@/lib/open-url";
 import { tolerantArray } from "@/lib/persist";
 import {
   GITHUB_JSON_HEADERS,
@@ -20,10 +21,14 @@ const notificationSchema = z.object({
   id: z.string(),
   reason: z.string(),
   updated_at: z.string(),
-  subject: z.object({ title: z.string(), url: z.string().nullable(), type: z.string() }),
+  subject: z.object({
+    title: z.string(),
+    url: httpUrlSchema.nullable().catch(null),
+    type: z.string(),
+  }),
   repository: z.object({
     full_name: z.string(),
-    html_url: z.string(),
+    html_url: httpUrlSchema,
     private: z.boolean(),
   }),
 });
@@ -96,7 +101,7 @@ fragment issue on Issue {
 const prNodeSchema = z.object({
   id: z.string(),
   title: z.string(),
-  url: z.string(),
+  url: httpUrlSchema,
   number: z.number(),
   isDraft: z.boolean(),
   updatedAt: z.string(),
@@ -117,7 +122,7 @@ const prNodeSchema = z.object({
 const issueNodeSchema = z.object({
   id: z.string(),
   title: z.string(),
-  url: z.string(),
+  url: httpUrlSchema,
   number: z.number(),
   updatedAt: z.string(),
   repository: z.object({ nameWithOwner: z.string(), isPrivate: z.boolean() }),
@@ -244,10 +249,6 @@ export async function markAllGithubNotificationsRead(): Promise<void> {
   ensureOk(response, "GitHub notifications update failed");
 }
 
-function sectionErrorMessage(reason: unknown, fallback: string): string {
-  return reason instanceof Error ? loadErrorMessage(reason, fallback) : fallback;
-}
-
 export async function fetchInbox(signal?: AbortSignal): Promise<InboxData> {
   const [notifications, items] = await Promise.allSettled([
     fetchNotifications(signal),
@@ -264,11 +265,11 @@ export async function fetchInbox(signal?: AbortSignal): Promise<InboxData> {
     issues: items.status === "fulfilled" ? items.value.issues : [],
     notificationsError:
       notifications.status === "rejected"
-        ? sectionErrorMessage(notifications.reason, "Couldn’t load notifications.")
+        ? loadErrorMessage(notifications.reason, "Couldn’t load notifications.")
         : undefined,
     itemsError:
       items.status === "rejected"
-        ? sectionErrorMessage(items.reason, "Couldn’t load pull requests and issues.")
+        ? loadErrorMessage(items.reason, "Couldn’t load pull requests and issues.")
         : undefined,
   };
 }
@@ -280,13 +281,13 @@ const cachedNotificationSchema = z.object({
   repo: z.string(),
   isPrivate: z.boolean(),
   updatedAt: z.string(),
-  url: z.string(),
+  url: httpUrlSchema,
 });
 
 const cachedPullRequestSchema = z.object({
   id: z.string(),
   title: z.string(),
-  url: z.string(),
+  url: httpUrlSchema,
   number: z.number(),
   repo: z.string(),
   isPrivate: z.boolean(),
@@ -301,7 +302,7 @@ const cachedPullRequestSchema = z.object({
 const cachedIssueSchema = z.object({
   id: z.string(),
   title: z.string(),
-  url: z.string(),
+  url: httpUrlSchema,
   number: z.number(),
   repo: z.string(),
   isPrivate: z.boolean(),

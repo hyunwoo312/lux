@@ -13,9 +13,11 @@ describe("normalizeUrl", () => {
     expect(normalizeUrl("   ")).toBeNull();
   });
 
-  it("rejects executable schemes", () => {
+  it("rejects every scheme outside http and https", () => {
     expect(normalizeUrl("javascript://%0aalert(1)")).toBeNull();
     expect(normalizeUrl("vbscript://x")).toBeNull();
+    expect(normalizeUrl("file:///etc/passwd")).toBeNull();
+    expect(normalizeUrl("chrome://extensions")).toBeNull();
   });
 });
 

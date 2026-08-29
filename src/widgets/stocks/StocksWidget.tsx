@@ -1,12 +1,12 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { DragEndEvent } from "@dnd-kit/core";
-import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { closestCenter, DndContext } from "@dnd-kit/core";
 import {
   rectSortingStrategy,
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { GRID_MODIFIERS, VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
+import { GRID_MODIFIERS, useSortableSensors, VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
 import { enterTween, viewSwap } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useElementSize } from "@/hooks/useElementSize";
@@ -33,7 +33,7 @@ export function StocksWidget() {
   const reorderSymbols = useStocksStore((s) => s.reorderSymbols);
 
   const [ref, { width }] = useElementSize<HTMLDivElement>();
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const sensors = useSortableSensors();
   const { map } = useWatchlistSparks();
 
   const isGrid = view === "grid";

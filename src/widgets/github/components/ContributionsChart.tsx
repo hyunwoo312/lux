@@ -210,7 +210,8 @@ const HeatmapGrid = memo(function HeatmapGrid({
                   className={cn(
                     "rounded-2xs",
                     LEVEL_CLASS[day.level],
-                    day.date === todayKey && "ring-ink-2 ring-1",
+                    day.date === todayKey &&
+                      "ring-ink-2 ring-offset-background ring-1 ring-offset-1",
                   )}
                   style={{ width: cell, height: cell }}
                 />

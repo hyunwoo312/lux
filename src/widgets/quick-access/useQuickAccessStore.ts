@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
+import { httpUrlSchema } from "@/lib/open-url";
 import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
@@ -69,7 +70,7 @@ const DEFAULT_DATA: QuickAccessData = {
 const linkSchema = z.object({
   id: z.string(),
   title: z.string(),
-  url: z.string(),
+  url: httpUrlSchema,
   icon: z.string().optional(),
 });
 

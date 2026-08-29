@@ -16,7 +16,7 @@ export function ItemActionButton({ label, onClick, className, children }: ItemAc
   return (
     <motion.button
       type="button"
-      {...tap(reduced, "icon")}
+      {...tap(reduced, "glyph")}
       onPointerDown={(event) => event.stopPropagation()}
       onClick={(event) => {
         event.preventDefault();
