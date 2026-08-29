@@ -1,28 +1,19 @@
-import { EASE_OUT } from "@/lib/motion";
+import { collapse } from "@/lib/motion";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useIntegrationStore } from "@/integrations";
+import { useIsConnected } from "@/integrations";
 import { GithubProfileLink } from "@/widgets/github/GithubProfileLink";
 import { GithubRefreshButton } from "@/widgets/github/GithubRefreshButton";
 
 export function GithubHeaderActions() {
   const reduced = useReducedMotion();
-  const connected = useIntegrationStore(
-    (s) => s.accounts.find((entry) => entry.providerId === "github")?.status === "connected",
-  );
+  const connected = useIsConnected("github");
 
   return (
     <div className="flex items-center gap-0.5">
       <GithubProfileLink />
       <AnimatePresence initial={false}>
         {connected && (
-          <motion.div
-            key="refresh"
-            className="overflow-hidden"
-            initial={reduced ? { opacity: 0 } : { opacity: 0, width: 0 }}
-            animate={reduced ? { opacity: 1 } : { opacity: 1, width: "auto" }}
-            exit={reduced ? { opacity: 0 } : { opacity: 0, width: 0 }}
-            transition={{ duration: reduced ? 0 : 0.18, ease: EASE_OUT }}
-          >
+          <motion.div key="refresh" className="overflow-hidden" {...collapse(reduced, "width")}>
             <GithubRefreshButton />
           </motion.div>
         )}

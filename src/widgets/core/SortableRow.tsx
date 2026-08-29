@@ -1,11 +1,9 @@
-import { DURATION, EASE_OUT } from "@/lib/motion";
+import { enterTween, exitTween } from "@/lib/motion";
 import type { CSSProperties, ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
-
-const ROW_TRANSITION = { duration: DURATION.base, ease: EASE_OUT } as const;
 
 export function SortableRow({
   id,
@@ -31,9 +29,8 @@ export function SortableRow({
       style={style}
       {...listeners}
       initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
-      transition={ROW_TRANSITION}
+      animate={{ opacity: 1, transition: enterTween(reduced) }}
+      exit={{ opacity: 0, scale: reduced ? 1 : 0.95, transition: exitTween(reduced) }}
       className={cn(
         "touch-none",
         isDragging ? "cursor-grabbing opacity-60" : "cursor-grab",

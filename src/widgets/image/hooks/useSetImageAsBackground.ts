@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { createAssetId, type MediaImageItem } from "@/lib/asset-store";
+import { mediaList, normalizeIndex } from "@/lib/media-rotation";
 import { useWallpaperStore, wallpaperAssets } from "@/stores/useWallpaperStore";
 import { readImageAsset } from "@/widgets/image/media";
-import { type ImageItem } from "@/widgets/image/types";
 import { useImage, useImageIndex } from "@/widgets/image/useImageStore";
 
 type SetBackgroundStatus = "idle" | "saving" | "done" | "error";
@@ -20,9 +20,8 @@ export function useSetImageAsBackground(): SetImageAsBackground {
   const index = useImageIndex();
   const [status, setStatus] = useState<SetBackgroundStatus>("idle");
 
-  const list: ImageItem[] = mode === "multi" ? items : single ? [single] : [];
-  const bounded = list.length ? ((index % list.length) + list.length) % list.length : 0;
-  const activeItem = list[bounded] ?? null;
+  const list = mediaList({ mode, single, items });
+  const activeItem = list[normalizeIndex(index, list.length)] ?? null;
 
   useEffect(() => {
     if (status !== "done" && status !== "error") return;

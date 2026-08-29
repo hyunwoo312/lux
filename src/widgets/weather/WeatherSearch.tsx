@@ -1,8 +1,9 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
-import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useMemo, useState } from "react";
 import { Check, ChevronLeft, MapPin } from "lucide-react";
 import { ExpandingSearch } from "@/components/ExpandingSearch";
 import { cn } from "@/lib/utils";
+import { searchResults, useDebouncedSearch } from "@/hooks/useDebouncedSearch";
+import { useComboboxCursor } from "@/hooks/useComboboxCursor";
 import { searchPlaces } from "@/widgets/weather/lib/open-meteo";
 import {
   detailLocation,
@@ -13,8 +14,9 @@ import {
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { makeLocationId, type GeocodeResult } from "@/widgets/weather/types";
 
+const MIN_QUERY_LENGTH = 2;
+
 export function WeatherSearch() {
-  const baseId = useId();
   const instanceId = useWidgetInstanceId();
   const locations = useWeather((d) => d.locations);
   const selectedId = useWeather((d) => d.selectedId);
@@ -23,11 +25,6 @@ export function WeatherSearch() {
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<GeocodeResult[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [active, setActive] = useState(0);
-  const debounceRef = useRef<number | undefined>(undefined);
 
   const detail = detailLocation(locations, selectedId);
   const inDetail = detail !== null && locations.length > 1;
@@ -35,49 +32,9 @@ export function WeatherSearch() {
 
   const atCap = locations.length >= MAX_LOCATIONS;
   const addedIds = useMemo(() => new Set(locations.map((entry) => entry.id)), [locations]);
-  const addedIdsRef = useRef(addedIds);
 
-  useEffect(() => {
-    addedIdsRef.current = addedIds;
-  }, [addedIds]);
-
-  useEffect(() => {
-    const trimmed = query.trim();
-    if (trimmed.length < 2) {
-      setResults([]);
-      setSearching(false);
-      return;
-    }
-    const controller = new AbortController();
-    window.clearTimeout(debounceRef.current);
-    setSearching(true);
-    setError(null);
-    debounceRef.current = window.setTimeout(() => {
-      searchPlaces(trimmed, controller.signal)
-        .then((found) => {
-          setResults(found);
-          setActive(
-            Math.max(
-              0,
-              found.findIndex(
-                (result) =>
-                  !addedIdsRef.current.has(makeLocationId(result.latitude, result.longitude)),
-              ),
-            ),
-          );
-          setSearching(false);
-        })
-        .catch((caught: unknown) => {
-          if (caught instanceof DOMException && caught.name === "AbortError") return;
-          setError("Couldn't search for places.");
-          setSearching(false);
-        });
-    }, 300);
-    return () => {
-      controller.abort();
-      window.clearTimeout(debounceRef.current);
-    };
-  }, [query]);
+  const state = useDebouncedSearch(query, searchPlaces, { minLength: MIN_QUERY_LENGTH });
+  const results = searchResults(state);
 
   const isAdded = (result: GeocodeResult) =>
     addedIds.has(makeLocationId(result.latitude, result.longitude));
@@ -91,51 +48,17 @@ export function WeatherSearch() {
       longitude: result.longitude,
     });
     setQuery("");
-    setResults([]);
   };
 
   const trimmed = query.trim();
-  const showResults = expanded && trimmed.length >= 2;
-  const hasOptions = showResults && !atCap && !error && results.length > 0;
-  const listboxId = `${baseId}-listbox`;
-  const optionId = (index: number) => `${baseId}-opt-${index}`;
+  const showResults = expanded && trimmed.length >= MIN_QUERY_LENGTH;
+  const hasOptions = showResults && !atCap && state.status !== "error" && results.length > 0;
 
-  const moveActive = (index: number) => {
-    setActive(index);
-    document.getElementById(optionId(index))?.scrollIntoView({ block: "nearest" });
-  };
-
-  const stepActive = (direction: 1 | -1) => {
-    let index = active;
-    for (let step = 0; step < results.length; step += 1) {
-      index = (index + direction + results.length) % results.length;
-      const result = results[index];
-      if (result && !isAdded(result)) {
-        moveActive(index);
-        return;
-      }
-    }
-  };
-
-  const onInputKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
-    if (!hasOptions) return;
-    switch (event.key) {
-      case "ArrowDown":
-        event.preventDefault();
-        stepActive(1);
-        return;
-      case "ArrowUp":
-        event.preventDefault();
-        stepActive(-1);
-        return;
-      case "Enter": {
-        event.preventDefault();
-        const result = results[active];
-        if (result) pick(result);
-        return;
-      }
-    }
-  };
+  const { active, setActive, listboxId, optionId, onInputKeyDown } = useComboboxCursor(results, {
+    enabled: hasOptions,
+    onPick: pick,
+    isDisabled: isAdded,
+  });
 
   if (inDetail) {
     return (
@@ -167,61 +90,57 @@ export function WeatherSearch() {
       listboxId={hasOptions ? listboxId : undefined}
       activeDescendantId={hasOptions ? optionId(active) : undefined}
     >
-      <div className="border-input bg-popover w-full overflow-hidden rounded-sm border shadow-md">
-        <div className="max-h-56 overflow-y-auto p-1">
-          {atCap ? (
-            <p className="text-ink-3 px-2 py-2 text-caption">
-              Remove a city to add another (max {MAX_LOCATIONS}).
-            </p>
-          ) : error ? (
-            <p className="text-ink-3 px-2 py-2 text-caption">{error}</p>
-          ) : searching && results.length === 0 ? (
-            <p className="text-ink-3 px-2 py-2 text-caption">Searching…</p>
-          ) : results.length === 0 ? (
-            <p className="text-ink-3 px-2 py-2 text-caption">No matching places.</p>
-          ) : (
-            <ul
-              role="listbox"
-              id={listboxId}
-              aria-label="Search results"
-              className="flex flex-col gap-0.5"
-            >
-              {results.map((result, index) => {
-                const added = isAdded(result);
-                return (
-                  <li key={result.id} role="none">
-                    <button
-                      type="button"
-                      id={optionId(index)}
-                      role="option"
-                      aria-selected={index === active && !added}
-                      disabled={added}
-                      onMouseMove={() => setActive(index)}
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => pick(result)}
-                      className={cn(
-                        "press-row focus-ring transition-colors cursor-pointer",
-                        `
-                          flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-body
-                          transition-colors
-                        `,
-                        index === active && !added
-                          ? "bg-accent text-primary"
-                          : "hover:bg-accent/60 hover:text-primary",
-                        added && "opacity-60",
-                      )}
-                    >
-                      <MapPin className="text-ink-3 size-4 shrink-0" aria-hidden />
-                      <span className="min-w-0 flex-1 truncate">{result.label}</span>
-                      {added && <Check className="text-ink-3 size-4 shrink-0" aria-hidden />}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-      </div>
+      {atCap ? (
+        <p className="text-ink-3 px-2 py-2 text-caption">
+          Remove a city to add another (max {MAX_LOCATIONS}).
+        </p>
+      ) : state.status === "error" ? (
+        <p className="text-ink-3 px-2 py-2 text-caption">Couldn't search for places.</p>
+      ) : state.status === "loading" && results.length === 0 ? (
+        <p className="text-ink-3 px-2 py-2 text-caption">Searching…</p>
+      ) : results.length === 0 ? (
+        <p className="text-ink-3 px-2 py-2 text-caption">No matching places.</p>
+      ) : (
+        <ul
+          role="listbox"
+          id={listboxId}
+          aria-label="Search results"
+          className="flex flex-col gap-0.5"
+        >
+          {results.map((result, index) => {
+            const added = isAdded(result);
+            return (
+              <li key={result.id} role="none">
+                <button
+                  type="button"
+                  id={optionId(index)}
+                  role="option"
+                  aria-selected={index === active && !added}
+                  disabled={added}
+                  onMouseMove={() => setActive(index)}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => pick(result)}
+                  className={cn(
+                    "press-row focus-ring transition-colors cursor-pointer",
+                    `
+                      flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-body
+                      transition-colors
+                    `,
+                    index === active && !added
+                      ? "bg-accent text-primary"
+                      : "hover:bg-accent/60 hover:text-primary",
+                    added && "opacity-60",
+                  )}
+                >
+                  <MapPin className="text-ink-3 size-4 shrink-0" aria-hidden />
+                  <span className="min-w-0 flex-1 truncate">{result.label}</span>
+                  {added && <Check className="text-ink-3 size-4 shrink-0" aria-hidden />}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </ExpandingSearch>
   );
 }

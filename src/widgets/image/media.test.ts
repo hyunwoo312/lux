@@ -35,17 +35,17 @@ describe("image media store", () => {
   });
 
   it("saves an asset and reads back its blob", async () => {
-    const metadata = await saveImageAsset(makeFile("image/png", 2048, "photo.png"));
-    expect(metadata).toMatchObject({ fileName: "photo.png", mimeType: "image/png", size: 2048 });
+    const item = await saveImageAsset(makeFile("image/png", 2048, "photo.png"));
+    expect(item).toMatchObject({ fileName: "photo.png", mimeType: "image/png", size: 2048 });
 
-    const asset = await readImageAsset(metadata.id);
+    const asset = await readImageAsset(item.assetId);
     expect(asset?.blob.size).toBe(2048);
   });
 
   it("deletes an asset", async () => {
-    const metadata = await saveImageAsset(makeFile("image/png", 1024));
-    await deleteImageAsset(metadata.id);
-    expect(await readImageAsset(metadata.id)).toBeNull();
+    const item = await saveImageAsset(makeFile("image/png", 1024));
+    await deleteImageAsset(item.assetId);
+    expect(await readImageAsset(item.assetId)).toBeNull();
   });
 
   it("rejects saving an invalid file", async () => {

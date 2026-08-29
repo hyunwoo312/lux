@@ -1,7 +1,7 @@
 import type { ChangeEvent, KeyboardEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { DURATION, EASE_OUT } from "@/lib/motion";
+import { enterTween, exitTween } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { continueList, toggleCheckbox, type ListEdit } from "@/widgets/note/lib/lists";
 import { NOTE_MAX_LENGTH, type NoteFontSize } from "@/widgets/note/types";
@@ -132,9 +132,8 @@ export function NoteWidget({ justAdded }: WidgetContentProps) {
         {dropped > 0 && (
           <motion.p
             initial={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
-            transition={{ duration: DURATION.fast, ease: EASE_OUT }}
+            animate={{ opacity: 1, y: 0, transition: enterTween(reduced, "fast") }}
+            exit={{ opacity: 0, y: reduced ? 0 : 8, transition: exitTween(reduced, "fast") }}
             role="status"
             className="
               border-border bg-background/95 text-ink pointer-events-none absolute right-0 bottom-0

@@ -8,6 +8,7 @@ import {
   clearNewtabQueue,
   getNextSequentialIndex,
   getRandomIndexExcluding,
+  normalizeIndex,
 } from "@/lib/media-rotation";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
@@ -138,11 +139,6 @@ export function referencedAssetIds(byInstance: Record<string, ImageConfig>): Set
     for (const item of config.items) ids.add(item.assetId);
   }
   return ids;
-}
-
-function normalizeIndex(index: number, length: number): number {
-  if (length <= 0) return 0;
-  return ((index % length) + length) % length;
 }
 
 const gatedStorage = createGatedChromeStorage();

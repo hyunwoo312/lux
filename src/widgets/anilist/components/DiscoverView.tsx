@@ -1,11 +1,11 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfigSegmented, ConfigSelect } from "@/components/config/WidgetConfig";
-import { useIntegrationStore } from "@/integrations";
+import { useProviderAccount } from "@/integrations";
 import { useSettingsStore } from "@/settings";
 import { usePolledResource, type PolledResourceState } from "@/widgets/core/usePolledResource";
 import { saveListStatus } from "@/widgets/anilist/lib/api/list";
-import { fetchDiscover } from "@/widgets/anilist/lib/api/discover";
+import { fetchDiscover, searchDiscover } from "@/widgets/anilist/lib/api/discover";
 import { parseCachedDiscover } from "@/widgets/anilist/lib/api/cache";
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
@@ -19,10 +19,7 @@ import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
 import { DiscoverRow } from "@/widgets/anilist/components/discover/DiscoverRow";
 import { SearchField } from "@/components/SearchField";
 import { DiscoverTile } from "@/widgets/anilist/components/discover/DiscoverTile";
-import {
-  useDiscoverSearch,
-  type DiscoverSearchState,
-} from "@/widgets/anilist/components/discover/useDiscoverSearch";
+import { useDebouncedSearch, type SearchState } from "@/hooks/useDebouncedSearch";
 import { discoverFeedLabel } from "@/widgets/anilist/lib/discover";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
@@ -69,9 +66,7 @@ function usePlanningAdds(): PlanningAdds {
 }
 
 export function DiscoverView() {
-  const account = useIntegrationStore(
-    (s) => s.accounts.find((entry) => entry.providerId === "anilist") ?? null,
-  );
+  const { account } = useProviderAccount("anilist");
   const instanceId = useWidgetInstanceId();
   const newTab = useAnilist((d) => d.openBehavior === "newTab");
   const lang = useAnilist((d) => d.titleLanguage);
@@ -95,7 +90,11 @@ export function DiscoverView() {
   const openAccounts = () => useSettingsStore.getState().openSettings("accounts");
 
   const adds = usePlanningAdds();
-  const search = useDiscoverSearch(trimmedQuery, lang, type, connected);
+  const runSearch = useCallback(
+    (value: string, signal: AbortSignal) => searchDiscover(lang, value, type, connected, signal),
+    [lang, type, connected],
+  );
+  const search = useDebouncedSearch(trimmedQuery, runSearch);
 
   const { state, isRefreshing, refresh, lastSyncedAt } = usePolledResource(
     (signal) => fetchDiscover(lang, feed, type, connected, signal),
@@ -190,7 +189,7 @@ function SearchBody({
   connected,
   adds,
 }: {
-  state: DiscoverSearchState;
+  state: SearchState<DiscoverMedia>;
   query: string;
   viewMode: ViewMode;
   newTab: boolean;

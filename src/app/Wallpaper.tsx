@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { DURATION, EASE_STANDARD } from "@/lib/motion";
+import { EASE_STANDARD, enterTween, STILL } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { GeneratedWallpaper } from "@/app/wallpaper/GeneratedWallpaper";
 import { useWallpaperStore, type WallpaperFit } from "@/stores/useWallpaperStore";
@@ -31,6 +31,7 @@ export function Wallpaper({ imageUrl }: { imageUrl: string | null }) {
   }, [showImage]);
 
   const bleed = blur * BLEED_PER_BLUR_PX;
+  const layerCrossfade = enterTween(reduced, "slow", EASE_STANDARD);
 
   return (
     <div aria-hidden className="fixed inset-0 z-wallpaper">
@@ -45,7 +46,7 @@ export function Wallpaper({ imageUrl }: { imageUrl: string | null }) {
             initial={crossfade ? { opacity: 0 } : false}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: DURATION.slow, ease: EASE_STANDARD }}
+            transition={layerCrossfade}
             className={cn("absolute", FIT_CLASS[fit])}
             style={{
               top: -bleed,
@@ -60,8 +61,8 @@ export function Wallpaper({ imageUrl }: { imageUrl: string | null }) {
           <motion.div
             key="dim"
             initial={false}
-            animate={{ opacity: dim, transition: { duration: 0 } }}
-            exit={{ opacity: 0, transition: { duration: DURATION.slow, ease: EASE_STANDARD } }}
+            animate={{ opacity: dim, transition: STILL }}
+            exit={{ opacity: 0, transition: layerCrossfade }}
             className="absolute inset-0 bg-black"
           />
         )}

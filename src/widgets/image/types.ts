@@ -3,8 +3,6 @@ import type { AccentPreset } from "@/widgets/core/accent";
 
 export const IMAGE_TINT: AccentPreset = "yellow";
 
-export const IMAGE_MIME_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"] as const;
-
 export const IMAGE_FIT_MODES = ["cover", "contain", "fill", "scale-down"] as const;
 export type ImageFit = (typeof IMAGE_FIT_MODES)[number];
 

@@ -1,14 +1,14 @@
-import { DURATION, EASE_OUT } from "@/lib/motion";
+import { enterTween, exitTween } from "@/lib/motion";
 import type { ChangeEvent, DragEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { AlertTriangle, ImageIcon } from "lucide-react";
+import { ACCEPTED_IMAGE_TYPES } from "@/lib/asset-store";
 import { cn } from "@/lib/utils";
 import { StateMessage } from "@/components/StateMessage";
 import { Button } from "@/components/ui/button";
 import type { WidgetContentProps } from "@/widgets/core/types";
 import { useImageUploads } from "@/widgets/image/hooks/useImageUploads";
-import { IMAGE_MIME_TYPES } from "@/widgets/image/types";
 import { useImage, useImageStore } from "@/widgets/image/useImageStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
@@ -101,7 +101,7 @@ export function ImageWidget({ editing }: WidgetContentProps) {
       <input
         ref={inputRef}
         type="file"
-        accept={IMAGE_MIME_TYPES.join(",")}
+        accept={ACCEPTED_IMAGE_TYPES.join(",")}
         multiple={mode === "multi"}
         disabled={disabled}
         onChange={onInputChange}
@@ -162,9 +162,8 @@ export function ImageWidget({ editing }: WidgetContentProps) {
         {error && (
           <motion.div
             initial={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
-            transition={{ duration: DURATION.fast, ease: EASE_OUT }}
+            animate={{ opacity: 1, y: 0, transition: enterTween(reduced, "fast") }}
+            exit={{ opacity: 0, y: reduced ? 0 : 8, transition: exitTween(reduced, "fast") }}
             role="status"
             className="
               border-border bg-background/95 text-ink pointer-events-none absolute bottom-3 left-1/2

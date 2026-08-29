@@ -1,6 +1,6 @@
-import { useEffect, useId, useState } from "react";
-import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ExpandingSearch } from "@/components/ExpandingSearch";
+import { useComboboxCursor } from "@/hooks/useComboboxCursor";
 import { SpotifyDeviceChooser } from "@/widgets/spotify/components/SpotifyDeviceChooser";
 import { SpotifySearchRow } from "@/widgets/spotify/components/SpotifySearchRow";
 import { useSpotifySearchResults } from "@/widgets/spotify/hooks/useSpotifySearchResults";
@@ -17,6 +17,7 @@ import {
 
 const MAX_RESULTS = 10;
 const OWNED_PLAYLIST_CAP = 3;
+const MIN_QUERY_LENGTH = 2;
 
 const SECTIONS: Array<{
   key: string;
@@ -34,22 +35,11 @@ const SECTIONS: Array<{
 ];
 
 export function SpotifySearch() {
-  const baseId = useId();
-
   const [open, setOpen] = useState(false);
-  const {
-    query,
-    setQuery,
-    results,
-    playlists,
-    playlistsLoading,
-    searching,
-    error: searchError,
-    active,
-    setActive,
-  } = useSpotifySearchResults(open);
+  const { query, setQuery, state, results, playlists, playlistsLoading } =
+    useSpotifySearchResults(open);
   const [actionError, setActionError] = useState<string | null>(null);
-  const error = searchError ?? actionError;
+  const error = state.status === "error" ? "Couldn't search Spotify." : actionError;
   const [devices, setDevices] = useState<SpotifyPlaybackDevice[]>([]);
   const [targetDeviceId, setTargetDeviceId] = useState<string | null>(null);
   const [queueingId, setQueueingId] = useState<string | null>(null);
@@ -113,47 +103,26 @@ export function SpotifySearch() {
   };
 
   const trimmed = query.trim();
-  const isSearch = trimmed.length >= 2;
-  const ownedMatches = playlists
-    .filter((playlist) => playlist.title.toLowerCase().includes(trimmed.toLowerCase()))
-    .slice(0, OWNED_PLAYLIST_CAP);
-  const ownedIds = new Set(ownedMatches.map((playlist) => playlist.id));
-  const rows = isSearch
-    ? [...ownedMatches, ...results.filter((result) => !ownedIds.has(result.id))].slice(
-        0,
-        MAX_RESULTS,
-      )
-    : playlists.slice(0, MAX_RESULTS);
+  const isSearch = trimmed.length >= MIN_QUERY_LENGTH;
+  const rows = useMemo(() => {
+    if (!isSearch) return playlists.slice(0, MAX_RESULTS);
+    const owned = playlists
+      .filter((playlist) => playlist.title.toLowerCase().includes(trimmed.toLowerCase()))
+      .slice(0, OWNED_PLAYLIST_CAP);
+    const ownedIds = new Set(owned.map((playlist) => playlist.id));
+    return [...owned, ...results.filter((result) => !ownedIds.has(result.id))].slice(
+      0,
+      MAX_RESULTS,
+    );
+  }, [isSearch, playlists, results, trimmed]);
 
   const hasOptions = open && !error && rows.length > 0;
   const needsDeviceChoice = !targetDevice && devices.length > 0;
-  const listboxId = `${baseId}-listbox`;
-  const optionId = (index: number) => `${baseId}-opt-${index}`;
 
-  const moveActive = (index: number) => {
-    setActive(index);
-    document.getElementById(optionId(index))?.scrollIntoView({ block: "nearest" });
-  };
-
-  const onInputKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
-    if (!hasOptions) return;
-    switch (event.key) {
-      case "ArrowDown":
-        event.preventDefault();
-        moveActive((active + 1) % rows.length);
-        return;
-      case "ArrowUp":
-        event.preventDefault();
-        moveActive((active - 1 + rows.length) % rows.length);
-        return;
-      case "Enter": {
-        event.preventDefault();
-        const result = rows[active];
-        if (result) pick(result);
-        return;
-      }
-    }
-  };
+  const { active, setActive, listboxId, optionId, onInputKeyDown } = useComboboxCursor(rows, {
+    enabled: hasOptions,
+    onPick: pick,
+  });
 
   const groups = SECTIONS.map((section) => ({
     key: section.key,
@@ -177,59 +146,51 @@ export function SpotifySearch() {
       activeDescendantId={hasOptions ? optionId(active) : undefined}
       className="-ml-1.5"
     >
-      <div className="border-input bg-popover w-full overflow-hidden rounded-sm border shadow-md">
-        <div className="max-h-72 overflow-y-auto p-1">
-          <SpotifyDeviceChooser
-            devices={devices}
-            needsChoice={needsDeviceChoice}
-            onSelect={setTargetDeviceId}
-          />
-          {error ? (
-            <p className="text-ink-3 px-2 py-2 text-caption">{error}</p>
-          ) : isSearch && searching && rows.length === 0 ? (
-            <p className="text-ink-3 px-2 py-2 text-caption">Searching…</p>
-          ) : isSearch && rows.length === 0 ? (
-            <p className="text-ink-3 px-2 py-2 text-caption">No matching results.</p>
-          ) : rows.length === 0 ? (
-            <p className="text-ink-3 px-2 py-2 text-caption">
-              {playlistsLoading
-                ? "Loading your playlists…"
-                : "Search songs, albums, and playlists."}
-            </p>
-          ) : (
-            <ul role="listbox" id={listboxId} aria-label="Search results" className="flex flex-col">
-              {groups.map((group) => (
-                <li key={group.key} role="group" aria-label={group.label}>
-                  <p
-                    aria-hidden
-                    className="
-                      text-ink-3 px-2 pt-2 pb-1 text-micro font-medium tracking-wide uppercase
-                    "
-                  >
-                    {group.label}
-                  </p>
-                  <ul role="none" className="flex flex-col gap-0.5">
-                    {group.items.map(({ result, index }) => (
-                      <li key={result.id} role="none">
-                        <SpotifySearchRow
-                          id={optionId(index)}
-                          result={result}
-                          active={index === active}
-                          queueing={queueingId === result.id}
-                          queued={queuedIds.has(result.id)}
-                          onActivate={() => setActive(index)}
-                          onPick={() => pick(result)}
-                          onAddToQueue={() => addToQueue(result)}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
+      <SpotifyDeviceChooser
+        devices={devices}
+        needsChoice={needsDeviceChoice}
+        onSelect={setTargetDeviceId}
+      />
+      {error ? (
+        <p className="text-ink-3 px-2 py-2 text-caption">{error}</p>
+      ) : isSearch && state.status === "loading" && rows.length === 0 ? (
+        <p className="text-ink-3 px-2 py-2 text-caption">Searching…</p>
+      ) : isSearch && rows.length === 0 ? (
+        <p className="text-ink-3 px-2 py-2 text-caption">No matching results.</p>
+      ) : rows.length === 0 ? (
+        <p className="text-ink-3 px-2 py-2 text-caption">
+          {playlistsLoading ? "Loading your playlists…" : "Search songs, albums, and playlists."}
+        </p>
+      ) : (
+        <ul role="listbox" id={listboxId} aria-label="Search results" className="flex flex-col">
+          {groups.map((group) => (
+            <li key={group.key} role="group" aria-label={group.label}>
+              <p
+                aria-hidden
+                className="text-ink-3 px-2 pt-2 pb-1 text-micro font-medium tracking-wide uppercase"
+              >
+                {group.label}
+              </p>
+              <ul role="none" className="flex flex-col gap-0.5">
+                {group.items.map(({ result, index }) => (
+                  <li key={result.id} role="none">
+                    <SpotifySearchRow
+                      id={optionId(index)}
+                      result={result}
+                      active={index === active}
+                      queueing={queueingId === result.id}
+                      queued={queuedIds.has(result.id)}
+                      onActivate={() => setActive(index)}
+                      onPick={() => pick(result)}
+                      onAddToQueue={() => addToQueue(result)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      )}
     </ExpandingSearch>
   );
 }

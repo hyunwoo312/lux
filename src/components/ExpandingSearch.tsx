@@ -3,7 +3,7 @@ import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 import { Search, X } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { DURATION, EASE_MORPH } from "@/lib/motion";
+import { EASE_MORPH, enterTween, stagger } from "@/lib/motion";
 import { useElementSize } from "@/hooks/useElementSize";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 
@@ -90,12 +90,11 @@ export function ExpandingSearch({
     }
   };
 
-  const morph = { duration: reduced ? 0 : DURATION.slow, ease: EASE_MORPH };
-  const surface = { duration: reduced ? 0 : DURATION.base, ease: EASE_MORPH };
-  const contentIn = (delay: number) => ({
-    duration: reduced ? 0 : DURATION.base,
-    ease: EASE_MORPH,
-    delay: open && !reduced ? delay : 0,
+  const morph = enterTween(reduced, "slow", EASE_MORPH);
+  const surface = enterTween(reduced, "base", EASE_MORPH);
+  const contentIn = (stage: number) => ({
+    ...surface,
+    delay: open ? stage * stagger(reduced, "loose") : 0,
   });
 
   return (
@@ -152,7 +151,7 @@ export function ExpandingSearch({
               ref={inputRef}
               initial={false}
               animate={{ opacity: open ? 1 : 0 }}
-              transition={contentIn(0.12)}
+              transition={contentIn(2)}
               value={value}
               onChange={(event) => onValueChange(event.target.value)}
               onKeyDown={onInputKeyDown}
@@ -179,7 +178,7 @@ export function ExpandingSearch({
               onClick={handleClose}
               initial={false}
               animate={{ opacity: open ? 1 : 0, scale: open ? 1 : 0.6 }}
-              transition={contentIn(0.16)}
+              transition={contentIn(3)}
               className={cn(
                 "press cursor-pointer",
                 `
@@ -201,10 +200,9 @@ export function ExpandingSearch({
         sideOffset={4}
         onOpenAutoFocus={(event) => event.preventDefault()}
         onCloseAutoFocus={(event) => event.preventDefault()}
-        padding="none"
-        className="w-[var(--radix-popover-trigger-width)] border-0 bg-transparent shadow-none"
+        className="w-[var(--radix-popover-trigger-width)]"
       >
-        {children}
+        <div className="max-h-72 overflow-y-auto rounded-lg">{children}</div>
       </PopoverContent>
     </Popover>
   );

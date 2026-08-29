@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { DIALOG_RAIL, DialogHeaderBar } from "@/components/DialogChrome";
-import { rowVariants, SPRING_CRISP } from "@/lib/motion";
+import { rowVariants, springCrisp } from "@/lib/motion";
 import { TYPE } from "@/lib/type";
 import {
   CHANGE_TYPE_LABEL,
@@ -78,7 +78,7 @@ export function ChangelogDialog({ open, onOpenChange }: Props) {
                       <motion.span
                         layoutId="changelog-active-release"
                         className="bg-primary/12 ring-primary/25 absolute inset-0 rounded-lg ring-1"
-                        transition={reduced ? { duration: 0 } : SPRING_CRISP}
+                        transition={springCrisp(reduced)}
                       />
                     )}
                     <span className="relative z-10 flex items-center gap-2">

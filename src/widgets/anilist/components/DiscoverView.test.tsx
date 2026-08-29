@@ -20,7 +20,7 @@ import { useIntegrationStore } from "@/integrations";
 import { DiscoverView } from "@/widgets/anilist/components/DiscoverView";
 import { saveListStatus } from "@/widgets/anilist/lib/api/list";
 import { fetchDiscover, searchDiscover } from "@/widgets/anilist/lib/api/discover";
-import { SEARCH_DEBOUNCE_MS } from "@/widgets/anilist/components/discover/useDiscoverSearch";
+import { SEARCH_DEBOUNCE_MS } from "@/hooks/useDebouncedSearch";
 import { useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import type { DiscoverMedia } from "@/widgets/anilist/types";

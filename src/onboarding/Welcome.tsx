@@ -1,25 +1,20 @@
-import { motion, useReducedMotion, type Variants } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight, Info, LayoutGrid, Palette, Plug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGuideStore } from "@/guide";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { IconRow } from "@/components/IconRow";
-import { DURATION, EASE_OUT_STRONG, EASE_STANDARD, SPRING_SOFT } from "@/lib/motion";
+import { EASE_STANDARD, listVariants, revealVariants, springSoft } from "@/lib/motion";
 import { TYPE } from "@/lib/type";
 import { useOnboardingStore } from "@/onboarding/useOnboardingStore";
 
-const container: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.06 } },
-};
-const item: Variants = {
-  hidden: { opacity: 0, y: 8 },
-  show: { opacity: 1, y: 0, transition: { duration: DURATION.slow, ease: EASE_OUT_STRONG } },
-};
+const HINT_SECONDS = 1.1;
 
 export function Welcome() {
   const reduced = useReducedMotion();
+  const container = listVariants(reduced, "loose");
+  const item = revealVariants(reduced);
   const open = useOnboardingStore((s) => s.welcomeOpen);
   const closeWelcome = useOnboardingStore((s) => s.closeWelcome);
   const openGuide = useGuideStore((s) => s.openGuide);
@@ -37,7 +32,7 @@ export function Welcome() {
             className="mx-auto mb-4 size-12 object-contain"
             initial={reduced ? false : { scale: 0, rotate: -120, opacity: 0 }}
             animate={{ scale: 1, rotate: 0, opacity: 1 }}
-            transition={reduced ? { duration: 0 } : SPRING_SOFT}
+            transition={springSoft(reduced)}
           />
 
           <motion.div
@@ -64,7 +59,7 @@ export function Welcome() {
                   className="text-primary ml-1 inline-flex align-[-0.15em]"
                   animate={reduced ? undefined : { x: [0, 4, 0] }}
                   transition={
-                    reduced ? undefined : { duration: 1.1, repeat: 2, ease: EASE_STANDARD }
+                    reduced ? undefined : { duration: HINT_SECONDS, repeat: 2, ease: EASE_STANDARD }
                   }
                 >
                   <ArrowRight className="size-3.5" />

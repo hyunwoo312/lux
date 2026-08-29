@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { GITHUB_SYNC_COOLDOWN_MS, useGithubStore } from "@/widgets/github/useGithubStore";
+import { GITHUB_SYNC_KEY, useGithubStore } from "@/widgets/github/useGithubStore";
 
 const store = () => useGithubStore.getState();
 
@@ -7,9 +7,9 @@ beforeEach(() => {
   useGithubStore.setState({
     byInstance: {},
     login: undefined,
-    syncNonce: 0,
-    syncing: false,
-    lastSyncAt: undefined,
+    syncNonce: {},
+    syncing: {},
+    lastSyncAt: {},
   });
 });
 
@@ -31,15 +31,11 @@ describe("useGithubStore", () => {
   });
 
   it("shares sync state across instances and honors the cooldown", () => {
-    const first = store().requestSync();
-    expect(first).toEqual({ ok: true, remainingMs: 0 });
-    expect(store().syncNonce).toBe(1);
+    store().requestSync();
+    expect(store().syncNonce[GITHUB_SYNC_KEY]).toBe(1);
 
-    const second = store().requestSync();
-    expect(second.ok).toBe(false);
-    expect(second.remainingMs).toBeGreaterThan(0);
-    expect(second.remainingMs).toBeLessThanOrEqual(GITHUB_SYNC_COOLDOWN_MS);
-    expect(store().syncNonce).toBe(1);
+    store().requestSync();
+    expect(store().syncNonce[GITHUB_SYNC_KEY]).toBe(1);
   });
 
   describe("migrate", () => {

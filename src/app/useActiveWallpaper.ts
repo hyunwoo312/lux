@@ -1,15 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { RefObject } from "react";
+import { useMediaRotation } from "@/hooks/useMediaRotation";
 import type { MediaImageItem } from "@/lib/asset-store";
 import { resolveFrost } from "@/lib/frost";
 import { DURATION } from "@/lib/motion";
 import { ensureGalleryAsset, galleryItemFor } from "@/lib/gallery-asset";
-import {
-  getSignature,
-  readNewtabQueue,
-  selectNewtabIndex,
-  writeNewtabQueue,
-} from "@/lib/media-rotation";
+import { mediaList } from "@/lib/media-rotation";
 import { activeWallpaperIds, useWallpaperStore, wallpaperAssets } from "@/stores/useWallpaperStore";
 
 const WALLPAPER_NEWTAB_QUEUE_KEY = "lux.wallpaper.newtab-queue";
@@ -43,40 +39,24 @@ export function useActiveWallpaper(enabled: boolean): ActiveWallpaper {
   const advance = useWallpaperStore((s) => s.advance);
 
   const displayItems = useMemo(() => {
-    if (source !== "gallery") return mode === "multi" ? items : single ? [single] : [];
+    if (source !== "gallery") return mediaList({ mode, single, items });
     const ids = activeWallpaperIds({ source, mode, single, items, gallerySingle, galleryItems });
     return ids.map(galleryItemFor).filter((item) => item !== null);
   }, [source, mode, items, single, galleryItems, gallerySingle]);
-  const length = displayItems.length;
-  const signature = useMemo(
-    () => getSignature(displayItems.map((item) => item.assetId)),
-    [displayItems],
-  );
-  const newtabEnabled = enabled && mode === "multi" && rotateOnNewtab;
-  const timedEnabled = enabled && mode === "multi" && rotateTimed;
+  const assetIds = useMemo(() => displayItems.map((item) => item.assetId), [displayItems]);
 
-  const lastSignature = useRef<string | null>(null);
-  useEffect(() => {
-    if (lastSignature.current === signature) return;
-    lastSignature.current = signature;
-    if (newtabEnabled && length > 0) {
-      const selection = selectNewtabIndex(
-        displayItems.map((item) => item.assetId),
-        readNewtabQueue(WALLPAPER_NEWTAB_QUEUE_KEY),
-        order,
-      );
-      writeNewtabQueue(WALLPAPER_NEWTAB_QUEUE_KEY, selection.next);
-      setCurrentIndex(selection.index);
-    }
-  }, [signature, newtabEnabled, length, displayItems, setCurrentIndex, order]);
+  const boundedIndex = useMediaRotation({
+    assetIds,
+    queueKey: WALLPAPER_NEWTAB_QUEUE_KEY,
+    order,
+    rotateOnNewtab: enabled && mode === "multi" && rotateOnNewtab,
+    rotateTimed: enabled && mode === "multi" && rotateTimed,
+    intervalSeconds,
+    currentIndex,
+    setCurrentIndex,
+    advance,
+  });
 
-  useEffect(() => {
-    if (!timedEnabled || length < 2) return;
-    const id = window.setInterval(() => advance(), intervalSeconds * 1000);
-    return () => window.clearInterval(id);
-  }, [timedEnabled, length, intervalSeconds, advance]);
-
-  const boundedIndex = length > 0 ? ((currentIndex % length) + length) % length : 0;
   const activeItem = displayItems[boundedIndex] ?? null;
   const activeAssetId = activeItem?.assetId ?? null;
   const activeGalleryId =

@@ -6,7 +6,12 @@ import { mergePersisted, tolerantRecord } from "@/lib/persist";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
-import { syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
+import {
+  bumpSyncNonce,
+  createSyncSlice,
+  isSyncCoolingDown,
+  type SyncSlice,
+} from "@/widgets/core/syncSlice";
 import type { UnreadCounts } from "@/widgets/email/lib/counts";
 import {
   BATCH_SIZES,
@@ -26,25 +31,19 @@ type EmailData = {
   newTab: boolean;
 };
 
-type SyncResult = { ok: boolean; remainingMs: number };
+export const EMAIL_SYNC_KEY = "email";
 
-type EmailState = {
+type EmailState = SyncSlice & {
   byInstance: Record<string, EmailData>;
-  syncNonce: number;
   failures: Partial<Record<MailProvider, string>>;
   unread: UnreadCounts;
-  syncing: boolean;
-  lastSyncAt?: number;
-  dataSyncedAt?: number;
   setView: (instanceId: string, view: EmailView) => void;
   setQuery: (instanceId: string, query: string) => void;
   setBatch: (instanceId: string, batch: BatchSize) => void;
   setNewTab: (instanceId: string, newTab: boolean) => void;
   reportFailures: (queried: MailProvider[], reasons: Partial<Record<MailProvider, string>>) => void;
   reportUnread: (unread: UnreadCounts) => void;
-  setSyncing: (syncing: boolean) => void;
-  reportSynced: (at: number) => void;
-  requestSync: () => SyncResult;
+  requestSync: () => void;
   removeInstance: (instanceId: string) => void;
 };
 
@@ -70,13 +69,10 @@ const gatedStorage = createGatedChromeStorage();
 export const useEmailStore = create<EmailState>()(
   persist(
     (set, get) => ({
+      ...createSyncSlice(set),
       byInstance: {},
-      syncNonce: 0,
       failures: {},
       unread: {},
-      syncing: false,
-      lastSyncAt: undefined,
-      dataSyncedAt: undefined,
       setView: (instanceId, view) =>
         set((state) => ({
           byInstance: patchInstance(state.byInstance, instanceId, DEFAULT_DATA, (data) => ({
@@ -114,14 +110,9 @@ export const useEmailStore = create<EmailState>()(
             : state;
         }),
       reportUnread: (unread) => set({ unread }),
-      setSyncing: (syncing) => set({ syncing }),
-      reportSynced: (at) =>
-        set((state) => (at > (state.dataSyncedAt ?? 0) ? { dataSyncedAt: at } : state)),
       requestSync: () => {
-        const remainingMs = syncCooldownRemainingMs(get().lastSyncAt, EMAIL_SYNC_COOLDOWN_MS);
-        if (remainingMs > 0) return { ok: false, remainingMs };
-        set({ syncNonce: get().syncNonce + 1, lastSyncAt: Date.now() });
-        return { ok: true, remainingMs: 0 };
+        if (isSyncCoolingDown(get(), EMAIL_SYNC_KEY, EMAIL_SYNC_COOLDOWN_MS)) return;
+        set((state) => bumpSyncNonce(state, EMAIL_SYNC_KEY));
       },
       removeInstance: (instanceId) =>
         set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),

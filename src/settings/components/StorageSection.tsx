@@ -4,7 +4,7 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { EASE_OUT, panelVariants } from "@/lib/motion";
+import { enterTween, panelVariants } from "@/lib/motion";
 import {
   breakdownOf,
   clearResourceCaches,
@@ -40,7 +40,7 @@ function Footprint({ usage }: { usage: StorageUsage }) {
             className={SEGMENT_TONES[index] ?? "bg-primary/20"}
             initial={reduced ? false : { width: 0 }}
             animate={{ width: `${(part.bytes / total) * 100}%` }}
-            transition={{ duration: reduced ? 0 : 0.4, ease: EASE_OUT }}
+            transition={enterTween(reduced, "slow")}
           />
         ))}
       </div>

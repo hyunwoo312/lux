@@ -12,7 +12,7 @@ import { WidgetGrid } from "@/widgets/WidgetGrid";
 import { useGlobalShortcuts } from "@/app/useGlobalShortcuts";
 import { useDisableContextMenu } from "@/app/useDisableContextMenu";
 import { useActiveWallpaper } from "@/app/useActiveWallpaper";
-import { DURATION, EASE_OUT } from "@/lib/motion";
+import { enterTween } from "@/lib/motion";
 import { FrostImageProvider } from "@/lib/frost-image";
 import { useWallpaperStore } from "@/stores/useWallpaperStore";
 import { takePendingPermissionHighlight } from "@/lib/permissions";
@@ -61,7 +61,7 @@ export function App() {
             style={{ width: boardWidth }}
             initial={{ opacity: 0 }}
             animate={{ opacity: boardReady ? 1 : 0 }}
-            transition={{ duration: reduced ? 0 : DURATION.fast, ease: EASE_OUT }}
+            transition={enterTween(reduced, "fast")}
             className="mx-auto flex h-full flex-col gap-4 py-4"
           >
             <Header />

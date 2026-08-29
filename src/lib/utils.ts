@@ -13,3 +13,7 @@ const twMerge = extendTailwindMerge({
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export function clamp01(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}

@@ -1,7 +1,7 @@
 import { useRef, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { AlertCircle, MailOpen } from "lucide-react";
-import { DURATION, EASE_OUT } from "@/lib/motion";
+import { collapse, enterTween, exitTween, fade } from "@/lib/motion";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useNow } from "@/hooks/useNow";
 import { Button } from "@/components/ui/button";
@@ -70,9 +70,8 @@ export function MessageList({
         key={`group:${group.label}`}
         layout={!reduced}
         initial={reduced ? false : { opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}
+        animate={{ opacity: 1, transition: enterTween(reduced) }}
+        exit={{ opacity: 0, transition: exitTween(reduced) }}
       >
         <ListGroupHeading label={group.label} className={index === 0 ? "pt-0.5" : undefined} />
       </motion.li>,
@@ -83,9 +82,8 @@ export function MessageList({
           key={message.id}
           layout={!reduced}
           initial={reduced ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}
+          animate={{ opacity: 1, transition: enterTween(reduced) }}
+          exit={{ opacity: 0, transition: exitTween(reduced) }}
         >
           <MessageRow message={message} newTab={newTab} showProvider={showProvider} now={now} />
         </motion.li>,
@@ -97,14 +95,7 @@ export function MessageList({
     <div className="flex h-full min-h-0 flex-col">
       <AnimatePresence initial={false}>
         {broken.length > 0 && (
-          <motion.div
-            key="failures"
-            className="shrink-0 overflow-hidden"
-            initial={reduced ? false : { opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: reduced ? 0 : DURATION.fast, ease: EASE_OUT }}
-          >
+          <motion.div key="failures" className="shrink-0 overflow-hidden" {...collapse(reduced)}>
             {broken.map(([provider, reason]) => (
               <p
                 key={provider}
@@ -139,10 +130,7 @@ export function MessageList({
                 <motion.span
                   key={isLoadingMore ? "loading" : "idle"}
                   className="flex items-center gap-1.5"
-                  initial={reduced ? false : { opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: reduced ? 0 : DURATION.fast, ease: EASE_OUT }}
+                  {...fade(reduced, "fast")}
                 >
                   {isLoadingMore ? (
                     <>

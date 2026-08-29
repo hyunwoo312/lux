@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { TAP } from "@/lib/motion";
+import { tap } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 type ItemActionButtonProps = {
@@ -16,7 +16,7 @@ export function ItemActionButton({ label, onClick, className, children }: ItemAc
   return (
     <motion.button
       type="button"
-      {...(reduced ? {} : TAP.icon)}
+      {...tap(reduced, "icon")}
       onPointerDown={(event) => event.stopPropagation()}
       onClick={(event) => {
         event.preventDefault();

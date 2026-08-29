@@ -4,7 +4,7 @@ import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { DialogHeaderBar } from "@/components/DialogChrome";
-import { DURATION, EASE_IN, EASE_OUT } from "@/lib/motion";
+import { enterTween, exitTween } from "@/lib/motion";
 import { TYPE } from "@/lib/type";
 import { ARTICLE_ORDER } from "@/guide/content";
 import { ArticleBlock } from "@/guide/components/ArticleBlock";
@@ -39,12 +39,8 @@ export function GuideArticleView({ location, onSelect }: Props) {
           <motion.div
             key={article.id}
             initial={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{
-              opacity: 0,
-              transition: { duration: reduced ? 0 : DURATION.fast, ease: EASE_IN },
-            }}
-            transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}
+            animate={{ opacity: 1, y: 0, transition: enterTween(reduced) }}
+            exit={{ opacity: 0, transition: exitTween(reduced) }}
             className="mx-auto flex max-w-2xl flex-col gap-10 px-10 pt-6 pb-12"
           >
             <div className="flex flex-col gap-4">

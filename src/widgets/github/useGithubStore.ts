@@ -8,7 +8,12 @@ import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import type { OpenBehavior } from "@/lib/open-url";
 import { invalidatePolledResource } from "@/widgets/core/usePolledResource";
-import { syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
+import {
+  bumpSyncNonce,
+  createSyncSlice,
+  isSyncCoolingDown,
+  type SyncSlice,
+} from "@/widgets/core/syncSlice";
 import {
   CONTRIBUTIONS_CACHE_KEY,
   GITHUB_VIEWS,
@@ -20,10 +25,9 @@ import {
 } from "@/widgets/github/types";
 
 export const GITHUB_SYNC_COOLDOWN_MS = 10_000;
+export const GITHUB_SYNC_KEY = "github";
 
 const CACHE_KEYS = [CONTRIBUTIONS_CACHE_KEY, INBOX_CACHE_KEY, RELEASES_CACHE_KEY] as const;
-
-type SyncResult = { ok: boolean; remainingMs: number };
 
 export type GithubData = {
   view: GithubView;
@@ -34,14 +38,10 @@ export type GithubData = {
   openBehavior: OpenBehavior;
 };
 
-type GithubStoreState = {
+type GithubStoreState = SyncSlice & {
   byInstance: Record<string, GithubData>;
   login?: string;
   lastSeenReleaseAt?: string;
-  syncNonce: number;
-  syncing: boolean;
-  lastSyncAt?: number;
-  dataSyncedAt?: number;
   setView: (instanceId: string, view: GithubView) => void;
   setShowPrivate: (instanceId: string, showPrivate: boolean) => void;
   setShowDrafts: (instanceId: string, showDrafts: boolean) => void;
@@ -51,9 +51,7 @@ type GithubStoreState = {
   removeInstance: (instanceId: string) => void;
   setLogin: (login: string | undefined) => void;
   markReleasesSeen: (publishedAt: string | undefined) => void;
-  setSyncing: (syncing: boolean) => void;
-  reportSynced: (at: number) => void;
-  requestSync: () => SyncResult;
+  requestSync: () => void;
 };
 
 const DEFAULT_DATA: GithubData = {
@@ -100,13 +98,10 @@ function update(
 export const useGithubStore = create<GithubStoreState>()(
   persist(
     (set, get) => ({
+      ...createSyncSlice(set),
       byInstance: {},
       login: undefined,
       lastSeenReleaseAt: undefined,
-      syncNonce: 0,
-      syncing: false,
-      lastSyncAt: undefined,
-      dataSyncedAt: undefined,
       setView: (instanceId, view) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, view }))),
       setShowPrivate: (instanceId, showPrivate) =>
@@ -138,18 +133,10 @@ export const useGithubStore = create<GithubStoreState>()(
           set({ lastSeenReleaseAt: publishedAt });
         }
       },
-      setSyncing: (syncing) => set({ syncing }),
-      reportSynced: (at) => {
-        if (at > (get().dataSyncedAt ?? 0)) set({ dataSyncedAt: at });
-      },
       requestSync: () => {
-        const remainingMs = syncCooldownRemainingMs(get().lastSyncAt, GITHUB_SYNC_COOLDOWN_MS);
-        if (remainingMs > 0) {
-          return { ok: false, remainingMs };
-        }
-        for (const key of CACHE_KEYS) invalidatePolledResource(key);
-        set({ syncNonce: get().syncNonce + 1, lastSyncAt: Date.now() });
-        return { ok: true, remainingMs: 0 };
+        if (isSyncCoolingDown(get(), GITHUB_SYNC_KEY, GITHUB_SYNC_COOLDOWN_MS)) return;
+        for (const cacheKey of CACHE_KEYS) invalidatePolledResource(cacheKey);
+        set((state) => bumpSyncNonce(state, GITHUB_SYNC_KEY));
       },
     }),
     {

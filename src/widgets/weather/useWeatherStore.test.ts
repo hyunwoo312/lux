@@ -202,7 +202,7 @@ describe("useWeatherStore", () => {
     });
   });
 
-  describe("requestRefresh", () => {
+  describe("requestSync", () => {
     beforeEach(() => {
       useWeatherStore.setState({
         byInstance: {
@@ -215,14 +215,14 @@ describe("useWeatherStore", () => {
     });
 
     it("bumps the nonce and records the sync time on first refresh", () => {
-      store().requestRefresh(ID);
+      store().requestSync(ID);
       expect(store().syncNonce[ID]).toBe(1);
       expect(store().lastSyncAt[ID]).toBeGreaterThan(0);
     });
 
     it("is a no-op while cooling down", () => {
-      store().requestRefresh(ID);
-      store().requestRefresh(ID);
+      store().requestSync(ID);
+      store().requestSync(ID);
       expect(store().syncNonce[ID]).toBe(1);
     });
   });

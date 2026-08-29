@@ -1,8 +1,7 @@
-import { DURATION, EASE_OUT } from "@/lib/motion";
+import { enterTween, exitTween } from "@/lib/motion";
 import { ROW } from "@/lib/row";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Transition } from "motion/react";
 import { motion, useReducedMotion } from "motion/react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -22,8 +21,6 @@ type TaskRowProps = {
   onEdit: (title: string) => void;
   onRemove: () => void;
 };
-
-const ROW_TRANSITION: Transition = { duration: DURATION.base, ease: EASE_OUT };
 
 export function TaskRow({
   task,
@@ -93,9 +90,8 @@ export function TaskRow({
       style={style}
       {...listeners}
       initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
-      transition={ROW_TRANSITION}
+      animate={{ opacity: 1, transition: enterTween(reduced) }}
+      exit={{ opacity: 0, scale: reduced ? 1 : 0.95, transition: exitTween(reduced) }}
       className={cn(
         ROW.item,
         "group relative",
@@ -154,7 +150,7 @@ export function TaskRow({
                 "
                 initial={false}
                 animate={{ scaleX: task.done ? 1 : 0 }}
-                transition={{ duration: reduced ? 0 : 0.22, ease: EASE_OUT }}
+                transition={enterTween(reduced)}
               />
             </span>
           </Tooltip>

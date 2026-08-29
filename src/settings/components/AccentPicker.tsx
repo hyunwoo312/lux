@@ -1,4 +1,4 @@
-import { SPRING_CRISP, SPRING_POP, TAP } from "@/lib/motion";
+import { springCrisp, springPop, tap } from "@/lib/motion";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useAccentStore } from "@/stores/useAccentStore";
@@ -26,22 +26,22 @@ export function AccentPicker() {
             aria-label={ACCENT_LABELS[name]}
             title={ACCENT_LABELS[name]}
             onClick={() => setAccent(name)}
-            {...(reduced ? {} : TAP.control)}
-            transition={SPRING_POP}
+            {...tap(reduced, "control")}
+            transition={springPop(reduced)}
             className={cn(accentClass(name), SWATCH)}
           >
             {selected && (
               <motion.span
                 layoutId="accent-ring"
                 aria-hidden
-                transition={reduced ? { duration: 0 } : SPRING_CRISP}
+                transition={springCrisp(reduced)}
                 className="border-foreground/80 absolute inset-0 rounded-full border-2"
               />
             )}
             <motion.span
               aria-hidden
               animate={{ scale: selected ? 0.78 : 1 }}
-              transition={reduced ? { duration: 0 } : SPRING_CRISP}
+              transition={springCrisp(reduced)}
               className={DOT}
             />
           </motion.button>

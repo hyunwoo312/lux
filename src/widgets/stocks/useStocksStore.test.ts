@@ -195,26 +195,26 @@ describe("useStocksStore", () => {
     expect(entry?.indexSymbols).toEqual(["^VIX"]);
   });
 
-  describe("requestRefresh", () => {
+  describe("requestSync", () => {
     beforeEach(() => {
       store().addSymbol(ID, "AAPL");
       store().addSymbol(ID, "MSFT");
     });
 
     it("bumps the sync nonce and records the sync time", () => {
-      store().requestRefresh(ID);
+      store().requestSync(ID);
       expect(store().syncNonce[ID]).toBe(1);
       expect(typeof store().lastSyncAt[ID]).toBe("number");
     });
 
     it("is a no-op while cooling down", () => {
-      store().requestRefresh(ID);
-      store().requestRefresh(ID);
+      store().requestSync(ID);
+      store().requestSync(ID);
       expect(store().syncNonce[ID]).toBe(1);
     });
 
     it("drops sync state on instance cleanup", () => {
-      store().requestRefresh(ID);
+      store().requestSync(ID);
       store().removeInstance(ID);
       expect(store().syncNonce[ID]).toBeUndefined();
       expect(store().lastSyncAt[ID]).toBeUndefined();

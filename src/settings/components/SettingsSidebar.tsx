@@ -8,7 +8,7 @@ import { SearchResults } from "@/settings/components/SearchResults";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { SPRING_CRISP } from "@/lib/motion";
+import { springCrisp } from "@/lib/motion";
 import { searchSettings } from "@/settings/searchIndex";
 import { SETTINGS_TAB_META } from "@/settings/tabsMeta";
 import { SETTINGS_TABS, useSettingsStore } from "@/settings/useSettingsStore";
@@ -133,7 +133,7 @@ export function SettingsSidebar({ open }: { open: boolean }) {
                   <motion.span
                     layoutId="settings-active-tab"
                     className="bg-primary/12 ring-primary/25 absolute inset-0 rounded-lg ring-1"
-                    transition={reduced ? { duration: 0 } : SPRING_CRISP}
+                    transition={springCrisp(reduced)}
                   />
                 )}
                 <span className="relative z-10 flex items-center gap-4">

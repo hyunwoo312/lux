@@ -1,16 +1,10 @@
 import type { ComponentType } from "react";
 import { useEffect, useMemo, useRef } from "react";
-import {
-  AnimatePresence,
-  motion,
-  useReducedMotion,
-  type Transition,
-  type Variants,
-} from "motion/react";
+import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DialogHeaderBar } from "@/components/DialogChrome";
 import { SettingsSidebar } from "@/settings/components/SettingsSidebar";
-import { EASE_OUT_STRONG } from "@/lib/motion";
+import { EASE_OUT_STRONG, enterTween, exitTween } from "@/lib/motion";
 import { AboutTab } from "@/settings/tabs/AboutTab";
 import { AccountsTab } from "@/settings/tabs/AccountsTab";
 import { AppearanceTab } from "@/settings/tabs/AppearanceTab";
@@ -48,14 +42,13 @@ export function SettingsDialog() {
   const carouselVariants = useMemo<Variants>(
     () => ({
       enter: (dir: number) => ({ x: reduced ? 0 : dir * 120, opacity: 0 }),
-      center: { x: 0, opacity: 1 },
-      exit: (dir: number) => ({ x: reduced ? 0 : dir * -120, opacity: 0 }),
+      center: { x: 0, opacity: 1, transition: enterTween(reduced, "slow", EASE_OUT_STRONG) },
+      exit: (dir: number) => ({
+        x: reduced ? 0 : dir * -120,
+        opacity: 0,
+        transition: exitTween(reduced, "slow", EASE_OUT_STRONG),
+      }),
     }),
-    [reduced],
-  );
-
-  const transition = useMemo<Transition>(
-    () => ({ duration: reduced ? 0 : 0.3, ease: EASE_OUT_STRONG }),
     [reduced],
   );
 
@@ -90,7 +83,6 @@ export function SettingsDialog() {
                     initial="enter"
                     animate="center"
                     exit="exit"
-                    transition={transition}
                     className="flex min-w-0 items-center gap-2.5"
                   >
                     <ActiveIcon className="text-ink-3 size-4 shrink-0" aria-hidden />
@@ -117,7 +109,6 @@ export function SettingsDialog() {
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  transition={transition}
                   className="will-change-transform"
                 >
                   <ActiveTab />

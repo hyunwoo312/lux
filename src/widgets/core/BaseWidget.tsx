@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
-import { useCallback, useMemo, useState } from "react";
-import type { Transition, Variants } from "motion/react";
+import { useMemo, useState } from "react";
+import type { Variants } from "motion/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, Settings, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { DURATION, EASE_IN, EASE_OUT, POP } from "@/lib/motion";
+import { enterTween, exitTween, iconSwap, pop } from "@/lib/motion";
 import type { WidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
 import { HEADER_LABEL, WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { WidgetChromeContext } from "@/widgets/core/useWidgetChrome";
@@ -30,16 +30,6 @@ type BaseWidgetProps = {
   children: ReactNode;
 };
 
-const spin = {
-  initial: { opacity: 0, scale: 0.5, rotate: -90 },
-  animate: { opacity: 1, scale: 1, rotate: 0 },
-  exit: { opacity: 0, scale: 0.5, rotate: 90 },
-  transition: { duration: DURATION.base, ease: EASE_OUT },
-} as const;
-
-const swapTransition: Transition = { duration: DURATION.fast, ease: EASE_OUT };
-const paneEnter: Transition = { duration: DURATION.base, ease: EASE_OUT };
-const paneExit: Transition = { duration: DURATION.fast, ease: EASE_IN };
 export function BaseWidget({
   title,
   editing,
@@ -71,24 +61,14 @@ export function BaseWidget({
     const offset = reduced ? 0 : 12;
     return {
       initial: (toConfig: boolean) => ({ opacity: 0, x: toConfig ? offset : -offset }),
-      animate: { opacity: 1, x: 0, transition: paneEnter },
+      animate: { opacity: 1, x: 0, transition: enterTween(reduced) },
       exit: (toConfig: boolean) => ({
         opacity: 0,
         x: toConfig ? -offset : offset,
-        transition: paneExit,
+        transition: exitTween(reduced),
       }),
     };
   }, [reduced]);
-
-  const iconSpin = useCallback(
-    (sign: number) => ({
-      initial: { opacity: 0, scale: 0.6, rotate: reduced ? 0 : sign * 90 },
-      animate: { opacity: 1, scale: 1, rotate: 0 },
-      exit: { opacity: 0, scale: 0.6, rotate: reduced ? 0 : sign * -90 },
-      transition: swapTransition,
-    }),
-    [reduced],
-  );
 
   return (
     <WidgetChromeContext.Provider value={chrome}>
@@ -177,7 +157,7 @@ export function BaseWidget({
               {editing && size && (
                 <motion.span
                   key="size"
-                  {...POP}
+                  {...pop(reduced)}
                   className="
                     bg-foreground text-background rounded-md px-1.5 py-0.5 text-caption
                     font-semibold tabular-nums shadow-md
@@ -187,12 +167,12 @@ export function BaseWidget({
                 </motion.span>
               )}
               {!editing && !showConfig && headerAction && (
-                <motion.div key="action" {...POP}>
+                <motion.div key="action" {...pop(reduced)}>
                   {headerAction}
                 </motion.div>
               )}
               {!editing && config && (
-                <motion.div key="config-toggle" {...POP}>
+                <motion.div key="config-toggle" {...pop(reduced)}>
                   <Tooltip content={showConfig ? "Done" : "Settings"} sticky>
                     <Button
                       variant="ghost"
@@ -204,11 +184,11 @@ export function BaseWidget({
                     >
                       <AnimatePresence mode="wait" initial={false}>
                         {showConfig ? (
-                          <motion.span key="done" {...iconSpin(-1)}>
+                          <motion.span key="done" {...iconSwap(reduced, -1)}>
                             <Check />
                           </motion.span>
                         ) : (
-                          <motion.span key="cog" {...iconSpin(1)}>
+                          <motion.span key="cog" {...iconSwap(reduced)}>
                             <Settings />
                           </motion.span>
                         )}
@@ -218,7 +198,7 @@ export function BaseWidget({
                 </motion.div>
               )}
               {editing && (
-                <motion.div key="delete" {...spin}>
+                <motion.div key="delete" {...iconSwap(reduced, -1)}>
                   <Tooltip content={`Remove ${title}`}>
                     <Button
                       variant="ghost"

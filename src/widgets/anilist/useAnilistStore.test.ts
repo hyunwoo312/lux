@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { useAnilistStore } from "@/widgets/anilist/useAnilistStore";
+import { ANILIST_SYNC_KEY, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 
 const store = () => useAnilistStore.getState();
 
@@ -7,9 +7,9 @@ beforeEach(() => {
   useAnilistStore.setState({
     byInstance: {},
     lastSeenActivityAt: undefined,
-    syncNonce: 0,
-    syncing: false,
-    lastSyncAt: undefined,
+    syncNonce: {},
+    syncing: {},
+    lastSyncAt: {},
   });
 });
 
@@ -51,10 +51,10 @@ describe("useAnilistStore", () => {
 
   it("ignores a second sync request inside the cooldown", () => {
     store().requestSync("a", 1);
-    expect(store().syncNonce).toBe(1);
+    expect(store().syncNonce[ANILIST_SYNC_KEY]).toBe(1);
 
     store().requestSync("a", 1);
-    expect(store().syncNonce).toBe(1);
+    expect(store().syncNonce[ANILIST_SYNC_KEY]).toBe(1);
   });
 
   describe("merge", () => {

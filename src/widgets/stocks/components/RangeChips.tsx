@@ -1,7 +1,7 @@
 import { useId } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { SPRING_CRISP } from "@/lib/motion";
+import { springCrisp } from "@/lib/motion";
 import { RANGE_LABEL, STOCK_RANGES, type StockRange } from "@/widgets/stocks/types";
 
 type RangeChipsProps = {
@@ -34,7 +34,7 @@ export function RangeChips({ value, onChange }: RangeChipsProps) {
           {range === value && (
             <motion.span
               layoutId={layoutId}
-              transition={reduced ? { duration: 0 } : SPRING_CRISP}
+              transition={springCrisp(reduced)}
               className="bg-primary absolute inset-0 rounded-sm"
             />
           )}

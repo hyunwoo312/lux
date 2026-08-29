@@ -1,5 +1,5 @@
 import { LayoutGrid, List } from "lucide-react";
-import { useIntegrationStore } from "@/integrations";
+import { useIsConnected } from "@/integrations";
 import { ViewToggleButton } from "@/widgets/core/ViewToggleButton";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { AnilistProfileLink } from "@/widgets/anilist/AnilistProfileLink";
@@ -7,9 +7,7 @@ import { AnilistRefreshButton } from "@/widgets/anilist/AnilistRefreshButton";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 
 export function AnilistHeaderActions() {
-  const connected = useIntegrationStore(
-    (s) => s.accounts.find((entry) => entry.providerId === "anilist")?.status === "connected",
-  );
+  const connected = useIsConnected("anilist");
   const instanceId = useWidgetInstanceId();
   const activeTab = useAnilist((d) => d.activeTab);
   const viewMode = useAnilist((d) => d.viewMode);

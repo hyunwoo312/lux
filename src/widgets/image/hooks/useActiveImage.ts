@@ -1,11 +1,7 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useMemo } from "react";
+import { useMediaRotation } from "@/hooks/useMediaRotation";
+import { mediaList } from "@/lib/media-rotation";
 import { imageNewtabQueueKey } from "@/widgets/image/media";
-import {
-  getSignature,
-  readNewtabQueue,
-  selectNewtabIndex,
-  writeNewtabQueue,
-} from "@/lib/media-rotation";
 import { useImageSource } from "@/widgets/image/hooks/useImageSource";
 import type { ImageItem } from "@/widgets/image/types";
 import { useImage, useImageIndex, useImageStore } from "@/widgets/image/useImageStore";
@@ -31,50 +27,27 @@ export function useActiveImage(): ActiveImage {
   const setCurrentIndex = useImageStore((s) => s.setCurrentIndex);
   const advanceImage = useImageStore((s) => s.advanceImage);
 
-  const displayItems = useMemo(
-    () => (mode === "multi" ? items : single ? [single] : []),
-    [mode, items, single],
-  );
-  const length = displayItems.length;
-  const signature = useMemo(
-    () => getSignature(displayItems.map((item) => item.assetId)),
-    [displayItems],
-  );
-  const newtabEnabled = mode === "multi" && rotateOnNewtab;
-  const timedEnabled = mode === "multi" && rotateTimed;
+  const displayItems = useMemo(() => mediaList({ mode, single, items }), [mode, single, items]);
+  const assetIds = useMemo(() => displayItems.map((item) => item.assetId), [displayItems]);
 
-  const queueKey = imageNewtabQueueKey(instanceId);
-  const lastSignature = useRef<string | null>(null);
-  useEffect(() => {
-    if (lastSignature.current === signature) return;
-    lastSignature.current = signature;
-    if (newtabEnabled && length > 0) {
-      const selection = selectNewtabIndex(
-        displayItems.map((item) => item.assetId),
-        readNewtabQueue(queueKey),
-        order,
-      );
-      writeNewtabQueue(queueKey, selection.next);
-      setCurrentIndex(instanceId, selection.index);
-    }
-  }, [
-    signature,
-    newtabEnabled,
-    length,
-    displayItems,
-    setCurrentIndex,
-    instanceId,
-    queueKey,
+  const setIndex = useCallback(
+    (index: number) => setCurrentIndex(instanceId, index),
+    [setCurrentIndex, instanceId],
+  );
+  const advance = useCallback(() => advanceImage(instanceId), [advanceImage, instanceId]);
+
+  const boundedIndex = useMediaRotation({
+    assetIds,
+    queueKey: imageNewtabQueueKey(instanceId),
     order,
-  ]);
+    rotateOnNewtab: mode === "multi" && rotateOnNewtab,
+    rotateTimed: mode === "multi" && rotateTimed,
+    intervalSeconds,
+    currentIndex,
+    setCurrentIndex: setIndex,
+    advance,
+  });
 
-  useEffect(() => {
-    if (!timedEnabled || length < 2) return;
-    const id = window.setInterval(() => advanceImage(instanceId), intervalSeconds * 1000);
-    return () => window.clearInterval(id);
-  }, [timedEnabled, length, intervalSeconds, advanceImage, instanceId]);
-
-  const boundedIndex = length > 0 ? ((currentIndex % length) + length) % length : 0;
   const activeItem = displayItems[boundedIndex] ?? null;
   const { thumbUrl, fullUrl, loadError } = useImageSource(activeItem?.assetId ?? null);
 

@@ -4,6 +4,8 @@ const integrationFetch = vi.fn();
 vi.mock("@/integrations", () => ({
   integrationFetch: (...args: unknown[]) => integrationFetch(...args),
   useIntegrationStore: { getState: () => ({ accounts: [] }) },
+  accountFor: (accounts: { providerId: string }[], providerId: string) =>
+    accounts.find((account) => account.providerId === providerId),
 }));
 
 const { fetchGmail } = await import("@/widgets/email/lib/gmail");

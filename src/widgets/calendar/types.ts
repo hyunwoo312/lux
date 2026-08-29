@@ -23,7 +23,7 @@ export type CalendarDensity = (typeof CALENDAR_DENSITIES)[number];
 
 export type CalendarMode = "month" | "week";
 
-const CALENDAR_PROVIDER_IDS = ["google", "microsoft"] as const;
+export const CALENDAR_PROVIDER_IDS = ["google", "microsoft"] as const;
 export type CalendarProviderId = (typeof CALENDAR_PROVIDER_IDS)[number];
 
 export type CalendarEventLink = {

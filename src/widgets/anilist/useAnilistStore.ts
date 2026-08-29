@@ -9,7 +9,12 @@ import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import type { OpenBehavior } from "@/lib/open-url";
 import { invalidatePolledResource } from "@/widgets/core/usePolledResource";
 import { invalidatePagedResource } from "@/widgets/core/usePagedResource";
-import { syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
+import {
+  bumpSyncNonce,
+  createSyncSlice,
+  isSyncCoolingDown,
+  type SyncSlice,
+} from "@/widgets/core/syncSlice";
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import {
   ANILIST_TABS,
@@ -33,8 +38,7 @@ import {
 } from "@/widgets/anilist/types";
 
 export const ANILIST_SYNC_COOLDOWN_MS = 10_000;
-
-type SyncResult = { ok: boolean; remainingMs: number };
+export const ANILIST_SYNC_KEY = "anilist";
 
 type AnilistData = {
   activeTab: AnilistTab;
@@ -49,13 +53,9 @@ type AnilistData = {
   discoverType: DiscoverType;
 };
 
-type AnilistStoreState = {
+type AnilistStoreState = SyncSlice & {
   byInstance: Record<string, AnilistData>;
   lastSeenActivityAt?: number;
-  syncNonce: number;
-  syncing: boolean;
-  lastSyncAt?: number;
-  dataSyncedAt?: number;
   setActiveTab: (instanceId: string, activeTab: AnilistTab) => void;
   setFeedSource: (instanceId: string, feedSource: FeedSource) => void;
   setViewMode: (instanceId: string, viewMode: ViewMode) => void;
@@ -68,9 +68,7 @@ type AnilistStoreState = {
   setDiscoverType: (instanceId: string, discoverType: DiscoverType) => void;
   removeInstance: (instanceId: string) => void;
   setLastSeenActivity: (createdAt: number) => void;
-  setSyncing: (syncing: boolean) => void;
-  reportSynced: (at: number) => void;
-  requestSync: (instanceId: string, viewerId: number) => SyncResult;
+  requestSync: (instanceId: string, viewerId: number) => void;
 };
 
 const DEFAULT_DATA: AnilistData = {
@@ -181,12 +179,9 @@ function update(
 export const useAnilistStore = create<AnilistStoreState>()(
   persist(
     (set, get) => ({
+      ...createSyncSlice(set),
       byInstance: {},
       lastSeenActivityAt: undefined,
-      syncNonce: 0,
-      syncing: false,
-      lastSyncAt: undefined,
-      dataSyncedAt: undefined,
       setActiveTab: (instanceId, activeTab) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, activeTab }))),
       setFeedSource: (instanceId, feedSource) =>
@@ -213,15 +208,8 @@ export const useAnilistStore = create<AnilistStoreState>()(
         set((state) => ({
           lastSeenActivityAt: Math.max(state.lastSeenActivityAt ?? 0, createdAt),
         })),
-      setSyncing: (syncing) => set({ syncing }),
-      reportSynced: (at) => {
-        if (at > (get().dataSyncedAt ?? 0)) set({ dataSyncedAt: at });
-      },
       requestSync: (instanceId, viewerId) => {
-        const remainingMs = syncCooldownRemainingMs(get().lastSyncAt, ANILIST_SYNC_COOLDOWN_MS);
-        if (remainingMs > 0) {
-          return { ok: false, remainingMs };
-        }
+        if (isSyncCoolingDown(get(), ANILIST_SYNC_KEY, ANILIST_SYNC_COOLDOWN_MS)) return;
         const { titleLanguage, discoverFeed, discoverType } =
           get().byInstance[instanceId] ?? DEFAULT_DATA;
         invalidatePolledResource(anilistKeys.discover(titleLanguage, discoverFeed, discoverType));
@@ -229,8 +217,7 @@ export const useAnilistStore = create<AnilistStoreState>()(
         invalidatePolledResource(anilistKeys.unread(viewerId));
         invalidatePagedResource(anilistKeys.activity(viewerId, titleLanguage));
         invalidatePagedResource(anilistKeys.inbox(viewerId, titleLanguage));
-        set({ syncNonce: get().syncNonce + 1, lastSyncAt: Date.now() });
-        return { ok: true, remainingMs: 0 };
+        set((state) => bumpSyncNonce(state, ANILIST_SYNC_KEY));
       },
     }),
     {

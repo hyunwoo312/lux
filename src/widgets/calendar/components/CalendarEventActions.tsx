@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { Video } from "lucide-react";
-import { TAP } from "@/lib/motion";
+import { tap } from "@/lib/motion";
 import { openUrl } from "@/lib/open-url";
 import { cn } from "@/lib/utils";
 import { GoogleCalendarServiceIcon, OutlookServiceIcon } from "@/components/icons/service-icons";
@@ -65,7 +65,7 @@ export function CalendarEventActions({
         <Tooltip content="Join meeting">
           <motion.button
             type="button"
-            {...(reduced ? {} : TAP.icon)}
+            {...tap(reduced, "icon")}
             aria-label={`Join ${title}`}
             onClick={() => openUrl(joinUrl, "newTab")}
             className={cn(BUTTON, scale.button, hover, !onColor && "text-primary")}
@@ -80,7 +80,7 @@ export function CalendarEventActions({
           <Tooltip key={link.provider} content={`Open in ${label}`}>
             <motion.button
               type="button"
-              {...(reduced ? {} : TAP.icon)}
+              {...tap(reduced, "icon")}
               aria-label={`Open ${title} in ${label}`}
               onClick={() => openUrl(link.sourceUrl, "newTab")}
               className={cn(BUTTON, scale.button, hover)}

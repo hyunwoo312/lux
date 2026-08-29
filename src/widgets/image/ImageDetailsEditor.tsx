@@ -2,7 +2,8 @@ import type { KeyboardEvent, MouseEvent } from "react";
 import { ImageIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAssetObjectUrl } from "@/lib/asset-store";
-import { cn } from "@/lib/utils";
+import { mediaList } from "@/lib/media-rotation";
+import { clamp01, cn } from "@/lib/utils";
 import { imageAssetStore } from "@/widgets/image/media";
 import { type ImageFocalPoint, type ImageItem } from "@/widgets/image/types";
 import { useImage, useImageStore } from "@/widgets/image/useImageStore";
@@ -10,10 +11,6 @@ import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 const CAPTION_MAX_LENGTH = 80;
 const FOCAL_STEP = 0.05;
-
-function clamp01(value: number): number {
-  return Math.min(1, Math.max(0, value));
-}
 
 export function ImageDetailsEditor() {
   const instanceId = useWidgetInstanceId();
@@ -23,7 +20,7 @@ export function ImageDetailsEditor() {
   const fit = useImage((c) => c.fit);
   const updateItem = useImageStore((s) => s.updateItem);
 
-  const list = mode === "multi" ? items : single ? [single] : [];
+  const list = mediaList({ mode, single, items });
   if (list.length === 0) return null;
 
   return (

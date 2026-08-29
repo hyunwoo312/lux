@@ -5,7 +5,7 @@ import {
   WidgetConfigGroup,
   WidgetConfigItem,
 } from "@/components/config/WidgetConfig";
-import { useIntegrationStore } from "@/integrations";
+import { useProviderAccount } from "@/integrations";
 import { useSettingsStore } from "@/settings";
 import type { OpenBehavior } from "@/lib/open-url";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
@@ -29,9 +29,7 @@ const TITLE_OPTIONS: { value: TitleLanguage; label: string }[] = [
 ];
 
 export function AnilistConfig() {
-  const account = useIntegrationStore(
-    (s) => s.accounts.find((entry) => entry.providerId === "anilist") ?? null,
-  );
+  const { account } = useProviderAccount("anilist");
   const instanceId = useWidgetInstanceId();
   const titleLanguage = useAnilist((d) => d.titleLanguage);
   const setTitleLanguage = useAnilistStore((s) => s.setTitleLanguage);

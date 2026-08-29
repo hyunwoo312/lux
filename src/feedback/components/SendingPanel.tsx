@@ -5,6 +5,7 @@ import { FEEDBACK_TIMEOUT_MS } from "@/lib/net";
 
 const IN_FLIGHT_CEILING = 92;
 const SETTLE_MS = 280;
+const SHIMMER_SECONDS = 1.6;
 
 const PING = "bg-primary absolute inline-flex size-full animate-ping rounded-full opacity-75";
 
@@ -78,7 +79,7 @@ export function SendingPanel({ settling, onSettled }: Props) {
               aria-hidden
               className="h-full w-1/2 bg-gradient-to-r from-transparent via-white/50 to-transparent"
               animate={{ x: ["-150%", "400%"] }}
-              transition={{ repeat: Infinity, duration: 1.6, ease: "linear" }}
+              transition={{ repeat: Infinity, duration: SHIMMER_SECONDS, ease: "linear" }}
             />
           )}
         </motion.div>

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DURATION, EASE_IN, SPRING_CRISP } from "@/lib/motion";
+import { exitTween, springCrisp } from "@/lib/motion";
 import { TOAST_DURATION_MS, useToastStore } from "@/stores/useToastStore";
 
 function barVariants(reduced: boolean): Variants {
@@ -12,12 +12,12 @@ function barVariants(reduced: boolean): Variants {
       opacity: 1,
       y: 0,
       scale: 1,
-      transition: reduced ? { duration: 0 } : SPRING_CRISP,
+      transition: springCrisp(reduced),
     },
     exit: {
       opacity: 0,
       ...(reduced ? {} : { y: 8, scale: 0.98 }),
-      transition: { duration: reduced ? 0 : DURATION.fast, ease: EASE_IN },
+      transition: exitTween(reduced, "base"),
     },
   };
 }

@@ -15,7 +15,7 @@ import {
   useShortcutsStore,
   type ShortcutAction,
 } from "@/stores/useShortcutsStore";
-import { DURATION, EASE_OUT_STRONG, SPRING_CRISP } from "@/lib/motion";
+import { EASE_OUT_STRONG, enterTween, exitTween, springCrisp } from "@/lib/motion";
 import { AddShortcutControl, ShortcutDisplay } from "@/settings/tabs/ShortcutRow";
 
 function sameBindings(a: Shortcut[], b: Shortcut[]): boolean {
@@ -95,9 +95,12 @@ export function ShortcutsTab() {
                           key="reset"
                           layout
                           initial={reduced ? false : { opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.8 }}
-                          transition={SPRING_CRISP}
+                          animate={{ opacity: 1, scale: 1, transition: springCrisp(reduced) }}
+                          exit={{
+                            opacity: 0,
+                            scale: reduced ? 1 : 0.8,
+                            transition: exitTween(reduced, "fast"),
+                          }}
                         >
                           <Tooltip content="Reset to default" prose>
                             <Button
@@ -115,7 +118,7 @@ export function ShortcutsTab() {
                     <LayoutGroup>
                       <motion.div
                         layout
-                        transition={SPRING_CRISP}
+                        transition={springCrisp(reduced)}
                         className="flex items-center gap-1.5"
                       >
                         {bindings.map((binding, slot) => (
@@ -143,9 +146,16 @@ export function ShortcutsTab() {
                       <motion.p
                         key="conflict"
                         initial={reduced ? false : { opacity: 0, y: -4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={reduced ? { opacity: 0 } : { opacity: 0, y: -4 }}
-                        transition={{ duration: DURATION.fast, ease: EASE_OUT_STRONG }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                          transition: enterTween(reduced, "fast", EASE_OUT_STRONG),
+                        }}
+                        exit={{
+                          opacity: 0,
+                          y: reduced ? 0 : -4,
+                          transition: exitTween(reduced, "fast", EASE_OUT_STRONG),
+                        }}
                         className="text-destructive flex items-center gap-1.5 pl-9 text-caption"
                       >
                         <TriangleAlert className="size-3.5 shrink-0" aria-hidden />

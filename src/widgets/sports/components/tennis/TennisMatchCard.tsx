@@ -1,6 +1,6 @@
 import { useId, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { EASE_OUT } from "@/lib/motion";
+import { collapse } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { LiveIndicator } from "@/widgets/sports/components/LiveIndicator";
 import { TennisMatchDetail } from "@/widgets/sports/components/tennis/TennisMatchDetail";
@@ -123,14 +123,7 @@ export function TennisMatchCard({ match }: { match: TennisMatch }) {
       )}
       <AnimatePresence initial={false}>
         {open && (
-          <motion.div
-            id={detailId}
-            className="overflow-hidden"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
-          >
+          <motion.div id={detailId} className="overflow-hidden" {...collapse(reduced)}>
             <TennisMatchDetail match={match} />
           </motion.div>
         )}

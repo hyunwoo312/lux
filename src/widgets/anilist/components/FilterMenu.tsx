@@ -4,10 +4,8 @@ import { Check, Filter, type LucideIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip } from "@/components/ui/tooltip";
 import { ROW } from "@/lib/row";
-import { DURATION, EASE_OUT } from "@/lib/motion";
+import { enterTween, exitTween, stagger } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-
-const STAGGER_STEP = 0.025;
 
 export type FilterOption<T extends string> = { value: T; label: string; icon: LucideIcon };
 
@@ -35,8 +33,8 @@ export function FilterMenu<T extends string>({
   const reduced = useReducedMotion();
   const active = options.find((option) => option.value === value) ?? options[0];
   const ActiveIcon = active?.icon ?? Filter;
-  const enterTransition = { duration: reduced ? 0 : DURATION.fast, ease: EASE_OUT };
-  const exitTransition = { duration: reduced ? 0 : DURATION.instant, ease: EASE_OUT };
+  const enterTransition = enterTween(reduced, "fast");
+  const exitTransition = exitTween(reduced, "fast");
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -76,7 +74,7 @@ export function FilterMenu<T extends string>({
                 }}
                 initial={reduced ? false : { opacity: 0, x: -4 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ ...enterTransition, delay: reduced ? 0 : index * STAGGER_STEP }}
+                transition={{ ...enterTransition, delay: index * stagger(reduced, "tight") }}
                 className={cn(ROW.option, "text-ink", selected && "font-medium")}
               >
                 <Icon className="size-3.5 shrink-0 opacity-70" aria-hidden />

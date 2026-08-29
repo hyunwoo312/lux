@@ -2,7 +2,7 @@ import { useId, useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DURATION, EASE_OUT, rowVariants } from "@/lib/motion";
+import { collapse, enterTween, rowVariants } from "@/lib/motion";
 import { COLUMN, MATCH_GRID, STATUS_RAIL } from "@/widgets/sports/lib/columns";
 import { useChangeFlash } from "@/widgets/sports/hooks/useChangeFlash";
 import { LiveIndicator } from "@/widgets/sports/components/LiveIndicator";
@@ -41,7 +41,7 @@ function TeamSide({ team, decided, side, live, starred }: TeamSideProps) {
       </span>
       <motion.span
         animate={scored && !reduced ? { scale: [1, 1.18, 1] } : { scale: 1 }}
-        transition={{ duration: DURATION.slow, ease: EASE_OUT }}
+        transition={enterTween(reduced, "slow")}
         className={cn(
           COLUMN.score,
           home ? "text-left" : "text-right",
@@ -115,14 +115,7 @@ function Row({ away, home, separator, status, detail, label }: RowProps) {
       )}
       <AnimatePresence initial={false}>
         {open && detail ? (
-          <motion.div
-            id={detailId}
-            className="overflow-hidden"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
-          >
+          <motion.div id={detailId} className="overflow-hidden" {...collapse(reduced)}>
             {detail}
           </motion.div>
         ) : null}

@@ -1,11 +1,19 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion, type Transition } from "motion/react";
 import { Check, ChevronRight, Copy, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
-import { DURATION, EASE_IN_OUT, EASE_OUT } from "@/lib/motion";
+import {
+  collapse,
+  DURATION,
+  EASE_IN_OUT,
+  enterTween,
+  exitTween,
+  fade,
+  stagger,
+} from "@/lib/motion";
 import { accentClass } from "@/widgets/core/accent";
 import { getWidgetPlugin } from "@/widgets/registry";
 
@@ -63,7 +71,7 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
   const isSaved = trimmed === (clientId ?? "");
   const formatInvalid = trimmed.length > 0 && !/^[0-9a-f]{32}$/i.test(trimmed);
   const canSave = trimmed.length > 0 && !isSaved && !formatInvalid && status === "idle";
-  const transition = reduced ? { duration: 0 } : { duration: DURATION.slow, ease: EASE_OUT };
+  const transition = enterTween(reduced, "slow");
 
   async function handleSave() {
     if (!canSave) return;
@@ -101,9 +109,12 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
               border-primary/30 bg-primary/10 absolute inset-0 origin-top-left rounded-2xl border
             "
             initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
-            transition={transition}
+            animate={{ opacity: 1, scale: 1, transition }}
+            exit={{
+              opacity: 0,
+              scale: reduced ? 1 : 0.97,
+              transition: exitTween(reduced, "slow"),
+            }}
           />
         )}
       </AnimatePresence>
@@ -139,14 +150,7 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
 
         <AnimatePresence initial={false}>
           {open && (
-            <motion.div
-              key="body"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={transition}
-              className="overflow-hidden"
-            >
+            <motion.div key="body" {...collapse(reduced)} className="overflow-hidden">
               <div className="flex flex-col gap-3 pt-3">
                 <p className="text-ink-3 text-caption leading-relaxed">
                   Spotify limits third-party Web API access, so Lux connects through your own
@@ -271,7 +275,7 @@ function SaveButton({
   showSaved: boolean;
   onSave: () => void;
   reduced: boolean | null;
-  transition: { duration: number; ease?: typeof EASE_OUT };
+  transition: Transition;
 }) {
   const bare = status !== "idle";
   const content: ReactNode =
@@ -302,10 +306,7 @@ function SaveButton({
       <AnimatePresence initial={false} mode="popLayout">
         <motion.span
           key={status === "idle" ? (showSaved ? "saved" : "save") : status}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: reduced ? 0 : DURATION.fast }}
+          {...fade(reduced, "fast")}
           className="absolute inset-0 grid place-items-center"
         >
           {content}
@@ -327,15 +328,16 @@ function DrawnCheck({ reduced }: { reduced: boolean | null }) {
       strokeLinejoin="round"
       initial={reduced ? false : { scale: 0.6 }}
       animate={{ scale: 1 }}
-      transition={reduced ? { duration: 0 } : { duration: DURATION.base, ease: EASE_OUT }}
+      transition={enterTween(reduced)}
     >
       <motion.path
         d="M5 12.5l4.5 4.5L19 7"
         initial={reduced ? { pathLength: 1 } : { pathLength: 0 }}
         animate={{ pathLength: 1 }}
-        transition={
-          reduced ? { duration: 0 } : { duration: DURATION.slow, ease: EASE_IN_OUT, delay: 0.06 }
-        }
+        transition={{
+          ...enterTween(reduced, "slow", EASE_IN_OUT),
+          delay: stagger(reduced, "loose"),
+        }}
       />
     </motion.svg>
   );
@@ -345,7 +347,7 @@ function DrawnCross({ reduced }: { reduced: boolean | null }) {
   const draw = (delay: number) => ({
     initial: reduced ? { pathLength: 1 } : { pathLength: 0 },
     animate: { pathLength: 1 },
-    transition: reduced ? { duration: 0 } : { duration: DURATION.fast, ease: EASE_OUT, delay },
+    transition: { ...enterTween(reduced, "fast"), delay: reduced ? 0 : delay },
   });
   return (
     <motion.svg
@@ -357,10 +359,10 @@ function DrawnCross({ reduced }: { reduced: boolean | null }) {
       strokeLinecap="round"
       initial={reduced ? false : { scale: 0.6 }}
       animate={{ scale: 1 }}
-      transition={reduced ? { duration: 0 } : { duration: DURATION.base, ease: EASE_OUT }}
+      transition={enterTween(reduced)}
     >
-      <motion.path d="M7 7l10 10" {...draw(0.04)} />
-      <motion.path d="M17 7l-10 10" {...draw(0.16)} />
+      <motion.path d="M7 7l10 10" {...draw(0)} />
+      <motion.path d="M17 7l-10 10" {...draw(DURATION.fast)} />
     </motion.svg>
   );
 }

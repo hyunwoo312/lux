@@ -1,12 +1,11 @@
-import { useEffect } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useIntegrationStore } from "@/integrations";
+import { useProviderAccount } from "@/integrations";
 import { useGithub } from "@/widgets/github/useGithubStore";
 import { ContributionsView } from "@/widgets/github/components/ContributionsView";
 import { InboxView } from "@/widgets/github/components/InboxView";
 import { ReleasesView } from "@/widgets/github/components/ReleasesView";
 import { GithubSignedOutPreview } from "@/widgets/github/components/GithubSignedOutPreview";
-import { EASE_OUT } from "@/lib/motion";
+import { viewSwap } from "@/lib/motion";
 import type { GithubView } from "@/widgets/github/types";
 
 function ActiveView({
@@ -25,17 +24,9 @@ function ActiveView({
 
 export function GithubWidget() {
   const reduced = useReducedMotion();
-  const account = useIntegrationStore(
-    (s) => s.accounts.find((entry) => entry.providerId === "github") ?? null,
-  );
-  const loaded = useIntegrationStore((s) => s.loaded);
-  const load = useIntegrationStore((s) => s.load);
+  const { account, loaded } = useProviderAccount("github");
   const view = useGithub((d) => d.view);
   const showPrivate = useGithub((d) => d.showPrivate);
-
-  useEffect(() => {
-    if (!loaded) void load();
-  }, [loaded, load]);
 
   const connected = account?.status === "connected";
 
@@ -43,19 +34,10 @@ export function GithubWidget() {
     return <GithubSignedOutPreview />;
   }
 
-  const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT };
-
   return (
     <div className="relative h-full min-h-0">
       <AnimatePresence initial={false} mode="popLayout">
-        <motion.div
-          key={view}
-          className="absolute inset-0"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={transition}
-        >
+        <motion.div key={view} className="absolute inset-0" {...viewSwap(reduced)}>
           <ActiveView view={view} enabled={connected} showPrivate={showPrivate} />
         </motion.div>
       </AnimatePresence>

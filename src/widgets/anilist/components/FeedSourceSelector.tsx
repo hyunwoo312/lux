@@ -2,7 +2,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { motion, useReducedMotion } from "motion/react";
 import { useId } from "react";
 import { cn } from "@/lib/utils";
-import { SPRING_CRISP } from "@/lib/motion";
+import { springCrisp } from "@/lib/motion";
 import { FEED_SOURCES, type FeedSource } from "@/widgets/anilist/types";
 
 const LABELS: Record<FeedSource, string> = {
@@ -38,7 +38,7 @@ export function FeedSourceSelector({ value, counts, onChange }: FeedSourceSelect
             {active && (
               <motion.span
                 layoutId={layoutId}
-                transition={reduced ? { duration: 0 } : SPRING_CRISP}
+                transition={springCrisp(reduced)}
                 className="bg-primary absolute inset-0 rounded-sm"
               />
             )}

@@ -2,6 +2,8 @@ import type { AccentPreset } from "@/widgets/core/accent";
 
 export const QUICK_ACCESS_TINT: AccentPreset = "rose";
 
+export const LOCAL_SEARCH_DEBOUNCE_MS = 180;
+
 export type QuickLink = {
   id: string;
   title: string;

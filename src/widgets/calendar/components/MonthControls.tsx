@@ -1,4 +1,4 @@
-import { EASE_OUT } from "@/lib/motion";
+import { collapse } from "@/lib/motion";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatedHeaderText } from "@/widgets/calendar/components/AnimatedHeaderText";
@@ -39,10 +39,7 @@ export function MonthControls() {
           <motion.span
             key="back-to-month"
             className="flex-none overflow-hidden"
-            initial={reduced ? { opacity: 0 } : { opacity: 0, width: 0 }}
-            animate={reduced ? { opacity: 1 } : { opacity: 1, width: "auto" }}
-            exit={reduced ? { opacity: 0 } : { opacity: 0, width: 0 }}
-            transition={{ duration: reduced ? 0 : 0.18, ease: EASE_OUT }}
+            {...collapse(reduced, "width")}
           >
             <CalendarNavButton
               label="Back to month"

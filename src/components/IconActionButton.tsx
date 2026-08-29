@@ -1,4 +1,4 @@
-import { SPRING_POP, TAP } from "@/lib/motion";
+import { springPop, tap } from "@/lib/motion";
 import type { ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import type { LucideIcon } from "lucide-react";
@@ -23,7 +23,6 @@ export function IconActionButton({
   spinning = false,
 }: IconActionButtonProps) {
   const reduced = useReducedMotion();
-  const interactive = !reduced && !disabled;
 
   return (
     <Tooltip content={tooltip}>
@@ -32,8 +31,8 @@ export function IconActionButton({
         onClick={disabled ? undefined : onClick}
         aria-disabled={disabled || undefined}
         aria-label={label}
-        {...(interactive ? TAP.icon : {})}
-        transition={SPRING_POP}
+        {...tap(reduced || disabled, "icon")}
+        transition={springPop(reduced)}
         className="
           focus-ring cursor-pointer text-ink-3
           hover:text-ink

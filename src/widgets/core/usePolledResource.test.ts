@@ -118,6 +118,26 @@ describe("usePolledResource", () => {
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
+  it("keeps its backoff when the last consumer unmounts and comes back", async () => {
+    const cacheKey = "backoff-remount";
+    localStorage.setItem(
+      `lux:polled:${cacheKey}`,
+      JSON.stringify({ data: { value: 1 }, at: Date.now() - 20_000 }),
+    );
+    const fetcher = vi.fn().mockRejectedValue(new RateLimitError(45_000));
+    const options = { cacheKey, persist: true, intervalMs: 10_000 };
+
+    const first = renderHook(() => usePolledResource(fetcher, options));
+    await waitFor(() => expect(first.result.current.freshness.status).toBe("failing"));
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    first.unmount();
+
+    renderHook(() => usePolledResource(fetcher, options));
+    await act(async () => {});
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
   it("reuses cached data on remount within the stale window without refetching", async () => {
     const fetcher = vi.fn().mockResolvedValue([1, 2]);
     const cacheKey = "test:cache:reuse";

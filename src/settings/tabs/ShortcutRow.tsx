@@ -12,7 +12,7 @@ import {
   type ModifierState,
   type Shortcut,
 } from "@/lib/shortcuts";
-import { DURATION, EASE_OUT_STRONG, SPRING_CRISP } from "@/lib/motion";
+import { EASE_OUT_STRONG, enterTween, exitTween, springCrisp } from "@/lib/motion";
 
 const NO_MODIFIERS: ModifierState = { mod: false, shift: false, alt: false };
 
@@ -118,9 +118,16 @@ function RecorderBody({
               layout
               className="flex items-center gap-1"
               initial={reduced ? false : { opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={reduced ? { opacity: 0 } : { opacity: 0, x: -6 }}
-              transition={{ duration: DURATION.fast, ease: EASE_OUT_STRONG }}
+              animate={{
+                opacity: 1,
+                x: 0,
+                transition: enterTween(reduced, "fast", EASE_OUT_STRONG),
+              }}
+              exit={{
+                opacity: 0,
+                x: reduced ? 0 : -6,
+                transition: exitTween(reduced, "fast", EASE_OUT_STRONG),
+              }}
             >
               <KeyText>{part}</KeyText>
               <MiniPlus />
@@ -149,7 +156,7 @@ export function ShortcutDisplay({
   return (
     <motion.span
       layout
-      transition={SPRING_CRISP}
+      transition={springCrisp(reduced)}
       className={cn(
         "group inline-flex items-center rounded-sm transition-colors",
         !recording &&
@@ -179,7 +186,7 @@ export function ShortcutDisplay({
             className="flex items-center gap-1"
             initial={reduced ? false : { opacity: 0, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={SPRING_CRISP}
+            transition={springCrisp(reduced)}
           >
             {shortcutKeyParts(value).map((part, index) => (
               <Fragment key={part}>
@@ -218,7 +225,7 @@ export function AddShortcutControl({
         type="button"
         onBlur={stop}
         layoutId={reduced ? undefined : layoutId}
-        transition={reduced ? { duration: 0 } : SPRING_CRISP}
+        transition={springCrisp(reduced)}
         aria-label={`Recording new ${label} shortcut`}
         className="press cursor-pointer rounded-md outline-none"
       >
@@ -233,7 +240,7 @@ export function AddShortcutControl({
         type="button"
         onClick={start}
         layoutId={reduced ? undefined : layoutId}
-        transition={reduced ? { duration: 0 } : SPRING_CRISP}
+        transition={springCrisp(reduced)}
         aria-label={`Add ${label} shortcut`}
         className="
           press cursor-pointer focus-ring text-ink-3

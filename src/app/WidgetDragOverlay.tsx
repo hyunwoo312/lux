@@ -2,7 +2,7 @@ import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { DURATION, EASE_STANDARD } from "@/lib/motion";
+import { enterTween, EASE_STANDARD } from "@/lib/motion";
 import { isOverGrid, resolveDrop } from "@/widgets/core/drag";
 import { useWidgetDragStore, type DropMorph } from "@/widgets/core/useWidgetDragStore";
 import { getWidgetPlugin } from "@/widgets/registry";
@@ -36,7 +36,7 @@ function DropMorphGhost({ morph, onDone }: { morph: DropMorph; onDone: () => voi
         height: morph.to.h,
         opacity: 0,
       }}
-      transition={{ duration: reduced ? 0 : DURATION.slow, ease: EASE_STANDARD }}
+      transition={enterTween(reduced, "slow", EASE_STANDARD)}
       onAnimationComplete={onDone}
       className="
         glass-solid text-ink-3 fixed z-modal pointer-events-none flex items-center justify-center

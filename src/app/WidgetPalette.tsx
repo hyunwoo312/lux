@@ -1,4 +1,4 @@
-import { DURATION, EASE_IN, EASE_OUT } from "@/lib/motion";
+import { enterTween, exitTween, stagger } from "@/lib/motion";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
@@ -57,24 +57,20 @@ export function WidgetPalette() {
     setQuery("");
   }, [open, setHighlighted]);
 
-  const panelVariants = useMemo<Variants>(
+  const paletteVariants = useMemo<Variants>(
     () => ({
       hidden: { opacity: 0, scale: reduced ? 1 : 0.96, y: reduced ? 0 : -6 },
       visible: {
         opacity: 1,
         scale: 1,
         y: 0,
-        transition: {
-          duration: DURATION.fast,
-          ease: EASE_OUT,
-          staggerChildren: 0.012,
-        },
+        transition: { ...enterTween(reduced, "fast"), staggerChildren: stagger(reduced, "micro") },
       },
       exit: {
         opacity: 0,
         scale: reduced ? 1 : 0.96,
         y: reduced ? 0 : -6,
-        transition: { duration: DURATION.instant, ease: EASE_IN },
+        transition: exitTween(reduced, "fast"),
       },
     }),
     [reduced],
@@ -82,7 +78,7 @@ export function WidgetPalette() {
   const itemVariants = useMemo<Variants>(
     () => ({
       hidden: { opacity: 0, y: reduced ? 0 : -6 },
-      visible: { opacity: 1, y: 0, transition: { duration: DURATION.fast, ease: EASE_OUT } },
+      visible: { opacity: 1, y: 0, transition: enterTween(reduced, "fast") },
     }),
     [reduced],
   );
@@ -148,7 +144,7 @@ export function WidgetPalette() {
           <Button variant="ghost" size="icon-lg" aria-label="Add widget">
             <motion.span
               animate={{ rotate: open ? 45 : 0 }}
-              transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}
+              transition={enterTween(reduced)}
               className="grid place-items-center"
             >
               <Plus />
@@ -169,7 +165,7 @@ export function WidgetPalette() {
               onCloseAutoFocus={(event) => event.preventDefault()}
             >
               <motion.div
-                variants={panelVariants}
+                variants={paletteVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"

@@ -1,7 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ErrorState } from "@/components/StateMessage";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DURATION, EASE_OUT, listVariants, rowVariants } from "@/lib/motion";
+import { exitTween, listVariants, rowVariants } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { movementFor } from "@/widgets/news/lib/trend-movement";
 import { regionLabel } from "@/widgets/news/lib/trend-regions";
@@ -65,8 +65,11 @@ export function TrendingContent({ layout }: { layout: NewsLayout }) {
                   key={item.term}
                   layout={reduced ? false : "position"}
                   variants={rowVariants(reduced)}
-                  exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
-                  transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}
+                  exit={{
+                    opacity: 0,
+                    scale: reduced ? 1 : 0.97,
+                    transition: exitTween(reduced),
+                  }}
                   className="min-w-0"
                 >
                   {isTiles ? (

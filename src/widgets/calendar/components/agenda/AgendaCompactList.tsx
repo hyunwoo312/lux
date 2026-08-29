@@ -3,7 +3,7 @@ import { motion } from "motion/react";
 import { TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatClock } from "@/lib/clock";
-import { EASE_OUT } from "@/lib/motion";
+import { enterTween, stagger } from "@/lib/motion";
 import { ListGroupHeading } from "@/components/ListGroupHeading";
 import { CalendarEventActions } from "@/widgets/calendar/components/CalendarEventActions";
 import { AgendaSkipRow } from "@/widgets/calendar/components/agenda/AgendaSkipRow";
@@ -81,9 +81,8 @@ function CompactRow({ block, color, now, hour12, index, reduced }: CompactRowPro
       initial={reduced ? { opacity: 0 } : { opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: reduced ? 0 : 0.16,
-        delay: reduced ? 0 : Math.min(index, 8) * 0.02,
-        ease: EASE_OUT,
+        ...enterTween(reduced, "fast"),
+        delay: Math.min(index, 8) * stagger(reduced, "tight"),
       }}
       className={cn("relative rounded-md", URGENCY_RING[urgency])}
     >

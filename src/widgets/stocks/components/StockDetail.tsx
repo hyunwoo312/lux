@@ -5,7 +5,7 @@ import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useNow } from "@/hooks/useNow";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TYPE } from "@/lib/type";
-import { cn } from "@/lib/utils";
+import { clamp01, cn } from "@/lib/utils";
 import {
   formatCountdown,
   formatExchangeTime,
@@ -56,7 +56,7 @@ function RangeMeter({
   priceHint: number;
 }) {
   if (low == null || high == null) return null;
-  const fraction = high > low ? Math.min(1, Math.max(0, (value - low) / (high - low))) : 0.5;
+  const fraction = high > low ? clamp01((value - low) / (high - low)) : 0.5;
 
   return (
     <div className="flex min-w-0 flex-col gap-1">

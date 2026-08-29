@@ -12,7 +12,7 @@ import { useCalendarConnection } from "@/widgets/calendar/hooks/useCalendarConne
 import { dedupeCalendarEvents } from "@/widgets/calendar/lib/agenda";
 import { buildCalendarColorMap } from "@/widgets/calendar/lib/colors";
 import { useCalendar } from "@/widgets/calendar/useCalendarStore";
-import { EASE_OUT } from "@/lib/motion";
+import { viewSwap } from "@/lib/motion";
 
 export function CalendarWidget() {
   const reduced = useReducedMotion();
@@ -68,7 +68,6 @@ export function CalendarWidget() {
   }
 
   const slide = !reduced && mode === "month";
-  const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT };
 
   return (
     <LayoutGroup>
@@ -78,10 +77,7 @@ export function CalendarWidget() {
             <motion.div
               key={view}
               className="absolute inset-0"
-              initial={{ opacity: 0, y: slide ? "4%" : 0 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: slide ? "4%" : 0 }}
-              transition={transition}
+              {...viewSwap(reduced, slide ? "4%" : 0)}
             >
               <AgendaView events={visibleEvents} colors={colors} status={status} />
             </motion.div>
@@ -89,10 +85,7 @@ export function CalendarWidget() {
             <motion.div
               key="calendar"
               className="absolute inset-0"
-              initial={{ opacity: 0, y: slide ? "-4%" : 0 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: slide ? "-4%" : 0 }}
-              transition={transition}
+              {...viewSwap(reduced, slide ? "-4%" : 0)}
             >
               <CalendarGrid events={visibleEvents} colors={colors} />
             </motion.div>

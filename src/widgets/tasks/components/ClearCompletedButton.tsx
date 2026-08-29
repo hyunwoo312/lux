@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Eraser } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
-import { POP } from "@/lib/motion";
+import { pop } from "@/lib/motion";
 import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { getTaskData, useTasks, useTasksStore } from "@/widgets/tasks/useTasksStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
@@ -12,6 +12,7 @@ import type { Task } from "@/widgets/tasks/types";
 const UNDO_MS = 6000;
 
 export function ClearCompletedButton() {
+  const reduced = useReducedMotion();
   const instanceId = useWidgetInstanceId();
   const hasCompleted = useTasks((d) => d.tasks.some((task) => task.done));
   const clearCompleted = useTasksStore((s) => s.clearCompleted);
@@ -39,7 +40,7 @@ export function ClearCompletedButton() {
     <div className="flex items-center gap-1">
       <AnimatePresence initial={false} mode="popLayout">
         {cleared.length > 0 && (
-          <motion.div key="undo" {...POP}>
+          <motion.div key="undo" {...pop(reduced)}>
             <Tooltip
               content={`Restore ${cleared.length} cleared ${cleared.length === 1 ? "task" : "tasks"}`}
               sticky
@@ -56,7 +57,7 @@ export function ClearCompletedButton() {
           </motion.div>
         )}
         {hasCompleted && (
-          <motion.div key="clear" {...POP}>
+          <motion.div key="clear" {...pop(reduced)}>
             <Tooltip content="Clear completed" sticky>
               <Button
                 variant="ghost"

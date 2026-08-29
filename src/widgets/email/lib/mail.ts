@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { useIntegrationStore } from "@/integrations";
+import { connectedProviders, useIntegrationStore } from "@/integrations";
 import { classifyLoadError } from "@/lib/net";
 import { fetchGmail } from "@/widgets/email/lib/gmail";
 import { createMerge, type Merge, type SourceFetcher } from "@/widgets/email/lib/merge";
@@ -25,15 +25,8 @@ const PROVIDERS: Record<MailProvider, Fetcher> = {
 
 export type MailRequest = Omit<MailQuery, "page"> & { view: EmailView };
 
-function connectedMailProviders(): MailProvider[] {
-  const accounts = useIntegrationStore.getState().accounts;
-  return MAIL_PROVIDERS.filter((provider) =>
-    accounts.some((account) => account.providerId === provider && account.status === "connected"),
-  );
-}
-
 export function sourcesFor(view: EmailView): MailProvider[] {
-  const connected = connectedMailProviders();
+  const connected = connectedProviders(useIntegrationStore.getState().accounts, MAIL_PROVIDERS);
   return view === "all" ? connected : connected.filter((provider) => provider === view);
 }
 

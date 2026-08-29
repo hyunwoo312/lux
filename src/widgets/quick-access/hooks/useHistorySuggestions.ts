@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { searchHistory } from "@/widgets/quick-access/browser";
-import type { BrowserItem } from "@/widgets/quick-access/types";
+import { LOCAL_SEARCH_DEBOUNCE_MS, type BrowserItem } from "@/widgets/quick-access/types";
 
-const DEBOUNCE_MS = 180;
 const MIN_QUERY = 2;
 
 export function useHistorySuggestions(query: string, enabled: boolean): BrowserItem[] {
@@ -23,7 +22,7 @@ export function useHistorySuggestions(query: string, enabled: boolean): BrowserI
         .catch(() => {
           if (active) setItems([]);
         });
-    }, DEBOUNCE_MS);
+    }, LOCAL_SEARCH_DEBOUNCE_MS);
 
     return () => {
       active = false;

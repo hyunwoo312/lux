@@ -1,7 +1,7 @@
-import { SPRING_CRISP } from "@/lib/motion";
+import { springCrisp } from "@/lib/motion";
 import type { ComponentType, ReactNode } from "react";
 import { useId, useState } from "react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { ChevronRight } from "lucide-react";
 import {
   Select,
@@ -189,6 +189,7 @@ export function ConfigSegmented<T extends string>({
   label,
   fit = "wrap",
 }: SegmentedProps<T>) {
+  const reduced = useReducedMotion();
   const oneLine = fit === "line";
   const layoutId = useId();
   const handleChange = (next: string) => {
@@ -220,7 +221,7 @@ export function ConfigSegmented<T extends string>({
             {active && (
               <motion.span
                 layoutId={layoutId}
-                transition={SPRING_CRISP}
+                transition={springCrisp(reduced)}
                 className="bg-primary absolute inset-0 rounded-sm"
               />
             )}

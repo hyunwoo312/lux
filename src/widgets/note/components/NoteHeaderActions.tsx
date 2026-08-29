@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, Copy, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
-import { POP } from "@/lib/motion";
+import { pop } from "@/lib/motion";
 import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { getNoteData, useNote } from "@/widgets/note/useNoteStore";
@@ -25,6 +25,7 @@ function downloadName(text: string): string {
 }
 
 export function NoteHeaderActions() {
+  const reduced = useReducedMotion();
   const instanceId = useWidgetInstanceId();
   const hasText = useNote(instanceId).text.trim().length > 0;
   const [copied, setCopied] = useState(false);
@@ -67,11 +68,11 @@ export function NoteHeaderActions() {
         >
           <AnimatePresence initial={false} mode="popLayout">
             {copied ? (
-              <motion.span key="copied" {...POP} className="text-primary flex">
+              <motion.span key="copied" {...pop(reduced)} className="text-primary flex">
                 <Check />
               </motion.span>
             ) : (
-              <motion.span key="copy" {...POP} className="flex">
+              <motion.span key="copy" {...pop(reduced)} className="flex">
                 <Copy />
               </motion.span>
             )}

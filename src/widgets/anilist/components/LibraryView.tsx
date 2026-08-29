@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { Button } from "@/components/ui/button";
-import { DURATION, EASE_OUT } from "@/lib/motion";
+import { fade } from "@/lib/motion";
 import { usePolledResource, patchPolledResource } from "@/widgets/core/usePolledResource";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { fetchList, saveListStatus, saveProgress } from "@/widgets/anilist/lib/api/list";
@@ -70,8 +70,6 @@ export function LibraryView({ enabled, userId, newTab }: LibraryViewProps) {
   );
   useAnilistSync(refresh, isRefreshing, lastSyncedAt);
   const reduced = useReducedMotion();
-  const enterTransition = { duration: reduced ? 0 : DURATION.fast, ease: EASE_OUT };
-  const exitTransition = { duration: reduced ? 0 : DURATION.instant, ease: EASE_OUT };
 
   return (
     <div className="flex h-full flex-col gap-2 p-1">
@@ -81,9 +79,7 @@ export function LibraryView({ enabled, userId, newTab }: LibraryViewProps) {
           <motion.div
             key={listFilter}
             className="absolute inset-0 flex flex-col"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: enterTransition }}
-            exit={{ opacity: 0, transition: exitTransition }}
+            {...fade(reduced, "fast")}
           >
             {state.status === "loading" ? (
               <AnilistSkeleton variant={viewMode} label="Loading your list…" />

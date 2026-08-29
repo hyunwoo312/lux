@@ -1,4 +1,4 @@
-import { SPRING_CRISP } from "@/lib/motion";
+import { enterTween, springCrisp } from "@/lib/motion";
 import type { MouseEvent } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -206,8 +206,8 @@ export function MonthWeek({ week, eventsByDate, colors, metrics, collapsed }: Mo
           initial={{ opacity: 0, x: selectedCol * cellWidth }}
           animate={{ opacity: 1, x: selectedCol * cellWidth }}
           transition={{
-            opacity: { duration: reduced ? 0 : 0.2 },
-            x: reduced ? { duration: 0 } : SPRING_CRISP,
+            opacity: enterTween(reduced),
+            x: springCrisp(reduced),
           }}
           style={{ width: Math.max(0, cellWidth - 4) }}
           className="

@@ -4,12 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip } from "@/components/ui/tooltip";
-import { useIntegrationStore } from "@/integrations";
+import { useConnectedProviders } from "@/integrations";
 import { cn } from "@/lib/utils";
 import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
 import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import type { CalendarProviderId, ConnectedCalendar } from "@/widgets/calendar/types";
+import {
+  CALENDAR_PROVIDER_IDS,
+  type CalendarProviderId,
+  type ConnectedCalendar,
+} from "@/widgets/calendar/types";
 
 const FALLBACK_COLOR = "var(--primary)";
 
@@ -45,13 +49,7 @@ function buildGroup(
 export function CalendarVisibilityPicker() {
   const instanceId = useWidgetInstanceId();
   const [open, setOpen] = useState(false);
-  const connected = useIntegrationStore((s) =>
-    s.accounts.some(
-      (account) =>
-        (account.providerId === "google" || account.providerId === "microsoft") &&
-        account.status === "connected",
-    ),
-  );
+  const { connected } = useConnectedProviders(CALENDAR_PROVIDER_IDS);
   const googleCalendars = useCalendar((d) => d.google.calendars);
   const googleEnabled = useCalendar((d) => d.google.enabledCalendarIds);
   const microsoftCalendars = useCalendar((d) => d.microsoft.calendars);
@@ -73,7 +71,7 @@ export function CalendarVisibilityPicker() {
     0,
   );
 
-  if (!connected || groups.length === 0) return null;
+  if (connected.length === 0 || groups.length === 0) return null;
 
   const label =
     hiddenCount > 0 ? `Choose calendars, ${hiddenCount} hidden` : "Choose calendars, all shown";

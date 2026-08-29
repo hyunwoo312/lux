@@ -5,7 +5,7 @@ export const EMAIL_TINT: AccentPreset = "indigo";
 export const EMAIL_CACHE_KEY = "email:messages";
 export const EMAIL_REFRESH_MS = 5 * 60 * 1000;
 export const EMAIL_SYNC_COOLDOWN_MS = 60_000;
-export const SEARCH_DEBOUNCE_MS = 400;
+export const MAIL_SEARCH_DEBOUNCE_MS = 400;
 
 export const MAX_MESSAGES = 200;
 

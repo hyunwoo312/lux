@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { DURATION, EASE_OUT } from "@/lib/motion";
+import { collapse, enterTween } from "@/lib/motion";
 import { describeDiagnostics } from "@/feedback/lib/diagnostics";
 import type { Diagnostics } from "@/feedback/types";
 
@@ -52,7 +52,7 @@ export function DiagnosticsPanel({ enabled, onEnabledChange, diagnostics }: Prop
         <motion.span
           className="flex"
           animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: reduced ? 0 : DURATION.fast, ease: EASE_OUT }}
+          transition={enterTween(reduced, "fast")}
         >
           <ChevronDown aria-hidden />
         </motion.span>
@@ -60,14 +60,7 @@ export function DiagnosticsPanel({ enabled, onEnabledChange, diagnostics }: Prop
 
       <AnimatePresence initial={false}>
         {open && (
-          <motion.div
-            id={panelId}
-            className="w-full overflow-hidden"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}
-          >
+          <motion.div id={panelId} className="w-full overflow-hidden" {...collapse(reduced)}>
             <dl className="bg-background/50 flex flex-col gap-1 rounded-md p-2.5">
               {describeDiagnostics(diagnostics).map(([label, value]) => (
                 <div key={label} className="flex items-baseline justify-between gap-3">

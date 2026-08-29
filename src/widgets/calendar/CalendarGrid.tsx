@@ -10,7 +10,7 @@ import { WeekdayHeader } from "@/widgets/calendar/components/WeekdayHeader";
 import { getEventsByDate } from "@/widgets/calendar/lib/agenda";
 import { getDateKey, getMonthGridDays, startOfWeek } from "@/widgets/calendar/lib/dates";
 import { computeMonthLayout, getMonthMetrics } from "@/widgets/calendar/lib/month-layout";
-import { EASE_OUT, SPRING_CRISP } from "@/lib/motion";
+import { enterTween, exitTween, springCrisp } from "@/lib/motion";
 import { useCalendar } from "@/widgets/calendar/useCalendarStore";
 import type { DisplayCalendarEvent } from "@/widgets/calendar/types";
 
@@ -72,16 +72,25 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
   }, [mode, selectedDay, selectedKey, layout, events, todayKey]);
   const dayEvents = selectedKey ? (eventsByDate.get(selectedKey) ?? []) : [];
 
-  const transition = { duration: reduced ? 0 : 0.5, ease: EASE_OUT } as const;
+  const settle = enterTween(reduced, "slower");
+  const leave = exitTween(reduced, "slower");
   const verticalSlide: Variants = {
     enter: (dir: number) => ({ y: reduced ? "0%" : `${dir * 100}%`, opacity: reduced ? 0 : 1 }),
-    center: { y: "0%", opacity: 1 },
-    exit: (dir: number) => ({ y: reduced ? "0%" : `${-dir * 100}%`, opacity: reduced ? 0 : 1 }),
+    center: { y: "0%", opacity: 1, transition: settle },
+    exit: (dir: number) => ({
+      y: reduced ? "0%" : `${-dir * 100}%`,
+      opacity: reduced ? 0 : 1,
+      transition: leave,
+    }),
   };
   const horizontalSlide: Variants = {
     enter: (dir: number) => ({ x: reduced ? "0%" : `${dir * 100}%`, opacity: reduced ? 0 : 1 }),
-    center: { x: "0%", opacity: 1 },
-    exit: (dir: number) => ({ x: reduced ? "0%" : `${-dir * 100}%`, opacity: reduced ? 0 : 1 }),
+    center: { x: "0%", opacity: 1, transition: settle },
+    exit: (dir: number) => ({
+      x: reduced ? "0%" : `${-dir * 100}%`,
+      opacity: reduced ? 0 : 1,
+      transition: leave,
+    }),
   };
 
   return (
@@ -134,11 +143,11 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
               aria-hidden
               initial={{ opacity: 0, x: hover.col * cellWidth, y: hover.row * rowHeight }}
               animate={{ opacity: 1, x: hover.col * cellWidth, y: hover.row * rowHeight }}
-              exit={{ opacity: 0 }}
+              exit={{ opacity: 0, transition: exitTween(reduced, "fast") }}
               transition={{
-                opacity: { duration: reduced ? 0 : 0.15 },
-                x: reduced ? { duration: 0 } : SPRING_CRISP,
-                y: reduced ? { duration: 0 } : SPRING_CRISP,
+                opacity: enterTween(reduced, "fast"),
+                x: springCrisp(reduced),
+                y: springCrisp(reduced),
               }}
               style={{
                 width: Math.max(0, cellWidth - 4),
@@ -157,7 +166,6 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
             initial="enter"
             animate="center"
             exit="exit"
-            transition={transition}
             className="absolute inset-0 flex flex-col"
           >
             {layout.weeks.map((week, index) => {
@@ -169,7 +177,7 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
                   role="presentation"
                   initial={false}
                   animate={{ height: collapsed ? 0 : rowHeight, opacity: collapsed ? 0 : 1 }}
-                  transition={transition}
+                  transition={settle}
                   className="shrink-0 overflow-hidden"
                 >
                   {isFocusRow ? (
@@ -183,7 +191,6 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
                           initial="enter"
                           animate="center"
                           exit="exit"
-                          transition={transition}
                           className="absolute inset-0"
                         >
                           <MonthWeek
@@ -204,7 +211,7 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
               className="min-h-0 flex-1 overflow-hidden"
               initial={false}
               animate={{ opacity: mode === "week" ? 1 : 0 }}
-              transition={transition}
+              transition={settle}
             >
               {mode === "week" && (
                 <div className="flex h-full min-h-0 flex-col gap-2 pt-2">
@@ -218,7 +225,6 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
                         initial="enter"
                         animate="center"
                         exit="exit"
-                        transition={transition}
                         className="absolute inset-0"
                       >
                         <DayPreview

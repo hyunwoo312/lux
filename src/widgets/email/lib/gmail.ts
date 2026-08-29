@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { integrationFetch, useIntegrationStore } from "@/integrations";
+import { accountFor, integrationFetch, useIntegrationStore } from "@/integrations";
 import { ensureOk, parseResponse } from "@/lib/net";
 import {
   PREVIEW_CHARS,
@@ -37,8 +37,7 @@ function header(headers: { name: string; value: string }[] | undefined, name: st
 }
 
 function connectedEmail(): string | undefined {
-  return useIntegrationStore.getState().accounts.find((account) => account.providerId === "google")
-    ?.email;
+  return accountFor(useIntegrationStore.getState().accounts, "google")?.email;
 }
 
 function inboxUrl(threadId: string, email: string | undefined): string {

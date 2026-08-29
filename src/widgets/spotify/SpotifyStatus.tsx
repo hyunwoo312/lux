@@ -1,10 +1,10 @@
 import { SpotifyServiceIcon } from "@/components/icons/service-icons";
 import { Tooltip } from "@/components/ui/tooltip";
-import { useSpotifyConnection } from "@/widgets/spotify/hooks/useSpotifyConnection";
+import { useProviderAccount } from "@/integrations";
 import { SpotifySearch } from "@/widgets/spotify/SpotifySearch";
 
 export function SpotifyStatus() {
-  const { account } = useSpotifyConnection();
+  const { account } = useProviderAccount("spotify");
 
   if (account?.status === "connected") {
     return <SpotifySearch />;

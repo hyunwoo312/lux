@@ -1,7 +1,7 @@
 import { useId, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ExternalLink, Flag } from "lucide-react";
-import { EASE_OUT, listVariants, rowVariants } from "@/lib/motion";
+import { collapse, listVariants, rowVariants } from "@/lib/motion";
 import { TYPE } from "@/lib/type";
 import { IconActionButton } from "@/components/IconActionButton";
 import { openUrl } from "@/lib/open-url";
@@ -181,14 +181,7 @@ function PlayerRow({
         )}
         <AnimatePresence initial={false}>
           {open && (
-            <motion.div
-              id={detailId}
-              className="overflow-hidden"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
-            >
+            <motion.div id={detailId} className="overflow-hidden" {...collapse(reduced)}>
               <LeaderboardPlayerDetail player={player} />
             </motion.div>
           )}

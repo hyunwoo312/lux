@@ -3,7 +3,7 @@ import { ROW } from "@/lib/row";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
-import { EASE_OUT } from "@/lib/motion";
+import { EASE_OUT, DURATION, enterTween, stagger } from "@/lib/motion";
 import { CalendarEventActions } from "@/widgets/calendar/components/CalendarEventActions";
 import {
   formatEventRelativeTime,
@@ -49,9 +49,9 @@ export function CalendarEventItem({
       initial={reduced ? { opacity: 0 } : { opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: reduced ? 0 : 0.16,
-        delay: reduced ? 0 : Math.min(index, 8) * 0.025,
-        layout: { duration: reduced ? 0 : 0.32, ease: EASE_OUT },
+        ...enterTween(reduced, "fast"),
+        delay: Math.min(index, 8) * stagger(reduced, "tight"),
+        layout: { duration: reduced ? 0 : DURATION.slow, ease: EASE_OUT },
       }}
       className={cn(ROW.item, "group", declined && "opacity-50")}
     >

@@ -1,6 +1,7 @@
-import { EASE_OUT } from "@/lib/motion";
+import { enterTween, exitTween } from "@/lib/motion";
 import { type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useProviderAccount } from "@/integrations";
 import { useSettingsStore } from "@/settings";
 import { Button } from "@/components/ui/button";
 import { useElementSize } from "@/hooks/useElementSize";
@@ -9,7 +10,6 @@ import { SpotifyEmptyState } from "@/widgets/spotify/components/SpotifyEmptyStat
 import { SpotifyBar } from "@/widgets/spotify/components/SpotifyBar";
 import { SpotifyPlayer } from "@/widgets/spotify/components/SpotifyPlayer";
 import { SpotifyQueuePanel } from "@/widgets/spotify/components/SpotifyQueuePanel";
-import { useSpotifyConnection } from "@/widgets/spotify/hooks/useSpotifyConnection";
 import { useSpotifyPlayback } from "@/widgets/spotify/hooks/useSpotifyPlayback";
 import { useSpotify } from "@/widgets/spotify/useSpotifyStore";
 import type { SpotifyPlaybackError } from "@/widgets/spotify/types";
@@ -39,7 +39,7 @@ function getErrorCopy(error: SpotifyPlaybackError): ErrorCopy {
 export function SpotifyWidget() {
   const [ref, size] = useElementSize<HTMLDivElement>();
   const reduced = useReducedMotion();
-  const { account, loaded } = useSpotifyConnection();
+  const { account, loaded } = useProviderAccount("spotify");
   const openAccounts = () => useSettingsStore.getState().openSettings("accounts");
   const connected = account?.status === "connected";
   const controller = useSpotifyPlayback(connected);
@@ -92,9 +92,12 @@ export function SpotifyWidget() {
         <motion.div
           key={queueView ? "queue" : "player"}
           initial={reduced ? { opacity: 0 } : { opacity: 0, x: queueView ? 16 : -16 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={reduced ? { opacity: 0 } : { opacity: 0, x: queueView ? 16 : -16 }}
-          transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
+          animate={{ opacity: 1, x: 0, transition: enterTween(reduced) }}
+          exit={{
+            opacity: 0,
+            x: reduced ? 0 : queueView ? 16 : -16,
+            transition: exitTween(reduced),
+          }}
           className="h-full min-h-0"
         >
           {queueView ? (

@@ -1,8 +1,8 @@
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
 import { forwardRef } from "react";
 import type { Variants } from "motion/react";
-import { motion } from "motion/react";
-import { SPRING_CRISP } from "@/lib/motion";
+import { motion, useReducedMotion } from "motion/react";
+import { springCrisp } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { accentClass } from "@/widgets/core/accent";
 import type { WidgetPlugin } from "@/widgets/core/types";
@@ -33,6 +33,7 @@ export const WidgetRow = forwardRef<HTMLButtonElement, WidgetCardProps>(function
   },
   ref,
 ) {
+  const reduced = useReducedMotion();
   const Icon = plugin.icon;
   return (
     <motion.button
@@ -53,7 +54,7 @@ export const WidgetRow = forwardRef<HTMLButtonElement, WidgetCardProps>(function
         <motion.span
           layoutId="palette-hover"
           aria-hidden
-          transition={SPRING_CRISP}
+          transition={springCrisp(reduced)}
           className="bg-accent pointer-events-none absolute inset-0 rounded-md"
         />
       )}

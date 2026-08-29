@@ -1,4 +1,4 @@
-import { DURATION, EASE_OUT } from "@/lib/motion";
+import { iconSwap } from "@/lib/motion";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -31,13 +31,7 @@ export function ViewToggleButton({
         onClick={onToggle}
       >
         <AnimatePresence mode="wait" initial={false}>
-          <motion.span
-            key={targetKey}
-            initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.6, rotate: -90 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0 }}
-            exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.6, rotate: 90 }}
-            transition={{ duration: reduced ? 0 : DURATION.fast, ease: EASE_OUT }}
-          >
+          <motion.span key={targetKey} {...iconSwap(reduced, -1)}>
             <Icon />
           </motion.span>
         </AnimatePresence>

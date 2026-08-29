@@ -7,7 +7,7 @@ import { createGatedChromeStorage } from "@/lib/storage";
 import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
-import { useIntegrationStore } from "@/integrations";
+import { isConnected, useIntegrationStore } from "@/integrations";
 import {
   fetchGoogleCalendarEvents,
   fetchGoogleCalendars,
@@ -28,6 +28,7 @@ import {
 import { isCalendarSyncCoolingDown } from "@/widgets/calendar/lib/cooldown";
 import {
   CALENDAR_DENSITIES,
+  CALENDAR_PROVIDER_IDS,
   CALENDAR_VIEWS,
   LEGACY_CALENDAR_VIEWS,
   calendarEventSchema,
@@ -367,14 +368,11 @@ export const useCalendarStore = create<CalendarState>()(
       sync: async (instanceId, options = {}) => {
         const data = getCalendarData(instanceId);
         const accounts = useIntegrationStore.getState().accounts;
-        const isConnected = (providerId: CalendarProviderId) =>
-          accounts.some(
-            (account) => account.providerId === providerId && account.status === "connected",
-          );
 
-        const requested = (["google", "microsoft"] as const).filter(
+        const requested = CALENDAR_PROVIDER_IDS.filter(
           (providerId) =>
-            isConnected(providerId) && (!options.providerId || options.providerId === providerId),
+            isConnected(accounts, providerId) &&
+            (!options.providerId || options.providerId === providerId),
         );
         const busy = requested.filter((providerId) => data.syncing.includes(providerId));
         const targets = requested.filter(

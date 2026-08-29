@@ -35,7 +35,7 @@ export function SpotifySearchRow({
       onClick={onPick}
       className={cn(
         `
-          group flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-left
+          group flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-left
           transition-colors
         `,
         active ? "bg-accent text-primary" : "hover:bg-accent/60",

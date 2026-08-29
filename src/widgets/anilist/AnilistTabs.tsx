@@ -1,6 +1,6 @@
 import { Compass, Library, Rss } from "lucide-react";
 import { AnilistServiceIcon } from "@/components/icons/service-icons";
-import { useIntegrationStore } from "@/integrations";
+import { useProviderAccount } from "@/integrations";
 import { WidgetTabs, type WidgetTab } from "@/widgets/core/WidgetTabs";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { useActivityUnseenCount, useUnreadCount } from "@/widgets/anilist/useAnilistSignals";
@@ -8,9 +8,7 @@ import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import type { AnilistTab } from "@/widgets/anilist/types";
 
 export function AnilistTabs() {
-  const account = useIntegrationStore(
-    (s) => s.accounts.find((entry) => entry.providerId === "anilist") ?? null,
-  );
+  const { account } = useProviderAccount("anilist");
   const connected = account?.status === "connected";
   const instanceId = useWidgetInstanceId();
   const activeTab = useAnilist((d) => d.activeTab);

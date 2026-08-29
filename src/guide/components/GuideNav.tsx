@@ -5,7 +5,7 @@ import type { LucideIcon } from "lucide-react";
 import { SearchField } from "@/components/SearchField";
 import { cn } from "@/lib/utils";
 import { DIALOG_RAIL } from "@/components/DialogChrome";
-import { DURATION, EASE_OUT, SPRING_CRISP } from "@/lib/motion";
+import { collapse, enterTween, springCrisp } from "@/lib/motion";
 import { GUIDE_GROUPS } from "@/guide/content";
 import type { GuideGroup } from "@/guide/types";
 
@@ -91,7 +91,7 @@ export function GuideNav({ articleId, onSelect }: Props) {
                       aria-hidden
                       className="flex"
                       animate={{ rotate: open ? 90 : 0 }}
-                      transition={{ duration: reduced ? 0 : DURATION.fast, ease: EASE_OUT }}
+                      transition={enterTween(reduced, "fast")}
                     >
                       <ChevronRight className="text-ink-4 size-3.5" />
                     </motion.span>
@@ -99,13 +99,7 @@ export function GuideNav({ articleId, onSelect }: Props) {
 
                   <AnimatePresence initial={false}>
                     {open && (
-                      <motion.div
-                        className="overflow-hidden"
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}
-                      >
+                      <motion.div className="overflow-hidden" {...collapse(reduced)}>
                         <ul className="border-edge-2 mt-1 ml-4 flex flex-col gap-0.5 border-l pl-3">
                           {articles.map((article) => {
                             const active = article.id === articleId;
@@ -130,7 +124,7 @@ export function GuideNav({ articleId, onSelect }: Props) {
                                         bg-primary/12 ring-primary/25 absolute inset-0 rounded-md
                                         ring-1
                                       "
-                                      transition={reduced ? { duration: 0 } : SPRING_CRISP}
+                                      transition={springCrisp(reduced)}
                                     />
                                   )}
                                   <span className="relative z-10 truncate">{article.title}</span>

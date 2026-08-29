@@ -5,7 +5,7 @@ import {
   WidgetConfigGroup,
   WidgetConfigItem,
 } from "@/components/config/WidgetConfig";
-import { useIntegrationStore } from "@/integrations";
+import { useProviderAccount } from "@/integrations";
 import { useSettingsStore } from "@/settings";
 import type { OpenBehavior } from "@/lib/open-url";
 import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
@@ -27,9 +27,7 @@ const DRAFT_OPTIONS: { value: "show" | "hide"; label: string }[] = [
 ];
 
 export function GithubConfig() {
-  const account = useIntegrationStore(
-    (s) => s.accounts.find((entry) => entry.providerId === "github") ?? null,
-  );
+  const { account } = useProviderAccount("github");
   const instanceId = useWidgetInstanceId();
   const showPrivate = useGithub((d) => d.showPrivate);
   const setShowPrivate = useGithubStore((s) => s.setShowPrivate);

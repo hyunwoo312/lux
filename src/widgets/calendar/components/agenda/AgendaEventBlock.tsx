@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 import { TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { EASE_OUT } from "@/lib/motion";
+import { enterTween, stagger } from "@/lib/motion";
 import { CalendarEventActions } from "@/widgets/calendar/components/CalendarEventActions";
 import { getEventTitle } from "@/widgets/calendar/lib/agenda";
 import { getReadableTextColor } from "@/widgets/calendar/lib/colors";
@@ -93,9 +93,8 @@ export function AgendaEventBlock({
       initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{
-        duration: reduced ? 0 : 0.18,
-        delay: reduced ? 0 : Math.min(index, 8) * 0.02,
-        ease: EASE_OUT,
+        ...enterTween(reduced, "fast"),
+        delay: Math.min(index, 8) * stagger(reduced, "tight"),
       }}
       style={{ top, height, left: `${left}%`, width: `${width}%` }}
       className="absolute pr-0.5"

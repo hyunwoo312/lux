@@ -1,4 +1,9 @@
-import { useIntegrationStore, type IntegrationProviderId } from "@/integrations";
+import {
+  accountFor,
+  useConnectedProviders,
+  useIntegrationStore,
+  type IntegrationProviderId,
+} from "@/integrations";
 import { useSettingsStore } from "@/settings";
 import type { WidgetLock } from "@/widgets/core/types";
 
@@ -13,17 +18,12 @@ export function useProviderLock({
   label,
   subject,
 }: ProviderLockOptions): WidgetLock | null {
-  const loaded = useIntegrationStore((s) => s.loaded);
+  const { connected, loaded } = useConnectedProviders(providers);
   const hasAccount = useIntegrationStore((s) =>
-    s.accounts.some((account) => providers.includes(account.providerId)),
-  );
-  const connected = useIntegrationStore((s) =>
-    s.accounts.some(
-      (account) => providers.includes(account.providerId) && account.status === "connected",
-    ),
+    providers.some((providerId) => accountFor(s.accounts, providerId) !== null),
   );
 
-  if (!loaded || connected) return null;
+  if (!loaded || connected.length > 0) return null;
 
   return {
     message: hasAccount

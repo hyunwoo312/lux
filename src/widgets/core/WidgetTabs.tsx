@@ -1,4 +1,4 @@
-import { DURATION, EASE_OUT, SPRING_CRISP } from "@/lib/motion";
+import { collapse, springCrisp } from "@/lib/motion";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -127,7 +127,7 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
             x: indicator.x + UNDERLINE_INSET,
             width: Math.max(0, indicator.width - UNDERLINE_INSET * 2),
           }}
-          transition={reduced ? { duration: 0 } : SPRING_CRISP}
+          transition={springCrisp(reduced)}
         />
       )}
       {tabs.map((tab) => {
@@ -177,10 +177,7 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
                 {(isActive || wide) && (
                   <motion.span
                     key="label"
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: "auto", opacity: 1 }}
-                    exit={{ width: 0, opacity: 0 }}
-                    transition={{ duration: DURATION.base, ease: EASE_OUT }}
+                    {...collapse(reduced, "width")}
                     className="overflow-hidden whitespace-nowrap"
                   >
                     <span className="pl-1.5">{tab.label}</span>

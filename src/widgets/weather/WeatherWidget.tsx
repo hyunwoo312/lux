@@ -8,7 +8,7 @@ import { VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
 import { SortableRow } from "@/widgets/core/SortableRow";
 import { WeatherDetail } from "@/widgets/weather/components/WeatherDetail";
 import { WeatherRow } from "@/widgets/weather/components/WeatherRow";
-import { EASE_OUT } from "@/lib/motion";
+import { viewSwap } from "@/lib/motion";
 import { detailLocation, useWeather, useWeatherStore } from "@/widgets/weather/useWeatherStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
@@ -27,9 +27,6 @@ export function WeatherWidget() {
 
   const detail = detailLocation(locations, selectedId);
 
-  const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT };
-  const offset = reduced ? 0 : "4%";
-
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
@@ -44,14 +41,7 @@ export function WeatherWidget() {
       ) : (
         <AnimatePresence initial={false} mode="popLayout">
           {detail ? (
-            <motion.div
-              key="detail"
-              className="absolute inset-0"
-              initial={{ opacity: 0, y: reduced ? 0 : "-4%" }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: reduced ? 0 : "-4%" }}
-              transition={transition}
-            >
+            <motion.div key="detail" className="absolute inset-0" {...viewSwap(reduced, "-4%")}>
               <WeatherDetail
                 location={detail}
                 units={units}
@@ -63,10 +53,7 @@ export function WeatherWidget() {
             <motion.div
               key="list"
               className="absolute inset-0 overflow-x-hidden scroll-fade overflow-y-auto"
-              initial={{ opacity: 0, y: offset }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: offset }}
-              transition={transition}
+              {...viewSwap(reduced, "4%")}
             >
               <DndContext
                 sensors={sensors}

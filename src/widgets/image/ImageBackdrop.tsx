@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { DURATION, EASE_STANDARD } from "@/lib/motion";
+import { EASE_STANDARD, enterTween } from "@/lib/motion";
 import { AnimatePresence, motion, useReducedMotion, type TargetAndTransition } from "motion/react";
 import { ImageOff } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { clamp01, cn } from "@/lib/utils";
 import { StateMessage } from "@/components/StateMessage";
 import { useActiveImage } from "@/widgets/image/hooks/useActiveImage";
 import { type ImageBrightness, type ImageFit, type ImageTransition } from "@/widgets/image/types";
@@ -57,10 +57,6 @@ function frameFor(assetId: string | undefined): KenBurnsFrame {
   return KEN_BURNS[Math.abs(hash) % KEN_BURNS.length] ?? KEN_BURNS_FALLBACK;
 }
 
-function clamp01(value: number): number {
-  return Math.min(1, Math.max(0, value));
-}
-
 export function ImageBackdrop() {
   const fit = useImage((c) => c.fit);
   const brightness = useImage((c) => c.brightness);
@@ -79,10 +75,7 @@ export function ImageBackdrop() {
 
   const effectiveTransition: ImageTransition = reduced ? "none" : transition;
   const variant = ENTER_VARIANTS[effectiveTransition];
-  const enterTransition =
-    effectiveTransition === "none"
-      ? { duration: 0 }
-      : { duration: DURATION.slow, ease: EASE_STANDARD };
+  const enterTransition = enterTween(effectiveTransition === "none", "slow", EASE_STANDARD);
 
   const panning = kenBurns && !reduced;
   const frame = frameFor(activeItem?.assetId);

@@ -9,18 +9,18 @@ import {
   Network,
   Star,
 } from "lucide-react";
-import { motion, useAnimationControls, useReducedMotion, type Variants } from "motion/react";
+import { motion, useAnimationControls, useReducedMotion } from "motion/react";
 import { IconRow } from "@/components/IconRow";
 import { ChromeMark, GithubMark, KofiMark } from "@/components/icons/service-icons";
 import { CWS_URL, KOFI_URL, PRIVACY_URL, REPO_URL, SITE_URL } from "@/lib/links";
 import {
-  DURATION,
   EASE_BACK,
   EASE_OUT,
-  EASE_OUT_STRONG,
   EASE_STANDARD,
-  SPRING_POP,
-  TAP,
+  listVariants,
+  revealVariants,
+  springPop,
+  tap,
 } from "@/lib/motion";
 import { SettingsSection } from "@/settings/components/SettingsSection";
 import { useGithubStars } from "@/settings/useGithubStars";
@@ -43,17 +43,10 @@ function formatStars(count: number): string {
   return count >= 1000 ? `${(count / 1000).toFixed(1)}k` : String(count);
 }
 
-const container: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
-};
-const item: Variants = {
-  hidden: { opacity: 0, y: 8 },
-  show: { opacity: 1, y: 0, transition: { duration: DURATION.slow, ease: EASE_OUT_STRONG } },
-};
-
 export function AboutTab() {
   const reduced = useReducedMotion();
+  const container = listVariants(reduced, "loose");
+  const item = revealVariants(reduced);
   const setTab = useSettingsStore((s) => s.setTab);
   const version = readVersion();
   const stars = useGithubStars();
@@ -277,8 +270,13 @@ const LOGO_MASK = {
   WebkitMaskPosition: "center",
 } as const;
 
+const CELEBRATE_SECONDS = 0.7;
+const SHEEN_SECONDS = 1.8;
+const SHEEN_GAP_SECONDS = 3.5;
+
 function LogoMark() {
   const reduced = useReducedMotion();
+  const lift = tap(reduced, "surface");
   const spin = useAnimationControls();
   const glow = useAnimationControls();
 
@@ -290,12 +288,12 @@ function LogoMark() {
     void spin.start({
       rotate: [0, 360],
       scale: [1, 0.82, 1.12, 1],
-      transition: { duration: 0.7, ease: EASE_BACK },
+      transition: { duration: CELEBRATE_SECONDS, ease: EASE_BACK },
     });
     void glow.start({
       opacity: [0.5, 0],
       scale: [0.5, 1.9],
-      transition: { duration: 0.7, ease: EASE_OUT },
+      transition: { duration: CELEBRATE_SECONDS, ease: EASE_OUT },
     });
   }
 
@@ -304,9 +302,9 @@ function LogoMark() {
       type="button"
       aria-label="Lux"
       onClick={celebrate}
-      whileHover={{ ...TAP.surface.whileHover, y: -5 }}
-      whileTap={TAP.surface.whileTap}
-      transition={SPRING_POP}
+      whileHover={{ ...lift.whileHover, y: -5 }}
+      whileTap={lift.whileTap}
+      transition={springPop(reduced)}
       className="focus-ring relative grid size-16 cursor-pointer place-items-center rounded-xl"
     >
       <motion.span
@@ -326,7 +324,12 @@ function LogoMark() {
             }}
             initial={{ x: "-130%" }}
             animate={{ x: "130%" }}
-            transition={{ duration: 1.8, repeat: Infinity, repeatDelay: 3.5, ease: EASE_STANDARD }}
+            transition={{
+              duration: SHEEN_SECONDS,
+              repeat: Infinity,
+              repeatDelay: SHEEN_GAP_SECONDS,
+              ease: EASE_STANDARD,
+            }}
           />
         </span>
       </motion.span>

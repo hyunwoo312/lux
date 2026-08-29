@@ -6,7 +6,22 @@ type NewtabQueueState = {
   last: string | null;
 };
 
-type RotationOrder = "shuffle" | "sequential";
+export type RotationOrder = "shuffle" | "sequential";
+
+export type MediaSelection<T> = {
+  mode: "single" | "multi";
+  single: T | null;
+  items: T[];
+};
+
+export function mediaList<T>({ mode, single, items }: MediaSelection<T>): T[] {
+  return mode === "multi" ? items : single ? [single] : [];
+}
+
+export function normalizeIndex(index: number, length: number): number {
+  if (length <= 0) return 0;
+  return ((index % length) + length) % length;
+}
 
 export function getSignature(assetIds: string[]): string {
   return assetIds.join(" ");

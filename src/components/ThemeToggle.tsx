@@ -1,11 +1,12 @@
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
-import { POP } from "@/lib/motion";
+import { pop } from "@/lib/motion";
 import { useThemeStore } from "@/stores/useThemeStore";
 
 export function ThemeToggle() {
+  const reduced = useReducedMotion();
   const theme = useThemeStore((s) => s.theme);
   const toggle = useThemeStore((s) => s.toggle);
   const isDark = theme === "dark";
@@ -19,7 +20,11 @@ export function ThemeToggle() {
         onClick={toggle}
       >
         <AnimatePresence mode="wait" initial={false}>
-          <motion.span key={isDark ? "dark" : "light"} className="grid place-items-center" {...POP}>
+          <motion.span
+            key={isDark ? "dark" : "light"}
+            className="grid place-items-center"
+            {...pop(reduced)}
+          >
             {isDark ? <Sun /> : <Moon />}
           </motion.span>
         </AnimatePresence>

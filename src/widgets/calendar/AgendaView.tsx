@@ -9,7 +9,7 @@ import { AgendaCompactList } from "@/widgets/calendar/components/agenda/AgendaCo
 import { AgendaTimeline } from "@/widgets/calendar/components/agenda/AgendaTimeline";
 import { AgendaUntimedBlock } from "@/widgets/calendar/components/agenda/AgendaUntimedBlock";
 import { getEventStartDate } from "@/widgets/calendar/lib/agenda";
-import { DURATION, EASE_OUT } from "@/lib/motion";
+import { enterTween, exitTween } from "@/lib/motion";
 import { endOfDay, getDateKey, getRangeEndDate, startOfDay } from "@/widgets/calendar/lib/dates";
 import {
   buildTimeline,
@@ -72,9 +72,8 @@ export function AgendaView({ events, colors, status }: AgendaViewProps) {
           key={anchorKey}
           className="flex min-h-0 flex-1 flex-col"
           initial={{ opacity: 0, x: direction * shift }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -direction * shift }}
-          transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}
+          animate={{ opacity: 1, x: 0, transition: enterTween(reduced) }}
+          exit={{ opacity: 0, x: -direction * shift, transition: exitTween(reduced) }}
         >
           {timed.length === 0 ? (
             <EmptyAgenda

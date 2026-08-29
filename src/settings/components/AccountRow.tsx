@@ -5,15 +5,13 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
 import type { ProviderMeta } from "@/settings/providers";
-import type { useIntegrationStore } from "@/integrations";
+import type { IntegrationAccountSummary } from "@/integrations";
 import type { AccentPreset } from "@/widgets/core/accent";
 import { accentClass } from "@/widgets/core/accent";
 
-type IntegrationAccount = ReturnType<typeof useIntegrationStore.getState>["accounts"][number];
-
 type Props = {
   provider: ProviderMeta;
-  account: IntegrationAccount | undefined;
+  account: IntegrationAccountSummary | null;
   busy: "connecting" | "disconnecting" | undefined;
   connectDisabled: boolean;
   brand?: AccentPreset;

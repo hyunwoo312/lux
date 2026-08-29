@@ -1,4 +1,4 @@
-import { EASE_OUT } from "@/lib/motion";
+import { enterTween, exitTween } from "@/lib/motion";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ListMusic, Play } from "lucide-react";
@@ -150,9 +150,8 @@ export function SpotifyQueuePanel() {
                   key={item.id}
                   layout={!reduced}
                   initial={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={reduced ? { opacity: 0 } : { opacity: 0, x: -8 }}
-                  transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
+                  animate={{ opacity: 1, y: 0, transition: enterTween(reduced) }}
+                  exit={{ opacity: 0, x: reduced ? 0 : -8, transition: exitTween(reduced) }}
                 >
                   <button
                     type="button"

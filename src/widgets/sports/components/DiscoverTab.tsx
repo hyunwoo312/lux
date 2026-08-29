@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { EASE_OUT } from "@/lib/motion";
+import { collapse } from "@/lib/motion";
 import { LeaderboardView } from "@/widgets/sports/components/golf/LeaderboardView";
 import { LeagueBar } from "@/widgets/sports/components/LeagueBar";
 import { LeagueSelector } from "@/widgets/sports/components/LeagueSelector";
@@ -55,14 +55,7 @@ export function DiscoverTab() {
 
       <AnimatePresence initial={false}>
         {layer && (
-          <motion.div
-            key={layer}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
-            className="shrink-0 overflow-hidden"
-          >
+          <motion.div key={layer} {...collapse(reduced)} className="shrink-0 overflow-hidden">
             {layer === "search" ? (
               <TeamSearchResults query={query} />
             ) : (

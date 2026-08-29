@@ -1,3 +1,5 @@
+import { clamp01 } from "@/lib/utils";
+
 export type Oklch = { l: number; c: number; h: number };
 export type LinearRgb = [number, number, number];
 
@@ -31,7 +33,7 @@ export function isInSrgbGamut(color: Oklch, tolerance = 1e-4): boolean {
 }
 
 function encode(channel: number): number {
-  const v = Math.min(1, Math.max(0, channel));
+  const v = clamp01(channel);
   return v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055;
 }
 

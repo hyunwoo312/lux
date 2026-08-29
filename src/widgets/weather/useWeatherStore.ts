@@ -7,7 +7,12 @@ import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { invalidatePolledResource } from "@/widgets/core/usePolledResource";
-import { syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
+import {
+  bumpSyncNonce,
+  createSyncSlice,
+  isSyncCoolingDown,
+  type SyncSlice,
+} from "@/widgets/core/syncSlice";
 import { weatherCacheKey } from "@/widgets/weather/lib/open-meteo";
 import {
   makeLocationId,
@@ -44,12 +49,8 @@ type WeatherData = {
   selectedId: string | null;
 };
 
-type WeatherState = {
+type WeatherState = SyncSlice & {
   byInstance: Record<string, WeatherData>;
-  syncNonce: Record<string, number>;
-  lastSyncAt: Record<string, number>;
-  dataSyncedAt: Record<string, number>;
-  syncing: Record<string, number>;
   addLocation: (instanceId: string, location: WeatherLocation) => void;
   removeLocation: (instanceId: string, id: string) => void;
   reorderLocations: (instanceId: string, activeId: string, overId: string) => void;
@@ -60,10 +61,7 @@ type WeatherState = {
   setForecastDays: (instanceId: string, forecastDays: WeatherForecastDays) => void;
   setRainAlert: (instanceId: string, rainAlert: WeatherRainAlert) => void;
   setMetrics: (instanceId: string, metrics: WeatherMetric[]) => void;
-  beginSync: (instanceId: string) => void;
-  endSync: (instanceId: string) => void;
-  reportSynced: (instanceId: string, at: number) => void;
-  requestRefresh: (instanceId: string) => void;
+  requestSync: (instanceId: string) => void;
   removeInstance: (instanceId: string) => void;
 };
 
@@ -147,11 +145,8 @@ function migrateLegacyToConfig(persisted: unknown): {
 export const useWeatherStore = create<WeatherState>()(
   persist(
     (set, get) => ({
+      ...createSyncSlice(set),
       byInstance: {},
-      syncNonce: {},
-      lastSyncAt: {},
-      dataSyncedAt: {},
-      syncing: {},
       addLocation: (instanceId, location) =>
         set((state) => {
           const data = state.byInstance[instanceId] ?? DEFAULT_DATA;
@@ -197,45 +192,19 @@ export const useWeatherStore = create<WeatherState>()(
         set((state) => update(state, instanceId, (data) => ({ ...data, rainAlert }))),
       setMetrics: (instanceId, metrics) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, metrics }))),
-      beginSync: (instanceId) =>
-        set((state) => ({
-          syncing: { ...state.syncing, [instanceId]: (state.syncing[instanceId] ?? 0) + 1 },
-        })),
-      endSync: (instanceId) =>
-        set((state) => ({
-          syncing: {
-            ...state.syncing,
-            [instanceId]: Math.max(0, (state.syncing[instanceId] ?? 0) - 1),
-          },
-        })),
-      reportSynced: (instanceId, at) =>
-        set((state) =>
-          at > (state.dataSyncedAt[instanceId] ?? 0)
-            ? { dataSyncedAt: { ...state.dataSyncedAt, [instanceId]: at } }
-            : state,
-        ),
-      requestRefresh: (instanceId) => {
-        if (syncCooldownRemainingMs(get().lastSyncAt[instanceId], WEATHER_SYNC_COOLDOWN_MS) > 0) {
-          return;
-        }
+      requestSync: (instanceId) => {
+        if (isSyncCoolingDown(get(), instanceId, WEATHER_SYNC_COOLDOWN_MS)) return;
         const inst = get().byInstance[instanceId];
         if (!inst) return;
         for (const location of inst.locations) {
           invalidatePolledResource(weatherCacheKey(location, inst.units, inst.windUnit));
         }
-        set((state) => ({
-          syncNonce: { ...state.syncNonce, [instanceId]: (state.syncNonce[instanceId] ?? 0) + 1 },
-          lastSyncAt: { ...state.lastSyncAt, [instanceId]: Date.now() },
-        }));
+        set((state) => bumpSyncNonce(state, instanceId));
       },
-      removeInstance: (instanceId) =>
-        set((state) => ({
-          byInstance: dropInstance(state.byInstance, instanceId),
-          syncNonce: dropInstance(state.syncNonce, instanceId),
-          lastSyncAt: dropInstance(state.lastSyncAt, instanceId),
-          dataSyncedAt: dropInstance(state.dataSyncedAt, instanceId),
-          syncing: dropInstance(state.syncing, instanceId),
-        })),
+      removeInstance: (instanceId) => {
+        set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) }));
+        get().dropSync(instanceId);
+      },
     }),
     {
       name: "widget:weather",

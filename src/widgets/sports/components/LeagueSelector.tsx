@@ -1,7 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { EASE_OUT } from "@/lib/motion";
+import { enterTween, exitTween } from "@/lib/motion";
 import { ROW } from "@/lib/row";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import {
@@ -32,7 +32,6 @@ export function LeagueSelector({
   const current = leagueById(leagueId);
 
   const offset = reduced ? 0 : SLIDE;
-  const transition = { duration: reduced ? 0 : 0.18, ease: EASE_OUT };
 
   return (
     <div className="relative shrink-0 overflow-hidden">
@@ -41,9 +40,8 @@ export function LeagueSelector({
           <motion.div
             key="sports"
             initial={{ opacity: 0, x: -offset }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -offset }}
-            transition={transition}
+            animate={{ opacity: 1, x: 0, transition: enterTween(reduced, "fast") }}
+            exit={{ opacity: 0, x: -offset, transition: exitTween(reduced, "fast") }}
             className="flex flex-col gap-0.5 px-1"
           >
             {activeSports().map((entry) => {
@@ -72,9 +70,8 @@ export function LeagueSelector({
           <motion.div
             key={sport}
             initial={{ opacity: 0, x: offset }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: offset }}
-            transition={transition}
+            animate={{ opacity: 1, x: 0, transition: enterTween(reduced, "fast") }}
+            exit={{ opacity: 0, x: offset, transition: exitTween(reduced, "fast") }}
             className="flex flex-col gap-0.5 px-1"
           >
             <button

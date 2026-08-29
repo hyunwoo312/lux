@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
+import { STILL } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 type SpotifyMarqueeProps = {
@@ -48,7 +49,7 @@ export function SpotifyMarquee({ label, className }: SpotifyMarqueeProps) {
                 repeat: Infinity,
                 times: [0, 0.16, 0.72, 0.88, 1],
               }
-            : { duration: 0 }
+            : STILL
         }
       >
         {label}

@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ChevronDown } from "lucide-react";
-import { EASE_OUT } from "@/lib/motion";
+import { collapse, enterTween } from "@/lib/motion";
 import { TYPE } from "@/lib/type";
 import { cn } from "@/lib/utils";
 
@@ -80,7 +80,7 @@ export function CollapsibleSection({
           <motion.span
             className="flex shrink-0"
             animate={{ rotate: open ? 0 : -90 }}
-            transition={{ duration: reduced ? 0 : 0.18, ease: EASE_OUT }}
+            transition={enterTween(reduced, "fast")}
           >
             <ChevronDown className="text-ink-3 size-3.5" aria-hidden />
           </motion.span>
@@ -88,14 +88,7 @@ export function CollapsibleSection({
       </h4>
       <AnimatePresence initial={false}>
         {open && (
-          <motion.div
-            key="body"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
-            className="overflow-hidden"
-          >
+          <motion.div key="body" {...collapse(reduced)} className="overflow-hidden">
             {children}
           </motion.div>
         )}

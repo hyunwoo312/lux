@@ -212,6 +212,37 @@ describe("usePagedResource", () => {
     await waitFor(() => expect(result.current.state).toEqual({ status: "success", items: [9] }));
   });
 
+  it("lets a user refresh interrupt an in-flight load more", async () => {
+    let releaseMore = (): void => {};
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [1], hasNextPage: true })
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            releaseMore = () => resolve({ items: [2], hasNextPage: true });
+          }),
+      )
+      .mockResolvedValue({ items: [9], hasNextPage: false });
+    const { result } = renderHook(() =>
+      usePagedResource(fetcher, { maxItems: 50, getKey: (n: number) => n }),
+    );
+
+    await waitFor(() => expect(result.current.state).toEqual({ status: "success", items: [1] }));
+    act(() => result.current.loadMore());
+    expect(result.current.isLoadingMore).toBe(true);
+
+    act(() => result.current.refresh());
+    expect(result.current.isRefreshing).toBe(true);
+    expect(result.current.isLoadingMore).toBe(false);
+    await waitFor(() => expect(result.current.state).toEqual({ status: "success", items: [9] }));
+
+    await act(async () => {
+      releaseMore();
+    });
+    expect(result.current.state).toEqual({ status: "success", items: [9] });
+  });
+
   it("still refetches an expanded list when the user asks for it", async () => {
     const fetcher = vi
       .fn()

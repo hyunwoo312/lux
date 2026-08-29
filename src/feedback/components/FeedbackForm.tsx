@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { TYPE } from "@/lib/type";
-import { SPRING_POP } from "@/lib/motion";
+import { springPop } from "@/lib/motion";
 import { formatShortcut } from "@/lib/shortcuts";
 import { CategoryChips } from "@/feedback/components/CategoryChips";
 import { DiagnosticsPanel } from "@/feedback/components/DiagnosticsPanel";
@@ -199,7 +199,7 @@ export function FeedbackForm({
             key={cooling ? "waiting" : "idle"}
             initial={reduced ? false : { opacity: 0, scale: 0.7 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={reduced ? { duration: 0 } : SPRING_POP}
+            transition={springPop(reduced)}
           >
             {cooling ? `Wait ${Math.ceil(waitMs / 1000)}s` : "Send Feedback"}
           </motion.span>

@@ -1,4 +1,4 @@
-import { useIntegrationStore } from "@/integrations";
+import { useIsConnected } from "@/integrations";
 import { usePolledResource } from "@/widgets/core/usePolledResource";
 import { fetchReleases, parseCachedReleases } from "@/widgets/github/lib/api/releases";
 import { countUnseen } from "@/widgets/github/lib/releases-unseen";
@@ -7,9 +7,7 @@ import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
 import { RELEASES_CACHE_KEY, SLOW_REFRESH_MS } from "@/widgets/github/types";
 
 export function useReleasesUnseen(): number {
-  const connected = useIntegrationStore(
-    (s) => s.accounts.find((entry) => entry.providerId === "github")?.status === "connected",
-  );
+  const connected = useIsConnected("github");
   const showPrivate = useGithub((d) => d.showPrivate);
   const lastSeenAt = useGithubStore((s) => s.lastSeenReleaseAt);
   const { state } = usePolledResource(fetchReleases, {

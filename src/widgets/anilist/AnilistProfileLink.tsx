@@ -1,17 +1,14 @@
 import { AnilistServiceIcon } from "@/components/icons/service-icons";
 import { RemoteImage } from "@/components/media/RemoteImage";
 import { Tooltip } from "@/components/ui/tooltip";
-import { useIntegrationStore } from "@/integrations";
+import { useProviderAccount } from "@/integrations";
 import { useAnilist } from "@/widgets/anilist/useAnilistStore";
 
 export function AnilistProfileLink() {
-  const account = useIntegrationStore((s) => {
-    const entry = s.accounts.find((item) => item.providerId === "anilist");
-    return entry?.status === "connected" ? entry : undefined;
-  });
+  const { account } = useProviderAccount("anilist");
   const newTab = useAnilist((d) => d.openBehavior === "newTab");
 
-  if (!account?.displayName) return null;
+  if (account?.status !== "connected" || !account.displayName) return null;
 
   return (
     <Tooltip content={`Open ${account.displayName} on AniList`} sticky>

@@ -1,26 +1,22 @@
 import { useEffect } from "react";
-import { useIntegrationStore } from "@/integrations";
+import { connectedProviders, useConnectedProviders, useIntegrationStore } from "@/integrations";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 import {
   getCalendarData,
   useCalendar,
   useCalendarStore,
 } from "@/widgets/calendar/useCalendarStore";
+import { CALENDAR_PROVIDER_IDS } from "@/widgets/calendar/types";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
-const PROVIDERS = ["google", "microsoft"] as const;
 const CHECK_INTERVAL_MS = 5 * 60 * 1000;
-
-function connectedProviders(): readonly (typeof PROVIDERS)[number][] {
-  const accounts = useIntegrationStore.getState().accounts;
-  return PROVIDERS.filter((providerId) =>
-    accounts.some((account) => account.providerId === providerId && account.status === "connected"),
-  );
-}
 
 function oldestSyncedAt(instanceId: string): number {
   const data = getCalendarData(instanceId);
-  const connected = connectedProviders();
+  const connected = connectedProviders(
+    useIntegrationStore.getState().accounts,
+    CALENDAR_PROVIDER_IDS,
+  );
   if (connected.length === 0) return Date.now();
   let oldest = Number.POSITIVE_INFINITY;
   for (const providerId of connected) {
@@ -33,13 +29,8 @@ function oldestSyncedAt(instanceId: string): number {
 export function useCalendarAutoSync() {
   const instanceId = useWidgetInstanceId();
   const refreshIntervalHours = useCalendar((d) => d.refreshIntervalHours);
-  const connectedKey = useIntegrationStore((s) =>
-    PROVIDERS.filter((providerId) =>
-      s.accounts.some(
-        (account) => account.providerId === providerId && account.status === "connected",
-      ),
-    ).join(","),
-  );
+  const { connected } = useConnectedProviders(CALENDAR_PROVIDER_IDS);
+  const connectedKey = connected.join(",");
 
   useEffect(() => {
     if (!connectedKey) return;

@@ -4,7 +4,12 @@ import { z } from "zod";
 import { createAssetStore, missingAssetIds, type MediaImageItem } from "@/lib/asset-store";
 import { encodeToWebp, isOptimizedMimeType } from "@/lib/image-encode";
 import { getLocal, setLocal } from "@/lib/local-store";
-import { getNextSequentialIndex, getRandomIndexExcluding } from "@/lib/media-rotation";
+import {
+  getNextSequentialIndex,
+  getRandomIndexExcluding,
+  mediaList,
+  normalizeIndex,
+} from "@/lib/media-rotation";
 import { keepPersisted, mergePersisted, tolerantArray } from "@/lib/persist";
 import { createGatedChromeStorage } from "@/lib/storage";
 import { GALLERY_ASSET_PREFIX, GALLERY_WALLPAPERS, galleryAssetId } from "@/lib/wallpaper-gallery";
@@ -200,16 +205,10 @@ type WallpaperSelection = Pick<
 
 export function activeWallpaperIds(selection: WallpaperSelection): string[] {
   if (selection.source === "gallery") {
-    if (selection.mode === "multi") return selection.galleryItems;
-    return selection.gallerySingle ? [selection.gallerySingle] : [];
+    const { mode, gallerySingle, galleryItems } = selection;
+    return mediaList({ mode, single: gallerySingle, items: galleryItems });
   }
-  if (selection.mode === "multi") return selection.items.map((item) => item.assetId);
-  return selection.single ? [selection.single.assetId] : [];
-}
-
-function normalizeIndex(index: number, length: number): number {
-  if (length <= 0) return 0;
-  return ((index % length) + length) % length;
+  return mediaList(selection).map((item) => item.assetId);
 }
 
 const gatedStorage = createGatedChromeStorage();

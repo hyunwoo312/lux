@@ -7,7 +7,12 @@ import { registerInstanceCleanup } from "@/widgets/core/instanceCleanup";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { invalidatePolledResource } from "@/widgets/core/usePolledResource";
-import { syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
+import {
+  bumpSyncNonce,
+  createSyncSlice,
+  isSyncCoolingDown,
+  type SyncSlice,
+} from "@/widgets/core/syncSlice";
 import { quoteKey, sparkKey } from "@/widgets/stocks/lib/cacheKeys";
 import { DEFAULT_INDICES, MAX_INDICES } from "@/widgets/stocks/lib/indices";
 import {
@@ -36,12 +41,8 @@ export type StocksData = {
   selectedSymbol: string | null;
 };
 
-type StocksState = {
+type StocksState = SyncSlice & {
   byInstance: Record<string, StocksData>;
-  syncNonce: Record<string, number>;
-  lastSyncAt: Record<string, number>;
-  dataSyncedAt: Record<string, number>;
-  syncing: Record<string, number>;
   addSymbol: (instanceId: string, symbol: string) => void;
   removeSymbol: (instanceId: string, symbol: string) => void;
   reorderSymbols: (instanceId: string, activeSymbol: string, overSymbol: string) => void;
@@ -53,10 +54,7 @@ type StocksState = {
   setChartStyle: (instanceId: string, chartStyle: ChartStyle) => void;
   selectSymbol: (instanceId: string, symbol: string) => void;
   clearSelection: (instanceId: string) => void;
-  beginSync: (instanceId: string) => void;
-  endSync: (instanceId: string) => void;
-  reportSynced: (instanceId: string, at: number) => void;
-  requestRefresh: (instanceId: string) => void;
+  requestSync: (instanceId: string) => void;
   removeInstance: (instanceId: string) => void;
 };
 
@@ -98,11 +96,8 @@ function update(
 export const useStocksStore = create<StocksState>()(
   persist(
     (set, get) => ({
+      ...createSyncSlice(set),
       byInstance: {},
-      syncNonce: {},
-      lastSyncAt: {},
-      dataSyncedAt: {},
-      syncing: {},
       addSymbol: (instanceId, symbol) =>
         set((state) => {
           const normalized = symbol.trim().toUpperCase();
@@ -157,29 +152,8 @@ export const useStocksStore = create<StocksState>()(
         set((state) => update(state, instanceId, (data) => ({ ...data, selectedSymbol: symbol }))),
       clearSelection: (instanceId) =>
         set((state) => update(state, instanceId, (data) => ({ ...data, selectedSymbol: null }))),
-      beginSync: (instanceId) =>
-        set((state) => ({
-          syncing: { ...state.syncing, [instanceId]: (state.syncing[instanceId] ?? 0) + 1 },
-        })),
-      endSync: (instanceId) =>
-        set((state) => ({
-          syncing: {
-            ...state.syncing,
-            [instanceId]: Math.max(0, (state.syncing[instanceId] ?? 0) - 1),
-          },
-        })),
-      reportSynced: (instanceId, at) =>
-        set((state) =>
-          at > (state.dataSyncedAt[instanceId] ?? 0)
-            ? { dataSyncedAt: { ...state.dataSyncedAt, [instanceId]: at } }
-            : state,
-        ),
-      requestRefresh: (instanceId) => {
-        const remainingMs = syncCooldownRemainingMs(
-          get().lastSyncAt[instanceId],
-          STOCKS_SYNC_COOLDOWN_MS,
-        );
-        if (remainingMs > 0) return;
+      requestSync: (instanceId) => {
+        if (isSyncCoolingDown(get(), instanceId, STOCKS_SYNC_COOLDOWN_MS)) return;
         const data = get().byInstance[instanceId];
         if (!data) return;
         invalidatePolledResource(sparkKey(data.symbols, DAY_RANGE));
@@ -190,19 +164,12 @@ export const useStocksStore = create<StocksState>()(
         if (data.indexSymbols.length > 0) {
           invalidatePolledResource(sparkKey(data.indexSymbols, DAY_RANGE));
         }
-        set((state) => ({
-          syncNonce: { ...state.syncNonce, [instanceId]: (state.syncNonce[instanceId] ?? 0) + 1 },
-          lastSyncAt: { ...state.lastSyncAt, [instanceId]: Date.now() },
-        }));
+        set((state) => bumpSyncNonce(state, instanceId));
       },
-      removeInstance: (instanceId) =>
-        set((state) => ({
-          byInstance: dropInstance(state.byInstance, instanceId),
-          syncNonce: dropInstance(state.syncNonce, instanceId),
-          lastSyncAt: dropInstance(state.lastSyncAt, instanceId),
-          dataSyncedAt: dropInstance(state.dataSyncedAt, instanceId),
-          syncing: dropInstance(state.syncing, instanceId),
-        })),
+      removeInstance: (instanceId) => {
+        set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) }));
+        get().dropSync(instanceId);
+      },
     }),
     {
       name: "widget:stocks",

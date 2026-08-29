@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { resolveThumb } from "@/lib/thumbnail";
+import { encodeToWebp } from "@/lib/image-encode";
+import { renderThumbnail, resolveThumb, THUMB_VERSION } from "@/lib/thumbnail";
 
 export type StoredAsset = {
   id: string;
@@ -171,6 +172,37 @@ export function createAssetStore(databaseName: string): AssetStore {
 
   registry.add(store);
   return store;
+}
+
+export type SaveMediaOptions = {
+  prefix: string;
+  fallbackName: string;
+  quality: number;
+  maxDimension?: number;
+};
+
+export async function saveMediaAsset(
+  store: AssetStore,
+  file: File,
+  { prefix, fallbackName, quality, maxDimension }: SaveMediaOptions,
+): Promise<MediaImageItem> {
+  const blob = await encodeToWebp(file, { quality, maxDimension });
+  const thumb = await renderThumbnail(blob);
+  const asset: StoredAsset = {
+    id: createAssetId(prefix),
+    fileName: file.name || fallbackName,
+    mimeType: blob.type || file.type,
+    size: blob.size,
+    blob,
+    ...(thumb ? { thumb, thumbVersion: THUMB_VERSION } : {}),
+  };
+  await store.save(asset);
+  return {
+    assetId: asset.id,
+    fileName: asset.fileName,
+    mimeType: asset.mimeType,
+    size: asset.size,
+  };
 }
 
 export async function missingAssetIds<T extends { assetId: string }>(

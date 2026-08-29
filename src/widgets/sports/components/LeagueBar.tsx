@@ -1,7 +1,7 @@
 import { motion, useReducedMotion } from "motion/react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { EASE_OUT } from "@/lib/motion";
+import { enterTween } from "@/lib/motion";
 import { SPORT_ICON, SPORT_LABEL, type League } from "@/widgets/sports/lib/leagues";
 
 const CRUMB = "press focus-ring text-caption max-w-32 truncate rounded-sm px-1.5 py-1";
@@ -42,7 +42,7 @@ export function LeagueBar({
         <motion.span
           className="flex shrink-0"
           animate={{ rotate: leaguesOpen ? 180 : 0 }}
-          transition={{ duration: reduced ? 0 : 0.18, ease: EASE_OUT }}
+          transition={enterTween(reduced, "fast")}
         >
           <ChevronDown className="text-ink-3 size-3.5" aria-hidden />
         </motion.span>

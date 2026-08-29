@@ -1,5 +1,5 @@
 import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, Copy, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TYPE } from "@/lib/type";
@@ -36,6 +36,7 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
 type ResetStage = "idle" | "confirming";
 
 function CrashCard({ detail }: { detail: string }) {
+  const reduced = useReducedMotion();
   const [stage, setStage] = useState<ResetStage>("idle");
   const [backupError, setBackupError] = useState<string | null>(null);
 
@@ -104,7 +105,7 @@ function CrashCard({ detail }: { detail: string }) {
           <AnimatePresence mode="wait" initial={false}>
             <motion.p
               key={stage}
-              variants={panelVariants(false)}
+              variants={panelVariants(reduced)}
               initial="hidden"
               animate="show"
               exit="exit"

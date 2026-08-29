@@ -22,7 +22,7 @@ import {
   EMAIL_REFRESH_MS,
   EMAIL_SYNC_COOLDOWN_MS,
   MAX_MESSAGES,
-  SEARCH_DEBOUNCE_MS,
+  MAIL_SEARCH_DEBOUNCE_MS,
 } from "@/widgets/email/types";
 
 export function EmailWidget() {
@@ -36,7 +36,7 @@ export function EmailWidget() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setSearch(query.trim()), SEARCH_DEBOUNCE_MS);
+    const timer = window.setTimeout(() => setSearch(query.trim()), MAIL_SEARCH_DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
   }, [query]);
 

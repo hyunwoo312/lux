@@ -7,7 +7,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { GRID_MODIFIERS, VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
-import { DURATION, EASE_OUT } from "@/lib/motion";
+import { enterTween, viewSwap } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useElementSize } from "@/hooks/useElementSize";
 import { SortableRow } from "@/widgets/core/SortableRow";
@@ -40,9 +40,6 @@ export function StocksWidget() {
   const showSparkline = showsSparkline(width);
   const detail = useDetailSymbol();
 
-  const transition = { duration: reduced ? 0 : 0.3, ease: EASE_OUT };
-  const offset = reduced ? 0 : "4%";
-
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
@@ -73,30 +70,20 @@ export function StocksWidget() {
         ) : (
           <AnimatePresence initial={false} mode="popLayout">
             {detail ? (
-              <motion.div
-                key="detail"
-                className="absolute inset-0"
-                initial={{ opacity: 0, y: reduced ? 0 : "-4%" }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: reduced ? 0 : "-4%" }}
-                transition={transition}
-              >
+              <motion.div key="detail" className="absolute inset-0" {...viewSwap(reduced, "-4%")}>
                 <StockDetail symbol={detail} onRemove={() => removeSymbol(instanceId, detail)} />
               </motion.div>
             ) : (
               <motion.div
                 key="list"
                 className="scroll-fade absolute inset-0 overflow-x-hidden overflow-y-auto"
-                initial={{ opacity: 0, y: offset }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: offset }}
-                transition={transition}
+                {...viewSwap(reduced, "4%")}
               >
                 <motion.div
                   key={view}
                   initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 6 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}
+                  transition={enterTween(reduced)}
                 >
                   <DndContext
                     sensors={sensors}

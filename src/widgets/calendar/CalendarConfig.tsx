@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { RefreshCw, Settings2 } from "lucide-react";
 import { formatClock } from "@/lib/clock";
-import { useIntegrationStore } from "@/integrations";
+import { useConnectedProviders } from "@/integrations";
 import { useSettingsStore } from "@/settings";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { IconActionButton } from "@/components/IconActionButton";
@@ -24,7 +24,11 @@ import {
   useCalendarStore,
 } from "@/widgets/calendar/useCalendarStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import type { CalendarDensity, CalendarProviderId } from "@/widgets/calendar/types";
+import {
+  CALENDAR_PROVIDER_IDS,
+  type CalendarDensity,
+  type CalendarProviderId,
+} from "@/widgets/calendar/types";
 
 const REFRESH_OPTIONS = REFRESH_INTERVAL_OPTIONS.map((hours) => ({
   value: String(hours),
@@ -185,11 +189,9 @@ export function CalendarConfig() {
   const setRefreshIntervalHours = useCalendarStore((s) => s.setRefreshIntervalHours);
   const primarySource = useCalendar((d) => d.primarySource);
   const setPrimarySource = useCalendarStore((s) => s.setPrimarySource);
-  const accounts = useIntegrationStore((s) => s.accounts);
+  const { connected } = useConnectedProviders(CALENDAR_PROVIDER_IDS);
 
-  const bothConnected = (["google", "microsoft"] as const).every((providerId) =>
-    accounts.some((account) => account.providerId === providerId && account.status === "connected"),
-  );
+  const bothConnected = connected.length === CALENDAR_PROVIDER_IDS.length;
 
   return (
     <>

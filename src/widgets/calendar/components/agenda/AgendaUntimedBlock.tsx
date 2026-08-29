@@ -1,6 +1,6 @@
 import { useState, type WheelEvent } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { DURATION, EASE_OUT } from "@/lib/motion";
+import { enterTween, stagger } from "@/lib/motion";
 import { CalendarEventActions } from "@/widgets/calendar/components/CalendarEventActions";
 import { CalendarRange } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -77,9 +77,8 @@ function UntimedItem({ event, color, index, reduced }: UntimedItemProps) {
       initial={reduced ? { opacity: 0 } : { opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: reduced ? 0 : DURATION.fast,
-        delay: reduced ? 0 : Math.min(index, 6) * 0.03,
-        ease: EASE_OUT,
+        ...enterTween(reduced, "fast"),
+        delay: Math.min(index, 6) * stagger(reduced),
       }}
     >
       <Tooltip prose content={`${title} · ${range}`}>

@@ -8,6 +8,7 @@ import { SettingsTabBody } from "@/settings/components/SettingsTabBody";
 import { SpotifySetup } from "@/settings/components/SpotifySetup";
 import { getWidgetPlugin } from "@/widgets/registry";
 import {
+  accountFor,
   getIntegrationRedirectUri,
   readSpotifyClientId,
   useIntegrationStore,
@@ -71,7 +72,7 @@ export function AccountsTab() {
     <SettingsTabBody>
       <SettingsSection title="Accounts">
         {PROVIDERS.map((provider) => {
-          const account = accounts.find((entry) => entry.providerId === provider.id);
+          const account = accountFor(accounts, provider.id);
           const busy = pending[provider.id];
           const error = errors[provider.id] ?? account?.lastError;
           const isSpotify = provider.id === "spotify";

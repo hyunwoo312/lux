@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import type { Transition } from "motion/react";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { DURATION, EASE_OUT, EASE_STANDARD } from "@/lib/motion";
+import { EASE_STANDARD, enterTween } from "@/lib/motion";
 import { LinkForm } from "@/widgets/quick-access/components/LinkForm";
 import { PinnedSection } from "@/widgets/quick-access/components/PinnedSection";
 import { useBrowserItems, useOpenTabs } from "@/widgets/quick-access/hooks/useBrowserItems";
@@ -17,11 +17,9 @@ import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 type FormState = { mode: "add" } | { mode: "edit"; link: QuickLink };
 
-const MORPH: Transition = { duration: DURATION.slow, ease: EASE_STANDARD };
-
 export function HomeTab({ editing }: { editing: boolean }) {
   const reduced = useReducedMotion() ?? false;
-  const morph: Transition = reduced ? { duration: 0 } : MORPH;
+  const morph: Transition = enterTween(reduced, "slow", EASE_STANDARD);
   const instanceId = useWidgetInstanceId();
   const view = useQuickAccess((d) => d.view);
   const { open: openItem, pinnedUrls, openBehavior, togglePin: onTogglePin } = useItemActions();
@@ -62,7 +60,7 @@ export function HomeTab({ editing }: { editing: boolean }) {
       <motion.div
         ref={scrollRef}
         animate={{ x: form ? "-12%" : 0, opacity: form ? 0 : 1 }}
-        transition={{ duration: reduced ? 0 : DURATION.base, ease: EASE_OUT }}
+        transition={enterTween(reduced)}
         className={cn(
           "h-full overflow-x-hidden scroll-fade overflow-y-auto",
           form && "pointer-events-none",

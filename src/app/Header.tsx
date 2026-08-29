@@ -1,8 +1,8 @@
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { BookOpen, Check, MessageSquarePlus, Pencil, ScrollText, Settings } from "lucide-react";
-import { POP } from "@/lib/motion";
+import { pop } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -19,6 +19,7 @@ import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 
 export function Header() {
+  const reduced = useReducedMotion();
   const editing = useDashboardStore((s) => s.editing);
   const toggleEditing = useDashboardStore((s) => s.toggleEditing);
   const openSettings = useSettingsStore((s) => s.openSettings);
@@ -97,7 +98,7 @@ export function Header() {
               <motion.span
                 key={editing ? "done" : "edit"}
                 className="grid place-items-center"
-                {...POP}
+                {...pop(reduced)}
               >
                 {editing ? <Check /> : <Pencil />}
               </motion.span>

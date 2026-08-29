@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { DURATION, EASE_IN, EASE_OUT, SPRING_SOFT } from "@/lib/motion";
+import { enterTween, exitTween, springSoft, stagger } from "@/lib/motion";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { useIntegrationStore } from "@/integrations";
 import { buildDiagnostics } from "@/feedback/lib/diagnostics";
@@ -19,13 +19,9 @@ function viewVariants(reduced: boolean): Variants {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: {
-        duration: reduced ? 0 : DURATION.base,
-        ease: EASE_OUT,
-        delay: reduced ? 0 : 0.06,
-      },
+      transition: { ...enterTween(reduced), delay: stagger(reduced, "loose") },
     },
-    exit: { opacity: 0, transition: { duration: reduced ? 0 : DURATION.fast, ease: EASE_IN } },
+    exit: { opacity: 0, transition: exitTween(reduced) },
   };
 }
 
@@ -120,7 +116,7 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
           className="relative overflow-hidden"
           initial={false}
           animate={{ height: viewHeight ?? "auto" }}
-          transition={reduced ? { duration: 0 } : SPRING_SOFT}
+          transition={springSoft(reduced)}
         >
           <div ref={viewRef}>
             <AnimatePresence mode="popLayout" initial={false}>

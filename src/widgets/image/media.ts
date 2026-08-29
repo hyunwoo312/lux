@@ -1,16 +1,11 @@
 import {
-  createAssetId,
   createAssetStore,
+  saveMediaAsset,
   validateImageFile as validateImageFileWithLimit,
+  type MediaImageItem,
   type StoredAsset,
-  type StoredAssetMetadata,
 } from "@/lib/asset-store";
-import { encodeToWebp } from "@/lib/image-encode";
-import { renderThumbnail, THUMB_VERSION } from "@/lib/thumbnail";
 import { IMAGE_ENCODE_QUALITY, IMAGE_MAX_BYTES, IMAGE_MAX_DIMENSION } from "@/widgets/image/types";
-
-type ImageMediaAsset = StoredAsset;
-type ImageMediaMetadata = StoredAssetMetadata;
 
 export const imageAssetStore = createAssetStore("lux.image-media");
 
@@ -24,38 +19,19 @@ export function validateImageFile(file: File): string | null {
   return validateImageFileWithLimit(file, IMAGE_MAX_BYTES);
 }
 
-function toMetadata(asset: ImageMediaAsset): ImageMediaMetadata {
-  return {
-    id: asset.id,
-    fileName: asset.fileName,
-    mimeType: asset.mimeType,
-    size: asset.size,
-  };
-}
-
-export async function saveImageAsset(file: File): Promise<ImageMediaMetadata> {
+export async function saveImageAsset(file: File): Promise<MediaImageItem> {
   const validationError = validateImageFile(file);
   if (validationError) throw new Error(validationError);
 
-  const blob = await encodeToWebp(file, {
+  return saveMediaAsset(imageAssetStore, file, {
+    prefix: "image",
+    fallbackName: "Image",
     quality: IMAGE_ENCODE_QUALITY,
     maxDimension: IMAGE_MAX_DIMENSION,
   });
-  const thumb = await renderThumbnail(blob);
-  const asset: ImageMediaAsset = {
-    id: createAssetId("image"),
-    fileName: file.name || "Image",
-    mimeType: blob.type || file.type,
-    size: blob.size,
-    blob,
-    ...(thumb ? { thumb, thumbVersion: THUMB_VERSION } : {}),
-  };
-
-  await imageAssetStore.save(asset);
-  return toMetadata(asset);
 }
 
-export async function readImageAsset(assetId: string): Promise<ImageMediaAsset | null> {
+export async function readImageAsset(assetId: string): Promise<StoredAsset | null> {
   return imageAssetStore.read(assetId);
 }
 
