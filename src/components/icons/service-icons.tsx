@@ -4,7 +4,6 @@ import anilistIcon from "@/assets/service-icons/anilist.svg";
 import githubIcon from "@/assets/service-icons/github.svg";
 import googleIcon from "@/assets/service-icons/google.svg";
 import googleCalendarIcon from "@/assets/service-icons/google-calendar.svg";
-import gmailIcon from "@/assets/service-icons/gmail.svg";
 import outlookIcon from "@/assets/service-icons/outlook.svg";
 import spotifyIcon from "@/assets/service-icons/spotify.svg";
 
@@ -16,10 +15,6 @@ function ServiceImg({ src, ...props }: ServiceIconProps & { src: string }) {
 
 export function GoogleCalendarServiceIcon(props: ServiceIconProps) {
   return <ServiceImg src={googleCalendarIcon} {...props} />;
-}
-
-export function GmailServiceIcon(props: ServiceIconProps) {
-  return <ServiceImg src={gmailIcon} {...props} />;
 }
 
 export function OutlookServiceIcon(props: ServiceIconProps) {

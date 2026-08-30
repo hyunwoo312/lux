@@ -17,7 +17,6 @@ export const STORE_KEYS = [
   "wallpaper",
   "widget:anilist",
   "widget:calendar",
-  "widget:email",
   "widget:github",
   "widget:image",
   "widget:news",

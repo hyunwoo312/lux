@@ -20,7 +20,7 @@ const GETTING_STARTED: readonly GuideArticle[] = [
       {
         kind: "callout",
         title: "Where your data lives",
-        text: "Your layout, notes and settings are stored in this browser. Widgets fetch straight from the services they show — weather, news, your calendar — and Lux keeps no copy of any of it on a server. Signing in to Microsoft or GitHub is the one exception: the last step passes through a small Lux relay, because those providers require a secret that cannot ship inside an extension. The relay completes the exchange and stores nothing. Google sign-in goes through Chrome itself and never reaches the relay.",
+        text: "Your layout, notes and settings are stored in this browser. Widgets fetch straight from the services they show — weather, news, your calendar — and Lux keeps no copy of any of it on a server. Signing in to Microsoft or GitHub is the one exception: the last step passes through a small Lux relay, because those providers require a secret that cannot ship inside an extension. The relay completes the exchange and stores nothing.",
       },
       { kind: "link", href: PRIVACY_URL, label: "Read the privacy policy" },
     ],
@@ -188,24 +188,6 @@ const WIDGET_BLOCKS: Record<string, GuideBlock[]> = {
     {
       kind: "prose",
       text: "Events keep their join link for Meet or Teams, show your RSVP with pending invitations flagged, and open on the provider's site if you need the full detail.",
-    },
-  ],
-  email: [
-    {
-      kind: "prose",
-      text: "Your Gmail and Outlook inboxes merged into one list, newest first and grouped by how recently each message arrived. Each row shows the sender with their initials, the subject, the first couple of lines, and how long ago it arrived, with a paperclip when something is attached. Unread messages sit at full strength; ones you have read fade back.",
-    },
-    {
-      kind: "prose",
-      text: "**All**, **Gmail** and **Outlook** switch between the merged list and one mailbox at a time, and each tab carries a badge counting what is unread behind it. All keeps both in true date order as you scroll, fetching more from whichever mailbox is busier. The search above the list queries your whole inbox on the server, not just the messages already loaded, and the widget settings choose how many arrive per load.",
-    },
-    {
-      kind: "prose",
-      text: "Lux reads your mail but never writes to it — nothing you do here can change a message, and opening one hands you to Gmail or Outlook rather than showing it in the widget.",
-    },
-    {
-      kind: "prose",
-      text: "Connect either mailbox, or both. If one provider fails to load, the other still shows and the widget says which one is missing.",
     },
   ],
   github: [
@@ -510,10 +492,6 @@ const WIDGET_META: Record<string, { title: string; lead: string }> = {
     title: "Calendar",
     lead: "Google and Outlook events together, read-only, in two views.",
   },
-  email: {
-    title: "Mail",
-    lead: "Gmail and Outlook inboxes in one list, headers only.",
-  },
   github: { title: "GitHub", lead: "Three views of your GitHub activity." },
   image: { title: "Image", lead: "Your own photos, as a single image or a slideshow." },
   news: { title: "News", lead: "Headlines from six publishers, merged or one tab each." },
@@ -548,7 +526,7 @@ export const GUIDE_GROUPS: readonly GuideGroup[] = [
       {
         id: "connecting-accounts",
         title: "Connecting an account",
-        lead: "Calendar, Mail, Spotify, GitHub and AniList can pull in what is yours. Each asks separately, and only when you tell it to.",
+        lead: "Calendar, Spotify, GitHub and AniList can pull in what is yours. Each asks separately, and only when you tell it to.",
         blocks: [
           {
             kind: "prose",
@@ -560,7 +538,7 @@ export const GUIDE_GROUPS: readonly GuideGroup[] = [
             items: [
               {
                 title: "Google",
-                text: "Read-only access to your calendars and, if you add the Mail widget, read-only access to your Gmail messages — plus your email address so the widget can show which account it is using. It cannot send, create, move or delete anything.",
+                text: "Read-only access to your calendars, plus your email address so the widget can show which account it is using. It cannot send, create, move or delete anything.",
               },
               {
                 title: "Outlook",
@@ -582,7 +560,7 @@ export const GUIDE_GROUPS: readonly GuideGroup[] = [
           },
           {
             kind: "prose",
-            text: "Microsoft and GitHub finish sign-in through a small Lux relay, because those two need a secret that cannot live inside an extension. Google signs in through Chrome, and Spotify and AniList talk to your browser directly. The relay keeps nothing.",
+            text: "Google, Microsoft and GitHub finish sign-in through a small Lux relay, because those providers need a secret that cannot live inside an extension. Spotify and AniList talk to your browser directly. The relay keeps nothing.",
           },
           {
             kind: "prose",

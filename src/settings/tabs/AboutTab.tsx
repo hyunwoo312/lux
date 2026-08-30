@@ -180,9 +180,8 @@ export function AboutTab() {
             No account, no analytics, no telemetry. Ever.
           </IconRow>
           <IconRow icon={Network} title="Token relay">
-            Connecting Microsoft or GitHub routes sign-in and token refresh through a tiny stateless
-            Lux relay that stores nothing. Google signs in through Chrome, and everything else stays
-            on your device.
+            Connecting Google, Microsoft or GitHub routes sign-in and token refresh through a tiny
+            stateless Lux relay that stores nothing. Everything else stays on your device.
           </IconRow>
           <IconRow
             icon={KeyRound}

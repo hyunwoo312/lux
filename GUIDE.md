@@ -15,7 +15,6 @@ This file is generated from `src/guide/content`. Edit that, then run `npm run gu
   - [Calendar](#calendar)
   - [GitHub](#github)
   - [Image](#image)
-  - [Mail](#email)
   - [News](#news)
   - [Note](#note)
   - [Quick Access](#quickAccess)
@@ -45,7 +44,7 @@ _One setup, with every widget sized and placed to taste._
 
 > **Where your data lives**
 >
-> Your layout, notes and settings are stored in this browser. Widgets fetch straight from the services they show — weather, news, your calendar — and Lux keeps no copy of any of it on a server. Signing in to Microsoft or GitHub is the one exception: the last step passes through a small Lux relay, because those providers require a secret that cannot ship inside an extension. The relay completes the exchange and stores nothing. Google sign-in goes through Chrome itself and never reaches the relay.
+> Your layout, notes and settings are stored in this browser. Widgets fetch straight from the services they show — weather, news, your calendar — and Lux keeps no copy of any of it on a server. Signing in to Microsoft or GitHub is the one exception: the last step passes through a small Lux relay, because those providers require a secret that cannot ship inside an extension. The relay completes the exchange and stores nothing.
 
 [Read the privacy policy](https://lux.hyunwk.me/privacy)
 
@@ -224,22 +223,6 @@ Point it at a set of pictures and it crossfades through them on a timer you choo
 _A slideshow crossfading through a set._
 
 One picture works just as well as a set. Either way they are stored in your browser and never uploaded — add them from the widget's own settings, where you also set how long each one stays up.
-
-Each widget carries a settings control in its own header, outside edit mode. That is where you choose whether it sits on glass or a solid surface, and which accent colour it uses. You can add more than one of the same widget.
-
-### Mail
-
-<a id="email"></a>
-
-_Gmail and Outlook inboxes in one list, headers only._
-
-Your Gmail and Outlook inboxes merged into one list, newest first and grouped by how recently each message arrived. Each row shows the sender with their initials, the subject, the first couple of lines, and how long ago it arrived, with a paperclip when something is attached. Unread messages sit at full strength; ones you have read fade back.
-
-**All**, **Gmail** and **Outlook** switch between the merged list and one mailbox at a time, and each tab carries a badge counting what is unread behind it. All keeps both in true date order as you scroll, fetching more from whichever mailbox is busier. The search above the list queries your whole inbox on the server, not just the messages already loaded, and the widget settings choose how many arrive per load.
-
-Lux reads your mail but never writes to it — nothing you do here can change a message, and opening one hands you to Gmail or Outlook rather than showing it in the widget.
-
-Connect either mailbox, or both. If one provider fails to load, the other still shows and the widget says which one is missing.
 
 Each widget carries a settings control in its own header, outside edit mode. That is where you choose whether it sits on glass or a solid surface, and which accent colour it uses. You can add more than one of the same widget.
 
@@ -479,19 +462,19 @@ Each widget carries a settings control in its own header, outside edit mode. Tha
 
 <a id="connecting-accounts"></a>
 
-_Calendar, Mail, Spotify, GitHub and AniList can pull in what is yours. Each asks separately, and only when you tell it to._
+_Calendar, Spotify, GitHub and AniList can pull in what is yours. Each asks separately, and only when you tell it to._
 
 A widget that needs an account shows a **Connect** button. Press it and you sign in on the provider's own site — your password never touches Lux, and all that comes back is a token.
 
 #### What each one is allowed to see
 
-- **Google** — Read-only access to your calendars and, if you add the Mail widget, read-only access to your Gmail messages — plus your email address so the widget can show which account it is using. It cannot send, create, move or delete anything.
+- **Google** — Read-only access to your calendars, plus your email address so the widget can show which account it is using. It cannot send, create, move or delete anything.
 - **Outlook** — The same read-only calendar and mail access, through Microsoft.
 - **Spotify** — What is playing, control over it, and your library and playlists so search and the queue work. Controlling playback needs Premium — Spotify's rule for every app, not ours.
 - **GitHub** — Your profile, notifications, and repository access — the broad-sounding one on GitHub's consent screen, which is what lets private contributions count towards your heatmap. Lux only reads with it.
 - **AniList** — Your list, progress and notifications. The only one that writes as well as reads — liking something or bumping an episode count, and only when you do it.
 
-Microsoft and GitHub finish sign-in through a small Lux relay, because those two need a secret that cannot live inside an extension. Google signs in through Chrome, and Spotify and AniList talk to your browser directly. The relay keeps nothing.
+Google, Microsoft and GitHub finish sign-in through a small Lux relay, because those providers need a secret that cannot live inside an extension. Spotify and AniList talk to your browser directly. The relay keeps nothing.
 
 Tokens expire after an hour or so and Lux renews them in the background, so you should not have to sign in again.
 

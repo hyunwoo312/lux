@@ -3,7 +3,6 @@ import { tasksPlugin } from "@/widgets/tasks";
 import { quickAccessPlugin } from "@/widgets/quick-access";
 import { imagePlugin } from "@/widgets/image";
 import { calendarPlugin } from "@/widgets/calendar";
-import { emailPlugin } from "@/widgets/email";
 import { spotifyPlugin } from "@/widgets/spotify";
 import { githubPlugin } from "@/widgets/github";
 import { weatherPlugin } from "@/widgets/weather";
@@ -18,7 +17,6 @@ const plugins: Record<WidgetType, WidgetPlugin> = {
   quickAccess: quickAccessPlugin,
   image: imagePlugin,
   calendar: calendarPlugin,
-  email: emailPlugin,
   spotify: spotifyPlugin,
   github: githubPlugin,
   weather: weatherPlugin,

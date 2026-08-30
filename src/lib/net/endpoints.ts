@@ -10,14 +10,14 @@ export type Endpoint = {
 export const ENDPOINTS: readonly Endpoint[] = [
   {
     host: "https://www.googleapis.com/*",
-    usedBy: "integrations/providers/google, widgets/calendar, widgets/email",
-    reason: "Google account profile, Calendar events and Gmail messages",
+    usedBy: "integrations/providers/google, widgets/calendar",
+    reason: "Google account profile and Calendar events",
     access: "host-permission",
   },
   {
     host: "https://graph.microsoft.com/*",
-    usedBy: "integrations/providers/microsoft, widgets/calendar, widgets/email",
-    reason: "Microsoft account profile, Outlook calendars and Outlook mail",
+    usedBy: "integrations/providers/microsoft, widgets/calendar",
+    reason: "Microsoft account profile and Outlook calendars",
     access: "host-permission",
   },
   {
@@ -122,6 +122,12 @@ export const ENDPOINTS: readonly Endpoint[] = [
     usedBy: "widgets/sports",
     reason: "Scoreboard mirror used when the primary host fails",
     access: "cors",
+  },
+  {
+    host: "https://accounts.google.com/*",
+    usedBy: "integrations/providers/google",
+    reason: "Google sign-in page the browser is sent to; Lux never fetches it",
+    access: "oauth-redirect",
   },
   {
     host: "https://login.microsoftonline.com/*",
