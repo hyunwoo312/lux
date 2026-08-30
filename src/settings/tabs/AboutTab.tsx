@@ -58,100 +58,105 @@ export function AboutTab() {
       animate="show"
       className="flex flex-col gap-6"
     >
-      <motion.div
-        variants={item}
-        className="
-          border-border/60 from-primary/10 relative flex flex-col items-center gap-3 overflow-hidden
-          rounded-xl border bg-gradient-to-br to-transparent px-6 py-8 text-center
-        "
-      >
-        <LogoMark />
+      <motion.div variants={item} className="relative">
+        <span
+          aria-hidden
+          className="accent-glow pointer-events-none absolute inset-0 rounded-xl opacity-70 blur-md"
+        />
+        <div
+          className="
+            border-border/60 from-primary/10 bg-card relative flex flex-col items-center gap-3
+            overflow-hidden rounded-xl border bg-gradient-to-br to-transparent px-6 py-8 text-center
+          "
+        >
+          <LogoMark />
 
-        <div className="flex flex-col items-center gap-1">
-          <h2 className="text-heading font-semibold tracking-tight">Lux</h2>
-          <p className="text-ink-3 text-body">A new tab worth opening.</p>
-        </div>
+          <div className="flex flex-col items-center gap-1">
+            <h2 className="text-heading font-semibold tracking-tight">Lux</h2>
+            <p className="text-ink-3 text-body">A new tab worth opening.</p>
+          </div>
 
-        <p className="text-ink-4 max-w-xs text-caption text-balance">{DESCRIPTION}</p>
+          <p className="text-ink-4 max-w-xs text-caption text-balance">{DESCRIPTION}</p>
 
-        <div className="flex flex-wrap items-center justify-center gap-2.5">
-          <a
-            href={REPO_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="
-              text-ink-3
-              hover:text-ink
-              inline-flex items-center gap-1.5 text-caption transition-colors
-            "
-          >
-            <GithubMark className="size-4" />
-            {stars === null ? (
-              <span>GitHub</span>
-            ) : (
-              <span className="inline-flex items-center gap-1 tabular-nums">
-                <Star className="size-3 fill-current" />
-                {formatStars(stars)}
-              </span>
-            )}
-          </a>
-          {version && (
+          <div className="flex flex-wrap items-center justify-center gap-2.5">
             <a
-              href={`${REPO_URL}/releases`}
+              href={REPO_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="
-                border-border/60 bg-card/60 text-ink-3
+                text-ink-3
                 hover:text-ink
-                rounded-full border px-2 py-0.5 text-micro font-medium tabular-nums
+                inline-flex items-center gap-1.5 text-caption transition-colors
+              "
+            >
+              <GithubMark className="size-4" />
+              {stars === null ? (
+                <span>GitHub</span>
+              ) : (
+                <span className="inline-flex items-center gap-1 tabular-nums">
+                  <Star className="size-3 fill-current" />
+                  {formatStars(stars)}
+                </span>
+              )}
+            </a>
+            {version && (
+              <a
+                href={`${REPO_URL}/releases`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="
+                  border-border/60 bg-card/60 text-ink-3
+                  hover:text-ink
+                  rounded-full border px-2 py-0.5 text-micro font-medium tabular-nums
+                  transition-colors
+                "
+              >
+                v{version}
+              </a>
+            )}
+            <a
+              href={SITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="
+                text-ink
+                hover:bg-accent
+                inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-caption font-medium
                 transition-colors
               "
             >
-              v{version}
+              <Globe className="size-4" />
+              Website
             </a>
-          )}
-          <a
-            href={SITE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="
-              text-ink
-              hover:bg-accent
-              inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-caption font-medium
-              transition-colors
-            "
-          >
-            <Globe className="size-4" />
-            Website
-          </a>
-          <a
-            href={CWS_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="
-              text-ink
-              hover:bg-accent
-              inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-caption font-medium
-              transition-colors
-            "
-          >
-            <ChromeMark className="size-4" />
-            Chrome Web Store
-          </a>
-          <a
-            href={KOFI_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="
-              text-ink
-              hover:bg-accent
-              inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-caption font-medium
-              transition-colors
-            "
-          >
-            <KofiMark className="size-4" />
-            Ko-fi
-          </a>
+            <a
+              href={CWS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="
+                text-ink
+                hover:bg-accent
+                inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-caption font-medium
+                transition-colors
+              "
+            >
+              <ChromeMark className="size-4" />
+              Chrome Web Store
+            </a>
+            <a
+              href={KOFI_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="
+                text-ink
+                hover:bg-accent
+                inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-caption font-medium
+                transition-colors
+              "
+            >
+              <KofiMark className="size-4" />
+              Ko-fi
+            </a>
+          </div>
         </div>
       </motion.div>
 

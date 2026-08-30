@@ -7,12 +7,11 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
-import { clockFormatter, formatClockDate } from "@/lib/clock";
-import { useNow } from "@/hooks/useNow";
 import { useRovingFocus } from "@/hooks/useRovingFocus";
 import { ChangelogDialog, consumeChangelogAutoShow, useHasUnseenRelease } from "@/changelog";
 import { GuideDialog, useGuideStore } from "@/guide";
 import { FeedbackDialog } from "@/feedback";
+import { HeaderClock } from "@/app/HeaderClock";
 import { WidgetPalette } from "@/app/WidgetPalette";
 import { useSettingsStore } from "@/settings";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
@@ -138,30 +137,5 @@ export function Header() {
         />
       )}
     </header>
-  );
-}
-
-function HeaderClock({ className }: { className?: string }) {
-  const clock24h = useAppSettingsStore((s) => s.clock24h);
-  const clockDate = useAppSettingsStore((s) => s.clockDate);
-  const formatter = clockFormatter(!clock24h);
-  const now = useNow();
-
-  const parts = formatter.formatToParts(now);
-  const hour = parts.find((part) => part.type === "hour")?.value ?? "";
-  const minute = parts.find((part) => part.type === "minute")?.value ?? "";
-  const dayPeriod = parts.find((part) => part.type === "dayPeriod")?.value;
-  const date = formatClockDate(now, clockDate);
-
-  return (
-    <span className={className}>
-      <span className="text-ink text-heading font-semibold tracking-tight tabular-nums">
-        {hour}
-        <span className="mx-0.5">:</span>
-        {minute}
-        {dayPeriod ? <span className="text-ink-3 ml-1">{dayPeriod}</span> : null}
-      </span>
-      {date ? <span className="text-ink-3 text-caption leading-tight">{date}</span> : null}
-    </span>
   );
 }

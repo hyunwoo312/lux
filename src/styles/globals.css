@@ -644,6 +644,16 @@
   );
 }
 
+@utility accent-glow {
+  background-image: linear-gradient(
+    to right,
+    oklch(from var(--bloom) l c calc(h - 55)),
+    var(--bloom),
+    oklch(from var(--bloom) l c calc(h + 55)),
+    oklch(from var(--bloom) l c calc(h + 110))
+  );
+}
+
 @utility widget-bloom {
   background-image: radial-gradient(
     circle at 88% 12%,

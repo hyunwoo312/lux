@@ -65,6 +65,8 @@ const SPRING_CRISP: Transition = { type: "spring", stiffness: 500, damping: 40 }
 const SPRING_SOFT: Transition = { type: "spring", stiffness: 260, damping: 30 };
 const SPRING_POP: Transition = { type: "spring", stiffness: 400, damping: 18 };
 
+export const SPRING_REEL = { stiffness: 280, damping: 18, mass: 0.3 } as const;
+
 export function springCrisp(reduced: Reduced): Transition {
   return reduced ? STILL : SPRING_CRISP;
 }
