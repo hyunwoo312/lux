@@ -7,7 +7,7 @@ import {
   fetchRecentlyClosed,
   fetchTopSites,
   watchTabs,
-} from "@/widgets/quick-access/browser";
+} from "@/lib/browser";
 import type { BookmarkFolder, BrowserItem, ItemSource } from "@/widgets/quick-access/types";
 
 type Retry = { retry: () => void };

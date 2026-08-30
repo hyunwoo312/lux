@@ -6,7 +6,7 @@ import { RetryButton, StateMessage } from "@/components/StateMessage";
 import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
 import { useBookmarkTree } from "@/widgets/quick-access/hooks/useBrowserItems";
 import { useItemActions } from "@/widgets/quick-access/hooks/useItemActions";
-import { resolveFolderTrail } from "@/widgets/quick-access/browser";
+import { resolveFolderTrail } from "@/lib/browser";
 import { SearchField } from "@/components/SearchField";
 import { searchBookmarks } from "@/widgets/quick-access/lib/search";
 import {

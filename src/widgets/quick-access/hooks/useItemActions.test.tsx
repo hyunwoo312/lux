@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/widgets/quick-access/browser", () => ({
+vi.mock("@/lib/browser", () => ({
   focusTab: vi.fn(),
   restoreSession: vi.fn(async () => true),
 }));
@@ -12,7 +12,7 @@ vi.mock("@/lib/open-url", async (importOriginal) => ({
 
 import { renderHook } from "@testing-library/react";
 import { openUrl } from "@/lib/open-url";
-import { focusTab, restoreSession } from "@/widgets/quick-access/browser";
+import { focusTab, restoreSession } from "@/lib/browser";
 import { useItemActions } from "@/widgets/quick-access/hooks/useItemActions";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import type { BrowserItem } from "@/widgets/quick-access/types";

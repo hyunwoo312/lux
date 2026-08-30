@@ -1,5 +1,24 @@
 import { isHttpUrl } from "@/lib/open-url";
-import type { BookmarkFolder, BrowserItem } from "@/widgets/quick-access/types";
+
+export type BrowserItem = {
+  id: string;
+  title: string;
+  url: string;
+  sessionId?: string;
+  tabId?: number;
+  windowId?: number;
+  audible?: boolean;
+  muted?: boolean;
+  visitedAt?: number;
+  visitCount?: number;
+};
+
+export type BookmarkFolder = {
+  id: string;
+  title: string;
+  folders: BookmarkFolder[];
+  items: BrowserItem[];
+};
 
 const RECENTLY_CLOSED_REQUEST = 25;
 const HISTORY_LIMIT = 300;
@@ -59,7 +78,13 @@ export async function restoreSession(sessionId: string): Promise<boolean> {
 
 export function historyToItem(item: chrome.history.HistoryItem): BrowserItem | null {
   if (!item.url || !isHttpUrl(item.url)) return null;
-  return { id: item.id, title: item.title || item.url, url: item.url };
+  return {
+    id: item.id,
+    title: item.title || item.url,
+    url: item.url,
+    visitedAt: item.lastVisitTime,
+    visitCount: item.visitCount,
+  };
 }
 
 export async function fetchBookmarkTree(): Promise<BookmarkFolder> {
@@ -93,6 +118,18 @@ export async function searchHistory(
     if (!item || seen.has(item.url)) continue;
     seen.add(item.url);
     items.push(item);
+    if (items.length >= limit) break;
+  }
+  return items;
+}
+
+export async function searchBookmarks(text: string, limit: number): Promise<BrowserItem[]> {
+  if (typeof chrome === "undefined" || !chrome.bookmarks?.search) return [];
+  const nodes = await chrome.bookmarks.search({ query: text });
+  const items: BrowserItem[] = [];
+  for (const node of nodes) {
+    if (node.url === undefined || !isHttpUrl(node.url)) continue;
+    items.push({ id: `bookmark-${node.id}`, title: node.title || node.url, url: node.url });
     if (items.length >= limit) break;
   }
   return items;

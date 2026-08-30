@@ -1,7 +1,7 @@
 import type { MouseEvent } from "react";
 import { useMemo } from "react";
 import { openUrl } from "@/lib/open-url";
-import { focusTab, restoreSession } from "@/widgets/quick-access/browser";
+import { focusTab, restoreSession } from "@/lib/browser";
 import { keyOf } from "@/widgets/quick-access/lib/url";
 import type { BrowserItem, OpenBehavior } from "@/widgets/quick-access/types";
 import { useQuickAccess, useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";

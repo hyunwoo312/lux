@@ -9,7 +9,7 @@ import { useBrowserItems, useOpenTabs } from "@/widgets/quick-access/hooks/useBr
 import { HomeSection } from "@/widgets/quick-access/components/HomeSection";
 import { useSectionGate } from "@/widgets/quick-access/hooks/useSectionGate";
 import { useItemActions } from "@/widgets/quick-access/hooks/useItemActions";
-import { closeTab, setTabMuted } from "@/widgets/quick-access/browser";
+import { closeTab, setTabMuted } from "@/lib/browser";
 import { keyOf } from "@/widgets/quick-access/lib/url";
 import type { LinkResult, QuickLink } from "@/widgets/quick-access/types";
 import { useQuickAccess, useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { searchHistory } from "@/widgets/quick-access/browser";
+import { searchHistory } from "@/lib/browser";
 import { LOCAL_SEARCH_DEBOUNCE_MS, type BrowserItem } from "@/widgets/quick-access/types";
 
 const LIMIT = 60;

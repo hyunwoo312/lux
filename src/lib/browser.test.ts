@@ -5,7 +5,7 @@ import {
   sessionToItem,
   tabToItem,
   toBookmarkFolder,
-} from "@/widgets/quick-access/browser";
+} from "@/lib/browser";
 
 const TREE = {
   id: "0",

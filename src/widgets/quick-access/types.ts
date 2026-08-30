@@ -16,24 +16,7 @@ export type LinkResult = "ok" | "invalid" | "duplicate";
 export type QuickAccessTab = "home" | "bookmarks" | "history";
 export type ItemSource = "history" | "recentlyClosed" | "topSites" | "openTabs";
 export type { OpenBehavior } from "@/lib/open-url";
+export type { BookmarkFolder, BrowserItem } from "@/lib/browser";
 export type QuickAccessView = "grid" | "list";
 
-export type BrowserItem = {
-  id: string;
-  title: string;
-  url: string;
-  sessionId?: string;
-  tabId?: number;
-  windowId?: number;
-  audible?: boolean;
-  muted?: boolean;
-};
-
 export type RemovedLink = { link: QuickLink; index: number };
-
-export type BookmarkFolder = {
-  id: string;
-  title: string;
-  folders: BookmarkFolder[];
-  items: BrowserItem[];
-};
