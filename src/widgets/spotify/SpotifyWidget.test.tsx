@@ -22,6 +22,8 @@ vi.mock("@/widgets/spotify/lib/spotify-api", () => ({
   getSpotifyQueue: vi.fn().mockResolvedValue([]),
   addSpotifyToQueue: vi.fn(),
   searchSpotify: vi.fn().mockResolvedValue([]),
+  getMySpotifyAlbums: vi.fn().mockResolvedValue([]),
+  getMySpotifyLikedTracks: vi.fn().mockResolvedValue([]),
 }));
 
 import { useIntegrationStore } from "@/integrations";

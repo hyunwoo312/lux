@@ -52,6 +52,41 @@ export type WidgetFrame = {
   useBare?: (instanceId: string) => boolean;
 };
 
+export type CommandSetup = { reason: string; run: () => void };
+
+export type LabelSegment = { text: string } | { image: string };
+
+export type CommandResult = {
+  id: string;
+  label: string;
+  detail?: string;
+  meta?: string;
+  metaTone?: "positive" | "negative";
+  section?: string;
+  icon?: WidgetIcon;
+  artworkUrl?: string;
+  labelSegments?: readonly LabelSegment[];
+  run: () => void | Promise<void>;
+};
+
+type WidgetCommandBase = {
+  id: string;
+  label: string;
+  description: string;
+  icon: WidgetIcon;
+  keywords?: readonly string[];
+  setup?: () => CommandSetup | null;
+};
+
+export type WidgetCommand =
+  | (WidgetCommandBase & { kind: "action"; run: () => void | Promise<void> })
+  | (WidgetCommandBase & {
+      kind: "provider";
+      placeholder: string;
+      emptyMessage?: (query: string) => string;
+      search: (query: string, signal: AbortSignal) => Promise<CommandResult[]>;
+    });
+
 export type WidgetPlugin = {
   type: WidgetType;
   name: string;
@@ -69,6 +104,7 @@ export type WidgetPlugin = {
   refreshMs?: number;
   tint?: AccentPreset;
   requiresAccount?: IntegrationProviderId[];
+  commands?: () => readonly WidgetCommand[];
   frame?: WidgetFrame;
   useLock?: (instanceId: string) => WidgetLock | null;
   removalNote?: (instanceId: string) => string | null;

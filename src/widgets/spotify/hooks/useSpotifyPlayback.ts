@@ -18,6 +18,7 @@ import {
   setSpotifyRepeatMode,
   setSpotifyShuffle,
   setSpotifyVolume,
+  startSpotifyPlayback,
   skipSpotifyNext,
   skipSpotifyPrevious,
   SpotifyRequestError,
@@ -29,11 +30,13 @@ import {
   type SpotifyPendingAction,
   type SpotifyPlaybackContext,
   type SpotifyPlaybackDevice,
+  type SpotifySearchResult,
   type SpotifyPlaybackError,
   type SpotifyPlaybackState,
   type SpotifyQueueItem,
 } from "@/widgets/spotify/types";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
+import { anySpotifyDevice } from "@/widgets/spotify/lib/devices";
 
 const RESTART_THRESHOLD_MS = 3_000;
 const PLAYING_POLL_MS = 10_000;
@@ -239,6 +242,14 @@ export async function loadSpotifyQueue(): Promise<void> {
   }
 }
 
+const NO_DEVICE_MESSAGE = "Open Spotify on a device first, then try again.";
+
+const NOTHING_QUEUED_MESSAGE = "Spotify has nothing queued — play something first.";
+
+const DEVICES_TTL_MS = 30_000;
+
+let devicesLoadedAt = 0;
+
 const skipQueue = createSerialQueue();
 const latestQueues = new Map<SpotifyPendingAction, QueuedRunner>();
 
@@ -303,7 +314,7 @@ function displayedProgressMs(state: ProgressInputs): number {
   return Math.min(playback.track.durationMs, Math.max(0, playback.progressMs + elapsed));
 }
 
-function togglePlayback(): void {
+export function togglePlayback(): void {
   const { playback } = get();
   if (!playback) return;
   const shouldPlay = !playback.isPlaying;
@@ -316,7 +327,7 @@ function togglePlayback(): void {
   );
 }
 
-function previousTrack(): void {
+export function previousTrack(): void {
   if (displayedProgressMs(get()) > RESTART_THRESHOLD_MS) {
     queuePlaybackAction(
       () => seekSpotifyPlayback(0),
@@ -333,11 +344,11 @@ function previousTrack(): void {
   queuePlaybackAction(skipSpotifyPrevious, undefined, "previous");
 }
 
-function nextTrack(): void {
+export function nextTrack(): void {
   queuePlaybackAction(skipSpotifyNext, undefined, "next");
 }
 
-function toggleShuffle(): void {
+export function toggleShuffle(): void {
   const { playback } = get();
   if (!playback) return;
   const nextShuffle = !playback.shuffle;
@@ -345,7 +356,7 @@ function toggleShuffle(): void {
   queuePlaybackAction(() => setSpotifyShuffle(nextShuffle), undefined, "shuffle");
 }
 
-function cycleRepeat(): void {
+export function cycleRepeat(): void {
   const { playback } = get();
   if (!playback) return;
   const currentIndex = SPOTIFY_REPEAT_MODES.indexOf(playback.repeatMode);
@@ -395,7 +406,7 @@ function commitProgress(): void {
   queuePlaybackAction(() => seekSpotifyPlayback(progressDraftMs), undefined, "seek");
 }
 
-function transferDevice(device: SpotifyPlaybackDevice): void {
+export function selectSpotifyDevice(device: SpotifyPlaybackDevice): void {
   queuePlaybackAction(
     () => transferSpotifyPlayback(device.id),
     () => {
@@ -426,6 +437,56 @@ async function refresh(): Promise<void> {
   } finally {
     setPendingAction("refresh", false);
   }
+}
+
+export async function playSpotifyResult(result: SpotifySearchResult): Promise<void> {
+  if (get().devices.length === 0) await loadDevices();
+  const target = anySpotifyDevice(get().devices);
+  if (!target) throw new Error(NO_DEVICE_MESSAGE);
+  await startSpotifyPlayback(result, target.id);
+  requestSpotifyPlaybackRefresh();
+}
+
+export function setSpotifyVolumeTo(volumePercent: number): void {
+  if (get().playback === null) throw new Error(NO_DEVICE_MESSAGE);
+  changeVolume(volumePercent);
+  commitVolume();
+}
+
+export function nudgeSpotifyVolume(delta: number): void {
+  if (get().playback === null) throw new Error(NO_DEVICE_MESSAGE);
+  const current = get().playback?.device.volumePercent;
+  if (typeof current !== "number") throw new Error("That device doesn't report its volume.");
+  setSpotifyVolumeTo(current + delta);
+}
+
+export async function spotifyDevices(): Promise<SpotifyPlaybackDevice[]> {
+  const fresh = get().devices.length > 0 && Date.now() - devicesLoadedAt < DEVICES_TTL_MS;
+  if (!fresh) {
+    await loadDevices();
+    devicesLoadedAt = Date.now();
+  }
+  const { devices, devicesError } = get();
+  if (devicesError !== null) throw new Error(devicesError);
+  return devices;
+}
+
+async function ensureSpotifyPlayback(): Promise<void> {
+  if (get().playback) return;
+  await refreshPlayback();
+}
+
+export async function ensureSpotifyTarget(): Promise<void> {
+  await ensureSpotifyPlayback();
+  if (get().playback) return;
+
+  const target = anySpotifyDevice(await spotifyDevices());
+  if (!target) throw new Error(NO_DEVICE_MESSAGE);
+  if (!target.isActive) {
+    await transferSpotifyPlayback(target.id);
+    await refreshPlayback();
+  }
+  if (get().playback === null) throw new Error(NOTHING_QUEUED_MESSAGE);
 }
 
 export function requestSpotifyPlaybackRefresh(): void {
@@ -587,7 +648,7 @@ export function useSpotifyPlayback(connectedArg: boolean): SpotifyPlaybackContro
     commitVolume,
     changeProgress,
     commitProgress,
-    transferDevice,
+    transferDevice: selectSpotifyDevice,
     loadDevices,
     refresh,
   };

@@ -10,6 +10,7 @@ import type {
   SpotifyPlaybackState,
   SpotifyQueueItem,
   SpotifyRepeatMode,
+  SpotifySearchKind,
   SpotifySearchResult,
 } from "@/widgets/spotify/types";
 
@@ -101,6 +102,18 @@ const queueEnvelope = z.custom<SpotifyQueuePayload>(isJsonObject);
 const searchEnvelope = z.custom<SpotifySearchPayload>(isJsonObject);
 const playlistsEnvelope = z.object({
   items: z.array(z.custom<SpotifySearchPlaylistItem | null>()).optional(),
+});
+
+const savedAlbumsEnvelope = z.object({
+  items: z
+    .array(z.object({ album: z.custom<SpotifySearchAlbumItem | null>().optional() }))
+    .optional(),
+});
+
+const savedTracksEnvelope = z.object({
+  items: z
+    .array(z.object({ track: z.custom<SpotifySearchTrackItem | null>().optional() }))
+    .optional(),
 });
 
 export class SpotifyRequestError extends Error {
@@ -320,15 +333,18 @@ export async function getSpotifyQueue(): Promise<SpotifyQueueItem[]> {
 
 const SPOTIFY_SEARCH_TYPES = "track,album,playlist";
 const SPOTIFY_SEARCH_LIMIT = 5;
+const SPOTIFY_KIND_SEARCH_LIMIT = 8;
+const LIBRARY_PAGE_SIZE = 50;
 
 export async function searchSpotify(
   query: string,
   signal?: AbortSignal,
+  kind?: SpotifySearchKind,
 ): Promise<SpotifySearchResult[]> {
   const params = new URLSearchParams({
     q: query,
-    type: SPOTIFY_SEARCH_TYPES,
-    limit: String(SPOTIFY_SEARCH_LIMIT),
+    type: kind ?? SPOTIFY_SEARCH_TYPES,
+    limit: String(kind === undefined ? SPOTIFY_SEARCH_LIMIT : SPOTIFY_KIND_SEARCH_LIMIT),
   });
   const response = await integrationFetch(
     "spotify",
@@ -339,20 +355,14 @@ export async function searchSpotify(
     throw spotifyError(response);
   }
   const payload = parseResponse("Spotify search", searchEnvelope, await response.json());
-  const tracks = takeResults(
-    toArray(payload.tracks?.items),
-    mapSearchTrack,
-    SEARCH_RESULT_CAPS.track,
-  );
-  const albums = takeResults(
-    toArray(payload.albums?.items),
-    mapSearchAlbum,
-    SEARCH_RESULT_CAPS.album,
-  );
+  const cap = (of: SpotifySearchKind) =>
+    kind === undefined ? SEARCH_RESULT_CAPS[of] : SPOTIFY_KIND_SEARCH_LIMIT;
+  const tracks = takeResults(toArray(payload.tracks?.items), mapSearchTrack, cap("track"));
+  const albums = takeResults(toArray(payload.albums?.items), mapSearchAlbum, cap("album"));
   const playlists = takeResults(
     toArray(payload.playlists?.items),
     mapSearchPlaylist,
-    SEARCH_RESULT_CAPS.playlist,
+    cap("playlist"),
   );
   return [...tracks, ...albums, ...playlists];
 }
@@ -395,6 +405,36 @@ export async function getMySpotifyPlaylists(): Promise<SpotifySearchResult[]> {
     .map(mapSearchPlaylist)
     .filter((result): result is SpotifySearchResult => result !== null)
     .map((result) => ({ ...result, mine: true }));
+}
+
+export async function getMySpotifyAlbums(): Promise<SpotifySearchResult[]> {
+  const params = new URLSearchParams({ limit: String(LIBRARY_PAGE_SIZE) });
+  const response = await integrationFetch(
+    "spotify",
+    `${SPOTIFY_API_BASE_URL}/me/albums?${params.toString()}`,
+  );
+  if (!response.ok) {
+    throw spotifyError(response);
+  }
+  const payload = parseResponse("Spotify albums", savedAlbumsEnvelope, await response.json());
+  return toArray(payload.items)
+    .map((entry) => mapSearchAlbum(entry?.album ?? null))
+    .filter((result): result is SpotifySearchResult => result !== null);
+}
+
+export async function getMySpotifyLikedTracks(): Promise<SpotifySearchResult[]> {
+  const params = new URLSearchParams({ limit: String(LIBRARY_PAGE_SIZE) });
+  const response = await integrationFetch(
+    "spotify",
+    `${SPOTIFY_API_BASE_URL}/me/tracks?${params.toString()}`,
+  );
+  if (!response.ok) {
+    throw spotifyError(response);
+  }
+  const payload = parseResponse("Spotify liked songs", savedTracksEnvelope, await response.json());
+  return toArray(payload.items)
+    .map((entry) => mapSearchTrack(entry?.track ?? null))
+    .filter((result): result is SpotifySearchResult => result !== null);
 }
 
 export async function startSpotifyPlayback(

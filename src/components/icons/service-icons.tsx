@@ -78,3 +78,25 @@ export function KofiMark({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function ClaudeMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={className}>
+      <path d="M6.9 15.3 11 5.2h2.2l4.1 10.1h-2.2l-.9-2.4h-4.3l-.9 2.4H6.9Zm3.7-4.2h3l-1.5-4-1.5 4Z" />
+      <path d="M3.4 18.7a9.8 9.8 0 0 1 0-13.4l1.3 1.3a8 8 0 0 0 0 10.8l-1.3 1.3Zm17.2 0-1.3-1.3a8 8 0 0 0 0-10.8l1.3-1.3a9.8 9.8 0 0 1 0 13.4Z" />
+    </svg>
+  );
+}
+
+export function ChatGptMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden className={className}>
+      <path
+        d="M12 3.6a3.2 3.2 0 0 1 5.5 1.5 3.2 3.2 0 0 1 2 5.3 3.2 3.2 0 0 1-2 5.3 3.2 3.2 0 0 1-5.5 1.5 3.2 3.2 0 0 1-5.5-1.5 3.2 3.2 0 0 1-2-5.3 3.2 3.2 0 0 1 2-5.3A3.2 3.2 0 0 1 12 3.6Z"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path d="M12 8.1v7.8M8.4 10.1l7.2 3.8M15.6 10.1l-7.2 3.8" strokeWidth="1.4" />
+    </svg>
+  );
+}

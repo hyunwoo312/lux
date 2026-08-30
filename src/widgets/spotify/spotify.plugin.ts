@@ -7,6 +7,7 @@ import { SpotifyHeaderActions } from "@/widgets/spotify/SpotifyHeaderActions";
 import { SpotifyBackdrop } from "@/widgets/spotify/components/SpotifyBackdrop";
 import { SPOTIFY_TINT } from "@/widgets/spotify/types";
 import { useSpotifyStore } from "@/widgets/spotify/useSpotifyStore";
+import { spotifyCommands } from "@/widgets/spotify/commands";
 
 export const spotifyPlugin: WidgetPlugin = {
   type: "spotify",
@@ -25,4 +26,5 @@ export const spotifyPlugin: WidgetPlugin = {
   tint: SPOTIFY_TINT,
   requiresAccount: ["spotify"],
   removalNote: () => "Its settings will be reset — your Spotify account stays connected.",
+  commands: spotifyCommands,
 };

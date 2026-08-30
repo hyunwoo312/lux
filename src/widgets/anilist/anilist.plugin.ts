@@ -7,6 +7,7 @@ import { AnilistConfig } from "@/widgets/anilist/AnilistConfig";
 import { AnilistHeaderActions } from "@/widgets/anilist/AnilistHeaderActions";
 import { AnilistTabs } from "@/widgets/anilist/AnilistTabs";
 import { useAnilistStore } from "@/widgets/anilist/useAnilistStore";
+import { anilistCommands } from "@/widgets/anilist/commands";
 
 export const anilistPlugin: WidgetPlugin = {
   type: "anilist",
@@ -24,5 +25,6 @@ export const anilistPlugin: WidgetPlugin = {
   refreshMs: ANILIST_REFRESH_MS,
   tint: ANILIST_TINT,
   requiresAccount: ["anilist"],
+  commands: anilistCommands,
   removalNote: () => "Its settings will be reset — your AniList account stays connected.",
 };

@@ -5,6 +5,7 @@ import { StocksConfig } from "@/widgets/stocks/StocksConfig";
 import { StocksSearch } from "@/widgets/stocks/StocksSearch";
 import { StocksHeaderActions } from "@/widgets/stocks/StocksHeaderActions";
 import { useStocksStore } from "@/widgets/stocks/useStocksStore";
+import { stocksCommands } from "@/widgets/stocks/commands";
 import { STOCKS_TINT } from "@/widgets/stocks/types";
 
 export const stocksPlugin: WidgetPlugin = {
@@ -15,6 +16,7 @@ export const stocksPlugin: WidgetPlugin = {
   icon: ChartCandlestick,
   defaultLayout: { w: 6, h: 6, minW: 6, minH: 6, maxW: 14, maxH: 14 },
   component: StocksWidget,
+  commands: stocksCommands,
   clearInstance: (instanceId) => useStocksStore.getState().removeInstance(instanceId),
   configComponent: StocksConfig,
   statusComponent: StocksSearch,

@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { searchResults, useDebouncedSearch, type SearchState } from "@/hooks/useDebouncedSearch";
-import {
-  getMySpotifyPlaylists,
-  getSpotifySavedTrackFlags,
-  searchSpotify,
-} from "@/widgets/spotify/lib/spotify-api";
+import { getSpotifySavedTrackFlags, searchSpotify } from "@/widgets/spotify/lib/spotify-api";
+import { usePolledDefinition } from "@/widgets/core/usePolledResource";
+import { spotifyPlaylists } from "@/widgets/spotify/lib/resources";
 import type { SpotifySearchResult } from "@/widgets/spotify/types";
 
 const MIN_QUERY_LENGTH = 2;
+
+const EMPTY_PLAYLISTS: SpotifySearchResult[] = [];
 
 export type SpotifySearchResults = {
   query: string;
@@ -20,31 +20,13 @@ export type SpotifySearchResults = {
 
 export function useSpotifySearchResults(open: boolean): SpotifySearchResults {
   const [query, setQuery] = useState("");
-  const [playlists, setPlaylists] = useState<SpotifySearchResult[]>([]);
-  const [playlistsLoading, setPlaylistsLoading] = useState(false);
   const [liked, setLiked] = useState<ReadonlySet<string>>(new Set());
 
   const state = useDebouncedSearch(query, searchSpotify, { minLength: MIN_QUERY_LENGTH });
   const found = searchResults(state);
 
-  useEffect(() => {
-    if (!open) return;
-    let cancelled = false;
-    setPlaylistsLoading(true);
-    getMySpotifyPlaylists()
-      .then((mine) => {
-        if (!cancelled) setPlaylists(mine);
-      })
-      .catch(() => {
-        if (!cancelled) setPlaylists([]);
-      })
-      .finally(() => {
-        if (!cancelled) setPlaylistsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [open]);
+  const mine = usePolledDefinition(spotifyPlaylists, { enabled: open });
+  const playlists = mine.state.status === "success" ? mine.state.data : EMPTY_PLAYLISTS;
 
   useEffect(() => {
     const trackIds = found.filter((result) => result.kind === "track").map((result) => result.id);
@@ -68,5 +50,12 @@ export function useSpotifySearchResults(open: boolean): SpotifySearchResults {
     [found, liked],
   );
 
-  return { query, setQuery, state, results, playlists, playlistsLoading };
+  return {
+    query,
+    setQuery,
+    state,
+    results,
+    playlists,
+    playlistsLoading: mine.state.status === "loading",
+  };
 }

@@ -8,6 +8,7 @@ import { GithubHeaderActions } from "@/widgets/github/GithubHeaderActions";
 import { GithubTabs } from "@/widgets/github/GithubTabs";
 import { GITHUB_TINT } from "@/widgets/github/types";
 import { useGithubStore } from "@/widgets/github/useGithubStore";
+import { githubCommands } from "@/widgets/github/commands";
 
 export const githubPlugin: WidgetPlugin = {
   type: "github",
@@ -25,6 +26,7 @@ export const githubPlugin: WidgetPlugin = {
   refreshMs: INBOX_REFRESH_MS,
   tint: GITHUB_TINT,
   requiresAccount: ["github"],
+  commands: githubCommands,
   useLock: () =>
     useProviderLock({ providers: ["github"], label: "GitHub", subject: "your activity" }),
   removalNote: () => "Its settings will be reset — your GitHub account stays connected.",

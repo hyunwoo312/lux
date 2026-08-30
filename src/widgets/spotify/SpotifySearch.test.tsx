@@ -5,6 +5,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 vi.mock("@/widgets/spotify/lib/spotify-api", () => ({
   getSpotifyDevices: vi.fn(),
   getMySpotifyPlaylists: vi.fn().mockResolvedValue([]),
+  getMySpotifyAlbums: vi.fn().mockResolvedValue([]),
+  getMySpotifyLikedTracks: vi.fn().mockResolvedValue([]),
   searchSpotify: vi.fn(),
   getSpotifySavedTrackFlags: vi.fn(),
   startSpotifyPlayback: vi.fn().mockResolvedValue(undefined),

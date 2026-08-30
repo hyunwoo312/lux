@@ -10,6 +10,7 @@ import {
   startSpotifyPlayback,
 } from "@/widgets/spotify/lib/spotify-api";
 import { type SpotifyPlaybackDevice, type SpotifySearchResult } from "@/widgets/spotify/types";
+import { resolveSpotifyDevice } from "@/widgets/spotify/lib/devices";
 import {
   loadSpotifyQueue,
   requestSpotifyPlaybackRefresh,
@@ -69,9 +70,7 @@ export function SpotifySearch() {
   }, [open]);
 
   const targetDevice =
-    devices.find((device) => device.id === targetDeviceId) ??
-    devices.find((device) => device.isActive) ??
-    (devices.length === 1 ? devices[0] : undefined);
+    devices.find((device) => device.id === targetDeviceId) ?? resolveSpotifyDevice(devices);
 
   const pick = (result: SpotifySearchResult) => {
     if (!targetDevice) return;

@@ -48,7 +48,10 @@ export type SpotifyQueueItem = {
   artworkUrl?: string;
 };
 
-export type SpotifySearchKind = "track" | "album" | "playlist";
+export const SPOTIFY_SEARCH_KINDS = ["track", "album", "playlist"] as const;
+export type SpotifySearchKind = (typeof SPOTIFY_SEARCH_KINDS)[number];
+
+export const SPOTIFY_LIBRARY_REFRESH_MS = 15 * 60_000;
 
 export type SpotifySearchResult = {
   id: string;

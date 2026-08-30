@@ -6,6 +6,7 @@ import { NewsConfig } from "@/widgets/news/NewsConfig";
 import { NewsHeaderActions } from "@/widgets/news/NewsHeaderActions";
 import { NEWS_TINT, NEWS_REFRESH_MS } from "@/widgets/news/types";
 import { useNewsStore } from "@/widgets/news/useNewsStore";
+import { newsCommands } from "@/widgets/news/commands";
 
 export const newsPlugin: WidgetPlugin = {
   type: "news",
@@ -15,6 +16,7 @@ export const newsPlugin: WidgetPlugin = {
   icon: Newspaper,
   defaultLayout: { w: 8, h: 8, minW: 8, minH: 8, maxW: 14, maxH: 14 },
   component: NewsWidget,
+  commands: newsCommands,
   clearInstance: (instanceId) => useNewsStore.getState().removeInstance(instanceId),
   statusComponent: NewsTabs,
   configComponent: NewsConfig,
