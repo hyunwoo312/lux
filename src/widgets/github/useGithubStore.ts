@@ -58,7 +58,7 @@ type GithubStoreState = SyncSlice & {
   requestSync: () => void;
 };
 
-const DEFAULT_DATA: GithubData = {
+export const DEFAULT_DATA: GithubData = {
   view: "contributions",
   showPrivate: true,
   showDrafts: true,

@@ -2,6 +2,7 @@ import { useCallback, useRef } from "react";
 import {
   SharedResource,
   freshnessOf,
+  readResource,
   getResource,
   hasPersisted,
   invalidateResource,
@@ -71,7 +72,7 @@ function encodePolled(data: unknown, at: number): unknown {
   return { data, at };
 }
 
-function decodePolled<T>(parse?: (raw: unknown) => T | null): Decode<T | undefined> {
+function decodePolled<T>(parse?: (raw: unknown) => T | null): Decode<T> {
   return (raw) => {
     const entry = raw as { data: unknown; at: unknown } | null;
     if (typeof entry?.at !== "number") return undefined;
@@ -108,6 +109,52 @@ class PolledSource<T> extends SharedResource<T | undefined> {
   protected isStorable(): boolean {
     return true;
   }
+}
+
+export type PolledDefinition<T> = {
+  cacheKey: string;
+  intervalMs: number;
+  staleMs?: number;
+  parse: (raw: unknown) => T | null;
+  fetch: Fetcher<T>;
+};
+
+export function usePolledDefinition<T>(
+  definition: PolledDefinition<T>,
+  options: { enabled?: boolean; isEmpty?: (data: T) => boolean; intervalMs?: number } = {},
+): PolledResource<T> {
+  return usePolledResource(definition.fetch, {
+    enabled: options.enabled,
+    isEmpty: options.isEmpty,
+    intervalMs: options.intervalMs ?? definition.intervalMs,
+    staleMs: definition.staleMs,
+    cacheKey: definition.cacheKey,
+    persist: true,
+    parsePersisted: definition.parse,
+  });
+}
+
+export async function readPolled<T>(definition: PolledDefinition<T>): Promise<T> {
+  const data = await readResource<T | undefined, PolledSource<T>>(
+    definition.cacheKey,
+    () =>
+      new PolledSource<T>(
+        {
+          key: definition.cacheKey,
+          cacheKey: definition.cacheKey,
+          scope: "polled",
+          staleMs: definition.staleMs ?? definition.intervalMs,
+          intervalMs: definition.intervalMs,
+          persist: true,
+          blank,
+          decode: decodePolled(definition.parse),
+          encode: encodePolled,
+        },
+        definition.fetch,
+      ),
+  );
+  if (data === undefined) throw new Error("That request came back with nothing.");
+  return data;
 }
 
 export function peekPolledResource<T>(cacheKey: string): T | undefined {

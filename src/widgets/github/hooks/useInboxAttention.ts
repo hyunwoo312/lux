@@ -1,21 +1,14 @@
 import { useIsConnected } from "@/integrations";
-import { usePolledResource } from "@/widgets/core/usePolledResource";
-import { fetchInbox, parseCachedInbox } from "@/widgets/github/lib/api/inbox";
+import { usePolledDefinition } from "@/widgets/core/usePolledResource";
+import { githubInbox } from "@/widgets/github/lib/resources";
 import { attentionCount } from "@/widgets/github/lib/inbox-groups";
 import { visibleItems } from "@/widgets/github/lib/visibility";
 import { useGithub } from "@/widgets/github/useGithubStore";
-import { INBOX_CACHE_KEY, INBOX_REFRESH_MS } from "@/widgets/github/types";
 
 export function useInboxAttention(): number {
   const connected = useIsConnected("github");
   const showPrivate = useGithub((d) => d.showPrivate);
-  const { state } = usePolledResource(fetchInbox, {
-    enabled: connected,
-    intervalMs: INBOX_REFRESH_MS,
-    cacheKey: INBOX_CACHE_KEY,
-    persist: true,
-    parsePersisted: parseCachedInbox,
-  });
+  const { state } = usePolledDefinition(githubInbox, { enabled: connected });
 
   if (state.status !== "success") return 0;
   return attentionCount(

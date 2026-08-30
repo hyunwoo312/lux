@@ -39,7 +39,7 @@ export function detailLocation(
   return locations.find((entry) => entry.id === selectedId) ?? null;
 }
 
-type WeatherData = {
+export type WeatherConfig = {
   locations: WeatherLocation[];
   units: WeatherUnits;
   windUnit: WeatherWindUnit;
@@ -50,7 +50,7 @@ type WeatherData = {
 };
 
 type WeatherState = SyncSlice & {
-  byInstance: Record<string, WeatherData>;
+  byInstance: Record<string, WeatherConfig>;
   addLocation: (instanceId: string, location: WeatherLocation) => void;
   removeLocation: (instanceId: string, id: string) => void;
   reorderLocations: (instanceId: string, activeId: string, overId: string) => void;
@@ -72,7 +72,7 @@ const DEFAULT_LOCATION: WeatherLocation = {
   longitude: -74.006,
 };
 
-const DEFAULT_DATA: WeatherData = {
+export const DEFAULT_DATA: WeatherConfig = {
   locations: [DEFAULT_LOCATION],
   units: "imperial",
   windUnit: "auto",
@@ -115,7 +115,7 @@ const gatedStorage = createGatedChromeStorage();
 function update(
   state: WeatherState,
   instanceId: string,
-  fn: (data: WeatherData) => WeatherData,
+  fn: (data: WeatherConfig) => WeatherConfig,
 ): Pick<WeatherState, "byInstance"> {
   return { byInstance: patchInstance(state.byInstance, instanceId, DEFAULT_DATA, fn) };
 }
@@ -234,7 +234,7 @@ export const useWeatherStore = create<WeatherState>()(
       },
       merge: (persisted, current) =>
         mergePersisted("widget:weather", persistedSchema, persisted, current, (parsed) => {
-          const byInstance: Record<string, WeatherData> = {};
+          const byInstance: Record<string, WeatherConfig> = {};
           for (const [id, data] of Object.entries(parsed.byInstance)) {
             const locations = data.locations.slice(0, MAX_LOCATIONS);
             byInstance[id] = {

@@ -4,11 +4,10 @@ import { Button } from "@/components/ui/button";
 import { ConfigSegmented, ConfigSelect } from "@/components/config/WidgetConfig";
 import { useProviderAccount } from "@/integrations";
 import { useSettingsStore } from "@/settings";
-import { usePolledResource, type PolledResourceState } from "@/widgets/core/usePolledResource";
+import { usePolledDefinition, type PolledResourceState } from "@/widgets/core/usePolledResource";
+import { anilistDiscover } from "@/widgets/anilist/lib/resources";
 import { saveListStatus } from "@/widgets/anilist/lib/api/list";
-import { fetchDiscover, searchDiscover } from "@/widgets/anilist/lib/api/discover";
-import { parseCachedDiscover } from "@/widgets/anilist/lib/api/cache";
-import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
+import { searchDiscover } from "@/widgets/anilist/lib/api/discover";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { SearchX } from "lucide-react";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
@@ -23,7 +22,7 @@ import { useDebouncedSearch, type SearchState } from "@/hooks/useDebouncedSearch
 import { discoverFeedLabel } from "@/widgets/anilist/lib/discover";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import { DISCOVER_FEEDS, DISCOVER_REFRESH_MS } from "@/widgets/anilist/types";
+import { DISCOVER_FEEDS } from "@/widgets/anilist/types";
 import type { DiscoverMedia, DiscoverType, ListStatus, ViewMode } from "@/widgets/anilist/types";
 
 const TYPE_OPTIONS: { value: DiscoverType; label: string }[] = [
@@ -96,15 +95,10 @@ export function DiscoverView() {
   );
   const search = useDebouncedSearch(trimmedQuery, runSearch);
 
-  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledResource(
-    (signal) => fetchDiscover(lang, feed, type, connected, signal),
+  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledDefinition(
+    anilistDiscover(lang, feed, type, connected),
     {
-      enabled: true,
-      intervalMs: DISCOVER_REFRESH_MS,
-      cacheKey: anilistKeys.discover(lang, feed, type),
       isEmpty: (data) => data.length === 0,
-      persist: true,
-      parsePersisted: parseCachedDiscover,
     },
   );
   useAnilistSync(refresh, isRefreshing, lastSyncedAt);

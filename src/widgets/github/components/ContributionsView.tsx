@@ -1,10 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
-import { usePolledResource } from "@/widgets/core/usePolledResource";
-import {
-  fetchContributions,
-  parseCachedContributions,
-} from "@/widgets/github/lib/api/contributions";
+import { usePolledDefinition } from "@/widgets/core/usePolledResource";
+import { githubContributions } from "@/widgets/github/lib/resources";
 import { ActivityLedger } from "@/widgets/github/components/ActivityLedger";
 import { Activity } from "lucide-react";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
@@ -15,11 +12,7 @@ import { heatmapHeight, heatmapMetrics } from "@/widgets/github/lib/heatmap";
 import { visibleItems } from "@/widgets/github/lib/visibility";
 import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
 import { useGithubSync } from "@/widgets/github/useGithubSync";
-import {
-  CONTRIBUTIONS_CACHE_KEY,
-  SLOW_REFRESH_MS,
-  type ContributionDay,
-} from "@/widgets/github/types";
+import { type ContributionDay } from "@/widgets/github/types";
 
 const LEDGER_MIN = 72;
 
@@ -32,12 +25,8 @@ export function ContributionsView({ enabled }: { enabled: boolean }) {
   const setLogin = useGithubStore((s) => s.setLogin);
   const showPrivate = useGithub((d) => d.showPrivate);
   const newTab = useGithub((d) => d.openBehavior === "newTab");
-  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledResource(fetchContributions, {
+  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledDefinition(githubContributions, {
     enabled,
-    intervalMs: SLOW_REFRESH_MS,
-    cacheKey: CONTRIBUTIONS_CACHE_KEY,
-    persist: true,
-    parsePersisted: parseCachedContributions,
   });
   useGithubSync(refresh, isRefreshing, lastSyncedAt);
 

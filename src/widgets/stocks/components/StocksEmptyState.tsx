@@ -1,21 +1,14 @@
 import { LineChart, Sparkles } from "lucide-react";
 import { StateMessage } from "@/components/StateMessage";
-import { usePolledResource } from "@/widgets/core/usePolledResource";
+import { usePolledDefinition } from "@/widgets/core/usePolledResource";
 import { TYPE } from "@/lib/type";
 import { cn } from "@/lib/utils";
-import { TRENDING_KEY } from "@/widgets/stocks/lib/cacheKeys";
-import { fetchTrendingSymbols, parseCachedTrending } from "@/widgets/stocks/lib/symbols";
+import { stocksTrending } from "@/widgets/stocks/lib/resources";
 
-const TRENDING_INTERVAL_MS = 60 * 60_000;
 const MAX_SUGGESTIONS = 8;
 
 export function StocksEmptyState({ onAdd }: { onAdd: (symbol: string) => void }) {
-  const { state } = usePolledResource(fetchTrendingSymbols, {
-    intervalMs: TRENDING_INTERVAL_MS,
-    cacheKey: TRENDING_KEY,
-    persist: true,
-    parsePersisted: parseCachedTrending,
-  });
+  const { state } = usePolledDefinition(stocksTrending);
   const trending = state.status === "success" ? state.data.slice(0, MAX_SUGGESTIONS) : [];
 
   return (

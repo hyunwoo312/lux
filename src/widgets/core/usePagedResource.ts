@@ -1,6 +1,7 @@
 import { useCallback, useRef } from "react";
 import {
   SharedResource,
+  readResource,
   freshnessOf,
   seedSnapshot,
   seededEntry,
@@ -145,6 +146,55 @@ class PagedSource<T> extends SharedResource<PagedData<T>> {
   protected override rewind(data: PagedData<T>): PagedData<T> {
     return data.page > 1 ? { ...data, page: 1 } : data;
   }
+}
+
+export type PagedDefinition<T> = {
+  cacheKey: string;
+  intervalMs: number;
+  staleMs?: number;
+  maxItems: number;
+  getKey: (item: T) => string | number;
+  parse: (raw: unknown) => T[] | null;
+  fetch: PagedFetcher<T>;
+};
+
+export function usePagedDefinition<T>(
+  definition: PagedDefinition<T>,
+  options: { enabled?: boolean; intervalMs?: number } = {},
+): PagedResource<T> {
+  return usePagedResource(definition.fetch, {
+    enabled: options.enabled,
+    intervalMs: options.intervalMs ?? definition.intervalMs,
+    staleMs: definition.staleMs,
+    maxItems: definition.maxItems,
+    cacheKey: definition.cacheKey,
+    getKey: definition.getKey,
+    persist: true,
+    parsePersisted: definition.parse,
+  });
+}
+
+export async function readPaged<T>(definition: PagedDefinition<T>): Promise<T[]> {
+  const data = await readResource<PagedData<T>, PagedSource<T>>(
+    definition.cacheKey,
+    () =>
+      new PagedSource<T>(
+        {
+          key: definition.cacheKey,
+          cacheKey: definition.cacheKey,
+          scope: "paged",
+          staleMs: definition.staleMs ?? definition.intervalMs,
+          intervalMs: definition.intervalMs,
+          persist: true,
+          blank,
+          decode: decodePaged(definition.parse),
+          encode: encodePaged,
+        },
+        { maxItems: definition.maxItems, resumePaging: true, getKey: definition.getKey },
+        definition.fetch,
+      ),
+  );
+  return data.items;
 }
 
 export function stalePagedResource(cacheKey: string): void {

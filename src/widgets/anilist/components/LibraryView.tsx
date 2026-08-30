@@ -4,10 +4,10 @@ import { loadErrorMessage } from "@/lib/net";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { Button } from "@/components/ui/button";
 import { fade } from "@/lib/motion";
-import { usePolledResource, patchPolledResource } from "@/widgets/core/usePolledResource";
+import { usePolledDefinition, patchPolledResource } from "@/widgets/core/usePolledResource";
+import { anilistLibrary } from "@/widgets/anilist/lib/resources";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import { fetchList, saveListStatus, saveProgress } from "@/widgets/anilist/lib/api/list";
-import { parseCachedCurrent } from "@/widgets/anilist/lib/api/cache";
+import { saveListStatus, saveProgress } from "@/widgets/anilist/lib/api/list";
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { computeBehind, progressLabel, sortCurrentEntries } from "@/widgets/anilist/lib/current";
 import {
@@ -25,7 +25,6 @@ import { LibraryTile } from "@/widgets/anilist/components/library/LibraryTile";
 import { resolveSort, showsInProgress } from "@/widgets/anilist/components/library/filters";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
-import { ANILIST_REFRESH_MS } from "@/widgets/anilist/types";
 import type { CurrentData, CurrentEntry, TitleLanguage } from "@/widgets/anilist/types";
 
 function withProgress(entry: CurrentEntry, progress: number): CurrentEntry {
@@ -57,15 +56,11 @@ export function LibraryView({ enabled, userId, newTab }: LibraryViewProps) {
   const viewMode = useAnilist((d) => d.viewMode);
   const instanceId = useWidgetInstanceId();
   const setActiveTab = useAnilistStore((s) => s.setActiveTab);
-  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledResource(
-    (signal) => fetchList(userId, lang, signal),
+  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledDefinition(
+    anilistLibrary(userId, lang),
     {
       enabled,
-      intervalMs: ANILIST_REFRESH_MS,
-      cacheKey: anilistKeys.library(userId, lang),
       isEmpty: (data) => data.entries.length === 0,
-      persist: true,
-      parsePersisted: parseCachedCurrent,
     },
   );
   useAnilistSync(refresh, isRefreshing, lastSyncedAt);

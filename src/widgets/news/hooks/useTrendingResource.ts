@@ -1,7 +1,6 @@
 import { useEffect } from "react";
-import { NEWS_REFRESH_MS } from "@/widgets/news/types";
-import { usePolledResource } from "@/widgets/core/usePolledResource";
-import { fetchTrends, parseCachedTrends, trendsKey } from "@/widgets/news/lib/trending";
+import { usePolledDefinition } from "@/widgets/core/usePolledResource";
+import { newsTrends } from "@/widgets/news/lib/resources";
 import { ranksOf } from "@/widgets/news/lib/trend-movement";
 import { useNews, useNewsStore } from "@/widgets/news/useNewsStore";
 
@@ -10,14 +9,7 @@ export function useTrendingResource(enabled = true) {
   const snapshot = useNewsStore((s) => s.trendSnapshots[region]);
   const remember = useNewsStore((s) => s.rememberTrendSnapshot);
 
-  const fetcher = (signal: AbortSignal) => fetchTrends(region, signal);
-  const resource = usePolledResource(fetcher, {
-    enabled,
-    intervalMs: NEWS_REFRESH_MS,
-    cacheKey: trendsKey(region),
-    persist: true,
-    parsePersisted: parseCachedTrends,
-  });
+  const resource = usePolledDefinition(newsTrends(region), { enabled });
 
   const feed = resource.state.status === "success" ? resource.state.data : null;
   const syncedAt = resource.lastSyncedAt;

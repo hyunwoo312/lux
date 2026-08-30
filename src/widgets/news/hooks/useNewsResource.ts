@@ -1,16 +1,9 @@
 import type { PolledResourceState } from "@/widgets/core/usePolledResource";
-import { usePolledResource } from "@/widgets/core/usePolledResource";
-import {
-  fetchFeed,
-  fetchMergedFeeds,
-  fetchSearch,
-  hasThumbnails,
-  orderedSources,
-  parseCachedNews,
-  resolveNewsTab,
-} from "@/widgets/news/lib/news";
+import { usePolledDefinition } from "@/widgets/core/usePolledResource";
+import { hasThumbnails, orderedSources, resolveNewsTab } from "@/widgets/news/lib/news";
+import { newsFeed } from "@/widgets/news/lib/resources";
 import { useNews } from "@/widgets/news/useNewsStore";
-import { NEWS_REFRESH_MS, type NewsItem } from "@/widgets/news/types";
+import type { NewsItem } from "@/widgets/news/types";
 
 export function useNewsResource(enabled = true) {
   const activeSource = useNews((d) => d.activeSource);
@@ -23,27 +16,9 @@ export function useNewsResource(enabled = true) {
   const tab = resolveNewsTab(activeSource, sources);
   const query = tab === "google" ? googleQuery.trim() : "";
 
-  const cacheKey =
-    tab === "all"
-      ? `news:all:${region}:${topic}:${sources.join(",")}`
-      : query
-        ? `news:search:${region}:${query}`
-        : `news:${tab}:${region}:${topic}`;
-
-  const fetcher = (signal: AbortSignal) =>
-    tab === "all"
-      ? fetchMergedFeeds(sources, region, topic, signal)
-      : query
-        ? fetchSearch(query, region, signal)
-        : fetchFeed(tab, region, topic, signal);
-
-  const raw = usePolledResource(fetcher, {
+  const raw = usePolledDefinition(newsFeed({ tab, region, topic, sources, query }), {
     enabled,
-    intervalMs: NEWS_REFRESH_MS,
     isEmpty: (payload) => payload.items.length === 0,
-    cacheKey,
-    persist: true,
-    parsePersisted: parseCachedNews,
   });
 
   const state: PolledResourceState<NewsItem[]> =

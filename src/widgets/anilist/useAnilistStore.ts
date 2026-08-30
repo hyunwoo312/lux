@@ -70,7 +70,7 @@ type AnilistStoreState = SyncSlice & {
   requestSync: (instanceId: string, viewerId: number) => void;
 };
 
-const DEFAULT_DATA: AnilistData = {
+export const DEFAULT_DATA: AnilistData = {
   activeTab: "feed",
   feedSource: "following",
   viewMode: "grid",

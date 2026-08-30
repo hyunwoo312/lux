@@ -2,20 +2,14 @@ import { ROW } from "@/lib/row";
 import { Bell, Inbox } from "lucide-react";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { formatRelativeTime } from "@/lib/relative-time";
-import { usePagedResource } from "@/widgets/core/usePagedResource";
-import { fetchInboxPage } from "@/widgets/anilist/lib/api/feed";
-import { parseCachedInbox } from "@/widgets/anilist/lib/api/cache";
+import { usePagedDefinition } from "@/widgets/core/usePagedResource";
+import { anilistInbox } from "@/widgets/anilist/lib/resources";
 import { FeedList } from "@/widgets/anilist/components/FeedList";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
-import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { useAnilist } from "@/widgets/anilist/useAnilistStore";
-import {
-  ANILIST_MAX_ITEMS,
-  ANILIST_REFRESH_MS,
-  type AnilistNotification,
-} from "@/widgets/anilist/types";
+import { type AnilistNotification } from "@/widgets/anilist/types";
 
 export function InboxView({
   enabled,
@@ -30,15 +24,7 @@ export function InboxView({
 }) {
   const lang = useAnilist((d) => d.titleLanguage);
   const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh, lastSyncedAt } =
-    usePagedResource((page, signal) => fetchInboxPage(page, lang, signal), {
-      enabled,
-      intervalMs: ANILIST_REFRESH_MS,
-      maxItems: ANILIST_MAX_ITEMS,
-      cacheKey: anilistKeys.inbox(userId, lang),
-      getKey: (notification) => notification.id,
-      persist: true,
-      parsePersisted: parseCachedInbox,
-    });
+    usePagedDefinition(anilistInbox(userId, lang), { enabled });
   useAnilistSync(refresh, isRefreshing, lastSyncedAt);
 
   if (state.status === "loading") return <AnilistSkeleton variant="list" label="Loading inbox…" />;

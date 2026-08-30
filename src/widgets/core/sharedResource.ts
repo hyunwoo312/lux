@@ -122,7 +122,7 @@ export function storeEntry<D>(
   }
 }
 
-export function dropEntry(scope: Scope, cacheKey: string): void {
+function dropEntry(scope: Scope, cacheKey: string): void {
   caches[scope].delete(cacheKey);
   removePersisted(scope, cacheKey);
 }
@@ -206,6 +206,7 @@ type LiveResource = {
   getSnapshot: () => Snapshot<unknown>;
   refresh: () => void;
   markStale: () => void;
+  adoptPersisted: (raw: string) => void;
 };
 
 const liveResources = new Map<string, LiveResource>();
@@ -272,6 +273,18 @@ export abstract class SharedResource<D> {
     };
   }
 
+  async load(): Promise<D> {
+    if (this.inFlight) {
+      await this.inFlight;
+    } else if (!this.snapshot.hasLoaded) {
+      await this.run("initial");
+    } else if (this.isDue(this.cadence()) && Date.now() >= this.retryAt) {
+      await this.run("refresh");
+    }
+    if (!this.snapshot.hasLoaded) throw this.snapshot.error ?? new Error("Request failed");
+    return this.snapshot.data;
+  }
+
   refresh(): void {
     void this.run("refresh");
   }
@@ -280,6 +293,34 @@ export abstract class SharedResource<D> {
     if (Date.now() < this.retryAt) return;
     if (!this.canPoll()) return;
     void this.run("refresh");
+  }
+
+  adoptPersisted(raw: string): void {
+    const { scope, cacheKey, decode } = this.config;
+    if (scope !== "polled" || !cacheKey || this.inFlight) return;
+    let entry: CacheEntry<D> | undefined;
+    try {
+      entry = decode(JSON.parse(raw));
+    } catch {
+      return;
+    }
+    if (!entry || entry.at <= this.snapshot.at) return;
+    caches[scope].set(cacheKey, entry);
+    this.failureCount = 0;
+    this.retryAt = 0;
+    this.patch({
+      data: entry.data,
+      at: entry.at,
+      hasLoaded: true,
+      error: undefined,
+      refreshError: undefined,
+      failureCount: 0,
+    });
+  }
+
+  release(): void {
+    if (this.cadences.size > 0 || this.inFlight) return;
+    this.retire();
   }
 
   markStale(): void {
@@ -394,6 +435,10 @@ export abstract class SharedResource<D> {
     this.unregister = null;
     this.registered = null;
     this.inFlight = null;
+    this.retire();
+  }
+
+  private retire(): void {
     if (this.retryAt > Date.now()) {
       carriedBackoff.set(this.config.key, {
         failureCount: this.failureCount,
@@ -402,7 +447,7 @@ export abstract class SharedResource<D> {
     } else {
       carriedBackoff.delete(this.config.key);
     }
-    liveResources.delete(this.config.key);
+    if (liveResources.get(this.config.key) === this) liveResources.delete(this.config.key);
   }
 }
 
@@ -511,11 +556,27 @@ export function clearResources(): void {
   carriedBackoff.clear();
 }
 
+function onOtherTabWrote(event: StorageEvent): void {
+  if (event.key === null || event.newValue === null) return;
+  const prefix = CACHE_PREFIX.polled;
+  if (!event.key.startsWith(prefix)) return;
+  liveResources.get(event.key.slice(prefix.length))?.adoptPersisted(event.newValue);
+}
+
+let listeningForOtherTabs = false;
+
+function listenForOtherTabs(): void {
+  if (listeningForOtherTabs || typeof window === "undefined") return;
+  listeningForOtherTabs = true;
+  window.addEventListener("storage", onOtherTabWrote);
+}
+
 function acquireResource<D, R extends SharedResource<D>>(
   key: string,
   create: () => R,
   adopt: (resource: R) => void,
 ): R {
+  listenForOtherTabs();
   const existing = liveResources.get(key) as R | undefined;
   if (existing) {
     adopt(existing);
@@ -524,6 +585,18 @@ function acquireResource<D, R extends SharedResource<D>>(
   const resource = create();
   liveResources.set(key, resource);
   return resource;
+}
+
+export async function readResource<D, R extends SharedResource<D>>(
+  key: string,
+  create: () => R,
+): Promise<D> {
+  const resource = acquireResource<D, R>(key, create, () => undefined);
+  try {
+    return await resource.load();
+  } finally {
+    resource.release();
+  }
 }
 
 let nextAutoKey = 0;

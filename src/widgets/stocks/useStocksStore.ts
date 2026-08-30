@@ -58,7 +58,7 @@ type StocksState = SyncSlice & {
   removeInstance: (instanceId: string) => void;
 };
 
-const DEFAULT_DATA: StocksData = {
+export const DEFAULT_DATA: StocksData = {
   symbols: ["AAPL", "MSFT", "NVDA", "TSLA"],
   range: "1d",
   showName: true,

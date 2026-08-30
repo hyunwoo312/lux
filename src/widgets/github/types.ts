@@ -116,6 +116,27 @@ export type ReleasesData = {
   watchedScanned: number;
 };
 
+export type RepoHit = {
+  nameWithOwner: string;
+  url: string;
+  description: string | null;
+  isPrivate: boolean;
+  stars: number;
+};
+
+export type IssueHit = {
+  id: string;
+  title: string;
+  url: string;
+  number: number;
+  repo: string;
+  isPrivate: boolean;
+  isPullRequest: boolean;
+  updatedAt: string;
+};
+
+export type GithubSearch = { repositories: RepoHit[]; issues: IssueHit[] };
+
 export type InboxData = {
   notifications: InboxNotification[];
   pullRequests: InboxPullRequest[];

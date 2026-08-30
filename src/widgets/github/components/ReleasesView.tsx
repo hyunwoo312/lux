@@ -2,29 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import { Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
-import { usePolledResource } from "@/widgets/core/usePolledResource";
-import { fetchReleases, parseCachedReleases } from "@/widgets/github/lib/api/releases";
+import { usePolledDefinition } from "@/widgets/core/usePolledResource";
+import { githubReleases } from "@/widgets/github/lib/resources";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { isUnseen, newestPublishedAt } from "@/widgets/github/lib/releases-unseen";
 import { visibleItems } from "@/widgets/github/lib/visibility";
 import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
 import { useGithubSync } from "@/widgets/github/useGithubSync";
-import {
-  RELEASES_CACHE_KEY,
-  SLOW_REFRESH_MS,
-  type Release,
-  type ReleasesData,
-} from "@/widgets/github/types";
+import { type Release, type ReleasesData } from "@/widgets/github/types";
 
 export function ReleasesView({ enabled, showPrivate }: { enabled: boolean; showPrivate: boolean }) {
   const newTab = useGithub((d) => d.openBehavior === "newTab");
-  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledResource(fetchReleases, {
+  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledDefinition(githubReleases, {
     enabled,
-    intervalMs: SLOW_REFRESH_MS,
     isEmpty: (data) => data.watchedCount === 0,
-    cacheKey: RELEASES_CACHE_KEY,
-    persist: true,
-    parsePersisted: parseCachedReleases,
   });
   useGithubSync(refresh, isRefreshing, lastSyncedAt);
 

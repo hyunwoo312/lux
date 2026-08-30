@@ -1,12 +1,10 @@
-import { useCallback } from "react";
-import { peekPolledResource, usePolledResource } from "@/widgets/core/usePolledResource";
-import { sparkKey } from "@/widgets/stocks/lib/cacheKeys";
-import { fetchSparks, parseCachedSparks } from "@/widgets/stocks/lib/spark";
+import { peekPolledResource, usePolledDefinition } from "@/widgets/core/usePolledResource";
+import { stocksSparks, type SparkMap } from "@/widgets/stocks/lib/resources";
 import { useStocks } from "@/widgets/stocks/useStocksStore";
 import { useStocksSync } from "@/widgets/stocks/hooks/useStocksSync";
-import { DAY_RANGE, type SparkSeries, type StockRange } from "@/widgets/stocks/types";
+import { DAY_RANGE, type StockRange } from "@/widgets/stocks/types";
 
-export type SparkMap = Record<string, SparkSeries>;
+export type { SparkMap };
 
 const TICKING_INTERVAL_MS = 60_000;
 const IDLE_INTERVAL_MS = 10 * 60_000;
@@ -21,20 +19,13 @@ function isTicking(map: SparkMap | undefined, nowMs: number): boolean {
 }
 
 function useSparkResource(symbols: string[], range: StockRange) {
-  const cacheKey = sparkKey(symbols, range);
-  const fetcher = useCallback(
-    (signal: AbortSignal) => fetchSparks(symbols, range, signal),
-    [symbols, range],
-  );
+  const definition = stocksSparks(symbols, range);
 
-  const resource = usePolledResource(fetcher, {
+  const resource = usePolledDefinition(definition, {
     enabled: symbols.length > 0,
-    intervalMs: isTicking(peekPolledResource<SparkMap>(cacheKey), Date.now())
+    intervalMs: isTicking(peekPolledResource<SparkMap>(definition.cacheKey), Date.now())
       ? TICKING_INTERVAL_MS
       : IDLE_INTERVAL_MS,
-    cacheKey,
-    persist: true,
-    parsePersisted: parseCachedSparks,
   });
 
   return {

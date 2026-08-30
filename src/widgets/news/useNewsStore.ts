@@ -89,7 +89,7 @@ type NewsState = {
   removeInstance: (instanceId: string) => void;
 };
 
-const DEFAULT_DATA: NewsData = {
+export const DEFAULT_DATA: NewsData = {
   view: "news",
   trendRegion: DEFAULT_REGION,
   activeSource: "all",

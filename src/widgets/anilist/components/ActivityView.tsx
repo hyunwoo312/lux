@@ -5,21 +5,18 @@ import { loadErrorMessage } from "@/lib/net";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
-import { usePagedResource } from "@/widgets/core/usePagedResource";
-import { fetchActivityPage, toggleActivityLike } from "@/widgets/anilist/lib/api/feed";
-import { parseCachedActivity } from "@/widgets/anilist/lib/api/cache";
+import { usePagedDefinition } from "@/widgets/core/usePagedResource";
+import { anilistActivity } from "@/widgets/anilist/lib/resources";
+import { toggleActivityLike } from "@/widgets/anilist/lib/api/feed";
 import { FeedList } from "@/widgets/anilist/components/FeedList";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
 import { AnilistWriteNotice } from "@/widgets/anilist/components/AnilistWriteNotice";
-import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import {
   ACTIVITY_OPEN_STALE_MS,
-  ACTIVITY_REFRESH_MS,
   ACTIVITY_SEEN_DWELL_MS,
-  ANILIST_MAX_ITEMS,
   ANILIST_PAGE_SIZE,
   type AnilistActivity,
 } from "@/widgets/anilist/types";
@@ -37,15 +34,7 @@ export function ActivityView({
   const lang = useAnilist((d) => d.titleLanguage);
   const seenRef = useRef(useAnilistStore.getState().lastSeenActivityAt ?? 0);
   const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh, lastSyncedAt } =
-    usePagedResource((page, signal) => fetchActivityPage(page, lang, signal), {
-      enabled,
-      intervalMs: ACTIVITY_REFRESH_MS,
-      maxItems: ANILIST_MAX_ITEMS,
-      cacheKey: anilistKeys.activity(userId, lang),
-      getKey: (activity) => activity.id,
-      persist: true,
-      parsePersisted: parseCachedActivity,
-    });
+    usePagedDefinition(anilistActivity(userId, lang), { enabled });
   useAnilistSync(refresh, isRefreshing, lastSyncedAt);
 
   const [likes, setLikes] = useState<Record<number, boolean>>({});
