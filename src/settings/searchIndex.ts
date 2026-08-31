@@ -2,6 +2,8 @@ import { PROVIDERS } from "@/settings/providers";
 import { PERMISSIONS } from "@/settings/permissions";
 import type { SettingsTab } from "@/settings/tabsMeta";
 import { SHORTCUT_DEFINITIONS } from "@/stores/shortcutDefinitions";
+import { PALETTE_SOURCES, PALETTE_SOURCE_LABELS } from "@/stores/usePaletteStore";
+import { commandCatalogue } from "@/commands";
 import { widgetPlugins } from "@/widgets/registry";
 
 export type SettingEntry = {
@@ -171,6 +173,42 @@ export function settingsIndex(): SettingEntry[] {
       section: "Shortcuts",
       tab: "shortcuts" as const,
       description: definition.description,
+    })),
+    ...PALETTE_SOURCES.map((source) => ({
+      label: PALETTE_SOURCE_LABELS[source],
+      section: "Browser data and search",
+      tab: "palette" as const,
+      description: "Choose whether the command palette offers this.",
+    })),
+    {
+      label: "Suggested commands",
+      section: "Suggestions",
+      tab: "palette" as const,
+      description: "Put the commands you use most at the top of the command palette.",
+    },
+    {
+      label: "How many to show",
+      section: "Suggestions",
+      tab: "palette" as const,
+      description: "How many suggested commands the palette shows, between five and ten.",
+    },
+    {
+      label: "Learned ranking",
+      section: "Suggestions",
+      tab: "palette" as const,
+      description: "Clear the ranking the command palette has learned from what you run.",
+    },
+    {
+      label: "Where results open",
+      section: "Results",
+      tab: "palette" as const,
+      description: "Whether a palette result opens in this tab or a new one.",
+    },
+    ...commandCatalogue().map((group) => ({
+      label: group.label,
+      section: "Commands",
+      tab: "palette" as const,
+      description: "Choose which of these commands the palette offers.",
     })),
   ];
 

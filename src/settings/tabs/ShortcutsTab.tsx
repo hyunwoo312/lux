@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
-import { RotateCcw, TriangleAlert } from "lucide-react";
+import { ExternalLink, RotateCcw, Search, TriangleAlert } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { Button } from "@/components/ui/button";
 import { SearchField } from "@/components/SearchField";
@@ -16,7 +16,18 @@ import {
   type ShortcutAction,
 } from "@/stores/useShortcutsStore";
 import { EASE_OUT_STRONG, enterTween, exitTween, springCrisp } from "@/lib/motion";
+import { usePaletteShortcut } from "@/hooks/usePaletteShortcut";
 import { AddShortcutControl, ShortcutDisplay } from "@/settings/tabs/ShortcutRow";
+
+const BROWSER_SHORTCUT = {
+  label: "Open the command palette",
+  description: "Works from any tab; rebind it in Chrome",
+} as const;
+
+function openBrowserShortcuts(): void {
+  if (typeof chrome === "undefined" || !chrome.tabs) return;
+  void chrome.tabs.create({ url: "chrome://extensions/shortcuts" });
+}
 
 function sameBindings(a: Shortcut[], b: Shortcut[]): boolean {
   if (a.length !== b.length) return false;
@@ -42,17 +53,46 @@ export function ShortcutsTab() {
   const resetShortcut = useShortcutsStore((s) => s.resetShortcut);
   const resetAll = useShortcutsStore((s) => s.resetAll);
   const reduced = useReducedMotion();
+  const paletteShortcut = usePaletteShortcut();
 
   const needle = query.trim().toLowerCase();
   const visibleShortcuts = SHORTCUT_DEFINITIONS.filter((action) =>
     `${action.label} ${action.description}`.toLowerCase().includes(needle),
   );
+  const browserMatches = `${BROWSER_SHORTCUT.label} ${BROWSER_SHORTCUT.description}`
+    .toLowerCase()
+    .includes(needle);
 
   return (
     <SettingsTabBody>
       <SearchField value={query} onChange={setQuery} label="Search shortcuts" />
 
-      {visibleShortcuts.length > 0 ? (
+      {browserMatches && (
+        <SettingsSection title="Browser shortcut">
+          <CustomizeRow
+            icon={<Search className="text-ink-3 size-6 shrink-0" />}
+            name={BROWSER_SHORTCUT.label}
+            description={BROWSER_SHORTCUT.description}
+          >
+            {paletteShortcut === undefined ? (
+              <span className="text-ink-3 text-caption">Not assigned</span>
+            ) : (
+              <kbd className="text-ink font-sans text-caption font-semibold">{paletteShortcut}</kbd>
+            )}
+            <Button
+              variant="ghost"
+              size="xs"
+              className="text-ink-3 hover:text-ink gap-1.5"
+              onClick={openBrowserShortcuts}
+            >
+              <ExternalLink className="size-3.5" />
+              Change in Chrome
+            </Button>
+          </CustomizeRow>
+        </SettingsSection>
+      )}
+
+      {visibleShortcuts.length > 0 && (
         <SettingsSection
           title="Shortcuts"
           action={
@@ -168,7 +208,9 @@ export function ShortcutsTab() {
             })}
           </div>
         </SettingsSection>
-      ) : (
+      )}
+
+      {!browserMatches && visibleShortcuts.length === 0 && (
         <p className="text-ink-3 py-8 text-center text-body">No shortcuts match “{query}”.</p>
       )}
     </SettingsTabBody>

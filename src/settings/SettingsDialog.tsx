@@ -9,6 +9,7 @@ import { AboutTab } from "@/settings/tabs/AboutTab";
 import { AccountsTab } from "@/settings/tabs/AccountsTab";
 import { AppearanceTab } from "@/settings/tabs/AppearanceTab";
 import { ShortcutsTab } from "@/settings/tabs/ShortcutsTab";
+import { PaletteTab } from "@/settings/tabs/PaletteTab";
 import { StorageTab } from "@/settings/tabs/StorageTab";
 import { WidgetsTab } from "@/settings/tabs/WidgetsTab";
 import { SETTINGS_TAB_META, type SettingsTab } from "@/settings/tabsMeta";
@@ -19,6 +20,7 @@ const TAB_COMPONENTS: Record<SettingsTab, ComponentType> = {
   widgets: WidgetsTab,
   accounts: AccountsTab,
   shortcuts: ShortcutsTab,
+  palette: PaletteTab,
   storage: StorageTab,
   about: AboutTab,
 };

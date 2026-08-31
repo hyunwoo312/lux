@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { Database, Keyboard, LayoutGrid, Palette, ShieldCheck } from "lucide-react";
+import { Database, Keyboard, LayoutGrid, Palette, Search, ShieldCheck } from "lucide-react";
 import { LuxMark } from "@/components/LuxMark";
 
 export const SETTINGS_TABS = [
@@ -7,6 +7,7 @@ export const SETTINGS_TABS = [
   "widgets",
   "accounts",
   "shortcuts",
+  "palette",
   "storage",
   "about",
 ] as const;
@@ -23,6 +24,7 @@ export const SETTINGS_TAB_META: Record<SettingsTab, SettingsTabMeta> = {
   widgets: { label: "Widgets", icon: LayoutGrid },
   accounts: { label: "Accounts & Permissions", icon: ShieldCheck },
   shortcuts: { label: "Shortcuts", icon: Keyboard },
+  palette: { label: "Command palette", icon: Search },
   storage: { label: "Storage & Backup", icon: Database },
   about: { label: "About", icon: LuxMark },
 };
