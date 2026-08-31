@@ -28,7 +28,7 @@ export const GUIDE_MEDIA_SIZES: Record<string, readonly [number, number]> = {
   "stocks-add-symbol": [490, 490],
   "stocks-watchlist": [490, 490],
   "tasks-reorder": [490, 490],
-  "using-arrange": [720, 405],
-  "using-widget-settings": [720, 405],
+  "using-add-widget": [1440, 810],
+  "using-configure": [1440, 810],
   "weather-add-city": [490, 490],
 };

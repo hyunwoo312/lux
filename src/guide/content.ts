@@ -68,9 +68,9 @@ const GETTING_STARTED: readonly GuideArticle[] = [
       },
       {
         kind: "figure",
-        media: "using-arrange",
-        alt: "Moving and resizing widgets in edit mode",
-        caption: "Drag to move, drag the corner to resize.",
+        media: "using-add-widget",
+        alt: "Dropping a widget onto the grid and moving it into place",
+        caption: "Pick a widget, drop it, and drag it where you want it.",
       },
       {
         kind: "prose",
@@ -78,8 +78,8 @@ const GETTING_STARTED: readonly GuideArticle[] = [
       },
       {
         kind: "figure",
-        media: "using-widget-settings",
-        alt: "A widget's settings, showing surface and accent options",
+        media: "using-configure",
+        alt: "A widget's own settings panel, open over the dashboard",
         caption: "Surface, accent and per-widget options all live here.",
       },
       {

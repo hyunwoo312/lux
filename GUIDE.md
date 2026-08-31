@@ -70,15 +70,15 @@ _Nothing here is fixed. Put widgets where you want them, size them how you like,
 Press the pencil in the toolbar to start editing. Drag a widget anywhere on the grid and the others move aside to make room; grab its bottom-right corner to make it bigger or smaller. Every widget gets a remove button while you are editing, and pressing the pencil again — or `Esc` — puts things back to normal.
 
 <p align="center">
-  <img src="public/guide/using-arrange.webp" alt="Moving and resizing widgets in edit mode" width="70%" />
+  <img src="public/guide/using-add-widget.webp" alt="Dropping a widget onto the grid and moving it into place" width="70%" />
 </p>
 
-_Drag to move, drag the corner to resize._
+_Pick a widget, drop it, and drag it where you want it._
 
 Each widget also has its own settings, behind the gear in its header — you will find it when you are *not* in edit mode. That is where you switch it between the frosted glass look and a solid one, give it its own accent colour, and change whatever that particular widget offers. Widgets that fetch things, like Weather, Stocks and Calendar, also have a refresh button there.
 
 <p align="center">
-  <img src="public/guide/using-widget-settings.webp" alt="A widget's settings, showing surface and accent options" width="70%" />
+  <img src="public/guide/using-configure.webp" alt="A widget's own settings panel, open over the dashboard" width="70%" />
 </p>
 
 _Surface, accent and per-widget options all live here._

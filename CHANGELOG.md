@@ -4,6 +4,97 @@ All notable changes to Lux are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-08-31
+
+_A command palette for everything Lux can do, wallpapers you can generate or choose, and a settings dialog rebuilt around what you actually change._
+
+### Added
+
+#### Dashboard
+- Wallpapers now come in three kinds: patterns Lux draws to match your theme, a bundled gallery, or your own images — each with its own options for motion, blur and dimming.
+- Removing a widget can be undone from a bar that counts down before it commits.
+- Widgets resize from any edge or corner, and the grid grows with your window instead of staying a fixed width.
+- A crash anywhere on the page now shows a recovery card with your backup close at hand, instead of an empty tab.
+
+#### Command palette
+- Press Alt+T anywhere in the browser, or click the magnifying glass in the toolbar, to open a command palette over your dashboard.
+- Run your widgets from it: play a song, check your AniList feed, read your GitHub inbox, look up a stock, or see today’s scores.
+- Search your bookmarks, browsing history, open tabs and most-visited sites from the same box, once you allow access.
+- Search the web, or hand a question straight to Claude or ChatGPT, without leaving the page.
+- Some commands open a search of their own, so you can find a track and play it, or find a repository and open it, without leaving the palette.
+- Every command is listed whether or not it can run yet. The ones still waiting on an account, a widget or a permission say what they need, and pressing one takes you straight there.
+- The commands you use most rise to the top of the list on their own.
+
+#### Settings
+- Settings is now one dialog with tabs for Appearance, Widgets, Accounts, Shortcuts, Command palette, Storage and About, and a search that finds any setting by name.
+- Every widget type has a default surface and refresh rate you can set once.
+- Storage shows exactly what Lux is keeping, lets you clear cached data, and backs your whole setup up to a file you can restore.
+- Keyboard shortcuts can be rebound, and the Command palette tab lists every command so you can switch off any you would rather never be offered.
+
+#### Onboarding
+- A first-run welcome explains what Lux is and hands you straight to the guide.
+
+#### Guide
+- A guide now lives in the toolbar, with a walkthrough of every widget, the toolbar, and the command palette.
+
+#### AniList
+- Three views — your feed, your library and a searchable Discover — with cover grids and progress you can change from the widget.
+
+#### Calendar
+- An agenda timeline and a month view, with a Go to today button and animation between dates.
+
+#### GitHub
+- An inbox grouped by repository, and a contributions heatmap that reports what it actually has.
+
+#### News
+- A Trending view, and sources that admit when a feed has failed instead of showing nothing.
+
+#### Note
+- Lists that continue as you type, and pasted text that keeps its shape.
+
+#### Quick Access
+- Your real links, a search box, and your open tabs.
+
+#### Spotify
+- A media bar, your playlists in search, and a transport that queues your presses instead of dropping them.
+
+#### Sports
+- Match detail, golf leaderboards and tennis draws, alongside the leagues and teams you follow.
+
+#### Stocks
+- A draggable card grid, and a detail view that leads with the chart.
+
+#### Weather
+- A nowcast, an hourly chart, and wind units you can choose.
+
+### Changed
+
+#### Dashboard
+- The accent colour you pick is used across the whole app, and only ever to signal something — what is selected, live, or about to be destroyed.
+- Widgets that read the same thing now share one request, so several widgets on one service refresh together instead of each asking separately.
+- A generated wallpaper stops animating when you switch tabs or move to another window, so it costs nothing while you are elsewhere.
+- The header clock is configurable, its digits roll as they change, and the whole toolbar is one stop for the keyboard.
+
+#### Feedback
+- The feedback form is shorter, and morphs into its confirmation instead of claiming an outcome it cannot know.
+
+### Fixed
+
+#### Dashboard
+- Stale data is now shown as stale, with the time it was last good, instead of quietly looking current.
+
+#### Accounts
+- A failed read no longer rebuilds your account list from nothing, and a refreshed token is kept rather than discarded.
+
+#### Image
+- Photos paint from their thumbnail first, and the details you add to them survive a reload.
+
+#### Spotify
+- The progress bar no longer jumps backwards when you pause.
+
+#### Tasks
+- The empty placeholder row is gone, and tasks use the same controls as everything else.
+
 ## [1.3.2] - 2026-08-18
 
 _Lighter background images, a cleaner frosted backdrop, and an AniList sign-in that finishes on its own._

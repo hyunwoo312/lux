@@ -5,16 +5,15 @@
 
   <p>
     <a href="https://chromewebstore.google.com/detail/lux/kmfabjnibncbooljgbkinkfddapmfcna"><img src="https://img.shields.io/badge/Chrome%20Web%20Store-Install-b79ced?style=flat-square&labelColor=2a2533&logo=googlechrome&logoColor=white" alt="Install from the Chrome Web Store" /></a>
-    <img src="https://img.shields.io/chrome-web-store/users/kmfabjnibncbooljgbkinkfddapmfcna?style=flat-square&labelColor=2a2533&color=b79ced" alt="Chrome Web Store users" />
-    <img src="https://img.shields.io/chrome-web-store/rating/kmfabjnibncbooljgbkinkfddapmfcna?style=flat-square&labelColor=2a2533&color=b79ced" alt="Chrome Web Store rating" />
-    <img src="https://img.shields.io/chrome-web-store/stars/kmfabjnibncbooljgbkinkfddapmfcna?style=flat-square&labelColor=2a2533&color=b79ced" alt="Chrome Web Store rating stars" />
-    <img src="https://img.shields.io/github/package-json/v/hyunwoo312/lux?style=flat-square&labelColor=2a2533&color=b79ced&label=version" alt="Version" />
+    <a href="https://chromewebstore.google.com/detail/lux/kmfabjnibncbooljgbkinkfddapmfcna"><img src="https://img.shields.io/chrome-web-store/v/kmfabjnibncbooljgbkinkfddapmfcna?style=flat-square&labelColor=2a2533&color=b79ced&label=version" alt="Version on the Chrome Web Store" /></a>
+    <a href="https://chromewebstore.google.com/detail/lux/kmfabjnibncbooljgbkinkfddapmfcna"><img src="https://img.shields.io/chrome-web-store/users/kmfabjnibncbooljgbkinkfddapmfcna?style=flat-square&labelColor=2a2533&color=b79ced&label=users" alt="Chrome Web Store users" /></a>
+    <a href="https://chromewebstore.google.com/detail/lux/kmfabjnibncbooljgbkinkfddapmfcna/reviews"><img src="https://img.shields.io/chrome-web-store/rating/kmfabjnibncbooljgbkinkfddapmfcna?style=flat-square&labelColor=2a2533&color=b79ced&label=rating" alt="Chrome Web Store rating" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-b79ced?style=flat-square&labelColor=2a2533" alt="Apache 2.0 licensed" /></a>
   </p>
 </div>
 
 <p align="center">
-  <img src=".github/media/preview-default.webp" alt="Lux new tab dashboard — default look" width="49%" />
-  <img src=".github/media/preview-custom.webp" alt="Lux new tab dashboard — custom wallpaper and layout" width="49%" />
+  <img src="public/guide/example-dashboard.webp" alt="Lux new tab dashboard — widgets arranged over a custom wallpaper" width="100%" />
 </p>
 
 ## What it is
@@ -36,20 +35,25 @@ glassy light or dark theme. It runs in your browser, and there's no Lux account 
   signal state — selected, live, destructive.
 - **Settings and backup.** Options live in one panel, and you can export your whole setup to a file
   and import it again later.
+- **Command palette.** `Alt+T` from any tab opens one box for your widgets, your bookmarks and
+  history, your open tabs, and the web. Run a widget without touching it.
 - **Keyboard shortcuts.** Settings, the widget palette, layout editing, grid lines, and the theme
-  each have one, and you can rebind them — two bindings per action.
+  each have one, and you can rebind them — two bindings per action. The palette's `Alt+T` is
+  registered with Chrome, so change it at `chrome://extensions/shortcuts`.
 
 ## Using Lux
 
-Everything lives on the new tab. The toolbar has theme, add widget, edit layout, settings, release
-notes, the guide, and feedback; the rest of the page is your dashboard.
+Everything lives on the new tab. The toolbar reads left to right as things you do — theme, add
+widget, edit layout, search — then the dialogs: settings, release notes, the guide, and feedback.
+The rest of the page is your dashboard.
 
 <p align="center">
-  <img src=".github/media/using-add-widget.webp" alt="Opening the add-widget menu and dropping a widget onto the grid" width="100%" />
+  <img src="public/guide/using-add-widget.webp" alt="Opening the add-widget menu and dropping a widget onto the grid" width="100%" />
 </p>
 
 Add a widget and click to drop it, hit edit to drag and resize, and open a widget's own header gear
-for its surface, accent, and options. Settings holds the theme, wallpaper, and backup.
+for its surface, accent, and options. Settings holds the theme, wallpaper, and backup. The
+magnifying glass — or `Alt+T` from anywhere — opens the command palette.
 
 **[Read the guide →](GUIDE.md)** — the same pages Lux shows in-extension, with a screenshot for
 every widget. Open it in Lux from the book icon in the toolbar.

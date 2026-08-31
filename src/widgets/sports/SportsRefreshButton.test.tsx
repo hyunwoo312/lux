@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
+import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 
 vi.mock("@/widgets/sports/lib/golf", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/widgets/sports/lib/golf")>()),
@@ -50,15 +51,17 @@ describe("refreshing the Favorites tab", () => {
     fetchMock.mockResolvedValue(null);
     seed({ pga: { teams: [], tour: true } });
     renderFavorites();
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await act(async () => vi.advanceTimersByTimeAsync(0));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
 
     const button = screen.getByRole("button", { name: /refresh/i });
     expect(button).toHaveAttribute("aria-disabled", "true");
 
-    await vi.advanceTimersByTimeAsync(SPORTS_SYNC_COOLDOWN_MS + 1000);
+    await act(async () => vi.advanceTimersByTimeAsync(SPORTS_SYNC_COOLDOWN_MS + 1000));
     const before = fetchMock.mock.calls.length;
     fireEvent.click(button);
 
-    await waitFor(() => expect(fetchMock.mock.calls.length).toBe(before + 1));
+    await act(async () => vi.advanceTimersByTimeAsync(0));
+    expect(fetchMock.mock.calls.length).toBe(before + 1);
   });
 });
