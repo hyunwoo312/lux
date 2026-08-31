@@ -315,10 +315,13 @@ function displayedProgressMs(state: ProgressInputs): number {
 }
 
 export function togglePlayback(): void {
-  const { playback } = get();
+  const state = get();
+  const { playback } = state;
   if (!playback) return;
   const shouldPlay = !playback.isPlaying;
-  set({ playback: { ...playback, isPlaying: shouldPlay } });
+  set({
+    playback: { ...playback, isPlaying: shouldPlay, progressMs: displayedProgressMs(state) },
+  });
   markSyncedNow();
   queuePlaybackAction(
     shouldPlay ? resumeSpotifyPlayback : pauseSpotifyPlayback,

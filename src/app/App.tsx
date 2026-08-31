@@ -6,10 +6,9 @@ import { Wallpaper } from "@/app/Wallpaper";
 import { Header } from "@/app/Header";
 import { WidgetDragOverlay } from "@/app/WidgetDragOverlay";
 import { Toaster } from "@/components/Toaster";
-import { SettingsDialog } from "@/settings";
 import { CommandPalette } from "@/palette";
-import { usePaletteCommand } from "@/app/usePaletteCommand";
 import { Welcome } from "@/onboarding";
+import { usePaletteCommand } from "@/app/usePaletteCommand";
 import { WidgetGrid } from "@/widgets/WidgetGrid";
 import { useGlobalShortcuts } from "@/app/useGlobalShortcuts";
 import { useDisableContextMenu } from "@/app/useDisableContextMenu";
@@ -19,9 +18,11 @@ import { FrostImageProvider } from "@/lib/frost-image";
 import { useWallpaperStore } from "@/stores/useWallpaperStore";
 import { takePendingPermissionHighlight } from "@/lib/permissions";
 import { useDashboardStore } from "@/stores/useDashboardStore";
-import { useSettingsStore } from "@/settings";
+import { SettingsDialog, useSettingsStore } from "@/settings";
 import { sweepStaleResourceCaches } from "@/widgets/core/resourceCacheSweep";
 import { usePersistHydrated } from "@/hooks/usePersistHydrated";
+
+const SWEEP_TIMEOUT_MS = 10_000;
 
 export function App() {
   useGlobalShortcuts();
@@ -34,9 +35,15 @@ export function App() {
   const reduced = useReducedMotion();
 
   useEffect(() => {
-    sweepStaleResourceCaches(Date.now());
     const pending = takePendingPermissionHighlight();
     if (pending) useSettingsStore.getState().openPermissions(pending);
+  }, []);
+
+  useEffect(() => {
+    const id = requestIdleCallback(() => sweepStaleResourceCaches(Date.now()), {
+      timeout: SWEEP_TIMEOUT_MS,
+    });
+    return () => cancelIdleCallback(id);
   }, []);
 
   const boardWidth = useBoardWidth();

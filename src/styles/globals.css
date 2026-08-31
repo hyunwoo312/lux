@@ -848,6 +848,7 @@
 .wp-paused .wp-blob,
 .wp-paused .mesh-poly {
   animation-play-state: paused;
+  will-change: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -18,13 +18,13 @@ import { cn } from "@/lib/utils";
 import { useRovingFocus } from "@/hooks/useRovingFocus";
 import { ChangelogDialog, consumeChangelogAutoShow, useHasUnseenRelease } from "@/changelog";
 import { GuideDialog, useGuideStore } from "@/guide";
-import { FeedbackDialog } from "@/feedback";
 import { HeaderClock } from "@/app/HeaderClock";
 import { WidgetPalette } from "@/app/WidgetPalette";
 import { useCommandPaletteStore } from "@/palette";
 import { useSettingsStore } from "@/settings";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useDashboardStore } from "@/stores/useDashboardStore";
+import { FeedbackDialog } from "@/feedback";
 
 const TOOLBAR_BUTTONS = 8;
 

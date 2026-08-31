@@ -1,14 +1,10 @@
-import { isResourceCacheKey } from "@/lib/local-store";
+import { cachedAt, isResourceCacheKey } from "@/lib/local-store";
 
 const DEFAULT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 function isStale(raw: string, now: number, maxAgeMs: number): boolean {
-  try {
-    const at = (JSON.parse(raw) as { at?: unknown }).at;
-    return typeof at === "number" && now - at > maxAgeMs;
-  } catch {
-    return true;
-  }
+  const at = cachedAt(raw);
+  return at === null ? true : now - at > maxAgeMs;
 }
 
 export function sweepStaleResourceCaches(now: number, maxAgeMs: number = DEFAULT_MAX_AGE_MS): void {

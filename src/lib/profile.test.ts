@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { PROFILE_VERSION, profileReady, upgradeProfile } from "@/lib/profile";
+import { PROFILE_VERSION, upgradeProfile } from "@/lib/profile";
 
 const all = () => chrome.storage.local.get(null);
 const stamp = async () => (await all())["lux:profile"];
@@ -232,8 +232,10 @@ describe("when the ledger cannot finish", () => {
   it("never leaves stores waiting when the ledger itself fails", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.spyOn(chrome.storage.local, "get").mockRejectedValue(new Error("storage down"));
+    vi.resetModules();
+    const { profileReady: freshProfileReady } = await import("@/lib/profile");
 
-    await expect(profileReady()).rejects.toThrow("storage down");
+    await expect(freshProfileReady()).rejects.toThrow("storage down");
   });
 
   it("does not stamp when a migration could not finish, so it retries", async () => {

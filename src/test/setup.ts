@@ -1,11 +1,19 @@
 import { afterEach, beforeEach } from "vitest";
-import { installChromeMock } from "./chrome-mock";
+import { installChromeMock } from "@/test/chrome-mock";
 import { clearPolledResources } from "@/widgets/core/usePolledResource";
 import { useToastStore } from "@/stores/useToastStore";
 
 const hasDom = typeof window !== "undefined";
 
-installChromeMock();
+if (hasDom && typeof window.requestIdleCallback !== "function") {
+  window.requestIdleCallback = ((cb: IdleRequestCallback) =>
+    window.setTimeout(
+      () => cb({ didTimeout: true, timeRemaining: () => 0 }),
+      0,
+    )) as typeof window.requestIdleCallback;
+  window.cancelIdleCallback = ((id: number) =>
+    window.clearTimeout(id)) as typeof window.cancelIdleCallback;
+}
 
 if (typeof navigator !== "undefined" && !navigator.locks) {
   const chains = new Map<string, Promise<unknown>>();

@@ -141,3 +141,5 @@ function createChromeMock() {
 export function installChromeMock() {
   (globalThis as { chrome?: unknown }).chrome = createChromeMock();
 }
+
+installChromeMock();

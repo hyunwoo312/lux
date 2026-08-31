@@ -9,12 +9,19 @@ export function isResourceCacheKey(key: string): boolean {
   return RESOURCE_CACHE_PREFIXES.some((prefix) => key.startsWith(prefix));
 }
 
-function cachedAt(raw: string): number {
+const AT_MARKER = '"at":';
+
+export function cachedAt(raw: string): number | null {
+  const marker = raw.lastIndexOf(AT_MARKER);
+  if (marker !== -1) {
+    const at = Number.parseInt(raw.slice(marker + AT_MARKER.length, marker + 30), 10);
+    if (Number.isFinite(at)) return at;
+  }
   try {
     const at = (JSON.parse(raw) as { at?: unknown }).at;
-    return typeof at === "number" ? at : Number.NEGATIVE_INFINITY;
+    return typeof at === "number" ? at : null;
   } catch {
-    return Number.NEGATIVE_INFINITY;
+    return null;
   }
 }
 
@@ -26,7 +33,8 @@ function evictOldestResourceCache(): boolean {
       const key = localStorage.key(index);
       if (!key || !isResourceCacheKey(key)) continue;
       const raw = localStorage.getItem(key);
-      const at = raw === null ? Number.NEGATIVE_INFINITY : cachedAt(raw);
+      const at =
+        raw === null ? Number.NEGATIVE_INFINITY : (cachedAt(raw) ?? Number.NEGATIVE_INFINITY);
       if (at < oldestAt) {
         oldestAt = at;
         oldestKey = key;
