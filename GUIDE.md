@@ -10,6 +10,7 @@ This file is generated from `src/guide/content`. Edit that, then run `npm run gu
   - [The toolbar](#the-toolbar)
   - [Customizing your dashboard](#customizing)
   - [Keyboard shortcuts](#keyboard-shortcuts)
+  - [The command palette](#command-palette)
 - **Widgets**
   - [AniList](#anilist)
   - [Calendar](#calendar)
@@ -52,13 +53,13 @@ _One setup, with every widget sized and placed to taste._
 
 <a id="the-toolbar"></a>
 
-_The controls in the top-right corner are how you change the dashboard. Here they are, numbered to match the list below._
+_The controls along the top of the page are how you change the dashboard. Everything left of the divider acts on your layout; everything right of it opens a dialog. Here they are, numbered to match the list below._
 
 1. **Light and dark** — Flips between the two themes. The change sweeps across the page instead of snapping, and Lux remembers which one you chose.
 2. **Add a widget** — Opens the widget palette. Pick anything from the list and it drops into the first free space on your grid — or drag it exactly where you want it.
 3. **Edit your layout** — Turns on edit mode, where widgets can be dragged, resized and removed. Press it again — or hit `Esc` — when you are finished.
-4. **Settings** — Everything that is not a widget: theme defaults, your wallpaper, connected accounts, keyboard shortcuts, and backing your setup up to a file.
-5. **Release notes, this guide, and feedback** — The last three sit together. The scroll shows what changed in each version, the book opens this guide, and the message icon sends a note straight to the developer.
+4. **Search everything** — Opens the command palette over the dashboard — the same box `Alt+T` reaches from any tab in the browser. Your widgets, your bookmarks and history, and the web, all from one place.
+5. **Settings, release notes, the guide, and feedback** — The four dialogs sit together past the divider. The cog holds everything that is not a widget — theme defaults, your wallpaper, connected accounts, keyboard shortcuts, and backing your setup up to a file. The scroll shows what changed in each version, the book opens this guide, and the message icon sends a note straight to the developer.
 
 ### Customizing your dashboard
 
@@ -92,9 +93,35 @@ _Surface, accent and per-widget options all live here._
 
 _Much of the dashboard can be driven from the keyboard, and every binding can be changed._
 
-Shortcuts only fire when focus is outside a text field, so typing in a note or a search box will not trigger them by accident. `Esc` leaves edit mode.
+Shortcuts work wherever you are on the dashboard, including while you are typing — every binding needs `Ctrl` or `Alt`, so an ordinary keystroke can never trigger one. `Esc` is the exception: it leaves edit mode, but it is left alone while you are in a text field.
 
 _Edit keyboard shortcuts — in Settings._
+
+### The command palette
+
+<a id="command-palette"></a>
+
+_One keystroke to search, run a command, or jump to something you already have open._
+
+Press `Alt+T` from anywhere in the browser, or click the magnifying glass in the toolbar. On a Lux tab the palette opens in place; on any other page Lux opens a new tab and puts the palette in it. Type to filter, move with the arrow keys, and press `Enter` to run the highlighted row.
+
+<p align="center">
+  <img src="public/guide/command-palette.webp" alt="The command palette open over the dashboard, listing Spotify playlists inside its search scope" width="70%" />
+</p>
+
+_Open it anywhere, type to filter, and press Enter._
+
+It searches four things at once: what your widgets can do, the dashboard's own actions, your browser data, and the web. Some rows open a scope of their own — picking **Search** on the Spotify rows lets you find a track and play it without leaving the palette. `Backspace` on an empty box steps back out of a scope.
+
+> **Why this shortcut is set in Chrome**
+>
+> A new tab gives the keyboard to the address bar, and Chrome does not let a page take it. `Alt+T` is therefore registered with the browser rather than with Lux, which is the only way it can reach you before the page has focus. That also means Lux cannot rebind it — change it at `chrome://extensions/shortcuts`, and Settings → Shortcuts shows you what it is currently set to.
+
+Every command is listed whether or not it can run yet. The ones still waiting on something — a connected account, a widget on your grid, or permission to read your bookmarks or history — sit dimmed with the reason in their place, and pressing one takes you straight to the thing it needs. Lux asks for nothing on its own. Settings → Command palette is where you switch each source on or off, choose whether a result replaces this tab, and untick any command you would rather never be offered.
+
+_Choose what the palette searches — in Settings._
+
+_See the palette shortcut — in Settings._
 
 ## Widgets
 
@@ -110,7 +137,7 @@ Sign in to see your own list, or browse without signing in at all. Three tabs, a
   <img src="public/guide/anilist-overview.webp" alt="Moving between the AniList widget's tabs" width="70%" />
 </p>
 
-_Feed, Library and Discover, and the detail view behind a title._
+_Feed, Library and Discover, and a search for anything not on your lists._
 
 **Feed** is what the people you follow are watching and reading, each with a one-tap like. **Notifications** sits beside it, with a count when something you follow airs or someone likes you back.
 
@@ -425,10 +452,10 @@ _A to-do list that stays on this machine._
 Type to add, tick to complete, drag to reorder.
 
 <p align="center">
-  <img src="public/guide/tasks-reorder.webp" alt="Dragging a task into a new position in the list" width="70%" />
+  <img src="public/guide/tasks-reorder.webp" alt="Adding a task and ticking others off, with edit and delete on the hovered row" width="70%" />
 </p>
 
-_Drag a row to move it; hover one for edit and delete._
+_Type to add and tick to complete; hover a row for edit and delete._
 
 Completed items strike through and stay where they are until you clear them. The header keeps a running done and left count, and clears the finished ones in a tap.
 

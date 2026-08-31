@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { BookOpen, Check, MessageSquarePlus, Pencil, ScrollText, Settings } from "lucide-react";
+import {
+  BookOpen,
+  Check,
+  MessageSquarePlus,
+  Pencil,
+  ScrollText,
+  Search,
+  Settings,
+} from "lucide-react";
 import { pop } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -13,11 +21,12 @@ import { GuideDialog, useGuideStore } from "@/guide";
 import { FeedbackDialog } from "@/feedback";
 import { HeaderClock } from "@/app/HeaderClock";
 import { WidgetPalette } from "@/app/WidgetPalette";
+import { useCommandPaletteStore } from "@/palette";
 import { useSettingsStore } from "@/settings";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 
-const TOOLBAR_BUTTONS = 7;
+const TOOLBAR_BUTTONS = 8;
 
 export function Header() {
   const reduced = useReducedMotion();
@@ -27,6 +36,7 @@ export function Header() {
   const hasUnseenRelease = useHasUnseenRelease();
   const [changelogOpen, setChangelogOpen] = useState(false);
   const openGuide = useGuideStore((s) => s.openGuide);
+  const openPalette = useCommandPaletteStore((s) => s.openPalette);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const showClock = useAppSettingsStore((s) => s.showClock);
   const toolbar = useRovingFocus({ count: TOOLBAR_BUTTONS });
@@ -71,9 +81,21 @@ export function Header() {
             </AnimatePresence>
           </Button>
         </Tooltip>
-        <Tooltip content="Settings">
+        <Tooltip content="Search">
           <Button
             {...toolbar.itemProps(3)}
+            variant="ghost"
+            size="icon-lg"
+            aria-label="Open the command palette"
+            onClick={openPalette}
+          >
+            <Search />
+          </Button>
+        </Tooltip>
+        <Separator orientation="vertical" className="mx-1 h-6" />
+        <Tooltip content="Settings">
+          <Button
+            {...toolbar.itemProps(4)}
             variant="ghost"
             size="icon-lg"
             aria-label="Settings"
@@ -82,10 +104,9 @@ export function Header() {
             <Settings />
           </Button>
         </Tooltip>
-        <Separator orientation="vertical" className="mx-1 h-6" />
         <Tooltip content="What's new">
           <Button
-            {...toolbar.itemProps(4)}
+            {...toolbar.itemProps(5)}
             variant="ghost"
             size="icon-lg"
             className="relative"
@@ -103,7 +124,7 @@ export function Header() {
         </Tooltip>
         <Tooltip content="Guide">
           <Button
-            {...toolbar.itemProps(5)}
+            {...toolbar.itemProps(6)}
             variant="ghost"
             size="icon-lg"
             aria-label="Open the Lux guide"
@@ -114,7 +135,7 @@ export function Header() {
         </Tooltip>
         <Tooltip content="Send feedback">
           <Button
-            {...toolbar.itemProps(6)}
+            {...toolbar.itemProps(7)}
             variant="ghost"
             size="icon-lg"
             aria-label="Send feedback"

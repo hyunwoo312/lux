@@ -28,7 +28,7 @@ const GETTING_STARTED: readonly GuideArticle[] = [
   {
     id: "the-toolbar",
     title: "The toolbar",
-    lead: "The controls in the top-right corner are how you change the dashboard. Here they are, numbered to match the list below.",
+    lead: "The controls along the top of the page are how you change the dashboard. Everything left of the divider acts on your layout; everything right of it opens a dialog. Here they are, numbered to match the list below.",
     blocks: [
       {
         kind: "toolbar",
@@ -46,12 +46,12 @@ const GETTING_STARTED: readonly GuideArticle[] = [
             text: "Turns on edit mode, where widgets can be dragged, resized and removed. Press it again — or hit `Esc` — when you are finished.",
           },
           {
-            title: "Settings",
-            text: "Everything that is not a widget: theme defaults, your wallpaper, connected accounts, keyboard shortcuts, and backing your setup up to a file.",
+            title: "Search everything",
+            text: "Opens the command palette over the dashboard — the same box `Alt+T` reaches from any tab in the browser. Your widgets, your bookmarks and history, and the web, all from one place.",
           },
           {
-            title: "Release notes, this guide, and feedback",
-            text: "The last three sit together. The scroll shows what changed in each version, the book opens this guide, and the message icon sends a note straight to the developer.",
+            title: "Settings, release notes, the guide, and feedback",
+            text: "The four dialogs sit together past the divider. The cog holds everything that is not a widget — theme defaults, your wallpaper, connected accounts, keyboard shortcuts, and backing your setup up to a file. The scroll shows what changed in each version, the book opens this guide, and the message icon sends a note straight to the developer.",
           },
         ],
       },
@@ -96,12 +96,52 @@ const GETTING_STARTED: readonly GuideArticle[] = [
     blocks: [
       {
         kind: "prose",
-        text: "Shortcuts only fire when focus is outside a text field, so typing in a note or a search box will not trigger them by accident. `Esc` leaves edit mode.",
+        text: "Shortcuts work wherever you are on the dashboard, including while you are typing — every binding needs `Ctrl` or `Alt`, so an ordinary keystroke can never trigger one. `Esc` is the exception: it leaves edit mode, but it is left alone while you are in a text field.",
       },
       {
         kind: "settingsLink",
         tab: "shortcuts",
         label: "Edit keyboard shortcuts",
+      },
+    ],
+  },
+  {
+    id: "command-palette",
+    title: "The command palette",
+    lead: "One keystroke to search, run a command, or jump to something you already have open.",
+    blocks: [
+      {
+        kind: "prose",
+        text: "Press `Alt+T` from anywhere in the browser, or click the magnifying glass in the toolbar. On a Lux tab the palette opens in place; on any other page Lux opens a new tab and puts the palette in it. Type to filter, move with the arrow keys, and press `Enter` to run the highlighted row.",
+      },
+      {
+        kind: "figure",
+        media: "command-palette",
+        alt: "The command palette open over the dashboard, listing Spotify playlists inside its search scope",
+        caption: "Open it anywhere, type to filter, and press Enter.",
+      },
+      {
+        kind: "prose",
+        text: "It searches four things at once: what your widgets can do, the dashboard's own actions, your browser data, and the web. Some rows open a scope of their own — picking **Search** on the Spotify rows lets you find a track and play it without leaving the palette. `Backspace` on an empty box steps back out of a scope.",
+      },
+      {
+        kind: "callout",
+        title: "Why this shortcut is set in Chrome",
+        text: "A new tab gives the keyboard to the address bar, and Chrome does not let a page take it. `Alt+T` is therefore registered with the browser rather than with Lux, which is the only way it can reach you before the page has focus. That also means Lux cannot rebind it — change it at `chrome://extensions/shortcuts`, and Settings → Shortcuts shows you what it is currently set to.",
+      },
+      {
+        kind: "prose",
+        text: "Every command is listed whether or not it can run yet. The ones still waiting on something — a connected account, a widget on your grid, or permission to read your bookmarks or history — sit dimmed with the reason in their place, and pressing one takes you straight to the thing it needs. Lux asks for nothing on its own. Settings → Command palette is where you switch each source on or off, choose whether a result replaces this tab, and untick any command you would rather never be offered.",
+      },
+      {
+        kind: "settingsLink",
+        tab: "palette",
+        label: "Choose what the palette searches",
+      },
+      {
+        kind: "settingsLink",
+        tab: "shortcuts",
+        label: "See the palette shortcut",
       },
     ],
   },
@@ -117,7 +157,7 @@ const WIDGET_BLOCKS: Record<string, GuideBlock[]> = {
       kind: "figure",
       media: "anilist-overview",
       alt: "Moving between the AniList widget's tabs",
-      caption: "Feed, Library and Discover, and the detail view behind a title.",
+      caption: "Feed, Library and Discover, and a search for anything not on your lists.",
     },
     {
       kind: "prose",
@@ -450,8 +490,8 @@ const WIDGET_BLOCKS: Record<string, GuideBlock[]> = {
     {
       kind: "figure",
       media: "tasks-reorder",
-      alt: "Dragging a task into a new position in the list",
-      caption: "Drag a row to move it; hover one for edit and delete.",
+      alt: "Adding a task and ticking others off, with edit and delete on the hovered row",
+      caption: "Type to add and tick to complete; hover a row for edit and delete.",
     },
     {
       kind: "prose",

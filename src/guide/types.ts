@@ -1,4 +1,11 @@
-type GuideSettingsTab = "appearance" | "widgets" | "accounts" | "shortcuts" | "storage" | "about";
+type GuideSettingsTab =
+  | "appearance"
+  | "widgets"
+  | "accounts"
+  | "shortcuts"
+  | "palette"
+  | "storage"
+  | "about";
 
 export type GuideBlock =
   | { kind: "prose"; text: string }
