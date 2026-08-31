@@ -20,10 +20,16 @@ function createChromeMock() {
       getManifest: vi.fn(() => ({ version: "9.9.9" })),
       onMessage: { addListener: vi.fn(), removeListener: vi.fn() },
       sendMessage: vi.fn(async () => undefined),
+      getURL: vi.fn((path: string) => `chrome-extension://lux/${path}`),
       lastError: undefined as { message: string } | undefined,
+    },
+    commands: {
+      onCommand: { addListener: vi.fn() },
+      getAll: vi.fn(async () => [] as { name: string; shortcut: string }[]),
     },
     tabs: {
       create: vi.fn(async () => ({ id: 1 })),
+      getCurrent: vi.fn(async () => ({ id: 1 })),
       remove: vi.fn(async () => undefined),
       onRemoved: { addListener: vi.fn(), removeListener: vi.fn() },
     },
