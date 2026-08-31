@@ -9,7 +9,7 @@ import betterTailwind from "eslint-plugin-better-tailwindcss";
 import tseslint from "typescript-eslint";
 import prettier from "eslint-config-prettier";
 
-const FEATURE_SLICES = ["settings", "onboarding", "feedback", "changelog"];
+const FEATURE_SLICES = ["settings", "onboarding", "feedback", "changelog", "commands", "palette"];
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 

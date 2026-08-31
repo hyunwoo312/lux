@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 
 export const SEARCH_DEBOUNCE_MS = 300;
 
+const SPINNER_GRACE_MS = 150;
+
 export type SearchState<T> =
   | { status: "idle" }
   | { status: "loading"; data: T[] }
@@ -35,16 +37,21 @@ export function useDebouncedSearch<T>(
     }
 
     const controller = new AbortController();
-    setState((previous) => ({ status: "loading", data: searchResults(previous) }));
+    const spinner = window.setTimeout(() => {
+      setState((previous) => ({ status: "loading", data: searchResults(previous) }));
+    }, delayMs + SPINNER_GRACE_MS);
+    const settle = (next: SearchState<T>) => {
+      if (controller.signal.aborted) return;
+      window.clearTimeout(spinner);
+      setState(next);
+    };
     const timer = window.setTimeout(() => {
       search(trimmed, controller.signal)
         .then((data) => {
-          if (controller.signal.aborted) return;
-          setState(data.length === 0 ? { status: "empty" } : { status: "success", data });
+          settle(data.length === 0 ? { status: "empty" } : { status: "success", data });
         })
         .catch((error: unknown) => {
-          if (controller.signal.aborted) return;
-          setState({
+          settle({
             status: "error",
             error: error instanceof Error ? error : new Error("Search failed."),
           });
@@ -54,6 +61,7 @@ export function useDebouncedSearch<T>(
     return () => {
       controller.abort();
       window.clearTimeout(timer);
+      window.clearTimeout(spinner);
     };
   }, [query, search, minLength, delayMs]);
 

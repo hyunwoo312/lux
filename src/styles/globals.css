@@ -446,6 +446,17 @@
   }
 }
 
+@utility scrollbar-transient {
+  &::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    transition: background-color var(--duration-base) var(--ease-standard);
+  }
+
+  &[data-scrolling="true"]::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+  }
+}
+
 @property --fade-start {
   syntax: "<length>";
   inherits: false;

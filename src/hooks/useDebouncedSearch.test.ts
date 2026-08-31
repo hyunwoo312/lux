@@ -34,7 +34,7 @@ describe("useDebouncedSearch", () => {
     expect(result.current).toEqual({ status: "success", data: ["second"] });
   });
 
-  it("keeps the previous results visible while the next query loads", async () => {
+  it("does not flash a loading state while a quick search settles", async () => {
     const search = vi
       .fn<(query: string, signal: AbortSignal) => Promise<string[]>>()
       .mockResolvedValue(["apple"]);
@@ -43,6 +43,21 @@ describe("useDebouncedSearch", () => {
     await waitFor(() => expect(result.current).toEqual({ status: "success", data: ["apple"] }));
 
     rerender({ query: "two" });
-    expect(result.current).toEqual({ status: "loading", data: ["apple"] });
+    expect(result.current).toEqual({ status: "success", data: ["apple"] });
+  });
+
+  it("keeps the previous results visible once a slow search shows loading", async () => {
+    const search = vi
+      .fn<(query: string, signal: AbortSignal) => Promise<string[]>>()
+      .mockResolvedValueOnce(["apple"])
+      .mockImplementation(() => new Promise<string[]>(() => undefined));
+
+    const { result, rerender } = renderSearch(search);
+    await waitFor(() => expect(result.current).toEqual({ status: "success", data: ["apple"] }));
+
+    rerender({ query: "two" });
+    await waitFor(() => expect(result.current).toEqual({ status: "loading", data: ["apple"] }), {
+      timeout: 2000,
+    });
   });
 });

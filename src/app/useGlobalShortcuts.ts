@@ -13,6 +13,7 @@ import { useToastStore } from "@/stores/useToastStore";
 import { useSettingsStore } from "@/settings";
 import { useGuideStore } from "@/guide";
 import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
+import { useCommandPaletteStore } from "@/palette";
 
 const HANDLERS: Record<ShortcutAction, () => void> = {
   openSettings: () => {
@@ -34,10 +35,37 @@ const HANDLERS: Record<ShortcutAction, () => void> = {
   },
 };
 
-const OWN_DIALOG_OPEN: Partial<Record<ShortcutAction, () => boolean>> = {
-  openSettings: () => useSettingsStore.getState().open,
-  openGuide: () => useGuideStore.getState().open,
+export function runShortcutAction(action: ShortcutAction): void {
+  HANDLERS[action]();
+}
+
+type DialogLayer = { isOpen: () => boolean; close: () => void };
+
+const DIALOG_FOR: Partial<Record<ShortcutAction, DialogLayer>> = {
+  openSettings: {
+    isOpen: () => useSettingsStore.getState().open,
+    close: () => useSettingsStore.getState().closeSettings(),
+  },
+  openGuide: {
+    isOpen: () => useGuideStore.getState().open,
+    close: () => useGuideStore.getState().closeGuide(),
+  },
+  addWidget: {
+    isOpen: () => useWidgetPaletteStore.getState().open,
+    close: () => useWidgetPaletteStore.getState().setOpen(false),
+  },
 };
+
+const COMMAND_PALETTE: DialogLayer = {
+  isOpen: () => useCommandPaletteStore.getState().open,
+  close: () => useCommandPaletteStore.getState().closePalette(),
+};
+
+export function closeOpenDialogs(): void {
+  for (const layer of [...Object.values(DIALOG_FOR), COMMAND_PALETTE]) {
+    if (layer.isOpen()) layer.close();
+  }
+}
 
 function dismissTopLayer(): boolean {
   const toasts = useToastStore.getState();
@@ -56,18 +84,20 @@ function dismissTopLayer(): boolean {
 export function useGlobalShortcuts() {
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.defaultPrevented || isEditableTarget(event.target)) return;
+      if (event.defaultPrevented) return;
       const modalOpen = isModalLayerOpen();
 
       if (event.key === "Escape") {
-        if (!modalOpen && dismissTopLayer()) event.preventDefault();
+        if (!isEditableTarget(event.target) && !modalOpen && dismissTopLayer())
+          event.preventDefault();
         return;
       }
 
       const bindings = useShortcutsStore.getState();
       for (const definition of SHORTCUT_DEFINITIONS) {
         if (!matchesAnyShortcut(event, bindings[definition.id])) continue;
-        if (modalOpen && !OWN_DIALOG_OPEN[definition.id]?.()) return;
+        const dialog = DIALOG_FOR[definition.id];
+        if (modalOpen && dialog && !dialog.isOpen()) closeOpenDialogs();
         event.preventDefault();
         HANDLERS[definition.id]();
         return;

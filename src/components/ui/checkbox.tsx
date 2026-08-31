@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
-import { Check } from "lucide-react";
+import { Check, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function Checkbox({ className, ...props }: ComponentProps<typeof CheckboxPrimitive.Root>) {
@@ -9,7 +9,7 @@ function Checkbox({ className, ...props }: ComponentProps<typeof CheckboxPrimiti
       data-slot="checkbox"
       className={cn(
         `
-          peer border-input focus-ring press
+          peer group/checkbox border-input focus-ring press
           data-[state=unchecked]:hover:border-foreground/25
           data-[state=checked]:border-primary data-[state=checked]:bg-primary
           data-[state=checked]:text-primary-foreground
@@ -24,7 +24,14 @@ function Checkbox({ className, ...props }: ComponentProps<typeof CheckboxPrimiti
         data-slot="checkbox-indicator"
         className="flex items-center justify-center text-current"
       >
-        <Check className="size-3" strokeWidth={3.5} />
+        <Check
+          className="size-3 group-data-[state=indeterminate]/checkbox:hidden"
+          strokeWidth={3.5}
+        />
+        <Minus
+          className="hidden size-3 group-data-[state=indeterminate]/checkbox:block"
+          strokeWidth={3.5}
+        />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );

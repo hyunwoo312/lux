@@ -1,8 +1,11 @@
 import {
   ANILIST_CALLBACK_KEY,
   CHANGELOG_PENDING_KEY,
+  OPEN_PALETTE_COMMAND,
+  PALETTE_PARAM,
   anilistCallbackSchema,
   type AnilistCallback,
+  type OpenPaletteMessage,
 } from "@/lib/extension-keys";
 
 chrome.runtime.onInstalled.addListener((details) => {
@@ -28,4 +31,16 @@ async function stashAnilistCallback(
   await chrome.storage.session.set({ [ANILIST_CALLBACK_KEY]: callback }).catch(() => undefined);
   if (tabId === undefined) return;
   await chrome.tabs.remove(tabId).catch(() => undefined);
+}
+
+chrome.commands.onCommand.addListener((command, tab) => {
+  if (command !== OPEN_PALETTE_COMMAND || tab?.id === undefined) return;
+  void routePalette(tab.id);
+});
+
+async function routePalette(activeTabId: number): Promise<void> {
+  const message: OpenPaletteMessage = { type: "open-palette", activeTabId };
+  const handled = await chrome.runtime.sendMessage(message).catch(() => undefined);
+  if (handled === true) return;
+  await chrome.tabs.create({ url: chrome.runtime.getURL(`index.html?${PALETTE_PARAM}=1`) });
 }

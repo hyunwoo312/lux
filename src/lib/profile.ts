@@ -12,6 +12,7 @@ export const STORE_KEYS = [
   "changelog",
   "dashboard",
   "feedback",
+  "palette",
   "settings",
   "shortcuts",
   "wallpaper",

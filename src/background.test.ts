@@ -16,8 +16,10 @@ function chromeMock() {
     runtime: {
       onMessage: { addListener: ReturnType<typeof vi.fn> };
       onInstalled: { addListener: ReturnType<typeof vi.fn> };
+      sendMessage: ReturnType<typeof vi.fn>;
     };
-    tabs: { remove: ReturnType<typeof vi.fn> };
+    commands: { onCommand: { addListener: ReturnType<typeof vi.fn> } };
+    tabs: { remove: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn> };
     storage: {
       session: {
         get: (key: string) => Promise<Record<string, unknown>>;
@@ -45,6 +47,16 @@ async function loadInstalledListener(): Promise<(details: { reason: string }) =>
     | ((details: { reason: string }) => void)
     | undefined;
   if (!listener) throw new Error("background.ts registered no onInstalled listener");
+  return listener;
+}
+
+async function loadCommandListener(): Promise<(command: string, tab?: { id?: number }) => void> {
+  vi.resetModules();
+  await import("@/background");
+  const listener = chromeMock().commands.onCommand.addListener.mock.calls.at(-1)?.[0] as
+    | ((command: string, tab?: { id?: number }) => void)
+    | undefined;
+  if (!listener) throw new Error("background.ts registered no onCommand listener");
   return listener;
 }
 
@@ -176,5 +188,37 @@ describe("background worker — storage keys", () => {
   it("writes only keys the profile registry knows about", () => {
     expect(EXTENSION_SESSION_KEYS).toContain(ANILIST_CALLBACK_KEY);
     expect(EXTENSION_LOCAL_KEYS).toContain(CHANGELOG_PENDING_KEY);
+  });
+});
+
+describe("background worker — palette command", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("hands the command to the Lux page already in the active tab", async () => {
+    const onCommand = await loadCommandListener();
+    chromeMock().runtime.sendMessage.mockResolvedValueOnce(true);
+
+    onCommand("open-palette", { id: 7 });
+    await flush();
+
+    expect(chromeMock().runtime.sendMessage).toHaveBeenCalledWith({
+      type: "open-palette",
+      activeTabId: 7,
+    });
+    expect(chromeMock().tabs.create).not.toHaveBeenCalled();
+  });
+
+  it("opens a new tab with the palette when the active tab is not Lux", async () => {
+    const onCommand = await loadCommandListener();
+    chromeMock().runtime.sendMessage.mockResolvedValueOnce(undefined);
+
+    onCommand("open-palette", { id: 7 });
+    await flush();
+
+    expect(chromeMock().tabs.create).toHaveBeenCalledWith({
+      url: "chrome-extension://lux/index.html?palette=1",
+    });
   });
 });

@@ -7,6 +7,8 @@ import { Header } from "@/app/Header";
 import { WidgetDragOverlay } from "@/app/WidgetDragOverlay";
 import { Toaster } from "@/components/Toaster";
 import { SettingsDialog } from "@/settings";
+import { CommandPalette } from "@/palette";
+import { usePaletteCommand } from "@/app/usePaletteCommand";
 import { Welcome } from "@/onboarding";
 import { WidgetGrid } from "@/widgets/WidgetGrid";
 import { useGlobalShortcuts } from "@/app/useGlobalShortcuts";
@@ -23,6 +25,7 @@ import { usePersistHydrated } from "@/hooks/usePersistHydrated";
 
 export function App() {
   useGlobalShortcuts();
+  usePaletteCommand();
   useDisableContextMenu();
   const wallpaperSource = useWallpaperStore((s) => s.source);
   const isPattern = wallpaperSource === "generated";
@@ -60,6 +63,7 @@ export function App() {
       <WidgetDragOverlay />
       <Toaster />
       <SettingsDialog />
+      <CommandPalette />
       <Welcome />
     </TooltipProvider>
   );

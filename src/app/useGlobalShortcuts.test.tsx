@@ -6,6 +6,7 @@ import { useDashboardStore } from "@/stores/useDashboardStore";
 import { useToastStore } from "@/stores/useToastStore";
 import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
 import { useSettingsStore } from "@/settings";
+import { useCommandPaletteStore } from "@/palette";
 
 function Host() {
   useGlobalShortcuts();
@@ -24,6 +25,7 @@ beforeEach(() => {
   useWidgetPaletteStore.setState({ open: false });
   useToastStore.setState({ toast: null });
   useSettingsStore.setState({ open: false });
+  useCommandPaletteStore.setState({ open: false });
 });
 
 afterEach(() => {
@@ -38,15 +40,15 @@ describe("global shortcuts", () => {
     expect(event.defaultPrevented).toBe(true);
   });
 
-  it("stays out of the way while a modal layer is open", () => {
+  it("still runs non-dialog shortcuts while a modal layer is open", () => {
     document.body.style.pointerEvents = "none";
 
     press("e", { ctrlKey: true });
 
-    expect(useDashboardStore.getState().editing).toBe(false);
+    expect(useDashboardStore.getState().editing).toBe(true);
   });
 
-  it("stays out of the way while typing", () => {
+  it("runs shortcuts even while focus sits in a text field", () => {
     const input = document.createElement("input");
     document.body.append(input);
 
@@ -54,7 +56,7 @@ describe("global shortcuts", () => {
       new KeyboardEvent("keydown", { key: "e", ctrlKey: true, bubbles: true, cancelable: true }),
     );
 
-    expect(useDashboardStore.getState().editing).toBe(false);
+    expect(useDashboardStore.getState().editing).toBe(true);
     input.remove();
   });
 
@@ -66,6 +68,39 @@ describe("global shortcuts", () => {
     press(",", { ctrlKey: true });
 
     expect(useSettingsStore.getState().open).toBe(false);
+  });
+
+  it("opens a dialog even while focus sits in a text field", () => {
+    const input = document.createElement("input");
+    document.body.append(input);
+
+    input.dispatchEvent(
+      new KeyboardEvent("keydown", { key: ",", ctrlKey: true, bubbles: true, cancelable: true }),
+    );
+
+    expect(useSettingsStore.getState().open).toBe(true);
+    input.remove();
+  });
+
+  it("swaps one dialog for another when a dialog shortcut fires over it", () => {
+    press(",", { ctrlKey: true });
+    expect(useSettingsStore.getState().open).toBe(true);
+
+    document.body.style.pointerEvents = "none";
+    press("a", { ctrlKey: true, shiftKey: true });
+
+    expect(useSettingsStore.getState().open).toBe(false);
+    expect(useWidgetPaletteStore.getState().open).toBe(true);
+  });
+
+  it("closes the command palette when another dialog's shortcut fires", () => {
+    useCommandPaletteStore.setState({ open: true });
+    document.body.style.pointerEvents = "none";
+
+    press(",", { ctrlKey: true });
+
+    expect(useCommandPaletteStore.getState().open).toBe(false);
+    expect(useSettingsStore.getState().open).toBe(true);
   });
 
   it("dismisses the toast before leaving edit mode", () => {

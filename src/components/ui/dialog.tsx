@@ -21,11 +21,15 @@ function DialogOverlay({ className, ...props }: ComponentProps<typeof DialogPrim
 
 const dialogContentVariants = cva(
   `
-    dialog-content bg-popover text-popover-foreground glass-panel z-modal fixed inset-0 m-auto h-fit
-    max-w-[calc(100vw-2rem)] rounded-3xl outline-none
+    dialog-content text-popover-foreground z-modal fixed inset-0 m-auto h-fit
+    max-w-[calc(100vw-2rem)] outline-none
   `,
   {
     variants: {
+      surface: {
+        panel: "bg-popover glass-panel rounded-3xl",
+        glass: "glass rounded-2xl",
+      },
       layout: {
         default: "",
         flush: "flex flex-col gap-0 overflow-hidden p-0",
@@ -40,6 +44,7 @@ const dialogContentVariants = cva(
       },
     },
     defaultVariants: {
+      surface: "panel",
       layout: "default",
       width: "md",
     },
@@ -56,6 +61,7 @@ type DialogContentProps = ComponentProps<typeof DialogPrimitive.Content> &
 function DialogContent({
   className,
   children,
+  surface,
   layout,
   width,
   showClose = true,
@@ -73,7 +79,7 @@ function DialogContent({
           if (!dismissOnClickOutside) event.preventDefault();
           onInteractOutside?.(event);
         }}
-        className={cn(dialogContentVariants({ layout, width, className }))}
+        className={cn(dialogContentVariants({ surface, layout, width, className }))}
         {...props}
       >
         {children}
