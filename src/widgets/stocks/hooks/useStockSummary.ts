@@ -23,7 +23,11 @@ export type StockSummary = {
   points: PricePoint[];
 };
 
-export function useStockSummary(symbol: string, spark: SparkSeries | undefined): StockSummary {
+export function useStockSummary(
+  symbol: string,
+  spark: SparkSeries | undefined,
+  now: number,
+): StockSummary {
   const { state, data } = useQuote(symbol, { range: DAY_RANGE });
 
   const live = spark != null && spark.points.length > 0;
@@ -44,7 +48,7 @@ export function useStockSummary(symbol: string, spark: SparkSeries | undefined):
     change,
     percent,
     direction: directionOf(change),
-    extended: data ? extendedSession(data, Date.now()) : null,
+    extended: data ? extendedSession(data, now) : null,
     points: spark?.points ?? data?.bars ?? [],
   };
 }

@@ -189,8 +189,7 @@ export const useWeatherStore = create<WeatherState>()(
         set((state) => update(state, instanceId, (data) => ({ ...data, metrics }))),
       requestSync: (instanceId) => {
         if (isSyncCoolingDown(get(), instanceId, WEATHER_SYNC_COOLDOWN_MS)) return;
-        const inst = get().byInstance[instanceId];
-        if (!inst) return;
+        const inst = get().byInstance[instanceId] ?? DEFAULT_DATA;
         for (const location of inst.locations) {
           stalePolledResource(weatherCacheKey(location, inst.units, inst.windUnit));
         }

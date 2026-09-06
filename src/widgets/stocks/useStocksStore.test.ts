@@ -198,6 +198,12 @@ describe("useStocksStore", () => {
       expect(store().syncNonce[ID]).toBe(1);
     });
 
+    it("refreshes a widget that has never been written, using its defaults", () => {
+      useStocksStore.setState({ byInstance: {} });
+      store().requestSync(ID);
+      expect(store().syncNonce[ID]).toBe(1);
+    });
+
     it("drops sync state on instance cleanup", () => {
       store().requestSync(ID);
       store().removeInstance(ID);

@@ -148,8 +148,7 @@ export const useStocksStore = create<StocksState>()(
         set((state) => update(state, instanceId, (data) => ({ ...data, selectedSymbol: null }))),
       requestSync: (instanceId) => {
         if (isSyncCoolingDown(get(), instanceId, STOCKS_SYNC_COOLDOWN_MS)) return;
-        const data = get().byInstance[instanceId];
-        if (!data) return;
+        const data = get().byInstance[instanceId] ?? DEFAULT_DATA;
         stalePolledResource(sparkKey(data.symbols, DAY_RANGE));
         for (const symbol of data.symbols) {
           stalePolledResource(quoteKey(symbol, DAY_RANGE));

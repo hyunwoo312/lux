@@ -17,6 +17,7 @@ import type { CurrentEntry, ScoreFormat } from "@/widgets/anilist/types";
 type LibraryRowProps = {
   entry: CurrentEntry;
   newTab: boolean;
+  now: number;
   scoreFormat: ScoreFormat;
   pending: boolean;
   inProgress: boolean;
@@ -28,6 +29,7 @@ type LibraryRowProps = {
 export function LibraryRow({
   entry,
   newTab,
+  now,
   scoreFormat,
   pending,
   inProgress,
@@ -71,6 +73,7 @@ export function LibraryRow({
               <AiringBadge
                 airingAt={entry.nextEpisode.airingAt}
                 episode={entry.nextEpisode.episode}
+                now={now}
               />
             )}
           </span>

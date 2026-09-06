@@ -6,6 +6,7 @@ import { AIRING_SOON_SECONDS } from "@/widgets/anilist/types";
 type AiringBadgeProps = {
   airingAt: number;
   episode: number;
+  now: number;
   tone?: "art" | "surface";
   className?: string;
 };
@@ -15,8 +16,13 @@ const SOON_TONE = {
   surface: "bg-foreground/12 text-ink",
 } as const;
 
-export function AiringBadge({ airingAt, episode, tone = "surface", className }: AiringBadgeProps) {
-  const now = Date.now();
+export function AiringBadge({
+  airingAt,
+  episode,
+  now,
+  tone = "surface",
+  className,
+}: AiringBadgeProps) {
   const soon = airingAt - Math.floor(now / 1000) <= AIRING_SOON_SECONDS;
   const countdown = formatAiringIn(airingAt, now);
   const Icon = soon ? Zap : Clock;

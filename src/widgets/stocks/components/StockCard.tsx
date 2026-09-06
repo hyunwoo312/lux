@@ -13,6 +13,7 @@ import type { SparkSeries } from "@/widgets/stocks/types";
 type StockCardProps = {
   symbol: string;
   spark: SparkSeries | undefined;
+  now: number;
   onSelect: () => void;
   onRemove: () => void;
 };
@@ -26,11 +27,11 @@ function Meta({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function StockCard({ symbol, spark, onSelect, onRemove }: StockCardProps) {
+export function StockCard({ symbol, spark, now, onSelect, onRemove }: StockCardProps) {
   const showName = useStocks((d) => d.showName);
   const changeMode = useStocks((d) => d.changeMode);
   const { state, quote, price, reference, change, percent, direction, extended, points } =
-    useStockSummary(symbol, spark);
+    useStockSummary(symbol, spark, now);
 
   const priceHint = quote?.priceHint ?? 2;
   const dayRange =

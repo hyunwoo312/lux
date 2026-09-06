@@ -225,6 +225,12 @@ describe("useWeatherStore", () => {
       store().requestSync(ID);
       expect(store().syncNonce[ID]).toBe(1);
     });
+
+    it("refreshes a widget that has never been written, using its defaults", () => {
+      useWeatherStore.setState({ byInstance: {} });
+      store().requestSync(ID);
+      expect(store().syncNonce[ID]).toBe(1);
+    });
   });
 
   describe("migrate", () => {

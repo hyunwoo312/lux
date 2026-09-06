@@ -10,6 +10,7 @@ import { GRID_MODIFIERS, useSortableSensors, VERTICAL_LIST_MODIFIERS } from "@/l
 import { enterTween, viewSwap } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useNow } from "@/hooks/useNow";
 import { SortableRow } from "@/widgets/core/SortableRow";
 import { StockRow } from "@/widgets/stocks/components/StockRow";
 import { StockCard } from "@/widgets/stocks/components/StockCard";
@@ -33,6 +34,7 @@ export function StocksWidget() {
   const reorderSymbols = useStocksStore((s) => s.reorderSymbols);
 
   const [ref, { width }] = useElementSize<HTMLDivElement>();
+  const now = useNow().getTime();
   const sensors = useSortableSensors();
   const { map } = useWatchlistSparks();
 
@@ -51,6 +53,7 @@ export function StocksWidget() {
     const shared = {
       symbol,
       spark: map?.[symbol],
+      now,
       onSelect: () => selectSymbol(instanceId, symbol),
       onRemove: () => removeSymbol(instanceId, symbol),
     };

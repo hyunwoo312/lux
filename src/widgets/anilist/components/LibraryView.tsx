@@ -4,6 +4,7 @@ import { loadErrorMessage } from "@/lib/net";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { Button } from "@/components/ui/button";
 import { fade } from "@/lib/motion";
+import { useNow } from "@/hooks/useNow";
 import { usePolledDefinition, patchPolledResource } from "@/widgets/core/usePolledResource";
 import { anilistLibrary } from "@/widgets/anilist/lib/resources";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
@@ -114,6 +115,7 @@ function ListBody({
   const sort = useAnilist((d) => d.currentSort);
   const listFilter = useAnilist((d) => d.listFilter);
   const viewMode = useAnilist((d) => d.viewMode);
+  const now = useNow().getTime();
   const [pending, setPending] = useState<Record<number, boolean>>({});
   const [writeError, setWriteError] = useState("");
   const [announcement, setAnnouncement] = useState("");
@@ -220,6 +222,7 @@ function ListBody({
             <Item
               entry={entry}
               newTab={newTab}
+              now={now}
               scoreFormat={data.scoreFormat}
               pending={pending[entry.id] ?? false}
               inProgress={isInProgress(entry)}

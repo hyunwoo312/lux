@@ -15,16 +15,17 @@ import type { SparkSeries } from "@/widgets/stocks/types";
 type StockRowProps = {
   symbol: string;
   spark: SparkSeries | undefined;
+  now: number;
   showSparkline: boolean;
   onSelect: () => void;
   onRemove: () => void;
 };
 
-export function StockRow({ symbol, spark, showSparkline, onSelect, onRemove }: StockRowProps) {
+export function StockRow({ symbol, spark, now, showSparkline, onSelect, onRemove }: StockRowProps) {
   const showName = useStocks((d) => d.showName);
   const changeMode = useStocks((d) => d.changeMode);
   const { state, quote, price, reference, change, percent, direction, extended, points } =
-    useStockSummary(symbol, spark);
+    useStockSummary(symbol, spark, now);
 
   const graphClass = cn("min-w-0 flex-1", showName ? "h-7" : "h-5");
 

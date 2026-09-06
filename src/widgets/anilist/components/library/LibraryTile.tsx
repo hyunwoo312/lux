@@ -21,6 +21,7 @@ import type { CurrentEntry, ScoreFormat } from "@/widgets/anilist/types";
 type LibraryTileProps = {
   entry: CurrentEntry;
   newTab: boolean;
+  now: number;
   scoreFormat: ScoreFormat;
   pending: boolean;
   inProgress: boolean;
@@ -32,6 +33,7 @@ type LibraryTileProps = {
 export function LibraryTile({
   entry,
   newTab,
+  now,
   scoreFormat,
   pending,
   inProgress,
@@ -79,6 +81,7 @@ export function LibraryTile({
             <AiringBadge
               airingAt={entry.nextEpisode.airingAt}
               episode={entry.nextEpisode.episode}
+              now={now}
               tone="art"
               className="
                 text-micro absolute top-1 right-1 rounded-sm bg-black/60 px-1 py-px text-white
