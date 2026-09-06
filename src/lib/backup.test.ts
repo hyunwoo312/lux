@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { importSettings } from "@/lib/backup";
+import { upgradeProfile } from "@/lib/profile";
 
 function makeFile(value: unknown): File {
   return new File([JSON.stringify(value)], "backup.json", { type: "application/json" });
@@ -90,6 +91,29 @@ describe("importSettings", () => {
     const stored = await chrome.storage.local.get(null);
     expect(stored["lux:integrations"]).toEqual({ accounts: ["spotify"] });
     expect(stored["lux:integration-config"]).toEqual({ spotify: { clientId: "abc" } });
+  });
+
+  it("keeps Google signed in after importing a backup from before the profile ledger", async () => {
+    const integrations = {
+      accounts: {
+        "google-1": {
+          id: "google-1",
+          providerId: "google",
+          status: "connected",
+          lastAuthorizedAt: "2026-09-01T00:00:00.000Z",
+          token: { accessToken: "a", refreshToken: "r" },
+        },
+      },
+    };
+    await chrome.storage.local.set({
+      "lux:profile": { version: 3 },
+      "lux:integrations": integrations,
+    });
+
+    await importSettings(makeBackup({ chromeLocal: { "lux:dashboard": { widgets: [] } } }));
+    await upgradeProfile();
+
+    expect((await chrome.storage.local.get(null))["lux:integrations"]).toEqual(integrations);
   });
 
   it("leaves existing settings intact when the write fails", async () => {

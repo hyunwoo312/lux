@@ -105,7 +105,7 @@ async function requireGoogleReconnect(): Promise<void> {
   const next: Record<string, unknown> = {};
 
   for (const [id, value] of Object.entries(blob.accounts)) {
-    if (!isRecord(value) || value.providerId !== "google") {
+    if (!isRecord(value) || value.providerId !== "google" || "lastAuthorizedAt" in value) {
       next[id] = value;
       continue;
     }
