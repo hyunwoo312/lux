@@ -119,7 +119,9 @@ function ImageDetailRow({ item, focalEnabled, onCaption, onFocal }: ImageDetailR
           className="text-caption"
         />
         {focalEnabled && (
-          <span className="text-ink-3 text-micro">Click the thumbnail to set the focal point</span>
+          <span className="text-ink-3 text-micro">
+            Click or use arrow keys on the thumbnail to set the focal point
+          </span>
         )}
       </div>
     </div>

@@ -45,9 +45,9 @@ _One setup, with every widget sized and placed to taste._
 
 > **Where your data lives**
 >
-> Your layout, notes and settings are stored in this browser. Widgets fetch straight from the services they show — weather, news, your calendar — and Lux keeps no copy of any of it on a server. Signing in to Microsoft or GitHub is the one exception: the last step passes through a small Lux relay, because those providers require a secret that cannot ship inside an extension. The relay completes the exchange and stores nothing.
+> Your layout, notes and settings are stored in this browser. Widgets fetch straight from the services they show — weather, news, your calendar — and Lux keeps no copy of any of it on a server. Signing in to Google, Microsoft or GitHub is the one exception: the last step passes through a small Lux relay, because those providers require a secret that cannot ship inside an extension. The relay completes the exchange and stores nothing.
 
-[Read the privacy policy](https://lux.hyunwk.me/privacy)
+[Read the privacy policy](https://lux.hyunwk.me/privacy/)
 
 ### The toolbar
 
@@ -85,7 +85,7 @@ _Surface, accent and per-widget options all live here._
 
 > **Want two of something?**
 >
-> You can add more than one of the same widget. Two notes, two clocks, a Weather for home and another for wherever you are travelling — add them the same way you added the first.
+> You can add more than one of the same widget. Two notes, a Weather for home and another for wherever you are travelling — add them the same way you added the first.
 
 ### Keyboard shortcuts
 
@@ -163,7 +163,7 @@ Each widget carries a settings control in its own header, outside edit mode. Tha
 
 <a id="calendar"></a>
 
-_Google and Outlook events together, read-only, in two views._
+_Google Calendar and Outlook Calendar events together, read-only, in two views._
 
 **Agenda** puts the day on a time axis, with all-day items in a row above it.
 
@@ -496,10 +496,10 @@ A widget that needs an account shows a **Connect** button. Press it and you sign
 #### What each one is allowed to see
 
 - **Google** — Read-only access to your calendars, plus your email address so the widget can show which account it is using. It cannot send, create, move or delete anything.
-- **Outlook** — The same read-only calendar and mail access, through Microsoft.
+- **Microsoft** — Read-only access to your Outlook calendar and basic profile.
 - **Spotify** — What is playing, control over it, and your library and playlists so search and the queue work. Controlling playback needs Premium — Spotify's rule for every app, not ours.
-- **GitHub** — Your profile, notifications, and repository access — the broad-sounding one on GitHub's consent screen, which is what lets private contributions count towards your heatmap. Lux only reads with it.
-- **AniList** — Your list, progress and notifications. The only one that writes as well as reads — liking something or bumping an episode count, and only when you do it.
+- **GitHub** — Your profile, notifications, and repository access — the broad-sounding one on GitHub's consent screen, which is what lets private contributions count towards your heatmap. Lux reads with it, and writes only to your notifications when you act — marking them read or unsubscribing.
+- **AniList** — Your list, progress and notifications. It writes only when you act — liking something, bumping an episode count, or adding a title to your list.
 
 Google, Microsoft and GitHub finish sign-in through a small Lux relay, because those providers need a secret that cannot live inside an extension. Spotify and AniList talk to your browser directly. The relay keeps nothing.
 

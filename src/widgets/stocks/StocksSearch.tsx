@@ -102,7 +102,7 @@ export function StocksSearch() {
           Remove a symbol to add another (max {MAX_SYMBOLS}).
         </p>
       ) : state.status === "error" ? (
-        <p className="text-ink-3 px-2 py-2 text-caption">Couldn't search for symbols.</p>
+        <p className="text-ink-3 px-2 py-2 text-caption">Couldn’t search for symbols.</p>
       ) : state.status === "loading" && results.length === 0 ? (
         <p className="text-ink-3 px-2 py-2 text-caption">Searching…</p>
       ) : results.length === 0 ? (

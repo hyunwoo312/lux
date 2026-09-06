@@ -201,7 +201,7 @@ export function FeedbackForm({
             animate={{ opacity: 1, scale: 1 }}
             transition={springPop(reduced)}
           >
-            {cooling ? `Wait ${Math.ceil(waitMs / 1000)}s` : "Send Feedback"}
+            {cooling ? `Wait ${Math.ceil(waitMs / 1000)}s` : "Send feedback"}
           </motion.span>
         </Button>
       </footer>

@@ -20,7 +20,7 @@ const GETTING_STARTED: readonly GuideArticle[] = [
       {
         kind: "callout",
         title: "Where your data lives",
-        text: "Your layout, notes and settings are stored in this browser. Widgets fetch straight from the services they show — weather, news, your calendar — and Lux keeps no copy of any of it on a server. Signing in to Microsoft or GitHub is the one exception: the last step passes through a small Lux relay, because those providers require a secret that cannot ship inside an extension. The relay completes the exchange and stores nothing.",
+        text: "Your layout, notes and settings are stored in this browser. Widgets fetch straight from the services they show — weather, news, your calendar — and Lux keeps no copy of any of it on a server. Signing in to Google, Microsoft or GitHub is the one exception: the last step passes through a small Lux relay, because those providers require a secret that cannot ship inside an extension. The relay completes the exchange and stores nothing.",
       },
       { kind: "link", href: PRIVACY_URL, label: "Read the privacy policy" },
     ],
@@ -85,7 +85,7 @@ const GETTING_STARTED: readonly GuideArticle[] = [
       {
         kind: "callout",
         title: "Want two of something?",
-        text: "You can add more than one of the same widget. Two notes, two clocks, a Weather for home and another for wherever you are travelling — add them the same way you added the first.",
+        text: "You can add more than one of the same widget. Two notes, a Weather for home and another for wherever you are travelling — add them the same way you added the first.",
       },
     ],
   },
@@ -530,7 +530,7 @@ const WIDGET_META: Record<string, { title: string; lead: string }> = {
   anilist: { title: "AniList", lead: "Your anime and manga list, across three tabs." },
   calendar: {
     title: "Calendar",
-    lead: "Google and Outlook events together, read-only, in two views.",
+    lead: "Google Calendar and Outlook Calendar events together, read-only, in two views.",
   },
   github: { title: "GitHub", lead: "Three views of your GitHub activity." },
   image: { title: "Image", lead: "Your own photos, as a single image or a slideshow." },
@@ -581,8 +581,8 @@ export const GUIDE_GROUPS: readonly GuideGroup[] = [
                 text: "Read-only access to your calendars, plus your email address so the widget can show which account it is using. It cannot send, create, move or delete anything.",
               },
               {
-                title: "Outlook",
-                text: "The same read-only calendar and mail access, through Microsoft.",
+                title: "Microsoft",
+                text: "Read-only access to your Outlook calendar and basic profile.",
               },
               {
                 title: "Spotify",
@@ -590,11 +590,11 @@ export const GUIDE_GROUPS: readonly GuideGroup[] = [
               },
               {
                 title: "GitHub",
-                text: "Your profile, notifications, and repository access — the broad-sounding one on GitHub's consent screen, which is what lets private contributions count towards your heatmap. Lux only reads with it.",
+                text: "Your profile, notifications, and repository access — the broad-sounding one on GitHub's consent screen, which is what lets private contributions count towards your heatmap. Lux reads with it, and writes only to your notifications when you act — marking them read or unsubscribing.",
               },
               {
                 title: "AniList",
-                text: "Your list, progress and notifications. The only one that writes as well as reads — liking something or bumping an episode count, and only when you do it.",
+                text: "Your list, progress and notifications. It writes only when you act — liking something, bumping an episode count, or adding a title to your list.",
               },
             ],
           },

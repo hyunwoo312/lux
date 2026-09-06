@@ -17,14 +17,14 @@ export const SHORTCUT_DEFINITIONS = [
   {
     id: "openSettings",
     label: "Open settings",
-    description: "Open this dialog",
+    description: "Open the settings dialog",
     icon: Settings,
     defaults: [ctrl(",")],
   },
   {
     id: "openGuide",
     label: "Open the guide",
-    description: "Guides, shortcuts, and FAQ",
+    description: "Guides and shortcuts",
     icon: CircleHelp,
     defaults: [ctrlShift("h")],
   },

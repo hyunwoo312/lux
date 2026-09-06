@@ -32,7 +32,7 @@ const BACKGROUND_LABELS: Record<ReturnType<typeof useSetImageAsBackground>["stat
   idle: "Set as background",
   saving: "Setting…",
   done: "Background updated",
-  error: "Couldn't set",
+  error: "Couldn’t set",
 };
 
 export function ImageAppearanceGroup({

@@ -42,6 +42,24 @@ const REVIEW_LABEL: Record<PullRequestReview, string> = {
   none: "",
 };
 
+const NOTIFICATION_REASONS: Record<string, string> = {
+  approval_requested: "Approval requested",
+  assign: "Assigned to you",
+  author: "Your thread",
+  ci_activity: "Workflow run",
+  comment: "New comment",
+  invitation: "Invitation",
+  manual: "Subscribed",
+  member_feature_requested: "Feature requested",
+  mention: "Mentioned you",
+  review_requested: "Review requested",
+  security_advisory_credit: "Advisory credit",
+  security_alert: "Security alert",
+  state_change: "State changed",
+  subscribed: "Subscribed",
+  team_mention: "Team mentioned",
+};
+
 const NOTIFICATION_ICONS: Record<string, LucideIcon> = {
   review_requested: Eye,
   mention: AtSign,
@@ -143,7 +161,9 @@ export function NotificationRow({
   actions?: NotificationActions;
 }) {
   const Icon = NOTIFICATION_ICONS[notification.reason] ?? Bell;
-  const meta = `${notification.reason.replace(/_/g, " ")} · ${formatRelativeTime(notification.updatedAt)}`;
+  const reason =
+    NOTIFICATION_REASONS[notification.reason] ?? notification.reason.replace(/_/g, " ");
+  const meta = `${reason} · ${formatRelativeTime(notification.updatedAt)}`;
   const pending = actions?.pending[notification.id] ?? false;
 
   return (

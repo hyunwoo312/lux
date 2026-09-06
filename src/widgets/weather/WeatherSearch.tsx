@@ -95,7 +95,7 @@ export function WeatherSearch() {
           Remove a city to add another (max {MAX_LOCATIONS}).
         </p>
       ) : state.status === "error" ? (
-        <p className="text-ink-3 px-2 py-2 text-caption">Couldn't search for places.</p>
+        <p className="text-ink-3 px-2 py-2 text-caption">Couldn’t search for places.</p>
       ) : state.status === "loading" && results.length === 0 ? (
         <p className="text-ink-3 px-2 py-2 text-caption">Searching…</p>
       ) : results.length === 0 ? (

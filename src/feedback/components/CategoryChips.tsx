@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 import { FEEDBACK_CATEGORIES, type FeedbackCategory } from "@/feedback/types";
 
 const CATEGORY_LABEL: Record<FeedbackCategory, string> = {
-  bug: "Bug Report",
-  idea: "Feature Request",
+  bug: "Bug report",
+  idea: "Feature request",
   other: "Other",
 };
 

@@ -94,8 +94,9 @@ export const PERMISSIONS: PermissionItem[] = [
   {
     id: "search",
     name: "Web search",
-    description: "Sends a trending topic to the search engine you already use, not a fixed one.",
-    usedBy: "News",
+    description:
+      "Sends a trending topic, or a “Search for …” query from the palette, to the search engine you already use, not a fixed one.",
+    usedBy: "News, command palette",
     icon: Search,
     required: true,
   },

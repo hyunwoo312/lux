@@ -109,7 +109,7 @@ export function WallpaperImageOptions() {
       />
       <WidgetConfigSubItem
         title="Order"
-        description="Sequential or random"
+        description="Shuffle or sequential"
         disabled={isSingle}
         control={
           <ConfigSegmented

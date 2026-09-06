@@ -24,8 +24,8 @@ export const PROVIDERS: ProviderMeta[] = [
   },
   {
     id: "microsoft",
-    label: "Outlook",
-    description: "Reads your calendar and profile — read-only.",
+    label: "Microsoft",
+    description: "Reads your Outlook calendar and profile — read-only.",
     icon: OutlookServiceIcon,
   },
   {
@@ -37,7 +37,8 @@ export const PROVIDERS: ProviderMeta[] = [
   {
     id: "github",
     label: "GitHub",
-    description: "Reads your profile, notifications, watched repos, and private repos.",
+    description:
+      "Reads your profile, notifications, watched repos, and private repos; marks notifications read when you do.",
     icon: GitHubServiceIcon,
   },
   {

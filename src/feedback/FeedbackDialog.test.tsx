@@ -21,7 +21,7 @@ function type(value: string) {
 }
 
 function sendButton() {
-  return screen.getByRole("button", { name: "Send Feedback" });
+  return screen.getByRole("button", { name: "Send feedback" });
 }
 
 vi.mock("@/feedback/lib/submit", () => ({ submitFeedback: vi.fn() }));
