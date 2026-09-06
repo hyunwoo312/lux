@@ -403,6 +403,15 @@ describe("useCalendarStore.merge", () => {
     expect(merged.byInstance["a"]?.events).toHaveLength(1);
   });
 
+  it("keeps an event whose title runs past two hundred characters", () => {
+    const title = "x".repeat(201);
+    const merged = mergeInto({
+      byInstance: { a: { ...valid, events: [{ ...createEvent(), title }] } },
+    });
+
+    expect(merged.byInstance["a"]?.events[0]?.title).toBe(title);
+  });
+
   it("drops only the unreadable events from the cache", () => {
     const merged = mergeInto({
       byInstance: { a: { ...valid, events: [createEvent(), { id: "broken" }] } },

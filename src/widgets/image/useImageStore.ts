@@ -92,11 +92,11 @@ export const DEFAULT_IMAGE_CONFIG: ImageConfig = {
 
 const itemSchema = z.object({
   assetId: z.string(),
-  fileName: z.string(),
-  mimeType: z.string(),
-  size: z.number(),
-  caption: z.string().optional(),
-  focal: z.object({ x: z.number(), y: z.number() }).optional(),
+  fileName: z.string().catch(""),
+  mimeType: z.string().catch(""),
+  size: z.number().catch(0),
+  caption: z.string().optional().catch(undefined),
+  focal: z.object({ x: z.number(), y: z.number() }).optional().catch(undefined),
 });
 
 const configSchema = z.object({

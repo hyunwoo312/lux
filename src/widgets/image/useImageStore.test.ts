@@ -180,7 +180,24 @@ describe("useImageStore", () => {
       expect(merged.byInstance["a"]?.items).toHaveLength(1);
     });
 
-    it("drops only the unreadable image from the pool", () => {
+    it("keeps an image whose details are unreadable, so its file is never swept", () => {
+      const merged = mergeInto({
+        byInstance: {
+          a: {
+            ...stored,
+            items: [
+              { assetId: "a1", fileName: 1, mimeType: null, size: "big", caption: 7, focal: "x" },
+            ],
+          },
+        },
+      });
+
+      expect(merged.byInstance["a"]?.items).toEqual([
+        { assetId: "a1", fileName: "", mimeType: "", size: 0 },
+      ]);
+    });
+
+    it("drops only the image without an asset id from the pool", () => {
       const merged = mergeInto({
         byInstance: { a: { ...stored, items: [makeItem("a1"), { assetId: 5 }] } },
       });

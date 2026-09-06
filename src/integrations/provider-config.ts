@@ -4,7 +4,7 @@ import { read, readResult, writeOrThrow } from "@/lib/storage";
 const STORAGE_KEY = "integration-config";
 
 const providerConfigSchema = z.object({
-  spotifyClientId: z.string().min(1).optional(),
+  spotifyClientId: z.string().min(1).optional().catch(undefined),
 });
 type ProviderConfigState = z.infer<typeof providerConfigSchema>;
 

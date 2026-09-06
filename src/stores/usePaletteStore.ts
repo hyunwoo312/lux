@@ -71,11 +71,13 @@ const persistedSchema = z.object({
   suggestionsEnabled: z.boolean().catch(true),
   suggestionCount: z.number().min(SUGGESTION_MIN).max(SUGGESTION_MAX).catch(SUGGESTION_DEFAULT),
   openIn: openBehaviorSchema,
-  enabled: z.object(
-    Object.fromEntries(
-      PALETTE_SOURCES.map((source) => [source, z.boolean().catch(true)]),
-    ) as Record<PaletteSource, z.ZodCatch<z.ZodBoolean>>,
-  ),
+  enabled: z
+    .object(
+      Object.fromEntries(
+        PALETTE_SOURCES.map((source) => [source, z.boolean().catch(true)]),
+      ) as Record<PaletteSource, z.ZodCatch<z.ZodBoolean>>,
+    )
+    .catch({ ...ALL_ON }),
 });
 
 const gatedStorage = createGatedChromeStorage();

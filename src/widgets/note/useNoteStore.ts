@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { createGatedChromeStorage } from "@/lib/storage";
-import { mergePersisted, tolerantRecord } from "@/lib/persist";
+import { looksLikeLegacySingleton, mergePersisted, tolerantRecord } from "@/lib/persist";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { NOTE_FONT_SIZES, type NoteFontSize } from "@/widgets/note/types";
 
@@ -21,13 +21,15 @@ type NoteState = {
 const DEFAULT_NOTE: NoteData = { text: "", fontSize: "base" };
 
 const noteDataSchema = z.object({
-  text: z.string(),
+  text: z.string().catch(""),
   fontSize: z.enum(NOTE_FONT_SIZES).catch("base"),
 });
 
 const persistedSchema = z.object({
   byInstance: tolerantRecord(noteDataSchema),
 });
+
+const LEGACY_KEYS = ["text", "fontSize"] as const;
 
 const gatedStorage = createGatedChromeStorage();
 
@@ -56,6 +58,7 @@ export const useNoteStore = create<NoteState>()(
       partialize: (state) => ({ byInstance: state.byInstance }),
       migrate: (persisted, version) => {
         if (version >= 2) return persisted;
+        if (!looksLikeLegacySingleton(persisted, LEGACY_KEYS)) return { byInstance: {} };
         const legacy = noteDataSchema.safeParse(persisted);
         return { byInstance: legacy.success ? { note: legacy.data } : {} };
       },

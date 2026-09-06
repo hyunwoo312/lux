@@ -4,7 +4,10 @@ vi.mock("@/integrations", () => ({ integrationFetch: vi.fn() }));
 
 import { integrationFetch } from "@/integrations";
 import { RateLimitError } from "@/lib/net";
-import { fetchContributions } from "@/widgets/github/lib/api/contributions";
+import {
+  fetchContributions,
+  parseCachedContributions,
+} from "@/widgets/github/lib/api/contributions";
 import {
   fetchInbox,
   markAllGithubNotificationsRead,
@@ -372,6 +375,14 @@ describe("fetchContributions", () => {
     const data = await fetchContributions();
 
     expect(data.activity?.map((entry) => entry.repo)).toEqual(["o/fine"]);
+  });
+
+  it("round-trips through the cache with its streak ranges", async () => {
+    mockFetch.mockResolvedValue(contributionsResponse([]));
+    const data = await fetchContributions();
+
+    expect(data.currentStreakRange).toBeDefined();
+    expect(parseCachedContributions(JSON.parse(JSON.stringify(data)))).toEqual(data);
   });
 });
 

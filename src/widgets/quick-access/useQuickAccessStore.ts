@@ -75,7 +75,7 @@ const linkSchema = z.object({
   id: z.string(),
   title: z.string(),
   url: httpUrlSchema,
-  icon: z.string().optional(),
+  icon: z.string().optional().catch(undefined),
 });
 
 const RETIRED_TABS: Record<string, QuickAccessTab> = { recentlyClosed: "home" };

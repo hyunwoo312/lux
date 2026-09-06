@@ -25,11 +25,12 @@ import {
   replaceProviderAccount,
   writeAccount,
 } from "@/integrations/token-store";
-import type {
-  IntegrationAccount,
-  IntegrationProvider,
-  IntegrationProviderId,
-  IntegrationTokenResponse,
+import {
+  MAX_ERROR_LENGTH,
+  type IntegrationAccount,
+  type IntegrationProvider,
+  type IntegrationProviderId,
+  type IntegrationTokenResponse,
 } from "@/integrations/types";
 
 const TOKEN_REFRESH_BUFFER_MS = 300_000;
@@ -155,7 +156,7 @@ async function markNeedsReconnect(account: IntegrationAccount, message: string):
   await writeAccount({
     ...account,
     status: "needsReconnect",
-    lastError: message,
+    lastError: message.slice(0, MAX_ERROR_LENGTH),
   });
 }
 
@@ -217,7 +218,11 @@ async function refreshProviderToken(
         : await requestToken(provider, false, account.token?.accessToken);
   } catch (error) {
     if (error instanceof TemporaryAuthError || error instanceof InvalidResponseError) {
-      await writeAccount({ ...account, status: "connected", lastError: error.message });
+      await writeAccount({
+        ...account,
+        status: "connected",
+        lastError: error.message.slice(0, MAX_ERROR_LENGTH),
+      });
       throw error;
     }
     if (error instanceof IntegrationReconnectRequiredError) {

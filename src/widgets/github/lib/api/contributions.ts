@@ -145,6 +145,8 @@ const repoActivitySchema = z.object({
   total: z.number(),
 });
 
+const dateRangeSchema = z.object({ from: z.string(), to: z.string() });
+
 const cachedContributionsSchema = z.object({
   weeks: tolerantArray(tolerantArray(contributionDaySchema)),
   total: z.number().catch(0),
@@ -163,6 +165,8 @@ const cachedContributionsSchema = z.object({
   activity: tolerantArray(repoActivitySchema).optional(),
   bestDay: contributionDaySchema.optional().catch(undefined),
   dailyAverage: z.number().optional().catch(undefined),
+  currentStreakRange: dateRangeSchema.optional().catch(undefined),
+  longestStreakRange: dateRangeSchema.optional().catch(undefined),
 });
 
 export function parseCachedContributions(raw: unknown): ContributionsData | null {

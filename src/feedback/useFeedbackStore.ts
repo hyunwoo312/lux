@@ -8,6 +8,8 @@ import { FEEDBACK_CATEGORIES, type FeedbackDraft } from "@/feedback/types";
 export const COOLDOWN_MS = 60_000;
 export const DUPLICATE_WINDOW_MS = 10 * 60_000;
 
+const DRAFT_LIMIT = 5000;
+
 const EMPTY_DRAFT: FeedbackDraft = {
   category: "bug",
   message: "",
@@ -25,7 +27,10 @@ type FeedbackState = {
 
 const draftSchema = z.object({
   category: z.enum(FEEDBACK_CATEGORIES).catch("bug"),
-  message: z.string().max(5000).catch(""),
+  message: z
+    .string()
+    .catch("")
+    .transform((message) => message.slice(0, DRAFT_LIMIT)),
   includeDiagnostics: z.boolean().catch(true),
 });
 

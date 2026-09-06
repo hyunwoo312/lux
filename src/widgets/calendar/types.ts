@@ -38,10 +38,10 @@ export const calendarEventSchema = z.object({
   id: z.string().min(1),
   calendarId: z.string().min(1),
   provider: z.enum(CALENDAR_PROVIDER_IDS).optional(),
-  title: z.string().min(1).max(200),
+  title: z.string().min(1),
   startsAt: z.string().min(1),
   endsAt: z.string().min(1),
-  location: z.string().max(200).optional(),
+  location: z.string().optional(),
   sourceUrl: z.string().optional(),
   isAllDay: z.boolean(),
   visibility: z.enum(["default", "busy"]),
@@ -54,7 +54,7 @@ export type DisplayCalendarEvent = CalendarEvent & { links: CalendarEventLink[] 
 
 export const connectedCalendarSchema = z.object({
   id: z.string().min(1),
-  summary: z.string().min(1).max(200),
+  summary: z.string().min(1),
   backgroundColor: z.string().max(32).optional(),
   primary: z.boolean().default(false),
   selected: z.boolean().default(false),

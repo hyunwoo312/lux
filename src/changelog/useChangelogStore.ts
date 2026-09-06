@@ -19,7 +19,7 @@ type ChangelogState = {
   markSeen: () => void;
 };
 
-const persistedSchema = z.object({ lastSeenVersion: z.string().nullable() }).partial();
+const persistedSchema = z.object({ lastSeenVersion: z.string().nullable().catch(null) });
 
 const gatedStorage = createGatedChromeStorage();
 

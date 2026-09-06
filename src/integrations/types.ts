@@ -4,6 +4,8 @@ const INTEGRATION_PROVIDER_IDS = ["google", "microsoft", "spotify", "github", "a
 export type IntegrationProviderId = (typeof INTEGRATION_PROVIDER_IDS)[number];
 const integrationProviderIdSchema = z.enum(INTEGRATION_PROVIDER_IDS);
 
+export const MAX_ERROR_LENGTH = 240;
+
 const integrationAccountStatusSchema = z.enum(["connected", "needsReconnect"]);
 export type IntegrationAccountStatus = z.infer<typeof integrationAccountStatusSchema>;
 
@@ -26,7 +28,7 @@ export const integrationAccountSchema = z.object({
   token: integrationTokenSchema.optional(),
   connectedAt: z.string().datetime({ offset: true }),
   lastAuthorizedAt: z.string().datetime({ offset: true }).optional(),
-  lastError: z.string().max(240).optional(),
+  lastError: z.string().max(MAX_ERROR_LENGTH).optional(),
 });
 export type IntegrationAccount = z.infer<typeof integrationAccountSchema>;
 
