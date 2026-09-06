@@ -1,13 +1,19 @@
 import type { PolledDefinition } from "@/widgets/core/usePolledResource";
 import { scoreboardKey, TEAM_INDEX_KEY } from "@/widgets/sports/lib/cacheKeys";
 import { fetchScoreboard, parseCachedScoreboard } from "@/widgets/sports/lib/espn";
+import {
+  fetchLeaderboard,
+  parseCachedLeaderboard,
+  type Leaderboard,
+} from "@/widgets/sports/lib/golf";
 import type { League } from "@/widgets/sports/lib/leagues";
+import { fetchTennis, parseCachedTennis, type TennisEvent } from "@/widgets/sports/lib/tennis";
 import {
   fetchTeamIndex,
   parseCachedTeamIndex,
   type IndexedTeam,
 } from "@/widgets/sports/lib/teamIndex";
-import { datesParam, type DayWindow } from "@/widgets/sports/lib/window";
+import { datesParam, DEFAULT_DAY_WINDOW, type DayWindow } from "@/widgets/sports/lib/window";
 import type { Match } from "@/widgets/sports/types";
 
 const SCOREBOARD_INTERVAL_MS = 60_000;
@@ -19,6 +25,24 @@ export function sportsScoreboard(league: League, dayWindow: DayWindow): PolledDe
     intervalMs: SCOREBOARD_INTERVAL_MS,
     parse: parseCachedScoreboard,
     fetch: (signal) => fetchScoreboard(league.path, signal, datesParam(dayWindow, new Date())),
+  };
+}
+
+export function sportsLeaderboard(league: League): PolledDefinition<Leaderboard | null> {
+  return {
+    cacheKey: scoreboardKey(league, DEFAULT_DAY_WINDOW),
+    intervalMs: SCOREBOARD_INTERVAL_MS,
+    parse: parseCachedLeaderboard,
+    fetch: (signal) => fetchLeaderboard(league.path, signal),
+  };
+}
+
+export function sportsTennis(league: League): PolledDefinition<TennisEvent | null> {
+  return {
+    cacheKey: scoreboardKey(league, DEFAULT_DAY_WINDOW),
+    intervalMs: SCOREBOARD_INTERVAL_MS,
+    parse: parseCachedTennis,
+    fetch: (signal) => fetchTennis(league.path, signal),
   };
 }
 

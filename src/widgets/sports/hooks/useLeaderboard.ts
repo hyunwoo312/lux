@@ -1,35 +1,26 @@
-import { useCallback, useRef } from "react";
-import { usePolledResource } from "@/widgets/core/usePolledResource";
+import { useRef } from "react";
+import { usePolledDefinition } from "@/widgets/core/usePolledResource";
 import { useLivePollInterval } from "@/widgets/sports/hooks/useLivePollInterval";
-import { scoreboardKey } from "@/widgets/sports/lib/cacheKeys";
-import { fetchLeaderboard, parseCachedLeaderboard } from "@/widgets/sports/lib/golf";
 import type { League } from "@/widgets/sports/lib/leagues";
+import { sportsLeaderboard } from "@/widgets/sports/lib/resources";
 import { DEFAULT_DAY_WINDOW, livePollFloorMs } from "@/widgets/sports/lib/window";
 
 export function useLeaderboard(league: League) {
-  const cacheKey = scoreboardKey(league, DEFAULT_DAY_WINDOW);
-  const cacheKeyRef = useRef(cacheKey);
+  const definition = sportsLeaderboard(league);
+  const cacheKeyRef = useRef(definition.cacheKey);
   const wasLive = useRef(false);
-  if (cacheKeyRef.current !== cacheKey) {
-    cacheKeyRef.current = cacheKey;
+  if (cacheKeyRef.current !== definition.cacheKey) {
+    cacheKeyRef.current = definition.cacheKey;
     wasLive.current = false;
   }
-
-  const fetcher = useCallback(
-    (signal: AbortSignal) => fetchLeaderboard(league.path, signal),
-    [league.path],
-  );
 
   const intervalMs = useLivePollInterval(
     wasLive.current,
     livePollFloorMs(league.sport, DEFAULT_DAY_WINDOW),
   );
 
-  const resource = usePolledResource(fetcher, {
+  const resource = usePolledDefinition(definition, {
     intervalMs,
-    cacheKey,
-    persist: true,
-    parsePersisted: parseCachedLeaderboard,
     isEmpty: (board) => board === null,
   });
 

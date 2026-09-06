@@ -8,6 +8,7 @@ import { clearPolledResources } from "@/widgets/core/usePolledResource";
 import { POLLED_CACHE_PREFIX } from "@/lib/local-store";
 import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import { useIntegrationStore } from "@/integrations";
+import { availableWidgetCommands } from "@/commands";
 import { anilistCommands } from "@/widgets/anilist/commands";
 import { useAnilistStore, DEFAULT_DATA } from "@/widgets/anilist/useAnilistStore";
 import type { CurrentEntry } from "@/widgets/anilist/types";
@@ -57,9 +58,7 @@ beforeEach(() => {
 describe("anilistCommands", () => {
   it("asks for the account on the commands that need it, and not on the searches", () => {
     const setupFor = (id: string) =>
-      anilistCommands()
-        .find((command) => command.id === id)
-        ?.setup?.() ?? null;
+      availableWidgetCommands().find((command) => command.id === id)?.setupNeeded;
 
     expect(setupFor("anilist.library")).toMatchObject({ reason: "Connect AniList" });
     expect(setupFor("anilist.search")).toBeNull();

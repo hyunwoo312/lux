@@ -108,30 +108,25 @@ const watchlistCommand: WidgetCommand = {
   },
 };
 
-function addTickerCommand(instanceId: string): WidgetCommand {
-  return {
-    kind: "provider",
-    id: "stocks.addSymbol",
-    label: "Add a ticker",
-    description: "Follow a stock, index, fund or coin on your watchlist",
-    icon: Plus,
-    keywords: ["stock", "ticker", "symbol", "watchlist", "follow", "track"],
-    placeholder: "Search tickers to add",
-    emptyMessage: (query) =>
-      query === "" ? "Nothing trending right now." : `No ticker matched “${query}”.`,
-    search: async (query, signal) =>
-      (await findTickers(query.trim(), signal)).map((row) => ({
-        ...row,
-        run: () => useStocksStore.getState().addSymbol(instanceId, row.label),
-      })),
-  };
-}
-
-export const stocksCommands = (): WidgetCommand[] => {
-  const [instanceId] = instanceIds("stocks");
-  return [
-    lookUp,
-    watchlistCommand,
-    { ...addTickerCommand(instanceId ?? ""), setup: () => needsWidget("stocks", "Stocks") },
-  ];
+const addTicker: WidgetCommand = {
+  kind: "provider",
+  id: "stocks.addSymbol",
+  label: "Add a ticker",
+  description: "Follow a stock, index, fund or coin on your watchlist",
+  icon: Plus,
+  keywords: ["stock", "ticker", "symbol", "watchlist", "follow", "track"],
+  placeholder: "Search tickers to add",
+  emptyMessage: (query) =>
+    query === "" ? "Nothing trending right now." : `No ticker matched “${query}”.`,
+  search: async (query, signal) => {
+    const [instanceId] = instanceIds("stocks");
+    if (instanceId === undefined) return [];
+    return (await findTickers(query.trim(), signal)).map((row) => ({
+      ...row,
+      run: () => useStocksStore.getState().addSymbol(instanceId, row.label),
+    }));
+  },
+  setup: () => needsWidget("stocks", "Stocks"),
 };
+
+export const stocksCommands = (): WidgetCommand[] => [lookUp, watchlistCommand, addTicker];

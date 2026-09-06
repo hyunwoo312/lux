@@ -77,4 +77,20 @@ describe("stocksCommands", () => {
 
     expect(useStocksStore.getState().byInstance.s1?.symbols).toContain("GOOG");
   });
+
+  it("adds to the widget that exists when you search, not when the palette was listed", async () => {
+    const commands = stocksCommands();
+    place("s1");
+    vi.mocked(searchSymbols).mockResolvedValue([
+      { symbol: "GOOG", name: "Alphabet", exchange: "NMS", sector: null, instrumentType: null },
+    ]);
+    const command = commands.find((entry) => entry.id === "stocks.addSymbol");
+    if (command?.kind !== "provider") throw new Error("expected the add scope");
+
+    const [row] = await command.search("goog", new AbortController().signal);
+    await row?.run();
+
+    expect(useStocksStore.getState().byInstance.s1?.symbols).toContain("GOOG");
+    expect(Object.keys(useStocksStore.getState().byInstance)).toEqual(["s1"]);
+  });
 });

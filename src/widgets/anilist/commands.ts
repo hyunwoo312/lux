@@ -182,6 +182,7 @@ const SEARCH_COMMANDS: readonly WidgetCommand[] = SEARCH_SCOPES.map((scope) => (
     const found = await Promise.all(scope.types.map((type) => findMedia(query, type, signal)));
     return found.flat();
   },
+  setup: () => null,
 }));
 
 const ACCOUNT_COMMANDS: readonly WidgetCommand[] = [

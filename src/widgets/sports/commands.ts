@@ -45,7 +45,7 @@ function followedLeagues(): { league: League; dayWindow: DayWindow }[] {
   return [...seen.entries()]
     .flatMap(([id, dayWindow]) => {
       const league = leagueById(id);
-      return league ? [{ league, dayWindow }] : [];
+      return league?.kind === "match" ? [{ league, dayWindow }] : [];
     })
     .slice(0, LEAGUE_LIMIT);
 }
@@ -128,32 +128,26 @@ const scores: WidgetCommand = {
   },
 };
 
-function followTeamCommand(instanceId: string): WidgetCommand {
-  return {
-    kind: "provider",
-    id: "sports.followTeam",
-    label: "Follow a team",
-    description: "Add a team to your Sports widget, or stop following it",
-    icon: Star,
-    keywords: ["team", "favourite", "favorite", "track", "unfollow"],
-    placeholder: "Search teams",
-    emptyMessage: (query) =>
-      query === "" ? "Type a team name to follow it." : `No team matched “${query}”.`,
-    search: async (query) => {
-      const needle = query.trim();
-      if (needle === "") return [];
-      const teams = await readPolled(sportsTeamIndex);
-      return searchTeamIndex(teams, needle, TEAM_LIMIT).map((team) => teamRow(team, instanceId));
-    },
-  };
-}
+const followTeam: WidgetCommand = {
+  kind: "provider",
+  id: "sports.followTeam",
+  label: "Follow a team",
+  description: "Add a team to your Sports widget, or stop following it",
+  icon: Star,
+  keywords: ["team", "favourite", "favorite", "track", "unfollow"],
+  placeholder: "Search teams",
+  emptyMessage: (query) =>
+    query === "" ? "Type a team name to follow it." : `No team matched “${query}”.`,
+  search: async (query) => {
+    const needle = query.trim();
+    const [instanceId] = instanceIds("sports");
+    if (needle === "" || instanceId === undefined) return [];
+    const teams = await readPolled(sportsTeamIndex);
+    return searchTeamIndex(teams, needle, TEAM_LIMIT).map((team) => teamRow(team, instanceId));
+  },
+};
 
 const sportsWidget = () => needsWidget("sports", "Sports");
 
-export const sportsCommands = (): WidgetCommand[] => {
-  const [instanceId] = instanceIds("sports");
-  return [scores, followTeamCommand(instanceId ?? "")].map((command) => ({
-    ...command,
-    setup: sportsWidget,
-  }));
-};
+export const sportsCommands = (): WidgetCommand[] =>
+  [scores, followTeam].map((command) => ({ ...command, setup: sportsWidget }));
