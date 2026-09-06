@@ -11,15 +11,24 @@ import { useShortcutsStore } from "@/stores/useShortcutsStore";
 import { useAccentStore } from "@/stores/useAccentStore";
 import { useThemeStore } from "@/stores/useThemeStore";
 import { useOnboardingStore } from "@/onboarding";
+import { useChangelogStore } from "@/changelog";
+import { usePaletteStore } from "@/stores/usePaletteStore";
+import { useSettingsStore } from "@/settings/useSettingsStore";
 import { showToast } from "@/stores/useToastStore";
 import { clearWallpaperAssets, useWallpaperStore } from "@/stores/useWallpaperStore";
 
-function resetAllSettings() {
+const RESET_DESCRIPTION =
+  "Clears theme, accent, shortcuts, palette preferences and background images, and shows the welcome again. Widgets, their content and your accounts are kept.";
+
+async function resetAllSettings() {
   useShortcutsStore.getState().resetAll();
   useAppSettingsStore.getState().reset();
   useThemeStore.getState().reset();
   useAccentStore.getState().reset();
-  void clearWallpaperAssets();
+  usePaletteStore.getState().reset();
+  useSettingsStore.getState().reset();
+  useChangelogStore.getState().reset();
+  await clearWallpaperAssets();
   useWallpaperStore.getState().reset();
   useOnboardingStore.getState().replayOnNextOpen();
   showToast({ key: "settings-reset", message: "Settings reset" });
@@ -102,7 +111,7 @@ export function StorageTab() {
       <SettingsSection title="Start over">
         <SettingsRow
           title="Reset all settings"
-          description="Clears theme, shortcuts and background images, and shows the welcome again. Widgets, their content and your accounts are kept."
+          description={RESET_DESCRIPTION}
           control={
             <Button variant="ghost-destructive" onClick={() => setConfirmReset(true)}>
               Reset
@@ -115,9 +124,9 @@ export function StorageTab() {
         open={confirmReset}
         onOpenChange={setConfirmReset}
         title="Reset all settings?"
-        description="Clears theme, shortcuts, and background images, and shows the welcome again. Widgets, content, and accounts are kept."
+        description={RESET_DESCRIPTION}
         confirmLabel="Reset all"
-        onConfirm={resetAllSettings}
+        onConfirm={() => void resetAllSettings()}
       />
     </SettingsTabBody>
   );

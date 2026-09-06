@@ -1,2 +1,6 @@
 export { ChangelogDialog } from "@/changelog/ChangelogDialog";
-export { consumeChangelogAutoShow, useHasUnseenRelease } from "@/changelog/useChangelogStore";
+export {
+  consumeChangelogAutoShow,
+  useChangelogStore,
+  useHasUnseenRelease,
+} from "@/changelog/useChangelogStore";

@@ -45,6 +45,7 @@ type PaletteState = {
   setOpenIn: (value: OpenBehavior) => void;
   clearUsage: () => void;
   recordUse: (id: string, now: number) => void;
+  reset: () => void;
 };
 
 const HALF_LIFE_MS = 14 * 24 * 60 * 60 * 1000;
@@ -59,6 +60,15 @@ const ALL_ON = Object.fromEntries(PALETTE_SOURCES.map((source) => [source, true]
   PaletteSource,
   boolean
 >;
+
+const DEFAULTS = {
+  enabled: ALL_ON,
+  disabledCommands: {},
+  suggestionsEnabled: true,
+  suggestionCount: SUGGESTION_DEFAULT,
+  openIn: "currentTab",
+  usage: {},
+} satisfies Partial<PaletteState>;
 
 const useSchema = z.object({
   count: z.number().catch(0),
@@ -85,12 +95,7 @@ const gatedStorage = createGatedChromeStorage();
 export const usePaletteStore = create<PaletteState>()(
   persist(
     (set) => ({
-      enabled: { ...ALL_ON },
-      disabledCommands: {},
-      suggestionsEnabled: true,
-      suggestionCount: SUGGESTION_DEFAULT,
-      openIn: "currentTab",
-      usage: {},
+      ...DEFAULTS,
       setSourceEnabled: (source, value) =>
         set((state) => ({ enabled: { ...state.enabled, [source]: value } })),
       setCommandsEnabled: (ids, value) =>
@@ -113,6 +118,7 @@ export const usePaletteStore = create<PaletteState>()(
           const next = { ...state.usage, [id]: { count: (previous?.count ?? 0) + 1, at: now } };
           return { usage: prune(next, now) };
         }),
+      reset: () => set({ ...DEFAULTS }),
     }),
     {
       name: "palette",

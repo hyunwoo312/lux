@@ -14,10 +14,12 @@ type SettingsState = {
   permissionHighlight: chrome.runtime.ManifestPermission | null;
   openSettings: (tab?: SettingsTab) => void;
   openPermissions: (permission: chrome.runtime.ManifestPermission) => void;
+  reopenAfterReload: (permission: chrome.runtime.ManifestPermission) => void;
   clearPermissionHighlight: () => void;
   closeSettings: () => void;
   setTab: (tab: SettingsTab) => void;
   toggleSidebar: () => void;
+  reset: () => void;
 };
 
 const persistedSchema = z.object({
@@ -37,10 +39,16 @@ export const useSettingsStore = create<SettingsState>()(
       openSettings: (tab) => set((state) => ({ open: true, tab: tab ?? state.tab })),
       openPermissions: (permission) =>
         set({ open: true, tab: "accounts", permissionHighlight: permission }),
+      reopenAfterReload: (permission) =>
+        set((state) => ({
+          open: true,
+          permissionHighlight: state.tab === "accounts" ? permission : null,
+        })),
       clearPermissionHighlight: () => set({ permissionHighlight: null }),
       closeSettings: () => set({ open: false }),
       setTab: (tab) => set({ tab }),
       toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+      reset: () => set({ sidebarCollapsed: false }),
     }),
     {
       name: "settings",

@@ -1,12 +1,16 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useChangelogStore } from "@/changelog";
 import { StorageTab } from "@/settings/tabs/StorageTab";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
+import { usePaletteStore } from "@/stores/usePaletteStore";
 
 describe("StorageTab", () => {
   it("does not reset until the confirmation is accepted", async () => {
     useAppSettingsStore.setState({ showGridLines: true });
+    usePaletteStore.setState({ disabledCommands: { "action.openGuide": true } });
+    useChangelogStore.setState({ lastSeenVersion: "1.0.0" });
     render(<StorageTab />);
 
     fireEvent.click(screen.getByRole("button", { name: "Reset" }));
@@ -17,5 +21,7 @@ describe("StorageTab", () => {
     fireEvent.click(confirm);
 
     expect(useAppSettingsStore.getState().showGridLines).toBe(false);
+    expect(usePaletteStore.getState().disabledCommands).toEqual({});
+    expect(useChangelogStore.getState().lastSeenVersion).toBeNull();
   });
 });

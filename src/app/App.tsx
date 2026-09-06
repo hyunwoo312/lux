@@ -32,12 +32,14 @@ export function App() {
   const isPattern = wallpaperSource === "generated";
   const { imageUrl, frostUrl } = useActiveWallpaper(!isPattern);
   const boardReady = usePersistHydrated(useDashboardStore);
+  const settingsReady = usePersistHydrated(useSettingsStore);
   const reduced = useReducedMotion();
 
   useEffect(() => {
+    if (!settingsReady) return;
     const pending = takePendingPermissionHighlight();
-    if (pending) useSettingsStore.getState().openPermissions(pending);
-  }, []);
+    if (pending) useSettingsStore.getState().reopenAfterReload(pending);
+  }, [settingsReady]);
 
   useEffect(() => {
     const id = requestIdleCallback(() => sweepStaleResourceCaches(Date.now()), {

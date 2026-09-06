@@ -13,3 +13,22 @@ describe("persisted settings tab", () => {
     expect(merged.tab).toBe("appearance");
   });
 });
+
+describe("reopening settings after a permission reload", () => {
+  it("returns to the tab you were on, and highlights the row only on Accounts", () => {
+    useSettingsStore.setState({ open: false, tab: "palette", permissionHighlight: null });
+    useSettingsStore.getState().reopenAfterReload("tabs");
+    expect(useSettingsStore.getState()).toMatchObject({
+      open: true,
+      tab: "palette",
+      permissionHighlight: null,
+    });
+
+    useSettingsStore.setState({ open: false, tab: "accounts" });
+    useSettingsStore.getState().reopenAfterReload("tabs");
+    expect(useSettingsStore.getState()).toMatchObject({
+      tab: "accounts",
+      permissionHighlight: "tabs",
+    });
+  });
+});

@@ -17,6 +17,7 @@ const CURRENT_VERSION = readCurrentVersion();
 type ChangelogState = {
   lastSeenVersion: string | null;
   markSeen: () => void;
+  reset: () => void;
 };
 
 const persistedSchema = z.object({ lastSeenVersion: z.string().nullable().catch(null) });
@@ -28,6 +29,7 @@ export const useChangelogStore = create<ChangelogState>()(
     (set) => ({
       lastSeenVersion: null,
       markSeen: () => set({ lastSeenVersion: CURRENT_VERSION }),
+      reset: () => set({ lastSeenVersion: null }),
     }),
     {
       name: "changelog",
