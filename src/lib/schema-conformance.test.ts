@@ -68,18 +68,34 @@ describe("every key this extension writes", () => {
   const covers = (literal: string) =>
     registered.some((key) => key === literal || literal.startsWith(key));
 
+  const STORAGE_CALL =
+    /(?<![.\w])(?:read|readResult|write|writeOrThrow|remove|watchStorage)\(\s*("[^"]+"|[A-Za-z_$][\w$]*)/g;
+
+  function storageNames(body: string): string[] {
+    if (!body.includes('from "@/lib/storage"')) return [];
+    const constants = new Map(
+      [...body.matchAll(/const ([A-Z_]+) = "([^"]+)"/g)].map((match) => [match[1], match[2]]),
+    );
+    return [...body.matchAll(STORAGE_CALL)].map(([, argument = ""]) => {
+      const name = argument.startsWith('"') ? argument.slice(1, -1) : constants.get(argument);
+      return name === undefined ? `<unresolved ${argument}>` : `lux:${name}`;
+    });
+  }
+
   it("is named in the profile registry", () => {
     const strays: string[] = [];
+    let inspected = 0;
     for (const file of sourceFiles()) {
       if (file.endsWith("profile.ts") || file.endsWith("backup.ts")) continue;
       const body = readFileSync(file, "utf8");
-      for (const match of body.matchAll(/"(lux[.:][a-z.:-]*)"/g)) {
-        const literal = match[1];
-        if (literal && !covers(literal)) {
-          strays.push(`${sourcePath(file)}: ${literal}`);
-        }
+      const literals = [...body.matchAll(/"(lux[.:][a-z.:-]*)"/g)].map((match) => match[1] ?? "");
+      const names = storageNames(body);
+      inspected += literals.length + names.length;
+      for (const key of [...literals, ...names]) {
+        if (!covers(key)) strays.push(`${sourcePath(file)}: ${key}`);
       }
     }
     expect([...new Set(strays)]).toEqual([]);
+    expect(inspected, "nothing inspected — the key scan is broken").toBeGreaterThan(20);
   });
 });

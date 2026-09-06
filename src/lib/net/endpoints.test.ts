@@ -40,7 +40,7 @@ describe("endpoint registry parity with the code", () => {
   function networkModules(): { file: string; body: string }[] {
     return sourceFiles()
       .map((file) => ({ file: sourcePath(file), body: readFileSync(file, "utf8") }))
-      .filter(({ body }) => /\bfetch\(/.test(body));
+      .filter(({ body }) => /\b(?:fetch|integrationFetch)\(/.test(body));
   }
 
   it("names every host the code actually reaches for", () => {
@@ -48,13 +48,16 @@ describe("endpoint registry parity with the code", () => {
       endpoint.host.replace("https://", "").replace("/*", ""),
     );
     const strays: string[] = [];
+    let hosts = 0;
     for (const { file, body } of networkModules()) {
       for (const match of body.matchAll(/https:\/\/([a-z0-9.-]+)/g)) {
         const host = match[1] ?? "";
+        hosts += 1;
         const known = registered.some((entry) => host === entry || host.endsWith(`.${entry}`));
         if (!known) strays.push(`${file}: ${host}`);
       }
     }
     expect([...new Set(strays)]).toEqual([]);
+    expect(hosts, "no host found — the network module scan is broken").toBeGreaterThan(10);
   });
 });

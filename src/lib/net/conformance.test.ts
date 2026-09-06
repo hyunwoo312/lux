@@ -12,8 +12,10 @@ function callers(): { file: string; body: string }[] {
 
 describe("every network call", () => {
   it("carries a timeout", () => {
-    const offenders = callers().filter(({ body }) => !body.includes("withTimeout"));
+    const modules = callers();
+    const offenders = modules.filter(({ body }) => !body.includes("withTimeout"));
     expect(offenders.map(({ file }) => file)).toEqual([]);
+    expect(modules.length, "no callers found — the fetch scan is broken").toBeGreaterThan(5);
   });
 
   it("caps any response it reads as text", () => {

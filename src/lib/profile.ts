@@ -38,6 +38,7 @@ export const EXTENSION_LOCAL_KEYS = [
   "lux:integration-config",
   "lux:changelog-pending",
   "lux:reopen-permissions",
+  "lux:github-stars",
 ];
 
 export const EXTENSION_SESSION_KEYS = ["lux:anilist-callback"];

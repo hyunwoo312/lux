@@ -180,15 +180,18 @@ describe("colour tokens", () => {
   it("every custom property referenced in source is defined in the token layer", () => {
     const EXTERNAL = ["--radix-", "--tw-", "--wipe-", "--widget-"];
     const missing = new Set<string>();
+    const referenced = new Set<string>();
     for (const file of sourceFiles()) {
       const body = readFileSync(file, "utf8");
       for (const match of body.matchAll(/var\((--[a-z0-9-]+)/g)) {
         const name = match[1];
         if (!name || EXTERNAL.some((prefix) => name.startsWith(prefix))) continue;
+        referenced.add(name);
         if (!css.includes(`${name}:`)) missing.add(name);
       }
     }
     expect([...missing]).toEqual([]);
+    expect(referenced.size, "nothing referenced — the var() scan is broken").toBeGreaterThan(0);
   });
 
   it("keeps no colour or shadow token nothing references", () => {
@@ -202,6 +205,7 @@ describe("colour tokens", () => {
       (name) => !new RegExp(`\\b[a-z][a-z-]*-${name}(?![\\w-])`).test(bodies),
     );
     expect(unused).toEqual([]);
+    expect(exported.length, "no tokens exported — the CSS scan is broken").toBeGreaterThan(0);
   });
 
   describe("the ink ladder inside widgets", () => {
@@ -231,6 +235,10 @@ describe("colour tokens", () => {
       const beneath = lines.slice(Math.max(0, index - ANCHOR_REACH_LINES), index + 1);
       return ANCHOR.test(beneath.join("\n"));
     }
+
+    it("sees the widget sources it polices", () => {
+      expect(marks(/[a-z][a-z-]*-ink(?:-[0-9])?(?![\w-])/g).length).toBeGreaterThan(0);
+    });
 
     it("bans the faintest rung on fills, strokes and borders, not only on text", () => {
       expect(marks(/[a-z][a-z-]*-ink-4(?![\w-])/g).map((mark) => mark.at)).toEqual([]);
@@ -262,6 +270,7 @@ describe("colour tokens", () => {
 
     it("names every layer it uses", () => {
       expect([...used].filter((name) => !tokens.includes(name))).toEqual([]);
+      expect(used.size, "no z- utility found — the source scan is broken").toBeGreaterThan(0);
     });
 
     it("keeps no token nothing references", () => {
@@ -279,14 +288,14 @@ describe("colour tokens", () => {
   });
 
   it("focus is expressed only through the shared utility", () => {
-    const offenders = sourceFiles().flatMap((file) =>
-      [
-        ...readFileSync(file, "utf8").matchAll(
-          /\bfocus-visible:(?:ring|outline|border)-[^\s"'`,)]*/g,
-        ),
-      ].map((m) => `${sourcePath(file)}: ${m[0]}`),
+    const bodies = sourceFiles().map((file) => ({ file, body: readFileSync(file, "utf8") }));
+    const offenders = bodies.flatMap(({ file, body }) =>
+      [...body.matchAll(/\bfocus-visible:(?:ring|outline|border)-[^\s"'`,)]*/g)].map(
+        (m) => `${sourcePath(file)}: ${m[0]}`,
+      ),
     );
     expect(offenders).toEqual([]);
+    expect(bodies.filter(({ body }) => body.includes("focus-ring")).length).toBeGreaterThan(0);
   });
 
   it("tailwind-merge knows every font-size in the type scale", () => {

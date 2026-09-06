@@ -60,7 +60,10 @@ function findCycle(edges: Map<string, string[]>): string[] | null {
 
 describe("the module graph", () => {
   it("has no runtime import cycles, which silently break store hydration", () => {
-    const cycle = findCycle(graph());
+    const edges = graph();
+    const cycle = findCycle(edges);
     expect(cycle === null ? null : cycle.map(sourcePath).join(" → ")).toBeNull();
+    const resolved = [...edges.values()].reduce((count, targets) => count + targets.length, 0);
+    expect(resolved, "no edges resolved — the import scan is broken").toBeGreaterThan(100);
   });
 });
