@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { dateFromDayKey, localDayKey } from "@/lib/clock";
-import { loadErrorMessage } from "@/lib/net";
+import { describeFailure } from "@/lib/net";
 import {
   looksLikeLegacySingleton,
   mergePersisted,
@@ -28,6 +28,7 @@ import {
   getMonthOffset,
   startOfDay,
 } from "@/widgets/calendar/lib/dates";
+import { retryDelayMs } from "@/widgets/core/sharedResource";
 import { syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
 import {
   CALENDAR_DENSITIES,
@@ -62,6 +63,8 @@ type ProviderCalendarSettings = {
   failedCalendarIds: string[];
   lastError?: string;
   lastSyncedAt?: number;
+  failureCount?: number;
+  retryAt?: number;
 };
 
 type SyncWindow = { timeMin: Date; timeMax: Date };
@@ -112,6 +115,7 @@ type CalendarState = {
     selected: boolean,
   ) => void;
   clearIntegration: (instanceId: string, providerId: CalendarProviderId) => void;
+  clearRetry: (instanceId: string) => void;
   setVisibleMonth: (instanceId: string, month: Date) => void;
   shiftMonth: (instanceId: string, offset: number) => void;
   goToToday: (instanceId: string) => void;
@@ -174,7 +178,12 @@ export function createDefaultData(): CalendarData {
   };
 }
 
-const DEFAULT_DATA = createDefaultData();
+let defaultData = createDefaultData();
+
+function currentDefaultData(): CalendarData {
+  if (defaultData.listAnchorSetOn !== localDayKey(new Date())) defaultData = createDefaultData();
+  return defaultData;
+}
 
 const providerSettingsSchema = z.object({
   calendars: tolerantArray(connectedCalendarSchema),
@@ -183,6 +192,8 @@ const providerSettingsSchema = z.object({
   selectionChosen: z.boolean().optional().catch(undefined),
   lastError: z.string().optional().catch(undefined),
   lastSyncedAt: z.number().optional().catch(undefined),
+  failureCount: z.number().optional().catch(undefined),
+  retryAt: z.number().optional().catch(undefined),
 });
 
 const configSchema = z.object({
@@ -264,8 +275,18 @@ function resolveEnabledCalendarIds(
   return primary ? [primary.id] : [];
 }
 
+function failedSettings(
+  current: ProviderCalendarSettings,
+  settings: ProviderCalendarSettings,
+  error: Error,
+): ProviderCalendarSettings {
+  const failureCount = (current.failureCount ?? 0) + 1;
+  return { ...settings, failureCount, retryAt: Date.now() + retryDelayMs(error, failureCount) };
+}
+
 async function syncProvider(
   current: ProviderCalendarSettings,
+  service: string,
   fetchCalendars: () => Promise<ConnectedCalendar[]>,
   fetchEvents: (window: CalendarEventWindow) => Promise<CalendarEventsResult>,
   syncWindow: SyncWindow,
@@ -285,21 +306,28 @@ async function syncProvider(
       ? await fetchEvents({ calendarIds: enabledCalendarIds, ...syncWindow })
       : { events: [], failedCalendarIds: [] };
     const failed = result.failedCalendarIds.length > 0;
+    const settings: ProviderCalendarSettings = {
+      calendars: markedCalendars,
+      enabledCalendarIds,
+      failedCalendarIds: result.failedCalendarIds,
+      lastError: failed ? "Some calendars failed to sync" : undefined,
+    };
 
     return {
-      settings: {
-        calendars: markedCalendars,
-        enabledCalendarIds,
-        failedCalendarIds: result.failedCalendarIds,
-        lastError: failed ? "Some calendars failed to sync" : undefined,
-      },
+      settings: failed
+        ? failedSettings(current, settings, new Error(settings.lastError))
+        : settings,
       events: result.events,
       failed,
     };
   } catch (error) {
-    const message = loadErrorMessage(error, "Couldn’t sync your calendar.");
+    const { message } = describeFailure(error, { service, subject: "your calendar" });
     return {
-      settings: { ...current, failedCalendarIds: current.enabledCalendarIds, lastError: message },
+      settings: failedSettings(
+        current,
+        { ...current, failedCalendarIds: current.enabledCalendarIds, lastError: message },
+        error instanceof Error ? error : new Error(message),
+      ),
       events: [],
       failed: true,
     };
@@ -313,11 +341,11 @@ function update(
   instanceId: string,
   fn: (data: CalendarData) => CalendarData,
 ): Pick<CalendarState, "byInstance"> {
-  return { byInstance: patchInstance(state.byInstance, instanceId, DEFAULT_DATA, fn) };
+  return { byInstance: patchInstance(state.byInstance, instanceId, currentDefaultData(), fn) };
 }
 
 export function getCalendarData(instanceId: string): CalendarData {
-  return useCalendarStore.getState().byInstance[instanceId] ?? DEFAULT_DATA;
+  return useCalendarStore.getState().byInstance[instanceId] ?? currentDefaultData();
 }
 
 export const useCalendarStore = create<CalendarState>()(
@@ -376,8 +404,9 @@ export const useCalendarStore = create<CalendarState>()(
           (providerId) =>
             !data.syncing.includes(providerId) &&
             (options.bypassCooldown ||
-              syncCooldownRemainingMs(data[providerId].lastSyncedAt, CALENDAR_SYNC_COOLDOWN_MS) ===
-                0),
+              (syncCooldownRemainingMs(data[providerId].lastSyncedAt, CALENDAR_SYNC_COOLDOWN_MS) ===
+                0 &&
+                Date.now() >= (data[providerId].retryAt ?? 0))),
         );
         if (options.bypassCooldown && busy.length > 0) {
           set((state) =>
@@ -394,25 +423,24 @@ export const useCalendarStore = create<CalendarState>()(
             ...current,
             status: "syncing",
             syncing: Array.from(new Set([...current.syncing, ...targets])),
-            google: targets.includes("google")
-              ? { ...current.google, lastError: undefined }
-              : current.google,
-            microsoft: targets.includes("microsoft")
-              ? { ...current.microsoft, lastError: undefined }
-              : current.microsoft,
           })),
         );
 
         const syncWindow = getSyncWindow();
         const fetchers = {
-          google: [fetchGoogleCalendars, fetchGoogleCalendarEvents] as const,
-          microsoft: [fetchOutlookCalendars, fetchOutlookCalendarEvents] as const,
+          google: ["Google Calendar", fetchGoogleCalendars, fetchGoogleCalendarEvents] as const,
+          microsoft: [
+            "Outlook Calendar",
+            fetchOutlookCalendars,
+            fetchOutlookCalendarEvents,
+          ] as const,
         };
         const results = await Promise.all(
           targets.map(async (providerId) => {
-            const [fetchCalendars, fetchEvents] = fetchers[providerId];
+            const [service, fetchCalendars, fetchEvents] = fetchers[providerId];
             const result = await syncProvider(
               getCalendarData(instanceId)[providerId],
+              service,
               fetchCalendars,
               fetchEvents,
               syncWindow,
@@ -487,6 +515,14 @@ export const useCalendarStore = create<CalendarState>()(
               ? { ...data, google: updated }
               : { ...data, microsoft: updated };
           }),
+        ),
+      clearRetry: (instanceId) =>
+        set((state) =>
+          update(state, instanceId, (data) => ({
+            ...data,
+            google: { ...data.google, failureCount: undefined, retryAt: undefined },
+            microsoft: { ...data.microsoft, failureCount: undefined, retryAt: undefined },
+          })),
         ),
       clearIntegration: (instanceId, providerId) =>
         set((state) =>
@@ -620,4 +656,4 @@ export const useCalendarStore = create<CalendarState>()(
   ),
 );
 
-export const useCalendar = createInstanceSelector(useCalendarStore, DEFAULT_DATA);
+export const useCalendar = createInstanceSelector(useCalendarStore, currentDefaultData);

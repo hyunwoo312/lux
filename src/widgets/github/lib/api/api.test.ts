@@ -387,6 +387,16 @@ describe("fetchContributions", () => {
 });
 
 describe("graphql errors returned with HTTP 200", () => {
+  it("carries the Retry-After header into the rate limit", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(JSON.stringify({ errors: [{ type: "RATE_LIMITED" }] }), {
+        status: 200,
+        headers: { "retry-after": "30" },
+      }),
+    );
+    await expect(fetchContributions()).rejects.toMatchObject({ retryAfterMs: 30_000 });
+  });
+
   it("throws a RateLimitError when an error is RATE_LIMITED", async () => {
     mockFetch.mockResolvedValue(
       jsonResponse({ errors: [{ type: "RATE_LIMITED", message: "API rate limit exceeded" }] }),

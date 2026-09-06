@@ -177,11 +177,12 @@ export async function setTabMuted(tabId: number, muted: boolean): Promise<void> 
 }
 
 export function watchTabs(onChange: () => void): () => void {
+  if (typeof chrome === "undefined") return () => {};
   const events = [
-    chrome?.tabs?.onCreated,
-    chrome?.tabs?.onRemoved,
-    chrome?.tabs?.onUpdated,
-    chrome?.tabs?.onMoved,
+    chrome.tabs?.onCreated,
+    chrome.tabs?.onRemoved,
+    chrome.tabs?.onUpdated,
+    chrome.tabs?.onMoved,
   ].filter(Boolean) as {
     addListener: (fn: () => void) => void;
     removeListener: (fn: () => void) => void;

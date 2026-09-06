@@ -8,7 +8,7 @@ export async function fetchTokenEndpoint(
 ): Promise<Response> {
   try {
     return await fetch(input, { ...init, signal: withTimeout() });
-  } catch {
-    throw new TemporaryAuthError(`${label} could not be reached`);
+  } catch (error) {
+    throw new TemporaryAuthError(`${label} could not be reached`, { cause: error });
   }
 }

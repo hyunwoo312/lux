@@ -36,6 +36,7 @@ import {
   type SpotifyQueueItem,
 } from "@/widgets/spotify/types";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
+import { retryDelayMs } from "@/widgets/core/sharedResource";
 import { anySpotifyDevice } from "@/widgets/spotify/lib/devices";
 
 const RESTART_THRESHOLD_MS = 3_000;
@@ -100,6 +101,8 @@ let polling = false;
 let isVolumeEditing = false;
 let refreshRequestId = 0;
 let lastPolledAt = 0;
+let failureCount = 0;
+let retryAt = 0;
 let currentPollMs = IDLE_POLL_MS;
 let unregisterScheduler: (() => void) | null = null;
 let tickIntervalId: ReturnType<typeof setInterval> | undefined;
@@ -161,11 +164,12 @@ async function refreshPlayback(): Promise<void> {
   refreshRequestId = requestId;
 
   try {
-    set({ error: null });
     const nextPlayback = await getSpotifyPlaybackState();
     if (requestId !== refreshRequestId) return;
 
-    set({ playback: nextPlayback });
+    failureCount = 0;
+    retryAt = 0;
+    set({ playback: nextPlayback, error: null });
     if (!isVolumeEditing) set({ volumeDraft: nextPlayback?.device.volumePercent ?? null });
     markSyncedNow();
     lastPolledAt = Date.now();
@@ -174,6 +178,10 @@ async function refreshPlayback(): Promise<void> {
     void refreshContextName(nextPlayback?.context ?? null);
   } catch (caught) {
     if (requestId !== refreshRequestId) return;
+    failureCount += 1;
+    retryAt =
+      Date.now() +
+      retryDelayMs(caught instanceof Error ? caught : new Error(String(caught)), failureCount);
     if (!(caught instanceof RateLimitError)) {
       set({ error: playbackError(caught, "Unable to load Spotify playback") });
     }
@@ -433,7 +441,7 @@ export function selectSpotifyDevice(device: SpotifyPlaybackDevice): void {
 }
 
 async function refresh(): Promise<void> {
-  if (get().pendingActions.has("refresh")) return;
+  if (get().pendingActions.has("refresh") || Date.now() < retryAt) return;
   try {
     setPendingAction("refresh", true);
     await refreshPlayback();
@@ -503,7 +511,13 @@ function registerScheduler(): void {
     staleMs: currentPollMs,
     pollIntervalMs: currentPollMs,
     getLastRefreshedAt: () => lastPolledAt,
-    refresh: () => void refreshPlayback(),
+    refresh: () => {
+      if (Date.now() >= retryAt) void refreshPlayback();
+    },
+    clearBackoff: () => {
+      failureCount = 0;
+      retryAt = 0;
+    },
   });
 }
 

@@ -41,8 +41,8 @@ export class ResponseTooLargeError extends Error {
 }
 
 export class TemporaryAuthError extends Error {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "TemporaryAuthError";
   }
 }

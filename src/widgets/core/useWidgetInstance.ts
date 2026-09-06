@@ -10,12 +10,14 @@ export function useWidgetInstanceId(): string {
   return id;
 }
 
-export function createInstanceSelector<Data>(
+export function createInstanceSelector<Data extends object>(
   useStore: <T>(selector: (state: { byInstance: Record<string, Data> }) => T) => T,
-  fallback: Data,
+  fallback: Data | (() => Data),
 ): <T>(selector: (data: Data) => T) => T {
   return function useInstanceData<T>(selector: (data: Data) => T): T {
     const id = useWidgetInstanceId();
-    return useStore((state) => selector(state.byInstance[id] ?? fallback));
+    return useStore((state) =>
+      selector(state.byInstance[id] ?? (typeof fallback === "function" ? fallback() : fallback)),
+    );
   };
 }

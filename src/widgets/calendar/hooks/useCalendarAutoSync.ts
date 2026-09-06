@@ -49,6 +49,7 @@ export function useCalendarAutoSync() {
       pollIntervalMs: CHECK_INTERVAL_MS,
       getLastRefreshedAt: () => oldestSyncedAt(instanceId),
       refresh,
+      clearBackoff: () => useCalendarStore.getState().clearRetry(instanceId),
     });
   }, [connectedKey, refreshIntervalHours, instanceId]);
 }

@@ -29,7 +29,7 @@ export function StockRow({ symbol, spark, showSparkline, onSelect, onRemove }: S
   const graphClass = cn("min-w-0 flex-1", showName ? "h-7" : "h-5");
 
   return (
-    <div className="group hover:bg-foreground/5 relative rounded-lg transition-colors">
+    <div className="group relative rounded-lg">
       <button
         type="button"
         onClick={onSelect}

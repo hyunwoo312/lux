@@ -106,8 +106,8 @@ class PolledSource<T> extends SharedResource<T | undefined> {
     return this.fetcher(signal);
   }
 
-  protected isStorable(): boolean {
-    return true;
+  protected isStorable(data: T | undefined): boolean {
+    return data !== undefined;
   }
 }
 

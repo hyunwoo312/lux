@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { integrationFetch } from "@/integrations";
-import { ensureOk, RateLimitError } from "@/lib/net";
+import { ensureOk, RateLimitError, retryAfterMs } from "@/lib/net";
 
 export const GRAPHQL_ENDPOINT = "https://api.github.com/graphql";
 export const NOTIFICATIONS_ENDPOINT = "https://api.github.com/notifications";
@@ -23,7 +23,7 @@ export async function graphql(query: string, signal?: AbortSignal): Promise<unkn
   if (parsed.success) {
     const { errors } = parsed.data;
     if (errors.some((error) => error.type === "RATE_LIMITED")) {
-      throw new RateLimitError(0);
+      throw new RateLimitError(retryAfterMs(response));
     }
     throw new Error(errors[0]?.message ?? "GitHub request failed");
   }

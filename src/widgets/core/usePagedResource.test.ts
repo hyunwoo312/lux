@@ -2,7 +2,11 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { stalePagedResource, usePagedResource } from "@/widgets/core/usePagedResource";
+import {
+  patchPagedResource,
+  stalePagedResource,
+  usePagedResource,
+} from "@/widgets/core/usePagedResource";
 import { useFreshness } from "@/widgets/core/usePolledResource";
 
 afterEach(() => {
@@ -28,6 +32,19 @@ describe("usePagedResource", () => {
     );
 
     await waitFor(() => expect(result.current.state.status).toBe("empty"));
+  });
+
+  it("patches the items a live resource holds without refetching", async () => {
+    const fetcher = vi.fn().mockResolvedValue({ items: [1, 2], hasNextPage: false });
+    const { result } = renderHook(() =>
+      usePagedResource(fetcher, { maxItems: 50, getKey: (n: number) => n, cacheKey: "patch-me" }),
+    );
+    await waitFor(() => expect(result.current.state.status).toBe("success"));
+
+    act(() => patchPagedResource<number>("patch-me", (items) => items.map((n) => n * 10)));
+
+    expect(result.current.state).toEqual({ status: "success", items: [10, 20] });
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
   it("surfaces an error when the initial fetch fails", async () => {

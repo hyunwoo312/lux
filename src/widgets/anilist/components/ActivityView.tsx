@@ -5,7 +5,7 @@ import { loadErrorMessage } from "@/lib/net";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
-import { usePagedDefinition } from "@/widgets/core/usePagedResource";
+import { patchPagedResource, usePagedDefinition } from "@/widgets/core/usePagedResource";
 import { anilistActivity } from "@/widgets/anilist/lib/resources";
 import { toggleActivityLike } from "@/widgets/anilist/lib/api/feed";
 import { FeedList } from "@/widgets/anilist/components/FeedList";
@@ -33,20 +33,23 @@ export function ActivityView({
   const setLastSeen = useAnilistStore((s) => s.setLastSeenActivity);
   const lang = useAnilist((d) => d.titleLanguage);
   const seenRef = useRef(useAnilistStore.getState().lastSeenActivityAt ?? 0);
+  const definition = anilistActivity(userId, lang);
   const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh, lastSyncedAt } =
-    usePagedDefinition(anilistActivity(userId, lang), { enabled });
+    usePagedDefinition(definition, { enabled });
   useAnilistSync(refresh, isRefreshing, lastSyncedAt);
 
-  const [likes, setLikes] = useState<Record<number, boolean>>({});
   const [likeError, setLikeError] = useState("");
+  const setLiked = (id: number, isLiked: boolean) =>
+    patchPagedResource<AnilistActivity>(definition.cacheKey, (items) =>
+      items.map((item) => (item.id === id ? { ...item, isLiked } : item)),
+    );
   const toggleLike = (activity: AnilistActivity) => {
-    const current = likes[activity.id] ?? activity.isLiked;
-    setLikes((prev) => ({ ...prev, [activity.id]: !current }));
+    setLiked(activity.id, !activity.isLiked);
     setLikeError("");
     toggleActivityLike(activity.id).then(
-      (isLiked) => setLikes((prev) => ({ ...prev, [activity.id]: isLiked })),
+      (isLiked) => setLiked(activity.id, isLiked),
       (error: Error) => {
-        setLikes((prev) => ({ ...prev, [activity.id]: current }));
+        setLiked(activity.id, activity.isLiked);
         setLikeError(loadErrorMessage(error, "Couldn’t update your like. Try again."));
       },
     );
@@ -111,7 +114,7 @@ export function ActivityView({
             activity={activity}
             newTab={newTab}
             isNew={activity.createdAt > seen}
-            liked={likes[activity.id] ?? activity.isLiked}
+            liked={activity.isLiked}
             onToggleLike={() => toggleLike(activity)}
           />
         )}

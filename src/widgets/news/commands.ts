@@ -8,7 +8,7 @@ import { instanceData } from "@/widgets/core/instances";
 import { needsWidget } from "@/widgets/core/commandSetup";
 import type { CommandResult, WidgetCommand } from "@/widgets/core/types";
 import { readPolled } from "@/widgets/core/usePolledResource";
-import { fetchSearch, orderedSources } from "@/widgets/news/lib/news";
+import { fetchSearch, orderedSources, resolveNewsTab } from "@/widgets/news/lib/news";
 import { newsFeed, newsTrends } from "@/widgets/news/lib/resources";
 import { DEFAULT_DATA, useNewsStore, type NewsData } from "@/widgets/news/useNewsStore";
 import type { NewsItem, TrendItem } from "@/widgets/news/types";
@@ -62,10 +62,12 @@ const headlines: WidgetCommand = {
   emptyMessage: (query) =>
     query === "" ? "No headlines right now." : `No headline matched “${query}”.`,
   search: async (query) => {
-    const { region, topic, enabledSources } = settings();
+    const { activeSource, region, topic, enabledSources, googleQuery } = settings();
     const needle = query.trim();
+    const sources = orderedSources(enabledSources);
+    const tab = resolveNewsTab(activeSource, sources);
     const payload = await readPolled(
-      newsFeed({ tab: "all", region, topic, sources: orderedSources(enabledSources), query: "" }),
+      newsFeed({ tab, region, topic, sources, query: tab === "google" ? googleQuery.trim() : "" }),
     );
     return payload.items
       .filter((item) => matchesQuery(`${item.title} ${item.source}`, needle))

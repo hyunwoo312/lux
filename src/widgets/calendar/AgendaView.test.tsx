@@ -14,8 +14,6 @@ vi.mock("@/hooks/useElementSize", () => ({
 }));
 
 const ID = "calendar-today";
-// The store's DEFAULT_DATA captures listAnchor at module import, before setSystemTime can run,
-// so the fake clock has to sit on the real date or the anchor and "now" fall on different days.
 const NOW = (() => {
   const at = new Date();
   at.setHours(9, 30, 0, 0);

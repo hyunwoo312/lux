@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIntegrationStore } from "@/integrations";
+import { useSettingsStore } from "@/settings";
 import { CalendarWidget } from "@/widgets/calendar/CalendarWidget";
 import {
   createDefaultData,
@@ -81,6 +82,36 @@ describe("CalendarWidget", () => {
     patch({ view: "agenda" });
     renderWidget();
     expect(screen.getByText("Team standup")).toBeInTheDocument();
+  });
+
+  it("sends a refused account to Accounts instead of the widget settings", () => {
+    connectAccount();
+    useIntegrationStore.setState((state) => ({
+      accounts: [
+        ...state.accounts,
+        {
+          id: "microsoft-1",
+          providerId: "microsoft",
+          providerAccountId: "2",
+          displayName: "Ada",
+          status: "needsReconnect",
+          connectedAt: "2026-06-20T00:00:00.000Z",
+        },
+      ],
+    }));
+    patch({
+      view: "agenda",
+      microsoft: {
+        ...baseData().microsoft,
+        lastError: "Outlook Calendar turned down the request.",
+      },
+    });
+    useSettingsStore.setState({ open: false, tab: "appearance" });
+
+    renderWidget();
+    fireEvent.click(screen.getByRole("button", { name: "Reconnect" }));
+
+    expect(useSettingsStore.getState()).toMatchObject({ open: true, tab: "accounts" });
   });
 
   it("opens the source event in a new tab from the agenda", () => {

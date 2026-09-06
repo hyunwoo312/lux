@@ -12,6 +12,7 @@ import { useCalendarConnection } from "@/widgets/calendar/hooks/useCalendarConne
 import { dedupeCalendarEvents } from "@/widgets/calendar/lib/agenda";
 import { buildCalendarColorMap } from "@/widgets/calendar/lib/colors";
 import { useCalendar } from "@/widgets/calendar/useCalendarStore";
+import { useSettingsStore } from "@/settings";
 import { viewSwap } from "@/lib/motion";
 
 export function CalendarWidget() {
@@ -35,6 +36,8 @@ export function CalendarWidget() {
   const { openConfig } = useWidgetChrome();
   const connected =
     google.account?.status === "connected" || microsoft.account?.status === "connected";
+  const needsReconnect =
+    google.account?.status === "needsReconnect" || microsoft.account?.status === "needsReconnect";
   useCalendarAutoSync();
 
   const visibleEvents = useMemo(
@@ -47,7 +50,7 @@ export function CalendarWidget() {
   );
 
   const loaded = google.loaded;
-  const syncError = status === "error" ? (googleError ?? microsoftError ?? null) : null;
+  const syncError = googleError ?? microsoftError ?? null;
 
   if (loaded && !connected) {
     return <CalendarSignedOutPreview />;
@@ -101,7 +104,11 @@ export function CalendarWidget() {
             <span className="min-w-0 flex-1 truncate text-micro">{syncError}</span>
             <button
               type="button"
-              onClick={openConfig}
+              onClick={
+                needsReconnect
+                  ? () => useSettingsStore.getState().openSettings("accounts")
+                  : openConfig
+              }
               className="
                 press focus-ring cursor-pointer text-micro
                 hover:text-ink
@@ -109,7 +116,7 @@ export function CalendarWidget() {
                 hover:underline
               "
             >
-              Settings
+              {needsReconnect ? "Reconnect" : "Settings"}
             </button>
           </div>
         )}

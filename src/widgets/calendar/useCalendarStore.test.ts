@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RateLimitError } from "@/lib/net";
 import { localDayKey } from "@/lib/clock";
 import { addDays, startOfDay } from "@/widgets/calendar/lib/dates";
@@ -56,6 +56,10 @@ function seed(over: Partial<CalendarData> = {}) {
 }
 
 const data = () => useCalendarStore.getState().byInstance[ID];
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -123,7 +127,7 @@ describe("useCalendarStore.sync", () => {
 
     const d = data();
     expect(d?.status).toBe("error");
-    expect(d?.google.lastError).toBe("Couldn’t sync your calendar.");
+    expect(d?.google.lastError).toBe("Couldn’t load your calendar.");
     expect(d?.google.lastError).not.toContain("group.calendar.google.com");
   });
 
@@ -133,6 +137,22 @@ describe("useCalendarStore.sync", () => {
     await useCalendarStore.getState().sync(ID);
 
     expect(data()?.google.lastError).toMatch(/Rate limited/);
+  });
+
+  it("waits out a backoff after a failure, until the network comes back", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-06T12:00:00Z"));
+    fetchCalendarsMock.mockRejectedValue(new Error("boom"));
+
+    await useCalendarStore.getState().sync(ID);
+    vi.setSystemTime(new Date("2026-09-06T12:00:30Z"));
+    await useCalendarStore.getState().sync(ID);
+    expect(fetchCalendarsMock).toHaveBeenCalledTimes(1);
+    expect(data()?.google.lastError).toBeDefined();
+
+    useCalendarStore.getState().clearRetry(ID);
+    await useCalendarStore.getState().sync(ID);
+    expect(fetchCalendarsMock).toHaveBeenCalledTimes(2);
   });
 
   it("skips syncing while cooling down unless bypassed", async () => {

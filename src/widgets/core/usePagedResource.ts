@@ -1,11 +1,15 @@
 import { useCallback, useRef } from "react";
 import {
   SharedResource,
+  getResource,
+  hasPersisted,
+  peekEntry,
   readResource,
   freshnessOf,
   seedSnapshot,
   seededEntry,
   staleResource,
+  storeEntry,
   useResource,
   type Cadence,
   type Decode,
@@ -117,6 +121,14 @@ class PagedSource<T> extends SharedResource<PagedData<T>> {
     void this.run("more");
   }
 
+  applyPatch(update: (items: T[]) => T[]): void {
+    if (!this.snapshot.hasLoaded) return;
+    const data = { ...this.snapshot.data, items: update(this.snapshot.data.items) };
+    const { cacheKey, scope, persist, encode } = this.config;
+    if (cacheKey) storeEntry(scope, cacheKey, { data, at: this.snapshot.at }, persist, encode);
+    this.patch({ data });
+  }
+
   protected async fetchData(mode: Mode, signal: AbortSignal): Promise<PagedData<T>> {
     const page = mode === "more" ? this.snapshot.data.page + 1 : 1;
     const result = await this.fetcher(page, signal);
@@ -199,6 +211,23 @@ export async function readPaged<T>(definition: PagedDefinition<T>): Promise<T[]>
 
 export function stalePagedResource(cacheKey: string): void {
   staleResource("paged", cacheKey);
+}
+
+export function patchPagedResource<T>(cacheKey: string, update: (items: T[]) => T[]): void {
+  const live = getResource(cacheKey);
+  if (live instanceof PagedSource) {
+    (live as PagedSource<T>).applyPatch(update);
+    return;
+  }
+  const entry = peekEntry<PagedData<T>>("paged", cacheKey);
+  if (!entry) return;
+  storeEntry(
+    "paged",
+    cacheKey,
+    { data: { ...entry.data, items: update(entry.data.items) }, at: entry.at },
+    hasPersisted("paged", cacheKey),
+    encodePaged,
+  );
 }
 
 export function usePagedResource<T>(
