@@ -90,7 +90,7 @@ export function ImageBackdrop() {
 
   return (
     <>
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         <motion.div
           key={imageUrl}
           initial={variant.initial}

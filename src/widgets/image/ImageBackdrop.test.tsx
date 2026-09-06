@@ -60,6 +60,15 @@ describe("ImageBackdrop", () => {
     await waitFor(() => expect(document.querySelectorAll("img")).toHaveLength(1));
   });
 
+  it("paints the first image at full opacity instead of fading it in", async () => {
+    await seedAsset("a1", false);
+    useImageStore.setState({ byInstance: { [ID]: { ...base, single: makeItem("a1") } } });
+    renderBackdrop();
+
+    const image = await screen.findByAltText("a1.webp");
+    expect(image.parentElement?.style.opacity).not.toBe("0");
+  });
+
   it("still shows the image when no thumbnail was ever rendered", async () => {
     await seedAsset("a1", false);
     useImageStore.setState({ byInstance: { [ID]: { ...base, single: makeItem("a1") } } });

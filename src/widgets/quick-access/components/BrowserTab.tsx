@@ -23,17 +23,20 @@ const TAB_GATE: Record<
     permissions: chrome.runtime.ManifestPermission[];
     highlight: chrome.runtime.ManifestPermission;
     message: string;
+    loading: string;
   }
 > = {
   bookmarks: {
     permissions: ["bookmarks"],
     highlight: "bookmarks",
     message: "Turn on the Bookmarks permission to browse your bookmarks here.",
+    loading: "Loading bookmarks…",
   },
   history: {
     permissions: ["history"],
     highlight: "history",
     message: "Turn on the Browsing history permission to see recent sites here.",
+    loading: "Loading recent sites…",
   },
 };
 
@@ -45,7 +48,7 @@ type BrowserTabProps = {
 export function BrowserTab({ tab, editing }: BrowserTabProps) {
   const gate = TAB_GATE[tab];
   const granted = useGrantedPermissions();
-  if (granted === null) return null;
+  if (granted === null) return <StateMessage message={gate.loading} />;
   const missing = gate.permissions.filter((permission) => !granted.has(permission));
 
   if (isPermissionsManageable() && missing.length > 0) {
@@ -84,7 +87,7 @@ function HistoryView({ editing }: { editing: boolean }) {
         <SearchField value={query} onChange={setQuery} label="Search recent sites" />
       </div>
       <div ref={scrollRef} className="scroll-fade min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
-        {state.status === "loading" && <StateMessage message="Loading recent sites…" />}
+        {state.status === "loading" && <StateMessage message={TAB_GATE.history.loading} />}
         {state.status === "error" && (
           <StateMessage
             icon={AlertCircle}

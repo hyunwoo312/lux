@@ -81,14 +81,13 @@ export function useActiveWallpaper(enabled: boolean): ActiveWallpaper {
         ? await ensureGalleryAsset(activeGalleryId)
         : await wallpaperAssets.read(activeAssetId).catch(() => null);
       if (!active || !asset) return;
-      const nextUrl = URL.createObjectURL(asset.blob);
-      swapObjectUrl(objectUrlRef, nextUrl);
-      setImageUrl(nextUrl);
-
       const frost = await resolveFrost(wallpaperAssets, asset);
       if (!active) return;
+      const nextUrl = URL.createObjectURL(asset.blob);
       const nextFrostUrl = frost ? URL.createObjectURL(frost) : null;
+      swapObjectUrl(objectUrlRef, nextUrl);
       swapObjectUrl(frostUrlRef, nextFrostUrl);
+      setImageUrl(nextUrl);
       setFrostUrl(nextFrostUrl);
     })();
     return () => {
