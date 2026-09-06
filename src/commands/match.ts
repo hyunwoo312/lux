@@ -51,9 +51,11 @@ export function scoreItem(item: CommandItem, query: string): number | null {
   return best;
 }
 
+type Scored = { item: CommandItem; value: number };
+
 export function matchItems(items: readonly CommandItem[], query: string): CommandItem[] {
   const now = Date.now();
-  const scored: { item: CommandItem; value: number }[] = [];
+  const scored: Scored[] = [];
   for (const item of items) {
     if (item.section === "search") {
       scored.push({ item, value: ALWAYS_OFFERED });
@@ -70,11 +72,12 @@ export function matchItems(items: readonly CommandItem[], query: string): Comman
     ? COMMAND_SECTIONS
     : ["search", ...COMMAND_SECTIONS.filter((section) => section !== "search")];
 
-  const rank = (item: CommandItem) => sections.indexOf(item.section);
+  const rank = ({ item, value }: Scored) =>
+    item.section === "links" && value >= CONFIDENT_MATCH
+      ? sections.indexOf("commands")
+      : sections.indexOf(item.section);
   const ready = (item: CommandItem) => (item.setup == null ? 0 : 1);
   return scored
-    .sort(
-      (a, b) => rank(a.item) - rank(b.item) || ready(a.item) - ready(b.item) || b.value - a.value,
-    )
+    .sort((a, b) => rank(a) - rank(b) || ready(a.item) - ready(b.item) || b.value - a.value)
     .map(({ item }) => item);
 }

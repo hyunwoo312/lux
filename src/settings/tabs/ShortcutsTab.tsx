@@ -74,10 +74,13 @@ export function ShortcutsTab() {
             name={BROWSER_SHORTCUT.label}
             description={BROWSER_SHORTCUT.description}
           >
-            {paletteShortcut === undefined ? (
+            {paletteShortcut.status === "unbound" && (
               <span className="text-ink-3 text-caption">Not assigned</span>
-            ) : (
-              <kbd className="text-ink font-sans text-caption font-semibold">{paletteShortcut}</kbd>
+            )}
+            {paletteShortcut.status === "bound" && (
+              <kbd className="text-ink font-sans text-caption font-semibold">
+                {paletteShortcut.shortcut}
+              </kbd>
             )}
             <Button
               variant="ghost"

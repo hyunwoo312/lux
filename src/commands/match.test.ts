@@ -64,6 +64,20 @@ describe("matchItems", () => {
     expect(ids[0]).toBe("web");
   });
 
+  it("lets a confident link outrank a weak command, and only a confident one", () => {
+    const weakCommand = item({ id: "cmd", label: "Download screenshots" });
+    const exactLink = item({ id: "tab-1", section: "links", label: "Docs" });
+    const weakLink = item({ id: "tab-2", section: "links", label: "Documents scanner" });
+
+    const labels = (query: string) =>
+      matchItems([weakCommand, exactLink, weakLink], query)
+        .filter((entry) => entry.section !== "search")
+        .map((entry) => entry.label);
+
+    expect(labels("docs")).toEqual(["Docs", "Download screenshots", "Documents scanner"]);
+    expect(labels("dosc")).toEqual(["Download screenshots", "Documents scanner"]);
+  });
+
   it("always offers search, however unsearchable the text looks", () => {
     const ids = matchItems(items, "!!!").map((entry) => entry.id);
     expect(ids).toEqual(["web"]);

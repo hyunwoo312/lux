@@ -12,9 +12,8 @@ export function PaletteFooter({ inScope }: { inScope: boolean }) {
       "
     >
       <span className="truncate">
-        {shortcut === undefined
-          ? "No shortcut assigned"
-          : `${shortcut} to open or hide the command palette`}
+        {shortcut.status === "unbound" && "No shortcut assigned"}
+        {shortcut.status === "bound" && `${shortcut.shortcut} to open or hide the command palette`}
       </span>
       <span className="flex shrink-0 gap-3">
         {inScope && (

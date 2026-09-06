@@ -51,7 +51,7 @@ export function CommandPalette() {
       runCommand(setup.run);
       return;
     }
-    recordPaletteUse(entry.item.id);
+    if (entry.item.section !== "links") recordPaletteUse(entry.item.id);
     if (entry.item.effect === "scope") {
       enterScope(entry.item);
       setSelected(0);

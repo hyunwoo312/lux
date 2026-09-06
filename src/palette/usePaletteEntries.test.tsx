@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
-import { renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { act, renderHook } from "@testing-library/react";
+import { Search } from "lucide-react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { PaletteMode } from "@/palette/useCommandPaletteStore";
 import { usePaletteEntries } from "@/palette/usePaletteEntries";
 import { usePaletteStore } from "@/stores/usePaletteStore";
 
@@ -58,5 +60,34 @@ describe("what the palette shows at rest", () => {
     const groups = shown("theme");
 
     expect(groups.map((group) => group.label)).toEqual(["Results"]);
+  });
+});
+
+describe("inside a scope", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("paints the resting results at once, without waiting for the typing debounce", async () => {
+    vi.useFakeTimers();
+    const scope: PaletteMode = {
+      kind: "scope",
+      command: {
+        id: "widget.scope",
+        section: "commands",
+        label: "Scope",
+        icon: Search,
+        effect: "scope",
+        placeholder: "Search",
+        search: async () => [{ id: "r1", label: "Resting result", run: () => {} }],
+      },
+    };
+
+    const { result } = renderHook(() => usePaletteEntries(scope, ""));
+    await act(() => vi.advanceTimersByTimeAsync(0));
+
+    expect(
+      result.current.entries.map((entry) => (entry.kind === "result" ? entry.result.label : "")),
+    ).toEqual(["Resting result"]);
   });
 });

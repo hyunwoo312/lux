@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   COMMAND_SECTION_LABELS,
   SYSTEM_OWNER,
@@ -7,7 +8,7 @@ import {
   type CommandItem,
   type CommandSection,
 } from "@/commands";
-import { searchResults, useDebouncedSearch } from "@/hooks/useDebouncedSearch";
+import { SEARCH_DEBOUNCE_MS, searchResults, useDebouncedSearch } from "@/hooks/useDebouncedSearch";
 import { frecencyBoost, usePaletteStore } from "@/stores/usePaletteStore";
 import type { PaletteMode } from "@/palette/useCommandPaletteStore";
 import type { CommandResult, WidgetIcon } from "@/widgets/core/types";
@@ -29,6 +30,8 @@ const NO_SEARCH = async (): Promise<CommandResult[]> => [];
 
 const EMPTY_GROUPS: PaletteGroup[] = [];
 
+const EMPTY_ITEMS: CommandItem[] = [];
+
 const NOTHING_FOUND = "No results found.";
 
 const LINK_MIN_QUERY = 2;
@@ -49,16 +52,20 @@ export function usePaletteEntries(mode: PaletteMode, query: string, open = true)
   const scope = useDebouncedSearch(
     open && mode.kind === "scope" ? query : "",
     mode.kind === "scope" ? mode.command.search : NO_SEARCH,
-    { minLength: 0 },
+    { minLength: 0, delayMs: query === "" ? 0 : SEARCH_DEBOUNCE_MS },
   );
   const links = useDebouncedSearch(open && mode.kind === "root" ? query : "", linkItems, {
     minLength: LINK_MIN_QUERY,
   });
+  const items = useMemo(
+    () => (open && mode.kind === "root" ? commandItems(query) : EMPTY_ITEMS),
+    [open, mode.kind, query],
+  );
 
   const groups = !open
     ? EMPTY_GROUPS
     : mode.kind === "root"
-      ? rootGroups(query, [...commandItems(query), ...searchResults(links)])
+      ? rootGroups(query, [...items, ...searchResults(links)])
       : scopeGroups(searchResults(scope), mode.command.icon);
 
   const entries = groups.flatMap((group) => group.entries);
