@@ -71,8 +71,8 @@ export function WidgetRefreshButton({
         size="icon-xs"
         className={cn(WIDGET_HEADER_ACTION, failing && "text-warning hover:text-warning")}
         aria-label={staleNotice ?? "Refresh"}
-        disabled={disabled}
-        onClick={onRefresh}
+        aria-disabled={disabled || undefined}
+        onClick={disabled ? undefined : onRefresh}
       >
         <motion.span
           className="inline-flex"

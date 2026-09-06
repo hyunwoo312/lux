@@ -545,6 +545,7 @@
     transform: scale(0.97);
   }
 
+  &:disabled:active,
   &[aria-disabled="true"]:active {
     transform: none;
   }

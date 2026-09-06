@@ -17,7 +17,7 @@ describe("StorageTab", () => {
     expect(useAppSettingsStore.getState().showGridLines).toBe(true);
 
     const confirm = screen.getByRole("button", { name: "Reset all" });
-    await waitFor(() => expect(confirm).not.toHaveAttribute("aria-disabled"), { timeout: 2000 });
+    await waitFor(() => expect(confirm).not.toBeDisabled(), { timeout: 2000 });
     fireEvent.click(confirm);
 
     expect(useAppSettingsStore.getState().showGridLines).toBe(false);

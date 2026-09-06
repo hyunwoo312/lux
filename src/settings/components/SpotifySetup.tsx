@@ -282,7 +282,7 @@ function SaveButton({
       transition={transition}
       className={cn(
         "relative overflow-hidden",
-        bare && "aria-disabled:opacity-100 hover:bg-transparent",
+        bare && "disabled:opacity-100 hover:bg-transparent",
       )}
     >
       <AnimatePresence initial={false} mode="popLayout">
