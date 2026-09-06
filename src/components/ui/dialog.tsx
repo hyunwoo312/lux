@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import { useRef, type ComponentProps } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
@@ -56,7 +56,12 @@ type DialogContentProps = ComponentProps<typeof DialogPrimitive.Content> &
     showClose?: boolean;
     dismissOnClickOutside?: boolean;
     overDialog?: boolean;
+    initialFocus?: "first" | "container";
   };
+
+function isSearchWithText(element: Element | null): boolean {
+  return element instanceof HTMLInputElement && element.type === "search" && element.value !== "";
+}
 
 function DialogContent({
   className,
@@ -67,17 +72,34 @@ function DialogContent({
   showClose = true,
   dismissOnClickOutside = true,
   overDialog = false,
+  initialFocus = "first",
   onInteractOutside,
+  onEscapeKeyDown,
+  onOpenAutoFocus,
   ...props
 }: DialogContentProps) {
+  const contentRef = useRef<HTMLDivElement>(null);
   return (
     <DialogPrimitive.Portal>
       <DialogOverlay className={overDialog ? "z-modal" : "z-overlay"} />
       <DialogPrimitive.Content
         data-slot="dialog-content"
+        ref={contentRef}
+        tabIndex={initialFocus === "container" ? -1 : undefined}
         onInteractOutside={(event) => {
           if (!dismissOnClickOutside) event.preventDefault();
           onInteractOutside?.(event);
+        }}
+        onEscapeKeyDown={(event) => {
+          if (isSearchWithText(document.activeElement)) event.preventDefault();
+          onEscapeKeyDown?.(event);
+        }}
+        onOpenAutoFocus={(event) => {
+          if (initialFocus === "container") {
+            event.preventDefault();
+            contentRef.current?.focus();
+          }
+          onOpenAutoFocus?.(event);
         }}
         className={cn(dialogContentVariants({ surface, layout, width, className }))}
         {...props}

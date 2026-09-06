@@ -17,7 +17,7 @@ export function GuideDialog() {
       <DialogContent
         layout="flush"
         showClose={false}
-        onOpenAutoFocus={(event) => event.preventDefault()}
+        initialFocus="container"
         aria-label="Lux guide"
         width="2xl"
         className="h-[90dvh]"

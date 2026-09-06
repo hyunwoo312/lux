@@ -74,15 +74,8 @@ export function ExpandingSearch({
         onOpenChange(false);
       }
     };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onOpenChange(false);
-    };
     document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
+    return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open, onOpenChange]);
 
   const handleClose = () => {
@@ -92,6 +85,15 @@ export function ExpandingSearch({
     } else {
       onOpenChange(false);
     }
+  };
+
+  const handleInputKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      handleClose();
+      return;
+    }
+    onInputKeyDown?.(event);
   };
 
   const morph = enterTween(reduced, "slow", EASE_MORPH);
@@ -158,7 +160,7 @@ export function ExpandingSearch({
               transition={contentIn(2)}
               value={value}
               onChange={(event) => onValueChange(event.target.value)}
-              onKeyDown={onInputKeyDown}
+              onKeyDown={handleInputKeyDown}
               placeholder={placeholder}
               role="combobox"
               aria-label={ariaLabel}

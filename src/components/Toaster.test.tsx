@@ -9,22 +9,33 @@ beforeEach(() => {
 });
 
 describe("Toaster", () => {
-  it("stays out of the way when nothing has happened", () => {
+  it("keeps an empty live region mounted so the first toast is announced", () => {
     render(<Toaster />);
 
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
   });
 
-  it("announces the message and its note without trapping focus", () => {
+  it("announces the message and its note without moving focus", () => {
     render(<Toaster />);
 
     act(() => {
       useToastStore.getState().show({ key: "a", message: "Tasks removed", note: "kept locally" });
     });
 
-    expect(screen.getByRole("status")).toHaveTextContent("Tasks removed");
-    expect(screen.getByRole("status")).toHaveTextContent("kept locally");
+    expect(screen.getByRole("status")).toHaveTextContent("Tasks removed. kept locally");
     expect(document.activeElement).toBe(document.body);
+  });
+
+  it("hands the keyboard its action before the toast can expire", () => {
+    render(<Toaster />);
+
+    act(() => {
+      useToastStore
+        .getState()
+        .show({ key: "a", message: "Removed", action: { kind: "undo", run: vi.fn() } });
+    });
+
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Undo" }));
   });
 
   it("runs the action instead of expiring when it is taken", () => {

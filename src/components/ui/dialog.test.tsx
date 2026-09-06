@@ -80,3 +80,41 @@ describe("DialogContent", () => {
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
 });
+
+describe("DialogContent keyboard", () => {
+  it("lets a search field clear on Escape before the dialog closes", async () => {
+    const onOpenChange = vi.fn();
+    render(
+      <Dialog open onOpenChange={onOpenChange}>
+        <DialogContent>
+          <DialogTitle>Title</DialogTitle>
+          <input type="search" aria-label="Find" defaultValue="paris" />
+        </DialogContent>
+      </Dialog>,
+    );
+    const field = screen.getByRole("searchbox", { name: "Find" });
+    field.focus();
+
+    fireEvent.keyDown(field, { key: "Escape" });
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    fireEvent.change(field, { target: { value: "" } });
+    fireEvent.keyDown(field, { key: "Escape" });
+    await settle();
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("takes focus itself when asked, so the keyboard is inside the dialog", async () => {
+    render(
+      <Dialog open onOpenChange={vi.fn()}>
+        <DialogContent initialFocus="container">
+          <DialogTitle>Title</DialogTitle>
+          <button type="button">First</button>
+        </DialogContent>
+      </Dialog>,
+    );
+    await settle();
+
+    expect(document.activeElement).toBe(screen.getByRole("dialog"));
+  });
+});

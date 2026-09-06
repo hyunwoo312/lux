@@ -50,53 +50,58 @@ export function Toaster() {
   useExpiry(toast?.key, paused, expire);
 
   return (
-    <AnimatePresence mode="wait">
-      {toast && (
-        <motion.div
-          key={toast.key}
-          variants={barVariants(reduced)}
-          initial="hidden"
-          animate="show"
-          exit="exit"
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
-          onFocusCapture={() => setPaused(true)}
-          onBlurCapture={() => setPaused(false)}
-          className="
-            glass text-ink fixed bottom-4 left-1/2 z-toast flex max-w-[calc(100vw-2rem)]
-            -translate-x-1/2 items-center gap-3 overflow-hidden rounded-2xl py-2 pr-1.5 pl-4
-          "
-        >
-          <div role="status" className="flex min-w-0 flex-col">
-            <span className="text-body">{toast.message}</span>
-            {toast.note && <span className="text-ink-3 text-caption">{toast.note}</span>}
-          </div>
-          {toast.action && (
-            <Button variant="ghost" className="rounded-lg" onClick={runAction}>
-              {toast.action.kind === "undo" ? "Undo" : toast.action.label}
-            </Button>
-          )}
-          <Button
-            size="icon-xs"
-            variant="ghost"
-            className="rounded-lg"
-            onClick={expire}
-            aria-label="Dismiss"
+    <>
+      <div role="status" className="sr-only">
+        {toast && [toast.message, toast.note].filter(Boolean).join(". ")}
+      </div>
+      <AnimatePresence mode="wait">
+        {toast && (
+          <motion.div
+            key={toast.key}
+            variants={barVariants(reduced)}
+            initial="hidden"
+            animate="show"
+            exit="exit"
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+            onFocusCapture={() => setPaused(true)}
+            onBlurCapture={() => setPaused(false)}
+            className="
+              glass text-ink fixed bottom-4 left-1/2 z-toast flex max-w-[calc(100vw-2rem)]
+              -translate-x-1/2 items-center gap-3 overflow-hidden rounded-2xl py-2 pr-1.5 pl-4
+            "
           >
-            <X />
-          </Button>
-          {!reduced && (
-            <span
-              aria-hidden
-              className="bg-primary toast-countdown absolute inset-x-0 bottom-0 h-0.5 origin-left"
-              style={{
-                animationDuration: `${TOAST_DURATION_MS}ms`,
-                animationPlayState: paused ? "paused" : "running",
-              }}
-            />
-          )}
-        </motion.div>
-      )}
-    </AnimatePresence>
+            <div className="flex min-w-0 flex-col">
+              <span className="text-body">{toast.message}</span>
+              {toast.note && <span className="text-ink-3 text-caption">{toast.note}</span>}
+            </div>
+            {toast.action && (
+              <Button variant="ghost" className="rounded-lg" autoFocus onClick={runAction}>
+                {toast.action.kind === "undo" ? "Undo" : toast.action.label}
+              </Button>
+            )}
+            <Button
+              size="icon-xs"
+              variant="ghost"
+              className="rounded-lg"
+              onClick={expire}
+              aria-label="Dismiss"
+            >
+              <X />
+            </Button>
+            {!reduced && (
+              <span
+                aria-hidden
+                className="bg-primary toast-countdown absolute inset-x-0 bottom-0 h-0.5 origin-left"
+                style={{
+                  animationDuration: `${TOAST_DURATION_MS}ms`,
+                  animationPlayState: paused ? "paused" : "running",
+                }}
+              />
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

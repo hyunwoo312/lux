@@ -34,6 +34,19 @@ describe("ExpandingSearch", () => {
     expect(props.onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("clears the text on Escape and only closes once it is empty", () => {
+    const props = setup({ open: true, value: "paris" });
+    fireEvent.keyDown(screen.getByRole("combobox"), { key: "Escape" });
+    expect(props.onValueChange).toHaveBeenCalledWith("");
+    expect(props.onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("ignores an Escape pressed somewhere else on the page", () => {
+    const props = setup({ open: true });
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(props.onOpenChange).not.toHaveBeenCalled();
+  });
+
   it("clears the value before closing when there is text", () => {
     const props = setup({ open: true, value: "paris" });
     fireEvent.click(screen.getByRole("button", { name: "Close search" }));

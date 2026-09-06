@@ -67,7 +67,7 @@ export function SettingsDialog() {
     >
       <DialogContent
         showClose={false}
-        onOpenAutoFocus={(event) => event.preventDefault()}
+        initialFocus="container"
         layout="flush"
         width="xl"
         className="h-[90dvh]"

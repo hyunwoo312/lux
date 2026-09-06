@@ -163,7 +163,6 @@ export function WidgetPalette(roving: RovingItemProps) {
               collisionPadding={12}
               className="z-overlay"
               onOpenAutoFocus={(event) => event.preventDefault()}
-              onCloseAutoFocus={(event) => event.preventDefault()}
             >
               <motion.div
                 variants={paletteVariants}
