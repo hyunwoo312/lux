@@ -2,9 +2,9 @@ import {
   ConfigMultiToggle,
   ConfigSegmented,
   ConfigSelect,
-  WidgetConfigGroup,
-  WidgetConfigItem,
-} from "@/components/config/WidgetConfig";
+  ConfigSection,
+  ConfigRow,
+} from "@/components/config/Config";
 import { useWeather, useWeatherStore } from "@/widgets/weather/useWeatherStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import type {
@@ -64,8 +64,8 @@ export function WeatherConfig() {
 
   return (
     <>
-      <WidgetConfigGroup label="Units">
-        <WidgetConfigItem
+      <ConfigSection title="Units">
+        <ConfigRow
           title="Units"
           description="Imperial (°F, mph) or Metric (°C, km/h)"
           control={
@@ -77,7 +77,7 @@ export function WeatherConfig() {
             />
           }
         />
-        <WidgetConfigItem
+        <ConfigRow
           title="Wind speed"
           description="Set wind separately — °C with mph, for instance"
           control={
@@ -89,10 +89,10 @@ export function WeatherConfig() {
             />
           }
         />
-      </WidgetConfigGroup>
+      </ConfigSection>
 
-      <WidgetConfigGroup label="Forecast">
-        <WidgetConfigItem
+      <ConfigSection title="Forecast">
+        <ConfigRow
           title="Days shown"
           description="How far ahead the daily forecast runs"
           control={
@@ -104,7 +104,7 @@ export function WeatherConfig() {
             />
           }
         />
-        <WidgetConfigItem
+        <ConfigRow
           title="Rain alert"
           description="Warn when rain is close, at 30% or 50% odds"
           control={
@@ -116,21 +116,21 @@ export function WeatherConfig() {
             />
           }
         />
-      </WidgetConfigGroup>
+      </ConfigSection>
 
-      <WidgetConfigGroup label="Details">
-        <WidgetConfigItem title="Extra readings" description="Shown under the current conditions">
+      <ConfigSection title="Details">
+        <ConfigRow title="Extra readings" description="Shown under the current conditions">
           <ConfigMultiToggle
             label="Extra readings"
             values={metrics}
             options={METRIC_OPTIONS}
             onChange={(values) => setMetrics(instanceId, values)}
           />
-        </WidgetConfigItem>
-      </WidgetConfigGroup>
+        </ConfigRow>
+      </ConfigSection>
 
-      <WidgetConfigGroup label="About">
-        <WidgetConfigItem
+      <ConfigSection title="About">
+        <ConfigRow
           title="Weather data"
           description="Provided by Open-Meteo (CC BY 4.0)"
           control={
@@ -144,7 +144,7 @@ export function WeatherConfig() {
             </a>
           }
         />
-      </WidgetConfigGroup>
+      </ConfigSection>
     </>
   );
 }

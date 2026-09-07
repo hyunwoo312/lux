@@ -1,10 +1,6 @@
 import { Settings2 } from "lucide-react";
 import { IconActionButton } from "@/components/IconActionButton";
-import {
-  ConfigSegmented,
-  WidgetConfigGroup,
-  WidgetConfigItem,
-} from "@/components/config/WidgetConfig";
+import { ConfigSegmented, ConfigSection, ConfigRow } from "@/components/config/Config";
 import { useProviderAccount } from "@/integrations";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { OPEN_BEHAVIOR_OPTIONS } from "@/lib/open-url";
@@ -41,8 +37,8 @@ export function AnilistConfig() {
 
   return (
     <>
-      <WidgetConfigGroup label="Account">
-        <WidgetConfigItem
+      <ConfigSection title="Account">
+        <ConfigRow
           title="AniList"
           description={accountDescription}
           control={
@@ -54,10 +50,10 @@ export function AnilistConfig() {
             />
           }
         />
-      </WidgetConfigGroup>
+      </ConfigSection>
 
-      <WidgetConfigGroup label="AniList">
-        <WidgetConfigItem
+      <ConfigSection title="AniList">
+        <ConfigRow
           title="Open in"
           description="Where links open"
           control={
@@ -69,7 +65,7 @@ export function AnilistConfig() {
             />
           }
         />
-        <WidgetConfigItem
+        <ConfigRow
           title="Layout"
           description="Cover grid or compact list, in Library and Discover"
           control={
@@ -81,7 +77,7 @@ export function AnilistConfig() {
             />
           }
         />
-        <WidgetConfigItem
+        <ConfigRow
           title="Title language"
           description="How media titles are shown"
           control={
@@ -93,7 +89,7 @@ export function AnilistConfig() {
             />
           }
         />
-      </WidgetConfigGroup>
+      </ConfigSection>
     </>
   );
 }

@@ -1,10 +1,6 @@
 import { Settings2 } from "lucide-react";
 import { IconActionButton } from "@/components/IconActionButton";
-import {
-  ConfigSegmented,
-  WidgetConfigGroup,
-  WidgetConfigItem,
-} from "@/components/config/WidgetConfig";
+import { ConfigSegmented, ConfigSection, ConfigRow } from "@/components/config/Config";
 import { useProviderAccount } from "@/integrations";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { OPEN_BEHAVIOR_OPTIONS } from "@/lib/open-url";
@@ -39,8 +35,8 @@ export function GithubConfig() {
 
   return (
     <>
-      <WidgetConfigGroup label="Account">
-        <WidgetConfigItem
+      <ConfigSection title="Account">
+        <ConfigRow
           title="GitHub"
           description={accountDescription}
           control={
@@ -52,10 +48,10 @@ export function GithubConfig() {
             />
           }
         />
-      </WidgetConfigGroup>
+      </ConfigSection>
 
-      <WidgetConfigGroup label="GitHub">
-        <WidgetConfigItem
+      <ConfigSection title="GitHub">
+        <ConfigRow
           title="Open in"
           description="Where links open"
           control={
@@ -67,7 +63,7 @@ export function GithubConfig() {
             />
           }
         />
-        <WidgetConfigItem
+        <ConfigRow
           title="Repositories"
           description="Show items from private repositories in this widget"
           control={
@@ -79,7 +75,7 @@ export function GithubConfig() {
             />
           }
         />
-        <WidgetConfigItem
+        <ConfigRow
           title="Draft pull requests"
           description="Drafts rarely need action — hide them to keep the inbox tight"
           control={
@@ -91,7 +87,7 @@ export function GithubConfig() {
             />
           }
         />
-      </WidgetConfigGroup>
+      </ConfigSection>
     </>
   );
 }

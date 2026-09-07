@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import type { ReactNode } from "react";
 import { AlertCircle, CheckCheck, ChevronRight, Inbox, RotateCw } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ConfigSegmented } from "@/components/config/WidgetConfig";
+import { ConfigSegmented } from "@/components/config/Config";
 import { Spinner } from "@/components/ui/spinner";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";

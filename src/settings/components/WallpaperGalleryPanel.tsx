@@ -1,9 +1,10 @@
 import { tap } from "@/lib/motion";
 import { Check } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
+import { useRovingFocus } from "@/hooks/useRovingFocus";
 import { cn } from "@/lib/utils";
 import { GALLERY_WALLPAPERS } from "@/lib/wallpaper-gallery";
-import { SettingsRow } from "@/settings/components/SettingsRow";
+import { ConfigRow } from "@/components/config/Config";
 import { MAX_WALLPAPER_IMAGES, useWallpaperStore } from "@/stores/useWallpaperStore";
 
 const BADGE =
@@ -23,6 +24,22 @@ export function WallpaperGalleryPanel() {
   const isMulti = mode === "multi";
   const selected = isMulti ? galleryItems : gallerySingle ? [gallerySingle] : [];
   const atCap = isMulti && galleryItems.length >= MAX_WALLPAPER_IMAGES;
+  const title = isMulti ? "Wallpapers" : "Wallpaper";
+  const roving = useRovingFocus({
+    count: GALLERY_WALLPAPERS.length,
+    activeIndex: isMulti
+      ? undefined
+      : Math.max(
+          0,
+          GALLERY_WALLPAPERS.findIndex((wallpaper) => wallpaper.id === gallerySingle),
+        ),
+    onActivate: isMulti
+      ? undefined
+      : (index) => {
+          const next = GALLERY_WALLPAPERS[index];
+          if (next) setGallerySingle(next.id);
+        },
+  });
 
   const toggle = (id: string) => {
     if (!isMulti) {
@@ -39,23 +56,29 @@ export function WallpaperGalleryPanel() {
   };
 
   return (
-    <SettingsRow
-      title={isMulti ? "Wallpapers" : "Wallpaper"}
+    <ConfigRow
+      title={title}
       description={isMulti ? "Numbers show the order they rotate in" : "Pick one"}
     >
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-        {GALLERY_WALLPAPERS.map((wallpaper) => {
+      <div
+        role={isMulti ? "group" : "radiogroup"}
+        aria-label={title}
+        {...roving.containerProps}
+        className="grid grid-cols-3 gap-2 sm:grid-cols-5"
+      >
+        {GALLERY_WALLPAPERS.map((wallpaper, index) => {
           const isSelected = selected.includes(wallpaper.id);
           const isDisabled = !isSelected && atCap;
           return (
             <motion.button
               key={wallpaper.id}
+              {...roving.itemProps(index)}
               type="button"
               role={isMulti ? "checkbox" : "radio"}
               aria-checked={isSelected}
               aria-label={wallpaper.name}
               title={wallpaper.name}
-              disabled={isDisabled}
+              aria-disabled={isDisabled || undefined}
               onClick={() => toggle(wallpaper.id)}
               {...tap(reduced || isDisabled, "surface")}
               className={cn(
@@ -80,6 +103,6 @@ export function WallpaperGalleryPanel() {
           );
         })}
       </div>
-    </SettingsRow>
+    </ConfigRow>
   );
 }

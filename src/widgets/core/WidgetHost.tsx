@@ -5,7 +5,7 @@ import { BaseWidget } from "@/widgets/core/BaseWidget";
 import { WidgetErrorBoundary } from "@/widgets/core/WidgetErrorBoundary";
 import { CommonWidgetConfig } from "@/widgets/core/CommonWidgetConfig";
 import { ConnectOverlay } from "@/widgets/core/ConnectOverlay";
-import { WidgetConfig } from "@/components/config/WidgetConfig";
+import { ConfigBody } from "@/components/config/Config";
 import type { WidgetInstance } from "@/widgets/core/types";
 import { useWidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
 import { useWidgetHighlightStore } from "@/widgets/core/useWidgetHighlightStore";
@@ -76,10 +76,10 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
               headline={StatusComponent ? <StatusComponent /> : undefined}
               headerAction={HeaderActionComponent ? <HeaderActionComponent /> : undefined}
               config={
-                <WidgetConfig>
+                <ConfigBody>
                   <CommonWidgetConfig />
                   {ConfigComponent && <ConfigComponent />}
-                </WidgetConfig>
+                </ConfigBody>
               }
               onRemove={() => removeWidgetInstance(instance)}
             >

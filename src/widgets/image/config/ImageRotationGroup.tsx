@@ -2,10 +2,10 @@ import {
   ConfigMultiToggle,
   ConfigSegmented,
   ConfigSelect,
-  WidgetConfigGroup,
-  WidgetConfigItem,
-  WidgetConfigSubItem,
-} from "@/components/config/WidgetConfig";
+  ConfigSection,
+  ConfigRow,
+  ConfigSubRow,
+} from "@/components/config/Config";
 import { useImage, useImageStore } from "@/widgets/image/useImageStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import type { ImageOrder } from "@/widgets/image/types";
@@ -54,8 +54,8 @@ export function ImageRotationGroup() {
   };
 
   return (
-    <WidgetConfigGroup label="Rotation">
-      <WidgetConfigItem title="Change image" description="Pick at least one trigger">
+    <ConfigSection title="Rotation">
+      <ConfigRow title="Change image" description="Pick at least one trigger">
         <ConfigMultiToggle
           label="Rotation triggers"
           values={triggerValues}
@@ -63,7 +63,7 @@ export function ImageRotationGroup() {
           minSelected={1}
           onChange={applyTriggers}
         />
-        <WidgetConfigSubItem
+        <ConfigSubRow
           title="Interval"
           description="How often it rotates"
           disabled={!rotateTimed}
@@ -77,8 +77,8 @@ export function ImageRotationGroup() {
             />
           }
         />
-      </WidgetConfigItem>
-      <WidgetConfigItem
+      </ConfigRow>
+      <ConfigRow
         title="Order"
         description="Sequential or random"
         control={
@@ -90,6 +90,6 @@ export function ImageRotationGroup() {
           />
         }
       />
-    </WidgetConfigGroup>
+    </ConfigSection>
   );
 }

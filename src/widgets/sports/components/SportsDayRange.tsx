@@ -1,4 +1,4 @@
-import { ConfigSelect } from "@/components/config/WidgetConfig";
+import { ConfigSelect } from "@/components/config/Config";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { DAY_WINDOWS, DAY_WINDOW_LABEL } from "@/widgets/sports/lib/window";
 import { useSports, useSportsStore } from "@/widgets/sports/useSportsStore";

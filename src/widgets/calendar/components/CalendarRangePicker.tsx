@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { localDayKey } from "@/lib/clock";
 import { cn } from "@/lib/utils";
 import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
-import { ConfigSegmented } from "@/components/config/WidgetConfig";
+import { ConfigSegmented } from "@/components/config/Config";
 import { WeekdayHeader } from "@/widgets/calendar/components/WeekdayHeader";
 import {
   addDays,

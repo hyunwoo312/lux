@@ -1,4 +1,6 @@
+import { useId } from "react";
 import { Bookmark, SearchX } from "lucide-react";
+import { RailItem } from "@/components/DialogChrome";
 import { StateMessage } from "@/components/StateMessage";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -15,30 +17,25 @@ export function SavedToggle({
   active: boolean;
   onToggle: () => void;
 }) {
+  const layoutId = useId();
   return (
     <Tooltip content={active ? "Back to headlines" : "Saved headlines"}>
-      <button
-        type="button"
+      <RailItem
+        active={active}
+        layoutId={layoutId}
         aria-pressed={active}
         aria-label={active ? "Back to headlines" : `Saved headlines (${count})`}
         onClick={onToggle}
-        className={cn(
-          `
-            press focus-ring flex h-8 shrink-0 cursor-pointer items-center gap-1 rounded-md px-2
-            transition-colors
-          `,
-          active
-            ? "bg-primary/12 ring-primary/25 text-primary ring-1"
-            : "text-ink-3 hover:text-ink",
-        )}
+        dense
+        className="h-8 w-auto shrink-0 rounded-md py-0"
       >
-        <Bookmark className="size-4 shrink-0" aria-hidden />
+        <Bookmark className={cn("size-4 shrink-0", active && "text-primary")} aria-hidden />
         {count > 0 && (
           <span aria-hidden className="text-caption font-semibold tabular-nums">
             {count > 99 ? "99+" : count}
           </span>
         )}
-      </button>
+      </RailItem>
     </Tooltip>
   );
 }

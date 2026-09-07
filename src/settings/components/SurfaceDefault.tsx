@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { Layers } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { ConfigSegmented } from "@/components/config/WidgetConfig";
-import { SettingsRow } from "@/settings/components/SettingsRow";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import {
   useWidgetSettingsStore,
   type SurfacePreference,
   type WidgetBackground,
 } from "@/widgets/core/useWidgetSettingsStore";
+import { ConfigSegmented, ConfigRow } from "@/components/config/Config";
 
 const OPTIONS: { value: SurfacePreference; label: string; disabled?: boolean }[] = [
   { value: "glass", label: "Glass" },
@@ -41,7 +40,7 @@ export function SurfaceDefault() {
 
   return (
     <>
-      <SettingsRow
+      <ConfigRow
         title="Surface"
         description="Glass or solid for every widget at once."
         control={
@@ -54,7 +53,7 @@ export function SurfaceDefault() {
         }
       >
         <p className="text-ink-4 text-caption">{note}</p>
-      </SettingsRow>
+      </ConfigRow>
 
       <ConfirmDialog
         open={pending !== null}

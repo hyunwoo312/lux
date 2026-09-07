@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { loadErrorMessage } from "@/lib/net";
 import { Button } from "@/components/ui/button";
-import { ConfigSegmented, ConfigSelect } from "@/components/config/WidgetConfig";
+import { ConfigSegmented, ConfigSelect } from "@/components/config/Config";
 import { useProviderAccount } from "@/integrations";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { usePolledDefinition, type PolledResourceState } from "@/widgets/core/usePolledResource";

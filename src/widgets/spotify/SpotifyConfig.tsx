@@ -2,11 +2,7 @@ import { Settings2 } from "lucide-react";
 import { IconActionButton } from "@/components/IconActionButton";
 import { useProviderAccount } from "@/integrations";
 import { useSettingsStore } from "@/stores/useSettingsStore";
-import {
-  ConfigSegmented,
-  WidgetConfigGroup,
-  WidgetConfigItem,
-} from "@/components/config/WidgetConfig";
+import { ConfigSegmented, ConfigSection, ConfigRow } from "@/components/config/Config";
 import { useSpotify, useSpotifyStore } from "@/widgets/spotify/useSpotifyStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import type { SpotifyTimeDisplayMode } from "@/widgets/spotify/types";
@@ -30,8 +26,8 @@ export function SpotifyConfig() {
 
   return (
     <>
-      <WidgetConfigGroup label="Account">
-        <WidgetConfigItem
+      <ConfigSection title="Account">
+        <ConfigRow
           title="Spotify"
           description={accountDescription}
           control={
@@ -43,10 +39,10 @@ export function SpotifyConfig() {
             />
           }
         />
-      </WidgetConfigGroup>
+      </ConfigSection>
 
-      <WidgetConfigGroup label="Display">
-        <WidgetConfigItem
+      <ConfigSection title="Display">
+        <ConfigRow
           title="Right time"
           description="Show total duration or time remaining"
           control={
@@ -58,7 +54,7 @@ export function SpotifyConfig() {
             />
           }
         />
-      </WidgetConfigGroup>
+      </ConfigSection>
     </>
   );
 }

@@ -3,9 +3,9 @@ import { Switch } from "@/components/ui/switch";
 import {
   ConfigSegmented,
   ConfigSelect,
-  WidgetConfigGroup,
-  WidgetConfigItem,
-} from "@/components/config/WidgetConfig";
+  ConfigSection,
+  ConfigRow,
+} from "@/components/config/Config";
 import { useSetImageAsBackground } from "@/widgets/image/hooks/useSetImageAsBackground";
 import { useImage, useImageStore } from "@/widgets/image/useImageStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
@@ -56,8 +56,8 @@ export function ImageAppearanceGroup({
   const { setAsBackground, canSet, status } = useSetImageAsBackground();
 
   return (
-    <WidgetConfigGroup label="Appearance">
-      <WidgetConfigItem
+    <ConfigSection title="Appearance">
+      <ConfigRow
         title="Fit"
         description="How the image fills the widget"
         control={
@@ -69,7 +69,7 @@ export function ImageAppearanceGroup({
           />
         }
       />
-      <WidgetConfigItem
+      <ConfigRow
         title="Brightness"
         description="Overlay for contrast"
         control={
@@ -82,7 +82,7 @@ export function ImageAppearanceGroup({
         }
       />
       {isMulti && (
-        <WidgetConfigItem
+        <ConfigRow
           title="Transition"
           description="How images change over"
           control={
@@ -95,7 +95,7 @@ export function ImageAppearanceGroup({
           }
         />
       )}
-      <WidgetConfigItem
+      <ConfigRow
         title="Ken Burns"
         description="Slow pan and zoom on the image"
         control={
@@ -106,7 +106,7 @@ export function ImageAppearanceGroup({
           />
         }
       />
-      <WidgetConfigItem
+      <ConfigRow
         title="Hide frame"
         description="Show only the image, hiding the card and header"
         control={
@@ -118,7 +118,7 @@ export function ImageAppearanceGroup({
         }
       />
       {hasImages && (
-        <WidgetConfigItem
+        <ConfigRow
           title="Dashboard background"
           description="Use the current image as the page background"
           control={
@@ -132,6 +132,6 @@ export function ImageAppearanceGroup({
           }
         />
       )}
-    </WidgetConfigGroup>
+    </ConfigSection>
   );
 }

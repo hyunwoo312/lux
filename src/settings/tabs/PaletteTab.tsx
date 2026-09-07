@@ -4,14 +4,10 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { ConfigSegmented } from "@/components/config/WidgetConfig";
 import { commandCatalogue } from "@/commands";
 import { useGrantedPermissions } from "@/hooks/usePermission";
 import { isPermissionsManageable, setPermissionsGranted } from "@/lib/permissions";
 import { OPEN_BEHAVIOR_OPTIONS } from "@/lib/open-url";
-import { SettingsRow } from "@/settings/components/SettingsRow";
-import { SettingsSection } from "@/settings/components/SettingsSection";
-import { SettingsTabBody } from "@/settings/components/SettingsTabBody";
 import { SliderField } from "@/settings/components/SliderField";
 import {
   PALETTE_SOURCES,
@@ -21,6 +17,7 @@ import {
   usePaletteStore,
   type PaletteSource,
 } from "@/stores/usePaletteStore";
+import { ConfigSegmented, ConfigRow, ConfigSection, ConfigBody } from "@/components/config/Config";
 
 type SourceMeta = {
   description: string;
@@ -58,7 +55,7 @@ export function PaletteTab() {
   const missing = PALETTE_SOURCES.filter((source) => enabled[source] && !isGranted(source));
 
   return (
-    <SettingsTabBody>
+    <ConfigBody>
       {missing.length > 0 && (
         <p
           role="status"
@@ -75,8 +72,8 @@ export function PaletteTab() {
         </p>
       )}
 
-      <SettingsSection title="Suggestions">
-        <SettingsRow
+      <ConfigSection title="Suggestions">
+        <ConfigRow
           title="Suggested commands"
           description="Puts what you reach for most at the top, before everything else"
           control={
@@ -88,7 +85,7 @@ export function PaletteTab() {
           }
         />
         {suggestionsEnabled && (
-          <SettingsRow
+          <ConfigRow
             title="How many to show"
             description="At the top of the palette before anything else"
             control={
@@ -106,7 +103,7 @@ export function PaletteTab() {
             }
           />
         )}
-        <SettingsRow
+        <ConfigRow
           title="Learned ranking"
           description={
             usageCount === 0
@@ -120,10 +117,10 @@ export function PaletteTab() {
             </Button>
           }
         />
-      </SettingsSection>
+      </ConfigSection>
 
-      <SettingsSection title="Results">
-        <SettingsRow
+      <ConfigSection title="Results">
+        <ConfigRow
           title="Where results open"
           description="Whether picking a link or a search replaces this tab"
           control={
@@ -135,15 +132,15 @@ export function PaletteTab() {
             />
           }
         />
-      </SettingsSection>
+      </ConfigSection>
 
-      <SettingsSection title="Browser data and search">
+      <ConfigSection title="Browser data and search">
         {PALETTE_SOURCES.map((source) => {
           const meta = SOURCE_META[source];
           const permission = meta.permission;
           const needsGrant = enabled[source] && !isGranted(source);
           return (
-            <SettingsRow
+            <ConfigRow
               key={source}
               title={PALETTE_SOURCE_LABELS[source]}
               description={meta.description}
@@ -172,9 +169,9 @@ export function PaletteTab() {
             />
           );
         })}
-      </SettingsSection>
+      </ConfigSection>
 
-      <SettingsSection title="Commands">
+      <ConfigSection title="Commands">
         <p className="text-ink-2 text-caption">
           Everything the palette can offer. Uncheck what you would rather it never showed.
         </p>
@@ -241,7 +238,7 @@ export function PaletteTab() {
             </div>
           );
         })}
-      </SettingsSection>
-    </SettingsTabBody>
+      </ConfigSection>
+    </ConfigBody>
   );
 }

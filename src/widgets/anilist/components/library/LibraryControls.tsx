@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { ConfigSegmented } from "@/components/config/WidgetConfig";
+import { ConfigSegmented } from "@/components/config/Config";
 import { FilterMenu } from "@/widgets/anilist/components/FilterMenu";
 import {
   MEDIA_FILTER_OPTIONS,

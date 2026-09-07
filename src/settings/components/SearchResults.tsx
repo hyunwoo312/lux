@@ -1,6 +1,8 @@
 import type { SettingEntry } from "@/settings/searchIndex";
 import { SETTINGS_TAB_META } from "@/settings/tabsMeta";
 import type { SettingsTab } from "@/stores/useSettingsStore";
+import { ROW } from "@/lib/row";
+import { cn } from "@/lib/utils";
 
 type Props = {
   results: SettingEntry[];
@@ -19,12 +21,7 @@ export function SearchResults({ results, onSelect }: Props) {
           key={`${entry.tab}-${entry.label}`}
           type="button"
           onClick={() => onSelect(entry.tab)}
-          className="
-            press-row focus-ring
-            hover:bg-accent/50
-            flex w-full cursor-pointer flex-col items-start gap-0.5 rounded-lg px-2 py-1.5 text-left
-            transition-colors
-          "
+          className={cn(ROW.nav, "hover:bg-accent/50 flex-col items-start gap-0.5 py-1.5")}
         >
           <span className="text-ink text-caption font-medium">{entry.label}</span>
           <span className="text-ink-4 text-micro">

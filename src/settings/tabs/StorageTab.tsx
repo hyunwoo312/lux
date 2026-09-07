@@ -2,9 +2,6 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { exportSettings, importSettings } from "@/lib/backup";
-import { SettingsRow } from "@/settings/components/SettingsRow";
-import { SettingsSection } from "@/settings/components/SettingsSection";
-import { SettingsTabBody } from "@/settings/components/SettingsTabBody";
 import { StorageSection } from "@/settings/components/StorageSection";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useShortcutsStore } from "@/stores/useShortcutsStore";
@@ -16,6 +13,7 @@ import { usePaletteStore } from "@/stores/usePaletteStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { showToast } from "@/stores/useToastStore";
 import { clearWallpaperAssets, useWallpaperStore } from "@/stores/useWallpaperStore";
+import { ConfigRow, ConfigSection, ConfigBody } from "@/components/config/Config";
 
 const RESET_DESCRIPTION =
   "Clears theme, accent, shortcuts, palette preferences and background images, and shows the welcome again. Widgets, their content and your accounts are kept.";
@@ -63,11 +61,11 @@ export function StorageTab() {
   }
 
   return (
-    <SettingsTabBody>
+    <ConfigBody>
       <StorageSection />
 
-      <SettingsSection title="Backup & restore">
-        <SettingsRow
+      <ConfigSection title="Backup & restore">
+        <ConfigRow
           title="Your whole setup, in one file"
           description="Widgets, layout, preferences and shortcuts. Accounts are not included."
           control={
@@ -105,11 +103,11 @@ export function StorageTab() {
             </p>
           )}
           {importError && <p className="text-destructive text-caption">{importError}</p>}
-        </SettingsRow>
-      </SettingsSection>
+        </ConfigRow>
+      </ConfigSection>
 
-      <SettingsSection title="Start over">
-        <SettingsRow
+      <ConfigSection title="Start over">
+        <ConfigRow
           title="Reset all settings"
           description={RESET_DESCRIPTION}
           control={
@@ -118,7 +116,7 @@ export function StorageTab() {
             </Button>
           }
         />
-      </SettingsSection>
+      </ConfigSection>
 
       <ConfirmDialog
         open={confirmReset}
@@ -128,6 +126,6 @@ export function StorageTab() {
         confirmLabel="Reset all"
         onConfirm={() => void resetAllSettings()}
       />
-    </SettingsTabBody>
+    </ConfigBody>
   );
 }

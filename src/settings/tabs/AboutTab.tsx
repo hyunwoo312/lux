@@ -22,7 +22,7 @@ import {
   springPop,
   tap,
 } from "@/lib/motion";
-import { SettingsSection } from "@/settings/components/SettingsSection";
+import { ConfigSection } from "@/components/config/Config";
 import { useGithubStars } from "@/settings/useGithubStars";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { LuxMark } from "@/components/LuxMark";
@@ -162,7 +162,7 @@ export function AboutTab() {
       </motion.div>
 
       <motion.div variants={item}>
-        <SettingsSection
+        <ConfigSection
           title="Privacy"
           action={
             <a
@@ -228,7 +228,7 @@ export function AboutTab() {
           >
             Back up your whole setup to a file, restore it anywhere, or reset it all.
           </IconRow>
-        </SettingsSection>
+        </ConfigSection>
       </motion.div>
 
       <motion.p variants={item} className="text-ink-4 text-center text-caption">

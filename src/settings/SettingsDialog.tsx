@@ -1,8 +1,8 @@
 import type { ComponentType } from "react";
 import { useEffect, useMemo, useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { DialogHeaderBar } from "@/components/DialogChrome";
+import { Dialog } from "@/components/ui/dialog";
+import { DialogHeaderBar, RailDialogContent } from "@/components/DialogChrome";
 import { SettingsSidebar } from "@/settings/components/SettingsSidebar";
 import { EASE_OUT_STRONG, enterTween, exitTween } from "@/lib/motion";
 import { AboutTab } from "@/settings/tabs/AboutTab";
@@ -66,45 +66,12 @@ export function SettingsDialog() {
         if (!next) closeSettings();
       }}
     >
-      <DialogContent
-        showClose={false}
-        initialFocus="container"
-        layout="flush"
-        width="xl"
-        className="h-[90dvh]"
-      >
-        <div className="flex min-h-0 flex-1">
-          <SettingsSidebar open={open} />
+      <RailDialogContent initialFocus="container" width="xl">
+        <SettingsSidebar open={open} />
 
-          <div className="flex min-w-0 flex-1 flex-col">
-            <DialogHeaderBar>
-              <div className="relative min-w-0 flex-1 overflow-hidden">
-                <AnimatePresence mode="popLayout" custom={direction} initial={false}>
-                  <motion.div
-                    key={tab}
-                    custom={direction}
-                    variants={carouselVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    className="flex min-w-0 items-center gap-2.5"
-                  >
-                    <ActiveIcon className="text-ink-3 size-4 shrink-0" aria-hidden />
-                    <h2 className="text-body font-semibold whitespace-nowrap">{active.label}</h2>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            </DialogHeaderBar>
-
-            <div
-              id="settings-panel"
-              role="tabpanel"
-              aria-labelledby={`settings-tab-${tab}`}
-              className="
-                relative min-h-0 flex-1 overflow-x-hidden scroll-fade scrollbar-inset-b
-                overflow-y-auto px-6 py-5
-              "
-            >
+        <div className="flex min-w-0 flex-1 flex-col">
+          <DialogHeaderBar>
+            <div className="relative min-w-0 flex-1 overflow-hidden">
               <AnimatePresence mode="popLayout" custom={direction} initial={false}>
                 <motion.div
                   key={tab}
@@ -113,15 +80,40 @@ export function SettingsDialog() {
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  className="will-change-transform"
+                  className="flex min-w-0 items-center gap-2.5"
                 >
-                  <ActiveTab />
+                  <ActiveIcon className="text-ink-3 size-4 shrink-0" aria-hidden />
+                  <h2 className="text-body font-semibold whitespace-nowrap">{active.label}</h2>
                 </motion.div>
               </AnimatePresence>
             </div>
+          </DialogHeaderBar>
+
+          <div
+            id="settings-panel"
+            role="tabpanel"
+            aria-labelledby={`settings-tab-${tab}`}
+            className="
+              relative min-h-0 flex-1 overflow-x-hidden scroll-fade scrollbar-inset-b
+              overflow-y-auto px-6 py-5
+            "
+          >
+            <AnimatePresence mode="popLayout" custom={direction} initial={false}>
+              <motion.div
+                key={tab}
+                custom={direction}
+                variants={carouselVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                className="will-change-transform"
+              >
+                <ActiveTab />
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
-      </DialogContent>
+      </RailDialogContent>
     </Dialog>
   );
 }

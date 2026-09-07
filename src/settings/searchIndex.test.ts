@@ -5,7 +5,7 @@ import { sourceFiles, sourcePath } from "@/test/source-files";
 import { searchSettings, settingsIndex } from "@/settings/searchIndex";
 import { SETTINGS_TABS } from "@/stores/settingsTabs";
 
-const SETTINGS_ROW = /<SettingsRow\b[^>]*?\stitle="([^"]+)"/gs;
+const SETTINGS_ROW = /<ConfigRow\b[^>]*?\stitle="([^"]+)"/gs;
 
 function writtenRows(): { title: string; file: string }[] {
   return sourceFiles()

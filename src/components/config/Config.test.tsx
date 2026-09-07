@@ -4,10 +4,11 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { Switch } from "@/components/ui/switch";
 import {
   ConfigMultiToggle,
+  ConfigRow,
   ConfigSegmented,
-  WidgetConfigDisclosure,
-  WidgetConfigSubItem,
-} from "@/components/config/WidgetConfig";
+  ConfigDisclosure,
+  ConfigSubRow,
+} from "@/components/config/Config";
 
 const OPTIONS = [
   { value: "light", label: "Light" },
@@ -104,12 +105,12 @@ describe('ConfigSegmented fit="line"', () => {
   });
 });
 
-describe("WidgetConfigDisclosure", () => {
+describe("ConfigDisclosure", () => {
   it("keeps its contents out of the way until asked", () => {
     render(
-      <WidgetConfigDisclosure title="Captions">
+      <ConfigDisclosure title="Captions">
         <p>Inner detail</p>
-      </WidgetConfigDisclosure>,
+      </ConfigDisclosure>,
     );
 
     expect(screen.queryByText("Inner detail")).not.toBeInTheDocument();
@@ -121,9 +122,9 @@ describe("WidgetConfigDisclosure", () => {
 
   it("reveals and hides its contents on click", () => {
     render(
-      <WidgetConfigDisclosure title="Captions">
+      <ConfigDisclosure title="Captions">
         <p>Inner detail</p>
-      </WidgetConfigDisclosure>,
+      </ConfigDisclosure>,
     );
 
     const toggle = screen.getByRole("button", { name: /captions/i });
@@ -136,25 +137,25 @@ describe("WidgetConfigDisclosure", () => {
 
   it("can start open when the contents matter more than the space", () => {
     render(
-      <WidgetConfigDisclosure title="Captions" defaultOpen>
+      <ConfigDisclosure title="Captions" defaultOpen>
         <p>Inner detail</p>
-      </WidgetConfigDisclosure>,
+      </ConfigDisclosure>,
     );
 
     expect(screen.getByText("Inner detail")).toBeInTheDocument();
   });
 });
 
-describe("WidgetConfigSubItem", () => {
+describe("ConfigSubRow", () => {
   it("puts a disabled row out of keyboard reach and leaves an enabled one interactive", () => {
     render(
       <>
-        <WidgetConfigSubItem
+        <ConfigSubRow
           title="Interval"
           disabled
           control={<Switch aria-label="Rotate on a timer" onCheckedChange={vi.fn()} />}
         />
-        <WidgetConfigSubItem
+        <ConfigSubRow
           title="Captions"
           control={<Switch aria-label="Show captions" onCheckedChange={vi.fn()} />}
         />
@@ -163,5 +164,18 @@ describe("WidgetConfigSubItem", () => {
 
     expect(screen.getByText("Interval").closest("[inert]")).not.toBeNull();
     expect(screen.getByText("Captions").closest("[inert]")).toBeNull();
+  });
+});
+
+describe("ConfigRow", () => {
+  it("names a bare control after the row's title, and leaves a labelled one alone", () => {
+    render(
+      <>
+        <ConfigRow title="Grid lines" control={<Switch />} />
+        <ConfigRow title="Reset all settings" control={<button type="button">Reset</button>} />
+      </>,
+    );
+    expect(screen.getByRole("switch", { name: "Grid lines" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reset" })).toBeInTheDocument();
   });
 });

@@ -4,8 +4,9 @@ import { ChevronRight, LayoutGrid, Rocket, SearchX, ShieldCheck } from "lucide-r
 import type { LucideIcon } from "lucide-react";
 import { SearchField } from "@/components/SearchField";
 import { cn } from "@/lib/utils";
-import { DIALOG_RAIL } from "@/components/DialogChrome";
-import { collapse, enterTween, springCrisp } from "@/lib/motion";
+import { DIALOG_RAIL, RailItem } from "@/components/DialogChrome";
+import { collapse, enterTween } from "@/lib/motion";
+import { ROW } from "@/lib/row";
 import { GUIDE_GROUPS } from "@/guide/content";
 import type { GuideGroup } from "@/guide/types";
 
@@ -76,12 +77,14 @@ export function GuideNav({ articleId, onSelect }: Props) {
                       setCollapsed((state) => ({ ...state, [group.id]: !state[group.id] }))
                     }
                     aria-expanded={open}
-                    className="
-                      press-row focus-ring text-ink
-                      hover:bg-accent/60
-                      flex w-full cursor-pointer items-center justify-between gap-2 rounded-md px-2
-                      py-1.5 text-left text-body font-medium transition-colors
-                    "
+                    className={cn(
+                      ROW.nav,
+                      `
+                        text-ink
+                        hover:bg-accent/60
+                        justify-between gap-2 rounded-md py-1.5 font-medium
+                      `,
+                    )}
                   >
                     <span className="flex min-w-0 items-center gap-2">
                       <Icon className="text-ink-4 size-4 shrink-0" aria-hidden />
@@ -105,30 +108,15 @@ export function GuideNav({ articleId, onSelect }: Props) {
                             const active = article.id === articleId;
                             return (
                               <li key={article.id}>
-                                <button
-                                  type="button"
+                                <RailItem
+                                  active={active}
+                                  layoutId="guide-active-article"
                                   aria-current={active ? "page" : undefined}
                                   onClick={() => onSelect(article.id)}
-                                  className={cn(
-                                    `
-                                      press-row focus-ring relative flex w-full cursor-pointer
-                                      rounded-md px-2 py-1.5 text-left text-body transition-colors
-                                    `,
-                                    active ? "text-ink font-medium" : "text-ink-3 hover:text-ink",
-                                  )}
+                                  className={cn("rounded-md py-1.5", active && "font-medium")}
                                 >
-                                  {active && (
-                                    <motion.span
-                                      layoutId="guide-active-article"
-                                      className="
-                                        bg-primary/12 ring-primary/25 absolute inset-0 rounded-md
-                                        ring-1
-                                      "
-                                      transition={springCrisp(reduced)}
-                                    />
-                                  )}
-                                  <span className="relative z-10 truncate">{article.title}</span>
-                                </button>
+                                  <span className="truncate">{article.title}</span>
+                                </RailItem>
                               </li>
                             );
                           })}

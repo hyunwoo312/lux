@@ -1,8 +1,4 @@
-import {
-  ConfigMultiToggle,
-  WidgetConfigGroup,
-  WidgetConfigItem,
-} from "@/components/config/WidgetConfig";
+import { ConfigMultiToggle, ConfigSection, ConfigRow } from "@/components/config/Config";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { useSports, useSportsStore } from "@/widgets/sports/useSportsStore";
 import type { MatchState } from "@/widgets/sports/types";
@@ -20,8 +16,8 @@ export function SportsConfig() {
 
   return (
     <>
-      <WidgetConfigGroup label="Scores">
-        <WidgetConfigItem
+      <ConfigSection title="Scores">
+        <ConfigRow
           title="Show"
           description="Which games appear in the list (at least one)"
           control={
@@ -34,10 +30,10 @@ export function SportsConfig() {
             />
           }
         />
-      </WidgetConfigGroup>
+      </ConfigSection>
 
-      <WidgetConfigGroup label="About">
-        <WidgetConfigItem
+      <ConfigSection title="About">
+        <ConfigRow
           title="Scores"
           description="Live and final scores from ESPN; may be delayed"
           control={
@@ -51,7 +47,7 @@ export function SportsConfig() {
             </a>
           }
         />
-      </WidgetConfigGroup>
+      </ConfigSection>
     </>
   );
 }

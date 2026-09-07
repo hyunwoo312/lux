@@ -1,9 +1,9 @@
 import {
   ConfigMultiToggle,
   ConfigSegmented,
-  WidgetConfigGroup,
-  WidgetConfigItem,
-} from "@/components/config/WidgetConfig";
+  ConfigSection,
+  ConfigRow,
+} from "@/components/config/Config";
 import { useStocks, useStocksStore } from "@/widgets/stocks/useStocksStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { INDEX_CATALOGUE, MAX_INDICES } from "@/widgets/stocks/lib/indices";
@@ -42,8 +42,8 @@ export function StocksConfig() {
 
   return (
     <>
-      <WidgetConfigGroup label="Display">
-        <WidgetConfigItem
+      <ConfigSection title="Display">
+        <ConfigRow
           title="Change"
           description="Show movement as a percentage or in price"
           control={
@@ -55,7 +55,7 @@ export function StocksConfig() {
             />
           }
         />
-        <WidgetConfigItem
+        <ConfigRow
           title="Chart style"
           description="How the detail chart draws price"
           control={
@@ -67,7 +67,7 @@ export function StocksConfig() {
             />
           }
         />
-        <WidgetConfigItem
+        <ConfigRow
           title="Company name"
           description="Show the company name under each symbol"
           control={
@@ -79,10 +79,10 @@ export function StocksConfig() {
             />
           }
         />
-      </WidgetConfigGroup>
+      </ConfigSection>
 
-      <WidgetConfigGroup label="Market rail">
-        <WidgetConfigItem
+      <ConfigSection title="Market rail">
+        <ConfigRow
           title="Indices"
           description={`Shown above the watchlist. Pick up to ${MAX_INDICES}.`}
         >
@@ -93,11 +93,11 @@ export function StocksConfig() {
             maxSelected={MAX_INDICES}
             onChange={(values) => setIndexSymbols(instanceId, values)}
           />
-        </WidgetConfigItem>
-      </WidgetConfigGroup>
+        </ConfigRow>
+      </ConfigSection>
 
-      <WidgetConfigGroup label="About">
-        <WidgetConfigItem
+      <ConfigSection title="About">
+        <ConfigRow
           title="Market data"
           description="Quotes from Yahoo Finance; may be delayed"
           control={
@@ -111,7 +111,7 @@ export function StocksConfig() {
             </a>
           }
         />
-      </WidgetConfigGroup>
+      </ConfigSection>
     </>
   );
 }

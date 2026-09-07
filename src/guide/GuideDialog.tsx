@@ -1,4 +1,5 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
+import { RailDialogContent } from "@/components/DialogChrome";
 import { findArticle, FIRST_ARTICLE_ID } from "@/guide/content";
 import { GuideNav } from "@/guide/components/GuideNav";
 import { GuideArticleView } from "@/guide/components/GuideArticleView";
@@ -14,21 +15,12 @@ export function GuideDialog() {
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && closeGuide()}>
-      <DialogContent
-        layout="flush"
-        showClose={false}
-        initialFocus="container"
-        aria-label="Lux guide"
-        width="2xl"
-        className="h-[90dvh]"
-      >
-        <div className="flex min-h-0 flex-1">
-          <GuideNav articleId={location?.article.id ?? ""} onSelect={setArticle} />
-          <div className="flex min-w-0 flex-1 flex-col">
-            {location && <GuideArticleView location={location} onSelect={setArticle} />}
-          </div>
+      <RailDialogContent initialFocus="container" aria-label="Lux guide" width="2xl">
+        <GuideNav articleId={location?.article.id ?? ""} onSelect={setArticle} />
+        <div className="flex min-w-0 flex-1 flex-col">
+          {location && <GuideArticleView location={location} onSelect={setArticle} />}
         </div>
-      </DialogContent>
+      </RailDialogContent>
     </Dialog>
   );
 }

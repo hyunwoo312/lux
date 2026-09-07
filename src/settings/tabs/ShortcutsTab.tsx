@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import { SearchField } from "@/components/SearchField";
 import { Tooltip } from "@/components/ui/tooltip";
 import { shortcutsEqual, type Shortcut } from "@/lib/shortcuts";
-import { SettingsSection } from "@/settings/components/SettingsSection";
-import { SettingsTabBody } from "@/settings/components/SettingsTabBody";
 import {
   MAX_SHORTCUT_SLOTS,
   SHORTCUT_DEFAULTS,
@@ -19,6 +17,7 @@ import { EASE_OUT_STRONG, enterTween, exitTween, springCrisp } from "@/lib/motio
 import { usePaletteShortcut } from "@/hooks/usePaletteShortcut";
 import { AddShortcutControl, ShortcutDisplay } from "@/settings/tabs/ShortcutRow";
 import { Kbd } from "@/components/Kbd";
+import { ConfigSection, ConfigBody } from "@/components/config/Config";
 
 const BROWSER_SHORTCUT = {
   label: "Open the command palette",
@@ -65,11 +64,11 @@ export function ShortcutsTab() {
     .includes(needle);
 
   return (
-    <SettingsTabBody>
+    <ConfigBody>
       <SearchField value={query} onChange={setQuery} label="Search shortcuts" />
 
       {browserMatches && (
-        <SettingsSection title="Browser shortcut">
+        <ConfigSection title="Browser shortcut">
           <CustomizeRow
             icon={<Search className="text-ink-3 size-6 shrink-0" />}
             name={BROWSER_SHORTCUT.label}
@@ -89,11 +88,11 @@ export function ShortcutsTab() {
               Change in Chrome
             </Button>
           </CustomizeRow>
-        </SettingsSection>
+        </ConfigSection>
       )}
 
       {visibleShortcuts.length > 0 && (
-        <SettingsSection
+        <ConfigSection
           title="Shortcuts"
           action={
             SHORTCUT_DEFINITIONS.some(
@@ -207,13 +206,13 @@ export function ShortcutsTab() {
               );
             })}
           </div>
-        </SettingsSection>
+        </ConfigSection>
       )}
 
       {!browserMatches && visibleShortcuts.length === 0 && (
         <p className="text-ink-3 py-8 text-center text-body">No shortcuts match “{query}”.</p>
       )}
-    </SettingsTabBody>
+    </ConfigBody>
   );
 }
 

@@ -5,7 +5,7 @@ import { listVariants } from "@/lib/motion";
 import { IconActionButton } from "@/components/IconActionButton";
 import { openUrl } from "@/lib/open-url";
 import { cn } from "@/lib/utils";
-import { ConfigSelect } from "@/components/config/WidgetConfig";
+import { ConfigSelect } from "@/components/config/Config";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { useTennis } from "@/widgets/sports/hooks/useTennis";
 import { SPORT_ICON } from "@/widgets/sports/lib/leagues";

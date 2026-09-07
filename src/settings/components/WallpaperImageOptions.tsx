@@ -1,10 +1,4 @@
 import { Switch } from "@/components/ui/switch";
-import {
-  ConfigSegmented,
-  ConfigSelect,
-  WidgetConfigSubItem,
-} from "@/components/config/WidgetConfig";
-import { SettingsRow } from "@/settings/components/SettingsRow";
 import { SliderField } from "@/settings/components/SliderField";
 import {
   WALLPAPER_MAX_BLUR,
@@ -14,6 +8,7 @@ import {
   type WallpaperMode,
   type WallpaperOrder,
 } from "@/stores/useWallpaperStore";
+import { ConfigSegmented, ConfigSelect, ConfigSubRow, ConfigRow } from "@/components/config/Config";
 
 const MODE_OPTIONS: { value: WallpaperMode; label: string }[] = [
   { value: "single", label: "Single" },
@@ -54,7 +49,7 @@ export function WallpaperImageOptions() {
 
   return (
     <>
-      <SettingsRow
+      <ConfigRow
         title="Mode"
         description="One wallpaper or a rotating set"
         control={
@@ -67,7 +62,7 @@ export function WallpaperImageOptions() {
         }
       />
 
-      <WidgetConfigSubItem
+      <ConfigSubRow
         title="Change on new tab"
         description="A different one each time you open a tab"
         disabled={isSingle}
@@ -80,7 +75,7 @@ export function WallpaperImageOptions() {
           />
         }
       />
-      <WidgetConfigSubItem
+      <ConfigSubRow
         title="Change on a timer"
         description="Rotate automatically while the tab stays open"
         disabled={isSingle}
@@ -93,7 +88,7 @@ export function WallpaperImageOptions() {
           />
         }
       />
-      <WidgetConfigSubItem
+      <ConfigSubRow
         title="Interval"
         description="How often it changes"
         disabled={isSingle || !rotateTimed}
@@ -107,7 +102,7 @@ export function WallpaperImageOptions() {
           />
         }
       />
-      <WidgetConfigSubItem
+      <ConfigSubRow
         title="Order"
         description="Shuffle or sequential"
         disabled={isSingle}
@@ -122,7 +117,7 @@ export function WallpaperImageOptions() {
         }
       />
 
-      <SettingsRow
+      <ConfigRow
         title="Fit"
         description="How the image fills the screen"
         control={
@@ -142,7 +137,7 @@ export function WallpaperOverlay({ showBlur = false }: { showBlur?: boolean }) {
   const setBlur = useWallpaperStore((s) => s.setBlur);
 
   return (
-    <SettingsRow title="Overlay" description="Darken or blur for legibility">
+    <ConfigRow title="Overlay" description="Darken or blur for legibility">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <SliderField
           label="Dim"
@@ -165,6 +160,6 @@ export function WallpaperOverlay({ showBlur = false }: { showBlur?: boolean }) {
           />
         )}
       </div>
-    </SettingsRow>
+    </ConfigRow>
   );
 }

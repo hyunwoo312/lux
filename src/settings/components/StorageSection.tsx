@@ -13,7 +13,7 @@ import {
   totalOf,
   type StorageUsage,
 } from "@/lib/storage-usage";
-import { SettingsSection } from "@/settings/components/SettingsSection";
+import { ConfigSection } from "@/components/config/Config";
 
 const SEGMENT_TONES = ["bg-primary", "bg-primary/60", "bg-primary/35", "bg-primary/20"];
 
@@ -97,7 +97,7 @@ export function StorageSection() {
   };
 
   return (
-    <SettingsSection
+    <ConfigSection
       title="What Lux is storing"
       action={
         usage && (
@@ -135,6 +135,6 @@ export function StorageSection() {
           )}
         </motion.div>
       </AnimatePresence>
-    </SettingsSection>
+    </ConfigSection>
   );
 }

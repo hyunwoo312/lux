@@ -1,9 +1,9 @@
 import {
   ConfigSegmented,
-  WidgetConfigDisclosure,
-  WidgetConfigGroup,
-  WidgetConfigItem,
-} from "@/components/config/WidgetConfig";
+  ConfigDisclosure,
+  ConfigSection,
+  ConfigRow,
+} from "@/components/config/Config";
 import { ClearImagesButton } from "@/components/media/ClearImagesButton";
 import { ImageUploadButton } from "@/components/media/ImageUploadButton";
 import { MultiImageItems } from "@/components/media/MultiImageItems";
@@ -43,8 +43,8 @@ export function ImageConfig() {
 
   return (
     <>
-      <WidgetConfigGroup label="Image">
-        <WidgetConfigItem
+      <ConfigSection title="Image">
+        <ConfigRow
           title="Mode"
           description="One image or a rotating pool"
           control={
@@ -85,17 +85,17 @@ export function ImageConfig() {
           />
         )}
         {hasImages && (
-          <WidgetConfigDisclosure
+          <ConfigDisclosure
             title="Captions and focus"
             description={
               fit === "cover" ? "Name each image and choose what stays in frame" : "Name each image"
             }
           >
             <ImageDetailsEditor />
-          </WidgetConfigDisclosure>
+          </ConfigDisclosure>
         )}
         {error && <p className="text-destructive text-caption">{error}</p>}
-      </WidgetConfigGroup>
+      </ConfigSection>
 
       {isMulti && <ImageRotationGroup />}
 

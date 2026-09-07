@@ -1,14 +1,17 @@
 import { Switch } from "@/components/ui/switch";
-import { ConfigSegmented, ConfigSelect } from "@/components/config/WidgetConfig";
 import { AccentPicker } from "@/settings/components/AccentPicker";
 import { WallpaperSetting } from "@/settings/components/WallpaperSetting";
-import { SettingsRow } from "@/settings/components/SettingsRow";
-import { SettingsSection } from "@/settings/components/SettingsSection";
-import { SettingsTabBody } from "@/settings/components/SettingsTabBody";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import type { ClockDateFormat } from "@/lib/clock";
 import { useThemeStore } from "@/stores/useThemeStore";
 import type { ThemeMode } from "@/lib/theme";
+import {
+  ConfigSegmented,
+  ConfigSelect,
+  ConfigRow,
+  ConfigSection,
+  ConfigBody,
+} from "@/components/config/Config";
 
 const THEME_OPTIONS = [
   { value: "light", label: "Light" },
@@ -38,9 +41,9 @@ export function AppearanceTab() {
   const isThemePersisted = useThemeStore((s) => s.isPersisted);
 
   return (
-    <SettingsTabBody>
-      <SettingsSection title="Theme">
-        <SettingsRow
+    <ConfigBody>
+      <ConfigSection title="Theme">
+        <ConfigRow
           title="Light or dark"
           description="Follow your system setting, or pick one."
           control={
@@ -57,35 +60,35 @@ export function AppearanceTab() {
               Browser storage is full, so this theme won’t be remembered in new tabs.
             </p>
           )}
-        </SettingsRow>
-        <SettingsRow
+        </ConfigRow>
+        <ConfigRow
           title="Accent"
           description="The highlight colour used across Lux."
           control={<AccentPicker />}
         />
-      </SettingsSection>
+      </ConfigSection>
 
-      <SettingsSection title="Wallpaper">
+      <ConfigSection title="Wallpaper">
         <WallpaperSetting />
-      </SettingsSection>
+      </ConfigSection>
 
-      <SettingsSection title="Dashboard">
-        <SettingsRow
+      <ConfigSection title="Dashboard">
+        <ConfigRow
           title="Grid lines"
           description="Always show the dashboard grid, not only while editing."
           control={<Switch checked={showGridLines} onCheckedChange={setShowGridLines} />}
         />
-        <SettingsRow
+        <ConfigRow
           title="Clock"
           description="Show the time in the header."
           control={<Switch checked={showClock} onCheckedChange={setShowClock} />}
         />
-        <SettingsRow
+        <ConfigRow
           title="24-hour time"
           description="Use a 24-hour clock instead of AM/PM."
           control={<Switch checked={clock24h} onCheckedChange={setClock24h} />}
         />
-        <SettingsRow
+        <ConfigRow
           title="Date under the clock"
           description="Add the weekday, the date, or both."
           control={
@@ -98,7 +101,7 @@ export function AppearanceTab() {
             />
           }
         />
-      </SettingsSection>
-    </SettingsTabBody>
+      </ConfigSection>
+    </ConfigBody>
   );
 }

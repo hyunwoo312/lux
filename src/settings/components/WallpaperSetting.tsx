@@ -1,11 +1,9 @@
-import { ConfigSegmented } from "@/components/config/WidgetConfig";
 import { ClearImagesButton } from "@/components/media/ClearImagesButton";
 import { ImageUploadButton } from "@/components/media/ImageUploadButton";
 import { MultiImageItems } from "@/components/media/MultiImageItems";
 import { getMetadataLabel } from "@/lib/media-format";
 import { wallpaperAssets } from "@/lib/wallpaper-gallery";
 import { useWallpaperUploads } from "@/app/useWallpaperUploads";
-import { SettingsRow } from "@/settings/components/SettingsRow";
 import { WallpaperGalleryPanel } from "@/settings/components/WallpaperGalleryPanel";
 import { WallpaperGeneratedPanel } from "@/settings/components/WallpaperGeneratedPanel";
 import { WallpaperImageOptions } from "@/settings/components/WallpaperImageOptions";
@@ -14,6 +12,7 @@ import {
   useWallpaperStore,
   type WallpaperSource,
 } from "@/stores/useWallpaperStore";
+import { ConfigSegmented, ConfigRow } from "@/components/config/Config";
 
 const SOURCE_OPTIONS: { value: WallpaperSource; label: string }[] = [
   { value: "generated", label: "Patterns" },
@@ -27,7 +26,7 @@ export function WallpaperSetting() {
 
   return (
     <div className="flex flex-col gap-4">
-      <SettingsRow
+      <ConfigRow
         title="Type"
         description="A pattern Lux draws, one of ours, or an image of your own"
         control={
@@ -76,7 +75,7 @@ function CustomUploadPanel() {
       "PNG, JPG, WebP, or GIF up to 10 MB";
 
   return (
-    <SettingsRow
+    <ConfigRow
       title={isMulti ? "Images" : "Image"}
       control={
         hasImages ? (
@@ -106,6 +105,6 @@ function CustomUploadPanel() {
         />
       )}
       {error && <p className="text-destructive text-caption">{error}</p>}
-    </SettingsRow>
+    </ConfigRow>
   );
 }

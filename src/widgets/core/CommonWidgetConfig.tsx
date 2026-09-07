@@ -1,8 +1,4 @@
-import {
-  ConfigSegmented,
-  WidgetConfigGroup,
-  WidgetConfigItem,
-} from "@/components/config/WidgetConfig";
+import { ConfigSegmented, ConfigSection, ConfigRow } from "@/components/config/Config";
 import {
   useWidgetBackground,
   useWidgetSettingsStore,
@@ -21,8 +17,8 @@ export function CommonWidgetConfig() {
   const setBackground = useWidgetSettingsStore((s) => s.setBackground);
 
   return (
-    <WidgetConfigGroup label="General">
-      <WidgetConfigItem
+    <ConfigSection title="General">
+      <ConfigRow
         title="Background"
         description="Sets this widget only, and switches Settings → Widgets to Custom"
         control={
@@ -34,6 +30,6 @@ export function CommonWidgetConfig() {
           />
         }
       />
-    </WidgetConfigGroup>
+    </ConfigSection>
   );
 }

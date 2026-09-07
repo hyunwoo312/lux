@@ -1,5 +1,6 @@
 import { springCrisp, tap } from "@/lib/motion";
 import { motion, useReducedMotion } from "motion/react";
+import { useRovingFocus } from "@/hooks/useRovingFocus";
 import { cn } from "@/lib/utils";
 import { useAccentStore } from "@/stores/useAccentStore";
 import { ACCENT_LABELS, ACCENT_PRESETS, accentClass } from "@/widgets/core/accent";
@@ -13,14 +14,28 @@ export function AccentPicker() {
   const accent = useAccentStore((s) => s.accent);
   const setAccent = useAccentStore((s) => s.setAccent);
   const reduced = useReducedMotion();
+  const roving = useRovingFocus({
+    count: ACCENT_PRESETS.length,
+    activeIndex: ACCENT_PRESETS.indexOf(accent),
+    onActivate: (index) => {
+      const next = ACCENT_PRESETS[index];
+      if (next) setAccent(next);
+    },
+  });
 
   return (
-    <div role="radiogroup" aria-label="Accent colour" className="flex flex-wrap justify-end gap-1">
-      {ACCENT_PRESETS.map((name) => {
+    <div
+      role="radiogroup"
+      aria-label="Accent colour"
+      {...roving.containerProps}
+      className="flex flex-wrap justify-end gap-1"
+    >
+      {ACCENT_PRESETS.map((name, index) => {
         const selected = name === accent;
         return (
           <motion.button
             key={name}
+            {...roving.itemProps(index)}
             type="button"
             role="radio"
             aria-checked={selected}

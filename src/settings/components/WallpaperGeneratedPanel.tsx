@@ -1,6 +1,4 @@
 import { Switch } from "@/components/ui/switch";
-import { ConfigSegmented } from "@/components/config/WidgetConfig";
-import { SettingsRow } from "@/settings/components/SettingsRow";
 import { SliderField } from "@/settings/components/SliderField";
 import { WallpaperOverlay } from "@/settings/components/WallpaperImageOptions";
 import {
@@ -9,6 +7,7 @@ import {
   useWallpaperStore,
   type GeneratedStyle,
 } from "@/stores/useWallpaperStore";
+import { ConfigSegmented, ConfigRow } from "@/components/config/Config";
 
 const STYLE_OPTIONS: { value: GeneratedStyle; label: string }[] = [
   { value: "mesh", label: "Mesh" },
@@ -33,7 +32,7 @@ export function WallpaperGeneratedPanel() {
 
   return (
     <>
-      <SettingsRow
+      <ConfigRow
         title="Style"
         description="Drawn by Lux, so it always matches your theme"
         control={
@@ -45,7 +44,7 @@ export function WallpaperGeneratedPanel() {
           />
         }
       />
-      <SettingsRow
+      <ConfigRow
         title="Motion"
         description={isStill ? "Still has no motion" : "Slow drift, paused when the tab is hidden"}
         control={
@@ -57,7 +56,7 @@ export function WallpaperGeneratedPanel() {
           />
         }
       />
-      <SettingsRow
+      <ConfigRow
         title="Intensity"
         description="How strong the pattern reads"
         control={
@@ -75,7 +74,7 @@ export function WallpaperGeneratedPanel() {
         }
       />
       {style === "aurora" && (
-        <SettingsRow
+        <ConfigRow
           title="Speed"
           description="How quickly the bands travel"
           control={
@@ -94,7 +93,7 @@ export function WallpaperGeneratedPanel() {
         />
       )}
       {style === "mesh" && (
-        <SettingsRow
+        <ConfigRow
           title="Shapes"
           description="How many polygons the mesh draws"
           control={

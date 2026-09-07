@@ -1,9 +1,5 @@
 import { Switch } from "@/components/ui/switch";
-import {
-  ConfigSegmented,
-  WidgetConfigGroup,
-  WidgetConfigItem,
-} from "@/components/config/WidgetConfig";
+import { ConfigSegmented, ConfigSection, ConfigRow } from "@/components/config/Config";
 import { OPEN_BEHAVIOR_OPTIONS } from "@/lib/open-url";
 import { useQuickAccess, useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
@@ -20,8 +16,8 @@ export function QuickAccessConfig() {
   const setShowRecentlyClosed = useQuickAccessStore((s) => s.setShowRecentlyClosed);
 
   return (
-    <WidgetConfigGroup label="Quick access">
-      <WidgetConfigItem
+    <ConfigSection title="Quick access">
+      <ConfigRow
         title="Open in"
         description="Where links open"
         control={
@@ -33,7 +29,7 @@ export function QuickAccessConfig() {
           />
         }
       />
-      <WidgetConfigItem
+      <ConfigRow
         title="Top sites"
         description="Show most-visited sites on the Home tab"
         control={
@@ -44,7 +40,7 @@ export function QuickAccessConfig() {
           />
         }
       />
-      <WidgetConfigItem
+      <ConfigRow
         title="Open tabs"
         description="List and manage your open tabs on the Home tab"
         control={
@@ -55,7 +51,7 @@ export function QuickAccessConfig() {
           />
         }
       />
-      <WidgetConfigItem
+      <ConfigRow
         title="Recently closed"
         description="Reopen tabs you just closed from the Home tab"
         control={
@@ -66,6 +62,6 @@ export function QuickAccessConfig() {
           />
         }
       />
-    </WidgetConfigGroup>
+    </ConfigSection>
   );
 }

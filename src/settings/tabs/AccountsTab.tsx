@@ -3,8 +3,6 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AccountRow } from "@/settings/components/AccountRow";
 import { PermissionsSection } from "@/settings/components/PermissionsSection";
 import { PROVIDERS } from "@/settings/providers";
-import { SettingsSection } from "@/settings/components/SettingsSection";
-import { SettingsTabBody } from "@/settings/components/SettingsTabBody";
 import { SpotifySetup } from "@/settings/components/SpotifySetup";
 import { getWidgetPlugin } from "@/widgets/registry";
 import {
@@ -15,6 +13,7 @@ import {
   writeSpotifyClientId,
   type IntegrationProviderId,
 } from "@/integrations";
+import { ConfigSection, ConfigBody } from "@/components/config/Config";
 
 type Pending = "connecting" | "disconnecting";
 
@@ -69,8 +68,8 @@ export function AccountsTab() {
   }
 
   return (
-    <SettingsTabBody>
-      <SettingsSection title="Accounts">
+    <ConfigBody>
+      <ConfigSection title="Accounts">
         {PROVIDERS.map((provider) => {
           const account = accountFor(accounts, provider.id);
           const busy = pending[provider.id];
@@ -104,7 +103,7 @@ export function AccountsTab() {
           Google, Microsoft and GitHub sign-in goes through a stateless Lux relay that stores
           nothing. Spotify and AniList connect directly.
         </p>
-      </SettingsSection>
+      </ConfigSection>
       <PermissionsSection />
       <ConfirmDialog
         open={confirmDisconnect !== null}
@@ -125,6 +124,6 @@ export function AccountsTab() {
           void run(id, "disconnecting", () => disconnect(id));
         }}
       />
-    </SettingsTabBody>
+    </ConfigBody>
   );
 }

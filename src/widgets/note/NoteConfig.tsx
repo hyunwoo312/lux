@@ -1,8 +1,4 @@
-import {
-  ConfigSegmented,
-  WidgetConfigGroup,
-  WidgetConfigItem,
-} from "@/components/config/WidgetConfig";
+import { ConfigSegmented, ConfigSection, ConfigRow } from "@/components/config/Config";
 import type { NoteFontSize } from "@/widgets/note/types";
 import { useNote, useNoteStore } from "@/widgets/note/useNoteStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
@@ -19,8 +15,8 @@ export function NoteConfig() {
   const setFontSize = useNoteStore((s) => s.setFontSize);
 
   return (
-    <WidgetConfigGroup label="Note">
-      <WidgetConfigItem
+    <ConfigSection title="Note">
+      <ConfigRow
         title="Font size"
         description="Note text size"
         control={
@@ -32,6 +28,6 @@ export function NoteConfig() {
           />
         }
       />
-    </WidgetConfigGroup>
+    </ConfigSection>
   );
 }

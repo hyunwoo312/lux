@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { DIALOG_RAIL, DialogHeaderBar } from "@/components/DialogChrome";
-import { rowVariants, springCrisp } from "@/lib/motion";
+import {
+  DIALOG_RAIL,
+  DialogHeaderBar,
+  RailDialogContent,
+  RailItem,
+} from "@/components/DialogChrome";
+import { rowVariants } from "@/lib/motion";
 import { TYPE } from "@/lib/type";
 import {
   CHANGE_TYPE_LABEL,
@@ -46,35 +51,23 @@ export function ChangelogDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent layout="flush" showClose={false} width="lg" className="h-[90dvh]">
-        <div className="flex min-h-0 flex-1">
-          <nav aria-label="Releases" className={cn(DIALOG_RAIL, "w-52")}>
-            <p className={cn(TYPE.eyebrow, "mx-2 px-2.5 pt-5 pb-3")}>Release history</p>
-            <div className="scroll-fade flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-5">
-              {RELEASES.map((entry) => {
-                const active = entry.version === release?.version;
-                return (
-                  <button
-                    key={entry.version}
-                    type="button"
-                    aria-current={active ? "true" : undefined}
-                    onClick={() => setVersion(entry.version)}
-                    className={cn(
-                      `
-                        press-row focus-ring relative flex w-full shrink-0 cursor-pointer flex-col
-                        items-start rounded-lg px-2.5 py-2 text-left transition-colors
-                      `,
-                      active ? "text-ink" : "text-ink-3 hover:bg-accent/50 hover:text-ink",
-                    )}
-                  >
-                    {active && (
-                      <motion.span
-                        layoutId="changelog-active-release"
-                        className="bg-primary/12 ring-primary/25 absolute inset-0 rounded-lg ring-1"
-                        transition={springCrisp(reduced)}
-                      />
-                    )}
-                    <span className="relative z-10 flex items-center gap-2">
+      <RailDialogContent width="lg">
+        <nav aria-label="Releases" className={cn(DIALOG_RAIL, "w-52")}>
+          <p className={cn(TYPE.eyebrow, "mx-2 px-2.5 pt-5 pb-3")}>Release history</p>
+          <div className="scroll-fade flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-5">
+            {RELEASES.map((entry) => {
+              const active = entry.version === release?.version;
+              return (
+                <RailItem
+                  key={entry.version}
+                  active={active}
+                  layoutId="changelog-active-release"
+                  aria-current={active ? "true" : undefined}
+                  onClick={() => setVersion(entry.version)}
+                  className="shrink-0 px-2.5"
+                >
+                  <span className="flex flex-col items-start">
+                    <span className="flex items-center gap-2">
                       <span
                         className={cn(
                           "text-body tabular-nums",
@@ -85,49 +78,49 @@ export function ChangelogDialog() {
                       </span>
                       {entry.version === NEWEST_VERSION && <CurrentTag />}
                     </span>
-                    <span className="text-ink-4 relative z-10 text-caption">
+                    <span className="text-ink-4 text-caption">
                       {formatDate(entry.date, "short")}
                     </span>
-                  </button>
-                );
-              })}
-            </div>
-          </nav>
+                  </span>
+                </RailItem>
+              );
+            })}
+          </div>
+        </nav>
 
-          <div className="flex min-w-0 flex-1 flex-col">
-            <DialogHeaderBar>
-              <span className={cn(TYPE.eyebrow, "truncate")}>Release notes</span>
-            </DialogHeaderBar>
-            <header className="border-edge-2 flex flex-col gap-2 border-b px-6 pt-5 pb-6">
-              <DialogTitle className="text-display-sm font-extrabold tracking-tight">
-                Version {release?.version}
-              </DialogTitle>
-              <div className="flex flex-wrap items-center gap-3">
-                {isNewest && <CurrentTag />}
-                <span className="text-ink-3 text-body">
-                  Published {release ? formatDate(release.date, "long") : ""}
-                </span>
-              </div>
-              <DialogDescription className="sr-only">{release?.summary}</DialogDescription>
-            </header>
-
-            <div className="scroll-fade scrollbar-inset-b min-h-0 flex-1 overflow-y-auto px-6 py-8">
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={release?.version}
-                  variants={rowVariants(reduced)}
-                  initial="hidden"
-                  animate="show"
-                  exit="exit"
-                  className="flex flex-col gap-8"
-                >
-                  {release && <ReleaseBody release={release} showcase={isNewest} />}
-                </motion.div>
-              </AnimatePresence>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <DialogHeaderBar>
+            <span className={cn(TYPE.eyebrow, "truncate")}>Release notes</span>
+          </DialogHeaderBar>
+          <header className="border-edge-2 flex flex-col gap-2 border-b px-6 pt-5 pb-6">
+            <DialogTitle className="text-display-sm font-extrabold tracking-tight">
+              Version {release?.version}
+            </DialogTitle>
+            <div className="flex flex-wrap items-center gap-3">
+              {isNewest && <CurrentTag />}
+              <span className="text-ink-3 text-body">
+                Published {release ? formatDate(release.date, "long") : ""}
+              </span>
             </div>
+            <DialogDescription className="sr-only">{release?.summary}</DialogDescription>
+          </header>
+
+          <div className="scroll-fade scrollbar-inset-b min-h-0 flex-1 overflow-y-auto px-6 py-8">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={release?.version}
+                variants={rowVariants(reduced)}
+                initial="hidden"
+                animate="show"
+                exit="exit"
+                className="flex flex-col gap-8"
+              >
+                {release && <ReleaseBody release={release} showcase={isNewest} />}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
-      </DialogContent>
+      </RailDialogContent>
     </Dialog>
   );
 }

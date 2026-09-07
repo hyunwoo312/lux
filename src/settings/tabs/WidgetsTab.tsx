@@ -1,22 +1,21 @@
-import { SettingsSection } from "@/settings/components/SettingsSection";
-import { SettingsTabBody } from "@/settings/components/SettingsTabBody";
 import { SurfaceDefault } from "@/settings/components/SurfaceDefault";
 import { RefreshDefaults } from "@/settings/components/RefreshDefaults";
+import { ConfigSection, ConfigBody } from "@/components/config/Config";
 
 export function WidgetsTab() {
   return (
-    <SettingsTabBody>
-      <SettingsSection title="Defaults for every widget">
+    <ConfigBody>
+      <ConfigSection title="Defaults for every widget">
         <SurfaceDefault />
-      </SettingsSection>
+      </ConfigSection>
 
-      <SettingsSection title="Refresh and data">
+      <ConfigSection title="Refresh and data">
         <RefreshDefaults />
-      </SettingsSection>
+      </ConfigSection>
 
       <p className="text-ink-3 text-caption">
         Each widget keeps its own settings behind the gear in its header, on the dashboard.
       </p>
-    </SettingsTabBody>
+    </ConfigBody>
   );
 }

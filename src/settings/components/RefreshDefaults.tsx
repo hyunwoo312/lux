@@ -1,7 +1,5 @@
 import { cn } from "@/lib/utils";
 import { TYPE } from "@/lib/type";
-import { ConfigSegmented } from "@/components/config/WidgetConfig";
-import { SettingsRow } from "@/settings/components/SettingsRow";
 import {
   REFRESH_STEPS,
   useAppSettingsStore,
@@ -9,6 +7,7 @@ import {
 } from "@/stores/useAppSettingsStore";
 import { accentClass } from "@/widgets/core/accent";
 import { widgetPlugins } from "@/widgets/registry";
+import { ConfigSegmented, ConfigRow } from "@/components/config/Config";
 
 const OPTIONS: { value: RefreshCadence; label: string; disabled?: boolean }[] = [
   { value: "default", label: "Default" },
@@ -35,7 +34,7 @@ export function RefreshDefaults() {
 
   return (
     <>
-      <SettingsRow
+      <ConfigRow
         title="How often widgets refresh"
         description="Relaxed halves every widget's rate."
         control={
@@ -57,7 +56,7 @@ export function RefreshDefaults() {
           Adjusting any widget below moves this to Custom. Default is each widget’s built-in rate,
           set against its own service’s limits.
         </p>
-      </SettingsRow>
+      </ConfigRow>
 
       <ul className="flex flex-col gap-3">
         {plugins.map((plugin) => {

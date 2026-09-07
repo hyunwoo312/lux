@@ -1,10 +1,10 @@
 import { Switch } from "@/components/ui/switch";
 import {
   ConfigSegmented,
-  WidgetConfigGroup,
-  WidgetConfigItem,
-  WidgetConfigSubItem,
-} from "@/components/config/WidgetConfig";
+  ConfigSection,
+  ConfigRow,
+  ConfigSubRow,
+} from "@/components/config/Config";
 import type { CompletedPosition } from "@/widgets/tasks/types";
 import { useTasks, useTasksStore } from "@/widgets/tasks/useTasksStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
@@ -24,8 +24,8 @@ export function TasksConfig() {
   const setRemoveOnCompletion = useTasksStore((s) => s.setRemoveOnCompletion);
 
   return (
-    <WidgetConfigGroup label="Tasks">
-      <WidgetConfigItem
+    <ConfigSection title="Tasks">
+      <ConfigRow
         title="Auto-sort"
         description="Group tasks by completion"
         control={
@@ -36,7 +36,7 @@ export function TasksConfig() {
           />
         }
       >
-        <WidgetConfigSubItem
+        <ConfigSubRow
           title="Completed"
           description="Where finished tasks go"
           disabled={!autoSort}
@@ -50,8 +50,8 @@ export function TasksConfig() {
             />
           }
         />
-      </WidgetConfigItem>
-      <WidgetConfigItem
+      </ConfigRow>
+      <ConfigRow
         title="Remove on completion"
         description="Delete a task shortly after it is checked"
         control={
@@ -62,6 +62,6 @@ export function TasksConfig() {
           />
         }
       />
-    </WidgetConfigGroup>
+    </ConfigSection>
   );
 }

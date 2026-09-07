@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
 import { ChevronLeft, Settings } from "lucide-react";
 import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { DIALOG_RAIL } from "@/components/DialogChrome";
+import { DIALOG_RAIL, RailItem } from "@/components/DialogChrome";
 import { SearchField } from "@/components/SearchField";
 import { SearchResults } from "@/settings/components/SearchResults";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { springCrisp } from "@/lib/motion";
 import { useRovingFocus } from "@/hooks/useRovingFocus";
 import { searchSettings } from "@/settings/searchIndex";
 import { SETTINGS_TAB_META } from "@/settings/tabsMeta";
@@ -21,7 +19,6 @@ export function SettingsSidebar({ open }: { open: boolean }) {
   const setTab = useSettingsStore((s) => s.setTab);
   const collapsed = useSettingsStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useSettingsStore((s) => s.toggleSidebar);
-  const reduced = useReducedMotion();
 
   const [query, setQuery] = useState("");
   const [isNarrow, setIsNarrow] = useState(false);
@@ -110,35 +107,20 @@ export function SettingsSidebar({ open }: { open: boolean }) {
             const { label, icon: Icon } = SETTINGS_TAB_META[id];
             const isActive = id === tab;
             const button = (
-              <button
+              <RailItem
                 {...roving.itemProps(index)}
-                type="button"
                 role="tab"
                 id={`settings-tab-${id}`}
                 aria-selected={isActive}
                 aria-controls="settings-panel"
+                active={isActive}
+                layoutId="settings-active-tab"
                 onClick={() => setTab(id)}
-                className={cn(
-                  "press-row focus-ring transition-colors cursor-pointer",
-                  `
-                    relative flex w-full items-center rounded-lg px-2 py-2 text-body
-                    whitespace-nowrap
-                  `,
-                  isActive ? "text-ink" : "text-ink-3 hover:bg-accent/50",
-                )}
+                className="whitespace-nowrap"
               >
-                {isActive && (
-                  <motion.span
-                    layoutId="settings-active-tab"
-                    className="bg-primary/12 ring-primary/25 absolute inset-0 rounded-lg ring-1"
-                    transition={springCrisp(reduced)}
-                  />
-                )}
-                <span className="relative z-10 flex items-center gap-4">
-                  <Icon className={cn("size-5 shrink-0", isActive && "text-primary")} />
-                  <span className={cn(isActive && "font-medium")}>{label}</span>
-                </span>
-              </button>
+                <Icon className={cn("size-5 shrink-0", isActive && "text-primary")} />
+                <span className={cn(isActive && "font-medium")}>{label}</span>
+              </RailItem>
             );
             return (
               <div key={id}>

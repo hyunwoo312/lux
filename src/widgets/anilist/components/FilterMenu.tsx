@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tooltip } from "@/components/ui/tooltip";
 import { ROW } from "@/lib/row";
 import { enterTween, exitTween, stagger } from "@/lib/motion";
+import { useRovingFocus } from "@/hooks/useRovingFocus";
 import { cn } from "@/lib/utils";
 
 export type FilterOption<T extends string> = { value: T; label: string; icon: LucideIcon };
@@ -35,6 +36,14 @@ export function FilterMenu<T extends string>({
   const ActiveIcon = active?.icon ?? Filter;
   const enterTransition = enterTween(reduced, "fast");
   const exitTransition = exitTween(reduced, "fast");
+  const roving = useRovingFocus({
+    count: options.length,
+    orientation: "vertical",
+    activeIndex: Math.max(
+      0,
+      options.findIndex((option) => option.value === value),
+    ),
+  });
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -58,13 +67,19 @@ export function FilterMenu<T extends string>({
         </PopoverTrigger>
       </Tooltip>
       <PopoverContent align="end" className="w-auto min-w-40">
-        <div role="menu" aria-label={ariaLabel} className="flex flex-col">
+        <div
+          role="menu"
+          aria-label={ariaLabel}
+          {...roving.containerProps}
+          className="flex flex-col"
+        >
           {options.map((option, index) => {
             const Icon = option.icon;
             const selected = option.value === value;
             return (
               <motion.button
                 key={option.value}
+                {...roving.itemProps(index)}
                 type="button"
                 role="menuitemradio"
                 aria-checked={selected}

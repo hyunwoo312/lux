@@ -9,10 +9,10 @@ import { Switch } from "@/components/ui/switch";
 import {
   ConfigSegmented,
   ConfigSelect,
-  WidgetConfigGroup,
-  WidgetConfigItem,
-  WidgetConfigSubItem,
-} from "@/components/config/WidgetConfig";
+  ConfigSection,
+  ConfigRow,
+  ConfigSubRow,
+} from "@/components/config/Config";
 import { useCalendarConnection } from "@/widgets/calendar/hooks/useCalendarConnection";
 import { syncCooldownMessage, syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
 import {
@@ -103,9 +103,9 @@ function CalendarProviderConfig({
 
   if (!connected || needsReconnect) {
     return (
-      <WidgetConfigGroup label={label}>
-        <WidgetConfigItem title={label} description={description} control={manageButton} />
-      </WidgetConfigGroup>
+      <ConfigSection title={label}>
+        <ConfigRow title={label} description={description} control={manageButton} />
+      </ConfigSection>
     );
   }
 
@@ -124,8 +124,8 @@ function CalendarProviderConfig({
   };
 
   return (
-    <WidgetConfigGroup label={label}>
-      <WidgetConfigItem title={label} description={description} control={manageButton}>
+    <ConfigSection title={label}>
+      <ConfigRow title={label} description={description} control={manageButton}>
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <IconActionButton
@@ -146,7 +146,7 @@ function CalendarProviderConfig({
           {settings.calendars.length > 0 && (
             <div className="flex flex-col gap-3">
               {settings.calendars.map((calendar) => (
-                <WidgetConfigSubItem
+                <ConfigSubRow
                   key={calendar.id}
                   title={calendar.summary}
                   description={
@@ -173,8 +173,8 @@ function CalendarProviderConfig({
 
           {providerNote && <p className="text-ink-3 text-micro">{providerNote}</p>}
         </div>
-      </WidgetConfigItem>
-    </WidgetConfigGroup>
+      </ConfigRow>
+    </ConfigSection>
   );
 }
 
@@ -194,8 +194,8 @@ export function CalendarConfig() {
 
   return (
     <>
-      <WidgetConfigGroup label="Calendar">
-        <WidgetConfigItem
+      <ConfigSection title="Calendar">
+        <ConfigRow
           title="Show events"
           description="Display events from connected calendars"
           control={
@@ -206,7 +206,7 @@ export function CalendarConfig() {
             />
           }
         />
-        <WidgetConfigItem
+        <ConfigRow
           title="Timeline density"
           description="How much height each hour takes in the agenda timeline"
           control={
@@ -218,7 +218,7 @@ export function CalendarConfig() {
             />
           }
         />
-        <WidgetConfigItem
+        <ConfigRow
           title="Auto-refresh"
           description="How often events sync in the background"
           control={
@@ -231,7 +231,7 @@ export function CalendarConfig() {
           }
         />
         {bothConnected && (
-          <WidgetConfigItem
+          <ConfigRow
             title="Primary source"
             description="Which copy to keep for events in both calendars"
             control={
@@ -244,7 +244,7 @@ export function CalendarConfig() {
             }
           />
         )}
-      </WidgetConfigGroup>
+      </ConfigSection>
 
       <CalendarProviderConfig providerId="google" label="Google Calendar" />
       <CalendarProviderConfig providerId="microsoft" label="Outlook Calendar" />

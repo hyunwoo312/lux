@@ -1,6 +1,6 @@
 import { springCrisp } from "@/lib/motion";
 import type { ComponentType, ReactNode } from "react";
-import { useId, useState } from "react";
+import { cloneElement, isValidElement, useId, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { ChevronRight } from "lucide-react";
 import {
@@ -12,9 +12,10 @@ import {
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Separator } from "@/components/ui/separator";
+import { TYPE } from "@/lib/type";
 import { cn } from "@/lib/utils";
 
-export function WidgetConfig({ children }: { children: ReactNode }) {
+export function ConfigBody({ children }: { children: ReactNode }) {
   return (
     <div className="flex flex-col gap-5 [&>section:first-of-type>:first-child]:hidden">
       {children}
@@ -22,17 +23,28 @@ export function WidgetConfig({ children }: { children: ReactNode }) {
   );
 }
 
-export function WidgetConfigGroup({ label, children }: { label: string; children: ReactNode }) {
+export function ConfigSection({
+  title,
+  action,
+  children,
+}: {
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <section className="flex flex-col gap-3">
       <Separator className="mb-1.5" />
-      <span className="text-ink-3 text-micro font-semibold tracking-wider uppercase">{label}</span>
-      <div className="flex flex-col gap-3.5">{children}</div>
+      <div className="flex items-center justify-between gap-4">
+        <h3 className={TYPE.eyebrow}>{title}</h3>
+        {action && <div className="shrink-0">{action}</div>}
+      </div>
+      <div className="flex flex-col gap-4">{children}</div>
     </section>
   );
 }
 
-export function WidgetConfigDisclosure({
+export function ConfigDisclosure({
   title,
   description,
   defaultOpen = false,
@@ -58,10 +70,8 @@ export function WidgetConfigDisclosure({
           className={cn("text-ink-3 size-3.5 shrink-0 transition-transform", open && "rotate-90")}
         />
         <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-body leading-none font-medium">{title}</span>
-          {description && (
-            <span className="text-ink-3 text-caption leading-snug">{description}</span>
-          )}
+          <span className={TYPE.label}>{title}</span>
+          {description && <span className={TYPE.help}>{description}</span>}
         </span>
       </button>
       {open && children}
@@ -69,42 +79,73 @@ export function WidgetConfigDisclosure({
   );
 }
 
-type ConfigItemProps = {
+type Labelled = {
+  "aria-label"?: string;
+  "aria-labelledby"?: string;
+  label?: string;
+  children?: ReactNode;
+};
+
+function labelControl(control: ReactNode, labelId: string): ReactNode {
+  if (!isValidElement<Labelled>(control)) return control;
+  const { props } = control;
+  if (props["aria-label"] || props["aria-labelledby"] || props.label) return control;
+  if (props.children !== undefined && props.children !== null) return control;
+  return cloneElement(control, { "aria-labelledby": labelId });
+}
+
+function ConfigText({
+  id,
+  title,
+  description,
+}: {
+  id?: string;
   title: string;
+  description?: string;
+}) {
+  return (
+    <div className="flex min-w-0 grow basis-24 flex-col gap-0.5">
+      <span id={id} className={TYPE.label}>
+        {title}
+      </span>
+      {description && <span className={TYPE.help}>{description}</span>}
+    </div>
+  );
+}
+
+type ConfigRowProps = {
+  title?: string;
   description?: string;
   control?: ReactNode;
   children?: ReactNode;
 };
 
-function ConfigText({ title, description }: { title: string; description?: string }) {
-  return (
-    <div className="flex min-w-0 grow basis-24 flex-col gap-1">
-      <span className="text-body leading-none font-medium">{title}</span>
-      {description && <span className="text-ink-3 text-caption leading-snug">{description}</span>}
-    </div>
-  );
-}
-
-export function WidgetConfigItem({ title, description, control, children }: ConfigItemProps) {
+export function ConfigRow({ title, description, control, children }: ConfigRowProps) {
+  const labelId = useId();
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <ConfigText title={title} description={description} />
-        {control && <div className="shrink-0">{control}</div>}
-      </div>
+      {(title || control) && (
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          {title && <ConfigText id={labelId} title={title} description={description} />}
+          {control && (
+            <div className="min-w-0 shrink-0">
+              {title ? labelControl(control, labelId) : control}
+            </div>
+          )}
+        </div>
+      )}
       {children}
     </div>
   );
 }
 
-type ConfigSubItemProps = ConfigItemProps & { disabled?: boolean };
-
-export function WidgetConfigSubItem({
+export function ConfigSubRow({
   title,
   description,
   control,
   disabled = false,
-}: ConfigSubItemProps) {
+}: ConfigRowProps & { title: string; disabled?: boolean }) {
+  const labelId = useId();
   return (
     <div
       inert={disabled}
@@ -116,8 +157,8 @@ export function WidgetConfigSubItem({
         disabled && "opacity-40",
       )}
     >
-      <ConfigText title={title} description={description} />
-      {control && <div className="shrink-0">{control}</div>}
+      <ConfigText id={labelId} title={title} description={description} />
+      {control && <div className="shrink-0">{labelControl(control, labelId)}</div>}
     </div>
   );
 }

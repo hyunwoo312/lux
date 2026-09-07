@@ -7,9 +7,9 @@ import {
   ConfigMultiToggle,
   ConfigSegmented,
   ConfigSelect,
-  WidgetConfigGroup,
-  WidgetConfigItem,
-} from "@/components/config/WidgetConfig";
+  ConfigSection,
+  ConfigRow,
+} from "@/components/config/Config";
 import { OPEN_BEHAVIOR_OPTIONS } from "@/lib/open-url";
 import { orderedSources, sourceTab } from "@/widgets/news/lib/news";
 import { TREND_REGIONS, type TrendRegion } from "@/widgets/news/lib/trend-regions";
@@ -87,8 +87,8 @@ export function NewsConfig() {
 
   return (
     <>
-      <WidgetConfigGroup label="News">
-        <WidgetConfigItem
+      <ConfigSection title="News">
+        <ConfigRow
           title="Topic"
           description="Section shown where a source offers one"
           control={
@@ -100,7 +100,7 @@ export function NewsConfig() {
             />
           }
         />
-        <WidgetConfigItem
+        <ConfigRow
           title="Region"
           description="Edition used where a source offers one"
           control={
@@ -112,7 +112,7 @@ export function NewsConfig() {
             />
           }
         />
-        <WidgetConfigItem
+        <ConfigRow
           title="Open in"
           description="Where headlines open"
           control={
@@ -124,7 +124,7 @@ export function NewsConfig() {
             />
           }
         />
-        <WidgetConfigItem
+        <ConfigRow
           title="Load images"
           description="Fetch thumbnails from each publisher. Off shows headlines as a plain list."
           control={
@@ -135,7 +135,7 @@ export function NewsConfig() {
             />
           }
         />
-        <WidgetConfigItem
+        <ConfigRow
           title="Newest first"
           description="Sort headlines by most recent instead of the source's order"
           control={
@@ -146,25 +146,22 @@ export function NewsConfig() {
             />
           }
         />
-      </WidgetConfigGroup>
+      </ConfigSection>
 
-      <WidgetConfigGroup label="Filters">
-        <WidgetConfigItem
-          title="Muted keywords"
-          description="Hide headlines containing these words"
-        >
+      <ConfigSection title="Filters">
+        <ConfigRow title="Muted keywords" description="Hide headlines containing these words">
           <MutedTermsEditor />
-        </WidgetConfigItem>
-        <WidgetConfigItem
+        </ConfigRow>
+        <ConfigRow
           title="Highlighted keywords"
           description="Call out headlines containing these words"
         >
           <HighlightTermsEditor />
-        </WidgetConfigItem>
-      </WidgetConfigGroup>
+        </ConfigRow>
+      </ConfigSection>
 
-      <WidgetConfigGroup label="Trending">
-        <WidgetConfigItem
+      <ConfigSection title="Trending">
+        <ConfigRow
           title="Region"
           description="Which country's trending searches the Trending tab shows"
           control={
@@ -176,10 +173,10 @@ export function NewsConfig() {
             />
           }
         />
-      </WidgetConfigGroup>
+      </ConfigSection>
 
-      <WidgetConfigGroup label="Sources">
-        <WidgetConfigItem
+      <ConfigSection title="Sources">
+        <ConfigRow
           title="Show"
           description={`Which sources appear as tabs (one to ${MAX_ENABLED_SOURCES})`}
         >
@@ -191,8 +188,8 @@ export function NewsConfig() {
             minSelected={1}
             onChange={(values) => setEnabledSources(instanceId, values)}
           />
-        </WidgetConfigItem>
-      </WidgetConfigGroup>
+        </ConfigRow>
+      </ConfigSection>
     </>
   );
 }
