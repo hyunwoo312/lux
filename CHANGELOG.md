@@ -4,6 +4,64 @@ All notable changes to Lux are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-09-06
+
+_A correctness pass after 2.0: stored data survives a bad value, every refresh button refreshes, failing syncs settle instead of flickering, and the guide says exactly what each account can do._
+
+### Changed
+
+#### Command palette
+- A confident bookmark or link match now outranks a weak command match.
+
+#### Guide
+- The accounts chapter says that Microsoft signs you in and Outlook Calendar is the data, that GitHub writes only to your notifications when you act, and that Google also uses the relay.
+
+#### GitHub
+- Inbox rows label the reason for a notification in plain words.
+
+### Fixed
+
+#### Dashboard
+- A stored preference with one bad value is now corrected on its own, instead of resetting the whole store it belongs to.
+- With an image wallpaper, widgets paint with their glass in the first frame, instead of frosting a moment after the picture appears.
+- Escape clears a search box before it closes the dialog around it, and a dialog takes keyboard focus when it opens.
+- A toast that offers an action hands the keyboard that action while it is showing.
+- A disabled button is now disabled to the browser too, so Enter cannot press it.
+
+#### Command palette
+- Entering a scope no longer shows an empty panel for a beat, and the footer waits to learn the shortcut instead of briefly calling it unbound.
+- Sports tours, AniList searches and Stocks commands now run when picked, instead of failing or writing to a widget that does not exist.
+
+#### Accounts
+- A failing sync now backs off and waits as long as the provider asks, instead of retrying on every tick.
+
+#### Settings
+- Restoring a backup made before 2.0 keeps your Google sign-in, instead of asking you to reconnect.
+- Reset all settings now also resets the command palette, settings and What’s-new preferences, and removes wallpaper files.
+- Allowing a permission from the Command palette tab returns you to that tab, not to Accounts.
+
+#### AniList
+- A like now sticks after the feed refreshes.
+
+#### Calendar
+- An event with a very long title or location is kept, instead of being dropped from the cached list until the next sync.
+- A sync that fails now says why, and an expired sign-in sends you to Accounts rather than to widget settings.
+
+#### GitHub
+- A rate-limited request waits as long as GitHub asks before trying again.
+
+#### Quick Access
+- A tab that is still checking its permission shows its loading state instead of nothing.
+
+#### Spotify
+- A persistent playback error stays on screen, instead of flipping to “Nothing playing” on every poll.
+
+#### Stocks
+- Refresh works on a widget you have not changed yet, and a rate limit from Yahoo is reported as one and retried later.
+
+#### Weather
+- Refresh works on a widget you have not changed yet.
+
 ## [2.0.0] - 2026-08-31
 
 _A command palette for everything Lux can do, wallpapers you can generate or choose, and a settings dialog rebuilt around what you actually change._
