@@ -1,8 +1,5 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { z } from "zod";
-import { keepPersisted, mergePersisted } from "@/lib/persist";
-import { createGatedChromeStorage, read, remove } from "@/lib/storage";
+import { createPersistedStore, read, remove } from "@/lib/storage";
 
 function readCurrentVersion(): string {
   try {
@@ -15,36 +12,32 @@ function readCurrentVersion(): string {
 const CURRENT_VERSION = readCurrentVersion();
 
 type ChangelogState = {
+  open: boolean;
   lastSeenVersion: string | null;
+  setOpen: (open: boolean) => void;
   markSeen: () => void;
   reset: () => void;
 };
 
 const persistedSchema = z.object({ lastSeenVersion: z.string().nullable().catch(null) });
 
-const gatedStorage = createGatedChromeStorage();
-
-export const useChangelogStore = create<ChangelogState>()(
-  persist(
-    (set) => ({
-      lastSeenVersion: null,
-      markSeen: () => set({ lastSeenVersion: CURRENT_VERSION }),
-      reset: () => set({ lastSeenVersion: null }),
+export const useChangelogStore = createPersistedStore<ChangelogState>()(
+  (set) => ({
+    open: false,
+    lastSeenVersion: null,
+    setOpen: (open) => set({ open }),
+    markSeen: () => set({ lastSeenVersion: CURRENT_VERSION }),
+    reset: () => set({ lastSeenVersion: null }),
+  }),
+  {
+    name: "changelog",
+    partialize: (state) => ({ lastSeenVersion: state.lastSeenVersion }),
+    schema: persistedSchema,
+    build: (parsed, current) => ({
+      ...current,
+      ...parsed,
     }),
-    {
-      name: "changelog",
-      storage: gatedStorage,
-      version: 1,
-      migrate: keepPersisted,
-      onRehydrateStorage: () => () => gatedStorage.open(useChangelogStore),
-      partialize: (state) => ({ lastSeenVersion: state.lastSeenVersion }),
-      merge: (persisted, current) =>
-        mergePersisted("changelog", persistedSchema, persisted, current, (parsed) => ({
-          ...current,
-          ...parsed,
-        })),
-    },
-  ),
+  },
 );
 
 export function useHasUnseenRelease(): boolean {

@@ -17,7 +17,7 @@ import {
 import { getScrollParent, useEdgeAutoScroll } from "@/widgets/core/useEdgeAutoScroll";
 import { useWidgetDragStore } from "@/widgets/core/useWidgetDragStore";
 import { WidgetHost } from "@/widgets/core/WidgetHost";
-import { getWidgetPlugin } from "@/widgets/registry";
+import { WIDGET_LAYOUTS } from "@/widgets/core/types";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
@@ -137,7 +137,7 @@ export function WidgetGrid() {
     return layout.map((item) => {
       const type = typeById.get(item.i);
       if (!type) return item;
-      const { minW, minH, maxW, maxH } = getWidgetPlugin(type).defaultLayout;
+      const { minW, minH, maxW, maxH } = WIDGET_LAYOUTS[type];
       return {
         ...item,
         minW,
@@ -155,7 +155,7 @@ export function WidgetGrid() {
   );
   const previewPlacement = useMemo(() => {
     if (!previewType) return null;
-    const { w, h } = getWidgetPlugin(previewType).defaultLayout;
+    const { w, h } = WIDGET_LAYOUTS[previewType];
     const spot = findFirstOpenPosition({ i: "__preview__", x: 0, y: 0, w, h }, displayLayout, cols);
     return { x: spot.x, y: spot.y, w, h };
   }, [previewType, displayLayout, cols]);

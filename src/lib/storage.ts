@@ -1,6 +1,8 @@
 import type { ZodType } from "zod";
-import type { PersistStorage, StorageValue } from "zustand/middleware";
-import { profileReady } from "@/lib/profile";
+import { create, type StateCreator } from "zustand";
+import { persist, type PersistStorage, type StorageValue } from "zustand/middleware";
+import { keepPersisted, mergePersisted } from "@/lib/persist";
+import { profileReady, type STORE_KEYS } from "@/lib/profile";
 
 const NAMESPACE = "lux";
 const namespaced = (name: string) => `${NAMESPACE}:${name}`;
@@ -70,6 +72,51 @@ type PersistedStore = { persist: { rehydrate: () => void | Promise<void> } };
 type StorageOpen = "boot" | "resync" | "unreadable";
 
 type GatedStorage<S> = PersistStorage<S> & { open: (store: PersistedStore) => StorageOpen };
+
+type StoreKey = (typeof STORE_KEYS)[number];
+
+type PersistedStoreOptions<S, P> = {
+  name: StoreKey;
+  schema: ZodType<P>;
+  partialize: (state: S) => unknown;
+  build: (parsed: P, current: S) => S;
+  version?: number;
+  migrate?: (persisted: unknown, version: number) => unknown;
+  onUnreadable?: (current: S) => S;
+  onBoot?: (state: S) => void;
+};
+
+export function createPersistedStore<S>() {
+  return <P>(
+    initializer: StateCreator<S, [["zustand/persist", unknown]], []>,
+    options: PersistedStoreOptions<S, P>,
+  ) => {
+    const gatedStorage = createGatedChromeStorage<unknown>();
+    const store = create<S>()(
+      persist<S, [], [], unknown>(initializer, {
+        name: options.name,
+        storage: gatedStorage,
+        version: options.version ?? 1,
+        migrate: options.migrate ?? keepPersisted,
+        partialize: options.partialize,
+        onRehydrateStorage: () => (state) => {
+          if (gatedStorage.open(store) !== "boot" || !state) return;
+          options.onBoot?.(state);
+        },
+        merge: (persisted, current) =>
+          mergePersisted(
+            options.name,
+            options.schema,
+            persisted,
+            current,
+            (parsed) => options.build(parsed, current),
+            options.onUnreadable,
+          ),
+      }),
+    );
+    return store;
+  };
+}
 
 const serialize = (value: unknown) => JSON.stringify(value ?? null);
 

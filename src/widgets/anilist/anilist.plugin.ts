@@ -16,7 +16,6 @@ export const anilistPlugin: WidgetPlugin = {
   description: "Track the anime and manga you're following",
   icon: AnilistServiceIcon,
   brandIcon: true,
-  defaultLayout: { w: 8, h: 9, minW: 6, minH: 7, maxW: 12, maxH: 12 },
   component: AnilistWidget,
   clearInstance: (instanceId) => useAnilistStore.getState().removeInstance(instanceId),
   configComponent: AnilistConfig,

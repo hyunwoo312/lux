@@ -2,7 +2,6 @@
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { boardWidth, gridColumns } from "@/widgets/core/grid";
 import { collides } from "@/widgets/core/layout-engine";
-import { useWidgetSettingsStore } from "@/widgets/core/useWidgetSettingsStore";
 
 const store = () => useDashboardStore.getState();
 const mergeStored = (persisted: unknown) =>
@@ -18,7 +17,6 @@ describe("useDashboardStore", () => {
       lastAddedId: null,
       pendingRemoval: null,
     });
-    useWidgetSettingsStore.setState({ settings: {} });
   });
 
   it("adds a widget with a matching layout item", () => {
@@ -118,47 +116,33 @@ describe("useDashboardStore", () => {
   });
 
   describe("removing a widget", () => {
-    function addWidgetWithSettings() {
+    function addTasks() {
       store().addWidget("tasks");
-      const id = store().widgets[0]?.id ?? "";
-      useWidgetSettingsStore.getState().setBackground(id, "solid");
-      return id;
+      return store().widgets[0]?.id ?? "";
     }
 
-    it("takes the widget off the grid but keeps its content until the window closes", () => {
-      const id = addWidgetWithSettings();
-
-      store().removeWidget(id);
-
-      expect(store().widgets).toHaveLength(0);
-      expect(store().layout).toHaveLength(0);
-      expect(useWidgetSettingsStore.getState().settings[id]?.background).toBe("solid");
-    });
-
-    it("brings the widget back with its content on undo", () => {
-      const id = addWidgetWithSettings();
+    it("brings the widget back on undo", () => {
+      const id = addTasks();
       store().removeWidget(id);
 
       store().undoRemove();
 
       expect(store().widgets.map((w) => w.id)).toEqual([id]);
       expect(store().layout.map((l) => l.i)).toEqual([id]);
-      expect(useWidgetSettingsStore.getState().settings[id]?.background).toBe("solid");
     });
 
     it("keeps the undo alive when another tab reloads this store", async () => {
-      const id = addWidgetWithSettings();
+      const id = addTasks();
       store().removeWidget(id);
 
       await useDashboardStore.persist.rehydrate();
 
       store().undoRemove();
       expect(store().widgets.map((w) => w.id)).toEqual([id]);
-      expect(useWidgetSettingsStore.getState().settings[id]?.background).toBe("solid");
     });
 
     it("ignores a settle aimed at a removal that was already replaced", () => {
-      const first = addWidgetWithSettings();
+      const first = addTasks();
       store().addWidget("note");
       const second = store().widgets[1]?.id ?? "";
       store().removeWidget(first);
@@ -166,18 +150,6 @@ describe("useDashboardStore", () => {
 
       store().settlePendingRemoval(first);
 
-      expect(store().pendingRemoval?.instance.id).toBe(second);
-    });
-
-    it("settles the previous removal when a second widget is removed", () => {
-      const first = addWidgetWithSettings();
-      store().addWidget("note");
-      const second = store().widgets[1]?.id ?? "";
-
-      store().removeWidget(first);
-      store().removeWidget(second);
-
-      expect(useWidgetSettingsStore.getState().settings[first]).toBeUndefined();
       expect(store().pendingRemoval?.instance.id).toBe(second);
     });
 
@@ -212,13 +184,12 @@ describe("useDashboardStore", () => {
     });
 
     it("leaves nothing behind when the removal settles", () => {
-      const id = addWidgetWithSettings();
+      const id = addTasks();
       store().removeWidget(id);
 
       store().settlePendingRemoval();
 
       expect(store().pendingRemoval).toBeNull();
-      expect(useWidgetSettingsStore.getState().settings[id]).toBeUndefined();
       const liveIds = new Set(store().widgets.map((w) => w.id));
       expect(store().layout.filter((l) => !liveIds.has(l.i))).toEqual([]);
     });

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   BookOpen,
@@ -16,15 +16,21 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useRovingFocus } from "@/hooks/useRovingFocus";
-import { ChangelogDialog, consumeChangelogAutoShow, useHasUnseenRelease } from "@/changelog";
-import { GuideDialog, useGuideStore } from "@/guide";
+import {
+  ChangelogDialog,
+  consumeChangelogAutoShow,
+  useChangelogStore,
+  useHasUnseenRelease,
+} from "@/changelog";
+import { GuideDialog } from "@/guide";
+import { useGuideStore } from "@/stores/useGuideStore";
 import { HeaderClock } from "@/app/HeaderClock";
 import { WidgetPalette } from "@/app/WidgetPalette";
 import { useCommandPaletteStore } from "@/palette";
-import { useSettingsStore } from "@/settings";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useDashboardStore } from "@/stores/useDashboardStore";
-import { FeedbackDialog } from "@/feedback";
+import { FeedbackDialog, useFeedbackStore } from "@/feedback";
 
 const TOOLBAR_BUTTONS = 8;
 
@@ -34,10 +40,10 @@ export function Header() {
   const toggleEditing = useDashboardStore((s) => s.toggleEditing);
   const openSettings = useSettingsStore((s) => s.openSettings);
   const hasUnseenRelease = useHasUnseenRelease();
-  const [changelogOpen, setChangelogOpen] = useState(false);
+  const setChangelogOpen = useChangelogStore((s) => s.setOpen);
   const openGuide = useGuideStore((s) => s.openGuide);
   const openPalette = useCommandPaletteStore((s) => s.openPalette);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const setFeedbackOpen = useFeedbackStore((s) => s.setOpen);
   const showClock = useAppSettingsStore((s) => s.showClock);
   const toolbar = useRovingFocus({ count: TOOLBAR_BUTTONS });
 
@@ -49,7 +55,7 @@ export function Header() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [setChangelogOpen]);
 
   return (
     <header className="grid grid-cols-3 items-center gap-4 pr-(--scrollbar-width)">
@@ -146,9 +152,9 @@ export function Header() {
         </Tooltip>
       </div>
 
-      <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
+      <ChangelogDialog />
       <GuideDialog />
-      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+      <FeedbackDialog />
       {showClock && (
         <HeaderClock
           className="

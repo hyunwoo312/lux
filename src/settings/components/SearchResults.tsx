@@ -1,6 +1,6 @@
 import type { SettingEntry } from "@/settings/searchIndex";
-import { SETTINGS_TAB_META } from "@/settings/tabsMeta";
-import type { SettingsTab } from "@/settings/useSettingsStore";
+import { SETTINGS_TAB_META } from "@/stores/settingsTabs";
+import type { SettingsTab } from "@/stores/useSettingsStore";
 
 type Props = {
   results: SettingEntry[];

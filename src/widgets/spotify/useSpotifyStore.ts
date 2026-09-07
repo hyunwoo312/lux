@@ -1,8 +1,6 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { z } from "zod";
-import { createGatedChromeStorage } from "@/lib/storage";
-import { mergePersisted, tolerantRecord } from "@/lib/persist";
+import { createPersistedStore } from "@/lib/storage";
+import { tolerantRecord } from "@/lib/persist";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { SPOTIFY_TIME_DISPLAY_MODES, type SpotifyTimeDisplayMode } from "@/widgets/spotify/types";
@@ -35,8 +33,6 @@ const legacySchema = z.object({
 
 const persistedSchema = z.object({ byInstance: tolerantRecord(configSchema) });
 
-const gatedStorage = createGatedChromeStorage();
-
 function update(
   state: SpotifyState,
   instanceId: string,
@@ -45,48 +41,44 @@ function update(
   return { byInstance: patchInstance(state.byInstance, instanceId, DEFAULT_DATA, fn) };
 }
 
-export const useSpotifyStore = create<SpotifyState>()(
-  persist(
-    (set) => ({
-      byInstance: {},
-      setTimeDisplayMode: (instanceId, timeDisplayMode) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, timeDisplayMode }))),
-      setQueueView: (instanceId, queueView) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, queueView }))),
-      removeInstance: (instanceId) =>
-        set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
-    }),
-    {
-      name: "widget:spotify",
-      storage: gatedStorage,
-      version: 2,
-      onRehydrateStorage: () => () => gatedStorage.open(useSpotifyStore),
-      partialize: (state) => ({ byInstance: state.byInstance }),
-      migrate: (persisted, version) => {
-        if (version >= 2) return persisted;
-        const legacy = legacySchema.safeParse(persisted);
-        return {
-          byInstance: legacy.success
-            ? {
-                spotify: {
-                  timeDisplayMode: legacy.data.timeDisplayMode,
-                },
-              }
-            : {},
-        };
-      },
-      merge: (persisted, current) =>
-        mergePersisted("widget:spotify", persistedSchema, persisted, current, (parsed) => ({
-          ...current,
-          byInstance: Object.fromEntries(
-            Object.entries(parsed.byInstance).map(([id, config]) => [
-              id,
-              { ...DEFAULT_DATA, ...config },
-            ]),
-          ),
-        })),
+export const useSpotifyStore = createPersistedStore<SpotifyState>()(
+  (set) => ({
+    byInstance: {},
+    setTimeDisplayMode: (instanceId, timeDisplayMode) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, timeDisplayMode }))),
+    setQueueView: (instanceId, queueView) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, queueView }))),
+    removeInstance: (instanceId) =>
+      set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
+  }),
+  {
+    name: "widget:spotify",
+    version: 2,
+    partialize: (state) => ({ byInstance: state.byInstance }),
+    migrate: (persisted, version) => {
+      if (version >= 2) return persisted;
+      const legacy = legacySchema.safeParse(persisted);
+      return {
+        byInstance: legacy.success
+          ? {
+              spotify: {
+                timeDisplayMode: legacy.data.timeDisplayMode,
+              },
+            }
+          : {},
+      };
     },
-  ),
+    schema: persistedSchema,
+    build: (parsed, current) => ({
+      ...current,
+      byInstance: Object.fromEntries(
+        Object.entries(parsed.byInstance).map(([id, config]) => [
+          id,
+          { ...DEFAULT_DATA, ...config },
+        ]),
+      ),
+    }),
+  },
 );
 
 export const useSpotify = createInstanceSelector(useSpotifyStore, DEFAULT_DATA);

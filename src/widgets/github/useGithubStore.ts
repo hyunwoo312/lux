@@ -1,13 +1,6 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { z } from "zod";
-import {
-  looksLikeLegacySingleton,
-  mergePersisted,
-  tolerantArray,
-  tolerantRecord,
-} from "@/lib/persist";
-import { createGatedChromeStorage } from "@/lib/storage";
+import { looksLikeLegacySingleton, tolerantArray, tolerantRecord } from "@/lib/persist";
+import { createPersistedStore } from "@/lib/storage";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { openBehaviorSchema, type OpenBehavior } from "@/lib/open-url";
@@ -84,8 +77,6 @@ const persistedSchema = z.object({
 
 const LEGACY_KEYS = ["view", "showPrivate", "openBehavior", "contributions"] as const;
 
-const gatedStorage = createGatedChromeStorage();
-
 function update(
   state: GithubStoreState,
   instanceId: string,
@@ -94,75 +85,71 @@ function update(
   return { byInstance: patchInstance(state.byInstance, instanceId, DEFAULT_DATA, fn) };
 }
 
-export const useGithubStore = create<GithubStoreState>()(
-  persist(
-    (set, get) => ({
-      ...createSyncSlice(set),
-      byInstance: {},
-      login: undefined,
-      lastSeenReleaseAt: undefined,
-      setView: (instanceId, view) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, view }))),
-      setShowPrivate: (instanceId, showPrivate) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, showPrivate }))),
-      setShowDrafts: (instanceId, showDrafts) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, showDrafts }))),
-      setInboxFilter: (instanceId, inboxFilter) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, inboxFilter }))),
-      toggleRepoCollapsed: (instanceId, repo) =>
-        set((state) =>
-          update(state, instanceId, (data) => ({
-            ...data,
-            collapsedRepos: data.collapsedRepos.includes(repo)
-              ? data.collapsedRepos.filter((entry) => entry !== repo)
-              : [...data.collapsedRepos, repo],
-          })),
-        ),
-      setOpenBehavior: (instanceId, openBehavior) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, openBehavior }))),
-      removeInstance: (instanceId) =>
-        set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
-      setLogin: (login) => {
-        if (login !== get().login) set({ login });
-      },
-      markReleasesSeen: (publishedAt) => {
-        if (!publishedAt) return;
-        const seen = get().lastSeenReleaseAt;
-        if (!seen || Date.parse(publishedAt) > Date.parse(seen)) {
-          set({ lastSeenReleaseAt: publishedAt });
-        }
-      },
-      requestSync: () => {
-        if (isSyncCoolingDown(get(), GITHUB_SYNC_KEY, GITHUB_SYNC_COOLDOWN_MS)) return;
-        for (const cacheKey of CACHE_KEYS) stalePolledResource(cacheKey);
-        set((state) => bumpSyncNonce(state, GITHUB_SYNC_KEY));
-      },
-    }),
-    {
-      name: "widget:github",
-      storage: gatedStorage,
-      version: 2,
-      onRehydrateStorage: () => () => gatedStorage.open(useGithubStore),
-      partialize: (state) => ({
-        byInstance: state.byInstance,
-        login: state.login,
-        lastSeenReleaseAt: state.lastSeenReleaseAt,
-      }),
-      migrate: (persisted, version) => {
-        if (version >= 2) return persisted;
-        if (!looksLikeLegacySingleton(persisted, LEGACY_KEYS)) return { byInstance: {} };
-        const legacy = configSchema.safeParse(persisted);
-        return { byInstance: legacy.success ? { github: legacy.data } : {} };
-      },
-      merge: (persisted, current) =>
-        mergePersisted("widget:github", persistedSchema, persisted, current, (parsed) => ({
-          ...current,
-          byInstance: parsed.byInstance,
-          login: parsed.login,
-          lastSeenReleaseAt: parsed.lastSeenReleaseAt,
+export const useGithubStore = createPersistedStore<GithubStoreState>()(
+  (set, get) => ({
+    ...createSyncSlice(set),
+    byInstance: {},
+    login: undefined,
+    lastSeenReleaseAt: undefined,
+    setView: (instanceId, view) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, view }))),
+    setShowPrivate: (instanceId, showPrivate) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, showPrivate }))),
+    setShowDrafts: (instanceId, showDrafts) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, showDrafts }))),
+    setInboxFilter: (instanceId, inboxFilter) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, inboxFilter }))),
+    toggleRepoCollapsed: (instanceId, repo) =>
+      set((state) =>
+        update(state, instanceId, (data) => ({
+          ...data,
+          collapsedRepos: data.collapsedRepos.includes(repo)
+            ? data.collapsedRepos.filter((entry) => entry !== repo)
+            : [...data.collapsedRepos, repo],
         })),
+      ),
+    setOpenBehavior: (instanceId, openBehavior) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, openBehavior }))),
+    removeInstance: (instanceId) =>
+      set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
+    setLogin: (login) => {
+      if (login !== get().login) set({ login });
     },
-  ),
+    markReleasesSeen: (publishedAt) => {
+      if (!publishedAt) return;
+      const seen = get().lastSeenReleaseAt;
+      if (!seen || Date.parse(publishedAt) > Date.parse(seen)) {
+        set({ lastSeenReleaseAt: publishedAt });
+      }
+    },
+    requestSync: () => {
+      if (isSyncCoolingDown(get(), GITHUB_SYNC_KEY, GITHUB_SYNC_COOLDOWN_MS)) return;
+      for (const cacheKey of CACHE_KEYS) stalePolledResource(cacheKey);
+      set((state) => bumpSyncNonce(state, GITHUB_SYNC_KEY));
+    },
+  }),
+  {
+    name: "widget:github",
+    version: 2,
+    partialize: (state) => ({
+      byInstance: state.byInstance,
+      login: state.login,
+      lastSeenReleaseAt: state.lastSeenReleaseAt,
+    }),
+    migrate: (persisted, version) => {
+      if (version >= 2) return persisted;
+      if (!looksLikeLegacySingleton(persisted, LEGACY_KEYS)) return { byInstance: {} };
+      const legacy = configSchema.safeParse(persisted);
+      return { byInstance: legacy.success ? { github: legacy.data } : {} };
+    },
+    schema: persistedSchema,
+    build: (parsed, current) => ({
+      ...current,
+      byInstance: parsed.byInstance,
+      login: parsed.login,
+      lastSeenReleaseAt: parsed.lastSeenReleaseAt,
+    }),
+  },
 );
 
 export const useGithub = createInstanceSelector(useGithubStore, DEFAULT_DATA);

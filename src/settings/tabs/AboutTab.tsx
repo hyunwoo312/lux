@@ -24,7 +24,7 @@ import {
 } from "@/lib/motion";
 import { SettingsSection } from "@/settings/components/SettingsSection";
 import { useGithubStars } from "@/settings/useGithubStars";
-import { useSettingsStore } from "@/settings/useSettingsStore";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 
 const DESCRIPTION =
   "A customizable new tab dashboard — widgets and quick access to the sites you visit most.";

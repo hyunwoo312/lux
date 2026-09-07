@@ -13,7 +13,7 @@ import { useThemeStore } from "@/stores/useThemeStore";
 import { useOnboardingStore } from "@/onboarding";
 import { useChangelogStore } from "@/changelog";
 import { usePaletteStore } from "@/stores/usePaletteStore";
-import { useSettingsStore } from "@/settings/useSettingsStore";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import { showToast } from "@/stores/useToastStore";
 import { clearWallpaperAssets, useWallpaperStore } from "@/stores/useWallpaperStore";
 

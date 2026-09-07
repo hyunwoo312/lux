@@ -14,7 +14,6 @@ export const calendarPlugin: WidgetPlugin = {
   category: "productivity",
   description: "Your upcoming schedule at a glance",
   icon: CalendarDays,
-  defaultLayout: { w: 8, h: 9, minW: 6, minH: 6, maxW: 14, maxH: 14 },
   component: CalendarWidget,
   clearInstance: (instanceId) => useCalendarStore.getState().removeInstance(instanceId),
   configComponent: CalendarConfig,

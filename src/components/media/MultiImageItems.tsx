@@ -8,7 +8,8 @@ import { ImageIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/tooltip";
 import { GRID_MODIFIERS, moveById, useSortableSensors } from "@/lib/dnd";
-import { useAssetThumbUrl, type AssetStore, type MediaImageItem } from "@/lib/asset-store";
+import { useAssetThumbUrl } from "@/hooks/useAssetUrl";
+import type { AssetStore, MediaImageItem } from "@/lib/asset-store";
 import { getMetadataLabel } from "@/lib/media-format";
 
 type MultiImageItemsProps = {

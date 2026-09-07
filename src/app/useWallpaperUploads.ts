@@ -1,11 +1,11 @@
 import { saveMediaAsset, validateImageFile, type MediaImageItem } from "@/lib/asset-store";
 import { useMediaUploads } from "@/hooks/useMediaUploads";
+import { wallpaperAssets } from "@/lib/wallpaper-gallery";
 import {
   MAX_WALLPAPER_IMAGES,
   WALLPAPER_ENCODE_QUALITY,
   WALLPAPER_MAX_BYTES,
   useWallpaperStore,
-  wallpaperAssets,
 } from "@/stores/useWallpaperStore";
 
 export function useWallpaperUploads() {

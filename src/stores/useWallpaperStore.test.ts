@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { encodeToWebp } from "@/lib/image-encode";
-import { galleryAssetId } from "@/lib/wallpaper-gallery";
+import { galleryAssetId, wallpaperAssets } from "@/lib/wallpaper-gallery";
+import { resetAssetStores } from "@/test/asset-store";
 import {
   activeWallpaperIds,
   MAX_WALLPAPER_IMAGES,
@@ -9,7 +10,6 @@ import {
   WALLPAPER_MAX_DIM,
   resolveWallpaperSource,
   useWallpaperStore,
-  wallpaperAssets,
 } from "@/stores/useWallpaperStore";
 
 vi.mock("@/lib/image-encode", async (importOriginal) => ({
@@ -46,7 +46,7 @@ function item(assetId: string, mimeType: string, size: number) {
 describe("optimizeAssets", () => {
   beforeEach(() => {
     encodeMock.mockReset();
-    wallpaperAssets.clearMemoryForTest();
+    resetAssetStores();
     localStorage.clear();
     useWallpaperStore.setState({ single: null, items: [], mode: "multi" });
   });
@@ -116,7 +116,7 @@ describe("optimizeAssets", () => {
 describe("optimizeAssets resilience", () => {
   beforeEach(() => {
     encodeMock.mockReset();
-    wallpaperAssets.clearMemoryForTest();
+    resetAssetStores();
     localStorage.clear();
     useWallpaperStore.setState({ single: null, items: [], mode: "multi" });
   });
@@ -280,7 +280,7 @@ describe("veil and blur limits", () => {
 
 describe("sanitizeAssets", () => {
   beforeEach(() => {
-    wallpaperAssets.clearMemoryForTest();
+    resetAssetStores();
     useWallpaperStore.setState({
       source: "custom",
       mode: "single",

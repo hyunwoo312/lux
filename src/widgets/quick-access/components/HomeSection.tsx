@@ -1,7 +1,7 @@
 import { AlertCircle } from "lucide-react";
 import { InlinePermissionPrompt } from "@/components/PermissionPrompt";
 import { RetryButton, StateMessage } from "@/components/StateMessage";
-import { useSettingsStore } from "@/settings";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
 import type { BrowserState } from "@/widgets/quick-access/hooks/useBrowserItems";
 import { SECTION_GATE } from "@/widgets/quick-access/lib/gates";

@@ -34,6 +34,30 @@ export type WidgetInstance = {
   type: WidgetType;
 };
 
+type WidgetLayout = {
+  w: number;
+  h: number;
+  minW: number;
+  minH: number;
+  maxW: number;
+  maxH: number;
+};
+
+export const WIDGET_LAYOUTS: Record<WidgetType, WidgetLayout> = {
+  tasks: { w: 6, h: 6, minW: 6, minH: 6, maxW: 12, maxH: 12 },
+  quickAccess: { w: 6, h: 6, minW: 6, minH: 6, maxW: 12, maxH: 12 },
+  image: { w: 5, h: 5, minW: 5, minH: 5, maxW: 12, maxH: 12 },
+  calendar: { w: 8, h: 9, minW: 6, minH: 6, maxW: 14, maxH: 14 },
+  spotify: { w: 8, h: 5, minW: 8, minH: 5, maxW: 14, maxH: 14 },
+  github: { w: 8, h: 7, minW: 6, minH: 6, maxW: 10, maxH: 10 },
+  weather: { w: 6, h: 6, minW: 6, minH: 6, maxW: 12, maxH: 12 },
+  anilist: { w: 8, h: 9, minW: 6, minH: 7, maxW: 12, maxH: 12 },
+  note: { w: 6, h: 6, minW: 6, minH: 6, maxW: 12, maxH: 12 },
+  stocks: { w: 6, h: 6, minW: 6, minH: 6, maxW: 14, maxH: 14 },
+  news: { w: 8, h: 8, minW: 8, minH: 8, maxW: 14, maxH: 14 },
+  sports: { w: 8, h: 8, minW: 8, minH: 8, maxW: 14, maxH: 14 },
+};
+
 export type WidgetContentProps = {
   editing: boolean;
   justAdded: boolean;
@@ -95,7 +119,6 @@ export type WidgetPlugin = {
   recommended?: boolean;
   icon: WidgetIcon;
   brandIcon?: boolean;
-  defaultLayout: { w: number; h: number; minW: number; minH: number; maxW: number; maxH: number };
   component: ComponentType<WidgetContentProps>;
   clearInstance: (instanceId: string) => void;
   configComponent?: ComponentType;

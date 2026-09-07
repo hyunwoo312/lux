@@ -12,7 +12,7 @@ import { useCalendarConnection } from "@/widgets/calendar/hooks/useCalendarConne
 import { dedupeCalendarEvents } from "@/widgets/calendar/lib/agenda";
 import { buildCalendarColorMap } from "@/widgets/calendar/lib/colors";
 import { useCalendar } from "@/widgets/calendar/useCalendarStore";
-import { useSettingsStore } from "@/settings";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import { viewSwap } from "@/lib/motion";
 
 export function CalendarWidget() {

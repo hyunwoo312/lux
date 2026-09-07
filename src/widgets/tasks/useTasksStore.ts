@@ -1,14 +1,7 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { z } from "zod";
-import {
-  looksLikeLegacySingleton,
-  mergePersisted,
-  tolerantArray,
-  tolerantRecord,
-} from "@/lib/persist";
+import { looksLikeLegacySingleton, tolerantArray, tolerantRecord } from "@/lib/persist";
 import { moveById } from "@/lib/dnd";
-import { createGatedChromeStorage } from "@/lib/storage";
+import { createPersistedStore } from "@/lib/storage";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import type { CompletedPosition, Task } from "@/widgets/tasks/types";
@@ -57,8 +50,6 @@ const dataSchema = z.object({
 
 const persistedSchema = z.object({ byInstance: tolerantRecord(dataSchema) });
 
-const gatedStorage = createGatedChromeStorage();
-
 function update(
   state: TasksState,
   instanceId: string,
@@ -67,99 +58,93 @@ function update(
   return { byInstance: patchInstance(state.byInstance, instanceId, DEFAULT_TASKS, fn) };
 }
 
-export const useTasksStore = create<TasksState>()(
-  persist(
-    (set) => ({
-      byInstance: {},
-      addTask: (instanceId, title, id) =>
-        set((state) => {
-          const trimmed = title.trim();
-          if (!trimmed) return state;
-          const task: Task = { id, title: trimmed, done: false };
-          return update(state, instanceId, (data) => ({ ...data, tasks: [...data.tasks, task] }));
-        }),
-      toggleTask: (instanceId, id) =>
-        set((state) =>
-          update(state, instanceId, (data) => ({
-            ...data,
-            tasks: data.tasks.map((task) =>
-              task.id === id ? { ...task, done: !task.done } : task,
-            ),
-          })),
-        ),
-      editTask: (instanceId, id, title) =>
-        set((state) => {
-          const trimmed = title.trim();
-          if (!trimmed) return state;
-          return update(state, instanceId, (data) => ({
-            ...data,
-            tasks: data.tasks.map((task) => (task.id === id ? { ...task, title: trimmed } : task)),
-          }));
-        }),
-      removeTask: (instanceId, id) =>
-        set((state) =>
-          update(state, instanceId, (data) => ({
-            ...data,
-            tasks: data.tasks.filter((task) => task.id !== id),
-          })),
-        ),
-      clearCompleted: (instanceId) =>
-        set((state) =>
-          update(state, instanceId, (data) => ({
-            ...data,
-            tasks: data.tasks.filter((task) => !task.done),
-          })),
-        ),
-      restoreTasks: (instanceId, tasks) =>
-        set((state) =>
-          update(state, instanceId, (data) => {
-            const existing = new Set(data.tasks.map((task) => task.id));
-            const restored = tasks.filter((task) => !existing.has(task.id));
-            return restored.length === 0 ? data : { ...data, tasks: [...data.tasks, ...restored] };
-          }),
-        ),
-      reorderTasks: (instanceId, activeId, overId) =>
-        set((state) => {
-          const data = state.byInstance[instanceId] ?? DEFAULT_TASKS;
-          const tasks = moveById(data.tasks, activeId, overId, (task) => task.id);
-          if (!tasks) return state;
-          return update(state, instanceId, (current) => ({ ...current, tasks }));
-        }),
-      setAutoSort: (instanceId, autoSort) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, autoSort }))),
-      setCompletedPosition: (instanceId, completedPosition) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, completedPosition }))),
-      setRemoveOnCompletion: (instanceId, removeOnCompletion) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, removeOnCompletion }))),
-      removeInstance: (instanceId) =>
-        set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
-    }),
-    {
-      name: "widget:tasks",
-      storage: gatedStorage,
-      version: 2,
-      onRehydrateStorage: () => () => gatedStorage.open(useTasksStore),
-      partialize: (state) => ({ byInstance: state.byInstance }),
-      migrate: (persisted, version) => {
-        if (version >= 2) return persisted;
-        if (!looksLikeLegacySingleton(persisted, ["tasks"])) return { byInstance: {} };
-        const legacy = dataSchema.safeParse(persisted);
-        return { byInstance: legacy.success ? { tasks: legacy.data } : {} };
-      },
-      merge: (persisted, current) =>
-        mergePersisted("widget:tasks", persistedSchema, persisted, current, (parsed) => ({
-          ...current,
-          byInstance: Object.fromEntries(
-            Object.entries(parsed.byInstance).map(([id, data]) => [
-              id,
-              data.removeOnCompletion
-                ? { ...data, tasks: data.tasks.filter((task) => !task.done) }
-                : data,
-            ]),
-          ),
+export const useTasksStore = createPersistedStore<TasksState>()(
+  (set) => ({
+    byInstance: {},
+    addTask: (instanceId, title, id) =>
+      set((state) => {
+        const trimmed = title.trim();
+        if (!trimmed) return state;
+        const task: Task = { id, title: trimmed, done: false };
+        return update(state, instanceId, (data) => ({ ...data, tasks: [...data.tasks, task] }));
+      }),
+    toggleTask: (instanceId, id) =>
+      set((state) =>
+        update(state, instanceId, (data) => ({
+          ...data,
+          tasks: data.tasks.map((task) => (task.id === id ? { ...task, done: !task.done } : task)),
         })),
+      ),
+    editTask: (instanceId, id, title) =>
+      set((state) => {
+        const trimmed = title.trim();
+        if (!trimmed) return state;
+        return update(state, instanceId, (data) => ({
+          ...data,
+          tasks: data.tasks.map((task) => (task.id === id ? { ...task, title: trimmed } : task)),
+        }));
+      }),
+    removeTask: (instanceId, id) =>
+      set((state) =>
+        update(state, instanceId, (data) => ({
+          ...data,
+          tasks: data.tasks.filter((task) => task.id !== id),
+        })),
+      ),
+    clearCompleted: (instanceId) =>
+      set((state) =>
+        update(state, instanceId, (data) => ({
+          ...data,
+          tasks: data.tasks.filter((task) => !task.done),
+        })),
+      ),
+    restoreTasks: (instanceId, tasks) =>
+      set((state) =>
+        update(state, instanceId, (data) => {
+          const existing = new Set(data.tasks.map((task) => task.id));
+          const restored = tasks.filter((task) => !existing.has(task.id));
+          return restored.length === 0 ? data : { ...data, tasks: [...data.tasks, ...restored] };
+        }),
+      ),
+    reorderTasks: (instanceId, activeId, overId) =>
+      set((state) => {
+        const data = state.byInstance[instanceId] ?? DEFAULT_TASKS;
+        const tasks = moveById(data.tasks, activeId, overId, (task) => task.id);
+        if (!tasks) return state;
+        return update(state, instanceId, (current) => ({ ...current, tasks }));
+      }),
+    setAutoSort: (instanceId, autoSort) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, autoSort }))),
+    setCompletedPosition: (instanceId, completedPosition) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, completedPosition }))),
+    setRemoveOnCompletion: (instanceId, removeOnCompletion) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, removeOnCompletion }))),
+    removeInstance: (instanceId) =>
+      set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
+  }),
+  {
+    name: "widget:tasks",
+    version: 2,
+    partialize: (state) => ({ byInstance: state.byInstance }),
+    migrate: (persisted, version) => {
+      if (version >= 2) return persisted;
+      if (!looksLikeLegacySingleton(persisted, ["tasks"])) return { byInstance: {} };
+      const legacy = dataSchema.safeParse(persisted);
+      return { byInstance: legacy.success ? { tasks: legacy.data } : {} };
     },
-  ),
+    schema: persistedSchema,
+    build: (parsed, current) => ({
+      ...current,
+      byInstance: Object.fromEntries(
+        Object.entries(parsed.byInstance).map(([id, data]) => [
+          id,
+          data.removeOnCompletion
+            ? { ...data, tasks: data.tasks.filter((task) => !task.done) }
+            : data,
+        ]),
+      ),
+    }),
+  },
 );
 
 export const useTasks = createInstanceSelector(useTasksStore, DEFAULT_TASKS);

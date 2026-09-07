@@ -5,7 +5,7 @@ import { useGlobalShortcuts } from "@/app/useGlobalShortcuts";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { useToastStore } from "@/stores/useToastStore";
 import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
-import { useSettingsStore } from "@/settings";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useCommandPaletteStore } from "@/palette";
 
 function Host() {

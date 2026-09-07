@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { clearImageMediaMemoryStoreForTest, imageAssetStore } from "@/widgets/image/media";
+import { resetAssetStores } from "@/test/asset-store";
+import { imageAssetStore } from "@/widgets/image/media";
 import {
   DEFAULT_IMAGE_CONFIG,
   referencedAssetIds,
@@ -24,7 +25,7 @@ async function seedAsset(id: string) {
 const base = { ...DEFAULT_IMAGE_CONFIG, mode: "multi" as const };
 
 beforeEach(() => {
-  clearImageMediaMemoryStoreForTest();
+  resetAssetStores();
   useImageStore.setState({ byInstance: {}, indices: {}, unreadable: false });
 });
 

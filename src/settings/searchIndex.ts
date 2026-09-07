@@ -1,6 +1,6 @@
 import { PROVIDERS } from "@/settings/providers";
 import { PERMISSIONS } from "@/settings/permissions";
-import type { SettingsTab } from "@/settings/tabsMeta";
+import type { SettingsTab } from "@/stores/settingsTabs";
 import { SHORTCUT_DEFINITIONS } from "@/stores/shortcutDefinitions";
 import { PALETTE_SOURCES, PALETTE_SOURCE_LABELS } from "@/stores/usePaletteStore";
 import { commandCatalogue } from "@/commands";

@@ -1,8 +1,5 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { z } from "zod";
-import { keepPersisted, mergePersisted } from "@/lib/persist";
-import { createGatedChromeStorage } from "@/lib/storage";
+import { createPersistedStore } from "@/lib/storage";
 import { FEEDBACK_CATEGORIES, type FeedbackDraft } from "@/feedback/types";
 
 export const COOLDOWN_MS = 60_000;
@@ -17,9 +14,11 @@ const EMPTY_DRAFT: FeedbackDraft = {
 };
 
 type FeedbackState = {
+  open: boolean;
   draft: FeedbackDraft;
   lastSentAt: number;
   lastSentHash: string;
+  setOpen: (open: boolean) => void;
   setDraft: (patch: Partial<FeedbackDraft>) => void;
   clearDraft: () => void;
   recordSent: (hash: string, at: number) => void;
@@ -40,39 +39,33 @@ const persistedSchema = z.object({
   lastSentHash: z.string().catch(""),
 });
 
-const gatedStorage = createGatedChromeStorage();
-
-export const useFeedbackStore = create<FeedbackState>()(
-  persist(
-    (set) => ({
-      draft: EMPTY_DRAFT,
-      lastSentAt: 0,
-      lastSentHash: "",
-      setDraft: (patch) => set((state) => ({ draft: { ...state.draft, ...patch } })),
-      clearDraft: () =>
-        set((state) => ({
-          draft: { ...EMPTY_DRAFT, includeDiagnostics: state.draft.includeDiagnostics },
-        })),
-      recordSent: (hash, at) => set({ lastSentHash: hash, lastSentAt: at }),
+export const useFeedbackStore = createPersistedStore<FeedbackState>()(
+  (set) => ({
+    open: false,
+    draft: EMPTY_DRAFT,
+    lastSentAt: 0,
+    lastSentHash: "",
+    setOpen: (open) => set({ open }),
+    setDraft: (patch) => set((state) => ({ draft: { ...state.draft, ...patch } })),
+    clearDraft: () =>
+      set((state) => ({
+        draft: { ...EMPTY_DRAFT, includeDiagnostics: state.draft.includeDiagnostics },
+      })),
+    recordSent: (hash, at) => set({ lastSentHash: hash, lastSentAt: at }),
+  }),
+  {
+    name: "feedback",
+    partialize: (state) => ({
+      draft: state.draft,
+      lastSentAt: state.lastSentAt,
+      lastSentHash: state.lastSentHash,
     }),
-    {
-      name: "feedback",
-      storage: gatedStorage,
-      version: 1,
-      migrate: keepPersisted,
-      onRehydrateStorage: () => () => gatedStorage.open(useFeedbackStore),
-      partialize: (state) => ({
-        draft: state.draft,
-        lastSentAt: state.lastSentAt,
-        lastSentHash: state.lastSentHash,
-      }),
-      merge: (persisted, current) =>
-        mergePersisted("feedback", persistedSchema, persisted, current, (parsed) => ({
-          ...current,
-          ...parsed,
-        })),
-    },
-  ),
+    schema: persistedSchema,
+    build: (parsed, current) => ({
+      ...current,
+      ...parsed,
+    }),
+  },
 );
 
 export function messageHash(message: string): string {

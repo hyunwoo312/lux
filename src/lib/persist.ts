@@ -48,6 +48,7 @@ export function mergePersisted<P, S>(
   persisted: unknown,
   current: S,
   build: (parsed: P) => S,
+  refuse?: (current: S) => S,
 ): S {
   if (persisted === undefined || persisted === null) return current;
 
@@ -56,6 +57,10 @@ export function mergePersisted<P, S>(
     const detail = result.error.issues
       .map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`)
       .join("; ");
+    if (refuse) {
+      console.warn(`Refusing to overwrite "${name}" — stored data could not be read. ${detail}`);
+      return refuse(current);
+    }
     console.warn(`Resetting "${name}" — stored data could not be read. ${detail}`);
     return current;
   }

@@ -1,8 +1,6 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { z } from "zod";
-import { createGatedChromeStorage } from "@/lib/storage";
-import { keepPersisted, mergePersisted, tolerantRecord } from "@/lib/persist";
+import { createPersistedStore } from "@/lib/storage";
+import { tolerantRecord } from "@/lib/persist";
 import { openBehaviorSchema, type OpenBehavior } from "@/lib/open-url";
 
 export const PALETTE_SOURCES = [
@@ -90,57 +88,49 @@ const persistedSchema = z.object({
     .catch({ ...ALL_ON }),
 });
 
-const gatedStorage = createGatedChromeStorage();
-
-export const usePaletteStore = create<PaletteState>()(
-  persist(
-    (set) => ({
-      ...DEFAULTS,
-      setSourceEnabled: (source, value) =>
-        set((state) => ({ enabled: { ...state.enabled, [source]: value } })),
-      setCommandsEnabled: (ids, value) =>
-        set((state) => {
-          const disabledCommands = { ...state.disabledCommands };
-          for (const id of ids) {
-            if (value) delete disabledCommands[id];
-            else disabledCommands[id] = true;
-          }
-          return { disabledCommands };
-        }),
-      setSuggestionsEnabled: (value) => set({ suggestionsEnabled: value }),
-      setSuggestionCount: (value) =>
-        set({ suggestionCount: Math.min(SUGGESTION_MAX, Math.max(SUGGESTION_MIN, value)) }),
-      setOpenIn: (value) => set({ openIn: value }),
-      clearUsage: () => set({ usage: {} }),
-      recordUse: (id, now) =>
-        set((state) => {
-          const previous = state.usage[id];
-          const next = { ...state.usage, [id]: { count: (previous?.count ?? 0) + 1, at: now } };
-          return { usage: prune(next, now) };
-        }),
-      reset: () => set({ ...DEFAULTS }),
-    }),
-    {
-      name: "palette",
-      storage: gatedStorage,
-      version: 1,
-      migrate: keepPersisted,
-      onRehydrateStorage: () => () => gatedStorage.open(usePaletteStore),
-      partialize: (state) => ({
-        enabled: state.enabled,
-        disabledCommands: state.disabledCommands,
-        suggestionsEnabled: state.suggestionsEnabled,
-        suggestionCount: state.suggestionCount,
-        openIn: state.openIn,
-        usage: state.usage,
+export const usePaletteStore = createPersistedStore<PaletteState>()(
+  (set) => ({
+    ...DEFAULTS,
+    setSourceEnabled: (source, value) =>
+      set((state) => ({ enabled: { ...state.enabled, [source]: value } })),
+    setCommandsEnabled: (ids, value) =>
+      set((state) => {
+        const disabledCommands = { ...state.disabledCommands };
+        for (const id of ids) {
+          if (value) delete disabledCommands[id];
+          else disabledCommands[id] = true;
+        }
+        return { disabledCommands };
       }),
-      merge: (persisted, current) =>
-        mergePersisted("palette", persistedSchema, persisted, current, (parsed) => ({
-          ...current,
-          ...parsed,
-        })),
-    },
-  ),
+    setSuggestionsEnabled: (value) => set({ suggestionsEnabled: value }),
+    setSuggestionCount: (value) =>
+      set({ suggestionCount: Math.min(SUGGESTION_MAX, Math.max(SUGGESTION_MIN, value)) }),
+    setOpenIn: (value) => set({ openIn: value }),
+    clearUsage: () => set({ usage: {} }),
+    recordUse: (id, now) =>
+      set((state) => {
+        const previous = state.usage[id];
+        const next = { ...state.usage, [id]: { count: (previous?.count ?? 0) + 1, at: now } };
+        return { usage: prune(next, now) };
+      }),
+    reset: () => set({ ...DEFAULTS }),
+  }),
+  {
+    name: "palette",
+    partialize: (state) => ({
+      enabled: state.enabled,
+      disabledCommands: state.disabledCommands,
+      suggestionsEnabled: state.suggestionsEnabled,
+      suggestionCount: state.suggestionCount,
+      openIn: state.openIn,
+      usage: state.usage,
+    }),
+    schema: persistedSchema,
+    build: (parsed, current) => ({
+      ...current,
+      ...parsed,
+    }),
+  },
 );
 
 export function isSourceEnabled(source: PaletteSource): boolean {

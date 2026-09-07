@@ -1,7 +1,7 @@
 import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight, Info, LayoutGrid, Palette, Plug } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useGuideStore } from "@/guide";
+import { useGuideStore } from "@/stores/useGuideStore";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { IconRow } from "@/components/IconRow";

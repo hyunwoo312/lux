@@ -11,8 +11,8 @@ import { cn } from "@/lib/utils";
 import { springCrisp } from "@/lib/motion";
 import { useRovingFocus } from "@/hooks/useRovingFocus";
 import { searchSettings } from "@/settings/searchIndex";
-import { SETTINGS_TAB_META } from "@/settings/tabsMeta";
-import { SETTINGS_TABS, useSettingsStore } from "@/settings/useSettingsStore";
+import { SETTINGS_TAB_META } from "@/stores/settingsTabs";
+import { SETTINGS_TABS, useSettingsStore } from "@/stores/useSettingsStore";
 
 export function SettingsSidebar({ open }: { open: boolean }) {
   const tab = useSettingsStore((s) => s.tab);

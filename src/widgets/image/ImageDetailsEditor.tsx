@@ -1,7 +1,7 @@
 import type { KeyboardEvent, MouseEvent } from "react";
 import { ImageIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useAssetObjectUrl } from "@/lib/asset-store";
+import { useAssetObjectUrl } from "@/hooks/useAssetUrl";
 import { mediaList } from "@/lib/media-rotation";
 import { clamp01, cn } from "@/lib/utils";
 import { imageAssetStore } from "@/widgets/image/media";

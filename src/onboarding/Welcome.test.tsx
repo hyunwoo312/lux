@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Welcome } from "@/onboarding/Welcome";
 import { useOnboardingStore } from "@/onboarding/useOnboardingStore";
-import { useGuideStore } from "@/guide";
+import { useGuideStore } from "@/stores/useGuideStore";
 import { WELCOME_SEEN_KEY } from "@/lib/local-store";
 
 function renderWelcome() {

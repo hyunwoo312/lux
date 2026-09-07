@@ -10,16 +10,18 @@ import {
 } from "@/lib/profile";
 import { sourceFiles, sourcePath } from "@/test/source-files";
 
-const stores = sourceFiles()
-  .map((file) => ({ file, body: readFileSync(file, "utf8") }))
-  .filter(({ body }) => body.includes("createGatedChromeStorage"))
-  .filter(({ file }) => !file.endsWith("storage.ts"))
+const sources = sourceFiles().map((file) => ({
+  file: sourcePath(file),
+  body: readFileSync(file, "utf8"),
+}));
+
+const STORE_CALL = /createPersistedStore<\w+>\(\)\(/;
+
+const stores = sources
+  .filter(({ body }) => STORE_CALL.test(body))
   .map(({ file, body }) => ({
-    file: sourcePath(file),
-    name: /name:\s*"([^"]+)"/.exec(
-      body.slice(body.lastIndexOf("storage: gatedStorage") - 300),
-    )?.[1],
-    body,
+    file,
+    name: /\bname:\s*"([^"]+)"/.exec(body.slice(body.search(STORE_CALL)))?.[1],
   }));
 
 describe("every persisted store", () => {
@@ -35,23 +37,10 @@ describe("every persisted store", () => {
     expect(offenders.map((store) => store.file)).toEqual([]);
   });
 
-  it("reports a reset rather than swallowing one", () => {
-    const offenders = stores.filter(
-      (store) => !store.body.includes("mergePersisted(") && !store.body.includes("unreadable"),
+  it("goes through createPersistedStore, which keeps unknown versions and reports resets", () => {
+    const offenders = sources.filter(
+      ({ file, body }) => file !== "lib/storage.ts" && body.includes('from "zustand/middleware"'),
     );
-    expect(offenders.map((store) => store.file)).toEqual([]);
-  });
-
-  it("labels its own reset with the key it actually writes", () => {
-    const offenders = stores.filter((store) => {
-      const label = /mergePersisted\(\s*"([^"]+)"/.exec(store.body)?.[1];
-      return label !== undefined && label !== store.name;
-    });
-    expect(offenders.map((store) => store.file)).toEqual([]);
-  });
-
-  it("can survive a version it does not recognise", () => {
-    const offenders = stores.filter((store) => !store.body.includes("migrate:"));
     expect(offenders.map((store) => store.file)).toEqual([]);
   });
 });

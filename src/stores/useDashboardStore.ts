@@ -1,9 +1,7 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { z } from "zod";
 import type { Layout, LayoutItem } from "react-grid-layout";
-import { keepPersisted, mergePersisted, tolerantArray } from "@/lib/persist";
-import { createGatedChromeStorage } from "@/lib/storage";
+import { tolerantArray } from "@/lib/persist";
+import { createPersistedStore } from "@/lib/storage";
 import { DASHBOARD_SEEDED_KEY, getLocal, setLocal } from "@/lib/local-store";
 import {
   findFirstOpenPosition,
@@ -11,11 +9,8 @@ import {
   resolveLayoutCollisions,
 } from "@/widgets/core/layout-engine";
 import { boardWidth, gridColumns } from "@/widgets/core/grid";
-import { pruneInstance } from "@/widgets/core/instanceCleanup";
-import type { WidgetInstance, WidgetPlugin, WidgetType } from "@/widgets/core/types";
-import { WIDGET_TYPES } from "@/widgets/core/types";
-import { getWidgetPlugin } from "@/widgets/registry";
-import { showToast } from "@/stores/useToastStore";
+import type { WidgetInstance, WidgetType } from "@/widgets/core/types";
+import { WIDGET_LAYOUTS, WIDGET_TYPES } from "@/widgets/core/types";
 
 const DEFAULT_COLUMNS = 12;
 
@@ -110,9 +105,7 @@ function reconcile(parsed: z.infer<typeof persistedSchema>): ReconciledDashboard
 
   for (const widget of widgets) {
     if (placed.has(widget.id)) continue;
-    layout.push(
-      placeLayoutItem(layout, DEFAULT_COLUMNS, widget.id, getWidgetPlugin(widget.type), undefined),
-    );
+    layout.push(placeLayoutItem(layout, DEFAULT_COLUMNS, widget.id, widget.type, undefined));
   }
 
   return { widgets, layout, pendingRemoval: parsed.pendingRemoval ?? null };
@@ -122,10 +115,10 @@ function placeLayoutItem(
   layout: Layout,
   columns: number,
   id: string,
-  plugin: WidgetPlugin,
+  type: WidgetType,
   override: { x: number; y: number } | undefined,
 ): LayoutItem {
-  const { w, h, minW, minH, maxW, maxH } = plugin.defaultLayout;
+  const { w, h, minW, minH, maxW, maxH } = WIDGET_LAYOUTS[type];
   const base: LayoutItem = {
     i: id,
     x: override?.x ?? 0,
@@ -147,121 +140,102 @@ function createInstanceId(type: WidgetType): string {
   return `${type}-${crypto.randomUUID()}`;
 }
 
-const gatedStorage = createGatedChromeStorage();
-
-export const useDashboardStore = create<DashboardState>()(
-  persist(
-    (set, get) => ({
-      widgets: [],
-      layout: [],
-      columns: DEFAULT_COLUMNS,
-      editing: false,
-      lastAddedId: null,
-      pendingRemoval: null,
-      addWidget: (type, position) =>
-        set((state) => {
-          const plugin = getWidgetPlugin(type);
-          const id = createInstanceId(type);
-          const item = placeLayoutItem(state.layout, state.columns, id, plugin, position);
-          return {
-            widgets: [...state.widgets, { id, type }],
-            layout: [...state.layout, item],
-            lastAddedId: id,
-          };
-        }),
-      removeWidget: (id) => {
-        const { widgets, layout } = get();
-        const instance = widgets.find((entry) => entry.id === id);
-        const layoutItem = layout.find((entry) => entry.i === id);
-        if (!instance || !layoutItem) return;
-        get().settlePendingRemoval();
-        set({
-          widgets: widgets.filter((entry) => entry.id !== id),
-          layout: layout.filter((entry) => entry.i !== id),
-          pendingRemoval: { instance, layoutItem },
-        });
-        const plugin = getWidgetPlugin(instance.type);
-        showToast({
-          key: instance.id,
-          message: `${plugin.name} removed`,
-          note: plugin.removalNote?.(instance.id) ?? undefined,
-          action: { kind: "undo", run: () => get().undoRemove() },
-          onExpire: () => get().settlePendingRemoval(instance.id),
-        });
-      },
-      undoRemove: () => {
-        const pending = get().pendingRemoval;
-        if (!pending) return;
-        set((state) => {
-          const spot = findNearestOpenPosition(pending.layoutItem, state.layout, state.columns);
-          return {
-            widgets: [...state.widgets, pending.instance],
-            layout: [...state.layout, { ...pending.layoutItem, x: spot.x, y: spot.y }],
-            pendingRemoval: null,
-          };
-        });
-      },
-      settlePendingRemoval: (id) => {
-        const pending = get().pendingRemoval;
-        if (!pending) return;
-        if (id !== undefined && pending.instance.id !== id) return;
-        pruneInstance(pending.instance);
-        set({ pendingRemoval: null });
-      },
-      setLayout: (layout) => set({ layout }),
-      setColumns: (columns) => set({ columns }),
-      toggleEditing: () => set((state) => ({ editing: !state.editing })),
-      clearLastAdded: () => set({ lastAddedId: null }),
-      seedStarterIfFirstRun: () =>
-        set((state) => {
-          if (state.widgets.length > 0) return state;
-          if (getLocal(DASHBOARD_SEEDED_KEY) !== null) return state;
-          setLocal(DASHBOARD_SEEDED_KEY, "1");
-          const cols = starterColumns();
-          const widgets: WidgetInstance[] = [];
-          const raw: LayoutItem[] = [];
-          for (const tile of starterTiles(cols)) {
-            const plugin = getWidgetPlugin(tile.type);
-            const id = createInstanceId(tile.type);
-            const { minW, minH, maxW, maxH } = plugin.defaultLayout;
-            const w = clamp(tile.w, minW, maxW);
-            const h = clamp(STARTER_TILE_HEIGHT, minH, maxH);
-            widgets.push({ id, type: tile.type });
-            raw.push({
-              i: id,
-              x: clamp(tile.x, 0, Math.max(0, cols - w)),
-              y: tile.y,
-              w,
-              h,
-              minW,
-              minH,
-              maxW,
-              maxH,
-            });
-          }
-          return { widgets, columns: cols, layout: resolveLayoutCollisions(raw, cols, null) };
-        }),
-    }),
-    {
-      name: "dashboard",
-      storage: gatedStorage,
-      version: 1,
-      migrate: keepPersisted,
-      onRehydrateStorage: () => (state) => {
-        if (gatedStorage.open(useDashboardStore) !== "boot") return;
-        state?.settlePendingRemoval();
-        state?.seedStarterIfFirstRun();
-      },
-      partialize: (state) => ({
-        widgets: state.widgets,
-        layout: state.layout,
-        pendingRemoval: state.pendingRemoval,
+export const useDashboardStore = createPersistedStore<DashboardState>()(
+  (set, get) => ({
+    widgets: [],
+    layout: [],
+    columns: DEFAULT_COLUMNS,
+    editing: false,
+    lastAddedId: null,
+    pendingRemoval: null,
+    addWidget: (type, position) =>
+      set((state) => {
+        const id = createInstanceId(type);
+        const item = placeLayoutItem(state.layout, state.columns, id, type, position);
+        return {
+          widgets: [...state.widgets, { id, type }],
+          layout: [...state.layout, item],
+          lastAddedId: id,
+        };
       }),
-      merge: (persisted, current) =>
-        mergePersisted("dashboard", persistedSchema, persisted, current, (parsed) => ({
-          ...current,
-          ...reconcile(parsed),
-        })),
+    removeWidget: (id) => {
+      const { widgets, layout } = get();
+      const instance = widgets.find((entry) => entry.id === id);
+      const layoutItem = layout.find((entry) => entry.i === id);
+      if (!instance || !layoutItem) return;
+      get().settlePendingRemoval();
+      set({
+        widgets: widgets.filter((entry) => entry.id !== id),
+        layout: layout.filter((entry) => entry.i !== id),
+        pendingRemoval: { instance, layoutItem },
+      });
     },
-  ),
+    undoRemove: () => {
+      const pending = get().pendingRemoval;
+      if (!pending) return;
+      set((state) => {
+        const spot = findNearestOpenPosition(pending.layoutItem, state.layout, state.columns);
+        return {
+          widgets: [...state.widgets, pending.instance],
+          layout: [...state.layout, { ...pending.layoutItem, x: spot.x, y: spot.y }],
+          pendingRemoval: null,
+        };
+      });
+    },
+    settlePendingRemoval: (id) => {
+      const pending = get().pendingRemoval;
+      if (!pending) return;
+      if (id !== undefined && pending.instance.id !== id) return;
+      set({ pendingRemoval: null });
+    },
+    setLayout: (layout) => set({ layout }),
+    setColumns: (columns) => set({ columns }),
+    toggleEditing: () => set((state) => ({ editing: !state.editing })),
+    clearLastAdded: () => set({ lastAddedId: null }),
+    seedStarterIfFirstRun: () =>
+      set((state) => {
+        if (state.widgets.length > 0) return state;
+        if (getLocal(DASHBOARD_SEEDED_KEY) !== null) return state;
+        setLocal(DASHBOARD_SEEDED_KEY, "1");
+        const cols = starterColumns();
+        const widgets: WidgetInstance[] = [];
+        const raw: LayoutItem[] = [];
+        for (const tile of starterTiles(cols)) {
+          const id = createInstanceId(tile.type);
+          const { minW, minH, maxW, maxH } = WIDGET_LAYOUTS[tile.type];
+          const w = clamp(tile.w, minW, maxW);
+          const h = clamp(STARTER_TILE_HEIGHT, minH, maxH);
+          widgets.push({ id, type: tile.type });
+          raw.push({
+            i: id,
+            x: clamp(tile.x, 0, Math.max(0, cols - w)),
+            y: tile.y,
+            w,
+            h,
+            minW,
+            minH,
+            maxW,
+            maxH,
+          });
+        }
+        return { widgets, columns: cols, layout: resolveLayoutCollisions(raw, cols, null) };
+      }),
+  }),
+  {
+    name: "dashboard",
+    onBoot: (state) => {
+      state.settlePendingRemoval();
+      state.seedStarterIfFirstRun();
+    },
+    partialize: (state) => ({
+      widgets: state.widgets,
+      layout: state.layout,
+      pendingRemoval: state.pendingRemoval,
+    }),
+    schema: persistedSchema,
+    build: (parsed, current) => ({
+      ...current,
+      ...reconcile(parsed),
+    }),
+  },
 );

@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { clearImageMediaMemoryStoreForTest, imageAssetStore } from "@/widgets/image/media";
+import { resetAssetStores } from "@/test/asset-store";
+import { imageAssetStore } from "@/widgets/image/media";
 import { ImageBackdrop } from "@/widgets/image/ImageBackdrop";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import { DEFAULT_IMAGE_CONFIG, useImageStore } from "@/widgets/image/useImageStore";
@@ -37,7 +38,7 @@ function renderBackdrop() {
 }
 
 beforeEach(() => {
-  clearImageMediaMemoryStoreForTest();
+  resetAssetStores();
   useImageStore.setState({ byInstance: {}, indices: {}, unreadable: false });
 });
 

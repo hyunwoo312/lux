@@ -1,8 +1,6 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { z } from "zod";
-import { createGatedChromeStorage } from "@/lib/storage";
-import { looksLikeLegacySingleton, mergePersisted, tolerantRecord } from "@/lib/persist";
+import { createPersistedStore } from "@/lib/storage";
+import { looksLikeLegacySingleton, tolerantRecord } from "@/lib/persist";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { NOTE_FONT_SIZES, type NoteFontSize } from "@/widgets/note/types";
 
@@ -31,8 +29,6 @@ const persistedSchema = z.object({
 
 const LEGACY_KEYS = ["text", "fontSize"] as const;
 
-const gatedStorage = createGatedChromeStorage();
-
 function update(
   state: NoteState,
   id: string,
@@ -41,34 +37,30 @@ function update(
   return { byInstance: patchInstance(state.byInstance, id, DEFAULT_NOTE, fn) };
 }
 
-export const useNoteStore = create<NoteState>()(
-  persist(
-    (set) => ({
-      byInstance: {},
-      setText: (id, text) => set((state) => update(state, id, (data) => ({ ...data, text }))),
-      setFontSize: (id, fontSize) =>
-        set((state) => update(state, id, (data) => ({ ...data, fontSize }))),
-      removeInstance: (id) => set((state) => ({ byInstance: dropInstance(state.byInstance, id) })),
-    }),
-    {
-      name: "widget:note",
-      storage: gatedStorage,
-      version: 2,
-      onRehydrateStorage: () => () => gatedStorage.open(useNoteStore),
-      partialize: (state) => ({ byInstance: state.byInstance }),
-      migrate: (persisted, version) => {
-        if (version >= 2) return persisted;
-        if (!looksLikeLegacySingleton(persisted, LEGACY_KEYS)) return { byInstance: {} };
-        const legacy = noteDataSchema.safeParse(persisted);
-        return { byInstance: legacy.success ? { note: legacy.data } : {} };
-      },
-      merge: (persisted, current) =>
-        mergePersisted("widget:note", persistedSchema, persisted, current, (parsed) => ({
-          ...current,
-          byInstance: parsed.byInstance,
-        })),
+export const useNoteStore = createPersistedStore<NoteState>()(
+  (set) => ({
+    byInstance: {},
+    setText: (id, text) => set((state) => update(state, id, (data) => ({ ...data, text }))),
+    setFontSize: (id, fontSize) =>
+      set((state) => update(state, id, (data) => ({ ...data, fontSize }))),
+    removeInstance: (id) => set((state) => ({ byInstance: dropInstance(state.byInstance, id) })),
+  }),
+  {
+    name: "widget:note",
+    version: 2,
+    partialize: (state) => ({ byInstance: state.byInstance }),
+    migrate: (persisted, version) => {
+      if (version >= 2) return persisted;
+      if (!looksLikeLegacySingleton(persisted, LEGACY_KEYS)) return { byInstance: {} };
+      const legacy = noteDataSchema.safeParse(persisted);
+      return { byInstance: legacy.success ? { note: legacy.data } : {} };
     },
-  ),
+    schema: persistedSchema,
+    build: (parsed, current) => ({
+      ...current,
+      byInstance: parsed.byInstance,
+    }),
+  },
 );
 
 export function useNote(id: string): NoteData {

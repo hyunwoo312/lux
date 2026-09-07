@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
 import { encodeToWebp } from "@/lib/image-encode";
-import { renderThumbnail, resolveThumb, THUMB_VERSION } from "@/lib/thumbnail";
+import { renderThumbnail, THUMB_VERSION } from "@/lib/thumbnail";
 
 export type StoredAsset = {
   id: string;
@@ -54,7 +53,6 @@ export type AssetStore = {
   remove: (id: string | null | undefined) => Promise<void>;
   keys: () => Promise<Set<string>>;
   usage: () => Promise<AssetUsage>;
-  clearMemoryForTest: () => void;
 };
 
 function assetBytes(asset: Pick<StoredAsset, "size" | "frost" | "thumb">): number {
@@ -74,12 +72,6 @@ export async function measureAllAssets(): Promise<AssetUsage> {
 }
 
 export function createAssetStore(databaseName: string): AssetStore {
-  const memory = new Map<string, StoredAsset>();
-
-  function isIndexedDbAvailable(): boolean {
-    return typeof indexedDB !== "undefined";
-  }
-
   function openDatabase(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(databaseName, DATABASE_VERSION);
@@ -98,8 +90,6 @@ export function createAssetStore(databaseName: string): AssetStore {
     mode: IDBTransactionMode,
     operation: (store: IDBObjectStore) => IDBRequest<TValue>,
   ): Promise<TValue> {
-    if (!isIndexedDbAvailable()) return Promise.reject(new Error("IndexedDB is unavailable"));
-
     return openDatabase().then(
       (database) =>
         new Promise<TValue>((resolve, reject) => {
@@ -121,15 +111,10 @@ export function createAssetStore(databaseName: string): AssetStore {
 
   const store: AssetStore = {
     async save(asset) {
-      if (!isIndexedDbAvailable()) {
-        memory.set(asset.id, asset);
-        return;
-      }
       await runTransaction("readwrite", (store) => store.put(asset));
     },
     async read(id) {
       if (!id) return null;
-      if (!isIndexedDbAvailable()) return memory.get(id) ?? null;
       const asset = await runTransaction<StoredAsset | undefined>(
         "readonly",
         (store) => store.get(id) as IDBRequest<StoredAsset | undefined>,
@@ -138,24 +123,13 @@ export function createAssetStore(databaseName: string): AssetStore {
     },
     async remove(id) {
       if (!id) return;
-      if (!isIndexedDbAvailable()) {
-        memory.delete(id);
-        return;
-      }
       await runTransaction("readwrite", (store) => store.delete(id));
     },
     async keys() {
-      if (!isIndexedDbAvailable()) return new Set(memory.keys());
       const stored = await runTransaction<IDBValidKey[]>("readonly", (store) => store.getAllKeys());
       return new Set(stored.map((key) => String(key)));
     },
     async usage() {
-      if (!isIndexedDbAvailable()) {
-        return [...memory.values()].reduce(
-          (total, asset) => ({ count: total.count + 1, bytes: total.bytes + assetBytes(asset) }),
-          { count: 0, bytes: 0 },
-        );
-      }
       const stored = await runTransaction<StoredAsset[]>(
         "readonly",
         (store) => store.getAll() as IDBRequest<StoredAsset[]>,
@@ -164,9 +138,6 @@ export function createAssetStore(databaseName: string): AssetStore {
         (total, asset) => ({ count: total.count + 1, bytes: total.bytes + assetBytes(asset) }),
         { count: 0, bytes: 0 },
       );
-    },
-    clearMemoryForTest() {
-      memory.clear();
     },
   };
 
@@ -213,48 +184,4 @@ export async function missingAssetIds<T extends { assetId: string }>(
   if (!ids.length) return new Set();
   const present = await store.keys();
   return new Set(ids.filter((id) => !present.has(id)));
-}
-
-function useAssetBlobUrl(
-  store: AssetStore,
-  assetId: string | null,
-  pick: (store: AssetStore, asset: StoredAsset) => Promise<Blob> | Blob,
-): string | null {
-  const [url, setUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!assetId) {
-      setUrl(null);
-      return;
-    }
-    let active = true;
-    let objectUrl: string | null = null;
-    setUrl(null);
-    void store
-      .read(assetId)
-      .then(async (asset) => {
-        if (!active || !asset) return;
-        const blob = await pick(store, asset);
-        if (!active) return;
-        objectUrl = URL.createObjectURL(blob);
-        setUrl(objectUrl);
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [store, assetId, pick]);
-
-  return url;
-}
-
-const pickFull = (_store: AssetStore, asset: StoredAsset): Blob => asset.blob;
-
-export function useAssetObjectUrl(store: AssetStore, assetId: string | null): string | null {
-  return useAssetBlobUrl(store, assetId, pickFull);
-}
-
-export function useAssetThumbUrl(store: AssetStore, assetId: string | null): string | null {
-  return useAssetBlobUrl(store, assetId, resolveThumb);
 }

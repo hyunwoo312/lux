@@ -1,14 +1,13 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from "vitest";
-import { useGuideStore } from "@/guide/useGuideStore";
-import { FIRST_ARTICLE_ID } from "@/guide/content";
+import { useGuideStore } from "@/stores/useGuideStore";
 import { useToastStore } from "@/stores/useToastStore";
 
 const nudge = () => useToastStore.getState().toast;
 
 beforeEach(() => {
   localStorage.clear();
-  useGuideStore.setState({ open: false, articleId: FIRST_ARTICLE_ID });
+  useGuideStore.setState({ open: false, articleId: null });
   useToastStore.setState({ toast: null });
 });
 

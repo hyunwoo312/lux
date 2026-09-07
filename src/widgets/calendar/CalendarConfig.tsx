@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { RefreshCw, Settings2 } from "lucide-react";
 import { formatClock } from "@/lib/clock";
 import { useConnectedProviders } from "@/integrations";
-import { useSettingsStore } from "@/settings";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { IconActionButton } from "@/components/IconActionButton";
 import { Switch } from "@/components/ui/switch";

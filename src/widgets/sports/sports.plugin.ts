@@ -14,7 +14,6 @@ export const sportsPlugin: WidgetPlugin = {
   category: "information",
   description: "Live and upcoming scores for a league you follow",
   icon: Trophy,
-  defaultLayout: { w: 8, h: 8, minW: 8, minH: 8, maxW: 14, maxH: 14 },
   component: SportsWidget,
   commands: sportsCommands,
   clearInstance: (instanceId) => useSportsStore.getState().removeInstance(instanceId),

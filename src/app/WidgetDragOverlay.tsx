@@ -74,7 +74,7 @@ export function WidgetDragOverlay() {
 
   let placeholder: ReactNode = null;
   if (geometry && isOverGrid(pointerX, pointerY, geometry)) {
-    const { rect } = resolveDrop(plugin, layout, pointerX, pointerY, geometry);
+    const { rect } = resolveDrop(type, layout, pointerX, pointerY, geometry);
     placeholder = (
       <div
         style={{

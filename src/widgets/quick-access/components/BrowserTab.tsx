@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { PermissionPrompt } from "@/components/PermissionPrompt";
 import { useGrantedPermissions } from "@/hooks/usePermission";
 import { isPermissionsManageable } from "@/lib/permissions";
-import { useSettingsStore } from "@/settings";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import { AlertCircle } from "lucide-react";
 import { RetryButton, StateMessage } from "@/components/StateMessage";
 import { BookmarksView } from "@/widgets/quick-access/components/BookmarksView";

@@ -4,7 +4,7 @@ import {
   useIntegrationStore,
   type IntegrationProviderId,
 } from "@/integrations";
-import { useSettingsStore } from "@/settings";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import type { WidgetLock } from "@/widgets/core/types";
 
 type ProviderLockOptions = {

@@ -1,3 +1,7 @@
+import { createAssetStore } from "@/lib/asset-store";
+
+export const wallpaperAssets = createAssetStore("lux.wallpaper-media");
+
 export type GalleryWallpaper = {
   id: string;
   name: string;

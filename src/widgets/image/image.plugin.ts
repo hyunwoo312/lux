@@ -13,7 +13,6 @@ export const imagePlugin: WidgetPlugin = {
   category: "media",
   description: "Pin a favorite image or photo",
   icon: ImageIcon,
-  defaultLayout: { w: 5, h: 5, minW: 5, minH: 5, maxW: 12, maxH: 12 },
   component: ImageWidget,
   clearInstance: (instanceId) => useImageStore.getState().removeInstance(instanceId),
   configComponent: ImageConfig,

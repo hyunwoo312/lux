@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { useSettingsStore } from "@/settings/useSettingsStore";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 
 const merge = useSettingsStore.persist.getOptions().merge;
 

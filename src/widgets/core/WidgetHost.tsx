@@ -10,6 +10,7 @@ import type { WidgetInstance } from "@/widgets/core/types";
 import { useWidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
 import { useWidgetHighlightStore } from "@/widgets/core/useWidgetHighlightStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
+import { removeWidgetInstance } from "@/widgets/core/instanceRemoval";
 import { getWidgetPlugin } from "@/widgets/registry";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 
@@ -24,7 +25,6 @@ const useNoLock = () => null;
 
 export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
   const plugin = getWidgetPlugin(instance.type);
-  const removeWidget = useDashboardStore((s) => s.removeWidget);
   const background = useWidgetBackground(instance.id);
   const highlighted = useWidgetHighlightStore((s) => s.highlighted === instance.type);
   const isLastAdded = useDashboardStore((s) => s.lastAddedId === instance.id);
@@ -81,7 +81,7 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
                   {ConfigComponent && <ConfigComponent />}
                 </WidgetConfig>
               }
-              onRemove={() => removeWidget(instance.id)}
+              onRemove={() => removeWidgetInstance(instance)}
             >
               <WidgetErrorBoundary>
                 <Widget editing={editing} justAdded={isLastAdded} />

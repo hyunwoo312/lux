@@ -17,7 +17,7 @@ function commitDrop(plugin: WidgetPlugin, px: number, py: number, ghostW: number
     return;
   }
   const { layout, addWidget } = useDashboardStore.getState();
-  const { spot, rect } = resolveDrop(plugin, layout, px, py, geometry);
+  const { spot, rect } = resolveDrop(plugin.type, layout, px, py, geometry);
   addWidget(plugin.type, spot);
   drag.drop({
     type: plugin.type,

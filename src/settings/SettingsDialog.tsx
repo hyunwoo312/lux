@@ -12,8 +12,8 @@ import { ShortcutsTab } from "@/settings/tabs/ShortcutsTab";
 import { PaletteTab } from "@/settings/tabs/PaletteTab";
 import { StorageTab } from "@/settings/tabs/StorageTab";
 import { WidgetsTab } from "@/settings/tabs/WidgetsTab";
-import { SETTINGS_TAB_META, type SettingsTab } from "@/settings/tabsMeta";
-import { SETTINGS_TABS, useSettingsStore } from "@/settings/useSettingsStore";
+import { SETTINGS_TAB_META, type SettingsTab } from "@/stores/settingsTabs";
+import { SETTINGS_TABS, useSettingsStore } from "@/stores/useSettingsStore";
 
 const TAB_COMPONENTS: Record<SettingsTab, ComponentType> = {
   appearance: AppearanceTab,

@@ -1,7 +1,12 @@
-import { afterEach, beforeEach } from "vitest";
+import { afterEach, beforeEach, vi } from "vitest";
 import { installChromeMock } from "@/test/chrome-mock";
 import { clearPolledResources } from "@/widgets/core/usePolledResource";
 import { useToastStore } from "@/stores/useToastStore";
+
+vi.mock("@/lib/asset-store", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/asset-store")>()),
+  createAssetStore: (await import("@/test/asset-store")).memoryAssetStore,
+}));
 
 const hasDom = typeof window !== "undefined";
 

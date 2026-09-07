@@ -2,7 +2,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { findArticle, FIRST_ARTICLE_ID } from "@/guide/content";
 import { GuideNav } from "@/guide/components/GuideNav";
 import { GuideArticleView } from "@/guide/components/GuideArticleView";
-import { useGuideStore } from "@/guide/useGuideStore";
+import { useGuideStore } from "@/stores/useGuideStore";
 
 export function GuideDialog() {
   const open = useGuideStore((s) => s.open);
@@ -10,7 +10,7 @@ export function GuideDialog() {
   const closeGuide = useGuideStore((s) => s.closeGuide);
   const setArticle = useGuideStore((s) => s.setArticle);
 
-  const location = findArticle(articleId) ?? findArticle(FIRST_ARTICLE_ID);
+  const location = findArticle(articleId ?? FIRST_ARTICLE_ID) ?? findArticle(FIRST_ARTICLE_ID);
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && closeGuide()}>

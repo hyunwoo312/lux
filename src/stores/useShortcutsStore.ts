@@ -1,8 +1,5 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { z } from "zod";
-import { createGatedChromeStorage } from "@/lib/storage";
-import { keepPersisted, mergePersisted } from "@/lib/persist";
+import { createPersistedStore } from "@/lib/storage";
 import { shortcutsEqual, type Shortcut } from "@/lib/shortcuts";
 import {
   SHORTCUT_DEFAULTS,
@@ -57,43 +54,35 @@ const initialBindings = () =>
     SHORTCUT_DEFINITIONS.map((definition) => [definition.id, SHORTCUT_DEFAULTS[definition.id]]),
   ) as Record<ShortcutAction, Shortcut[]>;
 
-const gatedStorage = createGatedChromeStorage();
-
-export const useShortcutsStore = create<ShortcutsState>()(
-  persist(
-    (set, get) => ({
-      ...initialBindings(),
-      setShortcutSlot: (action, slot, shortcut) => {
-        const current = get()[action];
-        if (current.some((held, index) => index !== slot && shortcutsEqual(held, shortcut))) {
-          return false;
-        }
-        const next = [...current];
-        if (slot < next.length) next[slot] = shortcut;
-        else if (next.length < MAX_SHORTCUT_SLOTS) next.push(shortcut);
-        set(() => ({ [action]: next }));
-        return true;
-      },
-      clearShortcutSlot: (action, slot) =>
-        set((state) => ({ [action]: state[action].filter((_, index) => index !== slot) })),
-      resetShortcut: (action) => set({ [action]: SHORTCUT_DEFAULTS[action] }),
-      resetAll: () => set(initialBindings()),
-    }),
-    {
-      name: "shortcuts",
-      storage: gatedStorage,
-      version: 1,
-      migrate: keepPersisted,
-      onRehydrateStorage: () => () => gatedStorage.open(useShortcutsStore),
-      partialize: (state) =>
-        Object.fromEntries(
-          SHORTCUT_DEFINITIONS.map((definition) => [definition.id, state[definition.id]]),
-        ) as Record<ShortcutAction, Shortcut[]>,
-      merge: (persisted, current) =>
-        mergePersisted("shortcuts", persistedSchema, persisted, current, (parsed) => ({
-          ...current,
-          ...parsed,
-        })),
+export const useShortcutsStore = createPersistedStore<ShortcutsState>()(
+  (set, get) => ({
+    ...initialBindings(),
+    setShortcutSlot: (action, slot, shortcut) => {
+      const current = get()[action];
+      if (current.some((held, index) => index !== slot && shortcutsEqual(held, shortcut))) {
+        return false;
+      }
+      const next = [...current];
+      if (slot < next.length) next[slot] = shortcut;
+      else if (next.length < MAX_SHORTCUT_SLOTS) next.push(shortcut);
+      set(() => ({ [action]: next }));
+      return true;
     },
-  ),
+    clearShortcutSlot: (action, slot) =>
+      set((state) => ({ [action]: state[action].filter((_, index) => index !== slot) })),
+    resetShortcut: (action) => set({ [action]: SHORTCUT_DEFAULTS[action] }),
+    resetAll: () => set(initialBindings()),
+  }),
+  {
+    name: "shortcuts",
+    partialize: (state) =>
+      Object.fromEntries(
+        SHORTCUT_DEFINITIONS.map((definition) => [definition.id, state[definition.id]]),
+      ) as Record<ShortcutAction, Shortcut[]>,
+    schema: persistedSchema,
+    build: (parsed, current) => ({
+      ...current,
+      ...parsed,
+    }),
+  },
 );

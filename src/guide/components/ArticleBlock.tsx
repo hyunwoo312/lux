@@ -1,8 +1,8 @@
 import { ExternalLink, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { openUrl } from "@/lib/open-url";
-import { useSettingsStore, type SettingsTab } from "@/settings";
-import { useGuideStore } from "@/guide/useGuideStore";
+import { useSettingsStore, type SettingsTab } from "@/stores/useSettingsStore";
+import { useGuideStore } from "@/stores/useGuideStore";
 import { GUIDE_MEDIA_SIZES } from "@/guide/mediaSizes";
 import { InlineText } from "@/guide/components/InlineText";
 import { ToolbarGuide } from "@/guide/components/ToolbarGuide";

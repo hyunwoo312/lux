@@ -1,7 +1,7 @@
 import type { Layout } from "react-grid-layout";
 import { GAP, PAD, UNIT } from "@/widgets/core/grid";
 import { findNearestOpenPosition } from "@/widgets/core/layout-engine";
-import type { WidgetPlugin } from "@/widgets/core/types";
+import { WIDGET_LAYOUTS, type WidgetType } from "@/widgets/core/types";
 import type { DragGeometry, DragRect } from "@/widgets/core/useWidgetDragStore";
 
 export function isOverGrid(x: number, y: number, geometry: DragGeometry): boolean {
@@ -41,19 +41,14 @@ function cellRect(
 }
 
 export function resolveDrop(
-  plugin: WidgetPlugin,
+  type: WidgetType,
   layout: Layout,
   x: number,
   y: number,
   geometry: DragGeometry,
 ): { spot: { x: number; y: number }; rect: DragRect } {
-  const w = plugin.defaultLayout.w;
-  const h = plugin.defaultLayout.h;
+  const { w, h } = WIDGET_LAYOUTS[type];
   const { col, row } = pointerToCell(x, y, geometry, w, h);
-  const open = findNearestOpenPosition(
-    { i: plugin.type, x: col, y: row, w, h },
-    layout,
-    geometry.cols,
-  );
+  const open = findNearestOpenPosition({ i: type, x: col, y: row, w, h }, layout, geometry.cols);
   return { spot: { x: open.x, y: open.y }, rect: cellRect(open.x, open.y, w, h, geometry) };
 }

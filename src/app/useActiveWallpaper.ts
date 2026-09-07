@@ -6,7 +6,8 @@ import { resolveFrost } from "@/lib/frost";
 import { DURATION } from "@/lib/motion";
 import { ensureGalleryAsset, galleryItemFor } from "@/lib/gallery-asset";
 import { mediaList } from "@/lib/media-rotation";
-import { activeWallpaperIds, useWallpaperStore, wallpaperAssets } from "@/stores/useWallpaperStore";
+import { wallpaperAssets } from "@/lib/wallpaper-gallery";
+import { activeWallpaperIds, useWallpaperStore } from "@/stores/useWallpaperStore";
 
 const WALLPAPER_NEWTAB_QUEUE_KEY = "lux.wallpaper.newtab-queue";
 const URL_RELEASE_DELAY_MS = DURATION.slow * 1000 + 100;

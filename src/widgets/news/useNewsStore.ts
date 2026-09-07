@@ -1,5 +1,3 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { z } from "zod";
 import {
   DEFAULT_REGION,
@@ -7,8 +5,8 @@ import {
   type TrendRegion,
 } from "@/widgets/news/lib/trend-regions";
 import type { RankMap } from "@/widgets/news/lib/trend-movement";
-import { createGatedChromeStorage } from "@/lib/storage";
-import { keepPersisted, mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
+import { createPersistedStore } from "@/lib/storage";
+import { tolerantArray, tolerantRecord } from "@/lib/persist";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { openBehaviorSchema, type OpenBehavior } from "@/lib/open-url";
@@ -165,8 +163,6 @@ const persistedSchema = z.object({
   trendSnapshots: tolerantRecord(snapshotSchema),
 });
 
-const gatedStorage = createGatedChromeStorage();
-
 function update(
   state: NewsState,
   instanceId: string,
@@ -200,121 +196,115 @@ function trimSnapshots(snapshots: Record<string, TrendSnapshot>): Record<string,
   return Object.fromEntries(entries.slice(0, MAX_REMEMBERED_REGIONS));
 }
 
-export const useNewsStore = create<NewsState>()(
-  persist(
-    (set, get) => {
-      const addTerm = (instanceId: string, field: TermField, term: string): AddTermResult => {
-        const trimmed = term.trim();
-        const outcome = termOutcome(get().byInstance[instanceId]?.[field] ?? [], trimmed);
-        if (outcome !== "added") return outcome;
-        set((state) =>
-          update(state, instanceId, (data) => ({ ...data, [field]: [...data[field], trimmed] })),
-        );
-        return outcome;
-      };
+export const useNewsStore = createPersistedStore<NewsState>()(
+  (set, get) => {
+    const addTerm = (instanceId: string, field: TermField, term: string): AddTermResult => {
+      const trimmed = term.trim();
+      const outcome = termOutcome(get().byInstance[instanceId]?.[field] ?? [], trimmed);
+      if (outcome !== "added") return outcome;
+      set((state) =>
+        update(state, instanceId, (data) => ({ ...data, [field]: [...data[field], trimmed] })),
+      );
+      return outcome;
+    };
 
-      return {
-        byInstance: {},
-        trendSnapshots: {},
-        setView: (instanceId, view) =>
-          set((state) => update(state, instanceId, (data) => ({ ...data, view }))),
-        setTrendRegion: (instanceId, trendRegion) =>
-          set((state) => update(state, instanceId, (data) => ({ ...data, trendRegion }))),
-        rememberTrendSnapshot: (region, ranks, takenAt) =>
-          set((state) => {
-            const current = state.trendSnapshots[region];
-            if (current && takenAt <= current.takenAt) return state;
-            const next = {
-              ...state.trendSnapshots,
-              [region]: { takenAt, ranks, previous: current?.ranks ?? {} },
-            };
-            return { trendSnapshots: trimSnapshots(next) };
-          }),
-        setActiveSource: (instanceId, activeSource) =>
-          set((state) => update(state, instanceId, (data) => ({ ...data, activeSource }))),
-        setRegion: (instanceId, region) =>
-          set((state) => update(state, instanceId, (data) => ({ ...data, region }))),
-        setTopic: (instanceId, topic) =>
-          set((state) => update(state, instanceId, (data) => ({ ...data, topic }))),
-        setLayout: (instanceId, layout) =>
-          set((state) => update(state, instanceId, (data) => ({ ...data, layout }))),
-        setGoogleQuery: (instanceId, googleQuery) =>
-          set((state) => update(state, instanceId, (data) => ({ ...data, googleQuery }))),
-        setEnabledSources: (instanceId, sources) =>
-          set((state) =>
-            update(state, instanceId, (data) =>
-              sources.length > 0 && sources.length <= MAX_ENABLED_SOURCES
-                ? { ...data, enabledSources: sources }
-                : data,
-            ),
+    return {
+      byInstance: {},
+      trendSnapshots: {},
+      setView: (instanceId, view) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, view }))),
+      setTrendRegion: (instanceId, trendRegion) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, trendRegion }))),
+      rememberTrendSnapshot: (region, ranks, takenAt) =>
+        set((state) => {
+          const current = state.trendSnapshots[region];
+          if (current && takenAt <= current.takenAt) return state;
+          const next = {
+            ...state.trendSnapshots,
+            [region]: { takenAt, ranks, previous: current?.ranks ?? {} },
+          };
+          return { trendSnapshots: trimSnapshots(next) };
+        }),
+      setActiveSource: (instanceId, activeSource) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, activeSource }))),
+      setRegion: (instanceId, region) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, region }))),
+      setTopic: (instanceId, topic) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, topic }))),
+      setLayout: (instanceId, layout) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, layout }))),
+      setGoogleQuery: (instanceId, googleQuery) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, googleQuery }))),
+      setEnabledSources: (instanceId, sources) =>
+        set((state) =>
+          update(state, instanceId, (data) =>
+            sources.length > 0 && sources.length <= MAX_ENABLED_SOURCES
+              ? { ...data, enabledSources: sources }
+              : data,
           ),
-        setOpenBehavior: (instanceId, openBehavior) =>
-          set((state) => update(state, instanceId, (data) => ({ ...data, openBehavior }))),
-        setLoadImages: (instanceId, loadImages) =>
-          set((state) => update(state, instanceId, (data) => ({ ...data, loadImages }))),
-        setSortByLatest: (instanceId, sortByLatest) =>
-          set((state) => update(state, instanceId, (data) => ({ ...data, sortByLatest }))),
-        markRead: (instanceId, title) => {
-          if (get().byInstance[instanceId]?.readTitles.includes(title)) return;
-          set((state) =>
-            update(state, instanceId, (data) => ({
-              ...data,
-              readTitles: appendCapped(data.readTitles, [title], MAX_READ_TITLES),
-            })),
-          );
-        },
-        markSeen: (instanceId, titles) => {
-          const seenTitles = get().byInstance[instanceId]?.seenTitles;
-          if (seenTitles && titles.every((title) => seenTitles.includes(title))) return;
-          set((state) =>
-            update(state, instanceId, (data) => ({
-              ...data,
-              seenTitles: appendCapped(data.seenTitles, titles, MAX_SEEN_TITLES),
-            })),
-          );
-        },
-        addMutedTerm: (instanceId, term) => addTerm(instanceId, "mutedTerms", term),
-        removeMutedTerm: (instanceId, term) =>
-          set((state) => update(state, instanceId, removeTerm("mutedTerms", term))),
-        addHighlightTerm: (instanceId, term) => addTerm(instanceId, "highlightTerms", term),
-        removeHighlightTerm: (instanceId, term) =>
-          set((state) => update(state, instanceId, removeTerm("highlightTerms", term))),
-        toggleBookmark: (instanceId, item) => {
-          const bookmarks = get().byInstance[instanceId]?.bookmarks ?? [];
-          const saved = bookmarks.some((entry) => entry.item.link === item.link);
-          if (!saved && bookmarks.length >= MAX_BOOKMARKS) return false;
-          set((state) =>
-            update(state, instanceId, (data) => ({
-              ...data,
-              bookmarks: saved
-                ? data.bookmarks.filter((entry) => entry.item.link !== item.link)
-                : [{ item, savedAt: Date.now() }, ...data.bookmarks],
-            })),
-          );
-          return true;
-        },
-        removeInstance: (instanceId) =>
-          set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
-      };
-    },
-    {
-      name: "widget:news",
-      storage: gatedStorage,
-      version: 1,
-      migrate: keepPersisted,
-      onRehydrateStorage: () => () => gatedStorage.open(useNewsStore),
-      partialize: (state) => ({
-        byInstance: state.byInstance,
-        trendSnapshots: state.trendSnapshots,
-      }),
-      merge: (persisted, current) =>
-        mergePersisted("widget:news", persistedSchema, persisted, current, (parsed) => ({
-          ...current,
-          byInstance: parsed.byInstance,
-          trendSnapshots: trimSnapshots(parsed.trendSnapshots),
-        })),
-    },
-  ),
+        ),
+      setOpenBehavior: (instanceId, openBehavior) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, openBehavior }))),
+      setLoadImages: (instanceId, loadImages) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, loadImages }))),
+      setSortByLatest: (instanceId, sortByLatest) =>
+        set((state) => update(state, instanceId, (data) => ({ ...data, sortByLatest }))),
+      markRead: (instanceId, title) => {
+        if (get().byInstance[instanceId]?.readTitles.includes(title)) return;
+        set((state) =>
+          update(state, instanceId, (data) => ({
+            ...data,
+            readTitles: appendCapped(data.readTitles, [title], MAX_READ_TITLES),
+          })),
+        );
+      },
+      markSeen: (instanceId, titles) => {
+        const seenTitles = get().byInstance[instanceId]?.seenTitles;
+        if (seenTitles && titles.every((title) => seenTitles.includes(title))) return;
+        set((state) =>
+          update(state, instanceId, (data) => ({
+            ...data,
+            seenTitles: appendCapped(data.seenTitles, titles, MAX_SEEN_TITLES),
+          })),
+        );
+      },
+      addMutedTerm: (instanceId, term) => addTerm(instanceId, "mutedTerms", term),
+      removeMutedTerm: (instanceId, term) =>
+        set((state) => update(state, instanceId, removeTerm("mutedTerms", term))),
+      addHighlightTerm: (instanceId, term) => addTerm(instanceId, "highlightTerms", term),
+      removeHighlightTerm: (instanceId, term) =>
+        set((state) => update(state, instanceId, removeTerm("highlightTerms", term))),
+      toggleBookmark: (instanceId, item) => {
+        const bookmarks = get().byInstance[instanceId]?.bookmarks ?? [];
+        const saved = bookmarks.some((entry) => entry.item.link === item.link);
+        if (!saved && bookmarks.length >= MAX_BOOKMARKS) return false;
+        set((state) =>
+          update(state, instanceId, (data) => ({
+            ...data,
+            bookmarks: saved
+              ? data.bookmarks.filter((entry) => entry.item.link !== item.link)
+              : [{ item, savedAt: Date.now() }, ...data.bookmarks],
+          })),
+        );
+        return true;
+      },
+      removeInstance: (instanceId) =>
+        set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
+    };
+  },
+  {
+    name: "widget:news",
+    partialize: (state) => ({
+      byInstance: state.byInstance,
+      trendSnapshots: state.trendSnapshots,
+    }),
+    schema: persistedSchema,
+    build: (parsed, current) => ({
+      ...current,
+      byInstance: parsed.byInstance,
+      trendSnapshots: trimSnapshots(parsed.trendSnapshots),
+    }),
+  },
 );
 
 export const useNews = createInstanceSelector(useNewsStore, DEFAULT_DATA);

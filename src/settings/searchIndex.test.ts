@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { sourceFiles, sourcePath } from "@/test/source-files";
 import { searchSettings, settingsIndex } from "@/settings/searchIndex";
-import { SETTINGS_TABS } from "@/settings/tabsMeta";
+import { SETTINGS_TABS } from "@/stores/settingsTabs";
 
 const SETTINGS_ROW = /<SettingsRow\b[^>]*?\stitle="([^"]+)"/gs;
 

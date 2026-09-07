@@ -1,8 +1,6 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { z } from "zod";
-import { createGatedChromeStorage } from "@/lib/storage";
-import { mergePersisted, tolerantArray, tolerantRecord } from "@/lib/persist";
+import { createPersistedStore } from "@/lib/storage";
+import { tolerantArray, tolerantRecord } from "@/lib/persist";
 import { moveById } from "@/lib/dnd";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
@@ -110,8 +108,6 @@ const legacySchema = z.object({
   units: z.enum(["metric", "imperial"]).optional(),
 });
 
-const gatedStorage = createGatedChromeStorage();
-
 function update(
   state: WeatherState,
   instanceId: string,
@@ -142,116 +138,112 @@ function migrateLegacyToConfig(persisted: unknown): {
   };
 }
 
-export const useWeatherStore = create<WeatherState>()(
-  persist(
-    (set, get) => ({
-      ...createSyncSlice(set),
-      byInstance: {},
-      addLocation: (instanceId, location) =>
-        set((state) => {
-          const data = state.byInstance[instanceId] ?? DEFAULT_DATA;
-          if (data.locations.length >= MAX_LOCATIONS) return state;
-          if (data.locations.some((entry) => entry.id === location.id)) return state;
-          return update(state, instanceId, (current) => ({
-            ...current,
-            locations: [...current.locations, location],
-            selectedId: location.id,
-          }));
-        }),
-      removeLocation: (instanceId, id) =>
-        set((state) =>
-          update(state, instanceId, (data) => ({
-            ...data,
-            locations: data.locations.filter((entry) => entry.id !== id),
-            selectedId: data.selectedId === id ? null : data.selectedId,
-          })),
-        ),
-      reorderLocations: (instanceId, activeId, overId) =>
-        set((state) => {
-          const data = state.byInstance[instanceId] ?? DEFAULT_DATA;
-          const locations = moveById(data.locations, activeId, overId, (entry) => entry.id);
-          if (!locations) return state;
-          return update(state, instanceId, (current) => ({ ...current, locations }));
-        }),
-      selectCity: (instanceId, id) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, selectedId: id }))),
-      clearSelection: (instanceId) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, selectedId: null }))),
-      setUnits: (instanceId, units) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, units }))),
-      setWindUnit: (instanceId, windUnit) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, windUnit }))),
-      setForecastDays: (instanceId, forecastDays) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, forecastDays }))),
-      setRainAlert: (instanceId, rainAlert) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, rainAlert }))),
-      setMetrics: (instanceId, metrics) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, metrics }))),
-      requestSync: (instanceId) => {
-        if (isSyncCoolingDown(get(), instanceId, WEATHER_SYNC_COOLDOWN_MS)) return;
-        const inst = get().byInstance[instanceId] ?? DEFAULT_DATA;
-        for (const location of inst.locations) {
-          stalePolledResource(weatherCacheKey(location, inst.units, inst.windUnit));
-        }
-        set((state) => bumpSyncNonce(state, instanceId));
-      },
-      removeInstance: (instanceId) => {
-        set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) }));
-        get().dropSync(instanceId);
-      },
-    }),
-    {
-      name: "widget:weather",
-      storage: gatedStorage,
-      version: 3,
-      onRehydrateStorage: () => () => gatedStorage.open(useWeatherStore),
-      partialize: (state) => ({
-        byInstance: Object.fromEntries(
-          Object.entries(state.byInstance).map(([id, data]) => [
-            id,
-            {
-              locations: data.locations,
-              units: data.units,
-              windUnit: data.windUnit,
-              forecastDays: data.forecastDays,
-              rainAlert: data.rainAlert,
-              metrics: data.metrics,
-              selectedId: data.selectedId,
-            },
-          ]),
-        ),
+export const useWeatherStore = createPersistedStore<WeatherState>()(
+  (set, get) => ({
+    ...createSyncSlice(set),
+    byInstance: {},
+    addLocation: (instanceId, location) =>
+      set((state) => {
+        const data = state.byInstance[instanceId] ?? DEFAULT_DATA;
+        if (data.locations.length >= MAX_LOCATIONS) return state;
+        if (data.locations.some((entry) => entry.id === location.id)) return state;
+        return update(state, instanceId, (current) => ({
+          ...current,
+          locations: [...current.locations, location],
+          selectedId: location.id,
+        }));
       }),
-      migrate: (persisted, version) => {
-        if (version >= 3) return persisted;
-        if (version < 2) {
-          return { byInstance: { weather: migrateLegacyToConfig(persisted) } };
-        }
-        const v2 = configSchema.safeParse(persisted);
-        return {
-          byInstance: { weather: v2.success ? v2.data : { locations: [], units: "imperial" } },
-        };
-      },
-      merge: (persisted, current) =>
-        mergePersisted("widget:weather", persistedSchema, persisted, current, (parsed) => {
-          const byInstance: Record<string, WeatherConfig> = {};
-          for (const [id, data] of Object.entries(parsed.byInstance)) {
-            const locations = data.locations.slice(0, MAX_LOCATIONS);
-            byInstance[id] = {
-              locations,
-              units: data.units,
-              windUnit: data.windUnit,
-              forecastDays: data.forecastDays,
-              rainAlert: data.rainAlert,
-              metrics: data.metrics,
-              selectedId: locations.some((entry) => entry.id === data.selectedId)
-                ? data.selectedId
-                : null,
-            };
-          }
-          return { ...current, byInstance };
-        }),
+    removeLocation: (instanceId, id) =>
+      set((state) =>
+        update(state, instanceId, (data) => ({
+          ...data,
+          locations: data.locations.filter((entry) => entry.id !== id),
+          selectedId: data.selectedId === id ? null : data.selectedId,
+        })),
+      ),
+    reorderLocations: (instanceId, activeId, overId) =>
+      set((state) => {
+        const data = state.byInstance[instanceId] ?? DEFAULT_DATA;
+        const locations = moveById(data.locations, activeId, overId, (entry) => entry.id);
+        if (!locations) return state;
+        return update(state, instanceId, (current) => ({ ...current, locations }));
+      }),
+    selectCity: (instanceId, id) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, selectedId: id }))),
+    clearSelection: (instanceId) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, selectedId: null }))),
+    setUnits: (instanceId, units) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, units }))),
+    setWindUnit: (instanceId, windUnit) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, windUnit }))),
+    setForecastDays: (instanceId, forecastDays) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, forecastDays }))),
+    setRainAlert: (instanceId, rainAlert) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, rainAlert }))),
+    setMetrics: (instanceId, metrics) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, metrics }))),
+    requestSync: (instanceId) => {
+      if (isSyncCoolingDown(get(), instanceId, WEATHER_SYNC_COOLDOWN_MS)) return;
+      const inst = get().byInstance[instanceId] ?? DEFAULT_DATA;
+      for (const location of inst.locations) {
+        stalePolledResource(weatherCacheKey(location, inst.units, inst.windUnit));
+      }
+      set((state) => bumpSyncNonce(state, instanceId));
     },
-  ),
+    removeInstance: (instanceId) => {
+      set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) }));
+      get().dropSync(instanceId);
+    },
+  }),
+  {
+    name: "widget:weather",
+    version: 3,
+    partialize: (state) => ({
+      byInstance: Object.fromEntries(
+        Object.entries(state.byInstance).map(([id, data]) => [
+          id,
+          {
+            locations: data.locations,
+            units: data.units,
+            windUnit: data.windUnit,
+            forecastDays: data.forecastDays,
+            rainAlert: data.rainAlert,
+            metrics: data.metrics,
+            selectedId: data.selectedId,
+          },
+        ]),
+      ),
+    }),
+    migrate: (persisted, version) => {
+      if (version >= 3) return persisted;
+      if (version < 2) {
+        return { byInstance: { weather: migrateLegacyToConfig(persisted) } };
+      }
+      const v2 = configSchema.safeParse(persisted);
+      return {
+        byInstance: { weather: v2.success ? v2.data : { locations: [], units: "imperial" } },
+      };
+    },
+    schema: persistedSchema,
+    build: (parsed, current) => {
+      const byInstance: Record<string, WeatherConfig> = {};
+      for (const [id, data] of Object.entries(parsed.byInstance)) {
+        const locations = data.locations.slice(0, MAX_LOCATIONS);
+        byInstance[id] = {
+          locations,
+          units: data.units,
+          windUnit: data.windUnit,
+          forecastDays: data.forecastDays,
+          rainAlert: data.rainAlert,
+          metrics: data.metrics,
+          selectedId: locations.some((entry) => entry.id === data.selectedId)
+            ? data.selectedId
+            : null,
+        };
+      }
+      return { ...current, byInstance };
+    },
+  },
 );
 
 export const useWeather = createInstanceSelector(useWeatherStore, DEFAULT_DATA);

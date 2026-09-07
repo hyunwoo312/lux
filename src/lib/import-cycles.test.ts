@@ -21,9 +21,8 @@ function graph(): Map<string, string[]> {
   for (const file of sourceFiles()) {
     const body = readFileSync(file, "utf8");
     const targets: string[] = [];
-    for (const match of body.matchAll(/import\s+(type\s+)?[^;]*?from\s+"(@\/[^"]+)"/g)) {
-      if (match[1] !== undefined) continue;
-      const specifier = match[2];
+    for (const match of body.matchAll(/(?:import|export)\s+(?!type\b)[^;]*?from\s+"(@\/[^"]+)"/g)) {
+      const specifier = match[1];
       if (specifier === undefined) continue;
       const target = resolveAlias(specifier);
       if (target !== null && target !== file) targets.push(target);
@@ -64,6 +63,6 @@ describe("the module graph", () => {
     const cycle = findCycle(edges);
     expect(cycle === null ? null : cycle.map(sourcePath).join(" → ")).toBeNull();
     const resolved = [...edges.values()].reduce((count, targets) => count + targets.length, 0);
-    expect(resolved, "no edges resolved — the import scan is broken").toBeGreaterThan(100);
+    expect(resolved, "no edges resolved — the import scan is broken").toBeGreaterThan(200);
   });
 });

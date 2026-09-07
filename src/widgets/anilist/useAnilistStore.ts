@@ -1,8 +1,6 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { z } from "zod";
-import { looksLikeLegacySingleton, mergePersisted, tolerantRecord } from "@/lib/persist";
-import { createGatedChromeStorage } from "@/lib/storage";
+import { looksLikeLegacySingleton, tolerantRecord } from "@/lib/persist";
+import { createPersistedStore } from "@/lib/storage";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { openBehaviorSchema, type OpenBehavior } from "@/lib/open-url";
@@ -100,10 +98,13 @@ const legacySchema = configSchema.extend({
   lastSeenActivityAt: z.number().optional(),
 });
 
-const persistedSchema = z.object({
-  byInstance: tolerantRecord(configSchema),
-  lastSeenActivityAt: z.number().optional().catch(undefined),
-});
+const persistedSchema = z.preprocess(
+  normalisePersisted,
+  z.object({
+    byInstance: tolerantRecord(configSchema),
+    lastSeenActivityAt: z.number().optional().catch(undefined),
+  }),
+);
 
 const LEGACY_TAB_REMAP: Record<string, { activeTab: AnilistTab; feedSource?: FeedSource }> = {
   activity: { activeTab: "feed", feedSource: "following" },
@@ -160,8 +161,6 @@ function migrateLegacyFields(persisted: unknown): unknown {
   return normaliseConfig(raw);
 }
 
-const gatedStorage = createGatedChromeStorage();
-
 function update(
   state: AnilistStoreState,
   instanceId: string,
@@ -170,89 +169,79 @@ function update(
   return { byInstance: patchInstance(state.byInstance, instanceId, DEFAULT_DATA, fn) };
 }
 
-export const useAnilistStore = create<AnilistStoreState>()(
-  persist(
-    (set, get) => ({
-      ...createSyncSlice(set),
-      byInstance: {},
-      lastSeenActivityAt: undefined,
-      setActiveTab: (instanceId, activeTab) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, activeTab }))),
-      setFeedSource: (instanceId, feedSource) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, feedSource }))),
-      setViewMode: (instanceId, viewMode) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, viewMode }))),
-      setMediaFilter: (instanceId, mediaFilter) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, mediaFilter }))),
-      setListFilter: (instanceId, listFilter) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, listFilter }))),
-      setCurrentSort: (instanceId, currentSort) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, currentSort }))),
-      setTitleLanguage: (instanceId, titleLanguage) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, titleLanguage }))),
-      setDiscoverFeed: (instanceId, discoverFeed) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, discoverFeed }))),
-      setDiscoverType: (instanceId, discoverType) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, discoverType }))),
-      setOpenBehavior: (instanceId, openBehavior) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, openBehavior }))),
-      removeInstance: (instanceId) =>
-        set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
-      setLastSeenActivity: (createdAt) =>
-        set((state) => ({
-          lastSeenActivityAt: Math.max(state.lastSeenActivityAt ?? 0, createdAt),
-        })),
-      requestSync: (instanceId, viewerId) => {
-        if (isSyncCoolingDown(get(), ANILIST_SYNC_KEY, ANILIST_SYNC_COOLDOWN_MS)) return;
-        const { titleLanguage, discoverFeed, discoverType } =
-          get().byInstance[instanceId] ?? DEFAULT_DATA;
-        stalePolledResource(anilistKeys.discover(titleLanguage, discoverFeed, discoverType));
-        stalePolledResource(anilistKeys.library(viewerId, titleLanguage));
-        stalePolledResource(anilistKeys.unread(viewerId));
-        stalePagedResource(anilistKeys.activity(viewerId, titleLanguage));
-        stalePagedResource(anilistKeys.inbox(viewerId, titleLanguage));
-        set((state) => bumpSyncNonce(state, ANILIST_SYNC_KEY));
-      },
-    }),
-    {
-      name: "widget:anilist",
-      storage: gatedStorage,
-      version: 5,
-      onRehydrateStorage: () => () => gatedStorage.open(useAnilistStore),
-      partialize: (state) => ({
-        byInstance: state.byInstance,
-        lastSeenActivityAt: state.lastSeenActivityAt,
-      }),
-      migrate: (persisted) => {
-        const normalised = normalisePersisted(persisted);
-        if (
-          normalised &&
-          typeof normalised === "object" &&
-          "byInstance" in normalised &&
-          typeof (normalised as { byInstance?: unknown }).byInstance === "object"
-        ) {
-          return normalised;
-        }
-        if (!looksLikeLegacySingleton(persisted, LEGACY_KEYS)) return { byInstance: {} };
-        const legacy = legacySchema.safeParse(migrateLegacyFields(persisted));
-        if (!legacy.success) return { byInstance: {} };
-        const { lastSeenActivityAt, ...config } = legacy.data;
-        return { byInstance: { anilist: config }, lastSeenActivityAt };
-      },
-      merge: (persisted, current) =>
-        mergePersisted(
-          "widget:anilist",
-          persistedSchema,
-          normalisePersisted(persisted),
-          current,
-          (parsed) => ({
-            ...current,
-            byInstance: parsed.byInstance,
-            lastSeenActivityAt: parsed.lastSeenActivityAt,
-          }),
-        ),
+export const useAnilistStore = createPersistedStore<AnilistStoreState>()(
+  (set, get) => ({
+    ...createSyncSlice(set),
+    byInstance: {},
+    lastSeenActivityAt: undefined,
+    setActiveTab: (instanceId, activeTab) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, activeTab }))),
+    setFeedSource: (instanceId, feedSource) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, feedSource }))),
+    setViewMode: (instanceId, viewMode) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, viewMode }))),
+    setMediaFilter: (instanceId, mediaFilter) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, mediaFilter }))),
+    setListFilter: (instanceId, listFilter) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, listFilter }))),
+    setCurrentSort: (instanceId, currentSort) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, currentSort }))),
+    setTitleLanguage: (instanceId, titleLanguage) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, titleLanguage }))),
+    setDiscoverFeed: (instanceId, discoverFeed) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, discoverFeed }))),
+    setDiscoverType: (instanceId, discoverType) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, discoverType }))),
+    setOpenBehavior: (instanceId, openBehavior) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, openBehavior }))),
+    removeInstance: (instanceId) =>
+      set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
+    setLastSeenActivity: (createdAt) =>
+      set((state) => ({
+        lastSeenActivityAt: Math.max(state.lastSeenActivityAt ?? 0, createdAt),
+      })),
+    requestSync: (instanceId, viewerId) => {
+      if (isSyncCoolingDown(get(), ANILIST_SYNC_KEY, ANILIST_SYNC_COOLDOWN_MS)) return;
+      const { titleLanguage, discoverFeed, discoverType } =
+        get().byInstance[instanceId] ?? DEFAULT_DATA;
+      stalePolledResource(anilistKeys.discover(titleLanguage, discoverFeed, discoverType));
+      stalePolledResource(anilistKeys.library(viewerId, titleLanguage));
+      stalePolledResource(anilistKeys.unread(viewerId));
+      stalePagedResource(anilistKeys.activity(viewerId, titleLanguage));
+      stalePagedResource(anilistKeys.inbox(viewerId, titleLanguage));
+      set((state) => bumpSyncNonce(state, ANILIST_SYNC_KEY));
     },
-  ),
+  }),
+  {
+    name: "widget:anilist",
+    version: 5,
+    partialize: (state) => ({
+      byInstance: state.byInstance,
+      lastSeenActivityAt: state.lastSeenActivityAt,
+    }),
+    migrate: (persisted) => {
+      const normalised = normalisePersisted(persisted);
+      if (
+        normalised &&
+        typeof normalised === "object" &&
+        "byInstance" in normalised &&
+        typeof (normalised as { byInstance?: unknown }).byInstance === "object"
+      ) {
+        return normalised;
+      }
+      if (!looksLikeLegacySingleton(persisted, LEGACY_KEYS)) return { byInstance: {} };
+      const legacy = legacySchema.safeParse(migrateLegacyFields(persisted));
+      if (!legacy.success) return { byInstance: {} };
+      const { lastSeenActivityAt, ...config } = legacy.data;
+      return { byInstance: { anilist: config }, lastSeenActivityAt };
+    },
+    schema: persistedSchema,
+    build: (parsed, current) => ({
+      ...current,
+      byInstance: parsed.byInstance,
+      lastSeenActivityAt: parsed.lastSeenActivityAt,
+    }),
+  },
 );
 
 export const useAnilist = createInstanceSelector(useAnilistStore, DEFAULT_DATA);

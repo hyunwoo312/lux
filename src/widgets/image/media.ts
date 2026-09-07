@@ -38,7 +38,3 @@ export async function readImageAsset(assetId: string): Promise<StoredAsset | nul
 export async function deleteImageAsset(assetId: string | null | undefined): Promise<void> {
   await imageAssetStore.remove(assetId);
 }
-
-export function clearImageMediaMemoryStoreForTest(): void {
-  imageAssetStore.clearMemoryForTest();
-}

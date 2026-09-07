@@ -5,10 +5,12 @@ import { App } from "@/app/App";
 import { AppErrorBoundary } from "@/app/AppErrorBoundary";
 import { applyThemeClass, getStoredMode, resolveTheme } from "@/lib/theme";
 import { applyAccentClass, getStoredAccent } from "@/stores/useAccentStore";
+import { pruneSettledRemovals } from "@/widgets/core/instanceRemoval";
 import "@/styles/globals.css";
 
 applyThemeClass(resolveTheme(getStoredMode()));
 applyAccentClass(getStoredAccent());
+pruneSettledRemovals();
 
 const root = document.getElementById("root");
 if (!root) {

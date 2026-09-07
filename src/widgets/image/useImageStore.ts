@@ -1,7 +1,5 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { z } from "zod";
-import { createGatedChromeStorage } from "@/lib/storage";
+import { createPersistedStore } from "@/lib/storage";
 import { looksLikeLegacySingleton, tolerantArray, tolerantRecord } from "@/lib/persist";
 import { missingAssetIds } from "@/lib/asset-store";
 import {
@@ -135,8 +133,6 @@ export function referencedAssetIds(byInstance: Record<string, ImageConfig>): Set
   return ids;
 }
 
-const gatedStorage = createGatedChromeStorage();
-
 function update(
   state: ImageState,
   instanceId: string,
@@ -145,160 +141,151 @@ function update(
   return { byInstance: patchInstance(state.byInstance, instanceId, DEFAULT_IMAGE_CONFIG, fn) };
 }
 
-export const useImageStore = create<ImageState>()(
-  persist(
-    (set, get) => ({
-      byInstance: {},
-      indices: {},
-      unreadable: false,
-      setMode: (instanceId, mode) =>
-        set((state) => update(state, instanceId, (config) => ({ ...config, mode }))),
-      setSingle: (instanceId, single) =>
-        set((state) => update(state, instanceId, (config) => ({ ...config, single }))),
-      setItems: (instanceId, items) =>
-        set((state) =>
-          update(state, instanceId, (config) => ({
+export const useImageStore = createPersistedStore<ImageState>()(
+  (set, get) => ({
+    byInstance: {},
+    indices: {},
+    unreadable: false,
+    setMode: (instanceId, mode) =>
+      set((state) => update(state, instanceId, (config) => ({ ...config, mode }))),
+    setSingle: (instanceId, single) =>
+      set((state) => update(state, instanceId, (config) => ({ ...config, single }))),
+    setItems: (instanceId, items) =>
+      set((state) =>
+        update(state, instanceId, (config) => ({
+          ...config,
+          items: items.slice(0, MAX_MULTI_IMAGES),
+        })),
+      ),
+    setRotateOnNewtab: (instanceId, rotateOnNewtab) =>
+      set((state) => update(state, instanceId, (config) => ({ ...config, rotateOnNewtab }))),
+    setRotateTimed: (instanceId, rotateTimed) =>
+      set((state) => update(state, instanceId, (config) => ({ ...config, rotateTimed }))),
+    setRotateOnClick: (instanceId, rotateOnClick) =>
+      set((state) => update(state, instanceId, (config) => ({ ...config, rotateOnClick }))),
+    setIntervalSeconds: (instanceId, seconds) =>
+      set((state) =>
+        update(state, instanceId, (config) => ({
+          ...config,
+          intervalSeconds: clampInterval(seconds),
+        })),
+      ),
+    setOrder: (instanceId, order) =>
+      set((state) => update(state, instanceId, (config) => ({ ...config, order }))),
+    setFit: (instanceId, fit) =>
+      set((state) => update(state, instanceId, (config) => ({ ...config, fit }))),
+    setBrightness: (instanceId, brightness) =>
+      set((state) => update(state, instanceId, (config) => ({ ...config, brightness }))),
+    setHideFrame: (instanceId, hideFrame) =>
+      set((state) => update(state, instanceId, (config) => ({ ...config, hideFrame }))),
+    setTransition: (instanceId, transition) =>
+      set((state) => update(state, instanceId, (config) => ({ ...config, transition }))),
+    setKenBurns: (instanceId, kenBurns) =>
+      set((state) => update(state, instanceId, (config) => ({ ...config, kenBurns }))),
+    updateItem: (instanceId, assetId, itemUpdate) =>
+      set((state) =>
+        update(state, instanceId, (config) => {
+          const apply = (item: ImageItem): ImageItem =>
+            item.assetId === assetId ? { ...item, ...itemUpdate } : item;
+          return {
             ...config,
-            items: items.slice(0, MAX_MULTI_IMAGES),
-          })),
-        ),
-      setRotateOnNewtab: (instanceId, rotateOnNewtab) =>
-        set((state) => update(state, instanceId, (config) => ({ ...config, rotateOnNewtab }))),
-      setRotateTimed: (instanceId, rotateTimed) =>
-        set((state) => update(state, instanceId, (config) => ({ ...config, rotateTimed }))),
-      setRotateOnClick: (instanceId, rotateOnClick) =>
-        set((state) => update(state, instanceId, (config) => ({ ...config, rotateOnClick }))),
-      setIntervalSeconds: (instanceId, seconds) =>
-        set((state) =>
-          update(state, instanceId, (config) => ({
-            ...config,
-            intervalSeconds: clampInterval(seconds),
-          })),
-        ),
-      setOrder: (instanceId, order) =>
-        set((state) => update(state, instanceId, (config) => ({ ...config, order }))),
-      setFit: (instanceId, fit) =>
-        set((state) => update(state, instanceId, (config) => ({ ...config, fit }))),
-      setBrightness: (instanceId, brightness) =>
-        set((state) => update(state, instanceId, (config) => ({ ...config, brightness }))),
-      setHideFrame: (instanceId, hideFrame) =>
-        set((state) => update(state, instanceId, (config) => ({ ...config, hideFrame }))),
-      setTransition: (instanceId, transition) =>
-        set((state) => update(state, instanceId, (config) => ({ ...config, transition }))),
-      setKenBurns: (instanceId, kenBurns) =>
-        set((state) => update(state, instanceId, (config) => ({ ...config, kenBurns }))),
-      updateItem: (instanceId, assetId, itemUpdate) =>
-        set((state) =>
-          update(state, instanceId, (config) => {
-            const apply = (item: ImageItem): ImageItem =>
-              item.assetId === assetId ? { ...item, ...itemUpdate } : item;
-            return {
-              ...config,
-              single: config.single ? apply(config.single) : config.single,
-              items: config.items.map(apply),
-            };
-          }),
-        ),
-      setCurrentIndex: (instanceId, index) =>
-        set((state) => ({ indices: { ...state.indices, [instanceId]: index } })),
-      advanceImage: (instanceId) =>
-        set((state) => {
-          const config = state.byInstance[instanceId] ?? DEFAULT_IMAGE_CONFIG;
-          const length = config.items.length;
-          if (config.mode !== "multi" || length < 2) return state;
-          const current = normalizeIndex(state.indices[instanceId] ?? 0, length);
-          const next =
-            config.order === "shuffle"
-              ? getRandomIndexExcluding(length, current)
-              : getNextSequentialIndex(current, length);
-          return { indices: { ...state.indices, [instanceId]: next } };
+            single: config.single ? apply(config.single) : config.single,
+            items: config.items.map(apply),
+          };
         }),
-      sanitizeAssets: async () => {
-        const configs = Object.values(get().byInstance);
-        const referenced: (ImageItem | null)[] = [];
-        for (const config of configs) referenced.push(config.single, ...config.items);
-        const missing = await missingAssetIds(imageAssetStore, referenced);
-        if (!missing.size) return;
-        set((state) => {
-          const byInstance: Record<string, ImageConfig> = {};
-          for (const [id, config] of Object.entries(state.byInstance)) {
-            byInstance[id] = {
-              ...config,
-              single: config.single && missing.has(config.single.assetId) ? null : config.single,
-              items: config.items.filter((item) => !missing.has(item.assetId)),
-            };
-          }
-          return { byInstance };
-        });
-      },
-      discardUnreadable: () => {
-        if (!get().unreadable) return;
-        set({ unreadable: false });
-        gatedStorage.open(useImageStore);
-      },
-      forgetOrphanedAssets: async () => {
-        if (get().unreadable) return;
-        const stored = await imageAssetStore.keys().catch(() => null);
-        if (!stored) return;
-        const referenced = referencedAssetIds(get().byInstance);
-        for (const assetId of stored) {
-          if (!referenced.has(assetId)) await deleteImageAsset(assetId).catch(() => undefined);
-        }
-      },
-      removeInstance: (instanceId) => {
-        const config = get().byInstance[instanceId];
-        if (config) {
-          const assetIds = [config.single?.assetId, ...config.items.map((item) => item.assetId)];
-          for (const assetId of assetIds) {
-            if (assetId) void deleteImageAsset(assetId).catch(() => undefined);
-          }
-        }
-        clearNewtabQueue(imageNewtabQueueKey(instanceId));
-        set((state) => {
-          const indices = { ...state.indices };
-          delete indices[instanceId];
-          return { byInstance: dropInstance(state.byInstance, instanceId), indices };
-        });
-      },
-    }),
-    {
-      name: "widget:image",
-      storage: gatedStorage,
-      version: 3,
-      onRehydrateStorage: () => (state) => {
-        if (state?.unreadable) return;
-        if (gatedStorage.open(useImageStore) !== "boot") return;
-        void state
-          ?.sanitizeAssets()
-          .then(() => state.forgetOrphanedAssets())
-          .catch(() => undefined);
-      },
-      partialize: (state) => ({ byInstance: state.byInstance }),
-      migrate: (persisted, version) => {
-        if (version >= 2) return persisted;
-        if (!looksLikeLegacySingleton(persisted, LEGACY_KEYS)) return { byInstance: {} };
-        const legacy = configSchema.safeParse(persisted);
-        return { byInstance: legacy.success ? { image: legacy.data } : {} };
-      },
-      merge: (persisted, current) => {
-        if (persisted === undefined || persisted === null) return current;
-        const parsed = persistedSchema.safeParse(persisted);
-        if (!parsed.success) {
-          console.warn("Refusing to overwrite unreadable image data");
-          return { ...current, unreadable: true };
-        }
+      ),
+    setCurrentIndex: (instanceId, index) =>
+      set((state) => ({ indices: { ...state.indices, [instanceId]: index } })),
+    advanceImage: (instanceId) =>
+      set((state) => {
+        const config = state.byInstance[instanceId] ?? DEFAULT_IMAGE_CONFIG;
+        const length = config.items.length;
+        if (config.mode !== "multi" || length < 2) return state;
+        const current = normalizeIndex(state.indices[instanceId] ?? 0, length);
+        const next =
+          config.order === "shuffle"
+            ? getRandomIndexExcluding(length, current)
+            : getNextSequentialIndex(current, length);
+        return { indices: { ...state.indices, [instanceId]: next } };
+      }),
+    sanitizeAssets: async () => {
+      const configs = Object.values(get().byInstance);
+      const referenced: (ImageItem | null)[] = [];
+      for (const config of configs) referenced.push(config.single, ...config.items);
+      const missing = await missingAssetIds(imageAssetStore, referenced);
+      if (!missing.size) return;
+      set((state) => {
         const byInstance: Record<string, ImageConfig> = {};
-        for (const [id, config] of Object.entries(parsed.data.byInstance)) {
+        for (const [id, config] of Object.entries(state.byInstance)) {
           byInstance[id] = {
             ...config,
-            items: config.items.slice(0, MAX_MULTI_IMAGES),
-            intervalSeconds: clampInterval(config.intervalSeconds),
+            single: config.single && missing.has(config.single.assetId) ? null : config.single,
+            items: config.items.filter((item) => !missing.has(item.assetId)),
           };
         }
-        return { ...current, byInstance, unreadable: false };
-      },
+        return { byInstance };
+      });
     },
-  ),
+    discardUnreadable: () => {
+      if (!get().unreadable) return;
+      set({ unreadable: false });
+    },
+    forgetOrphanedAssets: async () => {
+      if (get().unreadable) return;
+      const stored = await imageAssetStore.keys().catch(() => null);
+      if (!stored) return;
+      const referenced = referencedAssetIds(get().byInstance);
+      for (const assetId of stored) {
+        if (!referenced.has(assetId)) await deleteImageAsset(assetId).catch(() => undefined);
+      }
+    },
+    removeInstance: (instanceId) => {
+      const config = get().byInstance[instanceId];
+      if (config) {
+        const assetIds = [config.single?.assetId, ...config.items.map((item) => item.assetId)];
+        for (const assetId of assetIds) {
+          if (assetId) void deleteImageAsset(assetId).catch(() => undefined);
+        }
+      }
+      clearNewtabQueue(imageNewtabQueueKey(instanceId));
+      set((state) => {
+        const indices = { ...state.indices };
+        delete indices[instanceId];
+        return { byInstance: dropInstance(state.byInstance, instanceId), indices };
+      });
+    },
+  }),
+  {
+    name: "widget:image",
+    version: 3,
+    onBoot: (state) => {
+      if (state.unreadable) return;
+      void state
+        .sanitizeAssets()
+        .then(() => state.forgetOrphanedAssets())
+        .catch(() => undefined);
+    },
+    partialize: (state) => ({ byInstance: state.byInstance }),
+    migrate: (persisted, version) => {
+      if (version >= 2) return persisted;
+      if (!looksLikeLegacySingleton(persisted, LEGACY_KEYS)) return { byInstance: {} };
+      const legacy = configSchema.safeParse(persisted);
+      return { byInstance: legacy.success ? { image: legacy.data } : {} };
+    },
+    schema: persistedSchema,
+    build: (parsed, current) => {
+      const byInstance: Record<string, ImageConfig> = {};
+      for (const [id, config] of Object.entries(parsed.byInstance)) {
+        byInstance[id] = {
+          ...config,
+          items: config.items.slice(0, MAX_MULTI_IMAGES),
+          intervalSeconds: clampInterval(config.intervalSeconds),
+        };
+      }
+      return { ...current, byInstance, unreadable: false };
+    },
+    onUnreadable: (current) => ({ ...current, unreadable: true }),
+  },
 );
 
 export const useImage = createInstanceSelector(useImageStore, DEFAULT_IMAGE_CONFIG);

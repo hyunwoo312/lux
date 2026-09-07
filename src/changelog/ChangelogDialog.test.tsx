@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { ChangelogDialog } from "@/changelog/ChangelogDialog";
 import { RELEASES, highlightsOf } from "@/changelog/releases";
+import { useChangelogStore } from "@/changelog/useChangelogStore";
 
 function open() {
-  render(<ChangelogDialog open onOpenChange={() => {}} />);
+  useChangelogStore.setState({ open: true });
+  render(<ChangelogDialog />);
 }
 
 describe("ChangelogDialog", () => {

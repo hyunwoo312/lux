@@ -14,7 +14,6 @@ export const newsPlugin: WidgetPlugin = {
   category: "information",
   description: "Headlines from the sources you choose",
   icon: Newspaper,
-  defaultLayout: { w: 8, h: 8, minW: 8, minH: 8, maxW: 14, maxH: 14 },
   component: NewsWidget,
   commands: newsCommands,
   clearInstance: (instanceId) => useNewsStore.getState().removeInstance(instanceId),

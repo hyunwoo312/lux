@@ -12,7 +12,7 @@ import { openUrl, searchWeb } from "@/lib/open-url";
 
 import { SHORTCUT_DEFINITIONS, type ShortcutAction } from "@/stores/useShortcutsStore";
 import { useThemeStore } from "@/stores/useThemeStore";
-import { runShortcutAction } from "@/app/useGlobalShortcuts";
+import { runShortcutAction } from "@/commands/shortcutActions";
 import { isCommandEnabled, isSourceEnabled, paletteOpenBehavior } from "@/stores/usePaletteStore";
 import { getWidgetPlugin } from "@/widgets/registry";
 

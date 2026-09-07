@@ -24,8 +24,7 @@ function isPersistedStore(value: unknown): value is PersistedStore {
 }
 
 const storeModules = sourceFiles()
-  .filter((file) => readFileSync(file, "utf8").includes("createGatedChromeStorage("))
-  .filter((file) => !file.endsWith("storage.ts"))
+  .filter((file) => /createPersistedStore<\w+>\(\)\(/.test(readFileSync(file, "utf8")))
   .map((file) => `@/${sourcePath(file).replace(/\.tsx?$/, "")}`);
 
 async function loadStore(module: string): Promise<PersistedStore> {

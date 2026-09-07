@@ -3,6 +3,7 @@ import { ClearImagesButton } from "@/components/media/ClearImagesButton";
 import { ImageUploadButton } from "@/components/media/ImageUploadButton";
 import { MultiImageItems } from "@/components/media/MultiImageItems";
 import { getMetadataLabel } from "@/lib/media-format";
+import { wallpaperAssets } from "@/lib/wallpaper-gallery";
 import { useWallpaperUploads } from "@/app/useWallpaperUploads";
 import { SettingsRow } from "@/settings/components/SettingsRow";
 import { WallpaperGalleryPanel } from "@/settings/components/WallpaperGalleryPanel";
@@ -11,7 +12,6 @@ import { WallpaperImageOptions } from "@/settings/components/WallpaperImageOptio
 import {
   MAX_WALLPAPER_IMAGES,
   useWallpaperStore,
-  wallpaperAssets,
   type WallpaperSource,
 } from "@/stores/useWallpaperStore";
 

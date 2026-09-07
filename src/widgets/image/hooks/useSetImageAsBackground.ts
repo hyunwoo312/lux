@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { createAssetId, type MediaImageItem } from "@/lib/asset-store";
 import { mediaList, normalizeIndex } from "@/lib/media-rotation";
-import { useWallpaperStore, wallpaperAssets } from "@/stores/useWallpaperStore";
+import { wallpaperAssets } from "@/lib/wallpaper-gallery";
+import { useWallpaperStore } from "@/stores/useWallpaperStore";
 import { readImageAsset } from "@/widgets/image/media";
 import { useImage, useImageIndex } from "@/widgets/image/useImageStore";
 

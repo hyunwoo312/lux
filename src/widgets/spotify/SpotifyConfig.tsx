@@ -1,7 +1,7 @@
 import { Settings2 } from "lucide-react";
 import { IconActionButton } from "@/components/IconActionButton";
 import { useProviderAccount } from "@/integrations";
-import { useSettingsStore } from "@/settings";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import {
   ConfigSegmented,
   WidgetConfigGroup,

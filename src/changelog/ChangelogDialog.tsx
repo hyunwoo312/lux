@@ -16,11 +16,6 @@ import {
 } from "@/changelog/releases";
 import { useChangelogStore } from "@/changelog/useChangelogStore";
 
-type Props = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-};
-
 const NEWEST_VERSION = RELEASES[0]?.version ?? "";
 
 const SECTION_CHIP = `
@@ -33,7 +28,9 @@ const TYPE_DOT: Record<ChangeType, string> = {
   fixed: "bg-warning",
 };
 
-export function ChangelogDialog({ open, onOpenChange }: Props) {
+export function ChangelogDialog() {
+  const open = useChangelogStore((s) => s.open);
+  const setOpen = useChangelogStore((s) => s.setOpen);
   const markSeen = useChangelogStore((s) => s.markSeen);
   const [version, setVersion] = useState(NEWEST_VERSION);
   const reduced = useReducedMotion() ?? false;
@@ -48,7 +45,7 @@ export function ChangelogDialog({ open, onOpenChange }: Props) {
   const isNewest = release?.version === NEWEST_VERSION;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent layout="flush" showClose={false} width="lg" className="h-[90dvh]">
         <div className="flex min-h-0 flex-1">
           <nav aria-label="Releases" className={cn(DIALOG_RAIL, "w-52")}>

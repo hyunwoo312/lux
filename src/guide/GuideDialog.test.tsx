@@ -2,9 +2,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { GuideDialog } from "@/guide";
-import { useGuideStore } from "@/guide/useGuideStore";
+import { useGuideStore } from "@/stores/useGuideStore";
 import { FIRST_ARTICLE_ID } from "@/guide/content";
-import { useSettingsStore } from "@/settings";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 
 function open(articleId?: string) {
   useGuideStore.setState({ open: true, articleId: articleId ?? FIRST_ARTICLE_ID });

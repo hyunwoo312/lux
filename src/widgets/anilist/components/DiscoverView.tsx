@@ -3,7 +3,7 @@ import { loadErrorMessage } from "@/lib/net";
 import { Button } from "@/components/ui/button";
 import { ConfigSegmented, ConfigSelect } from "@/components/config/WidgetConfig";
 import { useProviderAccount } from "@/integrations";
-import { useSettingsStore } from "@/settings";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import { usePolledDefinition, type PolledResourceState } from "@/widgets/core/usePolledResource";
 import { anilistDiscover } from "@/widgets/anilist/lib/resources";
 import { saveListStatus } from "@/widgets/anilist/lib/api/list";

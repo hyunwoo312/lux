@@ -3,7 +3,7 @@ import { render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { usePaletteCommand } from "@/app/usePaletteCommand";
 import { useCommandPaletteStore } from "@/palette";
-import { useSettingsStore } from "@/settings";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 
 type MessageListener = (
   message: unknown,

@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { getLocal, setLocal } from "@/lib/local-store";
-import { FIRST_ARTICLE_ID } from "@/guide/content";
 import { showToast, useToastStore } from "@/stores/useToastStore";
 
 const GUIDE_NUDGED_KEY = "lux.guide.nudged";
@@ -8,7 +7,7 @@ const NUDGE_KEY = "guide-nudge";
 
 type HelpState = {
   open: boolean;
-  articleId: string;
+  articleId: string | null;
   openGuide: (articleId?: string) => void;
   closeGuide: () => void;
   setArticle: (articleId: string) => void;
@@ -16,11 +15,11 @@ type HelpState = {
 
 export const useGuideStore = create<HelpState>()((set) => ({
   open: false,
-  articleId: FIRST_ARTICLE_ID,
+  articleId: null,
   openGuide: (articleId) => {
     const toasts = useToastStore.getState();
     if (toasts.toast?.key === NUDGE_KEY) toasts.expire();
-    set({ open: true, articleId: articleId ?? FIRST_ARTICLE_ID });
+    set({ open: true, articleId: articleId ?? null });
   },
   closeGuide: () => {
     set({ open: false });

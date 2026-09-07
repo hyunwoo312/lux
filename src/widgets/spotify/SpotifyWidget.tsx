@@ -2,7 +2,7 @@ import { enterTween, exitTween } from "@/lib/motion";
 import { type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useProviderAccount } from "@/integrations";
-import { useSettingsStore } from "@/settings";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import { Button } from "@/components/ui/button";
 import { useElementSize } from "@/hooks/useElementSize";
 import { SpotifyDeviceMenu } from "@/widgets/spotify/components/SpotifyDeviceMenu";

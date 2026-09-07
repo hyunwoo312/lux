@@ -1,15 +1,8 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { z } from "zod";
 import { dateFromDayKey, localDayKey } from "@/lib/clock";
 import { describeFailure } from "@/lib/net";
-import {
-  looksLikeLegacySingleton,
-  mergePersisted,
-  tolerantArray,
-  tolerantRecord,
-} from "@/lib/persist";
-import { createGatedChromeStorage } from "@/lib/storage";
+import { looksLikeLegacySingleton, tolerantArray, tolerantRecord } from "@/lib/persist";
+import { createPersistedStore } from "@/lib/storage";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { isConnected, useIntegrationStore } from "@/integrations";
@@ -334,8 +327,6 @@ async function syncProvider(
   }
 }
 
-const gatedStorage = createGatedChromeStorage();
-
 function update(
   state: CalendarState,
   instanceId: string,
@@ -348,312 +339,302 @@ export function getCalendarData(instanceId: string): CalendarData {
   return useCalendarStore.getState().byInstance[instanceId] ?? currentDefaultData();
 }
 
-export const useCalendarStore = create<CalendarState>()(
-  persist(
-    (set, get) => ({
-      byInstance: {},
-      setPrimarySource: (instanceId, provider) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, primarySource: provider }))),
-      setRefreshIntervalHours: (instanceId, hours) =>
-        set((state) =>
-          update(state, instanceId, (data) => ({
+export const useCalendarStore = createPersistedStore<CalendarState>()(
+  (set, get) => ({
+    byInstance: {},
+    setPrimarySource: (instanceId, provider) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, primarySource: provider }))),
+    setRefreshIntervalHours: (instanceId, hours) =>
+      set((state) =>
+        update(state, instanceId, (data) => ({
+          ...data,
+          refreshIntervalHours: clampRefreshInterval(hours),
+        })),
+      ),
+    setDensity: (instanceId, density) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, density }))),
+    setView: (instanceId, view) =>
+      set((state) =>
+        update(state, instanceId, (data) => {
+          if (view === "calendar") return { ...data, view };
+          if (data.mode !== "week" || !data.selectedDay) return { ...data, view };
+          return {
             ...data,
-            refreshIntervalHours: clampRefreshInterval(hours),
-          })),
-        ),
-      setDensity: (instanceId, density) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, density }))),
-      setView: (instanceId, view) =>
-        set((state) =>
-          update(state, instanceId, (data) => {
-            if (view === "calendar") return { ...data, view };
-            if (data.mode !== "week" || !data.selectedDay) return { ...data, view };
-            return {
-              ...data,
-              view,
-              listAnchor: startOfDay(data.selectedDay),
-              listAnchorSetOn: localDayKey(new Date()),
-            };
-          }),
-        ),
-      setListAnchor: (instanceId, date) =>
-        set((state) =>
-          update(state, instanceId, (data) => ({
-            ...data,
-            listAnchor: startOfDay(date),
+            view,
+            listAnchor: startOfDay(data.selectedDay),
             listAnchorSetOn: localDayKey(new Date()),
-          })),
-        ),
-      setLookaheadDays: (instanceId, days) =>
-        set((state) =>
-          update(state, instanceId, (data) => ({ ...data, lookaheadDays: clampLookahead(days) })),
-        ),
-      setEnabled: (instanceId, enabled) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, enabled }))),
-      sync: async (instanceId, options = {}) => {
-        const data = getCalendarData(instanceId);
-        const accounts = useIntegrationStore.getState().accounts;
+          };
+        }),
+      ),
+    setListAnchor: (instanceId, date) =>
+      set((state) =>
+        update(state, instanceId, (data) => ({
+          ...data,
+          listAnchor: startOfDay(date),
+          listAnchorSetOn: localDayKey(new Date()),
+        })),
+      ),
+    setLookaheadDays: (instanceId, days) =>
+      set((state) =>
+        update(state, instanceId, (data) => ({ ...data, lookaheadDays: clampLookahead(days) })),
+      ),
+    setEnabled: (instanceId, enabled) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, enabled }))),
+    sync: async (instanceId, options = {}) => {
+      const data = getCalendarData(instanceId);
+      const accounts = useIntegrationStore.getState().accounts;
 
-        const requested = CALENDAR_PROVIDER_IDS.filter(
-          (providerId) =>
-            isConnected(accounts, providerId) &&
-            (!options.providerId || options.providerId === providerId),
-        );
-        const busy = requested.filter((providerId) => data.syncing.includes(providerId));
-        const targets = requested.filter(
-          (providerId) =>
-            !data.syncing.includes(providerId) &&
-            (options.bypassCooldown ||
-              (syncCooldownRemainingMs(data[providerId].lastSyncedAt, CALENDAR_SYNC_COOLDOWN_MS) ===
-                0 &&
-                Date.now() >= (data[providerId].retryAt ?? 0))),
-        );
-        if (options.bypassCooldown && busy.length > 0) {
-          set((state) =>
-            update(state, instanceId, (current) => ({
-              ...current,
-              resyncPending: Array.from(new Set([...current.resyncPending, ...busy])),
-            })),
-          );
-        }
-        if (targets.length === 0) return;
-
+      const requested = CALENDAR_PROVIDER_IDS.filter(
+        (providerId) =>
+          isConnected(accounts, providerId) &&
+          (!options.providerId || options.providerId === providerId),
+      );
+      const busy = requested.filter((providerId) => data.syncing.includes(providerId));
+      const targets = requested.filter(
+        (providerId) =>
+          !data.syncing.includes(providerId) &&
+          (options.bypassCooldown ||
+            (syncCooldownRemainingMs(data[providerId].lastSyncedAt, CALENDAR_SYNC_COOLDOWN_MS) ===
+              0 &&
+              Date.now() >= (data[providerId].retryAt ?? 0))),
+      );
+      if (options.bypassCooldown && busy.length > 0) {
         set((state) =>
           update(state, instanceId, (current) => ({
             ...current,
-            status: "syncing",
-            syncing: Array.from(new Set([...current.syncing, ...targets])),
+            resyncPending: Array.from(new Set([...current.resyncPending, ...busy])),
           })),
         );
+      }
+      if (targets.length === 0) return;
 
-        const syncWindow = getSyncWindow();
-        const fetchers = {
-          google: ["Google Calendar", fetchGoogleCalendars, fetchGoogleCalendarEvents] as const,
-          microsoft: [
-            "Outlook Calendar",
-            fetchOutlookCalendars,
-            fetchOutlookCalendarEvents,
-          ] as const,
-        };
-        const results = await Promise.all(
-          targets.map(async (providerId) => {
-            const [service, fetchCalendars, fetchEvents] = fetchers[providerId];
-            const result = await syncProvider(
-              getCalendarData(instanceId)[providerId],
-              service,
-              fetchCalendars,
-              fetchEvents,
-              syncWindow,
-            );
-            return { providerId, result };
-          }),
-        );
+      set((state) =>
+        update(state, instanceId, (current) => ({
+          ...current,
+          status: "syncing",
+          syncing: Array.from(new Set([...current.syncing, ...targets])),
+        })),
+      );
 
-        const pendingBeforeCompletion = getCalendarData(instanceId).resyncPending;
-        set((state) =>
-          update(state, instanceId, (current) => {
-            const now = Date.now();
-            let google = current.google;
-            let microsoft = current.microsoft;
-            for (const { providerId, result } of results) {
-              const settings = result.failed
-                ? result.settings
-                : { ...result.settings, lastSyncedAt: now };
-              if (providerId === "google") google = settings;
-              else microsoft = settings;
-            }
-
-            const refreshed = results
-              .filter((entry) => !entry.result.failed)
-              .map((entry) => entry.providerId);
-            const keptEvents = current.events.filter(
-              (event) => !refreshed.some((providerId) => event.id.startsWith(`${providerId}-`)),
-            );
-            const events = capCalendarEvents([
-              ...keptEvents,
-              ...results.flatMap((entry) => entry.result.events),
-            ]);
-
-            const syncing = current.syncing.filter((providerId) => !targets.includes(providerId));
-            const hasError = Boolean(google.lastError || microsoft.lastError);
-            return {
-              ...current,
-              events,
-              google,
-              microsoft,
-              syncing,
-              resyncPending: current.resyncPending.filter(
-                (providerId) => !targets.includes(providerId),
-              ),
-              status: syncing.length > 0 ? "syncing" : hasError ? "error" : "idle",
-            };
-          }),
-        );
-
-        const resync = targets.filter((providerId) => pendingBeforeCompletion.includes(providerId));
-        for (const providerId of resync) {
-          void get().sync(instanceId, { bypassCooldown: true, providerId });
-        }
-      },
-      setCalendarSelection: (instanceId, providerId, calendarId, selected) =>
-        set((state) =>
-          update(state, instanceId, (data) => {
-            const current = data[providerId];
-            const enabledCalendarIds = selected
-              ? Array.from(new Set([...current.enabledCalendarIds, calendarId]))
-              : current.enabledCalendarIds.filter((id) => id !== calendarId);
-            const updated: ProviderCalendarSettings = {
-              ...current,
-              enabledCalendarIds,
-              selectionChosen: true,
-              calendars: current.calendars.map((calendar) =>
-                calendar.id === calendarId ? { ...calendar, selected } : calendar,
-              ),
-              failedCalendarIds: current.failedCalendarIds.filter((id) => id !== calendarId),
-            };
-            return providerId === "google"
-              ? { ...data, google: updated }
-              : { ...data, microsoft: updated };
-          }),
-        ),
-      clearRetry: (instanceId) =>
-        set((state) =>
-          update(state, instanceId, (data) => ({
-            ...data,
-            google: { ...data.google, failureCount: undefined, retryAt: undefined },
-            microsoft: { ...data.microsoft, failureCount: undefined, retryAt: undefined },
-          })),
-        ),
-      clearIntegration: (instanceId, providerId) =>
-        set((state) =>
-          update(state, instanceId, (data) => {
-            const events = data.events.filter((event) => !event.id.startsWith(`${providerId}-`));
-            return providerId === "google"
-              ? { ...data, events, google: EMPTY_PROVIDER }
-              : { ...data, events, microsoft: EMPTY_PROVIDER };
-          }),
-        ),
-      setVisibleMonth: (instanceId, visibleMonth) =>
-        set((state) => update(state, instanceId, (data) => ({ ...data, visibleMonth }))),
-      shiftMonth: (instanceId, offset) =>
-        set((state) =>
-          update(state, instanceId, (data) => ({
-            ...data,
-            visibleMonth: getMonthOffset(data.visibleMonth, offset),
-          })),
-        ),
-      goToToday: (instanceId) =>
-        set((state) =>
-          update(state, instanceId, (data) => {
-            if (data.view !== "calendar") {
-              const today = startOfDay(new Date());
-              return { ...data, listAnchor: today, listAnchorSetOn: localDayKey(today) };
-            }
-            if (data.mode !== "week") return { ...data, ...freshNav() };
-            const today = startOfDay(new Date());
-            const visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-            const todayKey = localDayKey(today);
-            const index = getMonthGridDays(visibleMonth).findIndex(
-              (day) => localDayKey(day) === todayKey,
-            );
-            return {
-              ...data,
-              selectedDay: today,
-              visibleMonth,
-              focusRowIndex: index >= 0 ? Math.floor(index / 7) : 0,
-            };
-          }),
-        ),
-      focusDay: (instanceId, date) =>
-        set((state) =>
-          update(state, instanceId, (data) => {
-            const grid = getMonthGridDays(data.visibleMonth);
-            const key = localDayKey(date);
-            const index = grid.findIndex((day) => localDayKey(day) === key);
-            return {
-              ...data,
-              mode: "week",
-              selectedDay: startOfDay(date),
-              focusRowIndex: index >= 0 ? Math.floor(index / 7) : 0,
-            };
-          }),
-        ),
-      selectDay: (instanceId, date) =>
-        set((state) =>
-          update(state, instanceId, (data) => ({ ...data, selectedDay: startOfDay(date) })),
-        ),
-      shiftWeek: (instanceId, offset) =>
-        set((state) =>
-          update(state, instanceId, (data) =>
-            data.selectedDay
-              ? { ...data, selectedDay: addDays(data.selectedDay, offset * 7) }
-              : data,
-          ),
-        ),
-      exitWeek: (instanceId) =>
-        set((state) =>
-          update(state, instanceId, (data) => ({
-            ...data,
-            mode: "month",
-            visibleMonth: data.selectedDay
-              ? new Date(data.selectedDay.getFullYear(), data.selectedDay.getMonth(), 1)
-              : data.visibleMonth,
-          })),
-        ),
-      removeInstance: (instanceId) =>
-        set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
-    }),
-    {
-      name: "widget:calendar",
-      storage: gatedStorage,
-      version: 2,
-      onRehydrateStorage: () => () => gatedStorage.open(useCalendarStore),
-      partialize: (state) => ({
-        byInstance: Object.fromEntries(
-          Object.entries(state.byInstance).map(([id, data]) => [
-            id,
-            {
-              events: data.events,
-              lookaheadDays: data.lookaheadDays,
-              enabled: data.enabled,
-              view: data.view,
-              density: data.density,
-              google: data.google,
-              microsoft: data.microsoft,
-              primarySource: data.primarySource,
-              refreshIntervalHours: data.refreshIntervalHours,
-              listAnchorKey: localDayKey(data.listAnchor),
-              listAnchorSetOn: data.listAnchorSetOn,
-            },
-          ]),
-        ),
-      }),
-      migrate: (persisted, version) => {
-        if (version >= 2) return persisted;
-        if (!looksLikeLegacySingleton(persisted, LEGACY_KEYS)) return { byInstance: {} };
-        const legacy = configSchema.safeParse(normaliseConfig(persisted));
-        return { byInstance: legacy.success ? { calendar: legacy.data } : {} };
-      },
-      merge: (persisted, current) =>
-        mergePersisted("widget:calendar", persistedSchema, persisted, current, (parsed) => {
-          const byInstance: Record<string, CalendarData> = {};
-          for (const [id, config] of Object.entries(parsed.byInstance)) {
-            byInstance[id] = {
-              ...config,
-              events: capCalendarEvents(config.events),
-              lookaheadDays: clampLookahead(config.lookaheadDays),
-              refreshIntervalHours: clampRefreshInterval(config.refreshIntervalHours),
-              status: "idle",
-              syncing: [],
-              resyncPending: [],
-              ...freshNav(),
-              ...anchorFor(config.listAnchorKey, config.listAnchorSetOn),
-            };
-          }
-          return { ...current, byInstance };
+      const syncWindow = getSyncWindow();
+      const fetchers = {
+        google: ["Google Calendar", fetchGoogleCalendars, fetchGoogleCalendarEvents] as const,
+        microsoft: ["Outlook Calendar", fetchOutlookCalendars, fetchOutlookCalendarEvents] as const,
+      };
+      const results = await Promise.all(
+        targets.map(async (providerId) => {
+          const [service, fetchCalendars, fetchEvents] = fetchers[providerId];
+          const result = await syncProvider(
+            getCalendarData(instanceId)[providerId],
+            service,
+            fetchCalendars,
+            fetchEvents,
+            syncWindow,
+          );
+          return { providerId, result };
         }),
+      );
+
+      const pendingBeforeCompletion = getCalendarData(instanceId).resyncPending;
+      set((state) =>
+        update(state, instanceId, (current) => {
+          const now = Date.now();
+          let google = current.google;
+          let microsoft = current.microsoft;
+          for (const { providerId, result } of results) {
+            const settings = result.failed
+              ? result.settings
+              : { ...result.settings, lastSyncedAt: now };
+            if (providerId === "google") google = settings;
+            else microsoft = settings;
+          }
+
+          const refreshed = results
+            .filter((entry) => !entry.result.failed)
+            .map((entry) => entry.providerId);
+          const keptEvents = current.events.filter(
+            (event) => !refreshed.some((providerId) => event.id.startsWith(`${providerId}-`)),
+          );
+          const events = capCalendarEvents([
+            ...keptEvents,
+            ...results.flatMap((entry) => entry.result.events),
+          ]);
+
+          const syncing = current.syncing.filter((providerId) => !targets.includes(providerId));
+          const hasError = Boolean(google.lastError || microsoft.lastError);
+          return {
+            ...current,
+            events,
+            google,
+            microsoft,
+            syncing,
+            resyncPending: current.resyncPending.filter(
+              (providerId) => !targets.includes(providerId),
+            ),
+            status: syncing.length > 0 ? "syncing" : hasError ? "error" : "idle",
+          };
+        }),
+      );
+
+      const resync = targets.filter((providerId) => pendingBeforeCompletion.includes(providerId));
+      for (const providerId of resync) {
+        void get().sync(instanceId, { bypassCooldown: true, providerId });
+      }
     },
-  ),
+    setCalendarSelection: (instanceId, providerId, calendarId, selected) =>
+      set((state) =>
+        update(state, instanceId, (data) => {
+          const current = data[providerId];
+          const enabledCalendarIds = selected
+            ? Array.from(new Set([...current.enabledCalendarIds, calendarId]))
+            : current.enabledCalendarIds.filter((id) => id !== calendarId);
+          const updated: ProviderCalendarSettings = {
+            ...current,
+            enabledCalendarIds,
+            selectionChosen: true,
+            calendars: current.calendars.map((calendar) =>
+              calendar.id === calendarId ? { ...calendar, selected } : calendar,
+            ),
+            failedCalendarIds: current.failedCalendarIds.filter((id) => id !== calendarId),
+          };
+          return providerId === "google"
+            ? { ...data, google: updated }
+            : { ...data, microsoft: updated };
+        }),
+      ),
+    clearRetry: (instanceId) =>
+      set((state) =>
+        update(state, instanceId, (data) => ({
+          ...data,
+          google: { ...data.google, failureCount: undefined, retryAt: undefined },
+          microsoft: { ...data.microsoft, failureCount: undefined, retryAt: undefined },
+        })),
+      ),
+    clearIntegration: (instanceId, providerId) =>
+      set((state) =>
+        update(state, instanceId, (data) => {
+          const events = data.events.filter((event) => !event.id.startsWith(`${providerId}-`));
+          return providerId === "google"
+            ? { ...data, events, google: EMPTY_PROVIDER }
+            : { ...data, events, microsoft: EMPTY_PROVIDER };
+        }),
+      ),
+    setVisibleMonth: (instanceId, visibleMonth) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, visibleMonth }))),
+    shiftMonth: (instanceId, offset) =>
+      set((state) =>
+        update(state, instanceId, (data) => ({
+          ...data,
+          visibleMonth: getMonthOffset(data.visibleMonth, offset),
+        })),
+      ),
+    goToToday: (instanceId) =>
+      set((state) =>
+        update(state, instanceId, (data) => {
+          if (data.view !== "calendar") {
+            const today = startOfDay(new Date());
+            return { ...data, listAnchor: today, listAnchorSetOn: localDayKey(today) };
+          }
+          if (data.mode !== "week") return { ...data, ...freshNav() };
+          const today = startOfDay(new Date());
+          const visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+          const todayKey = localDayKey(today);
+          const index = getMonthGridDays(visibleMonth).findIndex(
+            (day) => localDayKey(day) === todayKey,
+          );
+          return {
+            ...data,
+            selectedDay: today,
+            visibleMonth,
+            focusRowIndex: index >= 0 ? Math.floor(index / 7) : 0,
+          };
+        }),
+      ),
+    focusDay: (instanceId, date) =>
+      set((state) =>
+        update(state, instanceId, (data) => {
+          const grid = getMonthGridDays(data.visibleMonth);
+          const key = localDayKey(date);
+          const index = grid.findIndex((day) => localDayKey(day) === key);
+          return {
+            ...data,
+            mode: "week",
+            selectedDay: startOfDay(date),
+            focusRowIndex: index >= 0 ? Math.floor(index / 7) : 0,
+          };
+        }),
+      ),
+    selectDay: (instanceId, date) =>
+      set((state) =>
+        update(state, instanceId, (data) => ({ ...data, selectedDay: startOfDay(date) })),
+      ),
+    shiftWeek: (instanceId, offset) =>
+      set((state) =>
+        update(state, instanceId, (data) =>
+          data.selectedDay ? { ...data, selectedDay: addDays(data.selectedDay, offset * 7) } : data,
+        ),
+      ),
+    exitWeek: (instanceId) =>
+      set((state) =>
+        update(state, instanceId, (data) => ({
+          ...data,
+          mode: "month",
+          visibleMonth: data.selectedDay
+            ? new Date(data.selectedDay.getFullYear(), data.selectedDay.getMonth(), 1)
+            : data.visibleMonth,
+        })),
+      ),
+    removeInstance: (instanceId) =>
+      set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
+  }),
+  {
+    name: "widget:calendar",
+    version: 2,
+    partialize: (state) => ({
+      byInstance: Object.fromEntries(
+        Object.entries(state.byInstance).map(([id, data]) => [
+          id,
+          {
+            events: data.events,
+            lookaheadDays: data.lookaheadDays,
+            enabled: data.enabled,
+            view: data.view,
+            density: data.density,
+            google: data.google,
+            microsoft: data.microsoft,
+            primarySource: data.primarySource,
+            refreshIntervalHours: data.refreshIntervalHours,
+            listAnchorKey: localDayKey(data.listAnchor),
+            listAnchorSetOn: data.listAnchorSetOn,
+          },
+        ]),
+      ),
+    }),
+    migrate: (persisted, version) => {
+      if (version >= 2) return persisted;
+      if (!looksLikeLegacySingleton(persisted, LEGACY_KEYS)) return { byInstance: {} };
+      const legacy = configSchema.safeParse(normaliseConfig(persisted));
+      return { byInstance: legacy.success ? { calendar: legacy.data } : {} };
+    },
+    schema: persistedSchema,
+    build: (parsed, current) => {
+      const byInstance: Record<string, CalendarData> = {};
+      for (const [id, config] of Object.entries(parsed.byInstance)) {
+        byInstance[id] = {
+          ...config,
+          events: capCalendarEvents(config.events),
+          lookaheadDays: clampLookahead(config.lookaheadDays),
+          refreshIntervalHours: clampRefreshInterval(config.refreshIntervalHours),
+          status: "idle",
+          syncing: [],
+          resyncPending: [],
+          ...freshNav(),
+          ...anchorFor(config.listAnchorKey, config.listAnchorSetOn),
+        };
+      }
+      return { ...current, byInstance };
+    },
+  },
 );
 
 export const useCalendar = createInstanceSelector(useCalendarStore, currentDefaultData);

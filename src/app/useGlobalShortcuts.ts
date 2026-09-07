@@ -6,38 +6,15 @@ import {
   useShortcutsStore,
   type ShortcutAction,
 } from "@/stores/useShortcutsStore";
-import { useThemeStore } from "@/stores/useThemeStore";
 import { useDashboardStore } from "@/stores/useDashboardStore";
-import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useToastStore } from "@/stores/useToastStore";
-import { useSettingsStore } from "@/settings";
-import { useGuideStore } from "@/guide";
+import { useSettingsStore } from "@/stores/useSettingsStore";
+import { useGuideStore } from "@/stores/useGuideStore";
 import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
+import { useChangelogStore } from "@/changelog";
+import { runShortcutAction } from "@/commands";
+import { useFeedbackStore } from "@/feedback";
 import { useCommandPaletteStore } from "@/palette";
-
-const HANDLERS: Record<ShortcutAction, () => void> = {
-  openSettings: () => {
-    const settings = useSettingsStore.getState();
-    if (settings.open) settings.closeSettings();
-    else settings.openSettings();
-  },
-  openGuide: () => {
-    const guide = useGuideStore.getState();
-    if (guide.open) guide.closeGuide();
-    else guide.openGuide();
-  },
-  toggleTheme: () => useThemeStore.getState().toggle(),
-  editLayout: () => useDashboardStore.getState().toggleEditing(),
-  addWidget: () => useWidgetPaletteStore.getState().toggle(),
-  toggleGridLines: () => {
-    const settings = useAppSettingsStore.getState();
-    settings.setShowGridLines(!settings.showGridLines);
-  },
-};
-
-export function runShortcutAction(action: ShortcutAction): void {
-  HANDLERS[action]();
-}
 
 type DialogLayer = { isOpen: () => boolean; close: () => void };
 
@@ -49,6 +26,14 @@ const DIALOG_FOR: Partial<Record<ShortcutAction, DialogLayer>> = {
   openGuide: {
     isOpen: () => useGuideStore.getState().open,
     close: () => useGuideStore.getState().closeGuide(),
+  },
+  whatsNew: {
+    isOpen: () => useChangelogStore.getState().open,
+    close: () => useChangelogStore.getState().setOpen(false),
+  },
+  sendFeedback: {
+    isOpen: () => useFeedbackStore.getState().open,
+    close: () => useFeedbackStore.getState().setOpen(false),
   },
   addWidget: {
     isOpen: () => useWidgetPaletteStore.getState().open,
@@ -99,7 +84,7 @@ export function useGlobalShortcuts() {
         const dialog = DIALOG_FOR[definition.id];
         if (modalOpen && dialog && !dialog.isOpen()) closeOpenDialogs();
         event.preventDefault();
-        HANDLERS[definition.id]();
+        runShortcutAction(definition.id);
         return;
       }
     }

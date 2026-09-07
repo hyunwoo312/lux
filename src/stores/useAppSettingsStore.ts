@@ -1,8 +1,6 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { z } from "zod";
-import { createGatedChromeStorage } from "@/lib/storage";
-import { keepPersisted, mergePersisted, tolerantRecord } from "@/lib/persist";
+import { createPersistedStore } from "@/lib/storage";
+import { tolerantRecord } from "@/lib/persist";
 import { CLOCK_DATE_FORMATS, type ClockDateFormat } from "@/lib/clock";
 
 export const REFRESH_CADENCES = ["default", "relaxed", "custom"] as const;
@@ -46,49 +44,41 @@ const persistedSchema = z.object({
   widgetRefresh: tolerantRecord(z.number().min(0.5).max(4)),
 });
 
-const gatedStorage = createGatedChromeStorage();
-
-export const useAppSettingsStore = create<AppSettingsState>()(
-  persist(
-    (set) => ({
-      ...DEFAULTS,
-      setClock24h: (value) => set({ clock24h: value }),
-      setShowClock: (value) => set({ showClock: value }),
-      setClockDate: (value) => set({ clockDate: value }),
-      setShowGridLines: (value) => set({ showGridLines: value }),
-      applyRefreshPreset: (types, cadence) =>
-        set(() => {
-          const scale = PRESET_SCALE[cadence];
-          const widgetRefresh: Record<string, number> = {};
-          for (const type of types) widgetRefresh[type] = scale;
-          return { widgetRefresh, refreshCadence: cadence };
-        }),
-      setWidgetRefresh: (type, scale) =>
-        set((state) => ({
-          widgetRefresh: { ...state.widgetRefresh, [type]: scale },
-          refreshCadence: "custom",
-        })),
-      reset: () => set({ ...DEFAULTS }),
-    }),
-    {
-      name: "app-settings",
-      storage: gatedStorage,
-      version: 1,
-      migrate: keepPersisted,
-      onRehydrateStorage: () => () => gatedStorage.open(useAppSettingsStore),
-      partialize: (state) => ({
-        clock24h: state.clock24h,
-        showClock: state.showClock,
-        clockDate: state.clockDate,
-        showGridLines: state.showGridLines,
-        refreshCadence: state.refreshCadence,
-        widgetRefresh: state.widgetRefresh,
+export const useAppSettingsStore = createPersistedStore<AppSettingsState>()(
+  (set) => ({
+    ...DEFAULTS,
+    setClock24h: (value) => set({ clock24h: value }),
+    setShowClock: (value) => set({ showClock: value }),
+    setClockDate: (value) => set({ clockDate: value }),
+    setShowGridLines: (value) => set({ showGridLines: value }),
+    applyRefreshPreset: (types, cadence) =>
+      set(() => {
+        const scale = PRESET_SCALE[cadence];
+        const widgetRefresh: Record<string, number> = {};
+        for (const type of types) widgetRefresh[type] = scale;
+        return { widgetRefresh, refreshCadence: cadence };
       }),
-      merge: (persisted, current) =>
-        mergePersisted("app-settings", persistedSchema, persisted, current, (parsed) => ({
-          ...current,
-          ...parsed,
-        })),
-    },
-  ),
+    setWidgetRefresh: (type, scale) =>
+      set((state) => ({
+        widgetRefresh: { ...state.widgetRefresh, [type]: scale },
+        refreshCadence: "custom",
+      })),
+    reset: () => set({ ...DEFAULTS }),
+  }),
+  {
+    name: "app-settings",
+    partialize: (state) => ({
+      clock24h: state.clock24h,
+      showClock: state.showClock,
+      clockDate: state.clockDate,
+      showGridLines: state.showGridLines,
+      refreshCadence: state.refreshCadence,
+      widgetRefresh: state.widgetRefresh,
+    }),
+    schema: persistedSchema,
+    build: (parsed, current) => ({
+      ...current,
+      ...parsed,
+    }),
+  },
 );

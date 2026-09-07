@@ -1,5 +1,14 @@
 import type { ComponentType } from "react";
-import { CircleHelp, Grid3x3, LayoutGrid, Settings, SquarePlus, SunMoon } from "lucide-react";
+import {
+  CircleHelp,
+  Grid3x3,
+  LayoutGrid,
+  MessageSquarePlus,
+  ScrollText,
+  Settings,
+  SquarePlus,
+  SunMoon,
+} from "lucide-react";
 import type { Shortcut } from "@/lib/shortcuts";
 
 const ctrl = (key: string): Shortcut => ({ mod: true, shift: false, alt: false, key });
@@ -27,6 +36,20 @@ export const SHORTCUT_DEFINITIONS = [
     description: "Guides and shortcuts",
     icon: CircleHelp,
     defaults: [ctrlShift("h")],
+  },
+  {
+    id: "whatsNew",
+    label: "What's new",
+    description: "See what changed in each release",
+    icon: ScrollText,
+    defaults: [],
+  },
+  {
+    id: "sendFeedback",
+    label: "Send feedback",
+    description: "Send a note to the developer",
+    icon: MessageSquarePlus,
+    defaults: [],
   },
   {
     id: "toggleTheme",

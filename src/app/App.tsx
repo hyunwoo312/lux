@@ -18,7 +18,8 @@ import { FrostImageProvider } from "@/lib/frost-image";
 import { useWallpaperStore } from "@/stores/useWallpaperStore";
 import { takePendingPermissionHighlight } from "@/lib/permissions";
 import { useDashboardStore } from "@/stores/useDashboardStore";
-import { SettingsDialog, useSettingsStore } from "@/settings";
+import { SettingsDialog } from "@/settings";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import { sweepStaleResourceCaches } from "@/widgets/core/resourceCacheSweep";
 import { usePersistHydrated } from "@/hooks/usePersistHydrated";
 

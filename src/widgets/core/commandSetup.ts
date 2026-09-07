@@ -1,5 +1,5 @@
 import { useIntegrationStore, type IntegrationProviderId } from "@/integrations";
-import { useSettingsStore } from "@/settings";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { instanceIds } from "@/widgets/core/instances";
 import type { CommandSetup, WidgetType } from "@/widgets/core/types";

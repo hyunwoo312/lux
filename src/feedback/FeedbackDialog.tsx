@@ -12,8 +12,6 @@ import { SendingPanel } from "@/feedback/components/SendingPanel";
 import { useElementSize } from "@/hooks/useElementSize";
 import { messageHash, useFeedbackStore } from "@/feedback/useFeedbackStore";
 
-type Props = { open: boolean; onOpenChange: (open: boolean) => void };
-
 function viewVariants(reduced: boolean): Variants {
   return {
     hidden: { opacity: 0 },
@@ -46,7 +44,9 @@ function useDiagnostics() {
   });
 }
 
-export function FeedbackDialog({ open, onOpenChange }: Props) {
+export function FeedbackDialog() {
+  const open = useFeedbackStore((s) => s.open);
+  const setOpen = useFeedbackStore((s) => s.setOpen);
   const reduced = useReducedMotion() ?? false;
   const clearDraft = useFeedbackStore((s) => s.clearDraft);
   const recordSent = useFeedbackStore((s) => s.recordSent);
@@ -103,7 +103,7 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
       open={open}
       onOpenChange={(next) => {
         if (!next && inFlight) return;
-        onOpenChange(next);
+        setOpen(next);
       }}
     >
       <DialogContent layout="flush" showClose={false} dismissOnClickOutside={!inFlight} width="md">
@@ -133,7 +133,7 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
                   animate="show"
                   exit="exit"
                 >
-                  <SentPanel id={status.id} onClose={() => onOpenChange(false)} />
+                  <SentPanel id={status.id} onClose={() => setOpen(false)} />
                 </motion.div>
               ) : (
                 <motion.div
@@ -149,7 +149,7 @@ export function FeedbackDialog({ open, onOpenChange }: Props) {
                     diagnostics={diagnostics}
                     onStartOver={handleStartOver}
                     onSend={() => void send()}
-                    onClose={() => onOpenChange(false)}
+                    onClose={() => setOpen(false)}
                   />
                 </motion.div>
               )}

@@ -6,7 +6,7 @@ import {
   WidgetConfigItem,
 } from "@/components/config/WidgetConfig";
 import { useProviderAccount } from "@/integrations";
-import { useSettingsStore } from "@/settings";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import { OPEN_BEHAVIOR_OPTIONS } from "@/lib/open-url";
 import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";

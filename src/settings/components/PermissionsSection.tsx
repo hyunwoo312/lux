@@ -6,7 +6,7 @@ import { PERMISSIONS, type PermissionItem } from "@/settings/permissions";
 import { useGrantedPermissions } from "@/hooks/usePermission";
 import { isPermissionsManageable, setPermissionsGranted } from "@/lib/permissions";
 import { SettingsSection } from "@/settings/components/SettingsSection";
-import { useSettingsStore } from "@/settings/useSettingsStore";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 
 function permissionsOf(item: PermissionItem): chrome.runtime.ManifestPermission[] {
   return [item.id, ...(item.alsoNeeds ?? [])];

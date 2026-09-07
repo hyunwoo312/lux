@@ -13,7 +13,8 @@ import type { SubmitResult } from "@/feedback/types";
 import { messageHash, useFeedbackStore } from "@/feedback/useFeedbackStore";
 
 function open() {
-  render(<FeedbackDialog open onOpenChange={() => {}} />);
+  useFeedbackStore.setState({ open: true });
+  render(<FeedbackDialog />);
 }
 
 function type(value: string) {

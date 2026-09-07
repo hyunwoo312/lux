@@ -1,5 +1,5 @@
+import { resetAssetStores } from "@/test/asset-store";
 import {
-  clearImageMediaMemoryStoreForTest,
   deleteImageAsset,
   readImageAsset,
   saveImageAsset,
@@ -31,7 +31,7 @@ describe("validateImageFile", () => {
 
 describe("image media store", () => {
   beforeEach(() => {
-    clearImageMediaMemoryStoreForTest();
+    resetAssetStores();
   });
 
   it("saves an asset and reads back its blob", async () => {
