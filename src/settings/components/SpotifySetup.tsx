@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion, type Transition } from "motion/react";
 import { Check, ChevronRight, Copy, ExternalLink } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, MotionButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
@@ -23,8 +23,6 @@ const SPOTIFY_POLICY_URL =
   "https://developer.spotify.com/blog/2025-04-15-updating-the-criteria-for-web-api-extended-access";
 const FEEDBACK_MS = 1600;
 const LINK_CLASS = "text-primary underline underline-offset-2";
-
-const MotionButton = motion.create(Button);
 
 const STEPS: ReactNode[] = [
   <>

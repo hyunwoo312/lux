@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { Kbd } from "@/components/Kbd";
 
 const TOKEN = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g;
 
@@ -16,15 +17,9 @@ export function InlineText({ text }: { text: string }) {
         }
         if (part.startsWith("`") && part.endsWith("`")) {
           return (
-            <kbd
-              key={key}
-              className="
-                border-border/60 bg-card text-ink mx-0.5 rounded-xs border px-1.5 py-0.5
-                text-caption font-medium
-              "
-            >
+            <Kbd key={key} className="mx-0.5">
               {part.slice(1, -1)}
-            </kbd>
+            </Kbd>
           );
         }
         if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {

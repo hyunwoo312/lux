@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -13,27 +14,19 @@ export function StockRemoveButton({
 }) {
   return (
     <Tooltip content={`Remove ${symbol}`}>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="icon-xs"
         aria-label={`Remove ${symbol}`}
         onPointerDown={(event) => event.stopPropagation()}
         onClick={(event) => {
           event.stopPropagation();
           onRemove();
         }}
-        className={cn(
-          "press cursor-pointer focus-ring",
-          `
-            text-ink-3
-            hover:text-ink
-            grid size-7 place-items-center rounded-md transition-colors
-            [&_svg]:size-4
-          `,
-          className,
-        )}
+        className={cn("text-ink-3 hover:text-ink", className)}
       >
         <X />
-      </button>
+      </Button>
     </Tooltip>
   );
 }

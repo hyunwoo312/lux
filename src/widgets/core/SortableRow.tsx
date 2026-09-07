@@ -8,10 +8,14 @@ import { cn } from "@/lib/utils";
 
 export function SortableRow({
   id,
+  disabled = false,
+  tabIndex,
   className,
   children,
 }: {
   id: string;
+  disabled?: boolean;
+  tabIndex?: number;
   className?: string;
   children: ReactNode;
 }) {
@@ -24,7 +28,7 @@ export function SortableRow({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id, attributes: { role: "listitem" } });
+  } = useSortable({ id, disabled, attributes: { role: "listitem", tabIndex } });
 
   const ref = useCallback(
     (node: HTMLLIElement | null) => {
@@ -50,8 +54,9 @@ export function SortableRow({
       animate={{ opacity: 1, transition: enterTween(reduced) }}
       exit={{ opacity: 0, scale: reduced ? 1 : 0.95, transition: exitTween(reduced) }}
       className={cn(
-        "focus-ring rounded-lg touch-none",
-        isDragging ? "cursor-grabbing opacity-60" : "cursor-grab",
+        "focus-ring rounded-lg",
+        !disabled && "cursor-grab touch-none active:cursor-grabbing",
+        isDragging && "opacity-60",
         className,
       )}
     >

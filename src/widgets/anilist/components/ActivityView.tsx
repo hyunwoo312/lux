@@ -20,6 +20,7 @@ import {
   ANILIST_PAGE_SIZE,
   type AnilistActivity,
 } from "@/widgets/anilist/types";
+import { Button } from "@/components/ui/button";
 
 export function ActivityView({
   enabled,
@@ -188,18 +189,15 @@ function ActivityRow({
 
 function LikeButton({ liked, onToggle }: { liked: boolean; onToggle: () => void }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
+      size="icon-xs"
       onClick={onToggle}
       aria-pressed={liked}
       aria-label={liked ? "Unlike" : "Like"}
-      className="
-        press focus-ring cursor-pointer text-ink-3
-        hover:text-ink
-        flex size-7 shrink-0 items-center justify-center rounded-sm
-      "
+      className="text-ink-3 hover:text-ink"
     >
-      <Heart className={cn("size-4", liked && "fill-primary text-primary")} aria-hidden />
-    </button>
+      <Heart className={cn(liked && "fill-primary text-primary")} aria-hidden />
+    </Button>
   );
 }

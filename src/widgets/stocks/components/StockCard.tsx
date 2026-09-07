@@ -9,6 +9,7 @@ import { ExtendedChange } from "@/widgets/stocks/components/ExtendedChange";
 import { StockRemoveButton } from "@/widgets/stocks/components/StockRemoveButton";
 import { Sparkline } from "@/widgets/stocks/components/Sparkline";
 import type { SparkSeries } from "@/widgets/stocks/types";
+import { ROW } from "@/lib/row";
 
 type StockCardProps = {
   symbol: string;
@@ -98,11 +99,7 @@ export function StockCard({ symbol, spark, now, onSelect, onRemove }: StockCardP
       <StockRemoveButton
         symbol={symbol}
         onRemove={onRemove}
-        className="
-          absolute top-1 right-1 scale-90 opacity-0 transition duration-200
-          group-focus-within:scale-100 group-focus-within:opacity-100
-          group-hover:scale-100 group-hover:opacity-100
-        "
+        className={cn("absolute top-1 right-1", ROW.reveal)}
       />
     </div>
   );

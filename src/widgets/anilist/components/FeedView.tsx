@@ -11,6 +11,7 @@ import { AnilistWriteNotice } from "@/widgets/anilist/components/AnilistWriteNot
 import { FeedSourceSelector } from "@/widgets/anilist/components/FeedSourceSelector";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { useActivityUnseenCount, useUnreadCount } from "@/widgets/anilist/useAnilistSignals";
+import { Button } from "@/components/ui/button";
 
 type FeedViewProps = {
   enabled: boolean;
@@ -63,24 +64,16 @@ export function FeedView({ enabled, userId, newTab }: FeedViewProps) {
         />
         {source === "notifications" && unreadCount > 0 && (
           <Tooltip content="Mark all read" prose>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon-xs"
               onClick={markRead}
               disabled={marking}
               aria-label="Mark all notifications read"
-              className="
-                press cursor-pointer focus-ring text-ink-3
-                hover:text-ink
-                ml-auto flex size-7 shrink-0 items-center justify-center rounded-sm
-                disabled:opacity-50
-              "
+              className="text-ink-3 hover:text-ink ml-auto"
             >
-              {marking ? (
-                <Spinner className="size-3.5" />
-              ) : (
-                <CheckCheck className="size-3.5" aria-hidden />
-              )}
-            </button>
+              {marking ? <Spinner /> : <CheckCheck aria-hidden />}
+            </Button>
           </Tooltip>
         )}
       </div>

@@ -6,10 +6,10 @@ import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { ItemActionButton } from "@/components/ItemActionButton";
 import { QuickItem } from "@/widgets/quick-access/components/QuickItem";
 import { QuickLinkAnchor } from "@/widgets/quick-access/components/QuickLinkAnchor";
+import { ROW } from "@/lib/row";
 import {
   QA_GRID_CONTAINER,
   QA_LIST_CONTAINER,
-  QA_REVEAL,
   qaTileClass,
 } from "@/widgets/quick-access/lib/itemStyles";
 import { keyOf } from "@/widgets/quick-access/lib/url";
@@ -51,9 +51,10 @@ function RowActions({
   return (
     <div
       className={cn(
-        "absolute flex items-center gap-1",
-        view === "grid" ? "top-1 right-1" : "top-1/2 right-2 -translate-y-1/2",
-        pinned || canMute ? "opacity-100 transition duration-200" : QA_REVEAL,
+        view === "grid"
+          ? cn("absolute top-1 right-1 flex items-center gap-1", ROW.reveal)
+          : ROW.revealTrailing,
+        (pinned || canMute) && "translate-x-0 opacity-100",
       )}
     >
       {canMute && onToggleMuted && (
@@ -123,7 +124,13 @@ export function BrowserList({
                 url={item.url}
                 title={item.title}
                 view={view}
-                trailingPad={view === "list" ? (pinned ? "pr-7" : "group-hover:pr-7") : undefined}
+                trailingPad={
+                  view === "list"
+                    ? pinned
+                      ? "pr-7"
+                      : "group-hover:pr-7 group-focus-within:pr-7"
+                    : undefined
+                }
               />
             </QuickLinkAnchor>
             <RowActions

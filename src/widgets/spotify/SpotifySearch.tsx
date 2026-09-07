@@ -15,6 +15,7 @@ import {
   loadSpotifyQueue,
   requestSpotifyPlaybackRefresh,
 } from "@/widgets/spotify/hooks/useSpotifyPlayback";
+import { ListboxStatus } from "@/components/ListboxStatus";
 
 const MAX_RESULTS = 10;
 const OWNED_PLAYLIST_CAP = 3;
@@ -151,15 +152,15 @@ export function SpotifySearch() {
         onSelect={setTargetDeviceId}
       />
       {error ? (
-        <p className="text-ink-3 px-2 py-2 text-caption">{error}</p>
+        <ListboxStatus>{error}</ListboxStatus>
       ) : isSearch && state.status === "loading" && rows.length === 0 ? (
-        <p className="text-ink-3 px-2 py-2 text-caption">Searching…</p>
+        <ListboxStatus>Searching…</ListboxStatus>
       ) : isSearch && rows.length === 0 ? (
-        <p className="text-ink-3 px-2 py-2 text-caption">No matching results.</p>
+        <ListboxStatus>No matching results.</ListboxStatus>
       ) : rows.length === 0 ? (
-        <p className="text-ink-3 px-2 py-2 text-caption">
+        <ListboxStatus>
           {playlistsLoading ? "Loading your playlists…" : "Search songs, albums, and playlists."}
-        </p>
+        </ListboxStatus>
       ) : (
         <ul role="listbox" id={listboxId} aria-label="Search results" className="flex flex-col">
           {groups.map((group) => (

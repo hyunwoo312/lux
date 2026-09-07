@@ -8,6 +8,7 @@ import { IconRow } from "@/components/IconRow";
 import { EASE_STANDARD, listVariants, revealVariants, springSoft } from "@/lib/motion";
 import { TYPE } from "@/lib/type";
 import { useOnboardingStore } from "@/onboarding/useOnboardingStore";
+import { LuxMark } from "@/components/LuxMark";
 
 const HINT_SECONDS = 1.1;
 
@@ -23,14 +24,14 @@ export function Welcome() {
     <Dialog open={open} onOpenChange={(next) => !next && closeWelcome()}>
       <DialogContent initialFocus="container" width="sm" className="p-6">
         <div className="flex flex-col">
-          <motion.img
-            src="/logo.svg"
-            alt=""
-            className="mx-auto mb-4 size-12 object-contain"
+          <motion.span
+            className="mx-auto mb-4 block size-12"
             initial={reduced ? false : { scale: 0, rotate: -120, opacity: 0 }}
             animate={{ scale: 1, rotate: 0, opacity: 1 }}
             transition={springSoft(reduced)}
-          />
+          >
+            <LuxMark className="size-full" />
+          </motion.span>
 
           <motion.div
             variants={container}

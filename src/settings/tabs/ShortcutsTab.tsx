@@ -18,6 +18,7 @@ import {
 import { EASE_OUT_STRONG, enterTween, exitTween, springCrisp } from "@/lib/motion";
 import { usePaletteShortcut } from "@/hooks/usePaletteShortcut";
 import { AddShortcutControl, ShortcutDisplay } from "@/settings/tabs/ShortcutRow";
+import { Kbd } from "@/components/Kbd";
 
 const BROWSER_SHORTCUT = {
   label: "Open the command palette",
@@ -77,11 +78,7 @@ export function ShortcutsTab() {
             {paletteShortcut.status === "unbound" && (
               <span className="text-ink-3 text-caption">Not assigned</span>
             )}
-            {paletteShortcut.status === "bound" && (
-              <kbd className="text-ink font-sans text-caption font-semibold">
-                {paletteShortcut.shortcut}
-              </kbd>
-            )}
+            {paletteShortcut.status === "bound" && <Kbd>{paletteShortcut.shortcut}</Kbd>}
             <Button
               variant="ghost"
               size="xs"

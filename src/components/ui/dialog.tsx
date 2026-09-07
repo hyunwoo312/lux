@@ -4,6 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TYPE } from "@/lib/type";
+import { Button } from "@/components/ui/button";
 
 function Dialog(props: ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
@@ -113,20 +114,16 @@ function DialogContent({
 
 function DialogCloseButton({ className }: { className?: string }) {
   return (
-    <DialogPrimitive.Close
-      aria-label="Close"
-      className={cn(
-        `
-          text-ink-3
-          hover:text-ink hover:bg-accent
-          focus-ring grid size-8 shrink-0 cursor-pointer place-items-center rounded-md
-          transition-colors
-        `,
-        className,
-      )}
+    <Button
+      asChild
+      variant="ghost"
+      size="icon"
+      className={cn("text-ink-3 hover:text-ink", className)}
     >
-      <X className="size-4" />
-    </DialogPrimitive.Close>
+      <DialogPrimitive.Close aria-label="Close">
+        <X />
+      </DialogPrimitive.Close>
+    </Button>
   );
 }
 

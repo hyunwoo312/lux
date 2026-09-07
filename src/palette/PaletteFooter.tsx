@@ -1,5 +1,5 @@
 import { usePaletteShortcut } from "@/hooks/usePaletteShortcut";
-import { PaletteKey } from "@/palette/PaletteKey";
+import { Kbd } from "@/components/Kbd";
 
 export function PaletteFooter({ inScope }: { inScope: boolean }) {
   const shortcut = usePaletteShortcut();
@@ -18,14 +18,14 @@ export function PaletteFooter({ inScope }: { inScope: boolean }) {
       <span className="flex shrink-0 gap-3">
         {inScope && (
           <span className="flex items-center gap-1.5">
-            <PaletteKey>Esc</PaletteKey> Back
+            <Kbd>Esc</Kbd> Back
           </span>
         )}
         <span className="flex items-center gap-1.5">
-          <PaletteKey>↑↓</PaletteKey> Navigate
+          <Kbd>↑↓</Kbd> Navigate
         </span>
         <span className="flex items-center gap-1.5">
-          <PaletteKey>↵</PaletteKey> Select
+          <Kbd>↵</Kbd> Select
         </span>
       </span>
     </div>

@@ -126,7 +126,7 @@ export function BaseWidget({
             chromeHidden &&
               `
                 absolute inset-x-0 top-0 bg-gradient-to-b from-black/45 to-transparent pb-6
-                opacity-0 transition-opacity duration-200
+                opacity-0 transition-opacity duration-base
                 group-hover/widget:opacity-100
                 group-focus-within/widget:opacity-100
                 [&_button]:text-white/75

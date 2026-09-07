@@ -17,6 +17,7 @@ import { dedupeUpNext } from "@/widgets/spotify/lib/queue";
 import { SpotifyThumb } from "@/widgets/spotify/components/SpotifyThumb";
 import { RateLimitError } from "@/lib/net";
 import type { SpotifyQueueItem } from "@/widgets/spotify/types";
+import { ROW } from "@/lib/row";
 
 const EQ_BARS = [
   { x: 0, duration: 0.7 },
@@ -178,13 +179,7 @@ export function SpotifyQueuePanel() {
                         {item.subtitle}
                       </span>
                     </span>
-                    <Play
-                      className="
-                        text-ink-3 size-3.5 shrink-0 opacity-0 transition-opacity
-                        group-hover:opacity-100
-                      "
-                      aria-hidden
-                    />
+                    <Play className={cn("text-ink-3 size-3.5 shrink-0", ROW.reveal)} aria-hidden />
                   </button>
                 </motion.li>
               ))}

@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { LinkIcon } from "@/widgets/quick-access/components/LinkIcon";
 import type { QuickAccessView } from "@/widgets/quick-access/types";
+import { ROW } from "@/lib/row";
 
 type QuickItemProps = {
   url: string;
@@ -19,7 +20,7 @@ export function QuickItem({ url, title, view, icon, trailingPad }: QuickItemProp
           "truncate",
           view === "grid"
             ? "w-full text-center text-caption"
-            : "min-w-0 flex-1 text-body transition-[padding] duration-200",
+            : cn("min-w-0 flex-1 text-body", ROW.revealPad),
           trailingPad,
         )}
       >

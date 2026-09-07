@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { listStatusLabel } from "@/widgets/anilist/lib/list-status";
 import type { DiscoverMedia, ListStatus } from "@/widgets/anilist/types";
+import { Button } from "@/components/ui/button";
 
 type DiscoverRowProps = {
   media: DiscoverMedia;
@@ -69,20 +70,16 @@ export function DiscoverRow({
       </a>
       {canAdd && !listStatus && (
         <Tooltip content="Add to Planning">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="icon-xs"
             aria-label={`Add ${media.title} to Planning`}
             disabled={pending}
             onClick={onAdd}
-            className="
-              press focus-ring text-ink-3
-              hover:text-ink
-              grid size-7 shrink-0 cursor-pointer place-items-center rounded-sm
-              disabled:pointer-events-none disabled:opacity-50
-            "
+            className="text-ink-3 hover:text-ink"
           >
-            {pending ? <Spinner className="size-4" /> : <Plus className="size-4" aria-hidden />}
-          </button>
+            {pending ? <Spinner /> : <Plus aria-hidden />}
+          </Button>
         </Tooltip>
       )}
     </li>

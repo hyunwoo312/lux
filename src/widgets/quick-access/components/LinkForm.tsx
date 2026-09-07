@@ -4,11 +4,11 @@ import { Pin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 import { Favicon } from "@/widgets/quick-access/components/Favicon";
 import { useHistorySuggestions } from "@/widgets/quick-access/hooks/useHistorySuggestions";
 import { hostnameOf, keyOf } from "@/widgets/quick-access/lib/url";
 import type { LinkResult, QuickLink } from "@/widgets/quick-access/types";
+import { OptionRow } from "@/components/OptionRow";
 
 type LinkFormProps = {
   initial?: QuickLink;
@@ -127,8 +127,6 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
           <div className="max-h-60 overflow-y-auto rounded-lg">
             <ul id={listboxId} role="listbox">
               {matches.map((item, index) => {
-                const rowClass =
-                  "focus-ring flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left";
                 const label = (
                   <>
                     <Favicon url={item.url} size={32} className="size-4 shrink-0 rounded-xs" />
@@ -142,34 +140,18 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
                 );
                 return (
                   <li key={item.id}>
-                    {item.pinned ? (
-                      <div
-                        id={`${listboxId}-${index}`}
-                        role="option"
-                        aria-selected={false}
-                        aria-disabled
-                        className={cn(rowClass, "opacity-50")}
-                      >
-                        {label}
+                    <OptionRow
+                      id={`${listboxId}-${index}`}
+                      active={index === activeIndex}
+                      disabled={item.pinned}
+                      onActivate={() => setActiveIndex(index)}
+                      onPick={() => choose(item)}
+                    >
+                      {label}
+                      {item.pinned && (
                         <Pin className="text-primary size-3.5 shrink-0 fill-current" />
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        id={`${listboxId}-${index}`}
-                        role="option"
-                        aria-selected={index === activeIndex}
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => choose(item)}
-                        className={cn(
-                          "press cursor-pointer",
-                          rowClass,
-                          index === activeIndex ? "bg-accent" : "hover:bg-accent/60",
-                        )}
-                      >
-                        {label}
-                      </button>
-                    )}
+                      )}
+                    </OptionRow>
                   </li>
                 );
               })}

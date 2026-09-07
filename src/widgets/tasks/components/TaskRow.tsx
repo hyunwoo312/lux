@@ -1,16 +1,15 @@
-import { enterTween, exitTween } from "@/lib/motion";
+import { enterTween } from "@/lib/motion";
 import { ROW } from "@/lib/row";
-import type { CSSProperties, KeyboardEvent } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import type { KeyboardEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { Pencil, X } from "lucide-react";
 import { ItemActionButton } from "@/components/ItemActionButton";
 import { useIsOverflowing } from "@/hooks/useIsOverflowing";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { SortableRow } from "@/widgets/core/SortableRow";
 import type { Task } from "@/widgets/tasks/types";
 
 type TaskRowProps = {
@@ -37,28 +36,6 @@ export function TaskRow({
   const [measureRef, truncated] = useIsOverflowing<HTMLSpanElement>("horizontal", task.title);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: task.id,
-    disabled: !sortable || editing,
-    attributes: { role: "listitem", tabIndex: sortable ? 0 : -1 },
-  });
-
-  const rowRef = useCallback(
-    (node: HTMLLIElement | null) => {
-      setNodeRef(node);
-      setActivatorNodeRef(node);
-    },
-    [setNodeRef, setActivatorNodeRef],
-  );
-
   useEffect(() => {
     if (editing) {
       inputRef.current?.focus();
@@ -82,31 +59,14 @@ export function TaskRow({
     }
   };
 
-  const style: CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 1 : undefined,
-  };
-
   const stopDrag = (event: { stopPropagation: () => void }) => event.stopPropagation();
 
   return (
-    <motion.li
-      ref={rowRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1, transition: enterTween(reduced) }}
-      exit={{ opacity: 0, scale: reduced ? 1 : 0.95, transition: exitTween(reduced) }}
-      className={cn(
-        ROW.item,
-        "focus-ring group relative",
-        editing && "hover:bg-transparent",
-        sortable && "touch-none",
-        sortable && !editing && "cursor-grab active:cursor-grabbing",
-        isDragging && "opacity-60",
-      )}
+    <SortableRow
+      id={task.id}
+      disabled={!sortable || editing}
+      tabIndex={sortable ? 0 : -1}
+      className={cn(ROW.item, "group relative rounded-md", editing && "hover:bg-transparent")}
     >
       <Checkbox
         checked={task.done}
@@ -118,7 +78,8 @@ export function TaskRow({
       />
       <div
         className={cn(
-          "min-w-0 flex-1 transition-[padding] duration-200",
+          "min-w-0 flex-1",
+          ROW.revealPad,
           !editing && "group-hover:pr-12 group-focus-within:pr-12",
         )}
       >
@@ -164,14 +125,7 @@ export function TaskRow({
         )}
       </div>
       {!editing && (
-        <div
-          className="
-            absolute top-1/2 right-2 flex -translate-y-1/2 translate-x-2 items-center gap-1
-            opacity-0 transition duration-200
-            group-focus-within:translate-x-0 group-focus-within:opacity-100
-            group-hover:translate-x-0 group-hover:opacity-100
-          "
-        >
+        <div className={ROW.revealTrailing}>
           <ItemActionButton label={`Edit ${task.title}`} onClick={() => setEditing(true)}>
             <Pencil />
           </ItemActionButton>
@@ -184,6 +138,6 @@ export function TaskRow({
           </ItemActionButton>
         </div>
       )}
-    </motion.li>
+    </SortableRow>
   );
 }

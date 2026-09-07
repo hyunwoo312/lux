@@ -25,6 +25,7 @@ import {
 import { SettingsSection } from "@/settings/components/SettingsSection";
 import { useGithubStars } from "@/settings/useGithubStars";
 import { useSettingsStore } from "@/stores/useSettingsStore";
+import { LuxMark } from "@/components/LuxMark";
 
 const DESCRIPTION =
   "A customizable new tab dashboard — widgets and quick access to the sites you visit most.";
@@ -285,7 +286,7 @@ function LogoMark() {
   const glow = useAnimationControls();
 
   if (reduced) {
-    return <img src="/logo.svg" alt="" className="size-16 object-contain" />;
+    return <LuxMark className="size-16" />;
   }
 
   function celebrate() {
@@ -318,7 +319,7 @@ function LogoMark() {
         animate={glow}
       />
       <motion.span animate={spin} className="relative grid size-full place-items-center">
-        <img src="/logo.svg" alt="" className="size-full object-contain" />
+        <LuxMark className="size-full" />
         <span aria-hidden className="pointer-events-none absolute inset-0" style={LOGO_MASK}>
           <motion.span
             className="absolute inset-0"

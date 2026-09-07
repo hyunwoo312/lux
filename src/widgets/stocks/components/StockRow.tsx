@@ -37,8 +37,8 @@ export function StockRow({ symbol, spark, now, showSparkline, onSelect, onRemove
         aria-label={`Show ${symbol} details`}
         className={cn(
           ROW.itemAction,
-          "w-full transition-[padding,background-color] duration-200",
-          "group-hover:pr-9 group-focus-within:pr-9",
+          ROW.revealPad,
+          "w-full group-hover:pr-9 group-focus-within:pr-9",
         )}
       >
         <span
@@ -92,15 +92,7 @@ export function StockRow({ symbol, spark, now, showSparkline, onSelect, onRemove
         </span>
       </button>
 
-      <StockRemoveButton
-        symbol={symbol}
-        onRemove={onRemove}
-        className="
-          absolute top-1/2 right-1.5 -translate-y-1/2 translate-x-2 opacity-0
-          group-hover:translate-x-0 group-hover:opacity-100
-          group-focus-within:translate-x-0 group-focus-within:opacity-100
-        "
-      />
+      <StockRemoveButton symbol={symbol} onRemove={onRemove} className={ROW.revealTrailing} />
     </div>
   );
 }

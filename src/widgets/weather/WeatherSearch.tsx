@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Check, ChevronLeft, MapPin } from "lucide-react";
 import { ExpandingSearch } from "@/components/ExpandingSearch";
-import { cn } from "@/lib/utils";
 import { searchResults, useDebouncedSearch } from "@/hooks/useDebouncedSearch";
 import { useComboboxCursor } from "@/hooks/useComboboxCursor";
 import { searchPlaces } from "@/widgets/weather/lib/open-meteo";
@@ -13,6 +12,8 @@ import {
 } from "@/widgets/weather/useWeatherStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { makeLocationId, type GeocodeResult } from "@/widgets/weather/types";
+import { ListboxStatus } from "@/components/ListboxStatus";
+import { OptionRow } from "@/components/OptionRow";
 
 const MIN_QUERY_LENGTH = 2;
 
@@ -91,15 +92,13 @@ export function WeatherSearch() {
       activeDescendantId={hasOptions ? optionId(active) : undefined}
     >
       {atCap ? (
-        <p className="text-ink-3 px-2 py-2 text-caption">
-          Remove a city to add another (max {MAX_LOCATIONS}).
-        </p>
+        <ListboxStatus>Remove a city to add another (max {MAX_LOCATIONS}).</ListboxStatus>
       ) : state.status === "error" ? (
-        <p className="text-ink-3 px-2 py-2 text-caption">Couldn’t search for places.</p>
+        <ListboxStatus>Couldn’t search for places.</ListboxStatus>
       ) : state.status === "loading" && results.length === 0 ? (
-        <p className="text-ink-3 px-2 py-2 text-caption">Searching…</p>
+        <ListboxStatus>Searching…</ListboxStatus>
       ) : results.length === 0 ? (
-        <p className="text-ink-3 px-2 py-2 text-caption">No matching places.</p>
+        <ListboxStatus>No matching places.</ListboxStatus>
       ) : (
         <ul
           role="listbox"
@@ -111,31 +110,17 @@ export function WeatherSearch() {
             const added = isAdded(result);
             return (
               <li key={result.id} role="none">
-                <button
-                  type="button"
+                <OptionRow
                   id={optionId(index)}
-                  role="option"
-                  aria-selected={index === active && !added}
+                  active={index === active}
                   disabled={added}
-                  onMouseMove={() => setActive(index)}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => pick(result)}
-                  className={cn(
-                    "press-row focus-ring transition-colors cursor-pointer",
-                    `
-                      flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-body
-                      transition-colors
-                    `,
-                    index === active && !added
-                      ? "bg-accent text-primary"
-                      : "hover:bg-accent/60 hover:text-primary",
-                    added && "opacity-60",
-                  )}
+                  onActivate={() => setActive(index)}
+                  onPick={() => pick(result)}
                 >
                   <MapPin className="text-ink-3 size-4 shrink-0" aria-hidden />
-                  <span className="min-w-0 flex-1 truncate">{result.label}</span>
+                  <span className="min-w-0 flex-1 truncate text-body">{result.label}</span>
                   {added && <Check className="text-ink-3 size-4 shrink-0" aria-hidden />}
-                </button>
+                </OptionRow>
               </li>
             );
           })}

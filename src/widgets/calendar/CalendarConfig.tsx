@@ -134,7 +134,7 @@ function CalendarProviderConfig({
               tooltip={syncTooltip}
               onClick={() => void sync(instanceId, { providerId })}
               disabled={syncDisabled}
-              spinning={isSyncing}
+              pending={isSyncing}
             />
             {lastSyncedLabel && (
               <span className="text-ink-3 text-micro ml-auto">{lastSyncedLabel}</span>

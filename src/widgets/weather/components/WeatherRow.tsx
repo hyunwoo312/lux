@@ -27,12 +27,14 @@ export function WeatherRow({ location, units, windUnit, onSelect, onRemove }: We
       <button
         type="button"
         onClick={onSelect}
-        className="
-          press-row cursor-pointer focus-ring flex min-w-0 flex-1 items-center gap-3 rounded-lg
-          text-left transition-[padding,background-color] duration-200
-          group-hover:pr-9
-          group-focus-within:pr-9
-        "
+        className={cn(
+          `
+            press-row focus-ring flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-lg
+            text-left
+          `,
+          ROW.revealPad,
+          "group-hover:pr-7 group-focus-within:pr-7",
+        )}
         aria-label={failed ? `Couldn’t load ${location.name}` : `Show ${location.name} forecast`}
       >
         <span className="grid size-7 shrink-0 place-items-center">
@@ -66,12 +68,7 @@ export function WeatherRow({ location, units, windUnit, onSelect, onRemove }: We
       <ItemActionButton
         label={`Remove ${location.name}`}
         onClick={onRemove}
-        className="
-          hover:text-destructive
-          absolute top-1/2 right-1.5 -translate-y-1/2 translate-x-2 opacity-0 transition
-          group-hover:translate-x-0 group-hover:opacity-100
-          group-focus-within:translate-x-0 group-focus-within:opacity-100
-        "
+        className={cn("hover:text-destructive", ROW.revealTrailing)}
       >
         <X />
       </ItemActionButton>

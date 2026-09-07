@@ -27,6 +27,7 @@ import type {
   PullRequestKind,
   PullRequestReview,
 } from "@/widgets/github/types";
+import { Button } from "@/components/ui/button";
 
 const CI_LABEL: Record<PullRequestCi, string> = {
   success: "Checks passing",
@@ -177,8 +178,9 @@ export function NotificationRow({
         <Icon className="text-ink-3 size-3.5 shrink-0" aria-hidden />
         <div
           className={cn(
-            "min-w-0 flex-1 transition-[padding] duration-200",
-            actions && !pending && "group-hover:pr-14 group-focus-within:pr-14",
+            "min-w-0 flex-1",
+            ROW.revealPad,
+            actions && !pending && "group-hover:pr-17 group-focus-within:pr-17",
           )}
         >
           <p className="text-ink truncate text-caption font-medium">{notification.title}</p>
@@ -191,14 +193,7 @@ export function NotificationRow({
             <Spinner className="size-3.5" />
           </span>
         ) : (
-          <div
-            className="
-              absolute top-1/2 right-2 flex -translate-y-1/2 translate-x-2 items-center gap-0.5
-              opacity-0 transition duration-200
-              group-hover:translate-x-0 group-hover:opacity-100
-              group-focus-within:translate-x-0 group-focus-within:opacity-100
-            "
-          >
+          <div className={ROW.revealTrailing}>
             <NotificationActionButton
               label={`Mark "${notification.title}" as read`}
               tooltip="Mark as read"
@@ -230,18 +225,15 @@ function NotificationActionButton({
 }) {
   return (
     <Tooltip content={tooltip}>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="icon-xs"
         aria-label={label}
         onClick={onClick}
-        className="
-          press focus-ring text-ink-3 flex size-6 shrink-0 cursor-pointer items-center
-          justify-center rounded-sm
-          hover:bg-foreground/10 hover:text-ink
-        "
+        className="text-ink-3 hover:text-ink"
       >
-        <Icon className="size-3.5" aria-hidden />
-      </button>
+        <Icon aria-hidden />
+      </Button>
     </Tooltip>
   );
 }

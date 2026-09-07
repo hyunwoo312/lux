@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Plus, X } from "lucide-react";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -13,6 +13,9 @@ import {
   type Shortcut,
 } from "@/lib/shortcuts";
 import { EASE_OUT_STRONG, enterTween, exitTween, springCrisp } from "@/lib/motion";
+import { Kbd } from "@/components/Kbd";
+import { MotionButton } from "@/components/ui/button";
+import { ROW } from "@/lib/row";
 
 const NO_MODIFIERS: ModifierState = { mod: false, shift: false, alt: false };
 
@@ -72,10 +75,6 @@ function useShortcutRecorder(onCommit: (shortcut: Shortcut) => boolean) {
   return { recording, held, invalid, start, stop };
 }
 
-function KeyText({ children }: { children: ReactNode }) {
-  return <kbd className="text-ink font-sans text-caption font-semibold">{children}</kbd>;
-}
-
 function MiniPlus() {
   return (
     <span aria-hidden className="text-ink-3 text-body px-0.5 font-semibold">
@@ -129,7 +128,7 @@ function RecorderBody({
                 transition: exitTween(reduced, "fast", EASE_OUT_STRONG),
               }}
             >
-              <KeyText>{part}</KeyText>
+              <Kbd>{part}</Kbd>
               <MiniPlus />
             </motion.span>
           ))}
@@ -191,7 +190,7 @@ export function ShortcutDisplay({
             {shortcutKeyParts(value).map((part, index) => (
               <Fragment key={part}>
                 {index > 0 && <MiniPlus />}
-                <KeyText>{part}</KeyText>
+                <Kbd>{part}</Kbd>
               </Fragment>
             ))}
           </motion.span>
@@ -236,20 +235,17 @@ export function AddShortcutControl({
 
   return (
     <Tooltip content="Add Shortcut" prose>
-      <motion.button
-        type="button"
+      <MotionButton
+        variant="ghost"
+        size="icon"
         onClick={start}
         layoutId={reduced ? undefined : layoutId}
         transition={springCrisp(reduced)}
         aria-label={`Add ${label} shortcut`}
-        className="
-          press cursor-pointer focus-ring text-ink-3
-          hover:bg-accent hover:text-ink
-          flex size-8 items-center justify-center rounded-md
-        "
+        className="text-ink-3 hover:text-ink"
       >
-        <Plus className="size-4" aria-hidden />
-      </motion.button>
+        <Plus aria-hidden />
+      </MotionButton>
     </Tooltip>
   );
 }
@@ -260,14 +256,14 @@ function ClearButton({ onClear, label }: { onClear: () => void; label: string })
       type="button"
       onClick={onClear}
       aria-label={`Clear ${label}`}
-      className="
-        cursor-pointer focus-ring text-ink-4
-        hover:text-destructive
-        ml-1 grid size-4 shrink-0 scale-90 place-items-center rounded-xs opacity-0
-        transition-[opacity,transform]
-        group-hover:scale-100 group-hover:opacity-100
-        focus-visible:scale-100 focus-visible:opacity-100
-      "
+      className={cn(
+        `
+          focus-ring text-ink-4
+          hover:text-destructive
+          ml-1 grid size-4 shrink-0 cursor-pointer place-items-center rounded-xs
+        `,
+        ROW.reveal,
+      )}
     >
       <X className="size-3.5" aria-hidden />
     </button>

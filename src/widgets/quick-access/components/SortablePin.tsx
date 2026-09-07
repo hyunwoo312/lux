@@ -5,7 +5,8 @@ import { Pencil, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ItemActionButton } from "@/components/ItemActionButton";
 import { QuickItem } from "@/widgets/quick-access/components/QuickItem";
-import { QA_REVEAL, qaTileClass } from "@/widgets/quick-access/lib/itemStyles";
+import { ROW } from "@/lib/row";
+import { qaTileClass } from "@/widgets/quick-access/lib/itemStyles";
 import { QuickLinkAnchor } from "@/widgets/quick-access/components/QuickLinkAnchor";
 import type { OpenBehavior, QuickAccessView, QuickLink } from "@/widgets/quick-access/types";
 
@@ -57,12 +58,12 @@ export function SortablePin({ link, view, openBehavior, onEdit, onRemove }: Sort
       </QuickLinkAnchor>
       {view === "grid" ? (
         <>
-          <div className={cn("absolute top-1 left-1", QA_REVEAL)}>
+          <div className={cn("absolute top-1 left-1", ROW.reveal)}>
             <ItemActionButton label={`Edit ${link.title}`} onClick={onEdit}>
               <Pencil />
             </ItemActionButton>
           </div>
-          <div className={cn("absolute top-1 right-1", QA_REVEAL)}>
+          <div className={cn("absolute top-1 right-1", ROW.reveal)}>
             <ItemActionButton
               label={`Remove ${link.title}`}
               onClick={onRemove}
@@ -73,14 +74,7 @@ export function SortablePin({ link, view, openBehavior, onEdit, onRemove }: Sort
           </div>
         </>
       ) : (
-        <div
-          className="
-            absolute top-1/2 right-2 flex -translate-y-1/2 translate-x-2 items-center gap-1
-            opacity-0 transition duration-200
-            group-focus-within:translate-x-0 group-focus-within:opacity-100
-            group-hover:translate-x-0 group-hover:opacity-100
-          "
-        >
+        <div className={ROW.revealTrailing}>
           <ItemActionButton label={`Edit ${link.title}`} onClick={onEdit}>
             <Pencil />
           </ItemActionButton>

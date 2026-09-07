@@ -7,14 +7,11 @@ import type {
   SpotifyPlaybackDevice,
   SpotifyPlaybackState,
 } from "@/widgets/spotify/types";
+import { Button } from "@/components/ui/button";
 
 const ACTIVE_TOGGLE = "text-primary hover:text-primary";
 
-const CONTROL_BUTTON = `focus-ring text-ink-3 relative inline-flex items-center justify-center rounded-full
- transition-colors
- hover:text-ink
- disabled:pointer-events-none disabled:opacity-40
-`;
+const CONTROL_BUTTON = "text-ink-3 hover:text-ink relative rounded-full";
 
 type SpotifyControlsProps = {
   playback: SpotifyPlaybackState;
@@ -57,9 +54,8 @@ export function SpotifyControls({
   onChangeVolume,
   onCommitVolume,
 }: SpotifyControlsProps) {
-  const size = compact ? "size-7" : "size-8";
+  const size = compact ? "icon-xs" : "icon";
   const play = compact ? "size-8" : "size-10";
-  const glyph = compact ? "size-3.5" : "size-4";
   const playGlyph = compact ? "size-4" : "size-5";
 
   return (
@@ -79,31 +75,28 @@ export function SpotifyControls({
       </div>
 
       <div className="flex items-center gap-0.5">
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size={size}
           aria-label={playback.shuffle ? "Disable shuffle" : "Enable shuffle"}
           aria-pressed={playback.shuffle}
           disabled={pendingActions.has("shuffle")}
           onClick={onToggleShuffle}
-          className={cn(
-            "press cursor-pointer",
-            CONTROL_BUTTON,
-            size,
-            playback.shuffle && ACTIVE_TOGGLE,
-          )}
+          className={cn(CONTROL_BUTTON, playback.shuffle && ACTIVE_TOGGLE)}
         >
-          <Shuffle className={glyph} aria-hidden />
+          <Shuffle aria-hidden />
           {playback.shuffle && <ActiveDot />}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="ghost"
+          size={size}
           aria-label={canRestart ? "Restart track" : "Previous track"}
           disabled={pendingActions.has("previous")}
           onClick={onPrevious}
-          className={cn("press cursor-pointer", CONTROL_BUTTON, size)}
+          className={CONTROL_BUTTON}
         >
-          <SkipBack className={glyph} aria-hidden />
-        </button>
+          <SkipBack aria-hidden />
+        </Button>
         <button
           type="button"
           aria-label={playback.isPlaying ? "Pause" : "Play"}
@@ -126,35 +119,28 @@ export function SpotifyControls({
             <Play className={cn(playGlyph, "translate-x-px fill-current")} aria-hidden />
           )}
         </button>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size={size}
           aria-label="Next track"
           disabled={pendingActions.has("next")}
           onClick={onNext}
-          className={cn("press cursor-pointer", CONTROL_BUTTON, size)}
+          className={CONTROL_BUTTON}
         >
-          <SkipForward className={glyph} aria-hidden />
-        </button>
-        <button
-          type="button"
+          <SkipForward aria-hidden />
+        </Button>
+        <Button
+          variant="ghost"
+          size={size}
           aria-label={`Repeat ${playback.repeatMode}`}
           aria-pressed={playback.repeatMode !== "off"}
           disabled={pendingActions.has("repeat")}
           onClick={onCycleRepeat}
-          className={cn(
-            "press cursor-pointer",
-            CONTROL_BUTTON,
-            size,
-            playback.repeatMode !== "off" && ACTIVE_TOGGLE,
-          )}
+          className={cn(CONTROL_BUTTON, playback.repeatMode !== "off" && ACTIVE_TOGGLE)}
         >
-          {playback.repeatMode === "track" ? (
-            <Repeat1 className={glyph} aria-hidden />
-          ) : (
-            <Repeat className={glyph} aria-hidden />
-          )}
+          {playback.repeatMode === "track" ? <Repeat1 aria-hidden /> : <Repeat aria-hidden />}
           {playback.repeatMode !== "off" && <ActiveDot />}
-        </button>
+        </Button>
       </div>
 
       <div className={cn("flex justify-end", compact ? "w-0" : "w-8")}>

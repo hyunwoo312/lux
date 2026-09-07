@@ -11,8 +11,10 @@ import { cn } from "@/lib/utils";
 import { springCrisp } from "@/lib/motion";
 import { useRovingFocus } from "@/hooks/useRovingFocus";
 import { searchSettings } from "@/settings/searchIndex";
-import { SETTINGS_TAB_META } from "@/stores/settingsTabs";
+import { SETTINGS_TAB_META } from "@/settings/tabsMeta";
 import { SETTINGS_TABS, useSettingsStore } from "@/stores/useSettingsStore";
+import { Button } from "@/components/ui/button";
+import { LuxMark } from "@/components/LuxMark";
 
 export function SettingsSidebar({ open }: { open: boolean }) {
   const tab = useSettingsStore((s) => s.tab);
@@ -54,7 +56,7 @@ export function SettingsSidebar({ open }: { open: boolean }) {
     <aside
       className={cn(
         DIALOG_RAIL,
-        "overflow-hidden transition-[width] duration-200 ease-out",
+        "overflow-hidden transition-[width] duration-base ease-out",
         effectiveCollapsed ? "w-13" : "w-56",
       )}
     >
@@ -62,13 +64,13 @@ export function SettingsSidebar({ open }: { open: boolean }) {
         <Settings
           aria-hidden
           className={cn(
-            "absolute left-4 size-5 transition-opacity duration-200",
+            "absolute left-4 size-5 transition-opacity duration-base",
             effectiveCollapsed ? "opacity-100" : "opacity-0",
           )}
         />
         <DialogTitle
           className={cn(
-            "text-body font-semibold whitespace-nowrap transition-opacity duration-200",
+            "text-body font-semibold whitespace-nowrap transition-opacity duration-base",
             effectiveCollapsed ? "opacity-0" : "opacity-100",
           )}
         >
@@ -161,31 +163,25 @@ export function SettingsSidebar({ open }: { open: boolean }) {
       >
         {!effectiveCollapsed && (
           <div className="flex items-center gap-4 pl-2">
-            <img src="/logo.svg" alt="" className="size-5 object-contain" />
+            <LuxMark className="size-5" />
             <span className="text-body font-medium">Lux</span>
           </div>
         )}
         {isNarrow ? (
-          <img src="/logo.svg" alt="" className="size-4 object-contain" />
+          <LuxMark className="size-4" />
         ) : (
           <Tooltip content={collapsed ? "Expand" : "Collapse"} side="right" prose>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={toggleSidebar}
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              className="
-                press cursor-pointer text-ink-3
-                hover:bg-accent hover:text-ink
-                grid size-8 place-items-center rounded-md
-              "
+              className="text-ink-3 hover:text-ink"
             >
               <ChevronLeft
-                className={cn(
-                  "size-4 transition-transform duration-200",
-                  collapsed && "rotate-180",
-                )}
+                className={cn("transition-transform duration-base", collapsed && "rotate-180")}
               />
-            </button>
+            </Button>
           </Tooltip>
         )}
       </div>

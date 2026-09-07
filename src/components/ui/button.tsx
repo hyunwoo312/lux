@@ -1,5 +1,6 @@
 import type { ComponentProps } from "react";
 import { Slot } from "@radix-ui/react-slot";
+import { motion } from "motion/react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
@@ -60,4 +61,6 @@ function Button({
   );
 }
 
-export { Button };
+const MotionButton = motion.create(Button);
+
+export { Button, MotionButton };

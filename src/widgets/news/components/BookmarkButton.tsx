@@ -1,6 +1,8 @@
 import { Bookmark } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
+import { ROW } from "@/lib/row";
+import { cn } from "@/lib/utils";
 
 export function BookmarkButton({
   title,
@@ -19,26 +21,22 @@ export function BookmarkButton({
 
   return (
     <Tooltip content={saved ? "Saved" : "Save for later"}>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="icon-xs"
         aria-label={label}
         aria-pressed={saved}
         onClick={onToggle}
         className={cn(
-          `
-            press focus-ring flex size-7 shrink-0 cursor-pointer items-center justify-center
-            rounded-sm transition-opacity
-          `,
           onArt
-            ? "text-white/70 hover:text-white"
+            ? "text-white/70 hover:bg-white/15 hover:text-white"
             : cn("hover:text-ink", saved ? "text-primary" : "text-ink-3"),
-          !saved && "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
-          saved && "opacity-100",
+          !saved && ROW.reveal,
           className,
         )}
       >
-        <Bookmark className={cn("size-4 shrink-0", saved && "fill-current")} aria-hidden />
-      </button>
+        <Bookmark className={cn(saved && "fill-current")} aria-hidden />
+      </Button>
     </Tooltip>
   );
 }

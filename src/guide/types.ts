@@ -1,11 +1,4 @@
-type GuideSettingsTab =
-  | "appearance"
-  | "widgets"
-  | "accounts"
-  | "shortcuts"
-  | "palette"
-  | "storage"
-  | "about";
+import type { SettingsTab } from "../stores/settingsTabs.ts";
 
 export type GuideBlock =
   | { kind: "prose"; text: string }
@@ -15,7 +8,7 @@ export type GuideBlock =
   | { kind: "list"; items: { title: string; text: string }[] }
   | { kind: "toolbar"; steps: { title: string; text: string }[] }
   | { kind: "figure"; media: string; alt: string; caption: string }
-  | { kind: "settingsLink"; tab: GuideSettingsTab; label: string }
+  | { kind: "settingsLink"; tab: SettingsTab; label: string }
   | { kind: "link"; href: string; label: string };
 
 export type GuideArticle = {

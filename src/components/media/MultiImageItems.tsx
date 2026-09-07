@@ -11,6 +11,7 @@ import { GRID_MODIFIERS, moveById, useSortableSensors } from "@/lib/dnd";
 import { useAssetThumbUrl } from "@/hooks/useAssetUrl";
 import type { AssetStore, MediaImageItem } from "@/lib/asset-store";
 import { getMetadataLabel } from "@/lib/media-format";
+import { Button } from "@/components/ui/button";
 
 type MultiImageItemsProps = {
   items: MediaImageItem[];
@@ -123,8 +124,9 @@ function SortableImage({ item, assetStore, disabled, onRemove }: SortableImagePr
             <ImageIcon aria-hidden />
           </div>
         )}
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon-xs"
           disabled={disabled}
           aria-label={`Remove ${item.fileName}`}
           onPointerDown={(event) => event.stopPropagation()}
@@ -133,16 +135,10 @@ function SortableImage({ item, assetStore, disabled, onRemove }: SortableImagePr
             event.stopPropagation();
             onRemove();
           }}
-          className="
-            press bg-card text-ink-2
-            hover:text-destructive
-            absolute top-1 right-1 grid size-5 cursor-pointer place-items-center rounded-sm
-            disabled:pointer-events-none disabled:opacity-50
-            [&_svg]:size-3.5
-          "
+          className="bg-card text-ink-2 hover:text-destructive absolute top-1 right-1"
         >
           <X aria-hidden />
-        </button>
+        </Button>
       </li>
     </Tooltip>
   );

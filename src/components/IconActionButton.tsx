@@ -1,7 +1,6 @@
-import { tap } from "@/lib/motion";
 import type { ReactNode } from "react";
-import { motion, useReducedMotion } from "motion/react";
 import type { LucideIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -10,8 +9,9 @@ type IconActionButtonProps = {
   label: string;
   tooltip: ReactNode;
   onClick: () => void;
+  size?: "icon-xs" | "icon";
   disabled?: boolean;
-  spinning?: boolean;
+  pending?: boolean;
 };
 
 export function IconActionButton({
@@ -19,29 +19,24 @@ export function IconActionButton({
   label,
   tooltip,
   onClick,
+  size = "icon",
   disabled = false,
-  spinning = false,
+  pending = false,
 }: IconActionButtonProps) {
-  const reduced = useReducedMotion();
+  const inert = disabled || pending;
 
   return (
     <Tooltip content={tooltip}>
-      <motion.button
-        type="button"
-        onClick={disabled ? undefined : onClick}
-        aria-disabled={disabled || undefined}
+      <Button
+        variant="ghost"
+        size={size}
         aria-label={label}
-        {...tap(reduced || disabled, "control")}
-        className="
-          focus-ring cursor-pointer text-ink-3
-          hover:text-ink
-          inline-flex size-8 items-center justify-center rounded-md transition-colors
-          aria-disabled:cursor-not-allowed aria-disabled:opacity-40
-          [&_svg]:size-4 [&_svg]:shrink-0
-        "
+        aria-disabled={inert || undefined}
+        onClick={inert ? undefined : onClick}
+        className="text-ink-3 hover:text-ink"
       >
-        <Icon className={cn(spinning && "animate-spin")} />
-      </motion.button>
+        <Icon className={cn(pending && "animate-spin")} />
+      </Button>
     </Tooltip>
   );
 }
