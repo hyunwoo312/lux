@@ -2,7 +2,7 @@ import { useId } from "react";
 import { Bookmark, SearchX } from "lucide-react";
 import { RailItem } from "@/components/DialogChrome";
 import { StateMessage } from "@/components/StateMessage";
-import { cn } from "@/lib/utils";
+import { cn, matchesQuery } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/tooltip";
 import { HeadlineRow } from "@/widgets/news/components/HeadlineRow";
 import type { OpenBehavior } from "@/lib/open-url";
@@ -59,8 +59,7 @@ export function SavedList({
   const visible = filter
     ? bookmarks.filter(
         (entry) =>
-          entry.item.title.toLowerCase().includes(filter) ||
-          entry.item.source.toLowerCase().includes(filter),
+          matchesQuery(entry.item.title, filter) || matchesQuery(entry.item.source, filter),
       )
     : bookmarks;
 

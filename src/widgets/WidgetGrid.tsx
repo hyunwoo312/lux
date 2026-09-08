@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { GridLayout, useContainerWidth, setTopLeft } from "react-grid-layout";
 import type { Compactor, EventCallback, Position } from "react-grid-layout";
-import { cn } from "@/lib/utils";
+import { clamp, cn } from "@/lib/utils";
 import { CELL, GAP, gridColumns, gridWidth, PAD, UNIT } from "@/widgets/core/grid";
 import {
   applyDragWithinNarrowView,
@@ -144,8 +144,8 @@ export function WidgetGrid() {
         minH,
         maxW,
         maxH,
-        w: Math.min(maxW, Math.max(minW, item.w)),
-        h: Math.min(maxH, Math.max(minH, item.h)),
+        w: clamp(item.w, minW, maxW),
+        h: clamp(item.h, minH, maxH),
       };
     });
   }, [layout, widgets]);

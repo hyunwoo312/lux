@@ -1,5 +1,6 @@
 import { encodeToWebp } from "@/lib/image-encode";
 import { renderThumbnail, THUMB_VERSION } from "@/lib/thumbnail";
+import { newId } from "@/lib/utils";
 
 export type StoredAsset = {
   id: string;
@@ -32,14 +33,6 @@ export function validateImageFile(file: File, maxBytes: number): string | null {
     return `Use an image smaller than ${Math.round(maxBytes / (1024 * 1024))} MB.`;
   }
   return null;
-}
-
-export function createAssetId(prefix: string): string {
-  const value =
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
-  return `${prefix}-${value}`;
 }
 
 const DATABASE_VERSION = 1;
@@ -160,7 +153,7 @@ export async function saveMediaAsset(
   const blob = await encodeToWebp(file, { quality, maxDimension });
   const thumb = await renderThumbnail(blob);
   const asset: StoredAsset = {
-    id: createAssetId(prefix),
+    id: newId(prefix),
     fileName: file.name || fallbackName,
     mimeType: blob.type || file.type,
     size: blob.size,

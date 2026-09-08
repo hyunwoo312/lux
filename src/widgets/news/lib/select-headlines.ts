@@ -1,5 +1,6 @@
 import { normalizeTitle } from "@/widgets/news/lib/news";
 import type { NewsItem } from "@/widgets/news/types";
+import { matchesQuery } from "@/lib/utils";
 
 export type HeadlineEntry = { item: NewsItem; titleKey: string };
 
@@ -21,15 +22,14 @@ export function selectHeadlines(items: NewsItem[], options: SelectOptions): Head
   const muted = options.mutedTerms.map((term) => term.toLowerCase());
   const visible =
     muted.length > 0
-      ? items.filter((entry) => !muted.some((term) => entry.title.toLowerCase().includes(term)))
+      ? items.filter((entry) => !muted.some((term) => matchesQuery(entry.title, term)))
       : items;
   if (visible.length === 0) return { status: "muted" };
 
   const filter = options.filterQuery.toLowerCase();
   const matched = filter
     ? visible.filter(
-        (entry) =>
-          entry.title.toLowerCase().includes(filter) || entry.source.toLowerCase().includes(filter),
+        (entry) => matchesQuery(entry.title, filter) || matchesQuery(entry.source, filter),
       )
     : visible;
   if (matched.length === 0) return { status: "unmatched" };
@@ -40,7 +40,7 @@ export function selectHeadlines(items: NewsItem[], options: SelectOptions): Head
 
   const highlights = options.highlightTerms.map((term) => term.toLowerCase());
   const isHighlighted = (item: NewsItem) =>
-    highlights.length > 0 && highlights.some((term) => item.title.toLowerCase().includes(term));
+    highlights.length > 0 && highlights.some((term) => matchesQuery(item.title, term));
   const floated = highlights.length
     ? [...sorted.filter(isHighlighted), ...sorted.filter((item) => !isHighlighted(item))]
     : sorted;

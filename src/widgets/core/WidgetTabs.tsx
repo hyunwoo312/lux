@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useRovingFocus } from "@/hooks/useRovingFocus";
 import type { WidgetIcon } from "@/widgets/core/types";
+import { Separator } from "@/components/ui/separator";
 
 export type WidgetTab<T extends string> = {
   value: T;
@@ -119,9 +120,7 @@ export function WidgetTabs<T extends string>({ tabs, value, onSelect }: WidgetTa
         const item = roving.itemProps(index);
         return (
           <Fragment key={tab.value}>
-            {tab.separated && (
-              <span className="bg-border/60 mx-1 h-3.5 w-px shrink-0" aria-hidden />
-            )}
+            {tab.separated && <Separator orientation="vertical" className="mx-1 h-3.5" />}
             <button
               {...item}
               ref={(el) => {

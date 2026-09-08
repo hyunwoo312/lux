@@ -5,6 +5,7 @@ import { SHORTCUT_DEFINITIONS } from "@/stores/shortcutDefinitions";
 import { PALETTE_SOURCES, PALETTE_SOURCE_LABELS } from "@/stores/usePaletteStore";
 import { commandCatalogue } from "@/commands";
 import { widgetPlugins } from "@/widgets/registry";
+import { matchesQuery } from "@/lib/utils";
 
 export type SettingEntry = {
   label: string;
@@ -220,8 +221,6 @@ export function searchSettings(query: string): SettingEntry[] {
   if (needle.length === 0) return [];
 
   return settingsIndex()
-    .filter((entry) =>
-      `${entry.label} ${entry.section} ${entry.description}`.toLowerCase().includes(needle),
-    )
+    .filter((entry) => matchesQuery(`${entry.label} ${entry.section} ${entry.description}`, needle))
     .slice(0, 8);
 }

@@ -1,3 +1,4 @@
+import { clamp } from "@/lib/utils";
 export const ROW_IDENTITY_CLASS = "w-[5.5rem]";
 
 const ROW_IDENTITY_WIDTH = 88;
@@ -13,7 +14,7 @@ export function showsSparkline(width: number): boolean {
 }
 
 export function gridColumns(width: number): number {
-  return Math.max(1, Math.min(MAX_COLUMNS, Math.floor(width / CARD_MIN_WIDTH)));
+  return clamp(Math.floor(width / CARD_MIN_WIDTH), 1, MAX_COLUMNS);
 }
 
 export function tooltipLeft(anchorX: number, tooltipWidth: number, chartWidth: number): number {

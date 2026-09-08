@@ -16,6 +16,8 @@ import {
   requestSpotifyPlaybackRefresh,
 } from "@/widgets/spotify/hooks/useSpotifyPlayback";
 import { ListboxStatus } from "@/components/ListboxStatus";
+import { cn, matchesQuery } from "@/lib/utils";
+import { TYPE } from "@/lib/type";
 
 const MAX_RESULTS = 10;
 const OWNED_PLAYLIST_CAP = 3;
@@ -107,7 +109,7 @@ export function SpotifySearch() {
   const rows = useMemo(() => {
     if (!isSearch) return playlists.slice(0, MAX_RESULTS);
     const owned = playlists
-      .filter((playlist) => playlist.title.toLowerCase().includes(trimmed.toLowerCase()))
+      .filter((playlist) => matchesQuery(playlist.title, trimmed))
       .slice(0, OWNED_PLAYLIST_CAP);
     const ownedIds = new Set(owned.map((playlist) => playlist.id));
     return [...owned, ...results.filter((result) => !ownedIds.has(result.id))].slice(
@@ -165,10 +167,7 @@ export function SpotifySearch() {
         <ul role="listbox" id={listboxId} aria-label="Search results" className="flex flex-col">
           {groups.map((group) => (
             <li key={group.key} role="group" aria-label={group.label}>
-              <p
-                aria-hidden
-                className="text-ink-3 px-2 pt-2 pb-1 text-micro font-medium tracking-wide uppercase"
-              >
+              <p aria-hidden className={cn(TYPE.eyebrow, "px-2 pt-2 pb-1")}>
                 {group.label}
               </p>
               <ul role="none" className="flex flex-col gap-0.5">

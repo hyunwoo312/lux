@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { STILL } from "@/lib/motion";
-import { cn } from "@/lib/utils";
+import { clamp, cn } from "@/lib/utils";
 
 type SpotifyMarqueeProps = {
   label: string;
@@ -33,7 +33,7 @@ export function SpotifyMarquee({ label, className }: SpotifyMarqueeProps) {
   }, [label, measureOverflow]);
 
   const shouldAnimate = overflowDistance > 1 && !reduced;
-  const durationSeconds = Math.min(18, Math.max(8, label.length * 0.28));
+  const durationSeconds = clamp(label.length * 0.28, 8, 18);
 
   return (
     <span ref={containerRef} className={cn("block overflow-hidden whitespace-nowrap", className)}>

@@ -22,6 +22,7 @@ import {
   type InboxData,
   type InboxFilter,
 } from "@/widgets/github/types";
+import { TYPE } from "@/lib/type";
 
 const FILTER_LABEL: Record<InboxFilter, string> = {
   all: "All",
@@ -209,7 +210,7 @@ function SectionError({
   return (
     <div className="flex flex-col gap-0.5">
       <div className="flex items-center gap-1.5 px-2">
-        <h3 className="text-ink-3 text-micro font-semibold tracking-wide uppercase">{title}</h3>
+        <h3 className={TYPE.eyebrow}>{title}</h3>
         {onRetry && (
           <button
             type="button"

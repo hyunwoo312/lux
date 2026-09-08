@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { createAssetId, type MediaImageItem } from "@/lib/asset-store";
+import type { MediaImageItem } from "@/lib/asset-store";
+import { useTransientState } from "@/hooks/useTransientState";
+import { newId } from "@/lib/utils";
 import { mediaList, normalizeIndex } from "@/lib/media-rotation";
 import { wallpaperAssets } from "@/lib/wallpaper-gallery";
 import { useWallpaperStore } from "@/stores/useWallpaperStore";
@@ -19,16 +20,10 @@ export function useSetImageAsBackground(): SetImageAsBackground {
   const single = useImage((c) => c.single);
   const items = useImage((c) => c.items);
   const index = useImageIndex();
-  const [status, setStatus] = useState<SetBackgroundStatus>("idle");
+  const [status, flashStatus, setStatus] = useTransientState<SetBackgroundStatus>("idle", 2000);
 
   const list = mediaList({ mode, single, items });
   const activeItem = list[normalizeIndex(index, list.length)] ?? null;
-
-  useEffect(() => {
-    if (status !== "done" && status !== "error") return;
-    const id = window.setTimeout(() => setStatus("idle"), 2000);
-    return () => window.clearTimeout(id);
-  }, [status]);
 
   async function setAsBackground() {
     if (!activeItem) return;
@@ -38,10 +33,10 @@ export function useSetImageAsBackground(): SetImageAsBackground {
     try {
       const source = await readImageAsset(activeItem.assetId);
       if (!source) {
-        setStatus("error");
+        flashStatus("error");
         return;
       }
-      const copyId = createAssetId("wallpaper");
+      const copyId = newId("wallpaper");
       await wallpaperAssets.save({
         id: copyId,
         fileName: source.fileName,
@@ -59,9 +54,9 @@ export function useSetImageAsBackground(): SetImageAsBackground {
       wallpaper.setMode("single");
       wallpaper.setSingle(item);
       await wallpaperAssets.remove(previousAssetId).catch(() => undefined);
-      setStatus("done");
+      flashStatus("done");
     } catch {
-      setStatus("error");
+      flashStatus("error");
     }
   }
 

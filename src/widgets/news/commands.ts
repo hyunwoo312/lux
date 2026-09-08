@@ -1,5 +1,5 @@
 import { Bookmark, Flame, Newspaper, Search } from "lucide-react";
-import { matchesQuery, openResult } from "@/widgets/core/commandResult";
+import { openResult } from "@/widgets/core/commandResult";
 import { SOURCE_ICONS } from "@/widgets/news/components/sourceIcons";
 import { searchWeb } from "@/lib/open-url";
 import { formatRelativeTime } from "@/lib/relative-time";
@@ -12,6 +12,7 @@ import { fetchSearch, orderedSources, resolveNewsTab } from "@/widgets/news/lib/
 import { newsFeed, newsTrends } from "@/widgets/news/lib/resources";
 import { DEFAULT_DATA, useNewsStore, type NewsData } from "@/widgets/news/useNewsStore";
 import type { NewsItem, TrendItem } from "@/widgets/news/types";
+import { matchesQuery } from "@/lib/utils";
 
 const HEADLINE_LIMIT = 40;
 

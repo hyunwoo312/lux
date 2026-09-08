@@ -1,7 +1,8 @@
 import type { BookmarkFolder, BrowserItem } from "@/widgets/quick-access/types";
+import { matchesQuery } from "@/lib/utils";
 
 function matches(item: BrowserItem, query: string): boolean {
-  return item.title.toLowerCase().includes(query) || item.url.toLowerCase().includes(query);
+  return matchesQuery(item.title, query) || matchesQuery(item.url, query);
 }
 
 export function filterItems(items: BrowserItem[], query: string): BrowserItem[] {

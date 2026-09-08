@@ -1,10 +1,10 @@
 import type { ComponentType } from "react";
-import { useEffect, useMemo, useRef } from "react";
-import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
+import { useEffect, useRef } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Dialog } from "@/components/ui/dialog";
 import { DialogHeaderBar, RailDialogContent } from "@/components/DialogChrome";
 import { SettingsSidebar } from "@/settings/components/SettingsSidebar";
-import { EASE_OUT_STRONG, enterTween, exitTween } from "@/lib/motion";
+import { slideSwap } from "@/lib/motion";
 import { AboutTab } from "@/settings/tabs/AboutTab";
 import { AccountsTab } from "@/settings/tabs/AccountsTab";
 import { AppearanceTab } from "@/settings/tabs/AppearanceTab";
@@ -42,18 +42,7 @@ export function SettingsDialog() {
     wasOpenRef.current = open;
   }, [tabIndex, open]);
 
-  const carouselVariants = useMemo<Variants>(
-    () => ({
-      enter: (dir: number) => ({ x: reduced ? 0 : dir * 120, opacity: 0 }),
-      center: { x: 0, opacity: 1, transition: enterTween(reduced, "slow", EASE_OUT_STRONG) },
-      exit: (dir: number) => ({
-        x: reduced ? 0 : dir * -120,
-        opacity: 0,
-        transition: exitTween(reduced, "slow", EASE_OUT_STRONG),
-      }),
-    }),
-    [reduced],
-  );
+  const carouselVariants = slideSwap(reduced, "x", 120, "slow");
 
   const active = SETTINGS_TAB_META[tab];
   const ActiveIcon = active.icon;

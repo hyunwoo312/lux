@@ -1,4 +1,4 @@
-import { enterTween, exitTween } from "@/lib/motion";
+import { slideSwap } from "@/lib/motion";
 import { type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useProviderAccount } from "@/integrations";
@@ -88,16 +88,14 @@ export function SpotifyWidget() {
     );
   } else if (controller.playback) {
     content = (
-      <AnimatePresence mode="wait" initial={false}>
+      <AnimatePresence mode="wait" initial={false} custom={queueView ? 1 : -1}>
         <motion.div
           key={queueView ? "queue" : "player"}
-          initial={reduced ? { opacity: 0 } : { opacity: 0, x: queueView ? 16 : -16 }}
-          animate={{ opacity: 1, x: 0, transition: enterTween(reduced) }}
-          exit={{
-            opacity: 0,
-            x: reduced ? 0 : queueView ? 16 : -16,
-            transition: exitTween(reduced),
-          }}
+          custom={queueView ? 1 : -1}
+          variants={slideSwap(reduced, "x", 16)}
+          initial="enter"
+          animate="center"
+          exit="exit"
           className="h-full min-h-0"
         >
           {queueView ? (

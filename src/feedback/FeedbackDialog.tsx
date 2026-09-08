@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { enterTween, exitTween, springSoft, stagger } from "@/lib/motion";
+import { fade, springSoft } from "@/lib/motion";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { useIntegrationStore } from "@/integrations";
 import { buildDiagnostics } from "@/feedback/lib/diagnostics";
@@ -11,17 +11,6 @@ import { SentPanel } from "@/feedback/components/SentPanel";
 import { SendingPanel } from "@/feedback/components/SendingPanel";
 import { useElementSize } from "@/hooks/useElementSize";
 import { messageHash, useFeedbackStore } from "@/feedback/useFeedbackStore";
-
-function viewVariants(reduced: boolean): Variants {
-  return {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { ...enterTween(reduced), delay: stagger(reduced, "loose") },
-    },
-    exit: { opacity: 0, transition: exitTween(reduced) },
-  };
-}
 
 type Status =
   | { kind: "idle" }
@@ -116,33 +105,15 @@ export function FeedbackDialog() {
           <div ref={viewRef}>
             <AnimatePresence mode="popLayout" initial={false}>
               {inFlight ? (
-                <motion.div
-                  key="sending"
-                  variants={viewVariants(reduced)}
-                  initial="hidden"
-                  animate="show"
-                  exit="exit"
-                >
+                <motion.div key="sending" {...fade(reduced)}>
                   <SendingPanel settling={settling} onSettled={handleSettled} />
                 </motion.div>
               ) : settled ? (
-                <motion.div
-                  key="sent"
-                  variants={viewVariants(reduced)}
-                  initial="hidden"
-                  animate="show"
-                  exit="exit"
-                >
+                <motion.div key="sent" {...fade(reduced)}>
                   <SentPanel id={status.id} onClose={() => setOpen(false)} />
                 </motion.div>
               ) : (
-                <motion.div
-                  key="form"
-                  variants={viewVariants(reduced)}
-                  initial="hidden"
-                  animate="show"
-                  exit="exit"
-                >
+                <motion.div key="form" {...fade(reduced)}>
                   <FeedbackForm
                     error={status.kind === "error" ? status.message : null}
                     restored={restored}

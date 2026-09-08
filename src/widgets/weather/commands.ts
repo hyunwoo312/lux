@@ -12,7 +12,7 @@ import {
   type WeatherConfig,
 } from "@/widgets/weather/useWeatherStore";
 import { makeLocationId, type WeatherData, type WeatherLocation } from "@/widgets/weather/types";
-import { matchesQuery } from "@/widgets/core/commandResult";
+import { matchesQuery } from "@/lib/utils";
 
 type Saved = { instanceId: string; config: WeatherConfig; location: WeatherLocation };
 

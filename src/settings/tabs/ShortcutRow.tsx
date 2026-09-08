@@ -12,7 +12,7 @@ import {
   type ModifierState,
   type Shortcut,
 } from "@/lib/shortcuts";
-import { EASE_OUT_STRONG, enterTween, exitTween, springCrisp } from "@/lib/motion";
+import { pop, springCrisp } from "@/lib/motion";
 import { Kbd } from "@/components/Kbd";
 import { MotionButton } from "@/components/ui/button";
 import { ROW } from "@/lib/row";
@@ -112,22 +112,7 @@ function RecorderBody({
       ) : (
         <AnimatePresence mode="popLayout" initial={false}>
           {heldParts.map((part) => (
-            <motion.span
-              key={part}
-              layout
-              className="flex items-center gap-1"
-              initial={reduced ? false : { opacity: 0, x: -6 }}
-              animate={{
-                opacity: 1,
-                x: 0,
-                transition: enterTween(reduced, "fast", EASE_OUT_STRONG),
-              }}
-              exit={{
-                opacity: 0,
-                x: reduced ? 0 : -6,
-                transition: exitTween(reduced, "fast", EASE_OUT_STRONG),
-              }}
-            >
+            <motion.span key={part} layout className="flex items-center gap-1" {...pop(reduced)}>
               <Kbd>{part}</Kbd>
               <MiniPlus />
             </motion.span>
@@ -183,9 +168,7 @@ export function ShortcutDisplay({
           <motion.span
             key={formatShortcut(value)}
             className="flex items-center gap-1"
-            initial={reduced ? false : { opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={springCrisp(reduced)}
+            {...pop(reduced)}
           >
             {shortcutKeyParts(value).map((part, index) => (
               <Fragment key={part}>

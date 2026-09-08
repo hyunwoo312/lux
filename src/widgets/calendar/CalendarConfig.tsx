@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { RefreshCw, Settings2 } from "lucide-react";
 import { formatClock } from "@/lib/clock";
 import { useConnectedProviders } from "@/integrations";
@@ -27,6 +26,7 @@ import {
   type CalendarDensity,
   type CalendarProviderId,
 } from "@/widgets/calendar/types";
+import { useNow } from "@/hooks/useNow";
 
 const REFRESH_OPTIONS = REFRESH_INTERVAL_OPTIONS.map((hours) => ({
   value: String(hours),
@@ -71,20 +71,15 @@ function CalendarProviderConfig({
   const setCalendarSelection = useCalendarStore((s) => s.setCalendarSelection);
   const isSyncing = useCalendar((d) => d.syncing.includes(providerId));
 
-  const [now, setNow] = useState(() => Date.now());
   const connected = Boolean(account);
   const needsReconnect = account?.status === "needsReconnect";
-  const cooldownRemainingMs =
+  const remainingAt = (at: number) =>
     connected && !needsReconnect
-      ? syncCooldownRemainingMs(settings.lastSyncedAt, CALENDAR_SYNC_COOLDOWN_MS, now)
+      ? syncCooldownRemainingMs(settings.lastSyncedAt, CALENDAR_SYNC_COOLDOWN_MS, at)
       : 0;
-  const coolingDown = cooldownRemainingMs > 0;
-
-  useEffect(() => {
-    if (!coolingDown) return;
-    const id = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(id);
-  }, [coolingDown]);
+  const coolingDown = remainingAt(Date.now()) > 0;
+  const now = useNow(coolingDown ? 1000 : 60_000).getTime();
+  const cooldownRemainingMs = remainingAt(now);
 
   const manageButton = (
     <IconActionButton

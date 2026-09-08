@@ -6,6 +6,7 @@ import {
 import { localDayKey } from "@/lib/clock";
 import { GRID_LENGTH, startOfDay, WEEK_LENGTH } from "@/widgets/calendar/lib/dates";
 import type { CalendarEvent } from "@/widgets/calendar/types";
+import { clamp } from "@/lib/utils";
 
 const DAY_MS = 86_400_000;
 
@@ -203,6 +204,6 @@ export function getDayBottomPlan(
 }
 
 export function getBarColumn(ratio: number, segment: EventSegment): number {
-  const offset = Math.min(segment.span - 1, Math.max(0, Math.floor(ratio * segment.span)));
+  const offset = clamp(Math.floor(ratio * segment.span), 0, segment.span - 1);
   return segment.startCol + offset;
 }

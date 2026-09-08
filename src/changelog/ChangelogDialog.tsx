@@ -180,9 +180,7 @@ function ChangeRow({ change }: { change: ReleaseChange }) {
     <li className="flex items-start gap-3">
       <span className="mt-0.5 flex w-20 shrink-0 items-center justify-between gap-2">
         <span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", TYPE_DOT[change.type])} />
-        <span className="text-ink-4 text-micro font-semibold tracking-wider uppercase">
-          {CHANGE_TYPE_LABEL[change.type]}
-        </span>
+        <span className={cn(TYPE.eyebrow, "text-ink-4")}>{CHANGE_TYPE_LABEL[change.type]}</span>
       </span>
       <span className="text-ink min-w-0 text-body">{change.text}</span>
     </li>

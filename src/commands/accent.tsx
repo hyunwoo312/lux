@@ -4,15 +4,14 @@ import { useAccentStore } from "@/stores/useAccentStore";
 import { ACCENT_LABELS, ACCENT_PRESETS, accentClass, type AccentName } from "@/widgets/core/accent";
 import { SYSTEM_OWNER, type CommandItem } from "@/commands/items";
 import type { WidgetIcon } from "@/widgets/core/types";
-import { matchesQuery } from "@/widgets/core/commandResult";
-
-const DOT = "bg-primary size-4 rounded-full shadow-[inset_0_1px_0_0_oklch(1_0_0/0.25)]";
+import { matchesQuery } from "@/lib/utils";
+import { AccentSwatch } from "@/components/AccentSwatch";
 
 function swatch(accent: AccentName): WidgetIcon {
-  return function AccentSwatch({ className }) {
+  return function Swatch({ className }) {
     return (
       <span aria-hidden className={cn(accentClass(accent), "grid place-items-center", className)}>
-        <span className={DOT} />
+        <AccentSwatch size="sm" />
       </span>
     );
   };

@@ -16,6 +16,7 @@ import {
   galleryAssetId,
   wallpaperAssets,
 } from "@/lib/wallpaper-gallery";
+import { clamp } from "@/lib/utils";
 
 const WALLPAPER_MODES = ["single", "multi"] as const;
 export type WallpaperMode = (typeof WALLPAPER_MODES)[number];
@@ -187,17 +188,17 @@ export function resolveWallpaperSource(
 function clampIntensity(value: number): number {
   if (!Number.isFinite(value)) return DEFAULTS.generatedIntensity;
   const stepped = Math.round(value * 20) / 20;
-  return Math.min(GENERATED_MAX_INTENSITY, Math.max(GENERATED_MIN_INTENSITY, stepped));
+  return clamp(stepped, GENERATED_MIN_INTENSITY, GENERATED_MAX_INTENSITY);
 }
 
 function clampRange(value: number, max: number, fallback: number): number {
   if (!Number.isFinite(value)) return fallback;
-  return Math.min(max, Math.max(0, value));
+  return clamp(value, 0, max);
 }
 
 function clampInterval(seconds: number): number {
   if (!Number.isFinite(seconds)) return 30;
-  return Math.min(WALLPAPER_MAX_INTERVAL, Math.max(WALLPAPER_MIN_INTERVAL, Math.round(seconds)));
+  return clamp(Math.round(seconds), WALLPAPER_MIN_INTERVAL, WALLPAPER_MAX_INTERVAL);
 }
 
 type WallpaperSelection = Pick<

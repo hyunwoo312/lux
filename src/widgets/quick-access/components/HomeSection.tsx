@@ -8,15 +8,13 @@ import { SECTION_GATE } from "@/widgets/quick-access/lib/gates";
 import type { BrowserItem, ItemSource, QuickAccessView } from "@/widgets/quick-access/types";
 import type { OpenBehavior } from "@/lib/open-url";
 import type { MouseEvent, RefObject } from "react";
+import { TYPE } from "@/lib/type";
+import { cn } from "@/lib/utils";
 
 type GatedSource = Exclude<ItemSource, "history">;
 
 export function SectionHeader({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="text-ink-3 text-micro px-1 font-semibold tracking-wider uppercase">
-      {children}
-    </span>
-  );
+  return <span className={cn(TYPE.eyebrow, "px-1")}>{children}</span>;
 }
 
 export function HomeSection({

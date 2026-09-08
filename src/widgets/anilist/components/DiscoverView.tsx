@@ -24,6 +24,7 @@ import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { DISCOVER_FEEDS } from "@/widgets/anilist/types";
 import type { DiscoverMedia, DiscoverType, ListStatus, ViewMode } from "@/widgets/anilist/types";
+import { TYPE } from "@/lib/type";
 
 const TYPE_OPTIONS: { value: DiscoverType; label: string }[] = [
   { value: "anime", label: "Anime" },
@@ -122,9 +123,7 @@ export function DiscoverView() {
           />
         </div>
         {isSearching ? (
-          <span className="text-ink-3 text-micro truncate font-semibold tracking-wide uppercase">
-            Search results
-          </span>
+          <span className={cn(TYPE.eyebrow, "truncate")}>Search results</span>
         ) : connected ? (
           <ConfigSelect
             label="Discover feed"
@@ -134,9 +133,7 @@ export function DiscoverView() {
             triggerClassName="w-auto"
           />
         ) : (
-          <span className="text-ink-3 text-micro truncate font-semibold tracking-wide uppercase">
-            {discoverFeedLabel(feed, type)}
-          </span>
+          <span className={cn(TYPE.eyebrow, "truncate")}>{discoverFeedLabel(feed, type)}</span>
         )}
       </div>
       <div className="min-h-0 flex-1">

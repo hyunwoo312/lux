@@ -8,6 +8,7 @@ import { NOTE_MAX_LENGTH, type NoteFontSize } from "@/widgets/note/types";
 import { useNote, useNoteStore } from "@/widgets/note/useNoteStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import type { WidgetContentProps } from "@/widgets/core/types";
+import { useTransientState } from "@/hooks/useTransientState";
 
 const FONT_SIZE_CLASS: Record<NoteFontSize, string> = {
   sm: "text-body",
@@ -26,12 +27,11 @@ export function NoteWidget({ justAdded }: WidgetContentProps) {
   const ref = useRef<HTMLTextAreaElement>(null);
 
   const [value, setValue] = useState(text);
-  const [dropped, setDropped] = useState(0);
+  const [dropped, reportDropped] = useTransientState(0, OVERFLOW_NOTICE_MS);
   const valueRef = useRef(value);
   valueRef.current = value;
   const committedRef = useRef(text);
   const commitTimer = useRef<number | undefined>(undefined);
-  const noticeTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     if (text !== committedRef.current) {
@@ -48,7 +48,6 @@ export function NoteWidget({ justAdded }: WidgetContentProps) {
   }, [id, setText]);
 
   useEffect(() => commit, [commit]);
-  useEffect(() => () => window.clearTimeout(noticeTimer.current), []);
 
   useEffect(() => {
     if (justAdded) ref.current?.focus();
@@ -58,12 +57,6 @@ export function NoteWidget({ justAdded }: WidgetContentProps) {
     setValue(next);
     window.clearTimeout(commitTimer.current);
     commitTimer.current = window.setTimeout(commit, COMMIT_DELAY_MS);
-  };
-
-  const reportDropped = (count: number) => {
-    setDropped(count);
-    window.clearTimeout(noticeTimer.current);
-    noticeTimer.current = window.setTimeout(() => setDropped(0), OVERFLOW_NOTICE_MS);
   };
 
   const limitFor = () => Math.max(NOTE_MAX_LENGTH, valueRef.current.length);

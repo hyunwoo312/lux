@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TasksWidget } from "@/widgets/tasks/TasksWidget";
 import { ClearCompletedButton } from "@/widgets/tasks/components/ClearCompletedButton";
 import { useTasksStore } from "@/widgets/tasks/useTasksStore";
+import { useToastStore } from "@/stores/useToastStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { ReactNode } from "react";
@@ -139,7 +140,10 @@ describe("ClearCompletedButton", () => {
     fireEvent.click(screen.getByRole("button", { name: "Clear completed tasks" }));
     expect(tasks().map((task) => task.id)).toEqual(["2"]);
 
-    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+    const toast = useToastStore.getState().toast;
+    expect(toast?.message).toBe("1 task cleared");
+    expect(toast?.action?.kind).toBe("undo");
+    toast?.action?.run();
     expect(tasks().map((task) => task.id)).toEqual(["2", "1"]);
   });
 });

@@ -4,7 +4,7 @@ import { Check, Filter, type LucideIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip } from "@/components/ui/tooltip";
 import { ROW } from "@/lib/row";
-import { enterTween, exitTween, stagger } from "@/lib/motion";
+import { enterTween, iconSwap, stagger } from "@/lib/motion";
 import { useRovingFocus } from "@/hooks/useRovingFocus";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +35,6 @@ export function FilterMenu<T extends string>({
   const active = options.find((option) => option.value === value) ?? options[0];
   const ActiveIcon = active?.icon ?? Filter;
   const enterTransition = enterTween(reduced, "fast");
-  const exitTransition = exitTween(reduced, "fast");
   const roving = useRovingFocus({
     count: options.length,
     orientation: "vertical",
@@ -50,17 +49,7 @@ export function FilterMenu<T extends string>({
       <Tooltip content={tooltip}>
         <PopoverTrigger aria-label={ariaLabel} className={TRIGGER_CLASS}>
           <AnimatePresence initial={false} mode="popLayout">
-            <motion.span
-              key={value}
-              className="flex"
-              initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.5, rotate: -20 }}
-              animate={{ opacity: 1, scale: 1, rotate: 0, transition: enterTransition }}
-              exit={
-                reduced
-                  ? { opacity: 0, transition: exitTransition }
-                  : { opacity: 0, scale: 0.5, rotate: 20, transition: exitTransition }
-              }
-            >
+            <motion.span key={value} className="flex" {...iconSwap(reduced)}>
               <ActiveIcon className="size-3.5" aria-hidden />
             </motion.span>
           </AnimatePresence>

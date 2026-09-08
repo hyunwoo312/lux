@@ -14,6 +14,7 @@ import type {
   QuickLink,
   RemovedLink,
 } from "@/widgets/quick-access/types";
+import { newId } from "@/lib/utils";
 
 const DEFAULT_LINKS: QuickLink[] = [
   { id: "google", title: "Google", url: "https://www.google.com/" },
@@ -133,7 +134,7 @@ export const useQuickAccessStore = createPersistedStore<QuickAccessState>()(
       const data = get().byInstance[instanceId] ?? DEFAULT_DATA;
       if (data.links.some((link) => link.url === normalized)) return "duplicate";
       const link: QuickLink = {
-        id: crypto.randomUUID(),
+        id: newId("link"),
         title: title.trim() || hostnameOf(normalized),
         url: normalized,
       };
@@ -205,7 +206,7 @@ export const useQuickAccessStore = createPersistedStore<QuickAccessState>()(
         return;
       }
       const link: QuickLink = {
-        id: crypto.randomUUID(),
+        id: newId("link"),
         title: title.trim() || hostnameOf(normalized),
         url: normalized,
       };

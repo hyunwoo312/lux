@@ -13,7 +13,7 @@ import { getGrantedPermissions } from "@/lib/permissions";
 import { isSourceEnabled, paletteOpenBehavior, type PaletteSource } from "@/stores/usePaletteStore";
 import type { CommandItem } from "@/commands/items";
 import type { WidgetIcon } from "@/widgets/core/types";
-import { matchesQuery } from "@/widgets/core/commandResult";
+import { matchesQuery } from "@/lib/utils";
 
 const PER_SOURCE_LIMIT = 5;
 

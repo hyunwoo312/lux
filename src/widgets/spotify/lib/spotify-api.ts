@@ -13,6 +13,7 @@ import type {
   SpotifySearchKind,
   SpotifySearchResult,
 } from "@/widgets/spotify/types";
+import { clamp } from "@/lib/utils";
 
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
 
@@ -478,7 +479,7 @@ export async function seekSpotifyPlayback(positionMs: number): Promise<void> {
 }
 
 export async function setSpotifyVolume(volumePercent: number): Promise<void> {
-  const volume = Math.min(100, Math.max(0, Math.round(volumePercent)));
+  const volume = clamp(Math.round(volumePercent), 0, 100);
   await sendSpotifyCommand(`/me/player/volume?volume_percent=${volume}`, { method: "PUT" });
 }
 

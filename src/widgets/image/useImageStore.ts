@@ -27,6 +27,7 @@ import {
   type ImageOrder,
   type ImageTransition,
 } from "@/widgets/image/types";
+import { clamp } from "@/lib/utils";
 
 type ImageConfig = {
   mode: ImageMode;
@@ -121,7 +122,7 @@ const LEGACY_KEYS = ["mode", "single", "items", "fit", "brightness", "hideFrame"
 
 function clampInterval(seconds: number): number {
   if (!Number.isFinite(seconds)) return 30;
-  return Math.min(MAX_INTERVAL_SECONDS, Math.max(MIN_INTERVAL_SECONDS, Math.round(seconds)));
+  return clamp(Math.round(seconds), MIN_INTERVAL_SECONDS, MAX_INTERVAL_SECONDS);
 }
 
 export function referencedAssetIds(byInstance: Record<string, ImageConfig>): Set<string> {

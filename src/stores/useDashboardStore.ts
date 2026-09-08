@@ -11,6 +11,7 @@ import {
 import { boardWidth, gridColumns } from "@/widgets/core/grid";
 import type { WidgetInstance, WidgetType } from "@/widgets/core/types";
 import { WIDGET_LAYOUTS, WIDGET_TYPES } from "@/widgets/core/types";
+import { clamp, newId } from "@/lib/utils";
 
 const DEFAULT_COLUMNS = 12;
 
@@ -21,10 +22,6 @@ const STARTER_ROWS: WidgetType[][] = [
 const STARTER_TILE_HEIGHT = 8;
 const STARTER_MIN_TILE_WIDTH = 6;
 const STARTER_MAX_TILE_WIDTH = 12;
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
 
 function starterColumns(): number {
   return gridColumns(boardWidth(window.innerWidth));
@@ -136,10 +133,6 @@ function placeLayoutItem(
   return { ...base, x: spot.x, y: spot.y };
 }
 
-function createInstanceId(type: WidgetType): string {
-  return `${type}-${crypto.randomUUID()}`;
-}
-
 export const useDashboardStore = createPersistedStore<DashboardState>()(
   (set, get) => ({
     widgets: [],
@@ -150,7 +143,7 @@ export const useDashboardStore = createPersistedStore<DashboardState>()(
     pendingRemoval: null,
     addWidget: (type, position) =>
       set((state) => {
-        const id = createInstanceId(type);
+        const id = newId(type);
         const item = placeLayoutItem(state.layout, state.columns, id, type, position);
         return {
           widgets: [...state.widgets, { id, type }],
@@ -201,7 +194,7 @@ export const useDashboardStore = createPersistedStore<DashboardState>()(
         const widgets: WidgetInstance[] = [];
         const raw: LayoutItem[] = [];
         for (const tile of starterTiles(cols)) {
-          const id = createInstanceId(tile.type);
+          const id = newId(tile.type);
           const { minW, minH, maxW, maxH } = WIDGET_LAYOUTS[tile.type];
           const w = clamp(tile.w, minW, maxW);
           const h = clamp(STARTER_TILE_HEIGHT, minH, maxH);

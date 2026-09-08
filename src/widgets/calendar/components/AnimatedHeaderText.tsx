@@ -1,5 +1,4 @@
-import { enterTween, exitTween, stagger, type Reduced } from "@/lib/motion";
-import type { Variants } from "motion/react";
+import { listVariants, rowVariants } from "@/lib/motion";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 
@@ -7,21 +6,6 @@ type AnimatedHeaderTextProps = {
   text: string;
   className?: string;
 };
-
-function groupVariants(reduced: Reduced): Variants {
-  return {
-    enter: { transition: { staggerChildren: stagger(reduced, "tight") } },
-    exit: { transition: { staggerChildren: stagger(reduced, "micro") } },
-  };
-}
-
-function characterVariants(reduced: Reduced): Variants {
-  return {
-    initial: { opacity: 0, x: -6 },
-    enter: { opacity: 1, x: 0, transition: enterTween(reduced) },
-    exit: { opacity: 0, x: 6, transition: exitTween(reduced) },
-  };
-}
 
 export function AnimatedHeaderText({ text, className }: AnimatedHeaderTextProps) {
   const reduced = useReducedMotion();
@@ -36,16 +20,16 @@ export function AnimatedHeaderText({ text, className }: AnimatedHeaderTextProps)
         <motion.span
           key={text}
           className="inline-block whitespace-pre"
-          variants={groupVariants(reduced)}
-          initial="initial"
-          animate="enter"
+          variants={listVariants(reduced, "tight")}
+          initial="hidden"
+          animate="show"
           exit="exit"
         >
           {[...text].map((char, index) => (
             <motion.span
               key={`${index}-${char}`}
               className="inline-block whitespace-pre"
-              variants={characterVariants(reduced)}
+              variants={rowVariants(reduced)}
             >
               {char}
             </motion.span>

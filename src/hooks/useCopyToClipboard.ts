@@ -1,30 +1,28 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback } from "react";
+import { RESET_MS } from "@/lib/motion";
+import { useTransientState } from "@/hooks/useTransientState";
 
 export type CopyStatus = "idle" | "copied" | "failed";
-
-const RESET_MS = 1600;
 
 export function useCopyToClipboard(): {
   status: CopyStatus;
   copy: (text: string) => void;
 } {
-  const [status, setStatus] = useState<CopyStatus>("idle");
-  const timer = useRef<number | undefined>(undefined);
+  const [status, flash] = useTransientState<CopyStatus>("idle", RESET_MS);
 
-  useEffect(() => () => window.clearTimeout(timer.current), []);
-
-  const copy = useCallback((text: string) => {
-    void (async () => {
-      try {
-        await navigator.clipboard.writeText(text);
-        setStatus("copied");
-      } catch {
-        setStatus("failed");
-      }
-      window.clearTimeout(timer.current);
-      timer.current = window.setTimeout(() => setStatus("idle"), RESET_MS);
-    })();
-  }, []);
+  const copy = useCallback(
+    (text: string) => {
+      void (async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          flash("copied");
+        } catch {
+          flash("failed");
+        }
+      })();
+    },
+    [flash],
+  );
 
   return { status, copy };
 }

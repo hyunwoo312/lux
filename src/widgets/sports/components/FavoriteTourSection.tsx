@@ -4,13 +4,14 @@ import { TennisView } from "@/widgets/sports/components/tennis/TennisView";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import type { League } from "@/widgets/sports/lib/leagues";
 import { useSports, useSportsStore } from "@/widgets/sports/useSportsStore";
+import { matchesQuery } from "@/lib/utils";
 
 export function FavoriteTourSection({ league, query }: { league: League; query: string }) {
   const instanceId = useWidgetInstanceId();
   const open = useSports((d) => !d.collapsed.includes(league.id));
   const setSectionOpen = useSportsStore((s) => s.setSectionOpen);
   const needle = query.trim().toLowerCase();
-  if (needle !== "" && !league.label.toLowerCase().includes(needle)) return null;
+  if (needle !== "" && !matchesQuery(league.label, needle)) return null;
 
   return (
     <CollapsibleSection

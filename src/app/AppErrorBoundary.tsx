@@ -131,9 +131,7 @@ function CrashDetail({ detail }: { detail: string }) {
   return (
     <div className="mt-4 border-t pt-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-ink-3 text-micro font-medium tracking-wide uppercase">
-          What went wrong
-        </span>
+        <span className={TYPE.eyebrow}>What went wrong</span>
         <Button variant="ghost" onClick={() => copy(detail)} aria-label="Copy error details">
           {status === "copied" ? <Check aria-hidden /> : <Copy aria-hidden />}
           {status === "copied" ? "Copied" : "Copy"}

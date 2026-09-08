@@ -4,11 +4,10 @@ import { useRovingFocus } from "@/hooks/useRovingFocus";
 import { cn } from "@/lib/utils";
 import { useAccentStore } from "@/stores/useAccentStore";
 import { ACCENT_LABELS, ACCENT_PRESETS, accentClass } from "@/widgets/core/accent";
+import { AccentSwatch } from "@/components/AccentSwatch";
 
 const SWATCH =
   "focus-ring hover:bg-accent relative grid size-7 cursor-pointer place-items-center rounded-full";
-
-const DOT = "bg-primary size-5 rounded-full shadow-[inset_0_1px_0_0_oklch(1_0_0/0.25)]";
 
 export function AccentPicker() {
   const accent = useAccentStore((s) => s.accent);
@@ -57,8 +56,10 @@ export function AccentPicker() {
               aria-hidden
               animate={{ scale: selected ? 0.78 : 1 }}
               transition={springCrisp(reduced)}
-              className={DOT}
-            />
+              className="flex"
+            >
+              <AccentSwatch size="md" />
+            </motion.span>
           </motion.button>
         );
       })}

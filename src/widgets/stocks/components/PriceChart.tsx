@@ -1,7 +1,7 @@
 import { useId, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
-import { cn } from "@/lib/utils";
+import { clamp, cn } from "@/lib/utils";
 import { useElementSize } from "@/hooks/useElementSize";
 import { areaPath, chartGeometry, linePath } from "@/lib/chart";
 import { aggregateBars } from "@/widgets/stocks/lib/chart";
@@ -92,7 +92,7 @@ export function PriceChart({
     const position = candles
       ? Math.floor(fraction * shown.length)
       : Math.round(fraction * (shown.length - 1));
-    setActive(Math.max(0, Math.min(shown.length - 1, position)));
+    setActive(clamp(position, 0, shown.length - 1));
   };
 
   const dividendByBar = new Map<number, number>();

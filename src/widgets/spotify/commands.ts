@@ -1,5 +1,4 @@
 import { SpotifyServiceIcon } from "@/components/icons/service-icons";
-import { matchesQuery } from "@/widgets/core/commandResult";
 import { needsAccount } from "@/widgets/core/commandSetup";
 import type { CommandResult, WidgetCommand } from "@/widgets/core/types";
 import type { SpotifySearchKind, SpotifySearchResult } from "@/widgets/spotify/types";
@@ -23,6 +22,7 @@ import {
   togglePlayback,
   toggleShuffle,
 } from "@/widgets/spotify/hooks/useSpotifyPlayback";
+import { matchesQuery } from "@/lib/utils";
 
 const VOLUME_STEP = 10;
 

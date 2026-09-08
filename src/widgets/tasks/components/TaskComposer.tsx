@@ -6,6 +6,7 @@ import { DURATION, EASE_OUT } from "@/lib/motion";
 import { BorderTrail } from "@/widgets/tasks/components/BorderTrail";
 import { useTasksStore } from "@/widgets/tasks/useTasksStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
+import { newId } from "@/lib/utils";
 
 type TaskComposerProps = {
   onAdded: (id: string) => void;
@@ -23,7 +24,7 @@ export function TaskComposer({ onAdded }: TaskComposerProps) {
     event.preventDefault();
     if (!title.trim()) return;
 
-    const id = crypto.randomUUID();
+    const id = newId("task");
     addTask(instanceId, title, id);
     setTitle("");
     if (reduced) return;

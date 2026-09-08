@@ -5,23 +5,15 @@ import { Button, MotionButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
-import {
-  collapse,
-  DURATION,
-  EASE_IN_OUT,
-  enterTween,
-  exitTween,
-  fade,
-  stagger,
-} from "@/lib/motion";
+import { collapse, DURATION, EASE_IN_OUT, enterTween, fade, RESET_MS, stagger } from "@/lib/motion";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { accentClass } from "@/widgets/core/accent";
 import { getWidgetPlugin } from "@/widgets/registry";
+import { TYPE } from "@/lib/type";
 
 const SPOTIFY_DASHBOARD_URL = "https://developer.spotify.com/dashboard";
 const SPOTIFY_POLICY_URL =
   "https://developer.spotify.com/blog/2025-04-15-updating-the-criteria-for-web-api-extended-access";
-const FEEDBACK_MS = 1600;
 const LINK_CLASS = "text-primary underline underline-offset-2";
 
 const STEPS: ReactNode[] = [
@@ -75,7 +67,7 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
       setStatus("error");
     }
     window.clearTimeout(statusTimeout.current);
-    statusTimeout.current = window.setTimeout(() => setStatus("idle"), FEEDBACK_MS);
+    statusTimeout.current = window.setTimeout(() => setStatus("idle"), RESET_MS);
   }
 
   return (
@@ -88,13 +80,7 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
             className="
               border-primary/30 bg-primary/10 absolute inset-0 origin-top-left rounded-2xl border
             "
-            initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1, transition }}
-            exit={{
-              opacity: 0,
-              scale: reduced ? 1 : 0.97,
-              transition: exitTween(reduced, "slow"),
-            }}
+            {...fade(reduced, "slow")}
           />
         )}
       </AnimatePresence>
@@ -350,7 +336,7 @@ function DrawnCross({ reduced }: { reduced: boolean | null }) {
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-ink-3 text-micro font-semibold tracking-wider uppercase">{label}</span>
+      <span className={TYPE.eyebrow}>{label}</span>
       {children}
     </div>
   );

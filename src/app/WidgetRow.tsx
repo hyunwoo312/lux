@@ -6,6 +6,7 @@ import { springCrisp } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { accentClass } from "@/widgets/core/accent";
 import type { WidgetPlugin } from "@/widgets/core/types";
+import { TYPE } from "@/lib/type";
 
 type WidgetCardProps = {
   plugin: WidgetPlugin;
@@ -95,16 +96,10 @@ export const WidgetRow = forwardRef<HTMLButtonElement, WidgetCardProps>(function
           {plugin.description}
         </span>
         {needsAccount ? (
-          <span className="text-ink-4 text-micro font-semibold tracking-wide uppercase">
-            Needs an account
-          </span>
+          <span className={cn(TYPE.eyebrow, "text-ink-4")}>Needs an account</span>
         ) : (
           plugin.recommended &&
-          added === 0 && (
-            <span className="text-primary text-micro font-semibold tracking-wide uppercase">
-              Recommended
-            </span>
-          )
+          added === 0 && <span className={cn(TYPE.eyebrow, "text-primary")}>Recommended</span>
         )}
       </span>
     </motion.button>

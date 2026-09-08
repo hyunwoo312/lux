@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Variants } from "motion/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useElementSize } from "@/hooks/useElementSize";
 import { localDayKey } from "@/lib/clock";
@@ -11,9 +10,10 @@ import { WeekdayHeader } from "@/widgets/calendar/components/WeekdayHeader";
 import { getEventsByDate } from "@/widgets/calendar/lib/agenda";
 import { getMonthGridDays, startOfWeek } from "@/widgets/calendar/lib/dates";
 import { computeMonthLayout, getMonthMetrics } from "@/widgets/calendar/lib/month-layout";
-import { enterTween, exitTween, springCrisp } from "@/lib/motion";
+import { enterTween, exitTween, slideSwap, springCrisp } from "@/lib/motion";
 import { useCalendar } from "@/widgets/calendar/useCalendarStore";
 import type { DisplayCalendarEvent } from "@/widgets/calendar/types";
+import { clamp } from "@/lib/utils";
 
 type CalendarGridProps = {
   events: DisplayCalendarEvent[];
@@ -74,25 +74,8 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
   const dayEvents = selectedKey ? (eventsByDate.get(selectedKey) ?? []) : [];
 
   const settle = enterTween(reduced, "slower");
-  const leave = exitTween(reduced, "slower");
-  const verticalSlide: Variants = {
-    enter: (dir: number) => ({ y: reduced ? "0%" : `${dir * 100}%`, opacity: reduced ? 0 : 1 }),
-    center: { y: "0%", opacity: 1, transition: settle },
-    exit: (dir: number) => ({
-      y: reduced ? "0%" : `${-dir * 100}%`,
-      opacity: reduced ? 0 : 1,
-      transition: leave,
-    }),
-  };
-  const horizontalSlide: Variants = {
-    enter: (dir: number) => ({ x: reduced ? "0%" : `${dir * 100}%`, opacity: reduced ? 0 : 1 }),
-    center: { x: "0%", opacity: 1, transition: settle },
-    exit: (dir: number) => ({
-      x: reduced ? "0%" : `${-dir * 100}%`,
-      opacity: reduced ? 0 : 1,
-      transition: leave,
-    }),
-  };
+  const verticalSlide = slideSwap(reduced, "y", "100%", "slower", false);
+  const horizontalSlide = slideSwap(reduced, "x", "100%", "slower", false);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -118,7 +101,7 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
         onMouseMove={(event) => {
           if (rowHeight <= 0 || cellWidth <= 0) return;
           const rect = event.currentTarget.getBoundingClientRect();
-          const col = Math.min(6, Math.max(0, Math.floor((event.clientX - rect.left) / cellWidth)));
+          const col = clamp(Math.floor((event.clientX - rect.left) / cellWidth), 0, 6);
           const localY = event.clientY - rect.top;
           if (mode === "week") {
             if (localY > rowHeight) {
@@ -129,7 +112,7 @@ export function CalendarGrid({ events, colors }: CalendarGridProps) {
               prev && prev.row === 0 && prev.col === col ? prev : { row: 0, col },
             );
           } else {
-            const row = Math.min(5, Math.max(0, Math.floor(localY / rowHeight)));
+            const row = clamp(Math.floor(localY / rowHeight), 0, 5);
             setHover((prev) =>
               prev && prev.row === row && prev.col === col ? prev : { row, col },
             );

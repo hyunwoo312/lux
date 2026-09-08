@@ -8,12 +8,12 @@ import { enterTween, panelVariants } from "@/lib/motion";
 import {
   breakdownOf,
   clearResourceCaches,
-  formatBytes,
   measureStorage,
   totalOf,
   type StorageUsage,
 } from "@/lib/storage-usage";
 import { ConfigSection } from "@/components/config/Config";
+import { formatBytes } from "@/lib/media-format";
 
 const SEGMENT_TONES = ["bg-primary", "bg-primary/60", "bg-primary/35", "bg-primary/20"];
 

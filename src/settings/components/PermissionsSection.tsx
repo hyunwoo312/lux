@@ -7,6 +7,7 @@ import { useGrantedPermissions } from "@/hooks/usePermission";
 import { isPermissionsManageable, setPermissionsGranted } from "@/lib/permissions";
 import { ConfigSection } from "@/components/config/Config";
 import { useSettingsStore } from "@/stores/useSettingsStore";
+import { TYPE } from "@/lib/type";
 
 function permissionsOf(item: PermissionItem): chrome.runtime.ManifestPermission[] {
   return [item.id, ...(item.alsoNeeds ?? [])];
@@ -76,16 +77,7 @@ export function PermissionsSection() {
 }
 
 function SubLabel({ children }: { children: ReactNode }) {
-  return (
-    <span
-      className="
-        text-ink-4 text-micro mt-2 px-0.5 font-semibold tracking-wider uppercase
-        first:mt-0
-      "
-    >
-      {children}
-    </span>
-  );
+  return <span className={cn(TYPE.eyebrow, "text-ink-4 mt-2 px-0.5 first:mt-0")}>{children}</span>;
 }
 
 type PermissionToggle = {

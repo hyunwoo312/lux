@@ -10,7 +10,7 @@ import { AgendaCompactList } from "@/widgets/calendar/components/agenda/AgendaCo
 import { AgendaTimeline } from "@/widgets/calendar/components/agenda/AgendaTimeline";
 import { AgendaUntimedBlock } from "@/widgets/calendar/components/agenda/AgendaUntimedBlock";
 import { getEventStartDate } from "@/widgets/calendar/lib/agenda";
-import { enterTween, exitTween } from "@/lib/motion";
+import { slideSwap } from "@/lib/motion";
 import { endOfDay, getRangeEndDate, startOfDay } from "@/widgets/calendar/lib/dates";
 import {
   buildTimeline,
@@ -63,18 +63,19 @@ export function AgendaView({ events, colors, status }: AgendaViewProps) {
   const compact = size.width > 0 && size.width < TIMELINE_MIN_WIDTH;
   const anchorKey = localDayKey(rangeStart);
   const direction = useTravelDirection(anchorKey, rangeStart.getTime());
-  const shift = reduced ? 0 : 14;
 
   return (
     <div ref={ref} className="flex h-full min-h-0 flex-col gap-2 pt-0.5">
       <AgendaUntimedBlock events={allDay} colors={colors} compact={compact} anchorKey={anchorKey} />
-      <AnimatePresence initial={false} mode="wait">
+      <AnimatePresence initial={false} mode="wait" custom={direction}>
         <motion.div
           key={anchorKey}
+          custom={direction}
+          variants={slideSwap(reduced, "x", 14)}
+          initial="enter"
+          animate="center"
+          exit="exit"
           className="flex min-h-0 flex-1 flex-col"
-          initial={{ opacity: 0, x: direction * shift }}
-          animate={{ opacity: 1, x: 0, transition: enterTween(reduced) }}
-          exit={{ opacity: 0, x: -direction * shift, transition: exitTween(reduced) }}
         >
           {timed.length === 0 ? (
             <EmptyAgenda

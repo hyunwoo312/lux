@@ -16,7 +16,7 @@ export const DURATION = {
   slower: 0.5,
 } as const;
 
-export type Reduced = boolean | null;
+type Reduced = boolean | null;
 
 export type Speed = keyof typeof DURATION;
 
@@ -38,6 +38,8 @@ const STAGGER = {
 } as const;
 
 type Step = keyof typeof STAGGER;
+
+export const RESET_MS = 1600;
 
 export const STILL: Transition = { duration: 0 };
 
@@ -146,11 +148,57 @@ export function viewSwap(reduced: Reduced, offset: number | string = 0): Presenc
   };
 }
 
-export function panelVariants(reduced: Reduced): Variants {
+export function panelVariants(reduced: Reduced, step?: Step): Variants {
   return {
     hidden: { opacity: 0, y: reduced ? 0 : 4 },
-    show: { opacity: 1, y: 0, transition: enterTween(reduced, "fast") },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        ...enterTween(reduced, "fast"),
+        ...(step ? { staggerChildren: stagger(reduced, step) } : {}),
+      },
+    },
     exit: { opacity: 0, y: reduced ? 0 : -4, transition: exitTween(reduced, "fast") },
+  };
+}
+
+export function slideSwap(
+  reduced: Reduced,
+  axis: "x" | "y",
+  distance: number | `${number}%`,
+  speed: Speed = "base",
+  fade = true,
+): Variants {
+  const hidden = fade || reduced ? 0 : 1;
+  const at = (direction: number): TargetAndTransition => {
+    const offset = reduced
+      ? 0
+      : typeof distance === "number"
+        ? direction * distance
+        : `${direction * parseFloat(distance)}%`;
+    return axis === "x" ? { x: offset } : { y: offset };
+  };
+  return {
+    enter: (direction: number) => ({ ...at(direction), opacity: hidden }),
+    center: { ...at(0), opacity: 1, transition: enterTween(reduced, speed, EASE_OUT_STRONG) },
+    exit: (direction: number) => ({
+      ...at(-direction),
+      opacity: hidden,
+      transition: exitTween(reduced, speed, EASE_OUT_STRONG),
+    }),
+  };
+}
+
+export function toastVariants(reduced: Reduced): Variants {
+  return {
+    hidden: reduced ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.96 },
+    show: { opacity: 1, y: 0, scale: 1, transition: springCrisp(reduced) },
+    exit: {
+      opacity: 0,
+      ...(reduced ? {} : { y: 8, scale: 0.98 }),
+      transition: exitTween(reduced, "base"),
+    },
   };
 }
 

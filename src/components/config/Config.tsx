@@ -165,7 +165,7 @@ export function ConfigSubRow({
 
 type ConfigOption<T extends string> = {
   value: T;
-  label: string;
+  label: ReactNode;
 };
 
 type SelectControlProps<T extends string> = {
@@ -246,7 +246,7 @@ export function ConfigSegmented<T extends string>({
       aria-label={label}
       className={cn(
         "bg-foreground/5 max-w-full gap-0.5 rounded-md p-0.5",
-        oneLine ? "flex w-full min-w-0 flex-nowrap" : "flex-wrap",
+        oneLine ? "flex min-w-0 flex-nowrap" : "flex-wrap",
       )}
     >
       {options.map((option) => {
@@ -257,7 +257,7 @@ export function ConfigSegmented<T extends string>({
             value={option.value}
             variant="segmented"
             disabled={option.disabled}
-            className={cn(oneLine && (active ? "shrink-0" : "min-w-0 flex-1"))}
+            className={cn(oneLine && "min-w-0")}
           >
             {active && (
               <motion.span
@@ -266,9 +266,7 @@ export function ConfigSegmented<T extends string>({
                 className="bg-primary absolute inset-0 rounded-sm"
               />
             )}
-            <span className={cn("relative z-10", oneLine && !active && "block truncate")}>
-              {option.label}
-            </span>
+            <span className={cn("relative z-10", oneLine && "block truncate")}>{option.label}</span>
           </ToggleGroupItem>
         );
       })}

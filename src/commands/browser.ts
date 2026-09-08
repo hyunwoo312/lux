@@ -15,7 +15,7 @@ import { isSourceEnabled, paletteOpenBehavior, type PaletteSource } from "@/stor
 import { SYSTEM_OWNER, type CommandItem } from "@/commands/items";
 import { address } from "@/commands/links";
 import type { CommandResult, WidgetIcon } from "@/widgets/core/types";
-import { matchesQuery } from "@/widgets/core/commandResult";
+import { matchesQuery } from "@/lib/utils";
 
 const RESULT_LIMIT = 30;
 

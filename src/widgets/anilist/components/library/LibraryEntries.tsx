@@ -5,6 +5,7 @@ import { COVER_GRID } from "@/widgets/anilist/components/coverGrid";
 import { groupByAiringDay } from "@/widgets/anilist/lib/current";
 import { LIBRARY_PAGE_SIZE } from "@/widgets/anilist/types";
 import type { CurrentEntry, ViewMode } from "@/widgets/anilist/types";
+import { TYPE } from "@/lib/type";
 
 export function LibraryEntries({
   entries,
@@ -41,9 +42,7 @@ export function LibraryEntries({
       {grouped ? (
         groups.map((group) => (
           <section key={group.key} className={cn("flex flex-col", isGrid ? "gap-1.5" : "gap-1")}>
-            <h4 className="text-ink-3 text-micro px-1 font-bold tracking-wider uppercase">
-              {group.label}
-            </h4>
+            <h4 className={cn(TYPE.eyebrow, "px-1")}>{group.label}</h4>
             <ul aria-label={`Airing ${group.label}`} className={listClass}>
               {group.entries.map((entry) => (
                 <Fragment key={`${entry.kind}-${entry.id}`}>{renderEntry(entry)}</Fragment>

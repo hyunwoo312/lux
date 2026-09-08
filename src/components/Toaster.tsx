@@ -1,26 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { exitTween, springCrisp } from "@/lib/motion";
+import { toastVariants } from "@/lib/motion";
 import { TOAST_DURATION_MS, useToastStore } from "@/stores/useToastStore";
-
-function barVariants(reduced: boolean): Variants {
-  return {
-    hidden: reduced ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.96 },
-    show: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: springCrisp(reduced),
-    },
-    exit: {
-      opacity: 0,
-      ...(reduced ? {} : { y: 8, scale: 0.98 }),
-      transition: exitTween(reduced, "base"),
-    },
-  };
-}
 
 function useExpiry(key: string | undefined, paused: boolean, expire: () => void) {
   const remaining = useRef(TOAST_DURATION_MS);
@@ -58,7 +41,7 @@ export function Toaster() {
         {toast && (
           <motion.div
             key={toast.key}
-            variants={barVariants(reduced)}
+            variants={toastVariants(reduced)}
             initial="hidden"
             animate="show"
             exit="exit"

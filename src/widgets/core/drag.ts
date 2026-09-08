@@ -3,6 +3,7 @@ import { GAP, PAD, UNIT } from "@/widgets/core/grid";
 import { findNearestOpenPosition } from "@/widgets/core/layout-engine";
 import { WIDGET_LAYOUTS, type WidgetType } from "@/widgets/core/types";
 import type { DragGeometry, DragRect } from "@/widgets/core/useWidgetDragStore";
+import { clamp } from "@/lib/utils";
 
 export function isOverGrid(x: number, y: number, geometry: DragGeometry): boolean {
   return x >= geometry.left && x <= geometry.left + geometry.cols * UNIT && y >= geometry.top;
@@ -20,7 +21,7 @@ function pointerToCell(
   const col = Math.round((x - geometry.left - PAD - widthPx / 2) / UNIT);
   const row = Math.round((y - geometry.top - PAD - heightPx / 2) / UNIT);
   return {
-    col: Math.max(0, Math.min(col, geometry.cols - w)),
+    col: clamp(col, 0, geometry.cols - w),
     row: Math.max(0, row),
   };
 }

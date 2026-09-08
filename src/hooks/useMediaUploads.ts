@@ -1,5 +1,8 @@
 import { useState } from "react";
 import type { MediaImageItem } from "@/lib/asset-store";
+import { useTransientState } from "@/hooks/useTransientState";
+
+const ERROR_MS = 3000;
 
 type MediaUploads<T extends MediaImageItem> = {
   mode: "single" | "multi";
@@ -17,7 +20,6 @@ type MediaUploads<T extends MediaImageItem> = {
 type MediaUploadsResult<T> = {
   saving: boolean;
   error: string | null;
-  setError: (error: string | null) => void;
   handleFiles: (files: File[]) => void;
   removeItem: (item: T) => Promise<void>;
   clearAll: () => Promise<void>;
@@ -36,7 +38,7 @@ export function useMediaUploads<T extends MediaImageItem>({
   setItems,
 }: MediaUploads<T>): MediaUploadsResult<T> {
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError, clearError] = useTransientState<string | null>(null, ERROR_MS);
 
   const discard = (assetId: string | null | undefined) => remove(assetId).catch(() => undefined);
 
@@ -48,7 +50,7 @@ export function useMediaUploads<T extends MediaImageItem>({
     }
 
     setSaving(true);
-    setError(null);
+    clearError(null);
     const previousAssetId = single?.assetId ?? null;
     try {
       setSingle(await save(file));
@@ -81,7 +83,7 @@ export function useMediaUploads<T extends MediaImageItem>({
     }
 
     setSaving(true);
-    setError(null);
+    clearError(null);
     const saved: T[] = [];
     try {
       for (const file of files) {
@@ -132,5 +134,5 @@ export function useMediaUploads<T extends MediaImageItem>({
     }
   }
 
-  return { saving, error, setError, handleFiles, removeItem, clearAll };
+  return { saving, error, handleFiles, removeItem, clearAll };
 }

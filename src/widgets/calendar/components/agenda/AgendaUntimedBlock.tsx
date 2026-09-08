@@ -13,6 +13,7 @@ import { getEventColor } from "@/widgets/calendar/lib/colors";
 import { formatDayRange, getRangeEndDate } from "@/widgets/calendar/lib/dates";
 import { useCalendar } from "@/widgets/calendar/useCalendarStore";
 import type { DisplayCalendarEvent } from "@/widgets/calendar/types";
+import { Separator } from "@/components/ui/separator";
 
 const ROW_COUNT = 2;
 const TITLE_MAX_CHARS = 20;
@@ -159,7 +160,7 @@ export function AgendaUntimedBlock({
         <TodayButton />
       </span>
       {rows.length > 0 && !compact && (
-        <span aria-hidden className="bg-border/60 my-1 w-px flex-none self-stretch" />
+        <Separator orientation="vertical" className="my-1 h-auto self-stretch" />
       )}
       {rows.length > 0 && (
         <section aria-label="All-day and multi-day events" className="min-w-0 flex-1">

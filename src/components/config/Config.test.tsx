@@ -90,13 +90,15 @@ describe('ConfigSegmented fit="line"', () => {
     );
   }
 
-  it("gives the chosen option room and lets the others give way on one line", () => {
+  it("keeps every option at its own width on one line, truncating rather than stretching", () => {
     renderLine();
-    expect(screen.getByRole("radiogroup", { name: "Filter" })).toHaveClass("flex-nowrap");
-    expect(screen.getByRole("radio", { name: "Pull requests" })).toHaveClass("shrink-0");
-    expect(screen.getByRole("radio", { name: "All" })).toHaveClass("flex-1");
+    const group = screen.getByRole("radiogroup", { name: "Filter" });
+    expect(group).toHaveClass("flex-nowrap");
+    expect(group).not.toHaveClass("w-full");
+    expect(screen.getByRole("radio", { name: "All" })).toHaveClass("min-w-0");
+    expect(screen.getByRole("radio", { name: "All" })).not.toHaveClass("flex-1");
     expect(screen.getByText("Issues")).toHaveClass("truncate");
-    expect(screen.getByText("Pull requests")).not.toHaveClass("truncate");
+    expect(screen.getByText("Pull requests")).toHaveClass("truncate");
   });
 
   it("still wraps by default, so every other widget is untouched", () => {

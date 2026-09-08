@@ -4,13 +4,17 @@ function getImageTypeLabel(mimeType: string | null): string | null {
   return subtype ? subtype.replace("jpeg", "jpg").toUpperCase() : null;
 }
 
-function formatFileSize(size: number | null): string | null {
-  if (size === null) return null;
-  if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`;
-  return `${(size / (1024 * 1024)).toFixed(size < 10 * 1024 * 1024 ? 1 : 0)} MB`;
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const kb = bytes / 1024;
+  if (kb < 1000) return `${Math.round(kb)} KB`;
+  const mb = kb / 1024;
+  return `${mb < 10 ? Number(mb.toFixed(1)) : Math.round(mb)} MB`;
 }
 
 export function getMetadataLabel(mimeType: string | null, size: number | null): string | null {
-  const parts = [getImageTypeLabel(mimeType), formatFileSize(size)].filter(Boolean);
+  const parts = [getImageTypeLabel(mimeType), size === null ? null : formatBytes(size)].filter(
+    Boolean,
+  );
   return parts.length ? parts.join(" · ") : null;
 }

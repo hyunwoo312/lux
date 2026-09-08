@@ -1,5 +1,5 @@
 import { Bell, Book, CircleDot, GitPullRequest, Tag } from "lucide-react";
-import { matchesQuery, openResult } from "@/widgets/core/commandResult";
+import { openResult } from "@/widgets/core/commandResult";
 import { GitHubServiceIcon } from "@/components/icons/service-icons";
 import { formatRelativeTime } from "@/lib/relative-time";
 import type { CommandResult, WidgetCommand } from "@/widgets/core/types";
@@ -22,6 +22,7 @@ import {
   type Release,
   type ReleasesData,
 } from "@/widgets/github/types";
+import { matchesQuery } from "@/lib/utils";
 
 function showsPrivate(): boolean {
   return instanceData("github", useGithubStore.getState().byInstance, DEFAULT_DATA).every(

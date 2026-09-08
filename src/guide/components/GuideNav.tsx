@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ChevronRight, LayoutGrid, Rocket, SearchX, ShieldCheck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { SearchField } from "@/components/SearchField";
-import { cn } from "@/lib/utils";
+import { cn, matchesQuery } from "@/lib/utils";
 import { DIALOG_RAIL, RailItem } from "@/components/DialogChrome";
 import { collapse, enterTween } from "@/lib/motion";
 import { ROW } from "@/lib/row";
@@ -24,10 +24,9 @@ type Props = {
 function matchGroup(group: GuideGroup, query: string) {
   const term = query.trim().toLowerCase();
   if (!term) return { visible: true, articles: group.articles };
-  if (group.title.toLowerCase().includes(term)) return { visible: true, articles: group.articles };
+  if (matchesQuery(group.title, term)) return { visible: true, articles: group.articles };
   const articles = group.articles.filter(
-    (article) =>
-      article.title.toLowerCase().includes(term) || article.lead.toLowerCase().includes(term),
+    (article) => matchesQuery(article.title, term) || matchesQuery(article.lead, term),
   );
   return { visible: articles.length > 0, articles };
 }

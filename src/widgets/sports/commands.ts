@@ -1,5 +1,5 @@
 import { Star, Trophy } from "lucide-react";
-import { matchesQuery, openResult } from "@/widgets/core/commandResult";
+import { openResult } from "@/widgets/core/commandResult";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { matchStatus } from "@/widgets/sports/lib/status";
 import { instanceData, instanceIds } from "@/widgets/core/instances";
@@ -12,6 +12,7 @@ import { searchTeamIndex, type IndexedTeam } from "@/widgets/sports/lib/teamInde
 import type { DayWindow } from "@/widgets/sports/lib/window";
 import { DEFAULT_DATA, useSportsStore } from "@/widgets/sports/useSportsStore";
 import { STATE_ORDER, type Match, type MatchState } from "@/widgets/sports/types";
+import { matchesQuery } from "@/lib/utils";
 
 const LEAGUE_LIMIT = 5;
 

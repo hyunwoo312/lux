@@ -6,6 +6,7 @@ import { useNewsResource } from "@/widgets/news/hooks/useNewsResource";
 import { useTrendingResource } from "@/widgets/news/hooks/useTrendingResource";
 import { NEWS_SYNC_COOLDOWN_MS, useNews, useNewsStore } from "@/widgets/news/useNewsStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
+import { Separator } from "@/components/ui/separator";
 
 export function NewsHeaderActions() {
   const view = useNews((d) => d.view);
@@ -26,7 +27,7 @@ export function NewsHeaderActions() {
         staleSince={staleSinceOf(active.freshness)}
         onRefresh={active.refresh}
       />
-      <span className="bg-border/50 mx-0.5 h-4 w-px shrink-0" aria-hidden />
+      <Separator orientation="vertical" className="mx-0.5 h-4" />
       <NewsLayoutToggle available={withThumbnail} />
     </div>
   );

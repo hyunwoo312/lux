@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { fetchTeams, type TeamOption } from "@/widgets/sports/lib/espn";
 import { LEAGUES, type League } from "@/widgets/sports/lib/leagues";
+import { matchesQuery } from "@/lib/utils";
 
 export type IndexedTeam = {
   leagueId: string;
@@ -49,8 +50,7 @@ export function searchTours(query: string): League[] {
   if (needle === "") return [];
 
   return LEAGUES.filter((league) => league.kind !== "match").filter(
-    (league) =>
-      league.label.toLowerCase().includes(needle) || league.id.toLowerCase().startsWith(needle),
+    (league) => matchesQuery(league.label, needle) || league.id.toLowerCase().startsWith(needle),
   );
 }
 

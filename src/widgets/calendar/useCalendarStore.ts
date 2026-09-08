@@ -43,6 +43,7 @@ import {
   type CalendarView,
   type ConnectedCalendar,
 } from "@/widgets/calendar/types";
+import { clamp } from "@/lib/utils";
 
 export const CALENDAR_SYNC_COOLDOWN_MS = 60_000;
 
@@ -226,7 +227,7 @@ function normaliseConfig(value: unknown): unknown {
 
 function clampLookahead(days: number): number {
   if (!Number.isFinite(days)) return 7;
-  return Math.min(MAX_LOOKAHEAD_DAYS, Math.max(MIN_LOOKAHEAD_DAYS, Math.round(days)));
+  return clamp(Math.round(days), MIN_LOOKAHEAD_DAYS, MAX_LOOKAHEAD_DAYS);
 }
 
 export const REFRESH_INTERVAL_OPTIONS = [3, 6, 12, 24] as const;

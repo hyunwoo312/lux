@@ -1,3 +1,4 @@
+import { clamp } from "@/lib/utils";
 const WEEKS_IN_YEAR = 53;
 const MIN_WEEKS = 26;
 const MAX_CELL = 11;
@@ -23,7 +24,7 @@ function gapFor(cell: number): number {
 
 function weeksThatFit(available: number, cell: number, gap: number, showWeekdays: boolean): number {
   const grid = showWeekdays ? available - WEEKDAY_W - gap : available;
-  return Math.max(1, Math.min(WEEKS_IN_YEAR, Math.floor((grid + gap) / (cell + gap))));
+  return clamp(Math.floor((grid + gap) / (cell + gap)), 1, WEEKS_IN_YEAR);
 }
 
 export function heatmapMetrics(available: number): HeatmapMetrics {

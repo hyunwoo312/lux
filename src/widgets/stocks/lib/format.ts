@@ -1,4 +1,5 @@
 import type { ChangeMode, StockRange } from "@/widgets/stocks/types";
+import { clamp } from "@/lib/utils";
 
 export function formatSigned(value: number, digits = 2): string {
   const sign = value > 0 ? "+" : value < 0 ? "-" : "";
@@ -14,7 +15,7 @@ function magnitudeDecimals(value: number): number {
 }
 
 function fractionDigits(value: number, priceHint: number): number {
-  return Math.min(8, Math.max(priceHint, magnitudeDecimals(value)));
+  return clamp(magnitudeDecimals(value), priceHint, 8);
 }
 
 export function formatNumber(value: number, priceHint = 2): string {

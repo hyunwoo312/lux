@@ -13,6 +13,7 @@ import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import { removeWidgetInstance } from "@/widgets/core/instanceRemoval";
 import { getWidgetPlugin } from "@/widgets/registry";
 import { useDashboardStore } from "@/stores/useDashboardStore";
+import { RESET_MS } from "@/lib/motion";
 
 type WidgetHostProps = {
   instance: WidgetInstance;
@@ -46,7 +47,7 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
       setPulse(false);
       const { lastAddedId, clearLastAdded } = useDashboardStore.getState();
       if (lastAddedId === instance.id) clearLastAdded();
-    }, 1600);
+    }, RESET_MS);
     return () => window.clearTimeout(timer);
   }, [pulse, reduced, instance.id]);
 

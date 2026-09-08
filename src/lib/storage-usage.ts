@@ -98,11 +98,3 @@ export function clearResourceCaches(): void {
     return;
   }
 }
-
-export function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  const kb = bytes / 1024;
-  if (kb < 1000) return `${Math.round(kb)} KB`;
-  const mb = kb / 1024;
-  return `${mb < 10 ? Number(mb.toFixed(1)) : Math.round(mb)} MB`;
-}

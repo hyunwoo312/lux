@@ -13,11 +13,12 @@ import {
   useShortcutsStore,
   type ShortcutAction,
 } from "@/stores/useShortcutsStore";
-import { EASE_OUT_STRONG, enterTween, exitTween, springCrisp } from "@/lib/motion";
+import { panelVariants, pop, springCrisp } from "@/lib/motion";
 import { usePaletteShortcut } from "@/hooks/usePaletteShortcut";
 import { AddShortcutControl, ShortcutDisplay } from "@/settings/tabs/ShortcutRow";
 import { Kbd } from "@/components/Kbd";
 import { ConfigSection, ConfigBody } from "@/components/config/Config";
+import { matchesQuery } from "@/lib/utils";
 
 const BROWSER_SHORTCUT = {
   label: "Open the command palette",
@@ -57,7 +58,7 @@ export function ShortcutsTab() {
 
   const needle = query.trim().toLowerCase();
   const visibleShortcuts = SHORTCUT_DEFINITIONS.filter((action) =>
-    `${action.label} ${action.description}`.toLowerCase().includes(needle),
+    matchesQuery(`${action.label} ${action.description}`, needle),
   );
   const browserMatches = `${BROWSER_SHORTCUT.label} ${BROWSER_SHORTCUT.description}`
     .toLowerCase()
@@ -130,17 +131,7 @@ export function ShortcutsTab() {
                   >
                     <AnimatePresence initial={false}>
                       {!isDefault && (
-                        <motion.div
-                          key="reset"
-                          layout
-                          initial={reduced ? false : { opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1, transition: springCrisp(reduced) }}
-                          exit={{
-                            opacity: 0,
-                            scale: reduced ? 1 : 0.8,
-                            transition: exitTween(reduced, "fast"),
-                          }}
-                        >
+                        <motion.div key="reset" layout {...pop(reduced)}>
                           <Tooltip content="Reset to default" prose>
                             <Button
                               size="icon"
@@ -184,17 +175,10 @@ export function ShortcutsTab() {
                     {conflict && (
                       <motion.p
                         key="conflict"
-                        initial={reduced ? false : { opacity: 0, y: -4 }}
-                        animate={{
-                          opacity: 1,
-                          y: 0,
-                          transition: enterTween(reduced, "fast", EASE_OUT_STRONG),
-                        }}
-                        exit={{
-                          opacity: 0,
-                          y: reduced ? 0 : -4,
-                          transition: exitTween(reduced, "fast", EASE_OUT_STRONG),
-                        }}
+                        variants={panelVariants(reduced)}
+                        initial="hidden"
+                        animate="show"
+                        exit="exit"
                         className="text-destructive flex items-center gap-1.5 pl-9 text-caption"
                       >
                         <TriangleAlert className="size-3.5 shrink-0" aria-hidden />

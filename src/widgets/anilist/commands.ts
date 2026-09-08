@@ -1,5 +1,5 @@
 import { AnilistServiceIcon } from "@/components/icons/service-icons";
-import { matchesQuery, openResult } from "@/widgets/core/commandResult";
+import { openResult } from "@/widgets/core/commandResult";
 import { useIntegrationStore } from "@/integrations";
 import { formatRelativeTime } from "@/lib/relative-time";
 import type { CommandResult, WidgetCommand } from "@/widgets/core/types";
@@ -27,6 +27,7 @@ import {
   type ListStatus,
   type TitleLanguage,
 } from "@/widgets/anilist/types";
+import { matchesQuery } from "@/lib/utils";
 
 const NOTIFICATIONS_URL = "https://anilist.co/notifications";
 

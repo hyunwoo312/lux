@@ -3,7 +3,7 @@ import { getMetadataLabel } from "@/lib/media-format";
 describe("getMetadataLabel", () => {
   it("names the type and the size, normalizing jpeg to jpg", () => {
     expect(getMetadataLabel("image/jpeg", 2048)).toBe("JPG · 2 KB");
-    expect(getMetadataLabel("image/png", 2 * 1024 * 1024)).toBe("PNG · 2.0 MB");
+    expect(getMetadataLabel("image/png", 2 * 1024 * 1024)).toBe("PNG · 2 MB");
   });
 
   it("keeps whichever half it was given", () => {

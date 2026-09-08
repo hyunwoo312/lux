@@ -9,11 +9,12 @@ import { matchesTeam } from "@/widgets/sports/lib/espn";
 import type { League } from "@/widgets/sports/lib/leagues";
 import type { DayWindow } from "@/widgets/sports/lib/window";
 import type { Match } from "@/widgets/sports/types";
+import { matchesQuery } from "@/lib/utils";
 
 function teamMatchesQuery(match: Match, abbreviation: string, needle: string): boolean {
-  if (abbreviation.toLowerCase().includes(needle)) return true;
+  if (matchesQuery(abbreviation, needle)) return true;
   const side = [match.home, match.away].find((team) => team.abbreviation === abbreviation);
-  return side ? side.name.toLowerCase().includes(needle) : false;
+  return side ? matchesQuery(side.name, needle) : false;
 }
 
 export function FavoriteLeagueSection({
@@ -44,7 +45,7 @@ export function FavoriteLeagueSection({
       : teams.filter((team) =>
           all.some((match) => matchesTeam(match, team) && teamMatchesQuery(match, team, needle))
             ? true
-            : team.toLowerCase().includes(needle),
+            : matchesQuery(team, needle),
         );
 
   if (needle !== "" && shownTeams.length === 0) return null;

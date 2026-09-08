@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createPersistedStore } from "@/lib/storage";
 import { tolerantRecord } from "@/lib/persist";
 import { openBehaviorSchema, type OpenBehavior } from "@/lib/open-url";
+import { clamp } from "@/lib/utils";
 
 export const PALETTE_SOURCES = [
   "bookmarks",
@@ -104,7 +105,7 @@ export const usePaletteStore = createPersistedStore<PaletteState>()(
       }),
     setSuggestionsEnabled: (value) => set({ suggestionsEnabled: value }),
     setSuggestionCount: (value) =>
-      set({ suggestionCount: Math.min(SUGGESTION_MAX, Math.max(SUGGESTION_MIN, value)) }),
+      set({ suggestionCount: clamp(value, SUGGESTION_MIN, SUGGESTION_MAX) }),
     setOpenIn: (value) => set({ openIn: value }),
     clearUsage: () => set({ usage: {} }),
     recordUse: (id, now) =>

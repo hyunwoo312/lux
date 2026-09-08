@@ -1,7 +1,6 @@
 import { DURATION } from "@/lib/motion";
 
 const SPIN_SECONDS = 0.8;
-import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { formatRelativeTime } from "@/lib/relative-time";
 import { cn } from "@/lib/utils";
 import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { syncCooldownMessage, syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
+import { useNow } from "@/hooks/useNow";
 
 type WidgetRefreshButtonProps = {
   syncing: boolean;
@@ -31,17 +31,11 @@ export function WidgetRefreshButton({
   onRefresh,
 }: WidgetRefreshButtonProps) {
   const reduced = useReducedMotion();
-  const [now, setNow] = useState(() => Date.now());
 
+  const coolingDown = syncCooldownRemainingMs(lastSyncAt, cooldownMs, Date.now()) > 0;
+  const now = useNow(coolingDown ? 1000 : 60_000).getTime();
   const remainingMs = syncCooldownRemainingMs(lastSyncAt, cooldownMs, now);
-  const coolingDown = remainingMs > 0;
   const freshAt = (updatedAt ?? lastSyncAt) || undefined;
-
-  useEffect(() => {
-    if (!coolingDown && freshAt === undefined) return;
-    const id = window.setInterval(() => setNow(Date.now()), coolingDown ? 1000 : 60_000);
-    return () => window.clearInterval(id);
-  }, [coolingDown, freshAt]);
 
   const spinning = syncing && !reduced;
   const disabled = syncing || coolingDown;

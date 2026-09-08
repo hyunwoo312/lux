@@ -2,11 +2,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   clearResourceCaches,
-  formatBytes,
   breakdownOf,
   measureLocalStorage,
   totalOf,
 } from "@/lib/storage-usage";
+import { formatBytes } from "@/lib/media-format";
 
 beforeEach(() => {
   localStorage.clear();

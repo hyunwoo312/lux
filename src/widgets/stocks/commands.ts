@@ -9,7 +9,7 @@ import { stocksSparks, stocksTrending, type SparkMap } from "@/widgets/stocks/li
 import { searchSymbols } from "@/widgets/stocks/lib/symbols";
 import { DEFAULT_DATA, useStocksStore } from "@/widgets/stocks/useStocksStore";
 import { DAY_RANGE, type SymbolSearchResult } from "@/widgets/stocks/types";
-import { matchesQuery } from "@/widgets/core/commandResult";
+import { matchesQuery } from "@/lib/utils";
 
 const QUOTE_URL = "https://finance.yahoo.com/quote/";
 

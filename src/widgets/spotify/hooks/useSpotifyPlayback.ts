@@ -38,6 +38,7 @@ import {
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 import { retryDelayMs } from "@/widgets/core/sharedResource";
 import { anySpotifyDevice } from "@/widgets/spotify/lib/devices";
+import { clamp } from "@/lib/utils";
 
 const RESTART_THRESHOLD_MS = 3_000;
 const PLAYING_POLL_MS = 10_000;
@@ -319,7 +320,7 @@ function displayedProgressMs(state: ProgressInputs): number {
   const { playback } = state;
   if (!playback) return 0;
   const elapsed = playback.isPlaying ? state.nowMs - state.playbackSyncedAt : 0;
-  return Math.min(playback.track.durationMs, Math.max(0, playback.progressMs + elapsed));
+  return clamp(playback.progressMs + elapsed, 0, playback.track.durationMs);
 }
 
 export function togglePlayback(): void {
@@ -380,7 +381,7 @@ export function cycleRepeat(): void {
 function changeVolume(volumePercent: number): void {
   const { playback } = get();
   if (!playback) return;
-  const nextVolume = Math.min(100, Math.max(0, Math.round(volumePercent)));
+  const nextVolume = clamp(Math.round(volumePercent), 0, 100);
   isVolumeEditing = true;
   set((state) => ({
     volumeDraft: nextVolume,
@@ -402,7 +403,7 @@ function commitVolume(): void {
 function changeProgress(positionMs: number): void {
   const { playback } = get();
   if (!playback) return;
-  const nextProgress = Math.min(playback.track.durationMs, Math.max(0, Math.round(positionMs)));
+  const nextProgress = clamp(Math.round(positionMs), 0, playback.track.durationMs);
   set((state) => ({
     progressDraftMs: nextProgress,
     playback: state.playback ? { ...state.playback, progressMs: nextProgress } : state.playback,

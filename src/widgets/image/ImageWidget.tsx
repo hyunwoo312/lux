@@ -1,6 +1,6 @@
 import { enterTween, exitTween } from "@/lib/motion";
 import type { ChangeEvent, DragEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { AlertTriangle, ImageIcon } from "lucide-react";
 import { ACCEPTED_IMAGE_TYPES } from "@/lib/asset-store";
@@ -25,7 +25,7 @@ export function ImageWidget({ editing }: WidgetContentProps) {
   const items = useImage((c) => c.items);
   const rotateOnClick = useImage((c) => c.rotateOnClick);
   const advanceImage = useImageStore((s) => s.advanceImage);
-  const { saving, error, setError, handleFiles } = useImageUploads();
+  const { saving, error, handleFiles } = useImageUploads();
   const reduced = useReducedMotion();
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -35,12 +35,6 @@ export function ImageWidget({ editing }: WidgetContentProps) {
   const clickAdvances = mode === "multi" && rotateOnClick && items.length > 1;
   const disabled = editing || saving;
   const addLabel = mode === "multi" ? "Add images" : "Add image";
-
-  useEffect(() => {
-    if (!error) return;
-    const id = window.setTimeout(() => setError(null), 3000);
-    return () => window.clearTimeout(id);
-  }, [error, setError]);
 
   const openPicker = () => {
     if (!editing) inputRef.current?.click();

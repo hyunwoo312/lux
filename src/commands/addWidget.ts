@@ -3,7 +3,7 @@ import { useDashboardStore } from "@/stores/useDashboardStore";
 import { SYSTEM_OWNER, type CommandItem } from "@/commands/items";
 import { widgetPlugins } from "@/widgets/registry";
 import { WIDGET_CATEGORIES, WIDGET_CATEGORY_LABELS } from "@/widgets/core/types";
-import { matchesQuery } from "@/widgets/core/commandResult";
+import { matchesQuery } from "@/lib/utils";
 
 export const addWidgetCommand: CommandItem = {
   id: "action.addWidget",
