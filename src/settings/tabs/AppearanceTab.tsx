@@ -12,6 +12,7 @@ import {
   ConfigSection,
   ConfigBody,
 } from "@/components/config/Config";
+import { DASHBOARD, THEME, WALLPAPER } from "@/settings/rows";
 
 const THEME_OPTIONS = [
   { value: "light", label: "Light" },
@@ -42,10 +43,9 @@ export function AppearanceTab() {
 
   return (
     <ConfigBody>
-      <ConfigSection title="Theme">
+      <ConfigSection title={THEME.title}>
         <ConfigRow
-          title="Light or dark"
-          description="Follow your system setting, or pick one."
+          {...THEME.rows.theme}
           control={
             <ConfigSegmented
               label="Theme"
@@ -61,36 +61,28 @@ export function AppearanceTab() {
             </p>
           )}
         </ConfigRow>
-        <ConfigRow
-          title="Accent"
-          description="The highlight colour used across Lux."
-          control={<AccentPicker />}
-        />
+        <ConfigRow {...THEME.rows.accent} control={<AccentPicker />} />
       </ConfigSection>
 
-      <ConfigSection title="Wallpaper">
+      <ConfigSection title={WALLPAPER.title}>
         <WallpaperSetting />
       </ConfigSection>
 
-      <ConfigSection title="Dashboard">
+      <ConfigSection title={DASHBOARD.title}>
         <ConfigRow
-          title="Grid lines"
-          description="Always show the dashboard grid, not only while editing."
+          {...DASHBOARD.rows.gridLines}
           control={<Switch checked={showGridLines} onCheckedChange={setShowGridLines} />}
         />
         <ConfigRow
-          title="Clock"
-          description="Show the time in the header."
+          {...DASHBOARD.rows.clock}
           control={<Switch checked={showClock} onCheckedChange={setShowClock} />}
         />
         <ConfigRow
-          title="24-hour time"
-          description="Use a 24-hour clock instead of AM/PM."
+          {...DASHBOARD.rows.clock24h}
           control={<Switch checked={clock24h} onCheckedChange={setClock24h} />}
         />
         <ConfigRow
-          title="Date under the clock"
-          description="Add the weekday, the date, or both."
+          {...DASHBOARD.rows.clockDate}
           control={
             <ConfigSelect
               label="Date under the clock"

@@ -14,9 +14,7 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import { showToast } from "@/stores/useToastStore";
 import { clearWallpaperAssets, useWallpaperStore } from "@/stores/useWallpaperStore";
 import { ConfigRow, ConfigSection, ConfigBody } from "@/components/config/Config";
-
-const RESET_DESCRIPTION =
-  "Clears theme, accent, shortcuts, palette preferences and background images, and shows the welcome again. Widgets, their content and your accounts are kept.";
+import { BACKUP, START_OVER } from "@/settings/rows";
 
 async function resetAllSettings() {
   useShortcutsStore.getState().resetAll();
@@ -64,10 +62,9 @@ export function StorageTab() {
     <ConfigBody>
       <StorageSection />
 
-      <ConfigSection title="Backup & restore">
+      <ConfigSection title={BACKUP.title}>
         <ConfigRow
-          title="Your whole setup, in one file"
-          description="Widgets, layout, preferences and shortcuts. Accounts are not included."
+          {...BACKUP.rows.file}
           control={
             pendingImport ? (
               <div className="flex items-center gap-2">
@@ -106,10 +103,9 @@ export function StorageTab() {
         </ConfigRow>
       </ConfigSection>
 
-      <ConfigSection title="Start over">
+      <ConfigSection title={START_OVER.title}>
         <ConfigRow
-          title="Reset all settings"
-          description={RESET_DESCRIPTION}
+          {...START_OVER.rows.reset}
           control={
             <Button variant="ghost-destructive" onClick={() => setConfirmReset(true)}>
               Reset
@@ -122,7 +118,7 @@ export function StorageTab() {
         open={confirmReset}
         onOpenChange={setConfirmReset}
         title="Reset all settings?"
-        description={RESET_DESCRIPTION}
+        description={START_OVER.rows.reset.description}
         confirmLabel="Reset all"
         onConfirm={() => void resetAllSettings()}
       />

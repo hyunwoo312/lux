@@ -74,8 +74,8 @@ export const SHORTCUT_DEFINITIONS = [
   },
   {
     id: "toggleGridLines",
-    label: "Grid lines",
-    description: "Toggle the dashboard grid overlay",
+    label: "Toggle grid lines",
+    description: "Show or hide the dashboard grid overlay",
     icon: Grid3x3,
     defaults: [ctrl("g")],
   },

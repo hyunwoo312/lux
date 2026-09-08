@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { GALLERY_WALLPAPERS } from "@/lib/wallpaper-gallery";
 import { ConfigRow } from "@/components/config/Config";
 import { MAX_WALLPAPER_IMAGES, useWallpaperStore } from "@/stores/useWallpaperStore";
+import { WALLPAPER } from "@/settings/rows";
 
 const BADGE =
   "bg-primary text-primary-foreground absolute top-1 right-1 grid size-4 place-items-center rounded-full";
@@ -24,7 +25,7 @@ export function WallpaperGalleryPanel() {
   const isMulti = mode === "multi";
   const selected = isMulti ? galleryItems : gallerySingle ? [gallerySingle] : [];
   const atCap = isMulti && galleryItems.length >= MAX_WALLPAPER_IMAGES;
-  const title = isMulti ? "Wallpapers" : "Wallpaper";
+  const title = isMulti ? "Wallpapers" : WALLPAPER.rows.gallery.title;
   const roving = useRovingFocus({
     count: GALLERY_WALLPAPERS.length,
     activeIndex: isMulti
@@ -58,7 +59,9 @@ export function WallpaperGalleryPanel() {
   return (
     <ConfigRow
       title={title}
-      description={isMulti ? "Numbers show the order they rotate in" : "Pick one"}
+      description={
+        isMulti ? "Numbers show the order they rotate in" : WALLPAPER.rows.gallery.description
+      }
     >
       <div
         role={isMulti ? "group" : "radiogroup"}

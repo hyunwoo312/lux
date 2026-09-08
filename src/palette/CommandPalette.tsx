@@ -1,15 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import type { KeyboardEvent } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Search } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
+import { useComboboxCursor } from "@/hooks/useComboboxCursor";
 import { useTransientScrollbar } from "@/hooks/useTransientScrollbar";
 import { fade } from "@/lib/motion";
 import { recordPaletteUse } from "@/stores/usePaletteStore";
 import { useToastStore } from "@/stores/useToastStore";
 import { PaletteFooter } from "@/palette/PaletteFooter";
-import { LISTBOX_ID, entryId } from "@/palette/ids";
 import { PaletteResults } from "@/palette/PaletteResults";
 import { useCommandPaletteStore } from "@/palette/useCommandPaletteStore";
 
@@ -21,12 +21,10 @@ export function CommandPalette() {
   const query = useCommandPaletteStore((state) => state.query);
   const mode = useCommandPaletteStore((state) => state.mode);
   const { closePalette, setQuery, enterScope, leaveScope } = useCommandPaletteStore.getState();
-  const [selected, setSelected] = useState(0);
   const scroll = useTransientScrollbar<HTMLDivElement>();
   const reduced = useReducedMotion();
 
   const { groups, entries, working, emptyMessage } = usePaletteEntries(mode, query, open);
-  const active = Math.min(selected, Math.max(entries.length - 1, 0));
 
   const runCommand = (run: () => void | Promise<void>) => {
     Promise.resolve()
@@ -54,37 +52,26 @@ export function CommandPalette() {
     if (entry.item.section !== "links") recordPaletteUse(entry.item.id);
     if (entry.item.effect === "scope") {
       enterScope(entry.item);
-      setSelected(0);
       return;
     }
     runCommand(entry.item.run);
   };
 
+  const cursor = useComboboxCursor(entries, { enabled: entries.length > 0, onPick: activate });
+  const { active } = cursor;
+
   useEffect(() => {
-    const list = scroll.ref.current;
-    if (!list) return;
-    if (active === 0) list.scrollTo({ top: 0 });
-    else list.querySelector(`#${entryId(active)}`)?.scrollIntoView({ block: "nearest" });
-  }, [active, scroll.ref]);
+    scroll.ref.current?.scrollTo({ top: 0 });
+  }, [query, mode, scroll.ref]);
 
   const ContextIcon = mode.kind === "scope" ? mode.command.icon : Search;
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      setSelected((current) => (entries.length === 0 ? 0 : (current + 1) % entries.length));
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault();
-      setSelected((current) =>
-        entries.length === 0 ? 0 : (current - 1 + entries.length) % entries.length,
-      );
-    } else if (event.key === "Enter") {
-      event.preventDefault();
-      activate(entries[active]);
-    } else if (event.key === "Backspace" && query === "" && mode.kind === "scope") {
+    cursor.onInputKeyDown(event);
+    if (event.defaultPrevented) return;
+    if (event.key === "Backspace" && query === "" && mode.kind === "scope") {
       event.preventDefault();
       leaveScope();
-      setSelected(0);
     }
   };
 
@@ -127,18 +114,15 @@ export function CommandPalette() {
           <input
             autoFocus
             value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setSelected(0);
-            }}
+            onChange={(event) => setQuery(event.target.value)}
             onKeyDown={onKeyDown}
             role="combobox"
             aria-label="Command palette"
-            aria-controls={LISTBOX_ID}
+            aria-controls={cursor.listboxId}
             aria-expanded={entries.length > 0}
             aria-autocomplete="list"
             aria-describedby={COUNT_ID}
-            aria-activedescendant={entries.length > 0 ? entryId(active) : undefined}
+            aria-activedescendant={entries.length > 0 ? cursor.optionId(active) : undefined}
             placeholder={
               mode.kind === "scope" ? mode.command.placeholder : "Type a command or search…"
             }
@@ -164,9 +148,11 @@ export function CommandPalette() {
               <PaletteResults
                 groups={groups}
                 emptyMessage={emptyMessage}
+                listboxId={cursor.listboxId}
+                optionId={cursor.optionId}
                 active={active}
                 onActivate={activate}
-                onHover={setSelected}
+                onHover={cursor.setActive}
               />
             </motion.div>
           </AnimatePresence>

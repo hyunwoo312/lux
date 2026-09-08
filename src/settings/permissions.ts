@@ -1,16 +1,6 @@
 import type { ComponentType } from "react";
-import {
-  AppWindow,
-  Bookmark,
-  Clock,
-  Database,
-  HardDrive,
-  History,
-  ImageIcon,
-  KeyRound,
-  LayoutGrid,
-  Search,
-} from "lucide-react";
+import { Clock, Database, HardDrive, ImageIcon, KeyRound } from "lucide-react";
+import { PALETTE_SOURCE_META } from "@/stores/usePaletteStore";
 
 export type PermissionItem = {
   id: chrome.runtime.ManifestPermission;
@@ -28,7 +18,7 @@ export const PERMISSIONS: PermissionItem[] = [
     name: "Bookmarks",
     description: "Browse and search your bookmarks in Quick Access and the command palette.",
     usedBy: "Quick Access, command palette",
-    icon: Bookmark,
+    icon: PALETTE_SOURCE_META.bookmarks.icon,
     required: false,
   },
   {
@@ -36,7 +26,7 @@ export const PERMISSIONS: PermissionItem[] = [
     name: "Browsing history",
     description: "Suggests recently visited sites in Quick Access and the command palette.",
     usedBy: "Quick Access, command palette",
-    icon: History,
+    icon: PALETTE_SOURCE_META.history.icon,
     required: false,
   },
   {
@@ -55,7 +45,7 @@ export const PERMISSIONS: PermissionItem[] = [
     description:
       "Lists your open tabs in Quick Access and the command palette so you can switch to, close or mute one. Lux never injects into a tab or follows what you browse. Changing this reloads the page.",
     usedBy: "Quick Access, command palette",
-    icon: AppWindow,
+    icon: PALETTE_SOURCE_META.openTabs.icon,
     required: false,
   },
   {
@@ -63,7 +53,7 @@ export const PERMISSIONS: PermissionItem[] = [
     name: "Top sites",
     description: "Shows your most-visited sites in Quick Access and the command palette.",
     usedBy: "Quick Access, command palette",
-    icon: LayoutGrid,
+    icon: PALETTE_SOURCE_META.topSites.icon,
     required: false,
   },
   {
@@ -97,7 +87,7 @@ export const PERMISSIONS: PermissionItem[] = [
     description:
       "Sends a trending topic, or a “Search for …” query from the palette, to the search engine you already use, not a fixed one.",
     usedBy: "News, command palette",
-    icon: Search,
+    icon: PALETTE_SOURCE_META.webSearch.icon,
     required: true,
   },
   {

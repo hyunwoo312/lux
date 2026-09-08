@@ -5,6 +5,7 @@ type CursorOptions<T> = {
   enabled: boolean;
   onPick: (item: T) => void;
   isDisabled?: (item: T) => boolean;
+  startInactive?: boolean;
 };
 
 type ComboboxCursor = {
@@ -17,10 +18,10 @@ type ComboboxCursor = {
 
 export function useComboboxCursor<T>(
   items: T[],
-  { enabled, onPick, isDisabled }: CursorOptions<T>,
+  { enabled, onPick, isDisabled, startInactive = false }: CursorOptions<T>,
 ): ComboboxCursor {
   const baseId = useId();
-  const [active, setActive] = useState(0);
+  const [active, setActive] = useState(startInactive ? -1 : 0);
   const disabledRef = useRef(isDisabled);
 
   useEffect(() => {
@@ -30,12 +31,14 @@ export function useComboboxCursor<T>(
   useEffect(() => {
     const disabled = disabledRef.current;
     setActive(
-      Math.max(
-        0,
-        items.findIndex((item) => !disabled?.(item)),
-      ),
+      startInactive
+        ? -1
+        : Math.max(
+            0,
+            items.findIndex((item) => !disabled?.(item)),
+          ),
     );
-  }, [items]);
+  }, [items, startInactive]);
 
   const optionId = (index: number) => `${baseId}-opt-${index}`;
 
@@ -45,7 +48,7 @@ export function useComboboxCursor<T>(
   };
 
   const step = (direction: 1 | -1) => {
-    let index = active;
+    let index = active < 0 && direction < 0 ? 0 : active;
     for (let taken = 0; taken < items.length; taken += 1) {
       index = (index + direction + items.length) % items.length;
       const item = items[index];
@@ -68,9 +71,10 @@ export function useComboboxCursor<T>(
         step(-1);
         return;
       case "Enter": {
-        event.preventDefault();
         const item = items[active];
-        if (item !== undefined && !isDisabled?.(item)) onPick(item);
+        if (item === undefined || isDisabled?.(item)) return;
+        event.preventDefault();
+        onPick(item);
         return;
       }
     }

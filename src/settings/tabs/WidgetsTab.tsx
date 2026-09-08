@@ -1,15 +1,16 @@
 import { SurfaceDefault } from "@/settings/components/SurfaceDefault";
 import { RefreshDefaults } from "@/settings/components/RefreshDefaults";
 import { ConfigSection, ConfigBody } from "@/components/config/Config";
+import { REFRESH, WIDGET_DEFAULTS } from "@/settings/rows";
 
 export function WidgetsTab() {
   return (
     <ConfigBody>
-      <ConfigSection title="Defaults for every widget">
+      <ConfigSection title={WIDGET_DEFAULTS.title}>
         <SurfaceDefault />
       </ConfigSection>
 
-      <ConfigSection title="Refresh and data">
+      <ConfigSection title={REFRESH.title}>
         <RefreshDefaults />
       </ConfigSection>
 

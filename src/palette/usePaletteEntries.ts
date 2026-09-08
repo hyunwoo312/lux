@@ -62,13 +62,17 @@ export function usePaletteEntries(mode: PaletteMode, query: string, open = true)
     [open, mode.kind, query],
   );
 
-  const groups = !open
-    ? EMPTY_GROUPS
-    : mode.kind === "root"
-      ? rootGroups(query, [...items, ...searchResults(links)])
-      : scopeGroups(searchResults(scope), mode.command.icon);
+  const groups = useMemo(
+    () =>
+      !open
+        ? EMPTY_GROUPS
+        : mode.kind === "root"
+          ? rootGroups(query, [...items, ...searchResults(links)])
+          : scopeGroups(searchResults(scope), mode.command.icon),
+    [open, mode, query, items, links, scope],
+  );
 
-  const entries = groups.flatMap((group) => group.entries);
+  const entries = useMemo(() => groups.flatMap((group) => group.entries), [groups]);
 
   return {
     groups,

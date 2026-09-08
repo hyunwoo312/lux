@@ -14,6 +14,7 @@ import {
 } from "@/lib/storage-usage";
 import { ConfigSection } from "@/components/config/Config";
 import { formatBytes } from "@/lib/media-format";
+import { STORING } from "@/settings/rows";
 
 const SEGMENT_TONES = ["bg-primary", "bg-primary/60", "bg-primary/35", "bg-primary/20"];
 
@@ -98,7 +99,7 @@ export function StorageSection() {
 
   return (
     <ConfigSection
-      title="What Lux is storing"
+      title={STORING.title}
       action={
         usage && (
           <Button variant="outline" onClick={clearCache} disabled={!usage.localCacheBytes}>

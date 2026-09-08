@@ -1,4 +1,3 @@
-import { Bookmark, History, PanelTop, TrendingUp } from "lucide-react";
 import {
   fetchOpenTabs,
   fetchTopSites,
@@ -11,25 +10,29 @@ import { faviconUrl } from "@/lib/favicon";
 import { openUrl } from "@/lib/open-url";
 import { getGrantedPermissions, setPermissionsGranted } from "@/lib/permissions";
 import { formatRelativeTime } from "@/lib/relative-time";
-import { isSourceEnabled, paletteOpenBehavior, type PaletteSource } from "@/stores/usePaletteStore";
+import {
+  isSourceEnabled,
+  PALETTE_SOURCE_META,
+  paletteOpenBehavior,
+  type PaletteSource,
+} from "@/stores/usePaletteStore";
 import { SYSTEM_OWNER, type CommandItem } from "@/commands/items";
 import { address } from "@/commands/links";
-import type { CommandResult, WidgetIcon } from "@/widgets/core/types";
+import type { CommandResult } from "@/widgets/core/types";
 import { matchesQuery } from "@/lib/utils";
 
 const RESULT_LIMIT = 30;
 
-function allowed(permission: chrome.runtime.ManifestPermission): boolean {
-  return getGrantedPermissions()?.has(permission) ?? false;
+function allowed(source: PaletteSource): boolean {
+  const { permission } = PALETTE_SOURCE_META[source];
+  return permission === undefined || (getGrantedPermissions()?.has(permission) ?? false);
 }
 
 type BrowserScope = {
   source: PaletteSource;
-  permission: chrome.runtime.ManifestPermission;
   id: string;
   label: string;
   description: string;
-  icon: WidgetIcon;
   keywords: readonly string[];
   placeholder: string;
   section: string;
@@ -41,11 +44,9 @@ type BrowserScope = {
 const SCOPES: readonly BrowserScope[] = [
   {
     source: "bookmarks",
-    permission: "bookmarks",
     id: "browser.bookmarks",
     label: "Search bookmarks",
     description: "Find a page you have saved",
-    icon: Bookmark,
     keywords: ["bookmark", "saved", "favourite", "favorite"],
     placeholder: "Search bookmarks",
     section: "Bookmarks",
@@ -54,11 +55,9 @@ const SCOPES: readonly BrowserScope[] = [
   },
   {
     source: "history",
-    permission: "history",
     id: "browser.history",
     label: "Browse history",
     description: "Find a page you visited before",
-    icon: History,
     keywords: ["history", "visited", "recent", "again"],
     placeholder: "Search history",
     section: "History",
@@ -71,11 +70,9 @@ const SCOPES: readonly BrowserScope[] = [
   },
   {
     source: "openTabs",
-    permission: "tabs",
     id: "browser.tabs",
     label: "Switch tab",
     description: "Jump to a tab you already have open",
-    icon: PanelTop,
     keywords: ["tab", "switch", "window", "open"],
     placeholder: "Search open tabs",
     section: "Open tabs",
@@ -85,11 +82,9 @@ const SCOPES: readonly BrowserScope[] = [
   },
   {
     source: "topSites",
-    permission: "topSites",
     id: "browser.topSites",
     label: "Top sites",
     description: "Open one of the sites you visit most",
-    icon: TrendingUp,
     keywords: ["top", "frequent", "most visited", "popular"],
     placeholder: "Search top sites",
     section: "Most visited",
@@ -106,7 +101,7 @@ function itemRow(item: BrowserItem, scope: BrowserScope): CommandResult {
     detail: address(url),
     meta: scope.meta?.(item),
     section: scope.section,
-    icon: scope.icon,
+    icon: PALETTE_SOURCE_META[scope.source].icon,
     artworkUrl: faviconUrl(url) ?? undefined,
     run:
       tabId !== undefined && windowId !== undefined
@@ -121,13 +116,16 @@ function toCommand(scope: BrowserScope): CommandItem {
     section: "commands",
     label: scope.label,
     meta: SYSTEM_OWNER,
-    icon: scope.icon,
+    icon: PALETTE_SOURCE_META[scope.source].icon,
     keywords: [...scope.keywords, scope.description],
-    setup: allowed(scope.permission)
+    setup: allowed(scope.source)
       ? null
       : {
           reason: "Allow access",
-          run: () => void setPermissionsGranted([scope.permission], true),
+          run: () => {
+            const { permission } = PALETTE_SOURCE_META[scope.source];
+            if (permission) void setPermissionsGranted([permission], true);
+          },
         },
     effect: "scope",
     placeholder: scope.placeholder,
@@ -135,7 +133,7 @@ function toCommand(scope: BrowserScope): CommandItem {
       query === "" ? `Type to search ${scope.subject}.` : `Nothing matched “${query}”.`,
     search: async (query) => {
       const needle = query.trim();
-      const items = await scope.load(needle).catch((): BrowserItem[] => []);
+      const items = await scope.load(needle);
       return items
         .filter((item) => matchesQuery(`${item.title} ${item.url}`, needle))
         .slice(0, RESULT_LIMIT)

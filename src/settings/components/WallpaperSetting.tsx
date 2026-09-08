@@ -13,6 +13,7 @@ import {
   type WallpaperSource,
 } from "@/stores/useWallpaperStore";
 import { ConfigSegmented, ConfigRow } from "@/components/config/Config";
+import { WALLPAPER } from "@/settings/rows";
 
 const SOURCE_OPTIONS: { value: WallpaperSource; label: string }[] = [
   { value: "generated", label: "Patterns" },
@@ -27,8 +28,7 @@ export function WallpaperSetting() {
   return (
     <div className="flex flex-col gap-4">
       <ConfigRow
-        title="Type"
-        description="A pattern Lux draws, one of ours, or an image of your own"
+        {...WALLPAPER.rows.type}
         control={
           <ConfigSegmented
             label="Wallpaper type"
@@ -72,11 +72,11 @@ function CustomUploadPanel() {
   const uploadDescription = isMulti
     ? `${items.length} / ${MAX_WALLPAPER_IMAGES} images · up to 10 MB each`
     : (single && getMetadataLabel(single.mimeType, single.size)) ||
-      "PNG, JPG, WebP, or GIF up to 10 MB";
+      WALLPAPER.rows.image.description;
 
   return (
     <ConfigRow
-      title={isMulti ? "Images" : "Image"}
+      title={isMulti ? "Images" : WALLPAPER.rows.image.title}
       control={
         hasImages ? (
           <ClearImagesButton

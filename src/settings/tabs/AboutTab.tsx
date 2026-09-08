@@ -26,6 +26,7 @@ import { ConfigSection } from "@/components/config/Config";
 import { useGithubStars } from "@/settings/useGithubStars";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { LuxMark } from "@/components/LuxMark";
+import { PRIVACY } from "@/settings/rows";
 
 const DESCRIPTION =
   "A customizable new tab dashboard — widgets and quick access to the sites you visit most.";
@@ -163,7 +164,7 @@ export function AboutTab() {
 
       <motion.div variants={item}>
         <ConfigSection
-          title="Privacy"
+          title={PRIVACY.title}
           action={
             <a
               href={PRIVACY_URL}

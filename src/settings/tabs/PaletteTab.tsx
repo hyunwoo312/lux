@@ -11,26 +11,19 @@ import { OPEN_BEHAVIOR_OPTIONS } from "@/lib/open-url";
 import { SliderField } from "@/settings/components/SliderField";
 import {
   PALETTE_SOURCES,
-  PALETTE_SOURCE_LABELS,
+  PALETTE_SOURCE_META,
   SUGGESTION_MAX,
   SUGGESTION_MIN,
   usePaletteStore,
   type PaletteSource,
 } from "@/stores/usePaletteStore";
 import { ConfigSegmented, ConfigRow, ConfigSection, ConfigBody } from "@/components/config/Config";
-
-type SourceMeta = {
-  description: string;
-  permission?: chrome.runtime.ManifestPermission;
-};
-
-const SOURCE_META: Record<PaletteSource, SourceMeta> = {
-  bookmarks: { description: "Search the bookmarks you have saved.", permission: "bookmarks" },
-  history: { description: "Offer pages you have visited before.", permission: "history" },
-  openTabs: { description: "Switch to a tab you already have open.", permission: "tabs" },
-  topSites: { description: "Offer the sites you visit most.", permission: "topSites" },
-  webSearch: { description: "Send what you typed to your search engine, Claude or ChatGPT." },
-};
+import {
+  PALETTE_COMMANDS,
+  PALETTE_RESULTS,
+  PALETTE_SOURCES_SECTION,
+  PALETTE_SUGGESTIONS,
+} from "@/settings/rows";
 
 export function PaletteTab() {
   const enabled = usePaletteStore(useShallow((s) => s.enabled));
@@ -49,7 +42,7 @@ export function PaletteTab() {
   const manageable = isPermissionsManageable();
 
   const isGranted = (source: PaletteSource) => {
-    const permission = SOURCE_META[source].permission;
+    const permission = PALETTE_SOURCE_META[source].permission;
     return permission === undefined || (granted !== null && granted.has(permission));
   };
   const missing = PALETTE_SOURCES.filter((source) => enabled[source] && !isGranted(source));
@@ -72,10 +65,9 @@ export function PaletteTab() {
         </p>
       )}
 
-      <ConfigSection title="Suggestions">
+      <ConfigSection title={PALETTE_SUGGESTIONS.title}>
         <ConfigRow
-          title="Suggested commands"
-          description="Puts what you reach for most at the top, before everything else"
+          {...PALETTE_SUGGESTIONS.rows.suggested}
           control={
             <Switch
               checked={suggestionsEnabled}
@@ -86,8 +78,7 @@ export function PaletteTab() {
         />
         {suggestionsEnabled && (
           <ConfigRow
-            title="How many to show"
-            description="At the top of the palette before anything else"
+            {...PALETTE_SUGGESTIONS.rows.count}
             control={
               <SliderField
                 hideLabel
@@ -104,7 +95,7 @@ export function PaletteTab() {
           />
         )}
         <ConfigRow
-          title="Learned ranking"
+          {...PALETTE_SUGGESTIONS.rows.learned}
           description={
             usageCount === 0
               ? "Nothing learned yet"
@@ -119,10 +110,9 @@ export function PaletteTab() {
         />
       </ConfigSection>
 
-      <ConfigSection title="Results">
+      <ConfigSection title={PALETTE_RESULTS.title}>
         <ConfigRow
-          title="Where results open"
-          description="Whether picking a link or a search replaces this tab"
+          {...PALETTE_RESULTS.rows.openIn}
           control={
             <ConfigSegmented
               label="Where results open"
@@ -134,15 +124,15 @@ export function PaletteTab() {
         />
       </ConfigSection>
 
-      <ConfigSection title="Browser data and search">
+      <ConfigSection title={PALETTE_SOURCES_SECTION.title}>
         {PALETTE_SOURCES.map((source) => {
-          const meta = SOURCE_META[source];
+          const meta = PALETTE_SOURCE_META[source];
           const permission = meta.permission;
           const needsGrant = enabled[source] && !isGranted(source);
           return (
             <ConfigRow
               key={source}
-              title={PALETTE_SOURCE_LABELS[source]}
+              title={meta.label}
               description={meta.description}
               control={
                 <div className="flex items-center gap-2">
@@ -151,7 +141,7 @@ export function PaletteTab() {
                       size="xs"
                       variant="outline"
                       disabled={!manageable}
-                      aria-label={`Allow ${PALETTE_SOURCE_LABELS[source]}`}
+                      aria-label={`Allow ${meta.label}`}
                       onClick={() =>
                         void setPermissionsGranted([permission], true, { reopenSettings: true })
                       }
@@ -161,7 +151,7 @@ export function PaletteTab() {
                   )}
                   <Switch
                     checked={enabled[source]}
-                    aria-label={PALETTE_SOURCE_LABELS[source]}
+                    aria-label={meta.label}
                     onCheckedChange={(value) => setSourceEnabled(source, value)}
                   />
                 </div>
@@ -171,10 +161,8 @@ export function PaletteTab() {
         })}
       </ConfigSection>
 
-      <ConfigSection title="Commands">
-        <p className="text-ink-2 text-caption">
-          Everything the palette can offer. Uncheck what you would rather it never showed.
-        </p>
+      <ConfigSection title={PALETTE_COMMANDS.title}>
+        <p className="text-ink-2 text-caption">{PALETTE_COMMANDS.description}</p>
         {commandCatalogue().map((group) => {
           const ids = group.commands.map((command) => command.id);
           const on = ids.filter((id) => disabled[id] !== true).length;

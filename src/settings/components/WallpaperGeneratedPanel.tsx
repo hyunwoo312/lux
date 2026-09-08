@@ -8,6 +8,7 @@ import {
   type GeneratedStyle,
 } from "@/stores/useWallpaperStore";
 import { ConfigSegmented, ConfigRow } from "@/components/config/Config";
+import { WALLPAPER } from "@/settings/rows";
 
 const STYLE_OPTIONS: { value: GeneratedStyle; label: string }[] = [
   { value: "mesh", label: "Mesh" },
@@ -33,8 +34,7 @@ export function WallpaperGeneratedPanel() {
   return (
     <>
       <ConfigRow
-        title="Style"
-        description="Drawn by Lux, so it always matches your theme"
+        {...WALLPAPER.rows.style}
         control={
           <ConfigSegmented
             label="Wallpaper style"
@@ -45,8 +45,8 @@ export function WallpaperGeneratedPanel() {
         }
       />
       <ConfigRow
-        title="Motion"
-        description={isStill ? "Still has no motion" : "Slow drift, paused when the tab is hidden"}
+        {...WALLPAPER.rows.motion}
+        description={isStill ? "Still has no motion" : WALLPAPER.rows.motion.description}
         control={
           <Switch
             checked={motion && !isStill}
@@ -57,8 +57,7 @@ export function WallpaperGeneratedPanel() {
         }
       />
       <ConfigRow
-        title="Intensity"
-        description="How strong the pattern reads"
+        {...WALLPAPER.rows.intensity}
         control={
           <SliderField
             label="Pattern intensity"
@@ -75,8 +74,7 @@ export function WallpaperGeneratedPanel() {
       />
       {style === "aurora" && (
         <ConfigRow
-          title="Speed"
-          description="How quickly the bands travel"
+          {...WALLPAPER.rows.speed}
           control={
             <SliderField
               label="Aurora speed"
@@ -94,8 +92,7 @@ export function WallpaperGeneratedPanel() {
       )}
       {style === "mesh" && (
         <ConfigRow
-          title="Shapes"
-          description="How many polygons the mesh draws"
+          {...WALLPAPER.rows.shapes}
           control={
             <SliderField
               label="Shape count"

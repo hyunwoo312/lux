@@ -8,6 +8,7 @@ import { isPermissionsManageable, setPermissionsGranted } from "@/lib/permission
 import { ConfigSection } from "@/components/config/Config";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { TYPE } from "@/lib/type";
+import { PERMISSION_LIST } from "@/settings/rows";
 
 function permissionsOf(item: PermissionItem): chrome.runtime.ManifestPermission[] {
   return [item.id, ...(item.alsoNeeds ?? [])];
@@ -36,7 +37,7 @@ export function PermissionsSection() {
   };
 
   return (
-    <ConfigSection title="Permissions">
+    <ConfigSection title={PERMISSION_LIST.title}>
       {!available && (
         <p className="text-ink-3 text-caption">
           Permission controls are available once Lux is installed as an extension.

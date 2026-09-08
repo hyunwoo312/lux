@@ -9,6 +9,7 @@ import {
   type WallpaperOrder,
 } from "@/stores/useWallpaperStore";
 import { ConfigSegmented, ConfigSelect, ConfigSubRow, ConfigRow } from "@/components/config/Config";
+import { WALLPAPER } from "@/settings/rows";
 
 const MODE_OPTIONS: { value: WallpaperMode; label: string }[] = [
   { value: "single", label: "Single" },
@@ -50,8 +51,7 @@ export function WallpaperImageOptions() {
   return (
     <>
       <ConfigRow
-        title="Mode"
-        description="One wallpaper or a rotating set"
+        {...WALLPAPER.rows.mode}
         control={
           <ConfigSegmented
             label="Wallpaper mode"
@@ -63,8 +63,7 @@ export function WallpaperImageOptions() {
       />
 
       <ConfigSubRow
-        title="Change on new tab"
-        description="A different one each time you open a tab"
+        {...WALLPAPER.rows.newTab}
         disabled={isSingle}
         control={
           <Switch
@@ -76,8 +75,7 @@ export function WallpaperImageOptions() {
         }
       />
       <ConfigSubRow
-        title="Change on a timer"
-        description="Rotate automatically while the tab stays open"
+        {...WALLPAPER.rows.timer}
         disabled={isSingle}
         control={
           <Switch
@@ -89,8 +87,7 @@ export function WallpaperImageOptions() {
         }
       />
       <ConfigSubRow
-        title="Interval"
-        description="How often it changes"
+        {...WALLPAPER.rows.interval}
         disabled={isSingle || !rotateTimed}
         control={
           <ConfigSelect
@@ -103,8 +100,7 @@ export function WallpaperImageOptions() {
         }
       />
       <ConfigSubRow
-        title="Order"
-        description="Shuffle or sequential"
+        {...WALLPAPER.rows.order}
         disabled={isSingle}
         control={
           <ConfigSegmented
@@ -118,8 +114,7 @@ export function WallpaperImageOptions() {
       />
 
       <ConfigRow
-        title="Fit"
-        description="How the image fills the screen"
+        {...WALLPAPER.rows.fit}
         control={
           <ConfigSelect label="Wallpaper fit" value={fit} options={FIT_OPTIONS} onChange={setFit} />
         }
@@ -137,7 +132,7 @@ export function WallpaperOverlay({ showBlur = false }: { showBlur?: boolean }) {
   const setBlur = useWallpaperStore((s) => s.setBlur);
 
   return (
-    <ConfigRow title="Overlay" description="Darken or blur for legibility">
+    <ConfigRow {...WALLPAPER.rows.overlay}>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <SliderField
           label="Dim"

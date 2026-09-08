@@ -1,3 +1,5 @@
+import type { ComponentType } from "react";
+import { AppWindow, Bookmark, History, LayoutGrid, Search } from "lucide-react";
 import { z } from "zod";
 import { createPersistedStore } from "@/lib/storage";
 import { tolerantRecord } from "@/lib/persist";
@@ -14,12 +16,43 @@ export const PALETTE_SOURCES = [
 
 export type PaletteSource = (typeof PALETTE_SOURCES)[number];
 
-export const PALETTE_SOURCE_LABELS: Record<PaletteSource, string> = {
-  bookmarks: "Bookmarks",
-  history: "Browsing history",
-  openTabs: "Open tabs",
-  topSites: "Top sites",
-  webSearch: "Web search",
+type PaletteSourceMeta = {
+  label: string;
+  description: string;
+  icon: ComponentType<{ className?: string }>;
+  permission?: chrome.runtime.ManifestPermission;
+};
+
+export const PALETTE_SOURCE_META: Record<PaletteSource, PaletteSourceMeta> = {
+  bookmarks: {
+    label: "Bookmarks",
+    description: "Search the bookmarks you have saved.",
+    icon: Bookmark,
+    permission: "bookmarks",
+  },
+  history: {
+    label: "Browsing history",
+    description: "Offer pages you have visited before.",
+    icon: History,
+    permission: "history",
+  },
+  openTabs: {
+    label: "Open tabs",
+    description: "Switch to a tab you already have open.",
+    icon: AppWindow,
+    permission: "tabs",
+  },
+  topSites: {
+    label: "Top sites",
+    description: "Offer the sites you visit most.",
+    icon: LayoutGrid,
+    permission: "topSites",
+  },
+  webSearch: {
+    label: "Web search",
+    description: "Send what you typed to your search engine, Claude or ChatGPT.",
+    icon: Search,
+  },
 };
 
 export const SUGGESTION_MIN = 5;

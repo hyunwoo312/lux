@@ -19,11 +19,7 @@ import { AddShortcutControl, ShortcutDisplay } from "@/settings/tabs/ShortcutRow
 import { Kbd } from "@/components/Kbd";
 import { ConfigSection, ConfigBody } from "@/components/config/Config";
 import { matchesQuery } from "@/lib/utils";
-
-const BROWSER_SHORTCUT = {
-  label: "Open the command palette",
-  description: "Works from any tab; rebind it in Chrome",
-} as const;
+import { BROWSER_SHORTCUT, SHORTCUTS } from "@/settings/rows";
 
 function openBrowserShortcuts(): void {
   if (typeof chrome === "undefined" || !chrome.tabs) return;
@@ -60,20 +56,21 @@ export function ShortcutsTab() {
   const visibleShortcuts = SHORTCUT_DEFINITIONS.filter((action) =>
     matchesQuery(`${action.label} ${action.description}`, needle),
   );
-  const browserMatches = `${BROWSER_SHORTCUT.label} ${BROWSER_SHORTCUT.description}`
-    .toLowerCase()
-    .includes(needle);
+  const browserMatches =
+    `${BROWSER_SHORTCUT.rows.palette.title} ${BROWSER_SHORTCUT.rows.palette.description}`
+      .toLowerCase()
+      .includes(needle);
 
   return (
     <ConfigBody>
       <SearchField value={query} onChange={setQuery} label="Search shortcuts" />
 
       {browserMatches && (
-        <ConfigSection title="Browser shortcut">
+        <ConfigSection title={BROWSER_SHORTCUT.title}>
           <CustomizeRow
             icon={<Search className="text-ink-3 size-6 shrink-0" />}
-            name={BROWSER_SHORTCUT.label}
-            description={BROWSER_SHORTCUT.description}
+            name={BROWSER_SHORTCUT.rows.palette.title}
+            description={BROWSER_SHORTCUT.rows.palette.description}
           >
             {paletteShortcut.status === "unbound" && (
               <span className="text-ink-3 text-caption">Not assigned</span>
@@ -94,7 +91,7 @@ export function ShortcutsTab() {
 
       {visibleShortcuts.length > 0 && (
         <ConfigSection
-          title="Shortcuts"
+          title={SHORTCUTS.title}
           action={
             SHORTCUT_DEFINITIONS.some(
               (definition) =>

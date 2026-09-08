@@ -1,11 +1,12 @@
 import { SearchX } from "lucide-react";
-import { LISTBOX_ID, entryId } from "@/palette/ids";
 import { PaletteRow } from "@/palette/PaletteRow";
 import type { PaletteEntry, PaletteGroup } from "@/palette/usePaletteEntries";
 
 type PaletteResultsProps = {
   groups: readonly PaletteGroup[];
   emptyMessage: string | null;
+  listboxId: string;
+  optionId: (index: number) => string;
   active: number;
   onActivate: (entry: PaletteEntry) => void;
   onHover: (index: number) => void;
@@ -14,6 +15,8 @@ type PaletteResultsProps = {
 export function PaletteResults({
   groups,
   emptyMessage,
+  listboxId,
+  optionId,
   active,
   onActivate,
   onHover,
@@ -30,7 +33,7 @@ export function PaletteResults({
 
   let index = -1;
   return (
-    <div id={LISTBOX_ID} role="listbox" aria-label="Results" className="flex flex-col">
+    <div id={listboxId} role="listbox" aria-label="Results" className="flex flex-col">
       {groups.map((group) => (
         <div key={group.id} role="group" aria-label={group.label} className="flex flex-col">
           <p
@@ -46,7 +49,7 @@ export function PaletteResults({
             index += 1;
             const position = index;
             const shared = {
-              id: entryId(position),
+              id: optionId(position),
               selected: position === active,
               onSelect: () => onActivate(entry),
               onPointerMove: () => onHover(position),

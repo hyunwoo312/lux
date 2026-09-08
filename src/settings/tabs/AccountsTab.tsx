@@ -14,6 +14,7 @@ import {
   type IntegrationProviderId,
 } from "@/integrations";
 import { ConfigSection, ConfigBody } from "@/components/config/Config";
+import { ACCOUNTS } from "@/settings/rows";
 
 type Pending = "connecting" | "disconnecting";
 
@@ -69,7 +70,7 @@ export function AccountsTab() {
 
   return (
     <ConfigBody>
-      <ConfigSection title="Accounts">
+      <ConfigSection title={ACCOUNTS.title}>
         {PROVIDERS.map((provider) => {
           const account = accountFor(accounts, provider.id);
           const busy = pending[provider.id];

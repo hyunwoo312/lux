@@ -11,7 +11,6 @@ import type { WidgetIcon } from "@/widgets/core/types";
 import { openUrl, searchWeb } from "@/lib/open-url";
 
 import { SHORTCUT_DEFINITIONS, type ShortcutAction } from "@/stores/useShortcutsStore";
-import { useThemeStore } from "@/stores/useThemeStore";
 import { runShortcutAction } from "@/commands/shortcutActions";
 import { isCommandEnabled, isSourceEnabled, paletteOpenBehavior } from "@/stores/usePaletteStore";
 import { getWidgetPlugin } from "@/widgets/registry";
@@ -55,17 +54,6 @@ function widgetItems(): CommandItem[] {
     );
 }
 
-const ACTION_TEXT: Partial<Record<ShortcutAction, { label: string; describe: () => string }>> = {
-  openSettings: { label: "Open settings", describe: () => "Open the settings dialog" },
-  openGuide: { label: "Open guide", describe: () => "Open the guide dialog" },
-  toggleGridLines: { label: "Toggle grid lines", describe: () => "Show or hide the grid overlay" },
-  toggleTheme: {
-    label: "Toggle theme",
-    describe: () =>
-      useThemeStore.getState().theme === "dark" ? "Switch to light theme" : "Switch to dark theme",
-  },
-};
-
 const SCOPED_ACTIONS: Partial<Record<ShortcutAction, CommandItem>> = {
   addWidget: addWidgetCommand,
 };
@@ -74,14 +62,13 @@ function systemItems(): CommandItem[] {
   const shortcuts = SHORTCUT_DEFINITIONS.map<CommandItem>((definition) => {
     const scoped = SCOPED_ACTIONS[definition.id];
     if (scoped) return scoped;
-    const text = ACTION_TEXT[definition.id];
     return {
       id: `action.${definition.id}`,
       section: "commands",
-      label: text?.label ?? definition.label,
+      label: definition.label,
       meta: SYSTEM_OWNER,
       icon: definition.icon,
-      keywords: [text?.describe() ?? definition.description],
+      keywords: [definition.description],
       effect: "run",
       run: () => runShortcutAction(definition.id),
     };

@@ -8,6 +8,7 @@ import {
   type WidgetBackground,
 } from "@/widgets/core/useWidgetSettingsStore";
 import { ConfigSegmented, ConfigRow } from "@/components/config/Config";
+import { WIDGET_DEFAULTS } from "@/settings/rows";
 
 const OPTIONS: { value: SurfacePreference; label: string; disabled?: boolean }[] = [
   { value: "glass", label: "Glass" },
@@ -41,8 +42,7 @@ export function SurfaceDefault() {
   return (
     <>
       <ConfigRow
-        title="Surface"
-        description="Glass or solid for every widget at once."
+        {...WIDGET_DEFAULTS.rows.surface}
         control={
           <ConfigSegmented
             label="Widget surface"

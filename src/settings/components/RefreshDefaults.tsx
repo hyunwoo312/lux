@@ -8,6 +8,7 @@ import {
 import { accentClass } from "@/widgets/core/accent";
 import { widgetPlugins } from "@/widgets/registry";
 import { ConfigSegmented, ConfigRow } from "@/components/config/Config";
+import { REFRESH } from "@/settings/rows";
 
 const OPTIONS: { value: RefreshCadence; label: string; disabled?: boolean }[] = [
   { value: "default", label: "Default" },
@@ -35,8 +36,7 @@ export function RefreshDefaults() {
   return (
     <>
       <ConfigRow
-        title="How often widgets refresh"
-        description="Relaxed halves every widget's rate."
+        {...REFRESH.rows.cadence}
         control={
           <ConfigSegmented
             label="Refresh cadence"

@@ -5,26 +5,18 @@ import { sourceFiles, sourcePath } from "@/test/source-files";
 import { searchSettings, settingsIndex } from "@/settings/searchIndex";
 import { SETTINGS_TABS } from "@/stores/settingsTabs";
 
-const SETTINGS_ROW = /<ConfigRow\b[^>]*?\stitle="([^"]+)"/gs;
-
-function writtenRows(): { title: string; file: string }[] {
-  return sourceFiles()
-    .filter((file) => sourcePath(file).startsWith("settings/"))
-    .flatMap((file) =>
-      [...readFileSync(file, "utf8").matchAll(SETTINGS_ROW)].map((match) => ({
-        title: match[1] ?? "",
-        file: sourcePath(file),
-      })),
-    );
-}
+const HAND_WRITTEN = /<Config(?:Row|SubRow|Section)\b[^>]*?\s(?:title|description)="/s;
 
 describe("settings search", () => {
-  it("indexes every setting written as a row, wherever its tab keeps it", () => {
-    const labels = new Set(settingsIndex().map((entry) => entry.label));
-    const rows = writtenRows();
+  it("draws every row and section from the shared copy, so the index cannot drift", () => {
+    const settings = sourceFiles().filter((file) => sourcePath(file).startsWith("settings/"));
+    const rows = settings.flatMap(
+      (file) => readFileSync(file, "utf8").match(/<Config(?:Row|SubRow|Section)\b/g) ?? [],
+    );
+    const handWritten = settings.filter((file) => HAND_WRITTEN.test(readFileSync(file, "utf8")));
 
-    expect(rows.length).toBeGreaterThan(0);
-    expect(rows.filter((row) => !labels.has(row.title))).toEqual([]);
+    expect(rows.length).toBeGreaterThan(30);
+    expect(handWritten.map(sourcePath)).toEqual([]);
   });
 
   it("covers every tab, so no tab is unreachable by search", () => {

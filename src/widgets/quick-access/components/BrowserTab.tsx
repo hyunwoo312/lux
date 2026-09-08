@@ -14,6 +14,7 @@ import { SearchField } from "@/components/SearchField";
 import { filterItems } from "@/widgets/quick-access/lib/search";
 import type { QuickAccessTab } from "@/widgets/quick-access/types";
 import { useQuickAccess } from "@/widgets/quick-access/useQuickAccessStore";
+import { searchResults } from "@/hooks/useDebouncedSearch";
 
 type BrowserTabKey = Exclude<QuickAccessTab, "home">;
 
@@ -72,14 +73,17 @@ function HistoryView({ editing }: { editing: boolean }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const searched = useHistorySearch(query);
+  const trimmed = query.trim();
 
   const items =
     state.status === "ready"
-      ? query.trim()
-        ? (searched ?? [])
+      ? trimmed
+        ? searchResults(searched)
         : filterItems(state.items, query)
       : [];
-  const searching = Boolean(query.trim()) && searched === null;
+  const searchFailed = trimmed !== "" && searched.status === "error";
+  const searching =
+    trimmed !== "" && !searchFailed && searched.status !== "success" && searched.status !== "empty";
 
   return (
     <div className="flex h-full flex-col">
@@ -97,7 +101,9 @@ function HistoryView({ editing }: { editing: boolean }) {
           />
         )}
         {state.status === "ready" &&
-          (searching ? (
+          (searchFailed ? (
+            <StateMessage icon={AlertCircle} tone="error" message="Couldn’t search recent sites." />
+          ) : searching ? (
             <StateMessage message="Searching…" />
           ) : items.length === 0 ? (
             <StateMessage
