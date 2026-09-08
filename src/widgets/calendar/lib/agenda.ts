@@ -21,10 +21,6 @@ const time24Formatter = new Intl.DateTimeFormat(undefined, {
   hour12: false,
 });
 
-function getEventProvider(event: CalendarEvent): CalendarProviderId {
-  return event.provider ?? (event.id.startsWith("microsoft-") ? "microsoft" : "google");
-}
-
 export function getEventStartDate(event: CalendarEvent): Date {
   return new Date(event.startsAt);
 }
@@ -69,7 +65,7 @@ export function dedupeCalendarEvents(
 
   for (const event of events) {
     const key = getDedupeKey(event);
-    const provider = getEventProvider(event);
+    const { provider } = event;
     const links = linksByKey.get(key) ?? [];
     if (!links.some((link) => link.provider === provider)) {
       links.push({ provider, sourceUrl: event.sourceUrl });
@@ -77,7 +73,7 @@ export function dedupeCalendarEvents(
     linksByKey.set(key, links);
 
     const current = survivors.get(key);
-    if (!current || (provider === primary && getEventProvider(current) !== primary)) {
+    if (!current || (provider === primary && current.provider !== primary)) {
       survivors.set(key, event);
     }
   }

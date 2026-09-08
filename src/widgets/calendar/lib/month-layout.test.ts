@@ -25,6 +25,7 @@ function allDayEvent(id: string, startIndex: number, endIndex: number): Calendar
   return {
     id,
     calendarId: "c",
+    provider: "google",
     title: id,
     startsAt: DAYS[startIndex]!.toISOString(),
     endsAt: addDays(DAYS[endIndex]!, 1).toISOString(),
@@ -41,6 +42,7 @@ function timedEvent(id: string, index: number, hour: number): CalendarEvent {
   return {
     id,
     calendarId: "c",
+    provider: "google",
     title: id,
     startsAt: start.toISOString(),
     endsAt: end.toISOString(),

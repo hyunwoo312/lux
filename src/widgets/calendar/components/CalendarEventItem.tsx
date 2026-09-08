@@ -3,7 +3,7 @@ import { ROW } from "@/lib/row";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
-import { EASE_OUT, DURATION, enterTween, stagger } from "@/lib/motion";
+import { EASE_OUT, DURATION, rowVariants } from "@/lib/motion";
 import { CalendarEventActions } from "@/widgets/calendar/components/CalendarEventActions";
 import {
   formatEventRelativeTime,
@@ -15,7 +15,6 @@ import type { DisplayCalendarEvent } from "@/widgets/calendar/types";
 
 type CalendarEventItemProps = {
   event: DisplayCalendarEvent;
-  index: number;
   color: string;
   now: Date;
   emphasized?: boolean;
@@ -26,7 +25,6 @@ type CalendarEventItemProps = {
 
 export function CalendarEventItem({
   event,
-  index,
   color,
   now,
   emphasized = false,
@@ -46,13 +44,8 @@ export function CalendarEventItem({
   return (
     <motion.div
       layoutId={layoutId}
-      initial={reduced ? { opacity: 0 } : { opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        ...enterTween(reduced, "fast"),
-        delay: Math.min(index, 8) * stagger(reduced, "tight"),
-        layout: { duration: reduced ? 0 : DURATION.slow, ease: EASE_OUT },
-      }}
+      variants={rowVariants(reduced)}
+      transition={{ layout: { duration: reduced ? 0 : DURATION.slow, ease: EASE_OUT } }}
       className={cn(ROW.item, "group", declined && "opacity-50")}
     >
       <span
@@ -90,10 +83,9 @@ export function CalendarEventItem({
       <CalendarEventActions
         event={event}
         title={title}
-        reduced={reduced}
         size="md"
         className={cn(
-          "transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100",
+          "transition-opacity duration-base group-hover:opacity-100 group-focus-within:opacity-100",
           pinActions ? "opacity-100" : "opacity-60",
         )}
       />

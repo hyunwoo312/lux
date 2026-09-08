@@ -57,6 +57,7 @@ function timedEvent(): CalendarEvent {
   return {
     id: "google-primary-standup",
     calendarId: "primary",
+    provider: "google",
     title: "Standup",
     startsAt: start.toISOString(),
     endsAt: end.toISOString(),

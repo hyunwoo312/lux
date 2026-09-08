@@ -26,6 +26,15 @@ export type CalendarMode = "month" | "week";
 export const CALENDAR_PROVIDER_IDS = ["google", "microsoft"] as const;
 export type CalendarProviderId = (typeof CALENDAR_PROVIDER_IDS)[number];
 
+export const CALENDAR_PROVIDER_LABEL: Record<CalendarProviderId, string> = {
+  google: "Google Calendar",
+  microsoft: "Outlook Calendar",
+};
+
+function providerFromId(id: string): CalendarProviderId {
+  return id.startsWith("microsoft-") ? "microsoft" : "google";
+}
+
 export type CalendarEventLink = {
   provider: CalendarProviderId;
   sourceUrl?: string;
@@ -34,20 +43,22 @@ export type CalendarEventLink = {
 const RSVP_STATUSES = ["accepted", "declined", "tentative", "needsAction"] as const;
 export type RsvpStatus = (typeof RSVP_STATUSES)[number];
 
-export const calendarEventSchema = z.object({
-  id: z.string().min(1),
-  calendarId: z.string().min(1),
-  provider: z.enum(CALENDAR_PROVIDER_IDS).optional(),
-  title: z.string().min(1),
-  startsAt: z.string().min(1),
-  endsAt: z.string().min(1),
-  location: z.string().optional(),
-  sourceUrl: z.string().optional(),
-  isAllDay: z.boolean(),
-  visibility: z.enum(["default", "busy"]),
-  joinUrl: z.string().optional(),
-  rsvp: z.enum(RSVP_STATUSES).optional(),
-});
+export const calendarEventSchema = z
+  .object({
+    id: z.string().min(1),
+    calendarId: z.string().min(1),
+    provider: z.enum(CALENDAR_PROVIDER_IDS).optional(),
+    title: z.string().min(1),
+    startsAt: z.string().min(1),
+    endsAt: z.string().min(1),
+    location: z.string().optional(),
+    sourceUrl: z.string().optional(),
+    isAllDay: z.boolean(),
+    visibility: z.enum(["default", "busy"]),
+    joinUrl: z.string().optional(),
+    rsvp: z.enum(RSVP_STATUSES).optional(),
+  })
+  .transform((event) => ({ ...event, provider: event.provider ?? providerFromId(event.id) }));
 export type CalendarEvent = z.infer<typeof calendarEventSchema>;
 
 export type DisplayCalendarEvent = CalendarEvent & { links: CalendarEventLink[] };

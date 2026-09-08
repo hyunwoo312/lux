@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 import { TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { enterTween, stagger } from "@/lib/motion";
+import { rowVariants } from "@/lib/motion";
 import { CalendarEventActions } from "@/widgets/calendar/components/CalendarEventActions";
 import { getEventTitle } from "@/widgets/calendar/lib/agenda";
 import { getReadableTextColor } from "@/widgets/calendar/lib/colors";
@@ -24,7 +24,6 @@ type AgendaEventBlockProps = {
   countdown: string | null;
   conflicting: boolean;
   hour12: boolean;
-  index: number;
   reduced: boolean | null;
   top: number;
   height: number;
@@ -39,7 +38,6 @@ export function AgendaEventBlock({
   countdown,
   conflicting,
   hour12,
-  index,
   reduced,
   top,
   height,
@@ -53,70 +51,58 @@ export function AgendaEventBlock({
   const lines = linesThatFit(height);
   const showRange = lines >= 2;
   const showLocation = lines >= 3 && Boolean(event.location);
-  const actionCount = (event.joinUrl ? 1 : 0) + event.links.filter((link) => link.sourceUrl).length;
-  const chromeWidth = actionCount * 22 + (countdown ? 34 : 0) + 8;
-
-  const surface = (
-    <span
-      className={cn(
-        "flex size-full min-w-0 flex-col gap-px overflow-hidden rounded-md px-1.5 py-1 text-left",
-        declined && "opacity-60",
-      )}
-      style={{ backgroundColor: color, color: ink }}
-    >
-      <span className="flex min-w-0 items-center gap-1" style={{ paddingRight: chromeWidth }}>
-        {conflicting && <TriangleAlert className="size-3 flex-none opacity-90" aria-hidden />}
-        <span className={cn("truncate text-micro font-semibold", declined && "line-through")}>
-          {title}
-        </span>
-      </span>
-      <span className="sr-only">
-        {range}
-        {conflicting ? ", overlaps another event" : ""}
-        {declined ? ", declined" : ""}
-      </span>
-      {showRange && (
-        <span aria-hidden className="truncate text-micro tabular-nums opacity-80">
-          {range}
-        </span>
-      )}
-      {showLocation && (
-        <span aria-hidden className="truncate text-micro opacity-75">
-          {event.location}
-        </span>
-      )}
-    </span>
-  );
 
   return (
     <motion.li
-      initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{
-        ...enterTween(reduced, "fast"),
-        delay: Math.min(index, 8) * stagger(reduced, "tight"),
-      }}
+      variants={rowVariants(reduced)}
       style={{ top, height, left: `${left}%`, width: `${width}%` }}
       className="absolute pr-0.5"
     >
-      <span className={cn("relative block size-full rounded-md", URGENCY_RING[urgency])}>
-        {surface}
-        <span
-          className="absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-0.5"
-          style={{ color: ink }}
-        >
-          {countdown && (
-            <span
-              className="
-                bg-primary text-primary-foreground rounded-sm px-1 text-micro font-semibold
-                tabular-nums
-              "
-            >
-              {countdown}
+      <span
+        className={cn(
+          `
+            flex size-full min-w-0 items-center gap-1 overflow-hidden rounded-md px-1.5 py-1
+            text-left
+          `,
+          URGENCY_RING[urgency],
+          declined && "opacity-60",
+        )}
+        style={{ backgroundColor: color, color: ink }}
+      >
+        <span className="flex min-w-0 flex-1 flex-col gap-px self-stretch">
+          <span className="flex min-w-0 items-center gap-1">
+            {conflicting && <TriangleAlert className="size-3 flex-none opacity-90" aria-hidden />}
+            <span className={cn("truncate text-micro font-semibold", declined && "line-through")}>
+              {title}
+            </span>
+          </span>
+          <span className="sr-only">
+            {range}
+            {conflicting ? ", overlaps another event" : ""}
+            {declined ? ", declined" : ""}
+          </span>
+          {showRange && (
+            <span aria-hidden className="truncate text-micro tabular-nums opacity-80">
+              {range}
             </span>
           )}
-          <CalendarEventActions event={event} title={title} reduced={reduced} size="sm" onColor />
+          {showLocation && (
+            <span aria-hidden className="truncate text-micro opacity-75">
+              {event.location}
+            </span>
+          )}
         </span>
+        {countdown && (
+          <span
+            className="
+              bg-primary text-primary-foreground flex-none rounded-sm px-1 text-micro font-semibold
+              tabular-nums
+            "
+          >
+            {countdown}
+          </span>
+        )}
+        <CalendarEventActions event={event} title={title} size="sm" onColor />
       </span>
     </motion.li>
   );

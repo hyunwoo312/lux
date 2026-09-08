@@ -14,6 +14,7 @@ function createEvent(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
   return {
     id: overrides.id ?? "google-primary-evt",
     calendarId: overrides.calendarId ?? "primary",
+    provider: overrides.provider ?? "google",
     title: overrides.title ?? "Meeting",
     startsAt: overrides.startsAt ?? "2026-06-20T09:00:00.000Z",
     endsAt: overrides.endsAt ?? "2026-06-20T10:00:00.000Z",
@@ -27,7 +28,7 @@ function createEvent(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
 describe("dedupeCalendarEvents", () => {
   it("keeps the primary provider's copy and merges both links onto it", () => {
     const [merged, ...rest] = dedupeCalendarEvents([
-      createEvent({ id: "microsoft-1", sourceUrl: "https://outlook/1" }),
+      createEvent({ id: "microsoft-1", provider: "microsoft", sourceUrl: "https://outlook/1" }),
       createEvent({ id: "google-1", sourceUrl: "https://google/1" }),
     ]);
 

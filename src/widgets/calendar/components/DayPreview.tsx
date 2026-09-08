@@ -1,5 +1,7 @@
 import { useMemo } from "react";
+import { motion } from "motion/react";
 import { CalendarOff } from "lucide-react";
+import { listVariants } from "@/lib/motion";
 import { StateMessage } from "@/components/StateMessage";
 import { CalendarEventItem } from "@/widgets/calendar/components/CalendarEventItem";
 import { getEventColor } from "@/widgets/calendar/lib/colors";
@@ -32,12 +34,16 @@ export function DayPreview({ events, colors, now, reduced }: DayPreviewProps) {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-1.5 scroll-fade overflow-y-auto pr-0.5">
+    <motion.div
+      variants={listVariants(reduced, "tight")}
+      initial="hidden"
+      animate="show"
+      className="flex h-full min-h-0 flex-col gap-1.5 scroll-fade overflow-y-auto pr-0.5"
+    >
       {sorted.map((event, index) => (
         <CalendarEventItem
           key={event.id}
           event={event}
-          index={index}
           color={getEventColor(event, colors)}
           now={now}
           emphasized={index === 0 && !event.isAllDay}
@@ -46,6 +52,6 @@ export function DayPreview({ events, colors, now, reduced }: DayPreviewProps) {
           layoutId={`event-card-${event.id}`}
         />
       ))}
-    </div>
+    </motion.div>
   );
 }

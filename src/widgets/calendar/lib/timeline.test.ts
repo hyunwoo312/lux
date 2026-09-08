@@ -28,6 +28,7 @@ function event(over: Partial<CalendarEvent> & { id: string; from: Date; to: Date
   const { from, to, ...rest } = over;
   return {
     calendarId: "primary",
+    provider: "google",
     title: rest.id,
     isAllDay: false,
     visibility: "default",

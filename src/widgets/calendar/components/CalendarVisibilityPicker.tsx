@@ -5,22 +5,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useConnectedProviders } from "@/integrations";
+import { ROW } from "@/lib/row";
 import { cn } from "@/lib/utils";
 import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
 import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import {
   CALENDAR_PROVIDER_IDS,
+  CALENDAR_PROVIDER_LABEL,
   type CalendarProviderId,
   type ConnectedCalendar,
 } from "@/widgets/calendar/types";
 
 const FALLBACK_COLOR = "var(--primary)";
-
-const PROVIDER_LABELS: Record<CalendarProviderId, string> = {
-  google: "Google",
-  microsoft: "Outlook",
-};
 
 type PickerEntry = {
   calendar: ConnectedCalendar;
@@ -107,21 +104,13 @@ export function CalendarVisibilityPicker() {
             <div key={group.providerId} className="flex flex-col">
               {groups.length > 1 && (
                 <p className="text-ink-3 px-2 pt-1.5 pb-1 text-micro font-medium">
-                  {PROVIDER_LABELS[group.providerId]}
+                  {CALENDAR_PROVIDER_LABEL[group.providerId]}
                 </p>
               )}
               {group.entries.map(({ calendar, enabled }) => {
                 const controlId = `${instanceId}-${group.providerId}-${calendar.id}`;
                 return (
-                  <label
-                    key={calendar.id}
-                    htmlFor={controlId}
-                    className="
-                      press text-caption
-                      hover:bg-accent
-                      flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5
-                    "
-                  >
+                  <label key={calendar.id} htmlFor={controlId} className={ROW.option}>
                     <span
                       aria-hidden
                       className={cn("size-2 flex-none rounded-full", !enabled && "opacity-40")}

@@ -39,6 +39,7 @@ function createEvent(): CalendarEvent {
   return {
     id: "google-primary-evt",
     calendarId: "primary",
+    provider: "google",
     title: "Standup",
     startsAt: "2026-06-20T09:00:00.000Z",
     endsAt: "2026-06-20T09:30:00.000Z",

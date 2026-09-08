@@ -3,7 +3,7 @@ import { motion } from "motion/react";
 import { TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatClock, localDayKey } from "@/lib/clock";
-import { enterTween, stagger } from "@/lib/motion";
+import { listVariants, rowVariants } from "@/lib/motion";
 import { ListGroupHeading } from "@/components/ListGroupHeading";
 import { CalendarEventActions } from "@/widgets/calendar/components/CalendarEventActions";
 import { AgendaSkipRow } from "@/widgets/calendar/components/agenda/AgendaSkipRow";
@@ -33,19 +33,25 @@ type CompactRowProps = {
   color: string;
   now: Date;
   hour12: boolean;
-  index: number;
   reduced: boolean | null;
 };
 
-function CompactRow({ block, color, now, hour12, index, reduced }: CompactRowProps) {
+function CompactRow({ block, color, now, hour12, reduced }: CompactRowProps) {
   const { event, conflicting } = block;
   const title = getEventTitle(event);
   const urgency = getEventUrgency(event, now);
   const countdown = getEventCountdown(event, now);
   const declined = event.rsvp === "declined";
 
-  const content = (
-    <>
+  return (
+    <motion.li
+      variants={rowVariants(reduced)}
+      className={cn(
+        "flex min-w-0 items-center gap-2 rounded-md py-1 pr-1.5 pl-1.5",
+        URGENCY_RING[urgency],
+        declined && "opacity-60",
+      )}
+    >
       <span
         aria-hidden
         className="size-2 flex-none rounded-full"
@@ -67,38 +73,17 @@ function CompactRow({ block, color, now, hour12, index, reduced }: CompactRowPro
         {conflicting ? ", overlaps another event" : ""}
         {declined ? ", declined" : ""}
       </span>
-    </>
-  );
-
-  const row = cn(
-    "flex min-w-0 items-center gap-2 rounded-md py-1 pl-1.5",
-    declined && "opacity-60",
-  );
-
-  return (
-    <motion.li
-      initial={reduced ? { opacity: 0 } : { opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        ...enterTween(reduced, "fast"),
-        delay: Math.min(index, 8) * stagger(reduced, "tight"),
-      }}
-      className={cn("relative rounded-md", URGENCY_RING[urgency])}
-    >
-      <span className={cn(row, "pr-20")}>{content}</span>
-      <span className="absolute top-1/2 right-1.5 flex -translate-y-1/2 items-center gap-1">
-        {countdown && (
-          <span
-            className="
-              bg-primary text-primary-foreground rounded-sm px-1 text-micro font-semibold
-              tabular-nums
-            "
-          >
-            {countdown}
-          </span>
-        )}
-        <CalendarEventActions event={event} title={title} reduced={reduced} size="sm" />
-      </span>
+      {countdown && (
+        <span
+          className="
+            bg-primary text-primary-foreground flex-none rounded-sm px-1 text-micro font-semibold
+            tabular-nums
+          "
+        >
+          {countdown}
+        </span>
+      )}
+      <CalendarEventActions event={event} title={title} size="sm" />
     </motion.li>
   );
 }
@@ -158,7 +143,6 @@ function renderRunRows({ run, colors, now, hour12, reduced, isLast }: RunRowsOpt
         color={getEventColor(entry.block.event, colors)}
         now={now}
         hour12={hour12}
-        index={index}
         reduced={reduced}
       />,
     );
@@ -225,9 +209,15 @@ export function AgendaCompactList({
 
   return (
     <div className="scroll-fade min-h-0 flex-1 overflow-y-auto px-1.5 py-1">
-      <ol className="flex flex-col gap-0.5" aria-label="Agenda">
+      <motion.ol
+        variants={listVariants(reduced, "tight")}
+        initial="hidden"
+        animate="show"
+        className="flex flex-col gap-0.5"
+        aria-label="Agenda"
+      >
         {rows}
-      </ol>
+      </motion.ol>
     </div>
   );
 }

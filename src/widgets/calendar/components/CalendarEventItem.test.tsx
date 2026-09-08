@@ -25,7 +25,7 @@ function event(overrides: Partial<DisplayCalendarEvent> = {}): DisplayCalendarEv
 function renderItem(value: DisplayCalendarEvent) {
   return render(
     <TooltipProvider>
-      <CalendarEventItem event={value} index={0} color="#888" now={NOW} reduced />
+      <CalendarEventItem event={value} color="#888" now={NOW} reduced />
     </TooltipProvider>,
   );
 }
@@ -67,7 +67,6 @@ describe("CalendarEventItem join action", () => {
             endsAt: "2026-08-04T18:00:00Z",
             joinUrl: "https://meet.google.com/abc",
           })}
-          index={0}
           color="#888"
           now={NOW}
           reduced

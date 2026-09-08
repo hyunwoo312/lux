@@ -1,6 +1,6 @@
 import { useState, type WheelEvent } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { enterTween, stagger } from "@/lib/motion";
+import { listVariants, rowVariants } from "@/lib/motion";
 import { CalendarEventActions } from "@/widgets/calendar/components/CalendarEventActions";
 import { CalendarRange } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,13 +17,6 @@ import { Separator } from "@/components/ui/separator";
 
 const ROW_COUNT = 2;
 const TITLE_MAX_CHARS = 20;
-
-const ACTION_PADDING: Record<number, string | undefined> = {
-  0: undefined,
-  1: "group-hover/untimed:pr-7 group-focus-within/untimed:pr-7",
-  2: "group-hover/untimed:pr-12 group-focus-within/untimed:pr-12",
-  3: "group-hover/untimed:pr-16 group-focus-within/untimed:pr-16",
-};
 
 function RangeTrigger() {
   const [open, setOpen] = useState(false);
@@ -58,7 +51,6 @@ function RangeTrigger() {
 type UntimedItemProps = {
   event: DisplayCalendarEvent;
   color: string;
-  index: number;
   reduced: boolean | null;
 };
 
@@ -66,22 +58,12 @@ function clampTitle(title: string): string {
   return title.length > TITLE_MAX_CHARS ? `${title.slice(0, TITLE_MAX_CHARS).trimEnd()}…` : title;
 }
 
-function UntimedItem({ event, color, index, reduced }: UntimedItemProps) {
+function UntimedItem({ event, color, reduced }: UntimedItemProps) {
   const title = getEventTitle(event);
   const range = formatEventDateRange(event);
-  const actionCount = (event.joinUrl ? 1 : 0) + event.links.filter((link) => link.sourceUrl).length;
-  const actionPadding = ACTION_PADDING[actionCount];
 
   return (
-    <motion.div
-      className="group/untimed relative flex-none"
-      initial={reduced ? { opacity: 0 } : { opacity: 0, y: -4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        ...enterTween(reduced, "fast"),
-        delay: Math.min(index, 6) * stagger(reduced),
-      }}
-    >
+    <motion.div variants={rowVariants(reduced)} className="group flex-none">
       <Tooltip prose content={`${title} · ${range}`}>
         <span
           className={cn(
@@ -97,29 +79,24 @@ function UntimedItem({ event, color, index, reduced }: UntimedItemProps) {
             className="size-1.5 flex-none rounded-full"
             style={{ backgroundColor: color }}
           />
-          <span
-            aria-hidden
-            className={cn("truncate transition-[padding] duration-200", actionPadding)}
-          >
+          <span aria-hidden className="truncate">
             {clampTitle(title)}
           </span>
           <span className="sr-only">
             {title}, {event.isAllDay ? "all day" : "multi-day"}, {range}
           </span>
+          <CalendarEventActions
+            event={event}
+            title={title}
+            size="sm"
+            className="
+              opacity-60 transition-opacity duration-base
+              group-hover:opacity-100
+              group-focus-within:opacity-100
+            "
+          />
         </span>
       </Tooltip>
-      {actionCount > 0 && (
-        <span
-          className="
-            absolute top-1/2 right-1 flex -translate-y-1/2 translate-x-2 items-center gap-0.5
-            opacity-0 transition duration-200
-            group-hover/untimed:translate-x-0 group-hover/untimed:opacity-100
-            group-focus-within/untimed:translate-x-0 group-focus-within/untimed:opacity-100
-          "
-        >
-          <CalendarEventActions event={event} title={title} reduced={reduced} size="sm" />
-        </span>
-      )}
     </motion.div>
   );
 }
@@ -168,16 +145,21 @@ export function AgendaUntimedBlock({
             onWheel={scrollHorizontally}
             className="-mx-1.5 overflow-x-auto overscroll-x-contain px-1.5 py-1"
           >
-            <ul key={anchorKey} className="flex w-max min-w-full flex-col gap-1">
+            <motion.ul
+              key={anchorKey}
+              variants={listVariants(reduced)}
+              initial="hidden"
+              animate="show"
+              className="flex w-max min-w-full flex-col gap-1"
+            >
               {rows.map((row, index) => (
                 <li key={index}>
                   <ul className="flex items-center gap-1">
-                    {row.map((event, position) => (
+                    {row.map((event) => (
                       <li key={event.id} className="flex-none">
                         <UntimedItem
                           event={event}
                           color={getEventColor(event, colors)}
-                          index={index + position * ROW_COUNT}
                           reduced={reduced}
                         />
                       </li>
@@ -185,7 +167,7 @@ export function AgendaUntimedBlock({
                   </ul>
                 </li>
               ))}
-            </ul>
+            </motion.ul>
           </div>
         </section>
       )}

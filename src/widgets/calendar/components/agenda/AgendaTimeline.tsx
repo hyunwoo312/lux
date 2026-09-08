@@ -1,5 +1,7 @@
 import { useEffect, useRef, type Ref } from "react";
+import { motion } from "motion/react";
 import { formatClock, formatHourMark, localDayKey } from "@/lib/clock";
+import { listVariants } from "@/lib/motion";
 import { ListGroupHeading } from "@/components/ListGroupHeading";
 import { AgendaEventBlock } from "@/widgets/calendar/components/agenda/AgendaEventBlock";
 import { AgendaSkipRow } from "@/widgets/calendar/components/agenda/AgendaSkipRow";
@@ -92,8 +94,14 @@ function RunTrack({
           );
         })}
 
-        <ol className="absolute inset-0" aria-label={`Events, ${formatDayHeading(run.day, now)}`}>
-          {run.blocks.map((block, index) => {
+        <motion.ol
+          variants={listVariants(reduced, "tight")}
+          initial="hidden"
+          animate="show"
+          className="absolute inset-0"
+          aria-label={`Events, ${formatDayHeading(run.day, now)}`}
+        >
+          {run.blocks.map((block) => {
             const top = Math.max(0, block.startMin * pxPerMinute);
             const height = Math.max(MIN_BLOCK_PX, block.endMin * pxPerMinute - top);
             return (
@@ -105,7 +113,6 @@ function RunTrack({
                 countdown={getEventCountdown(block.event, now)}
                 conflicting={block.conflicting}
                 hour12={hour12}
-                index={index}
                 reduced={reduced}
                 top={top}
                 height={height}
@@ -114,7 +121,7 @@ function RunTrack({
               />
             );
           })}
-        </ol>
+        </motion.ol>
       </div>
 
       {holdsNow && (

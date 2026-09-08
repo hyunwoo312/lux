@@ -1,5 +1,11 @@
 import { useEffect } from "react";
-import { connectedProviders, useConnectedProviders, useIntegrationStore } from "@/integrations";
+import { useShallow } from "zustand/react/shallow";
+import {
+  accountFor,
+  connectedProviders,
+  useConnectedProviders,
+  useIntegrationStore,
+} from "@/integrations";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 import {
   getCalendarData,
@@ -28,8 +34,22 @@ function oldestSyncedAt(instanceId: string): number {
 export function useCalendarAutoSync() {
   const instanceId = useWidgetInstanceId();
   const refreshIntervalHours = useCalendar((d) => d.refreshIntervalHours);
-  const { connected } = useConnectedProviders(CALENDAR_PROVIDER_IDS);
+  const clearIntegration = useCalendarStore((s) => s.clearIntegration);
+  const { connected, loaded } = useConnectedProviders(CALENDAR_PROVIDER_IDS);
   const connectedKey = connected.join(",");
+  const signedOut = useIntegrationStore(
+    useShallow((s) => CALENDAR_PROVIDER_IDS.filter((id) => !accountFor(s.accounts, id))),
+  );
+  const stored = useCalendar(
+    useShallow((d) => CALENDAR_PROVIDER_IDS.filter((id) => d[id].calendars.length > 0)),
+  );
+
+  useEffect(() => {
+    if (!loaded) return;
+    for (const providerId of stored) {
+      if (signedOut.includes(providerId)) clearIntegration(instanceId, providerId);
+    }
+  }, [loaded, signedOut, stored, clearIntegration, instanceId]);
 
   useEffect(() => {
     if (!connectedKey) return;

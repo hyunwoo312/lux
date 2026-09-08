@@ -33,6 +33,7 @@ function makeEvent(
   const { from, to, ...rest } = over;
   return {
     calendarId: "primary",
+    provider: "google",
     title: rest.id,
     isAllDay: false,
     visibility: "default",

@@ -1,6 +1,6 @@
 import { RefreshCw, Settings2 } from "lucide-react";
 import { formatClock } from "@/lib/clock";
-import { useConnectedProviders } from "@/integrations";
+import { useConnectedProviders, useProviderAccount } from "@/integrations";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { IconActionButton } from "@/components/IconActionButton";
@@ -12,7 +12,6 @@ import {
   ConfigRow,
   ConfigSubRow,
 } from "@/components/config/Config";
-import { useCalendarConnection } from "@/widgets/calendar/hooks/useCalendarConnection";
 import { syncCooldownMessage, syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
 import {
   CALENDAR_SYNC_COOLDOWN_MS,
@@ -23,6 +22,7 @@ import {
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import {
   CALENDAR_PROVIDER_IDS,
+  CALENDAR_PROVIDER_LABEL,
   type CalendarDensity,
   type CalendarProviderId,
 } from "@/widgets/calendar/types";
@@ -38,10 +38,10 @@ const DENSITY_OPTIONS: { value: CalendarDensity; label: string }[] = [
   { value: "compact", label: "Compact" },
 ];
 
-const SOURCE_OPTIONS: { value: CalendarProviderId; label: string }[] = [
-  { value: "google", label: "Google" },
-  { value: "microsoft", label: "Outlook" },
-];
+const SOURCE_OPTIONS = CALENDAR_PROVIDER_IDS.map((value) => ({
+  value,
+  label: CALENDAR_PROVIDER_LABEL[value],
+}));
 
 function formatLastSynced(value: number | undefined, hour12: boolean): string | null {
   if (value === undefined) return null;
@@ -56,15 +56,10 @@ function getProviderNote(calendarCount: number, enabledCount: number): string | 
   return null;
 }
 
-function CalendarProviderConfig({
-  providerId,
-  label,
-}: {
-  providerId: CalendarProviderId;
-  label: string;
-}) {
+function CalendarProviderConfig({ providerId }: { providerId: CalendarProviderId }) {
+  const label = CALENDAR_PROVIDER_LABEL[providerId];
   const instanceId = useWidgetInstanceId();
-  const { account } = useCalendarConnection(providerId);
+  const { account } = useProviderAccount(providerId);
   const clock24h = useAppSettingsStore((s) => s.clock24h);
   const settings = useCalendar((d) => d[providerId]);
   const sync = useCalendarStore((s) => s.sync);
@@ -241,8 +236,9 @@ export function CalendarConfig() {
         )}
       </ConfigSection>
 
-      <CalendarProviderConfig providerId="google" label="Google Calendar" />
-      <CalendarProviderConfig providerId="microsoft" label="Outlook Calendar" />
+      {CALENDAR_PROVIDER_IDS.map((providerId) => (
+        <CalendarProviderConfig key={providerId} providerId={providerId} />
+      ))}
     </>
   );
 }

@@ -32,6 +32,7 @@ function sampleEvent(
   return {
     id,
     calendarId,
+    provider: "google",
     title,
     startsAt,
     endsAt,

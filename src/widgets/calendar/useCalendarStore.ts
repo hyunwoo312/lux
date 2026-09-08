@@ -28,6 +28,7 @@ import {
   CALENDAR_PROVIDER_IDS,
   CALENDAR_VIEWS,
   LEGACY_CALENDAR_VIEWS,
+  CALENDAR_PROVIDER_LABEL,
   calendarEventSchema,
   connectedCalendarSchema,
   MAX_CALENDAR_EVENTS,
@@ -419,8 +420,16 @@ export const useCalendarStore = createPersistedStore<CalendarState>()(
 
       const syncWindow = getSyncWindow();
       const fetchers = {
-        google: ["Google Calendar", fetchGoogleCalendars, fetchGoogleCalendarEvents] as const,
-        microsoft: ["Outlook Calendar", fetchOutlookCalendars, fetchOutlookCalendarEvents] as const,
+        google: [
+          CALENDAR_PROVIDER_LABEL.google,
+          fetchGoogleCalendars,
+          fetchGoogleCalendarEvents,
+        ] as const,
+        microsoft: [
+          CALENDAR_PROVIDER_LABEL.microsoft,
+          fetchOutlookCalendars,
+          fetchOutlookCalendarEvents,
+        ] as const,
       };
       const results = await Promise.all(
         targets.map(async (providerId) => {
@@ -453,9 +462,7 @@ export const useCalendarStore = createPersistedStore<CalendarState>()(
           const refreshed = results
             .filter((entry) => !entry.result.failed)
             .map((entry) => entry.providerId);
-          const keptEvents = current.events.filter(
-            (event) => !refreshed.some((providerId) => event.id.startsWith(`${providerId}-`)),
-          );
+          const keptEvents = current.events.filter((event) => !refreshed.includes(event.provider));
           const events = capCalendarEvents([
             ...keptEvents,
             ...results.flatMap((entry) => entry.result.events),
@@ -514,7 +521,7 @@ export const useCalendarStore = createPersistedStore<CalendarState>()(
     clearIntegration: (instanceId, providerId) =>
       set((state) =>
         update(state, instanceId, (data) => {
-          const events = data.events.filter((event) => !event.id.startsWith(`${providerId}-`));
+          const events = data.events.filter((event) => event.provider !== providerId);
           return providerId === "google"
             ? { ...data, events, google: EMPTY_PROVIDER }
             : { ...data, events, microsoft: EMPTY_PROVIDER };

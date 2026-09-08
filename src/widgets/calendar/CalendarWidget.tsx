@@ -8,17 +8,17 @@ import { CalendarGrid } from "@/widgets/calendar/CalendarGrid";
 import { AgendaView } from "@/widgets/calendar/AgendaView";
 import { useWidgetChrome } from "@/widgets/core/useWidgetChrome";
 import { useCalendarAutoSync } from "@/widgets/calendar/hooks/useCalendarAutoSync";
-import { useCalendarConnection } from "@/widgets/calendar/hooks/useCalendarConnection";
 import { dedupeCalendarEvents } from "@/widgets/calendar/lib/agenda";
 import { buildCalendarColorMap } from "@/widgets/calendar/lib/colors";
 import { useCalendar } from "@/widgets/calendar/useCalendarStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
+import { useProviderAccount } from "@/integrations";
 import { viewSwap } from "@/lib/motion";
 
 export function CalendarWidget() {
   const reduced = useReducedMotion();
-  const google = useCalendarConnection("google");
-  const microsoft = useCalendarConnection("microsoft");
+  const google = useProviderAccount("google");
+  const microsoft = useProviderAccount("microsoft");
   const events = useCalendar((d) => d.events);
   const enabled = useCalendar((d) => d.enabled);
   const view = useCalendar((d) => d.view);

@@ -1,5 +1,5 @@
 import { WidgetRefreshButton } from "@/widgets/core/WidgetRefreshButton";
-import { useCalendarConnection } from "@/widgets/calendar/hooks/useCalendarConnection";
+import { useProviderAccount } from "@/integrations";
 import {
   CALENDAR_SYNC_COOLDOWN_MS,
   useCalendar,
@@ -9,8 +9,8 @@ import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 export function CalendarRefreshButton() {
   const instanceId = useWidgetInstanceId();
-  const google = useCalendarConnection("google");
-  const microsoft = useCalendarConnection("microsoft");
+  const google = useProviderAccount("google");
+  const microsoft = useProviderAccount("microsoft");
   const syncing = useCalendar((d) => d.syncing.length > 0);
   const googleSyncedAt = useCalendar((d) => d.google.lastSyncedAt);
   const microsoftSyncedAt = useCalendar((d) => d.microsoft.lastSyncedAt);
