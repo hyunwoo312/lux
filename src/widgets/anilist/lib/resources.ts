@@ -33,6 +33,7 @@ export function anilistLibrary(
   lang: TitleLanguage,
 ): PolledDefinition<CurrentData> {
   return {
+    widget: "anilist",
     cacheKey: anilistKeys.library(viewerId, lang),
     intervalMs: ANILIST_REFRESH_MS,
     parse: parseCachedCurrent,
@@ -47,6 +48,7 @@ export function anilistDiscover(
   authed: boolean,
 ): PolledDefinition<DiscoverMedia[]> {
   return {
+    widget: "anilist",
     cacheKey: anilistKeys.discover(lang, feed, type),
     intervalMs: DISCOVER_REFRESH_MS,
     parse: parseCachedDiscover,
@@ -59,6 +61,7 @@ export function anilistActivity(
   lang: TitleLanguage,
 ): PagedDefinition<AnilistActivity> {
   return {
+    widget: "anilist",
     cacheKey: anilistKeys.activity(viewerId, lang),
     intervalMs: ACTIVITY_REFRESH_MS,
     maxItems: ANILIST_MAX_ITEMS,
@@ -73,6 +76,7 @@ export function anilistInbox(
   lang: TitleLanguage,
 ): PagedDefinition<AnilistNotification> {
   return {
+    widget: "anilist",
     cacheKey: anilistKeys.inbox(viewerId, lang),
     intervalMs: ANILIST_REFRESH_MS,
     maxItems: ANILIST_MAX_ITEMS,
@@ -84,6 +88,7 @@ export function anilistInbox(
 
 export function anilistUnread(viewerId: number): PolledDefinition<number> {
   return {
+    widget: "anilist",
     cacheKey: anilistKeys.unread(viewerId),
     intervalMs: ANILIST_REFRESH_MS,
     parse: (raw) => (typeof raw === "number" ? raw : null),

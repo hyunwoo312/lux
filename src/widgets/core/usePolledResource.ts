@@ -17,8 +17,11 @@ import {
   type Freshness,
   type Mode,
   type ResourceConfig,
+  type ResourceIdentity,
   type Snapshot,
 } from "@/widgets/core/sharedResource";
+import { refreshScaleOf } from "@/widgets/core/useWidgetRefreshScale";
+import type { WidgetType } from "@/widgets/core/types";
 
 export {
   RETRY_BASE_MS,
@@ -112,6 +115,7 @@ class PolledSource<T> extends SharedResource<T | undefined> {
 }
 
 export type PolledDefinition<T> = {
+  widget: WidgetType;
   cacheKey: string;
   intervalMs: number;
   staleMs?: number;
@@ -134,22 +138,31 @@ export function usePolledDefinition<T>(
   });
 }
 
+function polledConfig<T>(
+  identity: ResourceIdentity,
+  parse: ((raw: unknown) => T | null) | undefined,
+  persist: boolean,
+): ResourceConfig<T | undefined> {
+  return { ...identity, persist, blank, decode: decodePolled(parse), encode: encodePolled };
+}
+
 export async function readPolled<T>(definition: PolledDefinition<T>): Promise<T> {
+  const scale = refreshScaleOf(definition.widget);
   const data = await readResource<T | undefined, PolledSource<T>>(
     definition.cacheKey,
     () =>
       new PolledSource<T>(
-        {
-          key: definition.cacheKey,
-          cacheKey: definition.cacheKey,
-          scope: "polled",
-          staleMs: definition.staleMs ?? definition.intervalMs,
-          intervalMs: definition.intervalMs,
-          persist: true,
-          blank,
-          decode: decodePolled(definition.parse),
-          encode: encodePolled,
-        },
+        polledConfig(
+          {
+            key: definition.cacheKey,
+            cacheKey: definition.cacheKey,
+            scope: "polled",
+            staleMs: (definition.staleMs ?? definition.intervalMs) * scale,
+            intervalMs: definition.intervalMs * scale,
+          },
+          definition.parse,
+          true,
+        ),
         definition.fetch,
       ),
   );
@@ -222,10 +235,7 @@ export function usePolledResource<T>(
         blank,
       ),
     create: (identity) =>
-      new PolledSource<T>(
-        { ...identity, persist, blank, decode: decodePolled(parsePersisted), encode: encodePolled },
-        call,
-      ),
+      new PolledSource<T>(polledConfig(identity, parsePersisted, persist), call),
     adopt: (existing) => existing.setFetcher(call),
   });
 

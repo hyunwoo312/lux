@@ -1,5 +1,4 @@
 import { CalendarDays } from "lucide-react";
-import { useProviderLock } from "@/widgets/core/useProviderLock";
 import type { WidgetPlugin } from "@/widgets/core/types";
 import { CalendarWidget } from "@/widgets/calendar/CalendarWidget";
 import { CalendarConfig } from "@/widgets/calendar/CalendarConfig";
@@ -21,11 +20,6 @@ export const calendarPlugin: WidgetPlugin = {
   headerActionComponent: CalendarHeaderActions,
   tint: CALENDAR_TINT,
   requiresAccount: ["google", "microsoft"],
-  useLock: () =>
-    useProviderLock({
-      providers: ["google", "microsoft"],
-      label: "a calendar",
-      subject: "your schedule",
-    }),
+  signedOut: { mode: "lock", label: "a calendar", subject: "your schedule" },
   removalNote: () => "Its calendar selection will be reset — your accounts stay connected.",
 };

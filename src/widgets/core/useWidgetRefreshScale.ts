@@ -3,6 +3,10 @@ import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 
 export const WidgetTypeContext = createContext<string | null>(null);
 
+export function refreshScaleOf(type: string): number {
+  return useAppSettingsStore.getState().widgetRefresh[type] ?? 1;
+}
+
 export function useWidgetRefreshScale(): number {
   const type = useContext(WidgetTypeContext);
 

@@ -13,6 +13,7 @@ import {
   type AnilistNotification,
   type TitleLanguage,
 } from "@/widgets/anilist/types";
+import { parseResponse } from "@/lib/net";
 
 const UNREAD_QUERY = `query { Viewer { unreadNotificationCount } }`;
 
@@ -27,10 +28,12 @@ const markReadSchema = z.object({
 });
 
 export async function markAllNotificationsRead(signal?: AbortSignal): Promise<void> {
-  const parsed = markReadSchema.safeParse(await anilistGraphQL(MARK_READ_QUERY, {}, true, signal));
-  if (!parsed.success || !parsed.data.data.Page) {
-    throw new Error("Couldn't mark notifications as read");
-  }
+  const { data } = parseResponse(
+    "AniList mark-read",
+    markReadSchema,
+    await anilistGraphQL(MARK_READ_QUERY, {}, true, signal),
+  );
+  if (!data.Page) throw new Error("Couldn't mark notifications as read");
 }
 
 const INBOX_QUERY = `query ($page: Int!) {
@@ -155,22 +158,24 @@ export async function fetchInboxPage(
   lang: TitleLanguage,
   signal?: AbortSignal,
 ): Promise<Page<AnilistNotification>> {
-  const parsed = inboxSchema.safeParse(await anilistGraphQL(INBOX_QUERY, { page }, true, signal));
-  if (!parsed.success) {
-    throw new Error("Unexpected AniList inbox response");
-  }
-  const items = (parsed.data.data.Page?.notifications ?? [])
+  const { data } = parseResponse(
+    "AniList inbox",
+    inboxSchema,
+    await anilistGraphQL(INBOX_QUERY, { page }, true, signal),
+  );
+  const items = (data.Page?.notifications ?? [])
     .map((node) => toNotification(node, lang))
     .filter((entry): entry is AnilistNotification => entry !== null);
-  return { items, hasNextPage: parsed.data.data.Page?.pageInfo.hasNextPage ?? false };
+  return { items, hasNextPage: data.Page?.pageInfo.hasNextPage ?? false };
 }
 
 export async function fetchUnreadCount(signal?: AbortSignal): Promise<number> {
-  const parsed = unreadSchema.safeParse(await anilistGraphQL(UNREAD_QUERY, {}, true, signal));
-  if (!parsed.success) {
-    throw new Error("Unexpected AniList unread response");
-  }
-  return parsed.data.data.Viewer?.unreadNotificationCount ?? 0;
+  const { data } = parseResponse(
+    "AniList unread",
+    unreadSchema,
+    await anilistGraphQL(UNREAD_QUERY, {}, true, signal),
+  );
+  return data.Viewer?.unreadNotificationCount ?? 0;
 }
 
 const ACTIVITY_QUERY = `query ($page: Int!) {
@@ -241,7 +246,7 @@ function toActivity(node: unknown, lang: TitleLanguage): AnilistActivity | null 
 
   const base = {
     id: data.id,
-    createdAt: data.createdAt,
+    createdAt: new Date(data.createdAt * 1000).toISOString(),
     userName,
     userAvatar: data.user?.avatar?.medium ?? undefined,
     siteUrl: data.siteUrl,
@@ -271,16 +276,15 @@ export async function fetchActivityPage(
   lang: TitleLanguage,
   signal?: AbortSignal,
 ): Promise<Page<AnilistActivity>> {
-  const parsed = activitySchema.safeParse(
+  const { data } = parseResponse(
+    "AniList activity",
+    activitySchema,
     await anilistGraphQL(ACTIVITY_QUERY, { page }, true, signal),
   );
-  if (!parsed.success) {
-    throw new Error("Unexpected AniList activity response");
-  }
-  const items = (parsed.data.data.Page?.activities ?? [])
+  const items = (data.Page?.activities ?? [])
     .map((node) => toActivity(node, lang))
     .filter((entry): entry is AnilistActivity => entry !== null);
-  return { items, hasNextPage: parsed.data.data.Page?.pageInfo.hasNextPage ?? false };
+  return { items, hasNextPage: data.Page?.pageInfo.hasNextPage ?? false };
 }
 
 const TOGGLE_LIKE_MUTATION = `mutation ($id: Int!) {
@@ -297,11 +301,11 @@ const toggleLikeSchema = z.object({
 });
 
 export async function toggleActivityLike(id: number, signal?: AbortSignal): Promise<boolean> {
-  const parsed = toggleLikeSchema.safeParse(
+  const { data } = parseResponse(
+    "AniList like",
+    toggleLikeSchema,
     await anilistGraphQL(TOGGLE_LIKE_MUTATION, { id }, true, signal),
   );
-  if (!parsed.success || !parsed.data.data.ToggleLikeV2) {
-    throw new Error("Couldn't update like");
-  }
-  return parsed.data.data.ToggleLikeV2.isLiked ?? false;
+  if (!data.ToggleLikeV2) throw new Error("Couldn't update like");
+  return data.ToggleLikeV2.isLiked ?? false;
 }

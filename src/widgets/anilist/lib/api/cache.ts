@@ -62,7 +62,7 @@ const notificationSchema = z.object({
 const activitySchema = z.object({
   id: z.number(),
   kind: z.enum(["list", "text"]),
-  createdAt: z.number(),
+  createdAt: z.string(),
   userName: z.string(),
   userAvatar: z.string().optional(),
   text: z.string(),

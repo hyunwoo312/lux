@@ -69,6 +69,8 @@ export type WidgetLock = {
   onAction: () => void;
 };
 
+type SignedOut = { mode: "lock"; label: string; subject: string } | { mode: "degrade" };
+
 export type WidgetFrame = {
   bleed?: boolean;
   backdrop?: ComponentType;
@@ -127,8 +129,8 @@ export type WidgetPlugin = {
   refreshMs?: number;
   tint?: AccentPreset;
   requiresAccount?: IntegrationProviderId[];
+  signedOut?: SignedOut;
   commands?: () => readonly WidgetCommand[];
   frame?: WidgetFrame;
-  useLock?: (instanceId: string) => WidgetLock | null;
   removalNote?: (instanceId: string) => string | null;
 };

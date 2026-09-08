@@ -1,17 +1,13 @@
 import { useCallback, useState } from "react";
-import { CheckCheck } from "lucide-react";
-import { loadErrorMessage } from "@/lib/net";
-import { Spinner } from "@/components/ui/spinner";
-import { Tooltip } from "@/components/ui/tooltip";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { markAllNotificationsRead } from "@/widgets/anilist/lib/api/feed";
 import { ActivityView } from "@/widgets/anilist/components/ActivityView";
 import { InboxView } from "@/widgets/anilist/components/InboxView";
-import { AnilistWriteNotice } from "@/widgets/anilist/components/AnilistWriteNotice";
 import { FeedSourceSelector } from "@/widgets/anilist/components/FeedSourceSelector";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import { useActivityUnseenCount, useUnreadCount } from "@/widgets/anilist/useAnilistSignals";
-import { Button } from "@/components/ui/button";
+import { MarkAllReadButton } from "@/widgets/core/MarkAllReadButton";
+import { reportWriteFailure } from "@/widgets/core/reportWriteFailure";
 
 type FeedViewProps = {
   enabled: boolean;
@@ -33,11 +29,9 @@ export function FeedView({ enabled, userId, newTab }: FeedViewProps) {
 
   const [markedReadAt, setMarkedReadAt] = useState(0);
   const [marking, setMarking] = useState(false);
-  const [markError, setMarkError] = useState("");
 
   const markRead = useCallback(() => {
     setMarking(true);
-    setMarkError("");
     setMarkedReadAt(Date.now());
     markAllNotificationsRead().then(
       () => {
@@ -47,7 +41,11 @@ export function FeedView({ enabled, userId, newTab }: FeedViewProps) {
       (error: unknown) => {
         setMarking(false);
         setMarkedReadAt(0);
-        setMarkError(loadErrorMessage(error, "Couldn’t mark your notifications read. Try again."));
+        reportWriteFailure(
+          "anilist-write",
+          error,
+          "Couldn’t mark your notifications read. Try again.",
+        );
       },
     );
   }, [unreadRefresh]);
@@ -63,21 +61,11 @@ export function FeedView({ enabled, userId, newTab }: FeedViewProps) {
           onChange={(next) => setFeedSource(instanceId, next)}
         />
         {source === "notifications" && unreadCount > 0 && (
-          <Tooltip content="Mark all read" prose>
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              onClick={markRead}
-              disabled={marking}
-              aria-label="Mark all notifications read"
-              className="text-ink-3 hover:text-ink ml-auto"
-            >
-              {marking ? <Spinner /> : <CheckCheck aria-hidden />}
-            </Button>
-          </Tooltip>
+          <span className="ml-auto">
+            <MarkAllReadButton marking={marking} onClick={markRead} />
+          </span>
         )}
       </div>
-      <AnilistWriteNotice message={markError} />
       <div className="min-h-0 flex-1">
         {source === "following" ? (
           <ActivityView enabled={enabled} userId={userId} newTab={newTab} />

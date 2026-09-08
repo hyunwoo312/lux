@@ -112,19 +112,6 @@ beforeEach(() => {
 });
 
 describe("SpotifyWidget", () => {
-  it("prompts to connect when no account exists", () => {
-    setAccount(null);
-    renderWidget();
-    expect(screen.getByRole("button", { name: "Connect Spotify" })).toBeInTheDocument();
-    expect(screen.getByText("Connect Spotify to see and control playback.")).toBeInTheDocument();
-  });
-
-  it("prompts to reconnect when the account needs reconnection", () => {
-    setAccount("needsReconnect");
-    renderWidget();
-    expect(screen.getByText("Reconnect Spotify")).toBeInTheDocument();
-  });
-
   it("checks the saved state once per track, not on every poll", async () => {
     setAccount("connected");
     playbackMock.mockResolvedValue(playingState());

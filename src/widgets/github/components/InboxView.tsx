@@ -7,21 +7,13 @@ import {
   unsubscribeGithubThread,
 } from "@/widgets/github/lib/api/inbox";
 import { Inbox } from "lucide-react";
-import { loadErrorMessage } from "@/lib/net";
-import { showToast } from "@/stores/useToastStore";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { InboxList } from "@/widgets/github/components/inbox/InboxList";
 import type { NotificationActions } from "@/widgets/github/components/inbox/InboxRows";
 import { useGithub } from "@/widgets/github/useGithubStore";
 import { useGithubSync } from "@/widgets/github/useGithubSync";
 import { INBOX_CACHE_KEY, INBOX_ZERO } from "@/widgets/github/types";
-
-function reportWriteFailure(error: unknown, fallback: string): void {
-  showToast({
-    key: "github-inbox-write",
-    message: loadErrorMessage(error, fallback),
-  });
-}
+import { reportWriteFailure } from "@/widgets/core/reportWriteFailure";
 
 export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPrivate: boolean }) {
   const newTab = useGithub((d) => d.openBehavior === "newTab");
@@ -55,7 +47,7 @@ export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPriv
       },
       (error: unknown) => {
         clearPending(id);
-        reportWriteFailure(error, "Couldn’t update that notification.");
+        reportWriteFailure("github-inbox-write", error, "Couldn’t update that notification.");
       },
     );
   };
@@ -70,7 +62,7 @@ export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPriv
       },
       (error: unknown) => {
         setMarking(false);
-        reportWriteFailure(error, "Couldn’t mark your notifications read.");
+        reportWriteFailure("github-inbox-write", error, "Couldn’t mark your notifications read.");
       },
     );
   };

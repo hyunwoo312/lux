@@ -2,6 +2,7 @@ import { z } from "zod";
 import { httpUrlSchema } from "@/lib/open-url";
 import { graphql } from "@/widgets/github/lib/api/client";
 import type { GithubSearch, RepoHit, IssueHit } from "@/widgets/github/types";
+import { parseResponse } from "@/lib/net";
 
 const HIT_LIMIT = 10;
 
@@ -89,12 +90,13 @@ function toIssue(node: unknown): IssueHit[] {
 }
 
 export async function searchGithub(query: string, signal?: AbortSignal): Promise<GithubSearch> {
-  const parsed = searchSchema.safeParse(await graphql(searchQuery(query), signal));
-  if (!parsed.success) {
-    throw new Error("Unexpected GitHub search response");
-  }
+  const { data } = parseResponse(
+    "GitHub search",
+    searchSchema,
+    await graphql(searchQuery(query), signal),
+  );
   return {
-    repositories: (parsed.data.data.repositories?.nodes ?? []).flatMap(toRepo),
-    issues: (parsed.data.data.issues?.nodes ?? []).flatMap(toIssue),
+    repositories: (data.repositories?.nodes ?? []).flatMap(toRepo),
+    issues: (data.issues?.nodes ?? []).flatMap(toIssue),
   };
 }

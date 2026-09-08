@@ -1,31 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { filterItems, searchBookmarks } from "@/widgets/quick-access/lib/search";
+import { searchBookmarks } from "@/widgets/quick-access/lib/search";
 import type { BookmarkFolder, BrowserItem } from "@/widgets/quick-access/types";
 
 const item = (id: string, title: string, url: string): BrowserItem => ({ id, title, url });
-
-const ITEMS = [
-  item("1", "GitHub", "https://github.com/"),
-  item("2", "Hacker News", "https://news.ycombinator.com/"),
-];
-
-describe("filterItems", () => {
-  it("hands back the same list when nothing is typed", () => {
-    expect(filterItems(ITEMS, "  ")).toBe(ITEMS);
-  });
-
-  it("matches the title, case-insensitively", () => {
-    expect(filterItems(ITEMS, "github")).toHaveLength(1);
-  });
-
-  it("matches the url as well, so a domain finds a page you cannot name", () => {
-    expect(filterItems(ITEMS, "ycombinator")[0]?.title).toBe("Hacker News");
-  });
-
-  it("reads no matches as an empty list, not as everything", () => {
-    expect(filterItems(ITEMS, "zzz")).toEqual([]);
-  });
-});
 
 describe("searchBookmarks", () => {
   const tree: BookmarkFolder = {

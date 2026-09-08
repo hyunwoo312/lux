@@ -5,7 +5,7 @@ import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 
 export function useActivityUnseenCount(enabled: boolean, viewerId: number): number {
   const lang = useAnilist((d) => d.titleLanguage);
-  const lastSeen = useAnilistStore((s) => s.lastSeenActivityAt ?? 0);
+  const lastSeen = useAnilistStore((s) => s.lastSeenActivityAt ?? "");
 
   const activity = usePagedDefinition(anilistActivity(viewerId, lang), { enabled });
 

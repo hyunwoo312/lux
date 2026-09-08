@@ -5,12 +5,6 @@ function matches(item: BrowserItem, query: string): boolean {
   return matchesQuery(item.title, query) || matchesQuery(item.url, query);
 }
 
-export function filterItems(items: BrowserItem[], query: string): BrowserItem[] {
-  const trimmed = query.trim().toLowerCase();
-  if (!trimmed) return items;
-  return items.filter((item) => matches(item, trimmed));
-}
-
 export function searchBookmarks(folder: BookmarkFolder, query: string, limit = 200): BrowserItem[] {
   const trimmed = query.trim().toLowerCase();
   if (!trimmed) return [];

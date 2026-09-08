@@ -11,6 +11,7 @@ const TRENDING_INTERVAL_MS = 60 * 60_000;
 
 export function stocksSparks(symbols: string[], range: StockRange): PolledDefinition<SparkMap> {
   return {
+    widget: "stocks",
     cacheKey: sparkKey(symbols, range),
     intervalMs: SPARK_INTERVAL_MS,
     parse: parseCachedSparks,
@@ -19,6 +20,7 @@ export function stocksSparks(symbols: string[], range: StockRange): PolledDefini
 }
 
 export const stocksTrending: PolledDefinition<string[]> = {
+  widget: "stocks",
   cacheKey: TRENDING_KEY,
   intervalMs: TRENDING_INTERVAL_MS,
   parse: parseCachedTrending,

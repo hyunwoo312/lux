@@ -2,7 +2,6 @@ import { slideSwap } from "@/lib/motion";
 import { type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useProviderAccount } from "@/integrations";
-import { useSettingsStore } from "@/stores/useSettingsStore";
 import { Button } from "@/components/ui/button";
 import { useElementSize } from "@/hooks/useElementSize";
 import { SpotifyDeviceMenu } from "@/widgets/spotify/components/SpotifyDeviceMenu";
@@ -40,7 +39,6 @@ export function SpotifyWidget() {
   const [ref, size] = useElementSize<HTMLDivElement>();
   const reduced = useReducedMotion();
   const { account, loaded } = useProviderAccount("spotify");
-  const openAccounts = () => useSettingsStore.getState().openSettings("accounts");
   const connected = account?.status === "connected";
   const controller = useSpotifyPlayback(connected);
   const timeDisplayMode = useSpotify((d) => d.timeDisplayMode);
@@ -52,22 +50,6 @@ export function SpotifyWidget() {
   let content: ReactNode;
   if (!loaded) {
     content = <SpotifyEmptyState title="Loading Spotify" message="Checking your account." />;
-  } else if (!account) {
-    content = (
-      <SpotifyEmptyState
-        title="Connect Spotify"
-        message="Connect Spotify to see and control playback."
-        action={<Button onClick={openAccounts}>Connect Spotify</Button>}
-      />
-    );
-  } else if (!connected) {
-    content = (
-      <SpotifyEmptyState
-        title="Reconnect Spotify"
-        message={account.lastError ?? "Spotify needs a fresh connection."}
-        action={<Button onClick={openAccounts}>Reconnect</Button>}
-      />
-    );
   } else if (controller.isLoading) {
     content = <SpotifyEmptyState title="Loading Spotify" message="Checking current playback." />;
   } else if (controller.error) {

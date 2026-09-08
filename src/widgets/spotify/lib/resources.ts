@@ -36,6 +36,7 @@ function library(
   load: () => Promise<SpotifySearchResult[]>,
 ): PolledDefinition<SpotifySearchResult[]> {
   return {
+    widget: "spotify",
     cacheKey: `spotify:${name}`,
     intervalMs: SPOTIFY_LIBRARY_REFRESH_MS,
     parse,

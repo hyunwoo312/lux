@@ -33,6 +33,7 @@ function feedKey({ tab, region, topic, sources, query }: FeedRequest): string {
 export function newsFeed(request: FeedRequest): PolledDefinition<NewsPayload> {
   const { tab, region, topic, sources, query } = request;
   return {
+    widget: "news",
     cacheKey: feedKey(request),
     intervalMs: NEWS_REFRESH_MS,
     parse: parseCachedNews,
@@ -45,6 +46,7 @@ export function newsFeed(request: FeedRequest): PolledDefinition<NewsPayload> {
 
 export function newsTrends(region: TrendRegion): PolledDefinition<TrendsFeed> {
   return {
+    widget: "news",
     cacheKey: trendsKey(region),
     intervalMs: NEWS_REFRESH_MS,
     parse: parseCachedTrends,

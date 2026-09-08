@@ -204,11 +204,12 @@ function dedupeById<T extends { id: string }>(items: (T | null)[]): T[] {
 type InboxItems = { pullRequests: InboxPullRequest[]; issues: InboxIssue[] };
 
 async function fetchInboxItems(signal?: AbortSignal): Promise<InboxItems> {
-  const parsed = inboxItemsSchema.safeParse(await graphql(INBOX_ITEMS_QUERY, signal));
-  if (!parsed.success) {
-    throw new Error("Unexpected GitHub inbox response");
-  }
-  const { reviewRequested, mine, assigned, mentioned } = parsed.data.data;
+  const { data } = parseResponse(
+    "GitHub inbox",
+    inboxItemsSchema,
+    await graphql(INBOX_ITEMS_QUERY, signal),
+  );
+  const { reviewRequested, mine, assigned, mentioned } = data;
 
   return {
     pullRequests: dedupeById([

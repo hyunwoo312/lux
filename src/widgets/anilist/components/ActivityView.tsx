@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { ROW } from "@/lib/row";
 import { Heart, Users } from "lucide-react";
-import { loadErrorMessage } from "@/lib/net";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
@@ -11,7 +10,6 @@ import { toggleActivityLike } from "@/widgets/anilist/lib/api/feed";
 import { FeedList } from "@/widgets/anilist/components/FeedList";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
-import { AnilistWriteNotice } from "@/widgets/anilist/components/AnilistWriteNotice";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import {
@@ -21,6 +19,7 @@ import {
   type AnilistActivity,
 } from "@/widgets/anilist/types";
 import { Button } from "@/components/ui/button";
+import { reportWriteFailure } from "@/widgets/core/reportWriteFailure";
 
 export function ActivityView({
   enabled,
@@ -39,19 +38,17 @@ export function ActivityView({
     usePagedDefinition(definition, { enabled });
   useAnilistSync(refresh, isRefreshing, lastSyncedAt);
 
-  const [likeError, setLikeError] = useState("");
   const setLiked = (id: number, isLiked: boolean) =>
     patchPagedResource<AnilistActivity>(definition.cacheKey, (items) =>
       items.map((item) => (item.id === id ? { ...item, isLiked } : item)),
     );
   const toggleLike = (activity: AnilistActivity) => {
     setLiked(activity.id, !activity.isLiked);
-    setLikeError("");
     toggleActivityLike(activity.id).then(
       (isLiked) => setLiked(activity.id, isLiked),
-      (error: Error) => {
+      (error: unknown) => {
         setLiked(activity.id, activity.isLiked);
-        setLikeError(loadErrorMessage(error, "Couldn’t update your like. Try again."));
+        reportWriteFailure("anilist-write", error, "Couldn’t update your like. Try again.");
       },
     );
   };
@@ -102,7 +99,6 @@ export function ActivityView({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <AnilistWriteNotice message={likeError} />
       <FeedList
         label="Recent activity"
         items={items}
@@ -137,7 +133,7 @@ function ActivityRow({
   liked: boolean;
   onToggleLike: () => void;
 }) {
-  const time = formatRelativeTime(new Date(activity.createdAt * 1000).toISOString());
+  const time = formatRelativeTime(activity.createdAt);
   const meta = activity.mediaTitle ? `${activity.mediaTitle} · ${time}` : time;
 
   return (

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Check, ChevronLeft, MapPin } from "lucide-react";
+import { Check, MapPin } from "lucide-react";
 import { ExpandingSearch } from "@/components/ExpandingSearch";
 import { searchResults, useDebouncedSearch } from "@/hooks/useDebouncedSearch";
 import { useComboboxCursor } from "@/hooks/useComboboxCursor";
@@ -14,6 +14,7 @@ import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { makeLocationId, type GeocodeResult } from "@/widgets/weather/types";
 import { ListboxStatus } from "@/components/ListboxStatus";
 import { OptionRow } from "@/components/OptionRow";
+import { HeaderBackButton } from "@/widgets/core/HeaderBackButton";
 
 const MIN_QUERY_LENGTH = 2;
 
@@ -62,20 +63,7 @@ export function WeatherSearch() {
   });
 
   if (inDetail) {
-    return (
-      <button
-        type="button"
-        onClick={() => clearSelection(instanceId)}
-        className="
-          press focus-ring cursor-pointer text-ink-3
-          hover:text-ink
-          inline-flex items-center gap-0.5 text-caption font-medium tracking-wide uppercase
-        "
-      >
-        <ChevronLeft className="size-4" aria-hidden />
-        Cities
-      </button>
-    );
+    return <HeaderBackButton label="Cities" onClick={() => clearSelection(instanceId)} />;
   }
 
   return (

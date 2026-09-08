@@ -10,6 +10,7 @@ import type { WidgetInstance } from "@/widgets/core/types";
 import { useWidgetBackground } from "@/widgets/core/useWidgetSettingsStore";
 import { useWidgetHighlightStore } from "@/widgets/core/useWidgetHighlightStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
+import { useProviderLock } from "@/widgets/core/useProviderLock";
 import { removeWidgetInstance } from "@/widgets/core/instanceRemoval";
 import { getWidgetPlugin } from "@/widgets/registry";
 import { useDashboardStore } from "@/stores/useDashboardStore";
@@ -22,7 +23,6 @@ type WidgetHostProps = {
 };
 
 const useNoBare = () => false;
-const useNoLock = () => null;
 
 export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
   const plugin = getWidgetPlugin(instance.type);
@@ -34,8 +34,7 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
   const reduced = useReducedMotion();
   const useBare = plugin.frame?.useBare ?? useNoBare;
   const bare = useBare(instance.id);
-  const useLock = plugin.useLock ?? useNoLock;
-  const lock = useLock(instance.id);
+  const lock = useProviderLock(plugin);
 
   useEffect(() => {
     if (!pulse) return;

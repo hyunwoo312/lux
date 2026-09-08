@@ -10,6 +10,7 @@ import type { League } from "@/widgets/sports/lib/leagues";
 import type { DayWindow } from "@/widgets/sports/lib/window";
 import type { Match } from "@/widgets/sports/types";
 import { matchesQuery } from "@/lib/utils";
+import { ErrorState, StateMessage } from "@/components/StateMessage";
 
 function teamMatchesQuery(match: Match, abbreviation: string, needle: string): boolean {
   if (matchesQuery(abbreviation, needle)) return true;
@@ -31,7 +32,7 @@ export function FavoriteLeagueSection({
   now: number;
 }) {
   const instanceId = useWidgetInstanceId();
-  const { state } = useLeagueScoreboard(league, dayWindow);
+  const { state, refresh } = useLeagueScoreboard(league, dayWindow);
   const clock24h = useAppSettingsStore((s) => s.clock24h);
   const open = useSports((d) => !d.collapsed.includes(league.id));
   const states = useSports((d) => d.states);
@@ -62,9 +63,9 @@ export function FavoriteLeagueSection({
       onToggle={(next) => setSectionOpen(instanceId, league.id, next)}
     >
       {state.status === "loading" ? (
-        <p className="text-ink-3 px-2 text-caption">Loading…</p>
+        <StateMessage compact message="Loading…" />
       ) : state.status === "error" ? (
-        <p className="text-ink-3 px-2 text-caption">Scores unavailable.</p>
+        <ErrorState error={state.error} service="ESPN" subject="scores" onRetry={refresh} />
       ) : (
         <MatchList
           label={`${league.label} games`}

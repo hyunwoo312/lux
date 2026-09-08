@@ -16,6 +16,8 @@ vi.mock("@/widgets/spotify/lib/spotify-api", () => ({
 vi.mock("@/widgets/spotify/hooks/useSpotifyPlayback", () => ({
   loadSpotifyQueue: vi.fn(),
   requestSpotifyPlaybackRefresh: vi.fn(),
+  spotifyDevices: async () =>
+    (await import("@/widgets/spotify/lib/spotify-api")).getSpotifyDevices(),
 }));
 
 import { TooltipProvider } from "@/components/ui/tooltip";

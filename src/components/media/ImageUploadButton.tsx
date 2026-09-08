@@ -2,6 +2,7 @@ import type { ChangeEvent } from "react";
 import { useRef } from "react";
 import { Upload } from "lucide-react";
 import { ACCEPTED_IMAGE_TYPES } from "@/lib/asset-store";
+import { DashedAction } from "@/components/DashedAction";
 
 type ImageUploadButtonProps = {
   title: string;
@@ -28,17 +29,10 @@ export function ImageUploadButton({
 
   return (
     <>
-      <button
-        type="button"
+      <DashedAction
         disabled={disabled}
         onClick={() => inputRef.current?.click()}
-        className="
-          press-row transition-colors border-border/60 bg-background/30
-          hover:border-foreground/40 hover:text-ink
-          text-ink-3 focus-ring flex w-full cursor-pointer items-center gap-3 rounded-lg border
-          border-dashed px-3 py-2.5 text-left
-          disabled:cursor-default disabled:opacity-60
-        "
+        className="bg-background/30 px-3 py-2.5 text-left"
       >
         <span
           className="
@@ -52,7 +46,7 @@ export function ImageUploadButton({
           <strong className="text-ink text-body font-medium">{title}</strong>
           <span className="text-ink-3 truncate text-caption">{description}</span>
         </span>
-      </button>
+      </DashedAction>
       <input
         ref={inputRef}
         type="file"

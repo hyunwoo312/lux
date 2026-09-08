@@ -6,7 +6,6 @@ const store = () => useGithubStore.getState();
 beforeEach(() => {
   useGithubStore.setState({
     byInstance: {},
-    login: undefined,
     syncNonce: {},
     syncing: {},
     lastSyncAt: {},
@@ -103,7 +102,6 @@ describe("useGithubStore", () => {
       merge?.(persisted, {
         ...useGithubStore.getState(),
         byInstance: {},
-        login: undefined,
       }) as ReturnType<typeof useGithubStore.getState>;
 
     const valid = { view: "inbox", showPrivate: false, openBehavior: "newTab" };
@@ -159,11 +157,6 @@ describe("useGithubStore", () => {
       expect(
         mergeInto({ byInstance: { a: valid }, lastSeenReleaseAt: 5 }).lastSeenReleaseAt,
       ).toBeUndefined();
-    });
-
-    it("carries the login across a reload so the profile link survives", () => {
-      expect(mergeInto({ byInstance: { a: valid }, login: "octocat" }).login).toBe("octocat");
-      expect(mergeInto({ byInstance: { a: valid }, login: 42 }).login).toBeUndefined();
     });
 
     it("ignores a retired contributions cache without losing the settings", () => {

@@ -1,6 +1,6 @@
 import { CandlestickChart, LineChart } from "lucide-react";
 import { IconActionButton } from "@/components/IconActionButton";
-import { RetryButton, StateMessage } from "@/components/StateMessage";
+import { ErrorState } from "@/components/StateMessage";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useNow } from "@/hooks/useNow";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -247,9 +247,12 @@ export function StockDetail({ symbol, onRemove }: StockDetailProps) {
       {data ? (
         <DetailBody data={data} range={range} />
       ) : state.status === "error" ? (
-        <StateMessage
-          message={`Couldn’t load ${symbol}.`}
-          action={<RetryButton onRetry={refresh} retrying={isRefreshing} />}
+        <ErrorState
+          error={state.error}
+          service="Yahoo Finance"
+          subject={symbol}
+          onRetry={refresh}
+          retrying={isRefreshing}
         />
       ) : (
         <DetailSkeleton />

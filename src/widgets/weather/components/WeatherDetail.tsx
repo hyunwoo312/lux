@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { RetryButton, StateMessage } from "@/components/StateMessage";
+import { ErrorState } from "@/components/StateMessage";
 import { ItemActionButton } from "@/components/ItemActionButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useElementSize } from "@/hooks/useElementSize";
@@ -54,9 +54,12 @@ export function WeatherDetail({ location, units, windUnit, onRemove }: WeatherDe
       </ItemActionButton>
       {!data ? (
         state.status === "error" ? (
-          <StateMessage
-            message="Couldn’t load the weather."
-            action={<RetryButton onRetry={refresh} retrying={isRefreshing} />}
+          <ErrorState
+            error={state.error}
+            service="Open-Meteo"
+            subject="the weather"
+            onRetry={refresh}
+            retrying={isRefreshing}
           />
         ) : (
           <DetailSkeleton />

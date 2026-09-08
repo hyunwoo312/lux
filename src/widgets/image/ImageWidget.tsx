@@ -11,6 +11,7 @@ import type { WidgetContentProps } from "@/widgets/core/types";
 import { useImageUploads } from "@/widgets/image/hooks/useImageUploads";
 import { useImage, useImageStore } from "@/widgets/image/useImageStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
+import { DashedAction } from "@/components/DashedAction";
 
 function getDroppedFiles(transfer: DataTransfer): File[] {
   return Array.from(transfer.files).filter((file) => file.type.startsWith("image/"));
@@ -126,20 +127,11 @@ export function ImageWidget({ editing }: WidgetContentProps) {
         )
       ) : (
         <div className="h-full w-full p-3">
-          <button
-            type="button"
+          <DashedAction
             disabled={disabled}
             onClick={openPicker}
             className={cn(
-              "press-row transition-colors",
-              `
-                focus-ring text-ink-3
-                hover:text-ink hover:border-foreground/40
-                border-border/60 flex h-full w-full cursor-pointer flex-col items-center
-                justify-center gap-2 rounded-lg border border-dashed p-4 text-center
-                transition-colors
-                disabled:cursor-default disabled:opacity-60
-              `,
+              "h-full flex-col justify-center gap-2 p-4 text-center",
               dragging && "border-primary text-ink",
             )}
           >
@@ -148,7 +140,7 @@ export function ImageWidget({ editing }: WidgetContentProps) {
             <span className="text-ink-3 text-caption">
               Upload PNG, JPG, WebP, or GIF up to 5 MB.
             </span>
-          </button>
+          </DashedAction>
         </div>
       )}
 

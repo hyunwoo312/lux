@@ -85,7 +85,7 @@ describe("one bad entry never discards the rest", () => {
     const good = {
       id: 4,
       kind: "list",
-      createdAt: 1782849601,
+      createdAt: "2026-07-01T00:00:01.000Z",
       userName: "someone",
       text: "watched episode 5",
       siteUrl: "https://anilist.co/activity/4",
@@ -202,7 +202,7 @@ describe("persisted cache round-trip", () => {
       {
         id: 4,
         kind: "list",
-        createdAt: 1782849601,
+        createdAt: "2026-07-01T00:00:01.000Z",
         userName: "someone",
         userAvatar: "https://img.anilist.co/avatar.jpg",
         text: "watched episode 5 of Frieren",

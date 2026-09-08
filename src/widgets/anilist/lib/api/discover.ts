@@ -13,6 +13,7 @@ import {
   type DiscoverType,
   type TitleLanguage,
 } from "@/widgets/anilist/types";
+import { parseResponse } from "@/lib/net";
 
 const PAGE_SIZE = 30;
 
@@ -100,11 +101,12 @@ async function fetchDiscoverPage(
   authed: boolean,
   signal?: AbortSignal,
 ): Promise<DiscoverMedia[]> {
-  const parsed = discoverSchema.safeParse(await anilistGraphQL(query, variables, authed, signal));
-  if (!parsed.success) {
-    throw new Error("Unexpected AniList discover response");
-  }
-  return parsed.data.data.Page?.media.flatMap((media) => toDiscoverMedia(media, lang, type)) ?? [];
+  const { data } = parseResponse(
+    "AniList discover",
+    discoverSchema,
+    await anilistGraphQL(query, variables, authed, signal),
+  );
+  return data.Page?.media.flatMap((media) => toDiscoverMedia(media, lang, type)) ?? [];
 }
 
 export async function fetchDiscover(

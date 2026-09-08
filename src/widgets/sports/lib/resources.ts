@@ -21,6 +21,7 @@ const INDEX_REFRESH_MS = 24 * 60 * 60 * 1000;
 
 export function sportsScoreboard(league: League, dayWindow: DayWindow): PolledDefinition<Match[]> {
   return {
+    widget: "sports",
     cacheKey: scoreboardKey(league, dayWindow),
     intervalMs: SCOREBOARD_INTERVAL_MS,
     parse: parseCachedScoreboard,
@@ -30,6 +31,7 @@ export function sportsScoreboard(league: League, dayWindow: DayWindow): PolledDe
 
 export function sportsLeaderboard(league: League): PolledDefinition<Leaderboard | null> {
   return {
+    widget: "sports",
     cacheKey: scoreboardKey(league, DEFAULT_DAY_WINDOW),
     intervalMs: SCOREBOARD_INTERVAL_MS,
     parse: parseCachedLeaderboard,
@@ -39,6 +41,7 @@ export function sportsLeaderboard(league: League): PolledDefinition<Leaderboard 
 
 export function sportsTennis(league: League): PolledDefinition<TennisEvent | null> {
   return {
+    widget: "sports",
     cacheKey: scoreboardKey(league, DEFAULT_DAY_WINDOW),
     intervalMs: SCOREBOARD_INTERVAL_MS,
     parse: parseCachedTennis,
@@ -47,6 +50,7 @@ export function sportsTennis(league: League): PolledDefinition<TennisEvent | nul
 }
 
 export const sportsTeamIndex: PolledDefinition<IndexedTeam[]> = {
+  widget: "sports",
   cacheKey: TEAM_INDEX_KEY,
   intervalMs: INDEX_REFRESH_MS,
   parse: parseCachedTeamIndex,

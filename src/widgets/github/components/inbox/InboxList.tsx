@@ -1,10 +1,8 @@
 import { useMemo } from "react";
 import type { ReactNode } from "react";
-import { AlertCircle, CheckCheck, ChevronRight, Inbox, RotateCw } from "lucide-react";
+import { AlertCircle, ChevronRight, Inbox, RotateCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConfigSegmented } from "@/components/config/Config";
-import { Spinner } from "@/components/ui/spinner";
-import { Tooltip } from "@/components/ui/tooltip";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { StateMessage } from "@/components/StateMessage";
 import {
@@ -23,6 +21,7 @@ import {
   type InboxFilter,
 } from "@/widgets/github/types";
 import { TYPE } from "@/lib/type";
+import { MarkAllReadButton } from "@/widgets/core/MarkAllReadButton";
 
 const FILTER_LABEL: Record<InboxFilter, string> = {
   all: "All",
@@ -231,31 +230,5 @@ function SectionError({
         {message}
       </p>
     </div>
-  );
-}
-
-function MarkAllReadButton({ marking, onClick }: { marking: boolean; onClick: () => void }) {
-  return (
-    <Tooltip content="Mark all read" prose>
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={marking}
-        aria-label="Mark all notifications read"
-        className="
-          press focus-ring text-ink-3 text-micro flex cursor-pointer items-center gap-1 rounded-sm
-          px-1.5 py-0.5
-          hover:text-ink
-          disabled:opacity-50
-        "
-      >
-        {marking ? (
-          <Spinner className="size-3.5" />
-        ) : (
-          <CheckCheck className="size-3.5" aria-hidden />
-        )}
-        Mark all read
-      </button>
-    </Tooltip>
   );
 }

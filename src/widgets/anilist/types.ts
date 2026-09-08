@@ -103,7 +103,7 @@ export type AnilistNotification = {
 export type AnilistActivity = {
   id: number;
   kind: "list" | "text";
-  createdAt: number;
+  createdAt: string;
   userName: string;
   userAvatar?: string;
   text: string;

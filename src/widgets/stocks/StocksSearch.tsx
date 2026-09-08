@@ -6,7 +6,6 @@ import {
   Building2,
   ChartLine,
   Check,
-  ChevronLeft,
   Layers,
   PiggyBank,
 } from "lucide-react";
@@ -23,6 +22,7 @@ import { type InstrumentType, type SymbolSearchResult } from "@/widgets/stocks/t
 import { TYPE } from "@/lib/type";
 import { ListboxStatus } from "@/components/ListboxStatus";
 import { OptionRow } from "@/components/OptionRow";
+import { HeaderBackButton } from "@/widgets/core/HeaderBackButton";
 
 const TYPE_ICON: Record<InstrumentType, LucideIcon> = {
   EQUITY: Building2,
@@ -70,20 +70,7 @@ export function StocksSearch() {
 
   const inDetail = detail !== null && symbols.length > 1;
   if (inDetail) {
-    return (
-      <button
-        type="button"
-        onClick={() => clearSelection(instanceId)}
-        className="
-          press focus-ring cursor-pointer text-ink-3
-          hover:text-ink
-          inline-flex items-center gap-0.5 text-caption font-medium tracking-wide uppercase
-        "
-      >
-        <ChevronLeft className="size-4" aria-hidden />
-        Stocks
-      </button>
-    );
+    return <HeaderBackButton label="Stocks" onClick={() => clearSelection(instanceId)} />;
   }
 
   return (

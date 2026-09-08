@@ -44,9 +44,9 @@ describe("useAnilistStore", () => {
   });
 
   it("shares last-seen markers across instances and only advances forward", () => {
-    store().setLastSeenActivity(100);
-    store().setLastSeenActivity(50);
-    expect(store().lastSeenActivityAt).toBe(100);
+    store().setLastSeenActivity("2026-07-02T00:00:00.000Z");
+    store().setLastSeenActivity("2026-07-01T00:00:00.000Z");
+    expect(store().lastSeenActivityAt).toBe("2026-07-02T00:00:00.000Z");
   });
 
   it("ignores a second sync request inside the cooldown", () => {
@@ -142,7 +142,7 @@ describe("useAnilistStore", () => {
 
       expect(Object.keys(merged.byInstance)).toEqual(["anilist-1", "anilist-3"]);
       expect(merged.byInstance["anilist-1"]?.titleLanguage).toBe("romaji");
-      expect(merged.lastSeenActivityAt).toBe(100);
+      expect(merged.lastSeenActivityAt).toBe("1970-01-01T00:01:40.000Z");
     });
 
     it("keeps the instances when the shared last-seen marker is unreadable", () => {

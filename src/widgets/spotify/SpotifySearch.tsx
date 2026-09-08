@@ -4,20 +4,18 @@ import { useComboboxCursor } from "@/hooks/useComboboxCursor";
 import { SpotifyDeviceChooser } from "@/widgets/spotify/components/SpotifyDeviceChooser";
 import { SpotifySearchRow } from "@/widgets/spotify/components/SpotifySearchRow";
 import { useSpotifySearchResults } from "@/widgets/spotify/hooks/useSpotifySearchResults";
-import {
-  addSpotifyToQueue,
-  getSpotifyDevices,
-  startSpotifyPlayback,
-} from "@/widgets/spotify/lib/spotify-api";
+import { addSpotifyToQueue, startSpotifyPlayback } from "@/widgets/spotify/lib/spotify-api";
 import { type SpotifyPlaybackDevice, type SpotifySearchResult } from "@/widgets/spotify/types";
 import { resolveSpotifyDevice } from "@/widgets/spotify/lib/devices";
 import {
   loadSpotifyQueue,
   requestSpotifyPlaybackRefresh,
+  spotifyDevices,
 } from "@/widgets/spotify/hooks/useSpotifyPlayback";
 import { ListboxStatus } from "@/components/ListboxStatus";
 import { cn, matchesQuery } from "@/lib/utils";
 import { TYPE } from "@/lib/type";
+import { reportWriteFailure } from "@/widgets/core/reportWriteFailure";
 
 const MAX_RESULTS = 10;
 const OWNED_PLAYLIST_CAP = 3;
@@ -42,8 +40,7 @@ export function SpotifySearch() {
   const [open, setOpen] = useState(false);
   const { query, setQuery, state, results, playlists, playlistsLoading } =
     useSpotifySearchResults(open);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const error = state.status === "error" ? "Couldn't search Spotify." : actionError;
+  const error = state.status === "error" ? "Couldn't search Spotify." : null;
   const [devices, setDevices] = useState<SpotifyPlaybackDevice[]>([]);
   const [targetDeviceId, setTargetDeviceId] = useState<string | null>(null);
   const [queueingId, setQueueingId] = useState<string | null>(null);
@@ -58,7 +55,7 @@ export function SpotifySearch() {
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    getSpotifyDevices()
+    spotifyDevices()
       .then((found) => {
         if (cancelled) return;
         setDevices(found);
@@ -77,30 +74,28 @@ export function SpotifySearch() {
 
   const pick = (result: SpotifySearchResult) => {
     if (!targetDevice) return;
-    setActionError(null);
     startSpotifyPlayback(result, targetDevice.id)
       .then(() => {
         requestSpotifyPlaybackRefresh();
         setQuery("");
         setOpen(false);
       })
-      .catch((caught: unknown) => {
-        setActionError(caught instanceof Error ? caught.message : "Couldn't start playback.");
-      });
+      .catch((caught: unknown) =>
+        reportWriteFailure("spotify-write", caught, "Couldn't start playback."),
+      );
   };
 
   const addToQueue = (result: SpotifySearchResult) => {
     if (!targetDevice || queueingId === result.id || queuedIds.has(result.id)) return;
-    setActionError(null);
     setQueueingId(result.id);
     addSpotifyToQueue(result.uri, targetDevice.id)
       .then(() => {
         void loadSpotifyQueue();
         setQueuedIds((prev) => new Set(prev).add(result.id));
       })
-      .catch((caught: unknown) => {
-        setActionError(caught instanceof Error ? caught.message : "Couldn't add to queue.");
-      })
+      .catch((caught: unknown) =>
+        reportWriteFailure("spotify-write", caught, "Couldn't add to queue."),
+      )
       .finally(() => setQueueingId(null));
   };
 

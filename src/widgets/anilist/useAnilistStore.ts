@@ -52,7 +52,7 @@ type AnilistData = {
 
 type AnilistStoreState = SyncSlice & {
   byInstance: Record<string, AnilistData>;
-  lastSeenActivityAt?: number;
+  lastSeenActivityAt?: string;
   setActiveTab: (instanceId: string, activeTab: AnilistTab) => void;
   setFeedSource: (instanceId: string, feedSource: FeedSource) => void;
   setViewMode: (instanceId: string, viewMode: ViewMode) => void;
@@ -64,7 +64,7 @@ type AnilistStoreState = SyncSlice & {
   setDiscoverFeed: (instanceId: string, discoverFeed: DiscoverFeed) => void;
   setDiscoverType: (instanceId: string, discoverType: DiscoverType) => void;
   removeInstance: (instanceId: string) => void;
-  setLastSeenActivity: (createdAt: number) => void;
+  setLastSeenActivity: (createdAt: string) => void;
   requestSync: (instanceId: string, viewerId: number) => void;
 };
 
@@ -102,7 +102,13 @@ const persistedSchema = z.preprocess(
   normalisePersisted,
   z.object({
     byInstance: tolerantRecord(configSchema),
-    lastSeenActivityAt: z.number().optional().catch(undefined),
+    lastSeenActivityAt: z
+      .union([
+        z.iso.datetime(),
+        z.number().transform((seconds) => new Date(seconds * 1000).toISOString()),
+      ])
+      .optional()
+      .catch(undefined),
   }),
 );
 
@@ -198,7 +204,10 @@ export const useAnilistStore = createPersistedStore<AnilistStoreState>()(
       set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
     setLastSeenActivity: (createdAt) =>
       set((state) => ({
-        lastSeenActivityAt: Math.max(state.lastSeenActivityAt ?? 0, createdAt),
+        lastSeenActivityAt:
+          state.lastSeenActivityAt !== undefined && state.lastSeenActivityAt > createdAt
+            ? state.lastSeenActivityAt
+            : createdAt,
       })),
     requestSync: (instanceId, viewerId) => {
       if (isSyncCoolingDown(get(), ANILIST_SYNC_KEY, ANILIST_SYNC_COOLDOWN_MS)) return;

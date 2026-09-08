@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { loadErrorMessage } from "@/lib/net";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { Button } from "@/components/ui/button";
 import { fade } from "@/lib/motion";
@@ -18,7 +17,6 @@ import {
   matchesListFilter,
 } from "@/widgets/anilist/lib/list-status";
 import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
-import { AnilistWriteNotice } from "@/widgets/anilist/components/AnilistWriteNotice";
 import { LibraryControls } from "@/widgets/anilist/components/library/LibraryControls";
 import { LibraryEntries } from "@/widgets/anilist/components/library/LibraryEntries";
 import { LibraryRow } from "@/widgets/anilist/components/library/LibraryRow";
@@ -27,6 +25,7 @@ import { resolveSort, showsInProgress } from "@/widgets/anilist/components/libra
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import type { CurrentData, CurrentEntry, TitleLanguage } from "@/widgets/anilist/types";
+import { reportWriteFailure } from "@/widgets/core/reportWriteFailure";
 
 function withProgress(entry: CurrentEntry, progress: number): CurrentEntry {
   return {
@@ -117,7 +116,6 @@ function ListBody({
   const viewMode = useAnilist((d) => d.viewMode);
   const now = useNow().getTime();
   const [pending, setPending] = useState<Record<number, boolean>>({});
-  const [writeError, setWriteError] = useState("");
   const [announcement, setAnnouncement] = useState("");
 
   const effectiveSort = resolveSort(sort, listFilter);
@@ -140,16 +138,14 @@ function ListBody({
   const promote = useCallback(
     (entry: CurrentEntry) => {
       setPending((prev) => ({ ...prev, [entry.id]: true }));
-      setWriteError("");
       setAnnouncement("");
       saveListStatus(entry.id, "CURRENT")
         .then((status) => patchEntry(entry, (item) => ({ ...item, status })))
         .catch((error: unknown) =>
-          setWriteError(
-            loadErrorMessage(
-              error,
-              `Couldn’t move ${entry.title} to ${listStatusLabel("CURRENT", entry.kind)}. Try again.`,
-            ),
+          reportWriteFailure(
+            "anilist-write",
+            error,
+            `Couldn’t move ${entry.title} to ${listStatusLabel("CURRENT", entry.kind)}. Try again.`,
           ),
         )
         .finally(() => setPending((prev) => ({ ...prev, [entry.id]: false })));
@@ -162,7 +158,6 @@ function ListBody({
       const next = entry.progress + delta;
       if (next < 0) return;
       setPending((prev) => ({ ...prev, [entry.id]: true }));
-      setWriteError("");
       setAnnouncement("");
       patchEntry(entry, (item) => withProgress(item, next));
       saveProgress(entry.id, next)
@@ -172,8 +167,10 @@ function ListBody({
         })
         .catch((error: unknown) => {
           patchEntry(entry, (item) => withProgress(item, entry.progress));
-          setWriteError(
-            loadErrorMessage(error, `Couldn’t save your progress for ${entry.title}. Try again.`),
+          reportWriteFailure(
+            "anilist-write",
+            error,
+            `Couldn’t save your progress for ${entry.title}. Try again.`,
           );
         })
         .finally(() => setPending((prev) => ({ ...prev, [entry.id]: false })));
@@ -207,7 +204,6 @@ function ListBody({
           {newReleases}
         </p>
       )}
-      <AnilistWriteNotice message={writeError} />
       <div role="log" aria-live="polite" className="sr-only">
         {announcement}
       </div>

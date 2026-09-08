@@ -1,6 +1,6 @@
 import { AnilistServiceIcon } from "@/components/icons/service-icons";
 import { openResult } from "@/widgets/core/commandResult";
-import { useIntegrationStore } from "@/integrations";
+import { accountFor, useIntegrationStore } from "@/integrations";
 import { formatRelativeTime } from "@/lib/relative-time";
 import type { CommandResult, WidgetCommand } from "@/widgets/core/types";
 import { readPaged } from "@/widgets/core/usePagedResource";
@@ -43,9 +43,7 @@ const STATUS_ORDER: Record<ListStatus, number> = {
 };
 
 function viewerId(): number | null {
-  const account = useIntegrationStore
-    .getState()
-    .accounts.find((entry) => entry.providerId === "anilist");
+  const account = accountFor(useIntegrationStore.getState().accounts, "anilist");
   if (account?.status !== "connected") return null;
   const id = Number(account.providerAccountId);
   return Number.isFinite(id) ? id : null;
@@ -61,7 +59,7 @@ function activityRow(activity: AnilistActivity): CommandResult {
   return {
     id: `anilist.activity.${activity.id}`,
     label: activity.mediaTitle ? `${said} · ${activity.mediaTitle}` : said,
-    meta: formatRelativeTime(new Date(activity.createdAt * 1000).toISOString()),
+    meta: formatRelativeTime(activity.createdAt),
     section: "Recent activity",
     artworkUrl: activity.coverImage ?? activity.userAvatar,
     run: () => openResult(activity.siteUrl),

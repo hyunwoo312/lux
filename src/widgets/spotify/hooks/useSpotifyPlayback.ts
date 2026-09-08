@@ -221,10 +221,15 @@ async function refreshContextName(context: SpotifyPlaybackContext | null): Promi
   }
 }
 
+const DEVICES_TTL_MS = 30_000;
+
+let devicesLoadedAt = 0;
+
 async function loadDevices(): Promise<void> {
   set({ devicesLoading: true, devicesError: null });
   try {
     set({ devices: await getSpotifyDevices() });
+    devicesLoadedAt = Date.now();
   } catch (caught) {
     if (caught instanceof RateLimitError) {
       set({ devicesError: "Spotify is busy — try again in a moment." });
@@ -254,10 +259,6 @@ export async function loadSpotifyQueue(): Promise<void> {
 const NO_DEVICE_MESSAGE = "Open Spotify on a device first, then try again.";
 
 const NOTHING_QUEUED_MESSAGE = "Spotify has nothing queued — play something first.";
-
-const DEVICES_TTL_MS = 30_000;
-
-let devicesLoadedAt = 0;
 
 const skipQueue = createSerialQueue();
 const latestQueues = new Map<SpotifyPendingAction, QueuedRunner>();
@@ -452,8 +453,7 @@ async function refresh(): Promise<void> {
 }
 
 export async function playSpotifyResult(result: SpotifySearchResult): Promise<void> {
-  if (get().devices.length === 0) await loadDevices();
-  const target = anySpotifyDevice(get().devices);
+  const target = anySpotifyDevice(await spotifyDevices());
   if (!target) throw new Error(NO_DEVICE_MESSAGE);
   await startSpotifyPlayback(result, target.id);
   requestSpotifyPlaybackRefresh();
@@ -474,10 +474,7 @@ export function nudgeSpotifyVolume(delta: number): void {
 
 export async function spotifyDevices(): Promise<SpotifyPlaybackDevice[]> {
   const fresh = get().devices.length > 0 && Date.now() - devicesLoadedAt < DEVICES_TTL_MS;
-  if (!fresh) {
-    await loadDevices();
-    devicesLoadedAt = Date.now();
-  }
+  if (!fresh) await loadDevices();
   const { devices, devicesError } = get();
   if (devicesError !== null) throw new Error(devicesError);
   return devices;
@@ -569,7 +566,7 @@ function releaseEngine(): void {
 function setConnected(next: boolean): void {
   if (next === connected) return;
   connected = next;
-  if (connected) set({ isLoading: true });
+  set({ isLoading: connected });
   syncEngine();
 }
 

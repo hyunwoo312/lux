@@ -21,4 +21,5 @@ export const sportsPlugin: WidgetPlugin = {
   statusComponent: SportsTabs,
   headerActionComponent: SportsRefreshButton,
   tint: SPORTS_TINT,
+  removalNote: () => "Its league and followed teams will be removed.",
 };

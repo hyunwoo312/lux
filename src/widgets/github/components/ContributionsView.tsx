@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
 import { usePolledDefinition } from "@/widgets/core/usePolledResource";
 import { githubContributions } from "@/widgets/github/lib/resources";
@@ -10,7 +10,7 @@ import { ContributionsStats } from "@/widgets/github/components/ContributionsSta
 import { localDayKey } from "@/lib/clock";
 import { heatmapHeight, heatmapMetrics } from "@/widgets/github/lib/heatmap";
 import { visibleItems } from "@/widgets/github/lib/visibility";
-import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
+import { useGithub } from "@/widgets/github/useGithubStore";
 import { useGithubSync } from "@/widgets/github/useGithubSync";
 import { type ContributionDay } from "@/widgets/github/types";
 
@@ -22,7 +22,6 @@ function sumCounts(weeks: ContributionDay[][]): number {
 
 export function ContributionsView({ enabled }: { enabled: boolean }) {
   const [ref, size] = useElementSize<HTMLDivElement>();
-  const setLogin = useGithubStore((s) => s.setLogin);
   const showPrivate = useGithub((d) => d.showPrivate);
   const newTab = useGithub((d) => d.openBehavior === "newTab");
   const { state, isRefreshing, refresh, lastSyncedAt } = usePolledDefinition(githubContributions, {
@@ -31,11 +30,6 @@ export function ContributionsView({ enabled }: { enabled: boolean }) {
   useGithubSync(refresh, isRefreshing, lastSyncedAt);
 
   const data = state.status === "success" ? state.data : null;
-  const login = data?.login;
-  useEffect(() => {
-    if (login) setLogin(login);
-  }, [login, setLogin]);
-
   const ledgerActivity = useMemo(
     () => visibleItems(data?.activity ?? [], showPrivate),
     [data?.activity, showPrivate],

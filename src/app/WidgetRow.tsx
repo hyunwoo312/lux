@@ -11,7 +11,7 @@ import { TYPE } from "@/lib/type";
 type WidgetCardProps = {
   plugin: WidgetPlugin;
   added: number;
-  needsAccount: boolean;
+  accountNote: string | null;
   previewed: boolean;
   variants: Variants;
   onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => void;
@@ -24,7 +24,7 @@ export const WidgetRow = forwardRef<HTMLButtonElement, WidgetCardProps>(function
   {
     plugin,
     added,
-    needsAccount,
+    accountNote,
     previewed,
     variants,
     onPointerDown,
@@ -95,8 +95,8 @@ export const WidgetRow = forwardRef<HTMLButtonElement, WidgetCardProps>(function
         <span className="text-ink-4 text-micro line-clamp-2 leading-snug">
           {plugin.description}
         </span>
-        {needsAccount ? (
-          <span className={cn(TYPE.eyebrow, "text-ink-4")}>Needs an account</span>
+        {accountNote ? (
+          <span className={cn(TYPE.eyebrow, "text-ink-4")}>{accountNote}</span>
         ) : (
           plugin.recommended &&
           added === 0 && <span className={cn(TYPE.eyebrow, "text-primary")}>Recommended</span>

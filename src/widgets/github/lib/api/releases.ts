@@ -3,6 +3,7 @@ import { httpUrlSchema } from "@/lib/open-url";
 import { tolerantArray } from "@/lib/persist";
 import { graphql } from "@/widgets/github/lib/api/client";
 import type { Release, ReleasesData } from "@/widgets/github/types";
+import { parseResponse } from "@/lib/net";
 
 const WATCHED_REPO_LIMIT = 100;
 
@@ -59,11 +60,12 @@ function toRelease(repo: z.infer<typeof watchedRepoSchema>): Release | null {
 }
 
 export async function fetchReleases(signal?: AbortSignal): Promise<ReleasesData> {
-  const parsed = watchingSchema.safeParse(await graphql(RELEASES_QUERY, signal));
-  if (!parsed.success) {
-    throw new Error("Unexpected GitHub releases response");
-  }
-  const { totalCount, nodes } = parsed.data.data.viewer.watching;
+  const { data } = parseResponse(
+    "GitHub releases",
+    watchingSchema,
+    await graphql(RELEASES_QUERY, signal),
+  );
+  const { totalCount, nodes } = data.viewer.watching;
   const releases = nodes
     .map((node) => watchedRepoSchema.safeParse(node))
     .flatMap((result) => (result.success ? [result.data] : []))

@@ -17,6 +17,7 @@ import {
 } from "@/widgets/github/types";
 
 export const githubInbox: PolledDefinition<InboxData> = {
+  widget: "github",
   cacheKey: INBOX_CACHE_KEY,
   intervalMs: INBOX_REFRESH_MS,
   parse: parseCachedInbox,
@@ -24,6 +25,7 @@ export const githubInbox: PolledDefinition<InboxData> = {
 };
 
 export const githubReleases: PolledDefinition<ReleasesData> = {
+  widget: "github",
   cacheKey: RELEASES_CACHE_KEY,
   intervalMs: SLOW_REFRESH_MS,
   parse: parseCachedReleases,
@@ -31,6 +33,7 @@ export const githubReleases: PolledDefinition<ReleasesData> = {
 };
 
 export const githubContributions: PolledDefinition<ContributionsData> = {
+  widget: "github",
   cacheKey: CONTRIBUTIONS_CACHE_KEY,
   intervalMs: SLOW_REFRESH_MS,
   parse: parseCachedContributions,

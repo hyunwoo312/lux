@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from "react";
-import { loadErrorMessage } from "@/lib/net";
 import { Button } from "@/components/ui/button";
 import { ConfigSegmented, ConfigSelect } from "@/components/config/Config";
 import { useProviderAccount } from "@/integrations";
@@ -11,7 +10,6 @@ import { searchDiscover } from "@/widgets/anilist/lib/api/discover";
 import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { SearchX } from "lucide-react";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
-import { AnilistWriteNotice } from "@/widgets/anilist/components/AnilistWriteNotice";
 import { cn } from "@/lib/utils";
 import { COVER_GRID } from "@/widgets/anilist/components/coverGrid";
 import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
@@ -25,6 +23,7 @@ import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { DISCOVER_FEEDS } from "@/widgets/anilist/types";
 import type { DiscoverMedia, DiscoverType, ListStatus, ViewMode } from "@/widgets/anilist/types";
 import { TYPE } from "@/lib/type";
+import { reportWriteFailure } from "@/widgets/core/reportWriteFailure";
 
 const TYPE_OPTIONS: { value: DiscoverType; label: string }[] = [
   { value: "anime", label: "Anime" },
@@ -34,24 +33,23 @@ const TYPE_OPTIONS: { value: DiscoverType; label: string }[] = [
 type PlanningAdds = {
   statusOf: (media: DiscoverMedia) => ListStatus | undefined;
   isPending: (media: DiscoverMedia) => boolean;
-  writeError: string | null;
   add: (media: DiscoverMedia) => void;
 };
 
 function usePlanningAdds(): PlanningAdds {
   const [added, setAdded] = useState<Record<number, ListStatus>>({});
   const [pending, setPending] = useState<Record<number, boolean>>({});
-  const [writeError, setWriteError] = useState<string | null>(null);
 
   const add = (media: DiscoverMedia) => {
     if (pending[media.id]) return;
     setPending((prev) => ({ ...prev, [media.id]: true }));
-    setWriteError(null);
     saveListStatus(media.id, "PLANNING")
       .then((status) => setAdded((prev) => ({ ...prev, [media.id]: status })))
       .catch((error: unknown) =>
-        setWriteError(
-          loadErrorMessage(error, `Couldn’t add ${media.title} to Planning. Try again.`),
+        reportWriteFailure(
+          "anilist-write",
+          error,
+          `Couldn’t add ${media.title} to Planning. Try again.`,
         ),
       )
       .finally(() => setPending((prev) => ({ ...prev, [media.id]: false })));
@@ -60,7 +58,6 @@ function usePlanningAdds(): PlanningAdds {
   return {
     statusOf: (media) => added[media.id] ?? media.listStatus,
     isPending: (media) => pending[media.id] ?? false,
-    writeError,
     add,
   };
 }
@@ -256,7 +253,6 @@ function DiscoverList({
 
   return (
     <div className="flex h-full flex-col">
-      <AnilistWriteNotice message={adds.writeError ?? ""} />
       <ul
         aria-label={label}
         className={cn(

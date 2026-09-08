@@ -20,6 +20,7 @@ import {
 import type { QuickLink } from "@/widgets/quick-access/types";
 import { useQuickAccess, useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
+import { DashedAction } from "@/components/DashedAction";
 
 type PinnedSectionProps = {
   editing: boolean;
@@ -76,20 +77,10 @@ export function PinnedSection({ editing, formOpen, morph, onAdd, onEdit }: Pinne
                 transition={morph}
                 className="list-none"
               >
-                <button
-                  type="button"
+                <DashedAction
                   onClick={onAdd}
                   aria-label="Add link"
-                  className={cn(
-                    "press-row focus-ring transition-colors",
-                    `
-                      text-ink-3
-                      hover:text-ink hover:border-foreground/40
-                      border-border/60 w-full cursor-pointer border border-dashed transition-colors
-                    `,
-                    qaItemGeometry(view),
-                    !isGrid && "[&_svg]:size-4",
-                  )}
+                  className={cn(qaItemGeometry(view), !isGrid && "[&_svg]:size-4")}
                 >
                   {isGrid ? (
                     <>
@@ -104,7 +95,7 @@ export function PinnedSection({ editing, formOpen, morph, onAdd, onEdit }: Pinne
                       <span className="text-body">Add link</span>
                     </>
                   )}
-                </button>
+                </DashedAction>
               </motion.li>
             )}
           </ul>

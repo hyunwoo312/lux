@@ -11,7 +11,6 @@ import { useBrowserItems } from "@/widgets/quick-access/hooks/useBrowserItems";
 import { useItemActions } from "@/widgets/quick-access/hooks/useItemActions";
 import { useHistorySearch } from "@/widgets/quick-access/hooks/useHistorySearch";
 import { SearchField } from "@/components/SearchField";
-import { filterItems } from "@/widgets/quick-access/lib/search";
 import type { QuickAccessTab } from "@/widgets/quick-access/types";
 import { useQuickAccess } from "@/widgets/quick-access/useQuickAccessStore";
 import { searchResults } from "@/hooks/useDebouncedSearch";
@@ -75,12 +74,7 @@ function HistoryView({ editing }: { editing: boolean }) {
   const searched = useHistorySearch(query);
   const trimmed = query.trim();
 
-  const items =
-    state.status === "ready"
-      ? trimmed
-        ? searchResults(searched)
-        : filterItems(state.items, query)
-      : [];
+  const items = state.status === "ready" ? (trimmed ? searchResults(searched) : state.items) : [];
   const searchFailed = trimmed !== "" && searched.status === "error";
   const searching =
     trimmed !== "" && !searchFailed && searched.status !== "success" && searched.status !== "empty";

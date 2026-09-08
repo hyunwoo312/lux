@@ -1,6 +1,5 @@
 import { GitHubServiceIcon } from "@/components/icons/service-icons";
 import { INBOX_REFRESH_MS } from "@/widgets/github/types";
-import { useProviderLock } from "@/widgets/core/useProviderLock";
 import type { WidgetPlugin } from "@/widgets/core/types";
 import { GithubWidget } from "@/widgets/github/GithubWidget";
 import { GithubConfig } from "@/widgets/github/GithubConfig";
@@ -26,7 +25,6 @@ export const githubPlugin: WidgetPlugin = {
   tint: GITHUB_TINT,
   requiresAccount: ["github"],
   commands: githubCommands,
-  useLock: () =>
-    useProviderLock({ providers: ["github"], label: "GitHub", subject: "your activity" }),
+  signedOut: { mode: "lock", label: "GitHub", subject: "your activity" },
   removalNote: () => "Its settings will be reset — your GitHub account stays connected.",
 };

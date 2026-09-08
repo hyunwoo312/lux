@@ -22,4 +22,5 @@ export const newsPlugin: WidgetPlugin = {
   headerActionComponent: NewsHeaderActions,
   refreshMs: NEWS_REFRESH_MS,
   tint: NEWS_TINT,
+  removalNote: () => "Its sources, keywords and saved headlines will be removed.",
 };

@@ -24,6 +24,7 @@ export const spotifyPlugin: WidgetPlugin = {
   frame: { backdrop: SpotifyBackdrop, decorativeBackdrop: true },
   tint: SPOTIFY_TINT,
   requiresAccount: ["spotify"],
+  signedOut: { mode: "lock", label: "Spotify", subject: "what is playing" },
   removalNote: () => "Its settings will be reset — your Spotify account stays connected.",
   commands: spotifyCommands,
 };

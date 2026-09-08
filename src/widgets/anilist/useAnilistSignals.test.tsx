@@ -36,7 +36,7 @@ function activity(overrides: Partial<AnilistActivity> = {}): AnilistActivity {
   return {
     id: 1,
     kind: "text",
-    createdAt: 1_700_000_000,
+    createdAt: "2023-11-14T22:13:20.000Z",
     userName: "someone",
     text: "posted something",
     siteUrl: "https://anilist.co/activity/1",

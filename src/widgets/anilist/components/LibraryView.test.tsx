@@ -14,6 +14,7 @@ vi.mock("@/widgets/anilist/useAnilistSync", () => ({ useAnilistSync: vi.fn() }))
 
 import { RateLimitError } from "@/lib/net";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useToastStore } from "@/stores/useToastStore";
 import { LibraryView } from "@/widgets/anilist/components/LibraryView";
 import { fetchList, saveListStatus, saveProgress } from "@/widgets/anilist/lib/api/list";
 import { useAnilistStore } from "@/widgets/anilist/useAnilistStore";
@@ -195,7 +196,7 @@ describe("LibraryView", () => {
     fireEvent.click(await screen.findByLabelText("Start watching Frieren"));
 
     await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent(
+      expect(useToastStore.getState().toast?.message).toBe(
         "Couldn’t move Frieren to Watching. Try again.",
       ),
     );
@@ -214,7 +215,7 @@ describe("LibraryView", () => {
     fireEvent.click(screen.getByLabelText("Mark next episode of Frieren"));
 
     await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent(
+      expect(useToastStore.getState().toast?.message).toBe(
         "Couldn’t save your progress for Frieren. Try again.",
       ),
     );
@@ -302,7 +303,7 @@ describe("LibraryView", () => {
     fireEvent.click(screen.getByLabelText("Mark next episode of Frieren"));
 
     await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent("Rate limited — try again in 30s."),
+      expect(useToastStore.getState().toast?.message).toBe("Rate limited — try again in 30s."),
     );
   });
 

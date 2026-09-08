@@ -198,22 +198,7 @@ export const useWeatherStore = createPersistedStore<WeatherState>()(
   {
     name: "widget:weather",
     version: 3,
-    partialize: (state) => ({
-      byInstance: Object.fromEntries(
-        Object.entries(state.byInstance).map(([id, data]) => [
-          id,
-          {
-            locations: data.locations,
-            units: data.units,
-            windUnit: data.windUnit,
-            forecastDays: data.forecastDays,
-            rainAlert: data.rainAlert,
-            metrics: data.metrics,
-            selectedId: data.selectedId,
-          },
-        ]),
-      ),
-    }),
+    partialize: (state) => ({ byInstance: state.byInstance }),
     migrate: (persisted, version) => {
       if (version >= 3) return persisted;
       if (version < 2) {

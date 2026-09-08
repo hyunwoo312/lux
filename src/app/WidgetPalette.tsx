@@ -46,9 +46,13 @@ export function WidgetPalette(roving: RovingItemProps) {
   );
   const connectedProviders = connected.split(",");
   const countOf = (type: string) => widgets.filter((widget) => widget.type === type).length;
-  const missingAccount = (plugin: WidgetPlugin) =>
-    plugin.requiresAccount !== undefined &&
-    !plugin.requiresAccount.some((provider) => connectedProviders.includes(provider));
+  const accountNote = (plugin: WidgetPlugin) => {
+    const missing =
+      plugin.requiresAccount !== undefined &&
+      !plugin.requiresAccount.some((provider) => connectedProviders.includes(provider));
+    if (!missing) return null;
+    return plugin.signedOut?.mode === "degrade" ? "Connect for more" : "Needs an account";
+  };
 
   useEffect(() => {
     if (open) {
@@ -200,7 +204,7 @@ export function WidgetPalette(roving: RovingItemProps) {
                           }}
                           plugin={plugin}
                           added={countOf(plugin.type)}
-                          needsAccount={missingAccount(plugin)}
+                          accountNote={accountNote(plugin)}
                           previewed={previewType === plugin.type}
                           variants={itemVariants}
                           onPointerDown={(event) => onPointerDown(event, plugin)}

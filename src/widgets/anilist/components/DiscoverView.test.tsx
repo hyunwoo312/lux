@@ -17,6 +17,7 @@ import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIntegrationStore } from "@/integrations";
+import { useToastStore } from "@/stores/useToastStore";
 import { DiscoverView } from "@/widgets/anilist/components/DiscoverView";
 import { saveListStatus } from "@/widgets/anilist/lib/api/list";
 import { fetchDiscover, searchDiscover } from "@/widgets/anilist/lib/api/discover";
@@ -139,9 +140,11 @@ describe("DiscoverView", () => {
 
     fireEvent.click(await screen.findByLabelText("Add Frieren to Planning"));
 
-    expect(
-      await screen.findByText("Couldn’t add Frieren to Planning. Try again."),
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(useToastStore.getState().toast?.message).toBe(
+        "Couldn’t add Frieren to Planning. Try again.",
+      ),
+    );
     expect(screen.getByLabelText("Add Frieren to Planning")).toBeEnabled();
   });
 

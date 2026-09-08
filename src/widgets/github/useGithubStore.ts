@@ -37,7 +37,6 @@ export type GithubData = {
 
 type GithubStoreState = SyncSlice & {
   byInstance: Record<string, GithubData>;
-  login?: string;
   lastSeenReleaseAt?: string;
   setView: (instanceId: string, view: GithubView) => void;
   setShowPrivate: (instanceId: string, showPrivate: boolean) => void;
@@ -46,7 +45,6 @@ type GithubStoreState = SyncSlice & {
   toggleRepoCollapsed: (instanceId: string, repo: string) => void;
   setOpenBehavior: (instanceId: string, openBehavior: OpenBehavior) => void;
   removeInstance: (instanceId: string) => void;
-  setLogin: (login: string | undefined) => void;
   markReleasesSeen: (publishedAt: string | undefined) => void;
   requestSync: () => void;
 };
@@ -71,7 +69,6 @@ const configSchema = z.object({
 
 const persistedSchema = z.object({
   byInstance: tolerantRecord(configSchema),
-  login: z.string().optional().catch(undefined),
   lastSeenReleaseAt: z.string().optional().catch(undefined),
 });
 
@@ -89,7 +86,6 @@ export const useGithubStore = createPersistedStore<GithubStoreState>()(
   (set, get) => ({
     ...createSyncSlice(set),
     byInstance: {},
-    login: undefined,
     lastSeenReleaseAt: undefined,
     setView: (instanceId, view) =>
       set((state) => update(state, instanceId, (data) => ({ ...data, view }))),
@@ -112,9 +108,6 @@ export const useGithubStore = createPersistedStore<GithubStoreState>()(
       set((state) => update(state, instanceId, (data) => ({ ...data, openBehavior }))),
     removeInstance: (instanceId) =>
       set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
-    setLogin: (login) => {
-      if (login !== get().login) set({ login });
-    },
     markReleasesSeen: (publishedAt) => {
       if (!publishedAt) return;
       const seen = get().lastSeenReleaseAt;
@@ -133,7 +126,6 @@ export const useGithubStore = createPersistedStore<GithubStoreState>()(
     version: 2,
     partialize: (state) => ({
       byInstance: state.byInstance,
-      login: state.login,
       lastSeenReleaseAt: state.lastSeenReleaseAt,
     }),
     migrate: (persisted, version) => {
@@ -146,7 +138,6 @@ export const useGithubStore = createPersistedStore<GithubStoreState>()(
     build: (parsed, current) => ({
       ...current,
       byInstance: parsed.byInstance,
-      login: parsed.login,
       lastSeenReleaseAt: parsed.lastSeenReleaseAt,
     }),
   },

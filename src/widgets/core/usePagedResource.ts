@@ -18,6 +18,8 @@ import {
   type ResourceConfig,
   type Snapshot,
 } from "@/widgets/core/sharedResource";
+import type { WidgetType } from "@/widgets/core/types";
+import { refreshScaleOf } from "@/widgets/core/useWidgetRefreshScale";
 
 export type PagedFetcher<T> = (
   page: number,
@@ -161,6 +163,7 @@ class PagedSource<T> extends SharedResource<PagedData<T>> {
 }
 
 export type PagedDefinition<T> = {
+  widget: WidgetType;
   cacheKey: string;
   intervalMs: number;
   staleMs?: number;
@@ -187,6 +190,7 @@ export function usePagedDefinition<T>(
 }
 
 export async function readPaged<T>(definition: PagedDefinition<T>): Promise<T[]> {
+  const scale = refreshScaleOf(definition.widget);
   const data = await readResource<PagedData<T>, PagedSource<T>>(
     definition.cacheKey,
     () =>
@@ -195,8 +199,8 @@ export async function readPaged<T>(definition: PagedDefinition<T>): Promise<T[]>
           key: definition.cacheKey,
           cacheKey: definition.cacheKey,
           scope: "paged",
-          staleMs: definition.staleMs ?? definition.intervalMs,
-          intervalMs: definition.intervalMs,
+          staleMs: (definition.staleMs ?? definition.intervalMs) * scale,
+          intervalMs: definition.intervalMs * scale,
           persist: true,
           blank,
           decode: decodePaged(definition.parse),

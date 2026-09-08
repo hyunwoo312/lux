@@ -18,6 +18,7 @@ import {
   type MediaKind,
   type TitleLanguage,
 } from "@/widgets/anilist/types";
+import { parseResponse } from "@/lib/net";
 
 const LIST_QUERY = `query ($userId: Int!, $status: [MediaListStatus]) {
   Viewer { mediaListOptions { scoreFormat } }
@@ -119,18 +120,16 @@ export async function fetchList(
   if (!Number.isFinite(userId)) {
     throw new Error("AniList account is missing an id");
   }
-  const parsed = currentSchema.safeParse(
+  const { data } = parseResponse(
+    "AniList list",
+    currentSchema,
     await anilistGraphQL(LIST_QUERY, { userId, status: LIST_STATUSES }, true, signal),
   );
-  if (!parsed.success) {
-    throw new Error("Unexpected AniList list response");
-  }
   const entries = dedupeEntries([
-    ...collectEntries("anime", parsed.data.data.anime, lang),
-    ...collectEntries("manga", parsed.data.data.manga, lang),
+    ...collectEntries("anime", data.anime, lang),
+    ...collectEntries("manga", data.manga, lang),
   ]).slice(0, ANILIST_MAX_LIBRARY_ITEMS);
-  const scoreFormat =
-    parsed.data.data.Viewer?.mediaListOptions?.scoreFormat ?? DEFAULT_SCORE_FORMAT;
+  const scoreFormat = data.Viewer?.mediaListOptions?.scoreFormat ?? DEFAULT_SCORE_FORMAT;
   return { entries, scoreFormat };
 }
 
@@ -149,13 +148,13 @@ export async function saveProgress(
   progress: number,
   signal?: AbortSignal,
 ): Promise<number> {
-  const parsed = saveProgressSchema.safeParse(
+  const { data } = parseResponse(
+    "AniList progress",
+    saveProgressSchema,
     await anilistGraphQL(SAVE_PROGRESS_MUTATION, { mediaId, progress }, true, signal),
   );
-  if (!parsed.success || !parsed.data.data.SaveMediaListEntry) {
-    throw new Error("Couldn't update progress");
-  }
-  return parsed.data.data.SaveMediaListEntry.progress ?? progress;
+  if (!data.SaveMediaListEntry) throw new Error("Couldn't update progress");
+  return data.SaveMediaListEntry.progress ?? progress;
 }
 
 const SAVE_STATUS_MUTATION = `mutation ($mediaId: Int!, $status: MediaListStatus!) {
@@ -173,11 +172,11 @@ export async function saveListStatus(
   status: ListStatus,
   signal?: AbortSignal,
 ): Promise<ListStatus> {
-  const parsed = saveStatusSchema.safeParse(
+  const { data } = parseResponse(
+    "AniList status",
+    saveStatusSchema,
     await anilistGraphQL(SAVE_STATUS_MUTATION, { mediaId, status }, true, signal),
   );
-  if (!parsed.success || !parsed.data.data.SaveMediaListEntry) {
-    throw new Error("Couldn't update your list");
-  }
-  return parsed.data.data.SaveMediaListEntry.status ?? status;
+  if (!data.SaveMediaListEntry) throw new Error("Couldn't update your list");
+  return data.SaveMediaListEntry.status ?? status;
 }

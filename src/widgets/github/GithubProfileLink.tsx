@@ -1,9 +1,16 @@
 import { GitHubServiceIcon } from "@/components/icons/service-icons";
 import { Tooltip } from "@/components/ui/tooltip";
-import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
+import { useConnectedProviders } from "@/integrations";
+import { usePolledDefinition } from "@/widgets/core/usePolledResource";
+import { githubContributions } from "@/widgets/github/lib/resources";
+import { useGithub } from "@/widgets/github/useGithubStore";
+
+const GITHUB = ["github"] as const;
 
 export function GithubProfileLink() {
-  const login = useGithubStore((s) => s.login);
+  const { connected } = useConnectedProviders(GITHUB);
+  const { state } = usePolledDefinition(githubContributions, { enabled: connected.length > 0 });
+  const login = state.status === "success" ? state.data.login : undefined;
   const newTab = useGithub((d) => d.openBehavior === "newTab");
 
   if (!login) {

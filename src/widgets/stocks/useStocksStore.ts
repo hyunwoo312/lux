@@ -161,23 +161,7 @@ export const useStocksStore = createPersistedStore<StocksState>()(
   }),
   {
     name: "widget:stocks",
-    partialize: (state) => ({
-      byInstance: Object.fromEntries(
-        Object.entries(state.byInstance).map(([id, data]) => [
-          id,
-          {
-            symbols: data.symbols,
-            range: data.range,
-            showName: data.showName,
-            indexSymbols: data.indexSymbols,
-            view: data.view,
-            changeMode: data.changeMode,
-            chartStyle: data.chartStyle,
-            selectedSymbol: data.selectedSymbol,
-          },
-        ]),
-      ),
-    }),
+    partialize: (state) => ({ byInstance: state.byInstance }),
     schema: persistedSchema,
     build: (parsed, current) => {
       const byInstance: Record<string, StocksData> = {};

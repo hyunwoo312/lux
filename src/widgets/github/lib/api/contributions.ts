@@ -8,6 +8,7 @@ import {
   type RepoContribution,
 } from "@/widgets/github/lib/contributions";
 import type { ContributionLevel, ContributionsData } from "@/widgets/github/types";
+import { parseResponse } from "@/lib/net";
 
 const LEVELS: Record<string, ContributionLevel> = {
   NONE: 0,
@@ -88,11 +89,12 @@ const contributionsSchema = z.object({
 });
 
 export async function fetchContributions(signal?: AbortSignal): Promise<ContributionsData> {
-  const parsed = contributionsSchema.safeParse(await graphql(CONTRIBUTIONS_QUERY, signal));
-  if (!parsed.success) {
-    throw new Error("Unexpected GitHub contributions response");
-  }
-  const viewer = parsed.data.data.viewer;
+  const { data } = parseResponse(
+    "GitHub contributions",
+    contributionsSchema,
+    await graphql(CONTRIBUTIONS_QUERY, signal),
+  );
+  const viewer = data.viewer;
   const collection = viewer.contributionsCollection;
   const calendar = collection.contributionCalendar;
   const weeks = calendar.weeks.map((week) =>

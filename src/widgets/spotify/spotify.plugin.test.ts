@@ -103,9 +103,9 @@ it("turns a provider's results into rows that play what you pick", async () => {
   expect(rows).toHaveLength(1);
   expect(rows[0]).toMatchObject({ label: "Despacito", section: "Songs" });
 
-  useSpotifyPlaybackStore.setState({
-    devices: [{ id: "d1", name: "Desk", type: "Computer", isActive: true, volumePercent: 50 }],
-  });
+  vi.mocked(getSpotifyDevices).mockResolvedValue([
+    { id: "d1", name: "Desk", type: "Computer", isActive: true, volumePercent: 50 },
+  ]);
 
   await rows[0]?.run();
   expect(startSpotifyPlayback).toHaveBeenCalledWith(

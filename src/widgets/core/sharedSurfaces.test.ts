@@ -15,6 +15,7 @@ let fetches = 0;
 let resolveFetch: (data: Payload) => void = () => undefined;
 
 const definition: PolledDefinition<Payload> = {
+  widget: "news",
   cacheKey: "test:shared",
   intervalMs: 60_000,
   parse: (raw) =>

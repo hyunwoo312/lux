@@ -24,6 +24,7 @@ export const anilistPlugin: WidgetPlugin = {
   refreshMs: ANILIST_REFRESH_MS,
   tint: ANILIST_TINT,
   requiresAccount: ["anilist"],
+  signedOut: { mode: "degrade" },
   commands: anilistCommands,
   removalNote: () => "Its settings will be reset — your AniList account stays connected.",
 };

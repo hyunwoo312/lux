@@ -18,6 +18,7 @@ export function weatherForecast(
   windUnit: WeatherWindUnit,
 ): PolledDefinition<WeatherData> {
   return {
+    widget: "weather",
     cacheKey: weatherCacheKey(location, units, windUnit),
     intervalMs: WEATHER_REFRESH_MS,
     parse: parseCachedWeather,
