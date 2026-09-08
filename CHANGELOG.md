@@ -4,6 +4,75 @@ All notable changes to Lux are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2026-09-08
+
+_A consolidation pass: one mechanism per job under the hood, and on the surface the palette reaches more, pickers take the keyboard, and every widget says the same thing when it is signed out._
+
+### Added
+
+#### Command palette
+- What’s new and Send feedback are palette commands, and each can be given a keyboard shortcut in Settings.
+
+#### Settings
+- The accent picker and the wallpaper gallery are one tab stop each and move with the arrow keys.
+
+#### AniList
+- The library filter menu moves with the arrow keys.
+
+### Changed
+
+#### Dashboard
+- The smallest icon buttons grew to 28 px, so they are easier to hit.
+- The widget palette says “Connect for more” for a widget that works without an account, and “Needs an account” for one that does not.
+
+#### Settings
+- Keys are drawn as key caps everywhere, in the shortcut rows and the palette footer alike.
+
+#### AniList
+- A like, progress or status change that fails says so in a toast.
+
+#### Calendar
+- The countdown and the join and open buttons sit beside an event’s title instead of covering it, and all-day chips show their buttons too.
+- Google Calendar and Outlook Calendar are named the same way in every list, menu and message.
+
+#### News
+- Removing the widget says what goes with it: its sources, keywords and saved headlines.
+
+#### Spotify
+- Signed out, the widget shows the same locked state as GitHub and Calendar; search reuses the device list the widget loaded in the last half minute.
+
+#### Sports
+- Removing the widget says what goes with it: its league and followed teams.
+
+#### Tasks
+- Clearing completed tasks offers Undo in a toast.
+
+### Fixed
+
+#### Dashboard
+- Relaxed refresh now also slows the widget data the command palette reads.
+
+#### Command palette
+- Browser sources show the icon that means them: history is no longer drawn with the same clock as recently closed tabs.
+- Moving the pointer over a result no longer scrolls the list.
+- A browser lookup that fails shows an error, instead of an empty list.
+
+#### Settings
+- Settings search finds every row, and its descriptions are the ones the rows show.
+- The three Appearance switches are named for screen readers, and a wallpaper upload error clears on its own.
+
+#### Image
+- A clean save from another tab is picked up even while this tab’s image data is unreadable.
+
+#### Sports
+- A favourite league that fails to load names ESPN and offers Retry.
+
+#### Stocks
+- A detail view that fails to load names Yahoo Finance and offers Retry.
+
+#### Weather
+- A detail view that fails to load names Open-Meteo and offers Retry.
+
 ## [2.0.1] - 2026-09-06
 
 _A correctness pass after 2.0: stored data survives a bad value, every refresh button refreshes, failing syncs settle instead of flickering, and the guide says exactly what each account can do._

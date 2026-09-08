@@ -74,6 +74,131 @@ export function groupByArea(changes: readonly ReleaseChange[]): AreaGroup[] {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "2.0.2",
+    date: "2026-09-08",
+    summary:
+      "A consolidation pass: one mechanism per job under the hood, and on the surface the palette reaches more, pickers take the keyboard, and every widget says the same thing when it is signed out.",
+    changes: [
+      {
+        type: "changed",
+        area: "Dashboard",
+        text: "The smallest icon buttons grew to 28 px, so they are easier to hit.",
+      },
+      {
+        type: "changed",
+        area: "Dashboard",
+        text: "The widget palette says \u201cConnect for more\u201d for a widget that works without an account, and \u201cNeeds an account\u201d for one that does not.",
+      },
+      {
+        type: "fixed",
+        area: "Dashboard",
+        text: "Relaxed refresh now also slows the widget data the command palette reads.",
+      },
+      {
+        type: "added",
+        area: "Command palette",
+        text: "What\u2019s new and Send feedback are palette commands, and each can be given a keyboard shortcut in Settings.",
+        highlight: true,
+      },
+      {
+        type: "fixed",
+        area: "Command palette",
+        text: "Browser sources show the icon that means them: history is no longer drawn with the same clock as recently closed tabs.",
+      },
+      {
+        type: "fixed",
+        area: "Command palette",
+        text: "Moving the pointer over a result no longer scrolls the list.",
+      },
+      {
+        type: "fixed",
+        area: "Command palette",
+        text: "A browser lookup that fails shows an error, instead of an empty list.",
+      },
+      {
+        type: "added",
+        area: "Settings",
+        text: "The accent picker and the wallpaper gallery are one tab stop each and move with the arrow keys.",
+      },
+      {
+        type: "changed",
+        area: "Settings",
+        text: "Keys are drawn as key caps everywhere, in the shortcut rows and the palette footer alike.",
+      },
+      {
+        type: "fixed",
+        area: "Settings",
+        text: "Settings search finds every row, and its descriptions are the ones the rows show.",
+      },
+      {
+        type: "fixed",
+        area: "Settings",
+        text: "The three Appearance switches are named for screen readers, and a wallpaper upload error clears on its own.",
+      },
+      {
+        type: "added",
+        area: "AniList",
+        text: "The library filter menu moves with the arrow keys.",
+      },
+      {
+        type: "changed",
+        area: "AniList",
+        text: "A like, progress or status change that fails says so in a toast.",
+      },
+      {
+        type: "changed",
+        area: "Calendar",
+        text: "The countdown and the join and open buttons sit beside an event\u2019s title instead of covering it, and all-day chips show their buttons too.",
+        highlight: true,
+      },
+      {
+        type: "changed",
+        area: "Calendar",
+        text: "Google Calendar and Outlook Calendar are named the same way in every list, menu and message.",
+      },
+      {
+        type: "fixed",
+        area: "Image",
+        text: "A clean save from another tab is picked up even while this tab\u2019s image data is unreadable.",
+      },
+      {
+        type: "changed",
+        area: "News",
+        text: "Removing the widget says what goes with it: its sources, keywords and saved headlines.",
+      },
+      {
+        type: "changed",
+        area: "Spotify",
+        text: "Signed out, the widget shows the same locked state as GitHub and Calendar; search reuses the device list the widget loaded in the last half minute.",
+      },
+      {
+        type: "changed",
+        area: "Sports",
+        text: "Removing the widget says what goes with it: its league and followed teams.",
+      },
+      {
+        type: "fixed",
+        area: "Sports",
+        text: "A favourite league that fails to load names ESPN and offers Retry.",
+      },
+      {
+        type: "fixed",
+        area: "Stocks",
+        text: "A detail view that fails to load names Yahoo Finance and offers Retry.",
+      },
+      {
+        type: "changed",
+        area: "Tasks",
+        text: "Clearing completed tasks offers Undo in a toast.",
+      },
+      {
+        type: "fixed",
+        area: "Weather",
+        text: "A detail view that fails to load names Open-Meteo and offers Retry.",
+      },
+    ],
+  },
+  {
     version: "2.0.1",
     date: "2026-09-06",
     summary:
