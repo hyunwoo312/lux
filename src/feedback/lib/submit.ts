@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { RELAY_BASE_URL } from "@/lib/relay";
-import { FEEDBACK_TIMEOUT_MS, parseResponse, withTimeout } from "@/lib/net";
+import { FEEDBACK_TIMEOUT_MS, readJson, withTimeout } from "@/lib/net";
 import type { FeedbackSubmission, SubmitResult } from "@/feedback/types";
 
 const ENDPOINT = `${RELAY_BASE_URL}/feedback/submit`;
@@ -41,7 +41,7 @@ export async function submitFeedback(submission: FeedbackSubmission): Promise<Su
 
   let payload: RelayResponse;
   try {
-    payload = parseResponse("feedback", relayResponseSchema, await response.json());
+    payload = await readJson(response, "feedback", relayResponseSchema);
   } catch {
     return failure(false, response.ok ? UNCONFIRMED_MESSAGE : TERMINAL_MESSAGE);
   }

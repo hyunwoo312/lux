@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { integrationFetch } from "@/integrations";
-import { ensureOk, parseResponse } from "@/lib/net";
+import { ensureOk, readJson } from "@/lib/net";
 import {
   fanOutCalendars,
   MAX_EVENT_PAGES,
@@ -165,11 +165,7 @@ async function fetchEventsForCalendar(
 
     ensureOk(response, `Outlook calendar events request failed for ${calendarId}`);
 
-    const payload = parseResponse(
-      "Outlook calendar events",
-      outlookEventsEnvelope,
-      await response.json(),
-    );
+    const payload = await readJson(response, "Outlook calendar events", outlookEventsEnvelope);
 
     events.push(
       ...parseCalendarItems(graphEventSchema, payload.value ?? [])
@@ -189,11 +185,7 @@ export async function fetchOutlookCalendars(): Promise<ConnectedCalendar[]> {
 
   ensureOk(response, "Outlook calendar list request failed");
 
-  const payload = parseResponse(
-    "Outlook calendar list",
-    outlookCalendarsEnvelope,
-    await response.json(),
-  );
+  const payload = await readJson(response, "Outlook calendar list", outlookCalendarsEnvelope);
 
   return parseCalendarItems(graphCalendarSchema, payload.value ?? [])
     .map((calendar) => normalizeOutlookCalendar(calendar))

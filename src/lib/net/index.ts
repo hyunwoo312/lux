@@ -17,4 +17,4 @@ export {
 export { FEEDBACK_TIMEOUT_MS, withTimeout } from "@/lib/net/policy";
 export { fetchTokenEndpoint } from "@/lib/net/token-endpoint";
 export { isOnline, subscribeOnline } from "@/lib/net/online";
-export { readCappedText } from "@/lib/net/body";
+export { readCappedText, readJson } from "@/lib/net/body";

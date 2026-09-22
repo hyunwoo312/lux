@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
+import { AlertTriangle } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { StateMessage } from "@/components/StateMessage";
+import { Button } from "@/components/ui/button";
 import { AccountRow } from "@/settings/components/AccountRow";
 import { PermissionsSection } from "@/settings/components/PermissionsSection";
 import { PROVIDERS } from "@/settings/providers";
@@ -20,11 +23,14 @@ type Pending = "connecting" | "disconnecting";
 
 export function AccountsTab() {
   const accounts = useIntegrationStore((s) => s.accounts);
+  const unreadable = useIntegrationStore((s) => s.unreadable);
   const load = useIntegrationStore((s) => s.load);
+  const reset = useIntegrationStore((s) => s.reset);
   const connect = useIntegrationStore((s) => s.connect);
   const disconnect = useIntegrationStore((s) => s.disconnect);
   const [pending, setPending] = useState<Partial<Record<IntegrationProviderId, Pending>>>({});
   const [errors, setErrors] = useState<Partial<Record<IntegrationProviderId, string>>>({});
+  const [resetFailed, setResetFailed] = useState(false);
   const [spotifyClientId, setSpotifyClientId] = useState<string | undefined>(undefined);
   const [spotifyClientIdLoaded, setSpotifyClientIdLoaded] = useState(false);
   const [confirmDisconnect, setConfirmDisconnect] = useState<IntegrationProviderId | null>(null);
@@ -71,6 +77,25 @@ export function AccountsTab() {
   return (
     <ConfigBody>
       <ConfigSection title={ACCOUNTS.title}>
+        {unreadable && (
+          <StateMessage
+            icon={AlertTriangle}
+            tone="warning"
+            message={
+              resetFailed
+                ? "Starting fresh didn’t save. Try again."
+                : "Your connected accounts could not be read, so nothing is being overwritten."
+            }
+            action={
+              <Button
+                variant="outline"
+                onClick={() => void reset().catch(() => setResetFailed(true))}
+              >
+                Start fresh
+              </Button>
+            }
+          />
+        )}
         {PROVIDERS.map((provider) => {
           const account = accountFor(accounts, provider.id);
           const busy = pending[provider.id];

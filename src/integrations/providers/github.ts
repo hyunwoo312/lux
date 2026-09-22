@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createRelayProvider } from "@/integrations/providers/relay-provider";
-import { ensureOk, withTimeout, parseResponse } from "@/lib/net";
+import { ensureOk, readJson, withTimeout } from "@/lib/net";
 import type { CodeAuthProvider } from "@/integrations/types";
 
 const PROFILE_ENDPOINT = "https://api.github.com/user";
@@ -36,7 +36,7 @@ export const githubProvider: CodeAuthProvider = createRelayProvider({
 
     ensureOk(response, "GitHub profile request failed");
 
-    const payload = parseResponse("GitHub profile", githubProfileSchema, await response.json());
+    const payload = await readJson(response, "GitHub profile", githubProfileSchema);
 
     return {
       providerAccountId: String(payload.id),

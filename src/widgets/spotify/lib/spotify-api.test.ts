@@ -455,4 +455,19 @@ describe("malformed spotify payloads", () => {
     mockFetch.mockResolvedValue(new Response(JSON.stringify("nope"), { status: 200 }));
     await expect(getSpotifyDevices()).rejects.toBeInstanceOf(InvalidResponseError);
   });
+
+  it("settles a non-numeric progress on zero instead of NaN", async () => {
+    mockFetch.mockResolvedValue(
+      jsonResponse({
+        is_playing: true,
+        progress_ms: "soon",
+        repeat_state: "loop",
+        item: { id: "track1", name: "Song", duration_ms: 1000 },
+      }),
+    );
+    await expect(getSpotifyPlaybackState()).resolves.toMatchObject({
+      progressMs: 0,
+      repeatMode: "off",
+    });
+  });
 });

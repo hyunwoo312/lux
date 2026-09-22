@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { integrationFetch } from "@/integrations";
-import { ensureOk, RateLimitError, retryAfterMs } from "@/lib/net";
+import { ensureOk, RateLimitError, readJson, retryAfterMs } from "@/lib/net";
 
 export const GRAPHQL_ENDPOINT = "https://api.github.com/graphql";
 export const NOTIFICATIONS_ENDPOINT = "https://api.github.com/notifications";
@@ -18,7 +18,7 @@ export async function graphql(query: string, signal?: AbortSignal): Promise<unkn
     signal,
   });
   ensureOk(response, "GitHub request failed");
-  const body: unknown = await response.json();
+  const body = await readJson(response, "GitHub", z.unknown());
   const parsed = graphqlErrorsSchema.safeParse(body);
   if (parsed.success) {
     const { errors } = parsed.data;

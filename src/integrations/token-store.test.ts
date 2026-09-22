@@ -37,7 +37,9 @@ describe("token-store", () => {
 
   it("omits the token from account summaries", async () => {
     await writeAccount(createAccount());
-    const [summary] = await readAccountSummaries();
+    const {
+      accounts: [summary],
+    } = await readAccountSummaries();
     expect(summary).toBeDefined();
     expect(summary).not.toHaveProperty("token");
     expect(summary?.email).toBe("ada@example.com");
@@ -66,7 +68,7 @@ describe("token-store", () => {
     const fresh = createAccount();
     await replaceProviderAccount(fresh);
 
-    const google = (await readAccountSummaries()).filter((s) => s.providerId === "google");
+    const google = (await readAccountSummaries()).accounts.filter((s) => s.providerId === "google");
     expect(google).toHaveLength(1);
     expect(google[0]?.id).toBe(fresh.id);
     expect(await getAccountByProvider("google")).toEqual(fresh);

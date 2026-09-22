@@ -1,4 +1,5 @@
-import { ensureOk, withTimeout } from "@/lib/net";
+import { z } from "zod";
+import { ensureOk, readJson, withTimeout } from "@/lib/net";
 
 const ESPN_SPORTS_API = "https://site.api.espn.com/apis/site/v2/sports";
 
@@ -13,5 +14,5 @@ export async function fetchEspn(
 ): Promise<unknown> {
   const response = await fetch(url, { signal: withTimeout(signal) });
   ensureOk(response, message);
-  return response.json();
+  return readJson(response, "ESPN", z.unknown());
 }

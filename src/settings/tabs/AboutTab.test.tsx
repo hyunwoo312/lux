@@ -4,10 +4,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { AboutTab } from "@/settings/tabs/AboutTab";
 
 function mockStarsResponse(count: number) {
-  const fetchMock = vi.fn().mockResolvedValue({
-    ok: true,
-    json: async () => ({ stargazers_count: count }),
-  });
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue(new Response(JSON.stringify({ stargazers_count: count })));
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 }

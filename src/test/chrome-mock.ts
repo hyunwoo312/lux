@@ -60,7 +60,11 @@ function createChromeMock() {
           }
           emitChange(changes, "local");
         }),
-        clear: vi.fn(async () => store.clear()),
+        clear: vi.fn(async () => {
+          const changes = Object.fromEntries([...store.keys()].map((k) => [k, {}]));
+          store.clear();
+          emitChange(changes, "local");
+        }),
       },
       session: {
         get: vi.fn(async (keys?: string | string[] | null) => {
@@ -86,7 +90,11 @@ function createChromeMock() {
           }
           emitChange(changes, "session");
         }),
-        clear: vi.fn(async () => session.clear()),
+        clear: vi.fn(async () => {
+          const changes = Object.fromEntries([...session.keys()].map((k) => [k, {}]));
+          session.clear();
+          emitChange(changes, "session");
+        }),
       },
       onChanged: {
         addListener: vi.fn((listener: ChangeListener) => {

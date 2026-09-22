@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { integrationFetch } from "@/integrations";
-import { ensureOk, loadErrorMessage, parseResponse } from "@/lib/net";
+import { ensureOk, loadErrorMessage, parseResponse, readJson } from "@/lib/net";
 import { httpUrlSchema } from "@/lib/open-url";
 import { tolerantArray } from "@/lib/persist";
 import {
@@ -48,7 +48,7 @@ async function fetchNotifications(signal?: AbortSignal): Promise<InboxNotificati
     signal,
   });
   ensureOk(response, "GitHub notifications request failed");
-  const parsed = parseResponse("GitHub notifications", z.array(z.unknown()), await response.json());
+  const parsed = await readJson(response, "GitHub notifications", z.array(z.unknown()));
   return parsed
     .map((entry) => notificationSchema.safeParse(entry))
     .flatMap((result) => (result.success ? [result.data] : []))

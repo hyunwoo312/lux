@@ -4,7 +4,7 @@ import { instanceData, instanceIds } from "@/widgets/core/instances";
 import { needsWidget } from "@/widgets/core/commandSetup";
 import type { CommandResult, WidgetCommand } from "@/widgets/core/types";
 import { readPolled } from "@/widgets/core/usePolledResource";
-import { formatSigned } from "@/widgets/stocks/lib/format";
+import { formatNumber, formatSigned } from "@/widgets/stocks/lib/format";
 import { stocksSparks, stocksTrending, type SparkMap } from "@/widgets/stocks/lib/resources";
 import { searchSymbols } from "@/widgets/stocks/lib/symbols";
 import { DEFAULT_DATA, useStocksStore } from "@/widgets/stocks/useStocksStore";
@@ -33,7 +33,7 @@ async function priced(listings: Listing[], section: string): Promise<CommandResu
 }
 
 async function quotes(symbols: string[]): Promise<SparkMap> {
-  return readPolled(stocksSparks(symbols, DAY_RANGE)).catch(() => ({}));
+  return readPolled({ ...stocksSparks(symbols, DAY_RANGE), persist: false }).catch(() => ({}));
 }
 
 function tickerRow({ symbol, name }: Listing, map: SparkMap, section: string): CommandResult {
@@ -52,8 +52,8 @@ function tickerRow({ symbol, name }: Listing, map: SparkMap, section: string): C
       series === undefined
         ? undefined
         : change === null
-          ? `$${series.price.toFixed(2)}`
-          : `$${series.price.toFixed(2)} ${formatSigned(change)}%`,
+          ? formatNumber(series.price)
+          : `${formatNumber(series.price)} ${formatSigned(change)}%`,
     metaTone: change === null || change === 0 ? undefined : change > 0 ? "positive" : "negative",
     icon: LineChart,
     run: () => openQuote(symbol),

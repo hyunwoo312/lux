@@ -3,7 +3,7 @@ import {
   IntegrationReconnectRequiredError,
   isReconnectRequiredStatus,
 } from "@/integrations/errors";
-import { ensureOk, fetchTokenEndpoint, TemporaryAuthError, parseResponse } from "@/lib/net";
+import { ensureOk, fetchTokenEndpoint, readJson, TemporaryAuthError } from "@/lib/net";
 import { buildPkceAuthorizeUrl, parseScopes } from "@/integrations/providers/pkce";
 import { RELAY_BASE_URL } from "@/lib/relay";
 import type {
@@ -71,7 +71,7 @@ export function createRelayProvider(config: RelayProviderConfig): CodeAuthProvid
       throw new TemporaryAuthError(`${config.label} is temporarily unavailable`);
     }
 
-    const payload = parseResponse("token", relayTokenSchema, await response.json());
+    const payload = await readJson(response, "token", relayTokenSchema);
     if (payload.error) {
       throw new IntegrationReconnectRequiredError(`${config.label} needs to be reconnected`);
     }
@@ -106,7 +106,7 @@ export function createRelayProvider(config: RelayProviderConfig): CodeAuthProvid
 
       ensureOk(response, `${config.label} sign-in could not be completed`);
 
-      const payload = parseResponse("token", relayTokenSchema, await response.json());
+      const payload = await readJson(response, "token", relayTokenSchema);
       if (payload.error || !payload.access_token) {
         throw new Error(`${config.label} sign-in could not be completed`);
       }

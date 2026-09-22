@@ -3,7 +3,7 @@ import {
   IntegrationReconnectRequiredError,
   isReconnectRequiredStatus,
 } from "@/integrations/errors";
-import { ensureOk, fetchTokenEndpoint, TemporaryAuthError, parseResponse } from "@/lib/net";
+import { ensureOk, fetchTokenEndpoint, readJson, TemporaryAuthError } from "@/lib/net";
 import { buildPkceAuthorizeUrl, parseScopes } from "@/integrations/providers/pkce";
 import type {
   CodeAuthProvider,
@@ -68,7 +68,7 @@ export function createPkceProvider(config: PkceProviderConfig): CodeAuthProvider
 
       ensureOk(response, `${config.label} token exchange failed`);
 
-      return toTokenResponse(parseResponse("token", tokenPayloadSchema, await response.json()));
+      return toTokenResponse(await readJson(response, "token", tokenPayloadSchema));
     },
     refreshToken: async ({ clientId, refreshToken }) => {
       const body = new URLSearchParams({
@@ -90,7 +90,7 @@ export function createPkceProvider(config: PkceProviderConfig): CodeAuthProvider
         throw new TemporaryAuthError(`${config.label} is temporarily unavailable`);
       }
 
-      const payload = parseResponse("token", tokenPayloadSchema, await response.json());
+      const payload = await readJson(response, "token", tokenPayloadSchema);
       return { ...toTokenResponse(payload), refreshToken: payload.refresh_token ?? refreshToken };
     },
     fetchProfile: config.fetchProfile,

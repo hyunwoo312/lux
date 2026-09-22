@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ensureOk, withTimeout } from "@/lib/net";
+import { ensureOk, readJson, withTimeout } from "@/lib/net";
 import { httpUrlSchema } from "@/lib/open-url";
 import { integrationFetch } from "@/integrations";
 import type { ScoreFormat, TitleLanguage } from "@/widgets/anilist/types";
@@ -41,7 +41,7 @@ export async function anilistGraphQL(
     ? await integrationFetch("anilist", ENDPOINT, init)
     : await fetch(ENDPOINT, { ...init, signal: withTimeout(signal) });
   ensureOk(response, "AniList request failed");
-  return response.json();
+  return readJson(response, "AniList", z.unknown());
 }
 
 export const MEDIA_FRAGMENT = `fragment mediaFields on Media {

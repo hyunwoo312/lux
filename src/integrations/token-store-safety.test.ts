@@ -38,6 +38,14 @@ describe("connected accounts", () => {
     expect((await getAccountByProvider("github"))?.token?.refreshToken).toBe("github-1-refresh");
   });
 
+  it("are found again on the read after one that failed", async () => {
+    await writeAccount(account("google-1", "google"));
+    vi.spyOn(chrome.storage.local, "get").mockRejectedValueOnce(new Error("transient"));
+
+    expect(await getAccountByProvider("google")).toBeNull();
+    expect((await getAccountByProvider("google"))?.displayName).toBe("google-1");
+  });
+
   it("survive a stored blob that cannot be parsed", async () => {
     await writeAccount(account("google-1", "google"));
     await chrome.storage.local.set({ "lux:integrations": { accounts: "not-a-record" } });

@@ -106,7 +106,7 @@ async function requestedParams(
   units: "metric" | "imperial",
   windUnit: WeatherWindUnit,
 ): Promise<URLSearchParams> {
-  const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => forecastResponse });
+  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(forecastResponse)));
   vi.stubGlobal("fetch", fetchMock);
   await fetchWeather(LOCATION, units, windUnit);
   return new URL(String(fetchMock.mock.calls[0]?.[0])).searchParams;

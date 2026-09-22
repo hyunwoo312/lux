@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { readSpotifyClientId } from "@/integrations/provider-config";
-import { ensureOk, withTimeout, parseResponse } from "@/lib/net";
+import { ensureOk, readJson, withTimeout } from "@/lib/net";
 import { createPkceProvider } from "@/integrations/providers/pkce-provider";
 import type { CodeAuthProvider } from "@/integrations/types";
 
@@ -36,7 +36,7 @@ export const spotifyProvider: CodeAuthProvider = createPkceProvider({
 
     ensureOk(response, "Spotify profile request failed");
 
-    const payload = parseResponse("Spotify profile", spotifyProfileSchema, await response.json());
+    const payload = await readJson(response, "Spotify profile", spotifyProfileSchema);
 
     return {
       providerAccountId: payload.id,

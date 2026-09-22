@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { integrationFetch } from "@/integrations";
-import { ensureOk, parseResponse } from "@/lib/net";
+import { ensureOk, readJson } from "@/lib/net";
 import {
   fanOutCalendars,
   MAX_EVENT_PAGES,
@@ -156,11 +156,7 @@ async function fetchEventsForCalendar(
 
     ensureOk(response, `Google calendar events request failed for ${calendarId}`);
 
-    const payload = parseResponse(
-      "Google calendar events",
-      googleEventsEnvelope,
-      await response.json(),
-    );
+    const payload = await readJson(response, "Google calendar events", googleEventsEnvelope);
 
     events.push(
       ...parseCalendarItems(googleEventSchema, payload.items ?? [])
@@ -181,11 +177,7 @@ export async function fetchGoogleCalendars(): Promise<ConnectedCalendar[]> {
 
   ensureOk(response, "Google calendar list request failed");
 
-  const payload = parseResponse(
-    "Google calendar list",
-    googleCalendarsEnvelope,
-    await response.json(),
-  );
+  const payload = await readJson(response, "Google calendar list", googleCalendarsEnvelope);
 
   return parseCalendarItems(googleCalendarListEntrySchema, payload.items ?? [])
     .map((calendar) => normalizeGoogleCalendar(calendar))

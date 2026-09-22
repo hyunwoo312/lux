@@ -1,121 +1,134 @@
 import { z } from "zod";
 import { integrationFetch } from "@/integrations";
-import { parseResponse, RateLimitError, retryAfterMs } from "@/lib/net";
+import { RateLimitError, readJson, retryAfterMs } from "@/lib/net";
 
 const DEFAULT_RETRY_AFTER_MS = 5_000;
-import type {
-  SpotifyErrorKind,
-  SpotifyPlaybackContext,
-  SpotifyPlaybackDevice,
-  SpotifyPlaybackState,
-  SpotifyQueueItem,
-  SpotifyRepeatMode,
-  SpotifySearchKind,
-  SpotifySearchResult,
+import {
+  SPOTIFY_REPEAT_MODES,
+  type SpotifyErrorKind,
+  type SpotifyPlaybackContext,
+  type SpotifyPlaybackDevice,
+  type SpotifyPlaybackState,
+  type SpotifyQueueItem,
+  type SpotifyRepeatMode,
+  type SpotifySearchKind,
+  type SpotifySearchResult,
 } from "@/widgets/spotify/types";
 import { clamp } from "@/lib/utils";
 
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
 
-type SpotifyImage = { url?: string; width?: number; height?: number };
+const leaf = <T>(schema: z.ZodType<T>) => schema.optional().catch(undefined);
 
-type SpotifyDevicePayload = {
-  id?: string | null;
-  name?: string;
-  type?: string;
-  is_active?: boolean;
-  volume_percent?: number | null;
-};
+const imageSchema = z.object({
+  url: leaf(z.string()),
+  width: leaf(z.number()),
+  height: leaf(z.number()),
+});
+const imagesSchema = z.array(imageSchema.catch({})).catch([]);
+const artistsSchema = z.array(z.object({ name: leaf(z.string()) }).catch({})).catch([]);
 
-type SpotifyPlaybackPayload = {
-  is_playing?: boolean;
-  progress_ms?: number | null;
-  shuffle_state?: boolean;
-  repeat_state?: SpotifyRepeatMode;
-  device?: SpotifyDevicePayload | null;
-  context?: { uri?: string; type?: string } | null;
-  item?: {
-    id?: string;
-    name?: string;
-    duration_ms?: number;
-    album?: { name?: string; images?: SpotifyImage[] };
-    artists?: Array<{ name?: string }>;
-  } | null;
-};
+const deviceSchema = z.object({
+  id: leaf(z.string().nullable()),
+  name: leaf(z.string()),
+  type: leaf(z.string()),
+  is_active: leaf(z.boolean()),
+  volume_percent: leaf(z.number().nullable()),
+});
 
-type SpotifyDevicesPayload = { devices?: SpotifyDevicePayload[] };
+const playbackEnvelope = z.object({
+  is_playing: leaf(z.boolean()),
+  progress_ms: leaf(z.number().nullable()),
+  shuffle_state: leaf(z.boolean()),
+  repeat_state: leaf(z.enum(SPOTIFY_REPEAT_MODES)),
+  device: leaf(deviceSchema.nullable()),
+  context: leaf(z.object({ uri: leaf(z.string()), type: leaf(z.string()) }).nullable()),
+  item: leaf(
+    z
+      .object({
+        id: leaf(z.string()),
+        name: leaf(z.string()),
+        duration_ms: leaf(z.number()),
+        album: leaf(z.object({ name: leaf(z.string()), images: leaf(imagesSchema) })),
+        artists: leaf(artistsSchema),
+      })
+      .nullable(),
+  ),
+});
 
-type SpotifyQueueTrackPayload = {
-  id?: string;
-  uri?: string;
-  name?: string;
-  artists?: SpotifyArtistRef[];
-  album?: { images?: SpotifyImage[] };
-  images?: SpotifyImage[];
-};
+const searchTrackItem = z
+  .object({
+    id: leaf(z.string()),
+    uri: leaf(z.string()),
+    name: leaf(z.string()),
+    artists: leaf(artistsSchema),
+    album: leaf(z.object({ images: leaf(imagesSchema) })),
+  })
+  .nullable()
+  .catch(null);
 
-type SpotifyQueuePayload = { queue?: Array<SpotifyQueueTrackPayload | null> };
+const searchAlbumItem = z
+  .object({
+    id: leaf(z.string()),
+    uri: leaf(z.string()),
+    name: leaf(z.string()),
+    artists: leaf(artistsSchema),
+    images: leaf(imagesSchema),
+  })
+  .nullable()
+  .catch(null);
 
-type SpotifyArtistRef = { name?: string };
+const searchPlaylistItem = z
+  .object({
+    id: leaf(z.string()),
+    uri: leaf(z.string()),
+    name: leaf(z.string()),
+    owner: leaf(z.object({ display_name: leaf(z.string()) })),
+    images: leaf(imagesSchema),
+  })
+  .nullable()
+  .catch(null);
 
-type SpotifySearchTrackItem = {
-  id?: string;
-  uri?: string;
-  name?: string;
-  artists?: SpotifyArtistRef[];
-  album?: { images?: SpotifyImage[] };
-};
+const queueTrackItem = z
+  .object({
+    id: leaf(z.string()),
+    uri: leaf(z.string()),
+    name: leaf(z.string()),
+    artists: leaf(artistsSchema),
+    album: leaf(z.object({ images: leaf(imagesSchema) })),
+    images: leaf(imagesSchema),
+  })
+  .nullable()
+  .catch(null);
 
-type SpotifySearchAlbumItem = {
-  id?: string;
-  uri?: string;
-  name?: string;
-  artists?: SpotifyArtistRef[];
-  images?: SpotifyImage[];
-};
+const nameEnvelope = z.object({ name: z.unknown().optional() });
+const devicesEnvelope = z.object({ devices: leaf(z.array(deviceSchema.catch({}))) });
+const queueEnvelope = z.object({ queue: leaf(z.array(queueTrackItem)) });
+const searchEnvelope = z.object({
+  tracks: leaf(z.object({ items: leaf(z.array(searchTrackItem)) })),
+  albums: leaf(z.object({ items: leaf(z.array(searchAlbumItem)) })),
+  playlists: leaf(z.object({ items: leaf(z.array(searchPlaylistItem)) })),
+});
+const playlistsEnvelope = z.object({ items: leaf(z.array(searchPlaylistItem)) });
+const savedAlbumsEnvelope = z.object({
+  items: leaf(z.array(z.object({ album: leaf(searchAlbumItem) }).catch({}))),
+});
+const savedTracksEnvelope = z.object({
+  items: leaf(z.array(z.object({ track: leaf(searchTrackItem) }).catch({}))),
+});
 
-type SpotifySearchPlaylistItem = {
-  id?: string;
-  uri?: string;
-  name?: string;
-  owner?: { display_name?: string };
-  images?: SpotifyImage[];
-};
-
-type SpotifySearchPayload = {
-  tracks?: { items?: Array<SpotifySearchTrackItem | null> };
-  albums?: { items?: Array<SpotifySearchAlbumItem | null> };
-  playlists?: { items?: Array<SpotifySearchPlaylistItem | null> };
-};
-
-function isJsonObject(value: unknown): boolean {
-  return typeof value === "object" && value !== null;
-}
+type SpotifyImage = z.infer<typeof imageSchema>;
+type SpotifyArtistRef = z.infer<typeof artistsSchema>[number];
+type SpotifyDevicePayload = z.infer<typeof deviceSchema>;
+type SpotifyPlaybackPayload = z.infer<typeof playbackEnvelope>;
+type SpotifyQueueTrackPayload = z.infer<typeof queueTrackItem>;
+type SpotifySearchTrackItem = z.infer<typeof searchTrackItem>;
+type SpotifySearchAlbumItem = z.infer<typeof searchAlbumItem>;
+type SpotifySearchPlaylistItem = z.infer<typeof searchPlaylistItem>;
 
 function toArray<T>(value: T[] | undefined): T[] {
   return Array.isArray(value) ? value : [];
 }
-
-const playbackEnvelope = z.custom<SpotifyPlaybackPayload>(isJsonObject);
-const nameEnvelope = z.object({ name: z.unknown().optional() });
-const devicesEnvelope = z.custom<SpotifyDevicesPayload>(isJsonObject);
-const queueEnvelope = z.custom<SpotifyQueuePayload>(isJsonObject);
-const searchEnvelope = z.custom<SpotifySearchPayload>(isJsonObject);
-const playlistsEnvelope = z.object({
-  items: z.array(z.custom<SpotifySearchPlaylistItem | null>()).optional(),
-});
-
-const savedAlbumsEnvelope = z.object({
-  items: z
-    .array(z.object({ album: z.custom<SpotifySearchAlbumItem | null>().optional() }))
-    .optional(),
-});
-
-const savedTracksEnvelope = z.object({
-  items: z
-    .array(z.object({ track: z.custom<SpotifySearchTrackItem | null>().optional() }))
-    .optional(),
-});
 
 export class SpotifyRequestError extends Error {
   readonly kind: SpotifyErrorKind;
@@ -267,9 +280,7 @@ export async function getSpotifyPlaybackState(): Promise<SpotifyPlaybackState | 
     throw spotifyError(response);
   }
 
-  return mapPlaybackPayload(
-    parseResponse("Spotify playback", playbackEnvelope, await response.json()),
-  );
+  return mapPlaybackPayload(await readJson(response, "Spotify playback", playbackEnvelope));
 }
 
 const CONTEXT_PATHS: Record<SpotifyPlaybackContext["kind"], string> = {
@@ -290,7 +301,7 @@ export async function getSpotifyContextName(
   if (!response.ok) {
     throw spotifyError(response);
   }
-  const payload = parseResponse("Spotify context", nameEnvelope, await response.json());
+  const payload = await readJson(response, "Spotify context", nameEnvelope);
   if (typeof payload.name !== "string" || payload.name.length === 0) return null;
   return payload.name;
 }
@@ -301,7 +312,7 @@ export async function getSpotifyDevices(): Promise<SpotifyPlaybackDevice[]> {
     throw spotifyError(response);
   }
 
-  const payload = parseResponse("Spotify devices", devicesEnvelope, await response.json());
+  const payload = await readJson(response, "Spotify devices", devicesEnvelope);
   return toArray(payload.devices)
     .map(mapDevicePayload)
     .filter((device) => device.id);
@@ -326,7 +337,7 @@ export async function getSpotifyQueue(): Promise<SpotifyQueueItem[]> {
   if (!response.ok) {
     throw spotifyError(response);
   }
-  const payload = parseResponse("Spotify queue", queueEnvelope, await response.json());
+  const payload = await readJson(response, "Spotify queue", queueEnvelope);
   return toArray(payload.queue)
     .map(mapQueueItem)
     .filter((item): item is SpotifyQueueItem => item !== null);
@@ -355,7 +366,7 @@ export async function searchSpotify(
   if (!response.ok) {
     throw spotifyError(response);
   }
-  const payload = parseResponse("Spotify search", searchEnvelope, await response.json());
+  const payload = await readJson(response, "Spotify search", searchEnvelope);
   const cap = (of: SpotifySearchKind) =>
     kind === undefined ? SEARCH_RESULT_CAPS[of] : SPOTIFY_KIND_SEARCH_LIMIT;
   const tracks = takeResults(toArray(payload.tracks?.items), mapSearchTrack, cap("track"));
@@ -382,8 +393,7 @@ export async function getSpotifySavedTrackFlags(
   if (!response.ok) {
     throw spotifyError(response);
   }
-  const flags = (await response.json()) as unknown;
-  if (!Array.isArray(flags)) return new Set();
+  const flags = await readJson(response, "Spotify liked songs", z.array(z.unknown()).catch([]));
   const liked = new Set<string>();
   flags.forEach((isLiked, index) => {
     const id = ids[index];
@@ -401,7 +411,7 @@ export async function getMySpotifyPlaylists(): Promise<SpotifySearchResult[]> {
   if (!response.ok) {
     throw spotifyError(response);
   }
-  const payload = parseResponse("Spotify playlists", playlistsEnvelope, await response.json());
+  const payload = await readJson(response, "Spotify playlists", playlistsEnvelope);
   return toArray(payload.items)
     .map(mapSearchPlaylist)
     .filter((result): result is SpotifySearchResult => result !== null)
@@ -417,7 +427,7 @@ export async function getMySpotifyAlbums(): Promise<SpotifySearchResult[]> {
   if (!response.ok) {
     throw spotifyError(response);
   }
-  const payload = parseResponse("Spotify albums", savedAlbumsEnvelope, await response.json());
+  const payload = await readJson(response, "Spotify albums", savedAlbumsEnvelope);
   return toArray(payload.items)
     .map((entry) => mapSearchAlbum(entry?.album ?? null))
     .filter((result): result is SpotifySearchResult => result !== null);
@@ -432,7 +442,7 @@ export async function getMySpotifyLikedTracks(): Promise<SpotifySearchResult[]> 
   if (!response.ok) {
     throw spotifyError(response);
   }
-  const payload = parseResponse("Spotify liked songs", savedTracksEnvelope, await response.json());
+  const payload = await readJson(response, "Spotify liked songs", savedTracksEnvelope);
   return toArray(payload.items)
     .map((entry) => mapSearchTrack(entry?.track ?? null))
     .filter((result): result is SpotifySearchResult => result !== null);

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ensureOk, parseResponse, withTimeout } from "@/lib/net";
+import { ensureOk, readJson, withTimeout } from "@/lib/net";
 import type {
   GeocodeResult,
   WeatherData,
@@ -115,7 +115,7 @@ export async function fetchWeather(
     signal: withTimeout(signal),
   });
   ensureOk(response, "Weather request failed");
-  const parsed = parseResponse("weather", forecastSchema, await response.json());
+  const parsed = await readJson(response, "weather", forecastSchema);
 
   const { current, hourly, daily } = parsed;
   const days = buildDays(daily);
@@ -184,7 +184,7 @@ export async function searchPlaces(query: string, signal?: AbortSignal): Promise
     signal: withTimeout(signal),
   });
   ensureOk(response, "Place search failed");
-  const parsed = parseResponse("place search", geocodeSchema, await response.json());
+  const parsed = await readJson(response, "place search", geocodeSchema);
   return (parsed.results ?? []).map((result) => ({
     id: result.id,
     name: result.name,

@@ -1,4 +1,4 @@
-import { read, readResult, watchStorage, writeOrThrow } from "@/lib/storage";
+import { readResult, watchStorage, writeOrThrow } from "@/lib/storage";
 import {
   integrationAccountSchema,
   integrationStorageSchema,
@@ -15,6 +15,10 @@ const EMPTY_STORAGE: IntegrationStorageState = { accounts: {} };
 
 const listeners = new Set<() => void>();
 
+let cached: Promise<IntegrationStorageState> | null = null;
+
+type AccountSummaries = { accounts: IntegrationAccountSummary[]; unreadable: boolean };
+
 function withAccountsLock<T>(task: () => Promise<T>): Promise<T> {
   return navigator.locks.request(ACCOUNTS_LOCK, task);
 }
@@ -30,8 +34,15 @@ function toSummary(account: IntegrationAccount): IntegrationAccountSummary {
   return summary;
 }
 
-async function readStorage(): Promise<IntegrationStorageState> {
-  return read(STORAGE_KEY, integrationStorageSchema, EMPTY_STORAGE);
+async function readUncached(): Promise<IntegrationStorageState> {
+  const result = await readResult(STORAGE_KEY, integrationStorageSchema);
+  if (result.status === "unreadable") cached = null;
+  return result.status === "read" ? result.value : EMPTY_STORAGE;
+}
+
+function readStorage(): Promise<IntegrationStorageState> {
+  cached ??= readUncached();
+  return cached;
 }
 
 async function readStorageForWrite(): Promise<IntegrationStorageState> {
@@ -43,17 +54,23 @@ async function readStorageForWrite(): Promise<IntegrationStorageState> {
 }
 
 async function writeStorage(state: IntegrationStorageState): Promise<void> {
+  cached = null;
   await writeOrThrow(STORAGE_KEY, integrationStorageSchema.parse(state));
 }
 
-export async function readAccountSummaries(): Promise<IntegrationAccountSummary[]> {
-  const state = await readStorage();
-  return Object.values(state.accounts).map(toSummary);
+export async function readAccountSummaries(): Promise<AccountSummaries> {
+  const result = await readResult(STORAGE_KEY, integrationStorageSchema);
+  if (result.status === "unreadable") return { accounts: [], unreadable: true };
+  const state = result.status === "read" ? result.value : EMPTY_STORAGE;
+  cached = Promise.resolve(state);
+  return { accounts: Object.values(state.accounts).map(toSummary), unreadable: false };
 }
 
 export async function getAccountByProvider(
   providerId: IntegrationProviderId,
+  fresh = false,
 ): Promise<IntegrationAccount | null> {
+  if (fresh) cached = null;
   const state = await readStorage();
   return Object.values(state.accounts).find((account) => account.providerId === providerId) ?? null;
 }
@@ -91,6 +108,11 @@ export async function deleteAccount(accountId: string): Promise<void> {
   });
 }
 
+export async function resetAccounts(): Promise<void> {
+  await withAccountsLock(() => writeStorage(EMPTY_STORAGE));
+}
+
 watchStorage(STORAGE_KEY, () => {
+  cached = null;
   for (const listener of listeners) listener();
 });

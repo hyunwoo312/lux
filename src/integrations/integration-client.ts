@@ -188,7 +188,7 @@ async function getProviderAccessToken(
   }
 
   return withRefreshLock(providerId, async () => {
-    const current = await getAccountByProvider(providerId);
+    const current = await getAccountByProvider(providerId, true);
     if (!current?.token || current.status !== "connected") {
       throw new Error(`${provider.label} is not connected`);
     }

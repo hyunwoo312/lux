@@ -121,6 +121,7 @@ export type PolledDefinition<T> = {
   staleMs?: number;
   parse: (raw: unknown) => T | null;
   fetch: Fetcher<T>;
+  persist?: boolean;
 };
 
 export function usePolledDefinition<T>(
@@ -133,7 +134,7 @@ export function usePolledDefinition<T>(
     intervalMs: options.intervalMs ?? definition.intervalMs,
     staleMs: definition.staleMs,
     cacheKey: definition.cacheKey,
-    persist: true,
+    persist: definition.persist ?? true,
     parsePersisted: definition.parse,
   });
 }
@@ -161,7 +162,7 @@ export async function readPolled<T>(definition: PolledDefinition<T>): Promise<T>
             intervalMs: definition.intervalMs * scale,
           },
           definition.parse,
-          true,
+          definition.persist ?? true,
         ),
         definition.fetch,
       ),

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { ensureOk, parseResponse, withTimeout } from "@/lib/net";
+import { ensureOk, readJson, withTimeout } from "@/lib/net";
 import { read, write } from "@/lib/storage";
 
 const GITHUB_API = "https://api.github.com/repos/hyunwoo312/lux";
@@ -25,11 +25,7 @@ export function useGithubStars(): number | null {
       try {
         const response = await fetch(GITHUB_API, { signal: withTimeout(controller.signal) });
         ensureOk(response, "GitHub repository request failed");
-        const { stargazers_count: count } = parseResponse(
-          "GitHub repo",
-          repoSchema,
-          await response.json(),
-        );
+        const { stargazers_count: count } = await readJson(response, "GitHub repo", repoSchema);
         setStars(count);
         await write(CACHE_KEY, { count, at: Date.now() });
       } catch {

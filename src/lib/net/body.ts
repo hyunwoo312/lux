@@ -1,4 +1,5 @@
-import { ResponseTooLargeError } from "@/lib/net/errors";
+import type { ZodType } from "zod";
+import { InvalidResponseError, parseResponse, ResponseTooLargeError } from "@/lib/net/errors";
 
 const MAX_RESPONSE_BYTES = 5_000_000;
 
@@ -26,4 +27,19 @@ export async function readCappedText(response: Response): Promise<string> {
     offset += chunk.byteLength;
   }
   return new TextDecoder().decode(merged);
+}
+
+export async function readJson<T>(
+  response: Response,
+  label: string,
+  schema: ZodType<T>,
+): Promise<T> {
+  const text = await readCappedText(response);
+  let data: unknown;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new InvalidResponseError(label, []);
+  }
+  return parseResponse(label, schema, data);
 }

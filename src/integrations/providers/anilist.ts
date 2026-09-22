@@ -5,7 +5,7 @@ import {
   anilistCallbackSchema,
   type AnilistCallback,
 } from "@/lib/extension-keys";
-import { ensureOk, withTimeout, parseResponse } from "@/lib/net";
+import { ensureOk, readJson, withTimeout } from "@/lib/net";
 import type {
   AcquireTokenParams,
   BrowserAuthProvider,
@@ -167,8 +167,7 @@ export const anilistProvider: BrowserAuthProvider = {
 
     ensureOk(response, "AniList profile request failed");
 
-    const viewer = parseResponse("AniList profile", viewerPayloadSchema, await response.json()).data
-      ?.Viewer;
+    const viewer = (await readJson(response, "AniList profile", viewerPayloadSchema)).data?.Viewer;
     if (!viewer) {
       throw new Error("Unexpected AniList profile response");
     }

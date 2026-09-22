@@ -22,4 +22,11 @@ describe("every network call", () => {
     const offenders = callers().filter(({ body }) => /await response\.text\(\)/.test(body));
     expect(offenders.map(({ file }) => file)).toEqual([]);
   });
+
+  it("parses JSON through lib/net", () => {
+    const offenders = sourceFiles()
+      .filter((file) => !file.includes(join("lib", "net")))
+      .filter((file) => /\.json\(\)/.test(readFileSync(file, "utf8")));
+    expect(offenders.map(sourcePath)).toEqual([]);
+  });
 });

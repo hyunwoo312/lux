@@ -61,8 +61,8 @@ describe("stocksCommands", () => {
     const rows = await run("stocks.watchlist", "");
 
     expect(rows.map((row) => row.label)).toEqual(["AAPL", "MSFT", "NVDA", "TSLA", "GOOG"]);
-    expect(rows[0]).toMatchObject({ meta: "$110.00 +10.00%", metaTone: "positive" });
-    expect(rows[1]).toMatchObject({ meta: "$90.00 -10.00%", metaTone: "negative" });
+    expect(rows[0]).toMatchObject({ meta: "110.00 +10.00%", metaTone: "positive" });
+    expect(rows[1]).toMatchObject({ meta: "90.00 -10.00%", metaTone: "negative" });
     expect(fetchSparks).toHaveBeenCalledTimes(1);
   });
 

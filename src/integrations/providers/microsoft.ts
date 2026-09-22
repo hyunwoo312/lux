@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createRelayProvider } from "@/integrations/providers/relay-provider";
-import { ensureOk, withTimeout, parseResponse } from "@/lib/net";
+import { ensureOk, readJson, withTimeout } from "@/lib/net";
 import type { CodeAuthProvider } from "@/integrations/types";
 
 const PROFILE_ENDPOINT = "https://graph.microsoft.com/v1.0/me";
@@ -37,11 +37,7 @@ export const microsoftProvider: CodeAuthProvider = createRelayProvider({
 
     ensureOk(response, "Microsoft profile request failed");
 
-    const payload = parseResponse(
-      "Microsoft profile",
-      microsoftProfileSchema,
-      await response.json(),
-    );
+    const payload = await readJson(response, "Microsoft profile", microsoftProfileSchema);
 
     return {
       providerAccountId: payload.id,

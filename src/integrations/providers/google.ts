@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createRelayProvider } from "@/integrations/providers/relay-provider";
-import { ensureOk, withTimeout, parseResponse } from "@/lib/net";
+import { ensureOk, readJson, withTimeout } from "@/lib/net";
 import type { CodeAuthProvider } from "@/integrations/types";
 
 const USERINFO_ENDPOINT = "https://www.googleapis.com/oauth2/v2/userinfo";
@@ -36,7 +36,7 @@ export const googleProvider: CodeAuthProvider = createRelayProvider({
 
     ensureOk(response, "Google profile request failed");
 
-    const payload = parseResponse("Google profile", googleUserInfoSchema, await response.json());
+    const payload = await readJson(response, "Google profile", googleUserInfoSchema);
 
     return {
       providerAccountId: payload.id,
