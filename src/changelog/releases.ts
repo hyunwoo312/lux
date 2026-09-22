@@ -74,6 +74,87 @@ export function groupByArea(changes: readonly ReleaseChange[]): AreaGroup[] {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "2.0.3",
+    date: "2026-09-22",
+    summary:
+      "A reliability pass: a relay hiccup no longer costs you a sign-in, four more widgets refresh the same way, and the keyboard reaches the places it was missing.",
+    changes: [
+      {
+        type: "changed",
+        area: "Dashboard",
+        text: "Weather, Stocks, GitHub and AniList refresh like News and Sports: one button, one cooldown.",
+        highlight: true,
+      },
+      {
+        type: "changed",
+        area: "Dashboard",
+        text: "Accent colour is kept for what is selected, live or needs attention. Callouts and cards that only wore it as decoration are neutral.",
+      },
+      {
+        type: "changed",
+        area: "Dashboard",
+        text: "Edit mode shows as pressed on the toolbar.",
+      },
+      {
+        type: "fixed",
+        area: "Dashboard",
+        text: "Long menus scroll with the arrows at their ends again.",
+      },
+      {
+        type: "fixed",
+        area: "Accounts",
+        text: "A relay outage no longer asks you to reconnect. Only a revoked sign-in does.",
+        highlight: true,
+      },
+      {
+        type: "fixed",
+        area: "Accounts",
+        text: "If saved accounts can’t be read, the Accounts tab says so and offers Start fresh instead of overwriting them.",
+      },
+      {
+        type: "changed",
+        area: "Settings",
+        text: "The shortcut recorder and the note editor show a focus ring.",
+      },
+      {
+        type: "changed",
+        area: "Feedback",
+        text: "The sending bar no longer shows a made-up percentage.",
+      },
+      {
+        type: "fixed",
+        area: "Clock",
+        text: "Digits roll the short way from 9 to 0.",
+      },
+      {
+        type: "changed",
+        area: "GitHub",
+        text: "Inbox, release and activity rows and the streak details work from the keyboard.",
+      },
+      {
+        type: "changed",
+        area: "Quick Access",
+        text: "Switching tabs crossfades, and folder crumbs show focus.",
+      },
+      {
+        type: "fixed",
+        area: "Spotify",
+        text: "A bad value from Spotify no longer breaks the progress slider.",
+      },
+      {
+        type: "added",
+        area: "Stocks",
+        text: "Inspect the chart from the keyboard: arrow keys move along it, Home and End jump, Escape clears.",
+        highlight: true,
+      },
+      {
+        type: "fixed",
+        area: "Stocks",
+        text: "Palette rows no longer add a currency sign the data doesn’t carry.",
+      },
+    ],
+  },
+  {
     version: "2.0.2",
     date: "2026-09-08",
     summary:

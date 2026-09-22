@@ -4,6 +4,52 @@ All notable changes to Lux are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.3] - 2026-09-22
+
+_A reliability pass: a relay hiccup no longer costs you a sign-in, four more widgets refresh the same way, and the keyboard reaches the places it was missing._
+
+### Added
+
+#### Stocks
+- Inspect the chart from the keyboard: arrow keys move along it, Home and End jump, Escape clears.
+
+### Changed
+
+#### Dashboard
+- Weather, Stocks, GitHub and AniList refresh like News and Sports: one button, one cooldown.
+- Accent colour is kept for what is selected, live or needs attention. Callouts and cards that only wore it as decoration are neutral.
+- Edit mode shows as pressed on the toolbar.
+
+#### Settings
+- The shortcut recorder and the note editor show a focus ring.
+
+#### Feedback
+- The sending bar no longer shows a made-up percentage.
+
+#### GitHub
+- Inbox, release and activity rows and the streak details work from the keyboard.
+
+#### Quick Access
+- Switching tabs crossfades, and folder crumbs show focus.
+
+### Fixed
+
+#### Dashboard
+- Long menus scroll with the arrows at their ends again.
+
+#### Accounts
+- A relay outage no longer asks you to reconnect. Only a revoked sign-in does.
+- If saved accounts can’t be read, the Accounts tab says so and offers Start fresh instead of overwriting them.
+
+#### Clock
+- Digits roll the short way from 9 to 0.
+
+#### Spotify
+- A bad value from Spotify no longer breaks the progress slider.
+
+#### Stocks
+- Palette rows no longer add a currency sign the data doesn’t carry.
+
 ## [2.0.2] - 2026-09-08
 
 _A consolidation pass: one mechanism per job under the hood, and on the surface the palette reaches more, pickers take the keyboard, and every widget says the same thing when it is signed out._
