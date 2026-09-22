@@ -17,7 +17,7 @@ import {
   type TrendsFeed,
 } from "@/widgets/news/types";
 
-export type FeedRequest = {
+type FeedRequest = {
   tab: NewsTab;
   region: NewsRegion;
   topic: NewsTopic;

@@ -52,7 +52,7 @@ export function startOfWeek(date: Date): Date {
   return addDays(start, -((start.getDay() - WEEK_START_DAY + WEEK_LENGTH) % WEEK_LENGTH));
 }
 
-export type WeekdayLabel = { narrow: string; long: string };
+type WeekdayLabel = { narrow: string; long: string };
 
 export const WEEKDAY_LABELS: WeekdayLabel[] = Array.from({ length: WEEK_LENGTH }, (_, index) => {
   const day = addDays(startOfWeek(new Date(2024, 0, 1)), index);

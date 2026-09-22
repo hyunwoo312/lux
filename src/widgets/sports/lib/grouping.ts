@@ -1,6 +1,6 @@
 import type { MatchState } from "@/widgets/sports/types";
 
-export type MatchSection<T> = { id: string; label: string; matches: T[] };
+type MatchSection<T> = { id: string; label: string; matches: T[] };
 
 const BANDS: { id: string; label: string; state: MatchState }[] = [
   { id: "live", label: "Live", state: "in" },

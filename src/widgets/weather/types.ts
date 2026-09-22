@@ -35,7 +35,7 @@ export function makeLocationId(latitude: number, longitude: number): string {
   return `${latitude.toFixed(3)},${longitude.toFixed(3)}`;
 }
 
-export type WeatherNow = {
+type WeatherNow = {
   time: string;
   temperature: number;
   apparentTemperature: number;
@@ -68,7 +68,7 @@ export type WeatherMinute = {
   probability: number;
 };
 
-export type WeatherUnitLabels = {
+type WeatherUnitLabels = {
   windSpeed: string;
 };
 

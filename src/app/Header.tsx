@@ -120,7 +120,7 @@ export function Header() {
             aria-label={hasUnseenRelease ? "What's new — update available" : "What's new"}
             onClick={() => setChangelogOpen(true)}
           >
-            <ScrollText className="size-5" />
+            <ScrollText />
             {hasUnseenRelease && (
               <span
                 aria-hidden
@@ -137,7 +137,7 @@ export function Header() {
             aria-label="Open the Lux guide"
             onClick={() => openGuide()}
           >
-            <BookOpen className="size-5" />
+            <BookOpen />
           </Button>
         </Tooltip>
         <Tooltip content="Send feedback">
@@ -148,7 +148,7 @@ export function Header() {
             aria-label="Send feedback"
             onClick={() => setFeedbackOpen(true)}
           >
-            <MessageSquarePlus className="size-5" />
+            <MessageSquarePlus />
           </Button>
         </Tooltip>
       </div>

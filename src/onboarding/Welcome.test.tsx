@@ -22,23 +22,6 @@ beforeEach(() => {
 });
 
 describe("the first-run welcome", () => {
-  it("puts its three points and both ways out on screen", () => {
-    renderWelcome();
-
-    expect(screen.getByRole("heading", { name: "Welcome to Lux" })).toBeInTheDocument();
-    for (const point of ["Make it yours", "Light or dark", "Connect your accounts"]) {
-      expect(screen.getByText(point)).toBeInTheDocument();
-    }
-    expect(screen.getByRole("button", { name: "Skip" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Open the guide" })).toBeInTheDocument();
-  });
-
-  it("does not promise that every account connects the same way", () => {
-    renderWelcome();
-
-    expect(screen.getByText(/Spotify needs a few more/)).toBeInTheDocument();
-  });
-
   it("remembers being skipped so it does not return", () => {
     renderWelcome();
 

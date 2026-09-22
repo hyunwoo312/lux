@@ -13,7 +13,7 @@ export function getScrollParent(node: HTMLElement | null): HTMLElement | null {
   return null;
 }
 
-export type EdgeAutoScroll = {
+type EdgeAutoScroll = {
   begin: (container: HTMLElement | null) => void;
   track: (y: number) => void;
   end: () => void;

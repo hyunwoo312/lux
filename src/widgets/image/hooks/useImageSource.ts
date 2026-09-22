@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { readImageAsset } from "@/widgets/image/media";
 import { useImageStore } from "@/widgets/image/useImageStore";
 
-export type ImageSource = {
+type ImageSource = {
   thumbUrl: string | null;
   fullUrl: string | null;
   loadError: string | null;

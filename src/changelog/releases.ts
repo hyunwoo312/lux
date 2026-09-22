@@ -49,7 +49,7 @@ export const CHANGE_TYPE_LABEL: Record<ChangeType, string> = {
   fixed: "Fixed",
 };
 
-export function sortChanges(changes: readonly ReleaseChange[]): ReleaseChange[] {
+function sortChanges(changes: readonly ReleaseChange[]): ReleaseChange[] {
   return [...changes].sort((a, b) => CHANGE_AREAS.indexOf(a.area) - CHANGE_AREAS.indexOf(b.area));
 }
 

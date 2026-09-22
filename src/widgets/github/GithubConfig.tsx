@@ -30,7 +30,7 @@ export function GithubConfig() {
   const accountDescription = account
     ? account.status === "needsReconnect"
       ? "Reconnect to resume syncing."
-      : (account.email ?? account.displayName ?? "Connected")
+      : (account.email ?? account.displayName)
     : "Not connected — connect to see your activity.";
 
   return (

@@ -5,7 +5,7 @@ import { collapse, enterTween } from "@/lib/motion";
 import { TYPE } from "@/lib/type";
 import { cn } from "@/lib/utils";
 
-export type SectionTone = "band" | "league";
+type SectionTone = "band" | "league";
 
 const LABEL: Record<SectionTone, string> = {
   band: TYPE.eyebrow,

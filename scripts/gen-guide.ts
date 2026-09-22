@@ -61,7 +61,6 @@ function renderBlock(block: GuideBlock): string {
       return `#### ${block.text}`;
     case "callout":
       return `> **${block.title}**\n>\n> ${block.text}`;
-    case "steps":
     case "toolbar":
       return block.steps
         .map((step, index) => `${index + 1}. **${step.title}** — ${step.text}`)

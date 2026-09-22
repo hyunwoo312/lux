@@ -3,7 +3,7 @@ import { espnUrl, fetchEspn } from "@/widgets/sports/lib/espnApi";
 import { pickEventIndex } from "@/widgets/sports/lib/pickEvent";
 import { MATCH_STATES, type MatchState } from "@/widgets/sports/types";
 
-export type GolfRound = { round: number; toPar: string; strokes: string };
+type GolfRound = { round: number; toPar: string; strokes: string };
 
 export type ScoreCounts = {
   eagles: number;

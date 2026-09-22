@@ -21,7 +21,7 @@ export function GeneratedWallpaper() {
       {style === "mesh" && <MeshWallpaper intensity={intensity} density={density} />}
       {style === "aurora" && <AuroraWallpaper intensity={intensity} speed={speed} />}
       {style === "bloom" && <BloomWallpaper intensity={intensity} speed={speed} />}
-      {style === "still" && <GradientWallpaper style={style} intensity={intensity} />}
+      {style === "still" && <GradientWallpaper intensity={intensity} />}
     </div>
   );
 }

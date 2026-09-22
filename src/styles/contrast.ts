@@ -1,7 +1,7 @@
 import { clamp01 } from "@/lib/utils";
 
 export type Oklch = { l: number; c: number; h: number };
-export type LinearRgb = [number, number, number];
+type LinearRgb = [number, number, number];
 
 const OKLCH_PATTERN = /^oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\)$/;
 

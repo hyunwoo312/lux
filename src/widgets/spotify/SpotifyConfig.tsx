@@ -21,7 +21,7 @@ export function SpotifyConfig() {
   const accountDescription = account
     ? account.status === "needsReconnect"
       ? "Reconnect to resume playback."
-      : (account.email ?? account.displayName ?? "Connected")
+      : (account.email ?? account.displayName)
     : "Not connected — connect to control playback.";
 
   return (

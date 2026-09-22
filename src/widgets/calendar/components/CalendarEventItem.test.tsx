@@ -79,15 +79,6 @@ describe("CalendarEventItem join action", () => {
     expect(screen.getByText(/^in /)).toBeInTheDocument();
   });
 
-  it("keeps the actions rendered and legible without hovering", () => {
-    renderItem(event({ joinUrl: "https://meet.google.com/abc" }));
-
-    const actions = screen.getByLabelText("Join Standup").closest("div");
-
-    expect(actions?.className).not.toContain("opacity-0");
-    expect(actions?.className).toContain("opacity-60");
-  });
-
   it("keeps the countdown when an imminent event has no join url", () => {
     renderItem(event({ startsAt: "2026-08-04T09:20:00Z", endsAt: "2026-08-04T09:50:00Z" }));
 

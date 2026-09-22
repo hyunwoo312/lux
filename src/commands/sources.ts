@@ -112,7 +112,7 @@ export function commandItems(query: string): CommandItem[] {
   ];
 }
 
-export type CatalogueCommand = { id: string; label: string; setup: CommandSetup | null };
+type CatalogueCommand = { id: string; label: string; setup: CommandSetup | null };
 
 export type CommandGroup = {
   id: string;

@@ -1,15 +1,15 @@
-import { DURATION } from "@/lib/motion";
-
-const SPIN_SECONDS = 0.8;
 import { RefreshCw } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
+import { DURATION } from "@/lib/motion";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { cn } from "@/lib/utils";
 import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { syncCooldownMessage, syncCooldownRemainingMs } from "@/widgets/core/syncCooldown";
 import { useNow } from "@/hooks/useNow";
+
+const SPIN_SECONDS = 0.8;
 
 type WidgetRefreshButtonProps = {
   syncing: boolean;

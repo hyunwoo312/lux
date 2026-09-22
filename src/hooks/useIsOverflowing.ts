@@ -1,6 +1,6 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
-export type OverflowAxis = "horizontal" | "vertical";
+type OverflowAxis = "horizontal" | "vertical";
 
 const SUBPIXEL_TOLERANCE_PX = 1;
 

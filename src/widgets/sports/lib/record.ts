@@ -10,7 +10,7 @@ const LABELS: Record<Sport, Record<number, string[] | undefined>> = {
   golf: {},
 };
 
-export type RecordPart = { value: string; label: string };
+type RecordPart = { value: string; label: string };
 
 export function readRecord(summary: string | undefined, sport: Sport): RecordPart[] {
   if (!summary) return [];

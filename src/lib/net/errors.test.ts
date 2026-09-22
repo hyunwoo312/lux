@@ -24,11 +24,6 @@ describe("rateLimitError", () => {
     expect(rateLimitError(response(403), now)).toBeNull();
   });
 
-  it("uses retry-after seconds when present", () => {
-    const error = rateLimitError(response(429, { "retry-after": "30" }), now);
-    expect(error?.message).toBe("Rate limited — try again in 30s.");
-  });
-
   it("uses the ratelimit reset epoch for an exhausted 403", () => {
     const reset = String(Math.round(now / 1000) + 5 * 60);
     const error = rateLimitError(

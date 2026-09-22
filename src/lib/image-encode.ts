@@ -1,7 +1,7 @@
 const WEBP_MIME = "image/webp";
 const PASSTHROUGH_MIMES = new Set([WEBP_MIME, "image/gif"]);
 
-export type EncodeOptions = { quality: number; maxDimension?: number };
+type EncodeOptions = { quality: number; maxDimension?: number };
 
 type RenderBitmapOptions = {
   maxEdge: number;

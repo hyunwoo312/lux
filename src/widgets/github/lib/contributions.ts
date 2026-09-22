@@ -7,14 +7,14 @@ import type {
 
 export type RepoContribution = { repo: string; url: string; isPrivate: boolean; count: number };
 
-export type RepoActivityGroups = {
+type RepoActivityGroups = {
   commits: RepoContribution[];
   prs: RepoContribution[];
   issues: RepoContribution[];
   reviews: RepoContribution[];
 };
 
-export type Streaks = {
+type Streaks = {
   current: number;
   longest: number;
   currentRange?: DateRange;

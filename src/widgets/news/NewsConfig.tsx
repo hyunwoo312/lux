@@ -63,7 +63,7 @@ const SOURCE_OPTIONS = NEWS_SOURCES.map((source) => ({
 }));
 
 const TREND_REGION_OPTIONS: { value: TrendRegion; label: string }[] = TREND_REGIONS.map(
-  (entry) => ({ value: entry.code as TrendRegion, label: entry.label }),
+  (entry) => ({ value: entry.code, label: entry.label }),
 );
 
 export function NewsConfig() {

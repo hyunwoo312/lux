@@ -76,7 +76,7 @@ export async function restoreSession(sessionId: string): Promise<boolean> {
   }
 }
 
-export function historyToItem(item: chrome.history.HistoryItem): BrowserItem | null {
+function historyToItem(item: chrome.history.HistoryItem): BrowserItem | null {
   if (!item.url || !isHttpUrl(item.url)) return null;
   return {
     id: item.id,

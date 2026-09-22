@@ -21,18 +21,18 @@ import {
 import type { WidgetType } from "@/widgets/core/types";
 import { refreshScaleOf } from "@/widgets/core/useWidgetRefreshScale";
 
-export type PagedFetcher<T> = (
+type PagedFetcher<T> = (
   page: number,
   signal: AbortSignal,
 ) => Promise<{ items: T[]; hasNextPage: boolean }>;
 
-export type PagedResourceState<T> =
+type PagedResourceState<T> =
   | { status: "loading" }
   | { status: "error"; error: Error }
   | { status: "empty" }
   | { status: "success"; items: T[] };
 
-export type PagedResource<T> = {
+type PagedResource<T> = {
   state: PagedResourceState<T>;
   hasMore: boolean;
   isLoadingMore: boolean;

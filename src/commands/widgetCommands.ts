@@ -2,7 +2,7 @@ import { needsAccount, needsWidget } from "@/widgets/core/commandSetup";
 import { widgetPlugins } from "@/widgets/registry";
 import type { CommandSetup, WidgetCommand, WidgetPlugin, WidgetType } from "@/widgets/core/types";
 
-export type AvailableWidgetCommand = WidgetCommand & {
+type AvailableWidgetCommand = WidgetCommand & {
   widget: string;
   widgetType: WidgetType;
   setupNeeded: CommandSetup | null;
@@ -19,16 +19,14 @@ function widgetDefault(plugin: WidgetPlugin): CommandSetup | null {
 }
 
 export function availableWidgetCommands(): AvailableWidgetCommand[] {
-  return widgetPlugins
-    .filter((plugin) => plugin.commands)
-    .flatMap((plugin) => {
-      const fallback = widgetDefault(plugin);
-      return (plugin.commands?.() ?? []).map((command) => ({
-        ...command,
-        widget: plugin.name,
-        widgetType: plugin.type,
-        keywords: [...(command.keywords ?? []), plugin.name],
-        setupNeeded: command.setup === undefined ? fallback : command.setup(),
-      }));
-    });
+  return widgetPlugins.flatMap((plugin) => {
+    const fallback = widgetDefault(plugin);
+    return (plugin.commands?.() ?? []).map((command) => ({
+      ...command,
+      widget: plugin.name,
+      widgetType: plugin.type,
+      keywords: [...(command.keywords ?? []), plugin.name],
+      setupNeeded: command.setup === undefined ? fallback : command.setup(),
+    }));
+  });
 }

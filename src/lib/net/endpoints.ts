@@ -1,6 +1,6 @@
-export type EndpointAccess = "host-permission" | "cors" | "oauth-redirect";
+type EndpointAccess = "host-permission" | "cors" | "oauth-redirect";
 
-export type Endpoint = {
+type Endpoint = {
   host: string;
   usedBy: string;
   reason: string;

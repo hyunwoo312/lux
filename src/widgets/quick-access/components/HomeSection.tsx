@@ -7,13 +7,13 @@ import type { BrowserState } from "@/widgets/quick-access/hooks/useBrowserItems"
 import { SECTION_GATE } from "@/widgets/quick-access/lib/gates";
 import type { BrowserItem, ItemSource, QuickAccessView } from "@/widgets/quick-access/types";
 import type { OpenBehavior } from "@/lib/open-url";
-import type { MouseEvent, RefObject } from "react";
+import type { ReactNode, MouseEvent, RefObject } from "react";
 import { TYPE } from "@/lib/type";
 import { cn } from "@/lib/utils";
 
 type GatedSource = Exclude<ItemSource, "history">;
 
-export function SectionHeader({ children }: { children: React.ReactNode }) {
+export function SectionHeader({ children }: { children: ReactNode }) {
   return <span className={cn(TYPE.eyebrow, "px-1")}>{children}</span>;
 }
 

@@ -2,14 +2,14 @@ import { normalizeTitle } from "@/widgets/news/lib/news";
 import type { NewsItem } from "@/widgets/news/types";
 import { matchesQuery } from "@/lib/utils";
 
-export type HeadlineEntry = { item: NewsItem; titleKey: string };
+type HeadlineEntry = { item: NewsItem; titleKey: string };
 
-export type HeadlineSelection =
+type HeadlineSelection =
   | { status: "muted" }
   | { status: "unmatched" }
   | { status: "ready"; entries: HeadlineEntry[]; newCount: number; highlightCount: number };
 
-export type SelectOptions = {
+type SelectOptions = {
   mutedTerms: string[];
   highlightTerms: string[];
   filterQuery: string;

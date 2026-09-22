@@ -3,7 +3,7 @@ import { createPersistedStore } from "@/lib/storage";
 import { tolerantRecord } from "@/lib/persist";
 import { CLOCK_DATE_FORMATS, type ClockDateFormat } from "@/lib/clock";
 
-export const REFRESH_CADENCES = ["default", "relaxed", "custom"] as const;
+const REFRESH_CADENCES = ["default", "relaxed", "custom"] as const;
 export type RefreshCadence = (typeof REFRESH_CADENCES)[number];
 
 export const REFRESH_STEPS = [0.5, 1, 2, 4] as const;

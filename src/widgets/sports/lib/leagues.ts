@@ -48,7 +48,7 @@ type LeagueBase = {
   liveUnverified?: true;
 };
 
-export type LeagueKind = "match" | "leaderboard" | "draw";
+type LeagueKind = "match" | "leaderboard" | "draw";
 export type League = LeagueBase & { kind: LeagueKind };
 
 const MLB: League = {

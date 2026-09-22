@@ -2,11 +2,11 @@ import { create } from "zustand";
 
 export const TOAST_DURATION_MS = 8000;
 
-export type ToastAction =
+type ToastAction =
   | { kind: "undo"; run: () => void }
   | { kind: "action"; label: string; run: () => void };
 
-export type Toast = {
+type Toast = {
   key: string;
   message: string;
   note?: string;

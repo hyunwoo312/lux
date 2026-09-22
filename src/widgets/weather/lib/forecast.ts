@@ -2,7 +2,7 @@ import { formatClock } from "@/lib/clock";
 import { isPrecipitationCode } from "@/widgets/weather/lib/wmo";
 import type { WeatherHour } from "@/widgets/weather/types";
 
-export type ImminentPrecip = {
+type ImminentPrecip = {
   inHours: number;
   probability: number;
 };
@@ -46,7 +46,7 @@ export function forecastVisibility(
 const TICK_EVERY = 6;
 const MIN_TICK_GAP = 38;
 
-export type HourlyTick = { key: string; x: number; midnight: boolean; label: string };
+type HourlyTick = { key: string; x: number; midnight: boolean; label: string };
 
 export function hourlyTicks(
   hours: WeatherHour[],

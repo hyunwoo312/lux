@@ -19,6 +19,7 @@ import {
 import { useWidgetHighlightStore } from "@/widgets/core/useWidgetHighlightStore";
 import { widgetPlugins } from "@/widgets/registry";
 import { useDashboardStore } from "@/stores/useDashboardStore";
+import { useShallow } from "zustand/react/shallow";
 import { useIntegrationStore } from "@/integrations";
 import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
 import { clamp, cn, matchesQuery } from "@/lib/utils";
@@ -38,13 +39,13 @@ export function WidgetPalette(roving: RovingItemProps) {
   const searchRef = useRef<HTMLInputElement>(null);
   const cardRefs = useRef(new Map<WidgetType, HTMLButtonElement | null>());
   const activeTypes = new Set(widgets.map((widget) => widget.type));
-  const connected = useIntegrationStore((s) =>
-    s.accounts
-      .filter((account) => account.status === "connected")
-      .map((account) => account.providerId)
-      .join(","),
+  const connectedProviders = useIntegrationStore(
+    useShallow((s) =>
+      s.accounts
+        .filter((account) => account.status === "connected")
+        .map((account) => account.providerId),
+    ),
   );
-  const connectedProviders = connected.split(",");
   const countOf = (type: string) => widgets.filter((widget) => widget.type === type).length;
   const accountNote = (plugin: WidgetPlugin) => {
     const missing =

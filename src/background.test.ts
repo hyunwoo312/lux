@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { anilistProvider } from "@/integrations/providers/anilist";
 import { ANILIST_CALLBACK_KEY, CHANGELOG_PENDING_KEY } from "@/lib/extension-keys";
-import { EXTENSION_LOCAL_KEYS, EXTENSION_SESSION_KEYS } from "@/lib/profile";
 
 const STATE = "state-abc";
 
@@ -181,13 +180,6 @@ describe("background worker — install and update", () => {
     await flush();
 
     expect(await chrome.storage.local.get(CHANGELOG_PENDING_KEY)).toEqual({});
-  });
-});
-
-describe("background worker — storage keys", () => {
-  it("writes only keys the profile registry knows about", () => {
-    expect(EXTENSION_SESSION_KEYS).toContain(ANILIST_CALLBACK_KEY);
-    expect(EXTENSION_LOCAL_KEYS).toContain(CHANGELOG_PENDING_KEY);
   });
 });
 

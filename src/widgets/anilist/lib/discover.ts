@@ -1,6 +1,6 @@
 import type { DiscoverFeed, DiscoverType } from "@/widgets/anilist/types";
 
-export type DiscoverVariables = {
+type DiscoverVariables = {
   type: "ANIME" | "MANGA";
   sort: string[];
   season?: "WINTER" | "SPRING" | "SUMMER" | "FALL";

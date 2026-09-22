@@ -9,7 +9,7 @@ const MIN_QUERY_LENGTH = 2;
 
 const EMPTY_PLAYLISTS: SpotifySearchResult[] = [];
 
-export type SpotifySearchResults = {
+type SpotifySearchResults = {
   query: string;
   setQuery: (query: string) => void;
   state: SearchState<SpotifySearchResult>;

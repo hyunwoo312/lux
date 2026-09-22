@@ -24,7 +24,7 @@ function withShootout(match: Match, text: string): string {
     : text;
 }
 
-export function finishedWhen(match: Match, now: number, hour12: boolean): string {
+function finishedWhen(match: Match, now: number, hour12: boolean): string {
   const start = Date.parse(match.startsAt);
   if (Number.isNaN(start)) return match.detail;
 

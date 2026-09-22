@@ -24,10 +24,6 @@ describe("googleProvider.buildPkceAuthUrl", () => {
     expect(url.searchParams.get("prompt")).toBe("consent");
   });
 
-  it("supports refresh through the relay", () => {
-    expect(typeof googleProvider.refreshToken).toBe("function");
-  });
-
   it("falls back to a non-storm expiry when the relay omits expires_in", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ access_token: "tok", token_type: "Bearer" })),

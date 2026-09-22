@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import type { WidgetIcon } from "@/widgets/core/types";
 
-export type WmoInfo = {
+type WmoInfo = {
   label: string;
   icon: WidgetIcon;
   precipitation: boolean;

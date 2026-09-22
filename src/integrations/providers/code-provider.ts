@@ -23,7 +23,7 @@ const tokenPayloadSchema = z.object({
 
 type TokenPayload = z.infer<typeof tokenPayloadSchema>;
 
-export type TokenGrant =
+type TokenGrant =
   | {
       grant: "authorization_code";
       clientId: string;

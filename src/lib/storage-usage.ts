@@ -9,7 +9,7 @@ export type StorageUsage = {
   imageCount: number;
 };
 
-export type StorageBreakdown = {
+type StorageBreakdown = {
   label: string;
   bytes: number;
   hint: string;

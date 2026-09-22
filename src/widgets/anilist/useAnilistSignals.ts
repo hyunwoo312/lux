@@ -13,7 +13,7 @@ export function useActivityUnseenCount(enabled: boolean, viewerId: number): numb
   return activity.state.items.filter((item) => item.createdAt > lastSeen).length;
 }
 
-export type UnreadSignal = { count: number; refresh: () => void; lastSyncedAt: number };
+type UnreadSignal = { count: number; refresh: () => void; lastSyncedAt: number };
 
 export function useUnreadCount(enabled: boolean, viewerId: number): UnreadSignal {
   const unread = usePolledDefinition(anilistUnread(viewerId), { enabled });

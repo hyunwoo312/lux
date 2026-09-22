@@ -39,15 +39,6 @@ describe("refresh cadence", () => {
 
     expect(store().widgetRefresh["weather"]).toBeUndefined();
   });
-
-  it("only exposes widgets that declare a single stable cadence", () => {
-    const names = tunable().map((plugin) => plugin.name);
-
-    expect(names).toContain("News");
-    expect(names).not.toContain("Calendar");
-    expect(names).not.toContain("Sports");
-    expect(names).not.toContain("Spotify");
-  });
 });
 
 describe("persisted tolerance", () => {

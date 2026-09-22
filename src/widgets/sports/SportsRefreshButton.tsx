@@ -17,7 +17,7 @@ import { SPORTS_SYNC_COOLDOWN_MS, useSports } from "@/widgets/sports/useSportsSt
 
 type Resource = Omit<PolledResource<unknown>, "state">;
 
-function Button({ resource }: { resource: Resource }) {
+function RefreshFor({ resource }: { resource: Resource }) {
   return (
     <WidgetRefreshButton
       label="Sports"
@@ -33,15 +33,15 @@ function Button({ resource }: { resource: Resource }) {
 
 function ScoreboardRefresh({ league }: { league: League }) {
   const dayWindow = useSports((d) => d.window);
-  return <Button resource={useLeagueScoreboard(league, dayWindow)} />;
+  return <RefreshFor resource={useLeagueScoreboard(league, dayWindow)} />;
 }
 
 function LeaderboardRefresh({ league }: { league: League }) {
-  return <Button resource={useLeaderboard(league)} />;
+  return <RefreshFor resource={useLeaderboard(league)} />;
 }
 
 function DrawRefresh({ league }: { league: League }) {
-  return <Button resource={useTennis(league)} />;
+  return <RefreshFor resource={useTennis(league)} />;
 }
 
 function FavoritesRefresh() {

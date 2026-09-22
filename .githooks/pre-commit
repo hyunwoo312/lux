@@ -3,16 +3,16 @@ staged=$(git diff --cached --name-only --diff-filter=ACMR |
   grep -E '\.(ts|tsx|js|jsx|json|css|md)$' || true)
 [ -z "$staged" ] && exit 0
 
-if ! echo "$staged" | xargs npx prettier --check >/dev/null 2>&1; then
+if ! echo "$staged" | xargs -d '\n' npx prettier --check >/dev/null 2>&1; then
   echo "Prettier check failed. Run: npm run format"
-  echo "$staged" | xargs npx prettier --list-different
+  echo "$staged" | xargs -d '\n' npx prettier --list-different
   exit 1
 fi
 
 lintable=$(echo "$staged" | grep -E '\.(ts|tsx|js|jsx)$' || true)
 [ -z "$lintable" ] && exit 0
 
-if ! echo "$lintable" | xargs npx eslint --max-warnings 0; then
+if ! echo "$lintable" | xargs -d '\n' npx eslint --max-warnings 0; then
   echo "ESLint failed on staged files. Fix the errors above, or run: npm run lint"
   exit 1
 fi

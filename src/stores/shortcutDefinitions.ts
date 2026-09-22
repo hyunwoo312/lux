@@ -14,7 +14,7 @@ import type { Shortcut } from "@/lib/shortcuts";
 const ctrl = (key: string): Shortcut => ({ mod: true, shift: false, alt: false, key });
 const ctrlShift = (key: string): Shortcut => ({ mod: true, shift: true, alt: false, key });
 
-export type ShortcutDefinition = {
+type ShortcutDefinition = {
   readonly id: string;
   readonly label: string;
   readonly description: string;

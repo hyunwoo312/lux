@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { RESET_MS } from "@/lib/motion";
 import { useTransientState } from "@/hooks/useTransientState";
 
-export type CopyStatus = "idle" | "copied" | "failed";
+type CopyStatus = "idle" | "copied" | "failed";
 
 export function useCopyToClipboard(): {
   status: CopyStatus;

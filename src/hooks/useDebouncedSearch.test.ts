@@ -1,13 +1,17 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
-import { useDebouncedSearch } from "@/hooks/useDebouncedSearch";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { SEARCH_DEBOUNCE_MS, useDebouncedSearch } from "@/hooks/useDebouncedSearch";
 
 function renderSearch(search: (query: string, signal: AbortSignal) => Promise<string[]>) {
   return renderHook(({ query }) => useDebouncedSearch(query, search), {
     initialProps: { query: "one" },
   });
 }
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe("useDebouncedSearch", () => {
   it("ignores an in-flight request once the query has moved on", async () => {
@@ -55,9 +59,11 @@ describe("useDebouncedSearch", () => {
     const { result, rerender } = renderSearch(search);
     await waitFor(() => expect(result.current).toEqual({ status: "success", data: ["apple"] }));
 
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     rerender({ query: "two" });
-    await waitFor(() => expect(result.current).toEqual({ status: "loading", data: ["apple"] }), {
-      timeout: 2000,
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(SEARCH_DEBOUNCE_MS * 2);
     });
+    expect(result.current).toEqual({ status: "loading", data: ["apple"] });
   });
 });

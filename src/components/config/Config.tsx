@@ -170,7 +170,7 @@ type ConfigOption<T extends string> = {
 
 type SelectControlProps<T extends string> = {
   value: T;
-  options: ConfigOption<T>[];
+  options: readonly ConfigOption<T>[];
   onChange: (value: T) => void;
   disabled?: boolean;
   label: string;
@@ -215,7 +215,7 @@ export function ConfigSelect<T extends string>({
 
 type SegmentedProps<T extends string> = {
   value: T;
-  options: (ConfigOption<T> & { disabled?: boolean })[];
+  options: readonly (ConfigOption<T> & { disabled?: boolean })[];
   onChange: (value: T) => void;
   disabled?: boolean;
   label: string;

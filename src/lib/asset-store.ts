@@ -14,8 +14,6 @@ export type StoredAsset = {
   thumbVersion?: number;
 };
 
-export type StoredAssetMetadata = Omit<StoredAsset, "blob">;
-
 export type MediaImageItem = {
   assetId: string;
   fileName: string;
@@ -38,7 +36,7 @@ export function validateImageFile(file: File, maxBytes: number): string | null {
 const DATABASE_VERSION = 1;
 const STORE_NAME = "assets";
 
-export type AssetUsage = { count: number; bytes: number };
+type AssetUsage = { count: number; bytes: number };
 
 export type AssetStore = {
   save: (asset: StoredAsset) => Promise<void>;
@@ -138,7 +136,7 @@ export function createAssetStore(databaseName: string): AssetStore {
   return store;
 }
 
-export type SaveMediaOptions = {
+type SaveMediaOptions = {
   prefix: string;
   fallbackName: string;
   quality: number;

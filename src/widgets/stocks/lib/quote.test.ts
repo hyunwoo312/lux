@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   changeOf,
-  changeTone,
   directionOf,
   extendedSession,
   isAlwaysOpen,
@@ -90,12 +89,6 @@ describe("direction", () => {
     [0, "flat"],
   ])("reads %s as %s", (change, expected) => {
     expect(directionOf(change)).toBe(expected);
-  });
-
-  it("colours a rise with the success token, not the widget accent", () => {
-    expect(changeTone("up")).toBe("text-success");
-    expect(changeTone("down")).toBe("text-destructive");
-    expect(changeTone("flat")).toBe("text-ink-3");
   });
 });
 

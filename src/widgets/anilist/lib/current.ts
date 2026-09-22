@@ -70,7 +70,7 @@ export function formatAiringIn(airingAt: number, now = Date.now()): string {
   return `${Math.max(1, Math.floor(seconds / 60))}m`;
 }
 
-export type AiringGroup = { key: string; label: string; entries: CurrentEntry[] };
+type AiringGroup = { key: string; label: string; entries: CurrentEntry[] };
 
 const WEEKDAY_FORMATTER = new Intl.DateTimeFormat(undefined, { weekday: "long" });
 

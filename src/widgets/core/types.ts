@@ -21,7 +21,7 @@ export const WIDGET_TYPES = [
 export type WidgetType = (typeof WIDGET_TYPES)[number];
 
 export const WIDGET_CATEGORIES = ["productivity", "media", "information"] as const;
-export type WidgetCategory = (typeof WIDGET_CATEGORIES)[number];
+type WidgetCategory = (typeof WIDGET_CATEGORIES)[number];
 
 export const WIDGET_CATEGORY_LABELS: Record<WidgetCategory, string> = {
   productivity: "Productivity",
@@ -71,7 +71,7 @@ export type WidgetLock = {
 
 type SignedOut = { mode: "lock"; label: string; subject: string } | { mode: "degrade" };
 
-export type WidgetFrame = {
+type WidgetFrame = {
   bleed?: boolean;
   backdrop?: ComponentType;
   decorativeBackdrop?: boolean;

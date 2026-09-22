@@ -2,7 +2,7 @@ import { matchesTeam } from "@/widgets/sports/lib/espn";
 import { leagueById, type League } from "@/widgets/sports/lib/leagues";
 import type { LeagueFollowing, Match } from "@/widgets/sports/types";
 
-export type FollowedLeague = { league: League; teams: string[] };
+type FollowedLeague = { league: League; teams: string[] };
 
 export function followedLeagues(following: Record<string, LeagueFollowing>): FollowedLeague[] {
   return Object.entries(following).flatMap(([leagueId, entry]) => {

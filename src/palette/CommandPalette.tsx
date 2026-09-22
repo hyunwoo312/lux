@@ -13,8 +13,9 @@ import { PaletteFooter } from "@/palette/PaletteFooter";
 import { PaletteResults } from "@/palette/PaletteResults";
 import { useCommandPaletteStore } from "@/palette/useCommandPaletteStore";
 
-const COUNT_ID = "palette-result-count";
 import { usePaletteEntries, type PaletteEntry } from "@/palette/usePaletteEntries";
+
+const COUNT_ID = "palette-result-count";
 
 export function CommandPalette() {
   const open = useCommandPaletteStore((state) => state.open);

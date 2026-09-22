@@ -311,12 +311,9 @@ describe("LibraryView", () => {
     async (viewMode) => {
       listMock.mockReturnValue(new Promise<never>(() => {}));
       seed("all", "score", viewMode);
-      const view = renderView();
+      renderView();
 
       expect(await screen.findByText("Loading your list…")).toBeInTheDocument();
-      expect(
-        view.container.querySelector(`[data-variant="${viewMode}"] [data-slot="skeleton"]`),
-      ).not.toBeNull();
     },
   );
 

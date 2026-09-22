@@ -3,7 +3,7 @@ import type { WeatherMinute } from "@/widgets/weather/types";
 const BUCKET_MINUTES = 15;
 const WINDOW_MINUTES = 120;
 
-export type Nowcast = {
+type Nowcast = {
   startsInMinutes: number;
   probability: number;
 };

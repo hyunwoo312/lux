@@ -1,6 +1,6 @@
 import { STATE_ORDER, type MatchState } from "@/widgets/sports/types";
 
-export type DatedEvent = { state: MatchState; startsAt?: string | undefined };
+type DatedEvent = { state: MatchState; startsAt?: string | undefined };
 
 function time(event: DatedEvent): number {
   const parsed = event.startsAt ? Date.parse(event.startsAt) : Number.NaN;

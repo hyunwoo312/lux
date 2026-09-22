@@ -14,8 +14,8 @@ export function AnilistTabs() {
   const activeTab = useAnilist((d) => d.activeTab);
   const setActiveTab = useAnilistStore((s) => s.setActiveTab);
   const viewerId = Number(account?.providerAccountId);
-  const unseen = useActivityUnseenCount(Boolean(connected), viewerId);
-  const { count: unread } = useUnreadCount(Boolean(connected), viewerId);
+  const unseen = useActivityUnseenCount(connected, viewerId);
+  const { count: unread } = useUnreadCount(connected, viewerId);
 
   if (!connected) return <AnilistServiceIcon className="size-4" />;
 

@@ -40,10 +40,10 @@ export type Snapshot<D> = {
   failureCount: number;
 };
 
-export type CacheEntry<D> = { data: D; at: number };
+type CacheEntry<D> = { data: D; at: number };
 
 export type Decode<D> = (raw: unknown) => CacheEntry<D> | undefined;
-export type Encode<D> = (data: D, at: number) => unknown;
+type Encode<D> = (data: D, at: number) => unknown;
 
 export function seedSnapshot<D>(entry: CacheEntry<D> | undefined, blank: () => D): Snapshot<D> {
   return {

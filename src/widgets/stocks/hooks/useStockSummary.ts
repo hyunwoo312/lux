@@ -11,7 +11,7 @@ import {
 } from "@/widgets/stocks/lib/quote";
 import { DAY_RANGE, type PricePoint, type Quote, type SparkSeries } from "@/widgets/stocks/types";
 
-export type StockSummary = {
+type StockSummary = {
   state: PolledResourceState<Quote>;
   quote: Quote | null;
   price: number | null;

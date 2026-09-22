@@ -8,7 +8,7 @@ type NewtabQueueState = {
 
 export type RotationOrder = "shuffle" | "sequential";
 
-export type MediaSelection<T> = {
+type MediaSelection<T> = {
   mode: "single" | "multi";
   single: T | null;
   items: T[];

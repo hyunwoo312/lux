@@ -22,12 +22,12 @@ export const integrationAccountSchema = z.object({
   providerId: integrationProviderIdSchema,
   providerAccountId: z.string().min(1),
   displayName: z.string().min(1),
-  email: z.string().email().optional().catch(undefined),
-  avatarUrl: z.string().url().optional().catch(undefined),
+  email: z.email().optional().catch(undefined),
+  avatarUrl: z.url().optional().catch(undefined),
   status: integrationAccountStatusSchema,
   token: integrationTokenSchema.optional(),
-  connectedAt: z.string().datetime({ offset: true }),
-  lastAuthorizedAt: z.string().datetime({ offset: true }).optional(),
+  connectedAt: z.iso.datetime({ offset: true }),
+  lastAuthorizedAt: z.iso.datetime({ offset: true }).optional(),
   lastError: z.string().max(MAX_ERROR_LENGTH).optional(),
 });
 export type IntegrationAccount = z.infer<typeof integrationAccountSchema>;
@@ -62,14 +62,14 @@ export type IntegrationTokenResponse = {
   scopes: string[];
 };
 
-export type ExchangeCodeParams = {
+type ExchangeCodeParams = {
   clientId: string;
   code: string;
   redirectUri: string;
   codeVerifier: string;
 };
 
-export type RefreshTokenParams = {
+type RefreshTokenParams = {
   clientId: string;
   refreshToken: string;
 };

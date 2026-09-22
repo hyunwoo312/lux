@@ -171,7 +171,7 @@ export function shouldShowBarTitle(span: number, cellWidth: number): boolean {
   return span * cellWidth - BAR_INSET >= BAR_TITLE_MIN_WIDTH;
 }
 
-export type WeekRowBudget = { bandRows: number; bottomRows: number };
+type WeekRowBudget = { bandRows: number; bottomRows: number };
 
 export function getWeekRowBudget(week: MonthWeek, maxRows: number): WeekRowBudget {
   const weekHasTimed = week.days.some((day) => day.timedEvents.length > 0);
@@ -190,7 +190,7 @@ export function countHiddenBars(week: MonthWeek, bandRows: number, column: numbe
   ).length;
 }
 
-export type DayBottomPlan = { visibleCount: number; moreCount: number };
+type DayBottomPlan = { visibleCount: number; moreCount: number };
 
 export function getDayBottomPlan(
   timedCount: number,

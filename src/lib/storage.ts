@@ -7,10 +7,7 @@ import { profileReady, type STORE_KEYS } from "@/lib/profile";
 const NAMESPACE = "lux";
 const namespaced = (name: string) => `${NAMESPACE}:${name}`;
 
-export type ReadResult<T> =
-  | { status: "read"; value: T }
-  | { status: "absent" }
-  | { status: "unreadable" };
+type ReadResult<T> = { status: "read"; value: T } | { status: "absent" } | { status: "unreadable" };
 
 export async function readResult<T>(name: string, schema: ZodType<T>): Promise<ReadResult<T>> {
   const key = namespaced(name);

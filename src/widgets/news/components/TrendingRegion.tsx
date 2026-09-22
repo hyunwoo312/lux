@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TREND_REGIONS, type TrendRegion } from "@/widgets/news/lib/trend-regions";
+import { TREND_REGIONS } from "@/widgets/news/lib/trend-regions";
 import { useNews, useNewsStore } from "@/widgets/news/useNewsStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
@@ -20,7 +20,7 @@ export function TrendingRegion() {
       value={region}
       onValueChange={(next) => {
         const match = TREND_REGIONS.find((entry) => entry.code === next);
-        if (match) setRegion(instanceId, match.code as TrendRegion);
+        if (match) setRegion(instanceId, match.code);
       }}
     >
       <SelectTrigger

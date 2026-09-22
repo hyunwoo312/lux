@@ -7,7 +7,9 @@ export function useInfiniteScroll(
   loadMore: () => void,
 ): void {
   const loadMoreRef = useRef(loadMore);
-  loadMoreRef.current = loadMore;
+  useEffect(() => {
+    loadMoreRef.current = loadMore;
+  });
 
   useEffect(() => {
     const root = rootRef.current;

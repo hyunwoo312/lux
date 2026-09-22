@@ -1,6 +1,6 @@
 import type { PkceAuthUrlParams } from "@/integrations/types";
 
-export type PkceAuthorizeConfig = {
+type PkceAuthorizeConfig = {
   authorizationEndpoint: string;
   authParams?: Record<string, string>;
 };

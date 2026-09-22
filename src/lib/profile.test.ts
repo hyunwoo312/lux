@@ -1,9 +1,13 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PROFILE_VERSION, upgradeProfile } from "@/lib/profile";
 
 const all = () => chrome.storage.local.get(null);
 const stamp = async () => (await all())["lux:profile"];
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 beforeEach(async () => {
   await chrome.storage.local.clear();

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { TasksWidget } from "@/widgets/tasks/TasksWidget";
 import { ClearCompletedButton } from "@/widgets/tasks/components/ClearCompletedButton";
 import { useTasksStore } from "@/widgets/tasks/useTasksStore";
@@ -39,6 +39,10 @@ function addTask(title: string) {
   fireEvent.change(input, { target: { value: title } });
   fireEvent.submit(input);
 }
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 beforeEach(() => seed());
 
@@ -121,9 +125,13 @@ describe("TasksWidget", () => {
     seed({ removeOnCompletion: true, tasks: [{ id: "1", title: "buy milk", done: false }] });
     renderIn(<TasksWidget />);
 
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     fireEvent.click(screen.getByRole("checkbox", { name: "Mark buy milk as done" }));
 
-    await waitFor(() => expect(tasks()).toEqual([]), { timeout: 2000 });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+    expect(tasks()).toEqual([]);
   });
 });
 

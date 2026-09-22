@@ -3,7 +3,7 @@ import type { CurrentEntry } from "@/widgets/anilist/types";
 
 type EntryFacts = Pick<CurrentEntry, "kind" | "status" | "title">;
 
-export type PromoteAction = {
+type PromoteAction = {
   icon: LucideIcon;
   tooltip: string;
   label: string;

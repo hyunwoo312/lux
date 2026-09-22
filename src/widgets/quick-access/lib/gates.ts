@@ -1,6 +1,6 @@
 import type { ItemSource } from "@/widgets/quick-access/types";
 
-export type SectionGate = {
+type SectionGate = {
   permissions: chrome.runtime.ManifestPermission[];
   highlight: chrome.runtime.ManifestPermission;
   message: string;

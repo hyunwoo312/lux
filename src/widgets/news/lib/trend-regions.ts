@@ -29,8 +29,10 @@ export const TREND_REGION_CODES = TREND_REGIONS.map((region) => region.code);
 
 export const DEFAULT_REGION: TrendRegion = "US";
 
-const BY_CODE = new Map(TREND_REGIONS.map((region) => [region.code, region]));
+const BY_CODE = new Map<string, (typeof TREND_REGIONS)[number]>(
+  TREND_REGIONS.map((region) => [region.code, region]),
+);
 
 export function regionLabel(code: string): string {
-  return BY_CODE.get(code as TrendRegion)?.label ?? code;
+  return BY_CODE.get(code)?.label ?? code;
 }

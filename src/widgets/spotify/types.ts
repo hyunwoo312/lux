@@ -8,7 +8,7 @@ export type SpotifyRepeatMode = (typeof SPOTIFY_REPEAT_MODES)[number];
 export const SPOTIFY_TIME_DISPLAY_MODES = ["total", "remaining"] as const;
 export type SpotifyTimeDisplayMode = (typeof SPOTIFY_TIME_DISPLAY_MODES)[number];
 
-export type SpotifyPlaybackTrack = {
+type SpotifyPlaybackTrack = {
   id: string;
   title: string;
   artist: string;

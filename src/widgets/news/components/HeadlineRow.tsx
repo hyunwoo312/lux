@@ -72,14 +72,7 @@ export function HeadlineRow({
           />
         </a>
         {item.dek && (
-          <span
-            className={cn(
-              "line-clamp-1 text-caption leading-snug",
-              isRead ? "text-ink-3" : "text-ink-3",
-            )}
-          >
-            {item.dek}
-          </span>
+          <span className="text-ink-3 text-caption line-clamp-1 leading-snug">{item.dek}</span>
         )}
         <HeadlineMeta
           item={item}

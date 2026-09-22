@@ -23,6 +23,10 @@ function installOnChanged() {
   };
 }
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe("storage", () => {
   it("returns the fallback when nothing is stored", async () => {
     expect(await read("missing", schema, fallback)).toEqual(fallback);

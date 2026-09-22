@@ -3,7 +3,7 @@ import { espnUrl, fetchEspn } from "@/widgets/sports/lib/espnApi";
 import { pickEventIndex } from "@/widgets/sports/lib/pickEvent";
 import { MATCH_STATES, STATE_ORDER, type MatchState } from "@/widgets/sports/types";
 
-export type TennisSet = { games: string; won: boolean; tiebreak?: number };
+type TennisSet = { games: string; won: boolean; tiebreak?: number };
 
 export type TennisPlayer = {
   name: string;
@@ -28,7 +28,7 @@ export type TennisMatch = {
   home: TennisPlayer;
 };
 
-export type TennisDraw = {
+type TennisDraw = {
   id: string;
   label: string;
   matches: TennisMatch[];

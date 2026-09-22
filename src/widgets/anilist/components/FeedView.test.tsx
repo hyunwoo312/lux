@@ -31,7 +31,7 @@ const unreadMock = vi.mocked(fetchUnreadCount);
 const markReadMock = vi.mocked(markAllNotificationsRead);
 const ID = "anilist-1";
 
-let userId = 0;
+const userId = 1;
 let clock = 1_700_000_000_000;
 
 function renderView() {
@@ -54,7 +54,6 @@ const notificationsTab = () => screen.getByRole("radio", { name: /Notifications/
 
 beforeEach(() => {
   vi.clearAllMocks();
-  userId += 1;
   localStorage.clear();
   vi.spyOn(Date, "now").mockImplementation(() => (clock += 1));
   useAnilistStore.setState({ byInstance: {} });

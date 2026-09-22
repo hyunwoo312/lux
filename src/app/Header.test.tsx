@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Header } from "@/app/Header";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
@@ -21,7 +21,7 @@ beforeEach(() => {
 describe("the header toolbar", () => {
   it("costs one tab stop, not one per button", () => {
     const toolbar = renderHeader();
-    const buttons = [...toolbar.querySelectorAll("button")];
+    const buttons = within(toolbar).getAllByRole("button");
 
     expect(buttons.length).toBeGreaterThan(1);
     expect(buttons.filter((button) => button.tabIndex === 0)).toHaveLength(1);
@@ -29,7 +29,7 @@ describe("the header toolbar", () => {
 
   it("moves along the toolbar with the arrow keys, wrapping at either end", () => {
     const toolbar = renderHeader();
-    const buttons = [...toolbar.querySelectorAll("button")];
+    const buttons = within(toolbar).getAllByRole("button");
     buttons[0]?.focus();
 
     fireEvent.keyDown(toolbar, { key: "ArrowRight" });
@@ -44,7 +44,7 @@ describe("the header toolbar", () => {
 
   it("jumps to either end with Home and End", () => {
     const toolbar = renderHeader();
-    const buttons = [...toolbar.querySelectorAll("button")];
+    const buttons = within(toolbar).getAllByRole("button");
 
     fireEvent.keyDown(toolbar, { key: "End" });
     expect(document.activeElement).toBe(buttons[buttons.length - 1]);

@@ -14,7 +14,7 @@ function testFilesOnDisk(dir: string): string[] {
   return found;
 }
 
-type VitestJson = { testResults?: { name: string }[] };
+type VitestJson = { testResults?: { name: string; assertionResults?: unknown[] }[] };
 
 const onDisk = testFilesOnDisk(SRC);
 let report: VitestJson;
@@ -37,6 +37,15 @@ if (missed.length > 0) {
   process.stderr.write(
     "\nThis is the silent-drop failure: the summary can look green while files vanish.\n",
   );
+  process.exit(1);
+}
+
+const empty = (report.testResults ?? [])
+  .filter((r) => (r.assertionResults ?? []).length === 0)
+  .map((r) => r.name.replace(/\\/g, "/"));
+if (empty.length > 0) {
+  process.stderr.write("verify-test-run: files vitest reported with zero tests:\n");
+  for (const f of empty) process.stderr.write(`  ${f}\n`);
   process.exit(1);
 }
 

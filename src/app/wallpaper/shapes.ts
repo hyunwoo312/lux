@@ -17,7 +17,7 @@ export const MESH_POLYGONS = [
 
 export const MESH_DRIFTS = ["wp-drift-1", "wp-drift-2", "wp-drift-3"];
 
-export type GradientBlob = {
+type GradientBlob = {
   x: number;
   y: number;
   size: number;
@@ -26,14 +26,10 @@ export type GradientBlob = {
   duration: number;
 };
 
-export const GRADIENT_SETS = {
-  still: [
-    { x: 50, y: -12, size: 95, hue: 0, drift: "", duration: 0 },
-    { x: 12, y: 22, size: 62, hue: -28, drift: "", duration: 0 },
-    { x: 88, y: 34, size: 58, hue: 24, drift: "", duration: 0 },
-    { x: 32, y: 82, size: 70, hue: -12, drift: "", duration: 0 },
-    { x: 78, y: 96, size: 66, hue: 40, drift: "", duration: 0 },
-  ],
-} as const satisfies Record<string, readonly GradientBlob[]>;
-
-export type GradientStyle = keyof typeof GRADIENT_SETS;
+export const GRADIENT_BLOBS: readonly GradientBlob[] = [
+  { x: 50, y: -12, size: 95, hue: 0, drift: "", duration: 0 },
+  { x: 12, y: 22, size: 62, hue: -28, drift: "", duration: 0 },
+  { x: 88, y: 34, size: 58, hue: 24, drift: "", duration: 0 },
+  { x: 32, y: 82, size: 70, hue: -12, drift: "", duration: 0 },
+  { x: 78, y: 96, size: 66, hue: 40, drift: "", duration: 0 },
+];

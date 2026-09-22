@@ -33,33 +33,6 @@ export function ArticleBlock({ block }: { block: GuideBlock }) {
         </div>
       );
 
-    case "steps":
-      return (
-        <ol className="flex flex-col gap-6">
-          {block.steps.map((step, index) => (
-            <li key={step.title} className="relative flex gap-5">
-              {index < block.steps.length - 1 && (
-                <span aria-hidden className="bg-border absolute top-8 -bottom-6 left-3.5 w-px" />
-              )}
-              <span
-                className="
-                  bg-surface-2 text-ink ring-border relative z-10 grid size-7 shrink-0
-                  place-items-center rounded-full text-caption font-medium ring-1
-                "
-              >
-                {index + 1}
-              </span>
-              <span className="flex min-w-0 flex-col gap-1.5 pt-0.5">
-                <span className="text-ink text-body font-medium">{step.title}</span>
-                <span className="text-ink-3 text-body leading-relaxed">
-                  <InlineText text={step.text} />
-                </span>
-              </span>
-            </li>
-          ))}
-        </ol>
-      );
-
     case "list":
       return (
         <ul className="flex flex-col gap-4">

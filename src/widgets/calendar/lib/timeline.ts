@@ -15,9 +15,9 @@ const DAY_MS = 24 * 60 * MINUTE_MS;
 const MIN_WINDOW_HOURS = 3;
 const MIN_GAP_MINUTES = 20;
 
-export type TimelineSplit<T extends CalendarEvent> = { allDay: T[]; timed: T[] };
+type TimelineSplit<T extends CalendarEvent> = { allDay: T[]; timed: T[] };
 
-export type TimelineAxis = { start: Date; end: Date; minutes: number };
+type TimelineAxis = { start: Date; end: Date; minutes: number };
 
 export type TimedBlock<T extends CalendarEvent> = {
   event: T;
@@ -250,7 +250,7 @@ export type TimelineRun<T extends CalendarEvent> = {
   day: Date;
 };
 
-export type TimelineSkip = {
+type TimelineSkip = {
   kind: "skip";
   from: Date;
   to: Date;

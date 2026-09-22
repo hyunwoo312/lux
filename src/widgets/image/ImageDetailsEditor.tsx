@@ -94,7 +94,7 @@ function ImageDetailRow({ item, focalEnabled, onCaption, onFocal }: ImageDetailR
           onClick={setFromPointer}
           onKeyDown={nudge}
           aria-label={`Focal point for ${item.fileName}`}
-          className={cn("press cursor-pointer", thumbClass, "focus-ring cursor-crosshair ")}
+          className={cn("press focus-ring cursor-crosshair", thumbClass)}
         >
           {preview}
           <span

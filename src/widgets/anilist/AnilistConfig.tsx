@@ -32,7 +32,7 @@ export function AnilistConfig() {
   const accountDescription = account
     ? account.status === "needsReconnect"
       ? "Reconnect to resume syncing."
-      : (account.displayName ?? "Connected")
+      : account.displayName
     : "Not connected — showing trending.";
 
   return (

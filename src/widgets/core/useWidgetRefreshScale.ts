@@ -13,7 +13,7 @@ export function useWidgetRefreshScale(): number {
   return useAppSettingsStore((state) => (type === null ? 1 : (state.widgetRefresh[type] ?? 1)));
 }
 
-export type ScaledCadence = { staleMs: number; intervalMs: number | undefined };
+type ScaledCadence = { staleMs: number; intervalMs: number | undefined };
 
 export function useScaledCadence(staleMs: number, intervalMs: number | undefined): ScaledCadence {
   const scale = useWidgetRefreshScale();

@@ -5,10 +5,10 @@ import { dropInstance } from "@/widgets/core/byInstance";
 
 export type WidgetBackground = "glass" | "solid";
 
-export const SURFACE_PREFERENCES = ["glass", "solid", "custom"] as const;
+const SURFACE_PREFERENCES = ["glass", "solid", "custom"] as const;
 export type SurfacePreference = (typeof SURFACE_PREFERENCES)[number];
 
-export const DEFAULT_BACKGROUND: WidgetBackground = "glass";
+const DEFAULT_BACKGROUND: WidgetBackground = "glass";
 
 type WidgetSettings = {
   background?: WidgetBackground;
