@@ -109,11 +109,18 @@ describe("createRelayProvider.refreshToken", () => {
     expect(token).toMatchObject({ accessToken: "tok2", refreshToken: "ref1" });
   });
 
-  it("requires a reconnect when the relay rejects the refresh (400/401/403)", async () => {
+  it("requires a reconnect when the relay reports a revoked grant (400)", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 400 }));
     await expect(
       provider.refreshToken!({ clientId: "client-1", refreshToken: "ref1" }),
     ).rejects.toBeInstanceOf(IntegrationReconnectRequiredError);
+  });
+
+  it("stays connected when the relay refuses the origin (403)", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 403 }));
+    await expect(
+      provider.refreshToken!({ clientId: "client-1", refreshToken: "ref1" }),
+    ).rejects.toBeInstanceOf(TemporaryAuthError);
   });
 
   it("stays connected on a transient relay failure (5xx)", async () => {

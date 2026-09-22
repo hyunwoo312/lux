@@ -72,11 +72,18 @@ describe("spotifyProvider.refreshToken", () => {
     expect(token).toMatchObject({ accessToken: "tok2", refreshToken: "old-ref" });
   });
 
-  it("requires a reconnect when the refresh token is revoked (400/401/403)", async () => {
+  it("requires a reconnect when the refresh token is revoked (400)", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 400 }));
     await expect(
       spotifyProvider.refreshToken!({ clientId: "client-123", refreshToken: "old-ref" }),
     ).rejects.toBeInstanceOf(IntegrationReconnectRequiredError);
+  });
+
+  it("stays connected when the token endpoint answers 403", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 403 }));
+    await expect(
+      spotifyProvider.refreshToken!({ clientId: "client-123", refreshToken: "old-ref" }),
+    ).rejects.toBeInstanceOf(TemporaryAuthError);
   });
 
   it("stays connected on a transient failure (5xx)", async () => {

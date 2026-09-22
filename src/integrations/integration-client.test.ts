@@ -102,6 +102,23 @@ describe("refreshing a Spotify token", () => {
     expect(account?.token?.refreshToken).toBe("the-refresh-token");
   });
 
+  it("keeps the account connected when the token endpoint refuses with 403", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) =>
+        String(input).includes("accounts.spotify.com")
+          ? new Response(JSON.stringify({ error: "forbidden" }), { status: 403 })
+          : new Response("{}", { status: 200 }),
+      ),
+    );
+
+    await expect(integrationFetch("spotify", API_URL)).rejects.toThrow();
+
+    const account = await getAccountByProvider("spotify");
+    expect(account?.status).toBe("connected");
+    expect(account?.token?.refreshToken).toBe("the-refresh-token");
+  });
+
   it("keeps the account connected when the refreshed token cannot be persisted", async () => {
     vi.stubGlobal(
       "fetch",

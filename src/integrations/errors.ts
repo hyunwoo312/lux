@@ -6,5 +6,5 @@ export class IntegrationReconnectRequiredError extends Error {
 }
 
 export function isReconnectRequiredStatus(status: number): boolean {
-  return status === 400 || status === 401 || status === 403;
+  return status === 400 || status === 401;
 }
