@@ -30,7 +30,7 @@ export function SpotifyArtwork({
           draggable={false}
           {...crossfade}
           style={style}
-          className={cn("rounded-lg object-cover shadow-md", className)}
+          className={cn("rounded-lg object-cover shadow-elev-2", className)}
         />
       ) : (
         <motion.span

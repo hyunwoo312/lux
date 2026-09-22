@@ -138,9 +138,7 @@ function PlayerRow({
       <span
         className={cn(
           "w-8 shrink-0 text-right text-caption tabular-nums",
-          player.position === "1" ? "text-primary font-semibold" : null,
-          player.madeCut && player.position !== "1" ? "text-ink font-semibold" : null,
-          !player.madeCut && "text-ink-3",
+          player.madeCut ? "text-ink font-semibold" : "text-ink-3",
         )}
       >
         {player.score}

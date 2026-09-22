@@ -39,7 +39,7 @@ function DropMorphGhost({ morph, onDone }: { morph: DropMorph; onDone: () => voi
       onAnimationComplete={onDone}
       className="
         glass-solid text-ink-3 fixed z-modal pointer-events-none flex items-center justify-center
-        rounded-2xl shadow-lg
+        rounded-2xl shadow-elev-4
         [&_img]:size-7
         [&_svg]:size-7
       "
@@ -104,7 +104,7 @@ export function WidgetDragOverlay() {
         }}
         className="
           glass-solid fixed z-modal pointer-events-none flex items-center gap-3 rounded-2xl px-3
-          text-body shadow-lg
+          text-body shadow-elev-4
         "
       >
         <span

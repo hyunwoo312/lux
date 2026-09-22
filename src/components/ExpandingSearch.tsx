@@ -116,7 +116,7 @@ export function ExpandingSearch({
             className={cn(
               "absolute top-0 left-0 flex h-7 items-center overflow-hidden rounded-sm",
               !reduced && "transition-shadow duration-base",
-              open ? "shadow-sm" : "shadow-none",
+              open ? "shadow-elev-1" : "shadow-none",
             )}
           >
             <motion.span

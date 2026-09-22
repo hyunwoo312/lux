@@ -209,7 +209,7 @@ export function AddShortcutControl({
         layoutId={reduced ? undefined : layoutId}
         transition={springCrisp(reduced)}
         aria-label={`Recording new ${label} shortcut`}
-        className="press cursor-pointer rounded-md outline-none"
+        className="press focus-ring cursor-pointer rounded-md"
       >
         <RecorderBody held={held} invalid={invalid} reduced={reduced} />
       </motion.button>

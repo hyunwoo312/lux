@@ -40,7 +40,7 @@ export function MediaCover({
           onLoad={() => setLoaded(true)}
           onError={() => setBroken(true)}
           className={cn(
-            `size-full object-cover transition-opacity duration-300 motion-reduce:transition-none`,
+            `size-full object-cover transition-opacity duration-slow motion-reduce:transition-none`,
             loaded ? "opacity-100" : "opacity-0",
           )}
         />

@@ -113,7 +113,7 @@ export function ImageWidget({ editing }: WidgetContentProps) {
             className={cn(
               "press-row focus-ring h-full w-full cursor-pointer transition-colors",
               disabled && "cursor-default",
-              dragging && "ring-primary bg-black/10 ring-2 ring-inset",
+              dragging && "ring-primary bg-art-scrim/10 ring-2 ring-inset",
             )}
           />
         ) : (
@@ -121,7 +121,7 @@ export function ImageWidget({ editing }: WidgetContentProps) {
             aria-hidden
             className={cn(
               "h-full w-full transition-colors",
-              dragging && "ring-primary bg-black/10 ring-2 ring-inset",
+              dragging && "ring-primary bg-art-scrim/10 ring-2 ring-inset",
             )}
           />
         )
@@ -154,7 +154,7 @@ export function ImageWidget({ editing }: WidgetContentProps) {
             className="
               border-border bg-background/95 text-ink pointer-events-none absolute bottom-3 left-1/2
               z-10 max-w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-md border px-2.5 py-1.5
-              text-center text-caption shadow-md
+              text-center text-caption shadow-elev-2
             "
           >
             {error}

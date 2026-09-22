@@ -11,7 +11,7 @@ export function HighlightedTitle({ title, terms }: { title: string; terms: strin
   if (segments.length === 1) return title;
   return segments.map((segment, index) =>
     index % 2 === 1 ? (
-      <mark key={index} className="text-primary bg-transparent font-semibold">
+      <mark key={index} className="bg-primary/15 rounded-2xs text-inherit font-semibold">
         {segment}
       </mark>
     ) : (

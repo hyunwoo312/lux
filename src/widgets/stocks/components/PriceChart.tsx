@@ -315,7 +315,7 @@ export function PriceChart({
           className="pointer-events-none absolute top-0 z-10 w-fit whitespace-nowrap"
           style={{ left: `${tooltipLeft(xForBar(index), tooltip.width, width)}px` }}
         >
-          <div className="bg-card border-border/70 rounded-md border px-1.5 py-1 shadow-sm">
+          <div className="bg-card border-border/70 rounded-md border px-1.5 py-1 shadow-elev-1">
             <div
               className="
                 text-ink flex items-baseline gap-1 text-caption font-medium tabular-nums

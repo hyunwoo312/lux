@@ -10,19 +10,24 @@ export function BaseDiamond({ bases }: { bases: number[] }) {
   return (
     <svg viewBox="0 0 22 15" className="h-3.5 w-5 shrink-0" aria-hidden>
       {BASES.map(({ base, x, y }) => (
-        <rect
-          key={base}
-          x={-3}
-          y={-3}
-          width={6}
-          height={6}
-          transform={`translate(${x} ${y}) rotate(45)`}
-          className={cn(
-            bases.includes(base) ? "fill-primary" : "fill-none",
-            "stroke-muted-foreground/40",
-          )}
-          strokeWidth={1.2}
-        />
+        <g key={base} transform={`translate(${x} ${y}) rotate(45)`}>
+          <rect
+            x={-3}
+            y={-3}
+            width={6}
+            height={6}
+            className="stroke-background fill-none"
+            strokeWidth={2.6}
+          />
+          <rect
+            x={-3}
+            y={-3}
+            width={6}
+            height={6}
+            className={cn(bases.includes(base) ? "fill-primary" : "fill-none", "stroke-ink-3")}
+            strokeWidth={1.2}
+          />
+        </g>
       ))}
     </svg>
   );
@@ -36,7 +41,7 @@ export function OutDots({ outs }: { outs: number }) {
           key={index}
           className={cn(
             "size-1.5 rounded-full",
-            index < outs ? "bg-destructive" : "border-muted-foreground/40 border",
+            index < outs ? "bg-destructive" : "border-ink-3 bg-background border",
           )}
         />
       ))}

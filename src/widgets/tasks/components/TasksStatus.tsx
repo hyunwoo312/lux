@@ -21,7 +21,7 @@ export function TasksStatus() {
         <span
           className="
             bg-primary absolute inset-y-0 left-0 w-full origin-left rounded-full
-            transition-transform duration-300 ease-out
+            transition-transform duration-slow ease-out
           "
           style={{ transform: `scaleX(${done / tasks.length})` }}
         />

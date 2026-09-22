@@ -12,7 +12,7 @@ type AiringBadgeProps = {
 };
 
 const SOON_TONE = {
-  art: "bg-white/25 text-white",
+  art: "bg-on-art/25 text-on-art",
   surface: "bg-foreground/12 text-ink",
 } as const;
 

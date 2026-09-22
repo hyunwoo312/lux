@@ -25,7 +25,7 @@ export function TrendingTile({
       type="button"
       onClick={() => searchWeb(item.term, openBehavior)}
       className="
-        press focus-ring group bg-foreground/5 relative block aspect-[16/9] w-full overflow-hidden
+        press focus-ring group bg-foreground/5 relative block aspect-video w-full overflow-hidden
         rounded-lg
       "
     >
@@ -36,7 +36,7 @@ export function TrendingTile({
           aria-hidden
           onError={() => setImageFailed(true)}
           className="
-            absolute inset-0 size-full object-cover transition-transform duration-300
+            absolute inset-0 size-full object-cover transition-transform duration-slow
             group-hover:scale-105
             motion-reduce:transition-none
           "
@@ -45,7 +45,7 @@ export function TrendingTile({
       <span
         className={cn(
           "absolute top-2 left-2 rounded-sm px-1 text-micro font-semibold tabular-nums",
-          hasImage ? "bg-black/45 text-white" : "bg-foreground/10 text-ink-2",
+          hasImage ? "bg-art-scrim/45 text-on-art" : "bg-foreground/10 text-ink-2",
         )}
       >
         {rank}
@@ -54,7 +54,7 @@ export function TrendingTile({
         <TrendMovementBadge movement={movement} onArt={hasImage} />
       </span>
       <span className={TILE_CAPTION_CLASS}>
-        <span className={cn("line-clamp-2", hasImage ? "text-white" : "text-ink")}>
+        <span className={cn("line-clamp-2", hasImage ? "text-on-art" : "text-ink")}>
           {item.term}
         </span>
       </span>

@@ -54,9 +54,9 @@ export function LeagueSelector({
                   type="button"
                   onClick={() => onSport(entry)}
                   aria-label={`${SPORT_LABEL[entry]} leagues`}
-                  className={cn(ROW.option, "gap-2.5 py-2", holdsCurrent && "text-primary")}
+                  className={cn(ROW.option, "gap-2.5 py-2")}
                 >
-                  <Icon className="size-4 shrink-0" />
+                  <Icon className={cn("size-4 shrink-0", holdsCurrent && "text-primary")} />
                   <span className="min-w-0 flex-1 truncate text-left">{SPORT_LABEL[entry]}</span>
                   <span className="text-ink-3 text-micro shrink-0 tabular-nums">
                     {leagues.length}
@@ -96,11 +96,7 @@ export function LeagueSelector({
                     setLeague(instanceId, league.id);
                     onPick?.();
                   }}
-                  className={cn(
-                    ROW.option,
-                    "gap-2.5 py-2 pl-8",
-                    selected ? "text-primary font-medium" : "text-ink",
-                  )}
+                  className={cn(ROW.option, "gap-2.5 py-2 pl-8", selected && "font-medium")}
                 >
                   <span className="min-w-0 flex-1 truncate text-left">{league.label}</span>
                   {selected && (

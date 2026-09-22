@@ -111,7 +111,7 @@ function PermissionRow({
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex items-center gap-1.5">
           <span className="text-body font-medium">{permission.name}</span>
-          <span className="bg-muted/70 text-ink-3 rounded-xs px-1 py-px text-micro font-medium">
+          <span className="bg-foreground/8 text-ink-2 rounded-xs px-1 py-px text-micro font-medium">
             {permission.usedBy}
           </span>
         </span>

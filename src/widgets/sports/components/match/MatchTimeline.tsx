@@ -23,7 +23,7 @@ function Marker({ kind }: { kind: MatchEventKind }) {
         aria-hidden
         className={cn(
           "h-3 w-2 shrink-0 rounded-2xs",
-          kind === "yellow" ? "bg-yellow-400" : "bg-red-500",
+          kind === "yellow" ? "bg-warning" : "bg-destructive",
         )}
       />
     );

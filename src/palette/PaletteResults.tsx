@@ -25,7 +25,7 @@ export function PaletteResults({
     if (emptyMessage === null) return null;
     return (
       <div className="text-ink-2 flex flex-col items-center gap-3 px-5 py-10 text-center">
-        <SearchX className="text-ink-2/60 size-8" />
+        <SearchX className="text-ink-2 size-8" />
         <p className="text-body">{emptyMessage}</p>
       </div>
     );

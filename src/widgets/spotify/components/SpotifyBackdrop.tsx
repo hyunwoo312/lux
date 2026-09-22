@@ -17,16 +17,10 @@ export function SpotifyBackdrop() {
           alt=""
           aria-hidden
           {...fade(reduced, "slower")}
-          className="absolute inset-0 size-full scale-105 object-cover blur-lg saturate-[1.4]"
+          className="absolute inset-0 size-full scale-105 object-cover blur-lg saturate-150"
         />
       </AnimatePresence>
-      <div
-        aria-hidden
-        className="
-          absolute inset-0
-          bg-[linear-gradient(to_top,color-mix(in_oklab,var(--background)_72%,transparent)_0%,color-mix(in_oklab,var(--background)_40%,transparent)_55%,color-mix(in_oklab,var(--background)_24%,transparent)_100%)]
-        "
-      />
+      <div aria-hidden className="art-fade absolute inset-0" />
     </>
   );
 }

@@ -65,7 +65,7 @@ export function Wallpaper({ imageUrl }: { imageUrl: string | null }) {
             initial={false}
             animate={{ opacity: dim, transition: STILL }}
             exit={{ opacity: 0, transition: layerCrossfade }}
-            className="absolute inset-0 bg-black"
+            className="absolute inset-0 bg-art-scrim"
           />
         )}
       </AnimatePresence>

@@ -69,7 +69,7 @@ export function LibraryTile({
             <span
               className="
                 text-micro absolute top-1 left-1 inline-flex items-center gap-0.5 rounded-sm
-                bg-black/60 px-1 py-px text-white tabular-nums
+                bg-art-scrim/60 px-1 py-px text-on-art tabular-nums
               "
             >
               <span className="sr-only">Your score: {scoreText}</span>
@@ -84,15 +84,15 @@ export function LibraryTile({
               now={now}
               tone="art"
               className="
-                text-micro absolute top-1 right-1 rounded-sm bg-black/60 px-1 py-px text-white
+                text-micro absolute top-1 right-1 rounded-sm bg-art-scrim/60 px-1 py-px text-on-art
               "
             />
           )}
           <span className={cn(COVER_SCRIM, hasActions && COVER_SCRIM_ACTIONS)}>
-            <span className="text-micro block truncate leading-snug font-medium text-white">
+            <span className="text-micro block truncate leading-snug font-medium text-on-art">
               {entry.title}
             </span>
-            <span className="text-micro mt-0.5 block truncate text-white tabular-nums" aria-hidden>
+            <span className="text-micro mt-0.5 block truncate text-on-art tabular-nums" aria-hidden>
               {progressLabel(entry)}
             </span>
             <span className="sr-only">{progressSpeech(entry)}</span>

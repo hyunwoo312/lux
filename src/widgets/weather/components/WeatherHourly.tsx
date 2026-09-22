@@ -87,6 +87,15 @@ export function WeatherHourly({ hours, className }: WeatherHourlyProps) {
               <path
                 d={linePath(geometry.points)}
                 fill="none"
+                className="stroke-background"
+                strokeWidth={3.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+              />
+              <path
+                d={linePath(geometry.points)}
+                fill="none"
                 stroke="currentColor"
                 strokeWidth={1.75}
                 strokeLinecap="round"

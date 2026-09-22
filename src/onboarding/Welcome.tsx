@@ -54,7 +54,7 @@ export function Welcome() {
                 Switch the whole look — go ahead, try it now
                 <motion.span
                   aria-hidden
-                  className="text-primary ml-1 inline-flex align-[-0.15em]"
+                  className="text-ink-2 ml-1 inline-flex align-[-0.15em]"
                   animate={reduced ? undefined : { x: [0, 4, 0] }}
                   transition={
                     reduced ? undefined : { duration: HINT_SECONDS, repeat: 2, ease: EASE_STANDARD }
@@ -72,10 +72,10 @@ export function Welcome() {
             <motion.div
               variants={item}
               className="
-                border-primary/25 bg-primary/8 flex items-start gap-3 rounded-xl border px-3 py-3
+                border-border bg-foreground/5 flex items-start gap-3 rounded-xl border px-3 py-3
               "
             >
-              <Info className="text-primary mt-0.5 size-4 shrink-0" aria-hidden />
+              <Info className="text-ink-2 mt-0.5 size-4 shrink-0" aria-hidden />
               <p className="text-ink text-caption leading-relaxed">
                 <span className="font-semibold">Heads up:</span> the &quot;Customize Chrome /
                 Brave&quot; bar at the bottom of your new tab is your browser&apos;s, not Lux. To

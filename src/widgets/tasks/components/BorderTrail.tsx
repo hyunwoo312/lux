@@ -31,7 +31,7 @@ export function BorderTrail({ active }: BorderTrailProps) {
       className={cn(
         `
           pointer-events-none absolute inset-0 rounded-[inherit] border border-transparent opacity-0
-          transition-opacity duration-300 [mask-clip:padding-box,border-box]
+          transition-opacity duration-slow [mask-clip:padding-box,border-box]
           [mask-composite:intersect]
           [mask-image:linear-gradient(transparent,transparent),linear-gradient(#000,#000)]
         `,

@@ -102,7 +102,7 @@ function ImageDetailRow({ item, focalEnabled, onCaption, onFocal }: ImageDetailR
             style={marker}
             className="
               border-primary bg-primary/40 absolute size-2.5 -translate-x-1/2 -translate-y-1/2
-              rounded-full border-2 shadow-sm
+              rounded-full border-2 shadow-elev-1
             "
           />
         </button>

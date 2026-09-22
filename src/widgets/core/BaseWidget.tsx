@@ -125,12 +125,12 @@ export function BaseWidget({
             "relative z-widget-chrome flex items-center justify-between gap-2 px-4 py-2",
             chromeHidden &&
               `
-                absolute inset-x-0 top-0 bg-gradient-to-b from-black/45 to-transparent pb-6
+                absolute inset-x-0 top-0 bg-linear-to-b from-art-scrim/45 to-transparent pb-6
                 opacity-0 transition-opacity duration-base
                 group-hover/widget:opacity-100
                 group-focus-within/widget:opacity-100
-                [&_button]:text-white/75
-                [&_button:hover]:text-white
+                [&_button]:text-on-art/75
+                [&_button:hover]:text-on-art
               `,
           )}
         >
@@ -161,7 +161,7 @@ export function BaseWidget({
                   {...pop(reduced)}
                   className="
                     bg-foreground text-background rounded-md px-1.5 py-0.5 text-caption
-                    font-semibold tabular-nums shadow-md
+                    font-semibold tabular-nums shadow-elev-2
                   "
                 >
                   {size.w} × {size.h}

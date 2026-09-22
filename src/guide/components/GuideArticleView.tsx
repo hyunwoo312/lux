@@ -115,7 +115,7 @@ function PagerCard({
         {isNext ? "Next" : "Previous"}
         {isNext && <ArrowRight className="size-3" aria-hidden />}
       </span>
-      <span className="text-ink group-hover:text-primary text-body font-medium transition-colors">
+      <span className="text-ink group-hover:underline underline-offset-2 text-body font-medium">
         {title}
       </span>
     </button>

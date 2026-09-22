@@ -13,7 +13,7 @@ export function NewsSkeleton({ layout, withThumbnail }: NewsSkeletonProps) {
     return (
       <div className={cn(TILE_GRID_CLASS, "p-0.5")}>
         {Array.from({ length: 6 }, (_, index) => (
-          <Skeleton key={index} className="aspect-[16/9] w-full rounded-lg" />
+          <Skeleton key={index} className="aspect-video w-full rounded-lg" />
         ))}
       </div>
     );

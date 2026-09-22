@@ -5,9 +5,9 @@ import { useCalendar } from "@/widgets/calendar/useCalendarStore";
 import type { DisplayCalendarEvent } from "@/widgets/calendar/types";
 
 const SAMPLE_COLORS = new Map<string, string>([
-  ["work", "#3b82f6"],
-  ["personal", "#22c55e"],
-  ["social", "#f59e0b"],
+  ["work", "var(--primary)"],
+  ["personal", "var(--success)"],
+  ["social", "var(--warning)"],
 ]);
 
 function at(dayOffset: number, hour: number, minute = 0): string {

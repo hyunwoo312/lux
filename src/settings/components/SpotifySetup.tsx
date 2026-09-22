@@ -78,7 +78,7 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
             key="backing"
             aria-hidden
             className="
-              border-primary/30 bg-primary/10 absolute inset-0 origin-top-left rounded-2xl border
+              border-border bg-foreground/5 absolute inset-0 origin-top-left rounded-2xl border
             "
             {...fade(reduced, "slow")}
           />
@@ -141,7 +141,7 @@ export function SpotifySetup({ clientId, redirectUri, onSave }: SpotifySetupProp
                       <span
                         aria-hidden
                         className="
-                          border-primary/40 bg-primary/15 text-ink grid size-5.5 place-items-center
+                          border-border bg-foreground/8 text-ink grid size-5.5 place-items-center
                           rounded-full border text-micro font-bold
                         "
                       >
@@ -246,7 +246,7 @@ function SaveButton({
   const bare = status !== "idle";
   const content: ReactNode =
     status === "saving" ? (
-      <Spinner className="text-primary" />
+      <Spinner />
     ) : status === "success" ? (
       <DrawnCheck reduced={reduced} />
     ) : status === "error" ? (
@@ -286,7 +286,7 @@ function DrawnCheck({ reduced }: { reduced: boolean | null }) {
   return (
     <motion.svg
       viewBox="0 0 24 24"
-      className="text-primary size-5"
+      className="text-success size-5"
       fill="none"
       stroke="currentColor"
       strokeWidth={3}

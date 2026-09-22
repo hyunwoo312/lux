@@ -43,7 +43,7 @@ export function Favicon({ url, size, className }: FaviconProps) {
       onLoad={() => setLoaded(true)}
       onError={() => setFailed(true)}
       className={cn(
-        "object-contain transition-opacity duration-300 ease-out motion-reduce:transition-none",
+        "object-contain transition-opacity duration-slow ease-out motion-reduce:transition-none",
         loaded ? "opacity-100" : "opacity-0",
         className,
       )}

@@ -18,8 +18,8 @@ export function ConnectOverlay({
     <div className="bg-background/55 absolute inset-0 z-widget-overlay grid place-items-center p-4">
       <div
         className="
-          bg-card border-border elev-2 flex max-w-[20rem] flex-col items-center gap-3 rounded-xl
-          border px-5 py-4 text-center
+          bg-card border-border elev-2 flex max-w-xs flex-col items-center gap-3 rounded-xl border
+          px-5 py-4 text-center
         "
       >
         {Icon && (

@@ -32,7 +32,6 @@
   --secondary: oklch(0.92 0.01 290);
   --secondary-foreground: var(--foreground);
 
-  --muted: oklch(0.92 0.01 290);
   --muted-foreground: oklch(0.48 0.03 285);
 
   --accent: oklch(0 0 0 / 0.05);
@@ -55,6 +54,9 @@
   --surface-2: oklch(0.9 0.01 290);
   --surface-3: oklch(0.86 0.01 290);
   --scrim: oklch(0.26 0.03 285 / 0.45);
+  --on-art: oklch(1 0 0);
+  --control-thumb: oklch(1 0 0);
+  --art-scrim: oklch(0 0 0);
 
   --edge-2: oklch(0 0 0 / 0.1);
   --edge-3: oklch(0 0 0 / 0.15);
@@ -120,7 +122,6 @@
   --secondary: oklch(0.28 0.03 285);
   --secondary-foreground: var(--foreground);
 
-  --muted: oklch(0.28 0.03 285);
   --muted-foreground: oklch(0.75 0.03 285);
 
   --accent: oklch(1 0 0 / 0.1);
@@ -275,7 +276,6 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
@@ -300,6 +300,12 @@
   --color-edge-3: var(--edge-3);
   --shadow-glow-accent: 0 0 22px -2px var(--primary);
   --shadow-elev-1: var(--elev-1);
+  --shadow-elev-2: var(--elev-2);
+  --shadow-elev-3: var(--elev-3);
+  --shadow-elev-4: var(--elev-4);
+  --color-on-art: var(--on-art);
+  --color-control-thumb: var(--control-thumb);
+  --color-art-scrim: var(--art-scrim);
   --color-bloom: var(--bloom);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -341,6 +347,8 @@
   --default-transition-duration: var(--duration-fast);
   --default-transition-timing-function: var(--ease-standard);
 
+  --text-nano: 0.5rem;
+  --text-nano--line-height: 1;
   --text-micro: 0.6875rem;
   --text-micro--line-height: 1.45;
   --text-caption: 0.75rem;
@@ -452,6 +460,10 @@
 
 @utility duration-base {
   transition-duration: var(--duration-base);
+}
+
+@utility duration-slow {
+  transition-duration: var(--duration-slow);
 }
 
 @utility scrollbar-transient {
@@ -637,6 +649,15 @@
   background-color: color-mix(in oklab, var(--primary) 62%, var(--foreground));
 }
 
+@utility art-fade {
+  background-image: linear-gradient(
+    to top,
+    color-mix(in oklab, var(--background) 72%, transparent) 0%,
+    color-mix(in oklab, var(--background) 40%, transparent) 55%,
+    color-mix(in oklab, var(--background) 24%, transparent) 100%
+  );
+}
+
 @utility art-scrim {
   background-color: oklch(0 0 0 / 0.6);
   backdrop-filter: blur(var(--glass-blur)) saturate(150%);
@@ -661,16 +682,6 @@
     120% 80% at 50% -20%,
     color-mix(in oklab, var(--foreground) 4%, transparent) 0%,
     transparent 70%
-  );
-}
-
-@utility accent-glow {
-  background-image: linear-gradient(
-    to right,
-    oklch(from var(--bloom) l c calc(h - 55)),
-    var(--bloom),
-    oklch(from var(--bloom) l c calc(h + 55)),
-    oklch(from var(--bloom) l c calc(h + 110))
   );
 }
 

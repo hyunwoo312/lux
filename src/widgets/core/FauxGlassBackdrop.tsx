@@ -37,7 +37,7 @@ export function FauxGlassBackdrop() {
           ...(blur > 0 ? { filter: `blur(${blur}px)` } : {}),
         }}
       />
-      {dim > 0 && <div className="absolute inset-0 bg-black" style={{ opacity: dim }} />}
+      {dim > 0 && <div className="absolute inset-0 bg-art-scrim" style={{ opacity: dim }} />}
     </div>
   );
 }

@@ -61,14 +61,10 @@ export function AboutTab() {
       className="flex flex-col gap-6"
     >
       <motion.div variants={item} className="relative">
-        <span
-          aria-hidden
-          className="accent-glow pointer-events-none absolute inset-0 rounded-xl opacity-70 blur-md"
-        />
         <div
           className="
-            border-border/60 from-primary/10 bg-card relative flex flex-col items-center gap-3
-            overflow-hidden rounded-xl border bg-gradient-to-br to-transparent px-6 py-8 text-center
+            border-border/60 bg-card relative flex flex-col items-center gap-3 overflow-hidden
+            rounded-xl border px-6 py-8 text-center
           "
         >
           <LogoMark />
@@ -326,7 +322,7 @@ function LogoMark() {
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.7) 50%, transparent 60%)",
+                "linear-gradient(115deg, transparent 40%, color-mix(in oklab, var(--on-art) 70%, transparent) 50%, transparent 60%)",
             }}
             initial={{ x: "-130%" }}
             animate={{ x: "130%" }}

@@ -13,7 +13,7 @@ function Checkbox({ className, ...props }: ComponentProps<typeof CheckboxPrimiti
           data-[state=unchecked]:hover:border-foreground/25
           data-[state=checked]:border-primary data-[state=checked]:bg-primary
           data-[state=checked]:text-primary-foreground
-          size-4 shrink-0 cursor-pointer rounded-xs border bg-transparent shadow-sm
+          size-4 shrink-0 cursor-pointer rounded-xs border bg-transparent shadow-elev-1
           disabled:cursor-not-allowed disabled:opacity-50
         `,
         className,

@@ -124,7 +124,7 @@ export function HomeTab({ editing }: { editing: boolean }) {
           transition={morph}
           className="
             bg-popover border-border/60 absolute inset-x-2 top-1/2 z-10 -translate-y-1/2 rounded-lg
-            border p-3 shadow-lg
+            border p-3 shadow-elev-3
           "
         >
           <LinkForm

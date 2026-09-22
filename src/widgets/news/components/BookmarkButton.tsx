@@ -29,7 +29,7 @@ export function BookmarkButton({
         onClick={onToggle}
         className={cn(
           onArt
-            ? "text-white/70 hover:bg-white/15 hover:text-white"
+            ? "text-on-art/70 hover:bg-on-art/15 hover:text-on-art"
             : cn("hover:text-ink", saved ? "text-primary" : "text-ink-3"),
           !saved && ROW.reveal,
           className,

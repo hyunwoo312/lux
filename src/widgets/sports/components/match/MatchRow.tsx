@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { collapse, enterTween, rowVariants } from "@/lib/motion";
-import { COLUMN, MATCH_GRID, STATUS_RAIL } from "@/widgets/sports/lib/columns";
+import { COLUMN, MATCH_GRID, STATUS_RAIL, STATUS_RAIL_LABEL } from "@/widgets/sports/lib/columns";
 import { useChangeFlash } from "@/widgets/sports/hooks/useChangeFlash";
 import { LiveIndicator } from "@/widgets/sports/components/LiveIndicator";
 import { TeamLogo } from "@/widgets/sports/components/TeamLogo";
@@ -45,7 +45,7 @@ function TeamSide({ team, decided, side, live, starred }: TeamSideProps) {
         className={cn(
           COLUMN.score,
           home ? "text-left" : "text-right",
-          "rounded-xs transition-colors duration-300",
+          "rounded-xs transition-colors duration-slow",
           dim ? "text-ink-3 font-medium" : "text-ink font-semibold",
           scored && "bg-primary/15 text-primary",
         )}
@@ -79,10 +79,13 @@ function Row({ away, home, separator, status, detail, label }: RowProps) {
       </span>
       {home}
       <div
-        className="
-          text-ink-3 pointer-events-none absolute top-1/2 right-2 flex max-w-[4.25rem]
-          -translate-y-1/2 items-center gap-1
-        "
+        className={cn(
+          STATUS_RAIL_LABEL,
+          `
+            text-ink-3 pointer-events-none absolute top-1/2 right-2 flex -translate-y-1/2
+            items-center gap-1
+          `,
+        )}
       >
         {status}
       </div>
@@ -90,7 +93,7 @@ function Row({ away, home, separator, status, detail, label }: RowProps) {
   );
 
   return (
-    <motion.li variants={rowVariants(reduced)} className="rounded-xl">
+    <motion.li variants={rowVariants(reduced)} className="rounded-lg">
       {expandable ? (
         <button
           type="button"
@@ -104,7 +107,7 @@ function Row({ away, home, separator, status, detail, label }: RowProps) {
               press-row focus-ring
               hover:bg-foreground/5
               focus-visible:bg-foreground/5
-              relative w-full cursor-pointer rounded-xl px-2 py-2.5 text-left transition-colors
+              relative w-full cursor-pointer rounded-lg px-2 py-2.5 text-left transition-colors
             `,
           )}
         >

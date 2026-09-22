@@ -1,5 +1,4 @@
 import { TYPE } from "@/lib/type";
-import { cn } from "@/lib/utils";
 import type { LeaderboardPlayer, ScoreCounts } from "@/widgets/sports/lib/golf";
 
 const SCORING: { key: keyof ScoreCounts; label: string }[] = [
@@ -43,12 +42,7 @@ export function LeaderboardPlayerDetail({ player }: { player: LeaderboardPlayer 
           <div className="flex flex-wrap gap-x-3 gap-y-1">
             {SCORING.map(({ key, label }) => (
               <span key={key} className="flex items-baseline gap-1">
-                <span
-                  className={cn(
-                    "text-caption font-semibold tabular-nums",
-                    key === "eagles" || key === "birdies" ? "text-primary" : "text-ink",
-                  )}
-                >
+                <span className="text-ink text-caption font-semibold tabular-nums">
                   {scoring[key]}
                 </span>
                 <span className="text-ink-3 text-micro">{label}</span>

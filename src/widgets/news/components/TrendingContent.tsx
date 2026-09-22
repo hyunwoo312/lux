@@ -40,7 +40,7 @@ export function TrendingContent({ layout }: { layout: NewsLayout }) {
         {Array.from({ length: isTiles ? 6 : 7 }, (_, index) => (
           <Skeleton
             key={index}
-            className={cn("w-full shrink-0", isTiles ? "aspect-[16/9]" : "h-12 rounded-lg")}
+            className={cn("w-full shrink-0", isTiles ? "aspect-video" : "h-12 rounded-lg")}
           />
         ))}
       </div>

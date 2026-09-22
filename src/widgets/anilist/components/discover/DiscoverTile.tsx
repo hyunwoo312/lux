@@ -50,17 +50,17 @@ export function DiscoverTile({
           {listStatus && (
             <span
               className="
-                text-micro absolute top-1 right-1 rounded-sm bg-black/60 px-1 py-px text-white
+                text-micro absolute top-1 right-1 rounded-sm bg-art-scrim/60 px-1 py-px text-on-art
               "
             >
               {listStatusLabel(listStatus, media.kind)}
             </span>
           )}
           <span className={cn(COVER_SCRIM, showAdd && COVER_SCRIM_ACTIONS)}>
-            <span className="text-micro block truncate leading-snug font-medium text-white">
+            <span className="text-micro block truncate leading-snug font-medium text-on-art">
               {media.title}
             </span>
-            <span className="text-micro mt-0.5 flex min-w-0 items-center gap-1 text-white">
+            <span className="text-micro mt-0.5 flex min-w-0 items-center gap-1 text-on-art">
               {media.averageScore !== undefined && (
                 <span className="font-semibold tabular-nums">{media.averageScore}%</span>
               )}

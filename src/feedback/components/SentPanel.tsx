@@ -14,7 +14,7 @@ export function SentPanel({ id, onClose }: { id: string; onClose: () => void }) 
   return (
     <div className="flex flex-col items-center gap-3 px-6 py-10 text-center">
       <motion.span
-        className="bg-primary/10 text-primary grid size-11 place-items-center rounded-full"
+        className="bg-success/10 text-success grid size-11 place-items-center rounded-full"
         {...pop(reduced)}
       >
         <Check className="size-5" aria-hidden />
@@ -30,7 +30,7 @@ export function SentPanel({ id, onClose }: { id: string; onClose: () => void }) 
         >
           Reference <span className="font-mono">{id}</span>
           {copied ? (
-            <Check className="text-primary size-3" aria-hidden />
+            <Check className="text-success size-3" aria-hidden />
           ) : (
             <Copy className="size-3" aria-hidden />
           )}

@@ -1,4 +1,5 @@
 export const TYPE_SCALE = [
+  "nano",
   "micro",
   "caption",
   "body",

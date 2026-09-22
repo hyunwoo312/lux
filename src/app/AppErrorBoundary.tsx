@@ -68,7 +68,11 @@ function CrashCard({ detail }: { detail: string }) {
 
   return (
     <div className="bg-background flex h-dvh items-center justify-center p-6">
-      <div className="bg-card text-card-foreground w-full max-w-md rounded-3xl border p-6 shadow-lg">
+      <div
+        className="
+          bg-card text-card-foreground w-full max-w-md rounded-3xl border p-6 shadow-elev-3
+        "
+      >
         <div className="flex items-center gap-2.5">
           <TriangleAlert className="text-destructive size-5 shrink-0" aria-hidden />
           <h1 className="text-body-lg font-semibold">Lux hit an error</h1>

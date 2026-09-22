@@ -47,7 +47,7 @@ export function CalendarEventActions({
   if (!joinUrl && openLinks.length === 0) return null;
 
   const scale = SIZES[size];
-  const button = cn(scale.button, onColor && "hover:bg-black/15 hover:text-current");
+  const button = cn(scale.button, onColor && "hover:bg-art-scrim/15 hover:text-current");
 
   return (
     <div className={cn("flex flex-none items-center", scale.gap, className)}>

@@ -135,7 +135,7 @@ function ReleaseBody({ release, showcase }: { release: Release; showcase: boolea
     <>
       {highlights.length > 0 && (
         <section className="flex flex-col gap-4">
-          <h3 className={cn(SECTION_CHIP, "bg-primary text-primary-foreground")}>Highlights</h3>
+          <h3 className={cn(SECTION_CHIP, "bg-accent text-ink")}>Highlights</h3>
           <ul className="flex flex-col gap-4">
             {highlights.map((change) => (
               <li key={change.text} className="flex flex-col gap-0.5">

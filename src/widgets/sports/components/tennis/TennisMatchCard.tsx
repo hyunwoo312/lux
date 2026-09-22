@@ -56,7 +56,7 @@ function PlayerLine({
             >
               {set.games}
               {set.tiebreak !== undefined && (
-                <span className="text-ink-3 absolute -top-0.5 -right-1 text-[0.5rem] leading-none">
+                <span className="text-ink-3 absolute -top-0.5 -right-1 text-nano">
                   <span className="sr-only">tiebreak {set.tiebreak}</span>
                   <span aria-hidden="true">{set.tiebreak}</span>
                 </span>

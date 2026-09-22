@@ -57,13 +57,7 @@ export function SendingPanel({ settling, onSettled }: Props) {
             transition={{ repeat: Infinity, duration: SHIMMER_SECONDS, ease: "linear" }}
           />
         )}
-        <motion.div
-          style={{ x: fillX }}
-          className="
-            from-primary/50 via-bloom to-primary/50 absolute inset-0 rounded-full bg-linear-to-r
-            shadow-[0_0_10px_var(--bloom)]
-          "
-        />
+        <motion.div style={{ x: fillX }} className="bg-primary absolute inset-0 rounded-full" />
       </div>
     </div>
   );

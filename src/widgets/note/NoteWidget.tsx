@@ -114,8 +114,8 @@ export function NoteWidget({ justAdded }: WidgetContentProps) {
         aria-label="Note"
         className={cn(
           `
-            scroll-fade block h-full w-full max-w-[70ch] resize-none bg-transparent leading-relaxed
-            outline-none
+            scroll-fade focus-ring block h-full w-full max-w-[70ch] resize-none rounded-lg
+            bg-transparent leading-relaxed
             placeholder:text-ink-3
           `,
           FONT_SIZE_CLASS[fontSize],
@@ -130,7 +130,7 @@ export function NoteWidget({ justAdded }: WidgetContentProps) {
             role="status"
             className="
               border-border bg-background/95 text-ink pointer-events-none absolute right-0 bottom-0
-              rounded-md border px-2 py-1 text-caption shadow-md
+              rounded-md border px-2 py-1 text-caption shadow-elev-2
             "
           >
             {dropped.toLocaleString()} character{dropped === 1 ? "" : "s"} didn’t fit — the note

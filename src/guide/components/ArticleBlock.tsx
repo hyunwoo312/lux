@@ -22,8 +22,8 @@ export function ArticleBlock({ block }: { block: GuideBlock }) {
 
     case "callout":
       return (
-        <div className="border-primary/25 bg-primary/8 flex gap-4 rounded-xl border p-5">
-          <Info className="text-primary mt-0.5 size-5 shrink-0" aria-hidden />
+        <div className="border-border bg-foreground/5 flex gap-4 rounded-xl border p-5">
+          <Info className="text-ink-2 mt-0.5 size-5 shrink-0" aria-hidden />
           <div className="flex min-w-0 flex-col gap-1">
             <p className="text-ink text-body font-semibold">{block.title}</p>
             <p className="text-ink-2 text-body leading-relaxed">
@@ -108,9 +108,7 @@ function Figure({ block }: { block: Extract<GuideBlock, { kind: "figure" }> }) {
         height={size?.[1]}
         loading="lazy"
         decoding="async"
-        className="
-          ring-border/70 h-auto max-h-[30rem] w-auto max-w-full self-center rounded-xl ring-1
-        "
+        className="ring-border/70 h-auto max-h-120 w-auto max-w-full self-center rounded-xl ring-1"
       />
       <figcaption className="text-ink-3 text-center text-caption">{block.caption}</figcaption>
     </figure>

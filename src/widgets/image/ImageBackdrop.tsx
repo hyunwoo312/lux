@@ -18,8 +18,8 @@ const FIT_CLASS: Record<ImageFit, string> = {
 
 const BRIGHTNESS_OVERLAY: Record<ImageBrightness, string | null> = {
   normal: null,
-  dim: "bg-black/25",
-  dark: "bg-black/50",
+  dim: "bg-art-scrim/25",
+  dark: "bg-art-scrim/50",
 };
 
 type EnterVariant = {
@@ -134,7 +134,7 @@ export function ImageBackdrop() {
       )}
       {caption && (
         <div className={cn(ART_SCRIM, "z-20 px-3 py-1.5")}>
-          <p className="line-clamp-2 text-center text-caption font-medium text-white">{caption}</p>
+          <p className="line-clamp-2 text-center text-caption font-medium text-on-art">{caption}</p>
         </div>
       )}
     </>

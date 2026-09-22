@@ -66,7 +66,7 @@ export function HeadlineRow({
             terms={highlightTerms}
             isNew={isNew}
             className={cn(
-              "group-hover:text-primary text-body leading-snug",
+              "group-hover:underline decoration-ink-3 underline-offset-2 text-body leading-snug",
               isRead ? "text-ink-3" : "text-ink",
             )}
           />

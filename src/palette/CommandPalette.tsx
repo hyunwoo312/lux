@@ -139,8 +139,8 @@ export function CommandPalette() {
           ref={scroll.ref}
           onScroll={scroll.onScroll}
           className="
-            scroll-fade scrollbar-transient scrollbar-gutter relative h-[calc(10*2.5rem)]
-            overflow-y-auto pr-0 pl-(--scrollbar-width)
+            scroll-fade scrollbar-transient scrollbar-gutter relative h-100 overflow-y-auto pr-0
+            pl-(--scrollbar-width)
           "
         >
           <AnimatePresence mode="wait" initial={false}>

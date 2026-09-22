@@ -1,5 +1,6 @@
 export const MATCH_GRID = "grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center";
-export const STATUS_RAIL = "pr-[4.5rem]";
+export const STATUS_RAIL = "pr-18";
+export const STATUS_RAIL_LABEL = "max-w-17";
 
 export const COLUMN = {
   logo: "size-4 shrink-0",

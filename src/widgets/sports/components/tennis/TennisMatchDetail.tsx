@@ -46,7 +46,7 @@ function SetRow({ player, count }: { player: TennisPlayer; count: number }) {
           >
             {set?.games ?? "–"}
             {set?.tiebreak !== undefined && (
-              <span className="text-ink-3 absolute -top-1 -right-0.5 text-[0.5rem] leading-none">
+              <span className="text-ink-3 absolute -top-1 -right-0.5 text-nano">
                 <span className="sr-only">tiebreak {set.tiebreak}</span>
                 <span aria-hidden="true">{set.tiebreak}</span>
               </span>

@@ -298,6 +298,32 @@ describe("colour tokens", () => {
     expect(bodies.filter(({ body }) => body.includes("focus-ring")).length).toBeGreaterThan(0);
   });
 
+  it("takes durations and shadows from the scales, never the defaults", () => {
+    const bodies = sourceFiles().map((file) => ({ file, body: readFileSync(file, "utf8") }));
+    const offenders = bodies.flatMap(({ file, body }) =>
+      [...body.matchAll(/(?<![-\w])(?:duration-\d+|shadow-(?:xs|sm|md|lg|xl|2xl))(?![-\w])/g)].map(
+        (m) => `${sourcePath(file)}: ${m[0]}`,
+      ),
+    );
+    expect(offenders).toEqual([]);
+
+    const defined = new Set([...css.matchAll(/@utility (duration-[a-z]+)/g)].map((m) => m[1]));
+    const undefinedSteps = bodies.flatMap(({ file, body }) =>
+      [...body.matchAll(/(?<![-\w])duration-[a-z]+(?![-\w])/g)]
+        .filter((m) => !defined.has(m[0]))
+        .map((m) => `${sourcePath(file)}: ${m[0]}`),
+    );
+    expect(undefinedSteps).toEqual([]);
+  });
+
+  it("keeps the frost recipe on the glass tokens", () => {
+    const frost = readFileSync(fileURLToPath(new URL("../lib/frost.ts", import.meta.url)), "utf8");
+    expect(frost.match(/const BLUR_PX = (\d+)/)?.[1]).toBe(css.match(/--glass-blur: (\d+)px/)?.[1]);
+    expect(Number(frost.match(/const SATURATE = ([\d.]+)/)?.[1]) * 100).toBe(
+      Number(css.match(/saturate\((\d+)%\)/)?.[1]),
+    );
+  });
+
   it("tailwind-merge knows every font-size in the type scale", () => {
     const declared = new Set<string>();
     for (const m of css.matchAll(/--text-([a-z-]+):/g)) {

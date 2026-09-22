@@ -43,10 +43,10 @@ export function HeadlineTile({
         title={item.title}
         terms={highlightTerms}
         isNew={isNew}
-        className={cn(isRead ? "text-white/65" : "text-white", timeLabel && "pr-8")}
+        className={cn(isRead ? "text-on-art/65" : "text-on-art", timeLabel && "pr-8")}
       />
       {timeLabel && (
-        <span className="text-micro absolute right-2 bottom-1 text-white/65 tabular-nums">
+        <span className="text-micro absolute right-2 bottom-1 text-on-art/65 tabular-nums">
           {timeLabel}
         </span>
       )}
@@ -56,7 +56,7 @@ export function HeadlineTile({
   return (
     <div
       className="
-        press group bg-foreground/5 relative aspect-[16/9] cursor-pointer overflow-hidden rounded-lg
+        press group bg-foreground/5 relative aspect-video cursor-pointer overflow-hidden rounded-lg
       "
     >
       {hasImage && (
@@ -66,7 +66,7 @@ export function HeadlineTile({
           aria-hidden
           onError={() => setImageFailed(true)}
           className="
-            absolute inset-0 size-full object-cover transition-transform duration-300
+            absolute inset-0 size-full object-cover transition-transform duration-slow
             group-hover:scale-105
             motion-reduce:transition-none
           "
@@ -75,7 +75,7 @@ export function HeadlineTile({
       <SourceIcon
         className={cn(
           "absolute top-2 left-2 z-10 size-4",
-          hasImage ? "text-white drop-shadow-md" : "text-ink-3",
+          hasImage ? "text-on-art drop-shadow-md" : "text-ink-3",
         )}
       />
       <a

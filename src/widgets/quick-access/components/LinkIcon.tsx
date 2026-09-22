@@ -17,7 +17,7 @@ export function LinkIcon({
     <span
       className={cn(
         `
-          block shrink-0 overflow-hidden transition-[width,height,border-radius] duration-300
+          block shrink-0 overflow-hidden transition-[width,height,border-radius] duration-slow
           ease-out
           motion-reduce:transition-none
         `,

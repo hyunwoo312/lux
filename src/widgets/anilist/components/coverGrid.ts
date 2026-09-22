@@ -7,5 +7,8 @@ export const COVER_SCRIM = cn(ART_SCRIM, "block px-1.5 pt-1 pb-1");
 export const COVER_SCRIM_ACTIONS = "pb-8";
 
 export const ART_ACTION_SHAPE =
-  "flex h-6 items-center justify-center rounded-sm bg-white/15 text-white";
-export const ART_ACTION = cn(ART_ACTION_SHAPE, "press focus-ring cursor-pointer hover:bg-white/30");
+  "flex h-6 items-center justify-center rounded-sm bg-on-art/15 text-on-art";
+export const ART_ACTION = cn(
+  ART_ACTION_SHAPE,
+  "press focus-ring cursor-pointer hover:bg-on-art/30",
+);
