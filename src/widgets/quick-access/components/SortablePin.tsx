@@ -35,7 +35,7 @@ export function SortablePin({ link, view, openBehavior, onEdit, onRemove }: Sort
     zIndex: isDragging ? 1 : undefined,
   };
   return (
-    <li ref={setNodeRef} style={style} className={cn("group relative", isDragging && "opacity-50")}>
+    <li ref={setNodeRef} style={style} className={cn("group relative", isDragging && "opacity-60")}>
       <QuickLinkAnchor
         url={link.url}
         title={link.title}

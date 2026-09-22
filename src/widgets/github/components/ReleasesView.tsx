@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Tag } from "lucide-react";
+import { ROW } from "@/lib/row";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { usePolledDefinition } from "@/widgets/core/usePolledResource";
@@ -111,7 +112,7 @@ function ReleaseRow({
       href={release.url}
       target={newTab ? "_blank" : undefined}
       rel="noreferrer"
-      className="hover:bg-foreground/5 flex shrink-0 items-center gap-2 rounded-md px-2 py-1.5"
+      className={cn(ROW.itemAction, "shrink-0")}
     >
       <span className="relative flex size-3.5 shrink-0 items-center justify-center">
         <Tag className={cn("size-3.5", unseen ? "text-primary" : "text-ink-3")} aria-hidden />

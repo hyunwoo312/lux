@@ -136,7 +136,7 @@ function Breadcrumb({
               aria-current={isCurrent ? "page" : undefined}
               disabled={isCurrent}
               className={cn(
-                "press",
+                "press focus-ring",
                 "text-micro max-w-28 truncate rounded-sm px-1 py-0.5",
                 isCurrent ? "text-ink font-semibold" : "text-ink-3 hover:text-ink cursor-pointer",
               )}

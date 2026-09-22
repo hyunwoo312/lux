@@ -1,3 +1,4 @@
+import { ROW } from "@/lib/row";
 import { cn } from "@/lib/utils";
 import { TYPE } from "@/lib/type";
 import { CircleDot, Eye, GitCommitHorizontal, GitPullRequest, type LucideIcon } from "lucide-react";
@@ -66,7 +67,7 @@ function RepoRow({
       href={href}
       target={newTab ? "_blank" : undefined}
       rel="noreferrer"
-      className="hover:bg-foreground/5 flex flex-col gap-1 rounded-md px-1.5 py-1"
+      className={cn(ROW.itemAction, "flex-col items-stretch gap-1 px-1.5 py-1")}
     >
       <div className="flex items-center gap-2">
         <span className="text-ink min-w-0 flex-1 truncate text-caption">{repo.repo}</span>

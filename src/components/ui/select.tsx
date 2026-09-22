@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function Select(props: ComponentProps<typeof SelectPrimitive.Root>) {
@@ -41,6 +41,32 @@ function SelectTrigger({
   );
 }
 
+const SCROLL_BUTTON = "text-ink-3 flex cursor-default items-center justify-center py-1";
+
+function SelectScrollUpButton(props: ComponentProps<typeof SelectPrimitive.ScrollUpButton>) {
+  return (
+    <SelectPrimitive.ScrollUpButton
+      data-slot="select-scroll-up-button"
+      className={SCROLL_BUTTON}
+      {...props}
+    >
+      <ChevronUp className="size-3.5" />
+    </SelectPrimitive.ScrollUpButton>
+  );
+}
+
+function SelectScrollDownButton(props: ComponentProps<typeof SelectPrimitive.ScrollDownButton>) {
+  return (
+    <SelectPrimitive.ScrollDownButton
+      data-slot="select-scroll-down-button"
+      className={SCROLL_BUTTON}
+      {...props}
+    >
+      <ChevronDown className="size-3.5" />
+    </SelectPrimitive.ScrollDownButton>
+  );
+}
+
 function SelectContent({
   className,
   children,
@@ -64,7 +90,9 @@ function SelectContent({
         )}
         {...props}
       >
+        <SelectScrollUpButton />
         <SelectPrimitive.Viewport className="w-full p-0">{children}</SelectPrimitive.Viewport>
+        <SelectScrollDownButton />
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
   );

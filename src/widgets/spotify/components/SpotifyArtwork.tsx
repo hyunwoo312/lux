@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { EASE_STANDARD, enterTween } from "@/lib/motion";
+import { fade } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { SpotifyServiceIcon } from "@/components/icons/service-icons";
 
@@ -18,7 +18,7 @@ export function SpotifyArtwork({
   style?: CSSProperties;
 }) {
   const reduced = useReducedMotion();
-  const artCrossfade = enterTween(reduced, "slower", EASE_STANDARD);
+  const crossfade = fade(reduced, "slower");
 
   return (
     <AnimatePresence initial={false} mode="popLayout">
@@ -28,20 +28,14 @@ export function SpotifyArtwork({
           src={url}
           alt={`${album} cover`}
           draggable={false}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={artCrossfade}
+          {...crossfade}
           style={style}
           className={cn("rounded-lg object-cover shadow-md", className)}
         />
       ) : (
         <motion.span
           key="placeholder"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={artCrossfade}
+          {...crossfade}
           className={cn("bg-foreground/5 flex items-center justify-center rounded-lg", className)}
         >
           <SpotifyServiceIcon className={cn("size-9", iconClassName)} />

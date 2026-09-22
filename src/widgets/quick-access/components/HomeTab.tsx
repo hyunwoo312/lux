@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import type { Transition } from "motion/react";
 import { motion, useReducedMotion } from "motion/react";
-import { cn } from "@/lib/utils";
 import { EASE_STANDARD, enterTween } from "@/lib/motion";
 import { LinkForm } from "@/widgets/quick-access/components/LinkForm";
 import { PinnedSection } from "@/widgets/quick-access/components/PinnedSection";
@@ -61,10 +60,8 @@ export function HomeTab({ editing }: { editing: boolean }) {
         ref={scrollRef}
         animate={{ x: form ? "-12%" : 0, opacity: form ? 0 : 1 }}
         transition={enterTween(reduced)}
-        className={cn(
-          "h-full overflow-x-hidden scroll-fade overflow-y-auto",
-          form && "pointer-events-none",
-        )}
+        inert={form ? true : undefined}
+        className="h-full overflow-x-hidden scroll-fade overflow-y-auto"
       >
         <PinnedSection
           editing={editing}

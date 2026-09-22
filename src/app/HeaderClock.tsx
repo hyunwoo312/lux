@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { motion, useReducedMotion, useSpring, useTransform, type MotionValue } from "motion/react";
-import { clockFormatter, formatClockDate } from "@/lib/clock";
+import { clockFormatter, formatClockDate, nextReelTarget } from "@/lib/clock";
 import { SPRING_REEL } from "@/lib/motion";
 import { useNow } from "@/hooks/useNow";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
@@ -60,10 +60,12 @@ function SlidingDigits({ value, reduced }: { value: string; reduced: boolean | n
 }
 
 function Reel({ digit }: { digit: number }) {
+  const target = useRef(digit);
   const position = useSpring(digit, SPRING_REEL);
 
   useEffect(() => {
-    position.set(digit);
+    target.current = nextReelTarget(target.current, digit);
+    position.set(target.current);
   }, [position, digit]);
 
   return (
@@ -78,7 +80,7 @@ function Reel({ digit }: { digit: number }) {
 
 function ReelFace({ position, face }: { position: MotionValue<number>; face: number }) {
   const y = useTransform(position, (latest) => {
-    const offset = (10 + face - (latest % 10)) % 10;
+    const offset = (10 + face - (((latest % 10) + 10) % 10)) % 10;
     return `${(offset > 5 ? offset - 10 : offset) * 100}%`;
   });
 

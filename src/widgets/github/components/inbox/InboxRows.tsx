@@ -113,7 +113,7 @@ export function PullRequestRow({ pr, newTab }: { pr: InboxPullRequest; newTab: b
         target={newTab ? "_blank" : undefined}
         rel="noreferrer"
         aria-label={`${pr.title} — ${status}`}
-        className={ROW.item}
+        className={ROW.itemAction}
       >
         <Icon
           className={cn("size-3.5 shrink-0", pr.isDraft ? "text-ink-3" : "text-ink")}
@@ -141,7 +141,7 @@ export function IssueRow({ issue, newTab }: { issue: InboxIssue; newTab: boolean
       href={issue.url}
       target={newTab ? "_blank" : undefined}
       rel="noreferrer"
-      className={ROW.item}
+      className={ROW.itemAction}
     >
       <Icon className="text-ink-3 size-3.5 shrink-0" aria-hidden />
       <div className="min-w-0 flex-1">

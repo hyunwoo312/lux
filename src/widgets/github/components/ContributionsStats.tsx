@@ -73,7 +73,10 @@ function Stat({
 }) {
   return (
     <Tooltip content={detail} prose>
-      <div className="flex cursor-default flex-col items-end">
+      <button
+        type="button"
+        className="focus-ring flex cursor-default flex-col items-end rounded-sm"
+      >
         <span
           className={cn(
             "inline-flex items-center gap-1 text-body font-semibold tabular-nums",
@@ -84,7 +87,7 @@ function Stat({
           {value}
         </span>
         <span className="text-ink-3 text-micro">{label}</span>
-      </div>
+      </button>
     </Tooltip>
   );
 }

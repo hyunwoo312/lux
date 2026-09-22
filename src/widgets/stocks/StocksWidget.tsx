@@ -7,7 +7,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { GRID_MODIFIERS, useSortableSensors, VERTICAL_LIST_MODIFIERS } from "@/lib/dnd";
-import { enterTween, viewSwap } from "@/lib/motion";
+import { panelVariants, viewSwap } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useElementSize } from "@/hooks/useElementSize";
 import { useNow } from "@/hooks/useNow";
@@ -82,43 +82,46 @@ export function StocksWidget() {
                 className="scroll-fade absolute inset-0 overflow-x-hidden overflow-y-auto"
                 {...viewSwap(reduced, "4%")}
               >
-                <motion.div
-                  key={view}
-                  initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 6 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={enterTween(reduced)}
-                >
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    modifiers={isGrid ? GRID_MODIFIERS : VERTICAL_LIST_MODIFIERS}
-                    onDragEnd={handleDragEnd}
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={view}
+                    variants={panelVariants(reduced)}
+                    initial="hidden"
+                    animate="show"
+                    exit="exit"
                   >
-                    <SortableContext
-                      items={symbols}
-                      strategy={isGrid ? rectSortingStrategy : verticalListSortingStrategy}
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      modifiers={isGrid ? GRID_MODIFIERS : VERTICAL_LIST_MODIFIERS}
+                      onDragEnd={handleDragEnd}
                     >
-                      <ul
-                        className={cn(isGrid ? "grid gap-1" : "flex flex-col gap-0.5")}
-                        style={
-                          isGrid
-                            ? {
-                                gridTemplateColumns: `repeat(${gridColumns(width)}, minmax(0, 1fr))`,
-                              }
-                            : undefined
-                        }
+                      <SortableContext
+                        items={symbols}
+                        strategy={isGrid ? rectSortingStrategy : verticalListSortingStrategy}
                       >
-                        <AnimatePresence initial={false} mode="popLayout">
-                          {symbols.map((symbol) => (
-                            <SortableRow key={symbol} id={symbol}>
-                              {renderItem(symbol)}
-                            </SortableRow>
-                          ))}
-                        </AnimatePresence>
-                      </ul>
-                    </SortableContext>
-                  </DndContext>
-                </motion.div>
+                        <ul
+                          className={cn(isGrid ? "grid gap-1" : "flex flex-col gap-0.5")}
+                          style={
+                            isGrid
+                              ? {
+                                  gridTemplateColumns: `repeat(${gridColumns(width)}, minmax(0, 1fr))`,
+                                }
+                              : undefined
+                          }
+                        >
+                          <AnimatePresence initial={false} mode="popLayout">
+                            {symbols.map((symbol) => (
+                              <SortableRow key={symbol} id={symbol}>
+                                {renderItem(symbol)}
+                              </SortableRow>
+                            ))}
+                          </AnimatePresence>
+                        </ul>
+                      </SortableContext>
+                    </DndContext>
+                  </motion.div>
+                </AnimatePresence>
               </motion.div>
             )}
           </AnimatePresence>

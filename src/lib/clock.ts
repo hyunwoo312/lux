@@ -45,3 +45,8 @@ export function dateFromDayKey(key: string): Date | null {
   const date = new Date(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3]));
   return localDayKey(date) === key ? date : null;
 }
+
+export function nextReelTarget(target: number, digit: number): number {
+  const forward = (((digit - target) % 10) + 10) % 10;
+  return target + (forward > 5 ? forward - 10 : forward);
+}

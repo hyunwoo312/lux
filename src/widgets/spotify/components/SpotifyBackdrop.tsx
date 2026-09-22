@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { EASE_STANDARD, enterTween } from "@/lib/motion";
+import { fade } from "@/lib/motion";
 import { useSpotifyPlaybackStore } from "@/widgets/spotify/hooks/useSpotifyPlayback";
 
 export function SpotifyBackdrop() {
@@ -16,10 +16,7 @@ export function SpotifyBackdrop() {
           src={artworkUrl}
           alt=""
           aria-hidden
-          initial={{ opacity: reduced ? 1 : 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={enterTween(reduced, "slower", EASE_STANDARD)}
+          {...fade(reduced, "slower")}
           className="absolute inset-0 size-full scale-105 object-cover blur-lg saturate-[1.4]"
         />
       </AnimatePresence>

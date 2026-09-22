@@ -1,6 +1,8 @@
 import { GitHubServiceIcon } from "@/components/icons/service-icons";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useConnectedProviders } from "@/integrations";
+import { cn } from "@/lib/utils";
+import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { usePolledDefinition } from "@/widgets/core/usePolledResource";
 import { githubContributions } from "@/widgets/github/lib/resources";
 import { useGithub } from "@/widgets/github/useGithubStore";
@@ -28,10 +30,10 @@ export function GithubProfileLink() {
         target={newTab ? "_blank" : undefined}
         rel="noreferrer"
         aria-label="Open GitHub profile"
-        className="
-          inline-flex size-7 items-center justify-center rounded-sm opacity-80 transition-opacity
-          hover:opacity-100
-        "
+        className={cn(
+          "focus-ring inline-flex size-7 items-center justify-center rounded-sm transition-colors",
+          WIDGET_HEADER_ACTION,
+        )}
       >
         <GitHubServiceIcon className="size-4" />
       </a>

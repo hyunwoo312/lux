@@ -151,7 +151,7 @@ function PlayerRow({
   return (
     <>
       {firstOut && (
-        <li aria-hidden>
+        <li>
           <h4 className="flex items-center gap-2 px-2 pt-2 pb-1">
             <span className={TYPE.eyebrow}>Missed the cut</span>
             <span aria-hidden className="bg-foreground/8 h-px flex-1" />

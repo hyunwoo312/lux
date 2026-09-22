@@ -72,8 +72,9 @@ export function Header() {
             {...toolbar.itemProps(2)}
             variant="ghost"
             size="icon-lg"
-            className={cn(editing && "bg-accent text-ink")}
-            aria-label={editing ? "Done editing layout" : "Edit layout"}
+            className={cn(editing && "bg-primary/12 text-primary ring-1 ring-primary/25")}
+            aria-pressed={editing}
+            aria-label="Edit layout"
             onClick={toggleEditing}
           >
             <AnimatePresence mode="wait" initial={false}>

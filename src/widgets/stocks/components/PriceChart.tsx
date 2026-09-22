@@ -1,5 +1,5 @@
 import { useId, useState } from "react";
-import type { PointerEvent as ReactPointerEvent } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { clamp, cn } from "@/lib/utils";
 import { useElementSize } from "@/hooks/useElementSize";
@@ -84,6 +84,7 @@ export function PriceChart({
 
   const index = active != null && active < shown.length ? active : null;
   const bar = index != null ? shown[index] : undefined;
+  const read = bar ?? shown.at(-1);
 
   const handleMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (shown.length === 0) return;
@@ -93,6 +94,32 @@ export function PriceChart({
       ? Math.floor(fraction * shown.length)
       : Math.round(fraction * (shown.length - 1));
     setActive(clamp(position, 0, shown.length - 1));
+  };
+
+  const handleKey = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (shown.length === 0) return;
+    const last = shown.length - 1;
+    if (event.key === "Escape") {
+      if (index == null) return;
+      event.preventDefault();
+      event.stopPropagation();
+      setActive(null);
+      return;
+    }
+    const back = (index ?? shown.length) - 1;
+    const forward = index == null ? last : index + 1;
+    const steps: Record<string, number> = {
+      ArrowLeft: back,
+      ArrowDown: back,
+      ArrowRight: forward,
+      ArrowUp: forward,
+      Home: 0,
+      End: last,
+    };
+    const next = steps[event.key];
+    if (next === undefined) return;
+    event.preventDefault();
+    setActive(clamp(next, 0, last));
   };
 
   const dividendByBar = new Map<number, number>();
@@ -265,11 +292,22 @@ export function PriceChart({
         </svg>
       ) : null}
 
-      <div
-        className="absolute inset-0"
-        onPointerMove={handleMove}
-        onPointerLeave={() => setActive(null)}
-      />
+      {read ? (
+        <div
+          role="slider"
+          tabIndex={0}
+          aria-label="Inspect the chart"
+          aria-valuemin={0}
+          aria-valuemax={shown.length - 1}
+          aria-valuenow={index ?? shown.length - 1}
+          aria-valuetext={`${formatNumber(read.close, priceHint)}, ${formatChartTime(read.time, range, !clock24h, timeZone)}`}
+          className="focus-ring absolute inset-0 rounded-md"
+          onPointerMove={handleMove}
+          onPointerLeave={() => setActive(null)}
+          onKeyDown={handleKey}
+          onBlur={() => setActive(null)}
+        />
+      ) : null}
 
       {bar && index != null ? (
         <div
