@@ -13,7 +13,6 @@ vi.mock("@/widgets/anilist/lib/api/cache", () => ({
   parseCachedActivity: vi.fn().mockReturnValue(null),
   parseCachedInbox: vi.fn().mockReturnValue(null),
 }));
-vi.mock("@/widgets/anilist/useAnilistSync", () => ({ useAnilistSync: vi.fn() }));
 
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { FeedView } from "@/widgets/anilist/components/FeedView";

@@ -22,7 +22,6 @@ import { LibraryEntries } from "@/widgets/anilist/components/library/LibraryEntr
 import { LibraryRow } from "@/widgets/anilist/components/library/LibraryRow";
 import { LibraryTile } from "@/widgets/anilist/components/library/LibraryTile";
 import { resolveSort, showsInProgress } from "@/widgets/anilist/components/library/filters";
-import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import type { CurrentData, CurrentEntry, TitleLanguage } from "@/widgets/anilist/types";
 import { reportWriteFailure } from "@/widgets/core/reportWriteFailure";
@@ -56,14 +55,10 @@ export function LibraryView({ enabled, userId, newTab }: LibraryViewProps) {
   const viewMode = useAnilist((d) => d.viewMode);
   const instanceId = useWidgetInstanceId();
   const setActiveTab = useAnilistStore((s) => s.setActiveTab);
-  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledDefinition(
-    anilistLibrary(userId, lang),
-    {
-      enabled,
-      isEmpty: (data) => data.entries.length === 0,
-    },
-  );
-  useAnilistSync(refresh, isRefreshing, lastSyncedAt);
+  const { state } = usePolledDefinition(anilistLibrary(userId, lang), {
+    enabled,
+    isEmpty: (data) => data.entries.length === 0,
+  });
   const reduced = useReducedMotion();
 
   return (

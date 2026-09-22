@@ -7,7 +7,6 @@ import { anilistInbox } from "@/widgets/anilist/lib/resources";
 import { FeedList } from "@/widgets/anilist/components/FeedList";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
-import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { useAnilist } from "@/widgets/anilist/useAnilistStore";
 import { type AnilistNotification } from "@/widgets/anilist/types";
 
@@ -23,9 +22,10 @@ export function InboxView({
   unreadCount: number;
 }) {
   const lang = useAnilist((d) => d.titleLanguage);
-  const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh, lastSyncedAt } =
-    usePagedDefinition(anilistInbox(userId, lang), { enabled });
-  useAnilistSync(refresh, isRefreshing, lastSyncedAt);
+  const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh } = usePagedDefinition(
+    anilistInbox(userId, lang),
+    { enabled },
+  );
 
   if (state.status === "loading") return <AnilistSkeleton variant="list" label="Loading inbox…" />;
   if (state.status === "error")

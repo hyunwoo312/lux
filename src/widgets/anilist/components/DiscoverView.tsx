@@ -7,7 +7,6 @@ import { usePolledDefinition, type PolledResourceState } from "@/widgets/core/us
 import { anilistDiscover } from "@/widgets/anilist/lib/resources";
 import { saveListStatus } from "@/widgets/anilist/lib/api/list";
 import { searchDiscover } from "@/widgets/anilist/lib/api/discover";
-import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { SearchX } from "lucide-react";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { cn } from "@/lib/utils";
@@ -93,13 +92,9 @@ export function DiscoverView() {
   );
   const search = useDebouncedSearch(trimmedQuery, runSearch);
 
-  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledDefinition(
-    anilistDiscover(lang, feed, type, connected),
-    {
-      isEmpty: (data) => data.length === 0,
-    },
-  );
-  useAnilistSync(refresh, isRefreshing, lastSyncedAt);
+  const { state } = usePolledDefinition(anilistDiscover(lang, feed, type, connected), {
+    isEmpty: (data) => data.length === 0,
+  });
 
   return (
     <div className="flex h-full flex-col gap-2 p-1">

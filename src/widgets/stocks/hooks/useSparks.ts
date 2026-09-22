@@ -1,7 +1,6 @@
 import { peekPolledResource, usePolledDefinition } from "@/widgets/core/usePolledResource";
 import { stocksSparks, type SparkMap } from "@/widgets/stocks/lib/resources";
 import { useStocks } from "@/widgets/stocks/useStocksStore";
-import { useStocksSync } from "@/widgets/stocks/hooks/useStocksSync";
 import { DAY_RANGE, type StockRange } from "@/widgets/stocks/types";
 
 export type { SparkMap };
@@ -37,7 +36,6 @@ function useSparkResource(symbols: string[], range: StockRange) {
 export function useWatchlistSparks() {
   const symbols = useStocks((d) => d.symbols);
   const resource = useSparkResource(symbols, DAY_RANGE);
-  useStocksSync(resource.refresh, resource.isRefreshing, resource.lastSyncedAt);
   return resource;
 }
 

@@ -4,27 +4,14 @@ import { createPersistedStore } from "@/lib/storage";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { openBehaviorSchema, type OpenBehavior } from "@/lib/open-url";
-import { stalePolledResource } from "@/widgets/core/usePolledResource";
 import {
-  bumpSyncNonce,
-  createSyncSlice,
-  isSyncCoolingDown,
-  type SyncSlice,
-} from "@/widgets/core/syncSlice";
-import {
-  CONTRIBUTIONS_CACHE_KEY,
   GITHUB_VIEWS,
-  INBOX_CACHE_KEY,
   INBOX_FILTERS,
-  RELEASES_CACHE_KEY,
   type GithubView,
   type InboxFilter,
 } from "@/widgets/github/types";
 
 export const GITHUB_SYNC_COOLDOWN_MS = 10_000;
-export const GITHUB_SYNC_KEY = "github";
-
-const CACHE_KEYS = [CONTRIBUTIONS_CACHE_KEY, INBOX_CACHE_KEY, RELEASES_CACHE_KEY] as const;
 
 export type GithubData = {
   view: GithubView;
@@ -35,7 +22,7 @@ export type GithubData = {
   openBehavior: OpenBehavior;
 };
 
-type GithubStoreState = SyncSlice & {
+type GithubStoreState = {
   byInstance: Record<string, GithubData>;
   lastSeenReleaseAt?: string;
   setView: (instanceId: string, view: GithubView) => void;
@@ -46,7 +33,6 @@ type GithubStoreState = SyncSlice & {
   setOpenBehavior: (instanceId: string, openBehavior: OpenBehavior) => void;
   removeInstance: (instanceId: string) => void;
   markReleasesSeen: (publishedAt: string | undefined) => void;
-  requestSync: () => void;
 };
 
 export const DEFAULT_DATA: GithubData = {
@@ -84,7 +70,6 @@ function update(
 
 export const useGithubStore = createPersistedStore<GithubStoreState>()(
   (set, get) => ({
-    ...createSyncSlice(set),
     byInstance: {},
     lastSeenReleaseAt: undefined,
     setView: (instanceId, view) =>
@@ -114,11 +99,6 @@ export const useGithubStore = createPersistedStore<GithubStoreState>()(
       if (!seen || Date.parse(publishedAt) > Date.parse(seen)) {
         set({ lastSeenReleaseAt: publishedAt });
       }
-    },
-    requestSync: () => {
-      if (isSyncCoolingDown(get(), GITHUB_SYNC_KEY, GITHUB_SYNC_COOLDOWN_MS)) return;
-      for (const cacheKey of CACHE_KEYS) stalePolledResource(cacheKey);
-      set((state) => bumpSyncNonce(state, GITHUB_SYNC_KEY));
     },
   }),
   {

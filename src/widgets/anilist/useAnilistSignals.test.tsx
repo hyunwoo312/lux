@@ -8,7 +8,6 @@ vi.mock("@/widgets/anilist/lib/api/feed", () => ({
   toggleActivityLike: vi.fn(),
 }));
 vi.mock("@/widgets/anilist/lib/api/cache", () => ({ parseCachedActivity: vi.fn() }));
-vi.mock("@/widgets/anilist/useAnilistSync", () => ({ useAnilistSync: vi.fn() }));
 
 import { PAGED_CACHE_PREFIX } from "@/lib/local-store";
 import { ActivityView } from "@/widgets/anilist/components/ActivityView";

@@ -4,14 +4,6 @@ import { tolerantArray, tolerantRecord } from "@/lib/persist";
 import { moveById } from "@/lib/dnd";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
-import { stalePolledResource } from "@/widgets/core/usePolledResource";
-import {
-  bumpSyncNonce,
-  createSyncSlice,
-  isSyncCoolingDown,
-  type SyncSlice,
-} from "@/widgets/core/syncSlice";
-import { weatherCacheKey } from "@/widgets/weather/lib/open-meteo";
 import {
   makeLocationId,
   WEATHER_FORECAST_DAYS,
@@ -47,7 +39,7 @@ export type WeatherConfig = {
   selectedId: string | null;
 };
 
-type WeatherState = SyncSlice & {
+type WeatherState = {
   byInstance: Record<string, WeatherConfig>;
   addLocation: (instanceId: string, location: WeatherLocation) => void;
   removeLocation: (instanceId: string, id: string) => void;
@@ -59,7 +51,6 @@ type WeatherState = SyncSlice & {
   setForecastDays: (instanceId: string, forecastDays: WeatherForecastDays) => void;
   setRainAlert: (instanceId: string, rainAlert: WeatherRainAlert) => void;
   setMetrics: (instanceId: string, metrics: WeatherMetric[]) => void;
-  requestSync: (instanceId: string) => void;
   removeInstance: (instanceId: string) => void;
 };
 
@@ -139,8 +130,7 @@ function migrateLegacyToConfig(persisted: unknown): {
 }
 
 export const useWeatherStore = createPersistedStore<WeatherState>()(
-  (set, get) => ({
-    ...createSyncSlice(set),
+  (set) => ({
     byInstance: {},
     addLocation: (instanceId, location) =>
       set((state) => {
@@ -182,17 +172,8 @@ export const useWeatherStore = createPersistedStore<WeatherState>()(
       set((state) => update(state, instanceId, (data) => ({ ...data, rainAlert }))),
     setMetrics: (instanceId, metrics) =>
       set((state) => update(state, instanceId, (data) => ({ ...data, metrics }))),
-    requestSync: (instanceId) => {
-      if (isSyncCoolingDown(get(), instanceId, WEATHER_SYNC_COOLDOWN_MS)) return;
-      const inst = get().byInstance[instanceId] ?? DEFAULT_DATA;
-      for (const location of inst.locations) {
-        stalePolledResource(weatherCacheKey(location, inst.units, inst.windUnit));
-      }
-      set((state) => bumpSyncNonce(state, instanceId));
-    },
     removeInstance: (instanceId) => {
       set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) }));
-      get().dropSync(instanceId);
     },
   }),
   {

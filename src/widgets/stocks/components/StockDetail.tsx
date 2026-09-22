@@ -24,7 +24,6 @@ import {
   referencePrice,
 } from "@/widgets/stocks/lib/quote";
 import { useQuote } from "@/widgets/stocks/hooks/useQuote";
-import { useStocksSync } from "@/widgets/stocks/hooks/useStocksSync";
 import { useStocks, useStocksStore } from "@/widgets/stocks/useStocksStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { ChangeValue } from "@/widgets/stocks/components/ChangeValue";
@@ -232,10 +231,9 @@ type StockDetailProps = {
 };
 
 export function StockDetail({ symbol, onRemove }: StockDetailProps) {
-  const { state, data, refresh, isRefreshing, lastSyncedAt, range } = useQuote(symbol, {
+  const { state, data, refresh, isRefreshing, range } = useQuote(symbol, {
     focused: true,
   });
-  useStocksSync(refresh, isRefreshing, lastSyncedAt);
 
   return (
     <div className="relative h-full">

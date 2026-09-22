@@ -1,119 +1,33 @@
-import { z } from "zod";
 import {
-  IntegrationReconnectRequiredError,
-  isReconnectRequiredStatus,
-} from "@/integrations/errors";
-import { ensureOk, fetchTokenEndpoint, readJson, TemporaryAuthError } from "@/lib/net";
-import { buildPkceAuthorizeUrl, parseScopes } from "@/integrations/providers/pkce";
+  createCodeProvider,
+  type CodeProviderConfig,
+} from "@/integrations/providers/code-provider";
 import { RELAY_BASE_URL } from "@/lib/relay";
-import type {
-  CodeAuthProvider,
-  IntegrationProfile,
-  IntegrationProviderId,
-  IntegrationTokenResponse,
-} from "@/integrations/types";
+import type { CodeAuthProvider } from "@/integrations/types";
 
-const relayTokenSchema = z.object({
-  access_token: z.string().optional(),
-  refresh_token: z.string().optional(),
-  expires_in: z.number().optional(),
-  token_type: z.string().optional(),
-  scope: z.string().optional(),
-  error: z.string().optional(),
-});
-
-type RelayTokenPayload = z.infer<typeof relayTokenSchema>;
-
-type RelayProviderConfig = {
-  id: IntegrationProviderId;
-  label: string;
-  scopes: string[];
-  clientId?: string;
-  loadClientId?: () => Promise<string | undefined>;
-  authorizationEndpoint: string;
-  authParams?: Record<string, string>;
-  supportsRefresh: boolean;
-  defaultExpiresIn: number;
-  fetchProfile: (accessToken: string) => Promise<IntegrationProfile>;
-};
+type RelayProviderConfig = Omit<CodeProviderConfig, "tokenRequest">;
 
 export function createRelayProvider(config: RelayProviderConfig): CodeAuthProvider {
-  const relayEndpoint = `${RELAY_BASE_URL}/${config.id}/token`;
+  const url = `${RELAY_BASE_URL}/${config.id}/token`;
 
-  const toTokenResponse = (
-    payload: RelayTokenPayload,
-    accessToken: string,
-  ): IntegrationTokenResponse => ({
-    accessToken,
-    refreshToken: payload.refresh_token,
-    expiresIn: payload.expires_in ?? config.defaultExpiresIn,
-    tokenType: payload.token_type ?? "Bearer",
-    scopes: parseScopes(payload.scope, config.scopes),
+  return createCodeProvider({
+    ...config,
+    tokenRequest: (grant) => ({
+      url,
+      init: {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          grant.grant === "authorization_code"
+            ? {
+                grant_type: "authorization_code",
+                code: grant.code,
+                redirect_uri: grant.redirectUri,
+                code_verifier: grant.codeVerifier,
+              }
+            : { grant_type: "refresh_token", refresh_token: grant.refreshToken },
+        ),
+      },
+    }),
   });
-
-  const postToRelay = (body: Record<string, string>): Promise<Response> =>
-    fetchTokenEndpoint(config.label, relayEndpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-  const refreshToken: CodeAuthProvider["refreshToken"] = async ({ refreshToken: current }) => {
-    const response = await postToRelay({
-      grant_type: "refresh_token",
-      refresh_token: current,
-    });
-
-    if (!response.ok) {
-      if (isReconnectRequiredStatus(response.status)) {
-        throw new IntegrationReconnectRequiredError(`${config.label} needs to be reconnected`);
-      }
-      throw new TemporaryAuthError(`${config.label} is temporarily unavailable`);
-    }
-
-    const payload = await readJson(response, "token", relayTokenSchema);
-    if (payload.error) {
-      throw new IntegrationReconnectRequiredError(`${config.label} needs to be reconnected`);
-    }
-    if (!payload.access_token) {
-      throw new TemporaryAuthError(`${config.label} is temporarily unavailable`);
-    }
-    return {
-      ...toTokenResponse(payload, payload.access_token),
-      refreshToken: payload.refresh_token ?? current,
-    };
-  };
-
-  return {
-    id: config.id,
-    label: config.label,
-    scopes: config.scopes,
-    clientId: config.clientId,
-    loadClientId: config.loadClientId,
-    auth: "code",
-    buildPkceAuthUrl: (params) =>
-      buildPkceAuthorizeUrl(
-        { authorizationEndpoint: config.authorizationEndpoint, authParams: config.authParams },
-        params,
-      ),
-    exchangeCode: async ({ code, redirectUri, codeVerifier }) => {
-      const response = await postToRelay({
-        grant_type: "authorization_code",
-        code,
-        redirect_uri: redirectUri,
-        code_verifier: codeVerifier,
-      });
-
-      ensureOk(response, `${config.label} sign-in could not be completed`);
-
-      const payload = await readJson(response, "token", relayTokenSchema);
-      if (payload.error || !payload.access_token) {
-        throw new Error(`${config.label} sign-in could not be completed`);
-      }
-
-      return toTokenResponse(payload, payload.access_token);
-    },
-    ...(config.supportsRefresh ? { refreshToken } : {}),
-    fetchProfile: config.fetchProfile,
-  };
 }

@@ -6,8 +6,9 @@ import {
   backoffDelayMs,
   effectiveCadence,
   patchPolledResource,
+  refreshPolledResource,
   retryDelayMs,
-  stalePolledResource,
+  useResourceGroup,
   usePolledResource,
 } from "@/widgets/core/usePolledResource";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
@@ -236,6 +237,26 @@ describe("patchPolledResource", () => {
 });
 
 describe("usePolledResource persistence", () => {
+  it("starts a cooldown only for an explicit refresh request", async () => {
+    const cacheKey = "refresh-cooldown";
+    const fetcher = vi.fn().mockResolvedValue({ value: 1 });
+    const { result } = renderHook(() => ({
+      resource: usePolledResource(fetcher, { cacheKey, intervalMs: 10_000 }),
+      group: useResourceGroup([cacheKey]),
+    }));
+
+    await waitFor(() => expect(result.current.resource.state.status).toBe("success"));
+    expect(result.current.group.lastSyncedAt).toBeGreaterThan(0);
+    expect(result.current.group.lastRequestedAt).toBe(0);
+
+    const requestedAt = Date.now();
+    act(() => refreshPolledResource(cacheKey));
+
+    await waitFor(() =>
+      expect(result.current.group.lastRequestedAt).toBeGreaterThanOrEqual(requestedAt),
+    );
+  });
+
   it("persists a successful result to localStorage", async () => {
     const fetcher = vi.fn().mockResolvedValue({ value: 1 });
     const { result } = renderHook(() =>
@@ -261,24 +282,27 @@ describe("usePolledResource persistence", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
-  it("keeps an unmounted resource's cache when it is marked stale, then refetches on remount", async () => {
+  it("refreshes a live resource, and marks an unmounted one stale for its next mount", async () => {
     const fetcher = vi.fn().mockResolvedValueOnce({ value: 1 }).mockResolvedValue({ value: 2 });
-    const options = { cacheKey: "persist-stale", persist: true, intervalMs: 10_000 };
+    const options = { cacheKey: "refresh-request", persist: true, intervalMs: 10_000 };
     const first = renderHook(() => usePolledResource(fetcher, options));
 
     await waitFor(() =>
       expect(first.result.current.state).toEqual({ status: "success", data: { value: 1 } }),
     );
+    act(() => refreshPolledResource("refresh-request"));
+    await waitFor(() =>
+      expect(first.result.current.state).toEqual({ status: "success", data: { value: 2 } }),
+    );
     first.unmount();
-    act(() => stalePolledResource("persist-stale"));
 
-    expect(localStorage.getItem("lux:polled:persist-stale")).toContain('"value":1');
-
+    fetcher.mockResolvedValue({ value: 3 });
+    act(() => refreshPolledResource("refresh-request"));
     const second = renderHook(() => usePolledResource(fetcher, options));
 
-    expect(second.result.current.state).toEqual({ status: "success", data: { value: 1 } });
+    expect(second.result.current.state).toEqual({ status: "success", data: { value: 2 } });
     await waitFor(() =>
-      expect(second.result.current.state).toEqual({ status: "success", data: { value: 2 } }),
+      expect(second.result.current.state).toEqual({ status: "success", data: { value: 3 } }),
     );
   });
 

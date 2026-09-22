@@ -11,7 +11,6 @@ import { localDayKey } from "@/lib/clock";
 import { heatmapHeight, heatmapMetrics } from "@/widgets/github/lib/heatmap";
 import { visibleItems } from "@/widgets/github/lib/visibility";
 import { useGithub } from "@/widgets/github/useGithubStore";
-import { useGithubSync } from "@/widgets/github/useGithubSync";
 import { type ContributionDay } from "@/widgets/github/types";
 
 const LEDGER_MIN = 72;
@@ -24,10 +23,9 @@ export function ContributionsView({ enabled }: { enabled: boolean }) {
   const [ref, size] = useElementSize<HTMLDivElement>();
   const showPrivate = useGithub((d) => d.showPrivate);
   const newTab = useGithub((d) => d.openBehavior === "newTab");
-  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledDefinition(githubContributions, {
+  const { state, isRefreshing, refresh } = usePolledDefinition(githubContributions, {
     enabled,
   });
-  useGithubSync(refresh, isRefreshing, lastSyncedAt);
 
   const data = state.status === "success" ? state.data : null;
   const ledgerActivity = useMemo(

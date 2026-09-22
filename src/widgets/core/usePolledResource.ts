@@ -7,10 +7,9 @@ import {
   hasPersisted,
   invalidateResource,
   peekEntry,
-  refreshResource,
+  requestRefresh,
   seedSnapshot,
   seededEntry,
-  staleResource,
   storeEntry,
   useResource,
   type Decode,
@@ -193,15 +192,11 @@ export function patchPolledResource<T>(cacheKey: string, update: (data: T) => T)
 }
 
 export function refreshPolledResource(cacheKey: string): void {
-  refreshResource(cacheKey);
+  requestRefresh("polled", cacheKey);
 }
 
 export function invalidatePolledResource(cacheKey: string): void {
   invalidateResource("polled", cacheKey);
-}
-
-export function stalePolledResource(cacheKey: string): void {
-  staleResource("polled", cacheKey);
 }
 
 export function usePolledResource<T>(

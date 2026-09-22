@@ -11,16 +11,14 @@ import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { InboxList } from "@/widgets/github/components/inbox/InboxList";
 import type { NotificationActions } from "@/widgets/github/components/inbox/InboxRows";
 import { useGithub } from "@/widgets/github/useGithubStore";
-import { useGithubSync } from "@/widgets/github/useGithubSync";
 import { INBOX_CACHE_KEY, INBOX_ZERO } from "@/widgets/github/types";
 import { reportWriteFailure } from "@/widgets/core/reportWriteFailure";
 
 export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPrivate: boolean }) {
   const newTab = useGithub((d) => d.openBehavior === "newTab");
-  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledDefinition(githubInbox, {
+  const { state, isRefreshing, refresh } = usePolledDefinition(githubInbox, {
     enabled,
   });
-  useGithubSync(refresh, isRefreshing, lastSyncedAt);
 
   const [pending, setPending] = useState<Record<string, boolean>>({});
   const [marking, setMarking] = useState(false);

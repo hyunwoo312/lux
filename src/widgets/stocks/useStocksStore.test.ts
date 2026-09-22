@@ -37,10 +37,6 @@ function persistedEntry(overrides: Record<string, unknown> = {}) {
 beforeEach(() => {
   useStocksStore.setState({
     byInstance: { [ID]: { ...blank } },
-    syncNonce: {},
-    lastSyncAt: {},
-    dataSyncedAt: {},
-    syncing: {},
   });
 });
 
@@ -177,38 +173,6 @@ describe("useStocksStore", () => {
 
     it("reads an object blob with no watchlists at all", () => {
       expect(restore({}).byInstance).toEqual({});
-    });
-  });
-
-  describe("requestSync", () => {
-    beforeEach(() => {
-      store().addSymbol(ID, "AAPL");
-      store().addSymbol(ID, "MSFT");
-    });
-
-    it("bumps the sync nonce and records the sync time", () => {
-      store().requestSync(ID);
-      expect(store().syncNonce[ID]).toBe(1);
-      expect(typeof store().lastSyncAt[ID]).toBe("number");
-    });
-
-    it("is a no-op while cooling down", () => {
-      store().requestSync(ID);
-      store().requestSync(ID);
-      expect(store().syncNonce[ID]).toBe(1);
-    });
-
-    it("refreshes a widget that has never been written, using its defaults", () => {
-      useStocksStore.setState({ byInstance: {} });
-      store().requestSync(ID);
-      expect(store().syncNonce[ID]).toBe(1);
-    });
-
-    it("drops sync state on instance cleanup", () => {
-      store().requestSync(ID);
-      store().removeInstance(ID);
-      expect(store().syncNonce[ID]).toBeUndefined();
-      expect(store().lastSyncAt[ID]).toBeUndefined();
     });
   });
 });

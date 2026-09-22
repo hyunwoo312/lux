@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { ANILIST_SYNC_KEY, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
+import { useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 
 const store = () => useAnilistStore.getState();
 
@@ -7,9 +7,6 @@ beforeEach(() => {
   useAnilistStore.setState({
     byInstance: {},
     lastSeenActivityAt: undefined,
-    syncNonce: {},
-    syncing: {},
-    lastSyncAt: {},
   });
 });
 
@@ -47,14 +44,6 @@ describe("useAnilistStore", () => {
     store().setLastSeenActivity("2026-07-02T00:00:00.000Z");
     store().setLastSeenActivity("2026-07-01T00:00:00.000Z");
     expect(store().lastSeenActivityAt).toBe("2026-07-02T00:00:00.000Z");
-  });
-
-  it("ignores a second sync request inside the cooldown", () => {
-    store().requestSync("a", 1);
-    expect(store().syncNonce[ANILIST_SYNC_KEY]).toBe(1);
-
-    store().requestSync("a", 1);
-    expect(store().syncNonce[ANILIST_SYNC_KEY]).toBe(1);
   });
 
   describe("merge", () => {

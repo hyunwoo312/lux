@@ -4,19 +4,10 @@ import { tolerantArray, tolerantRecord } from "@/lib/persist";
 import { moveById } from "@/lib/dnd";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
-import { stalePolledResource } from "@/widgets/core/usePolledResource";
-import {
-  bumpSyncNonce,
-  createSyncSlice,
-  isSyncCoolingDown,
-  type SyncSlice,
-} from "@/widgets/core/syncSlice";
-import { quoteKey, sparkKey } from "@/widgets/stocks/lib/cacheKeys";
 import { MAX_INDICES } from "@/widgets/stocks/lib/indices";
 import {
   CHANGE_MODES,
   CHART_STYLES,
-  DAY_RANGE,
   STOCK_RANGES,
   STOCK_VIEWS,
   type ChangeMode,
@@ -39,7 +30,7 @@ export type StocksData = {
   selectedSymbol: string | null;
 };
 
-type StocksState = SyncSlice & {
+type StocksState = {
   byInstance: Record<string, StocksData>;
   addSymbol: (instanceId: string, symbol: string) => void;
   removeSymbol: (instanceId: string, symbol: string) => void;
@@ -52,7 +43,6 @@ type StocksState = SyncSlice & {
   setChartStyle: (instanceId: string, chartStyle: ChartStyle) => void;
   selectSymbol: (instanceId: string, symbol: string) => void;
   clearSelection: (instanceId: string) => void;
-  requestSync: (instanceId: string) => void;
   removeInstance: (instanceId: string) => void;
 };
 
@@ -89,8 +79,7 @@ function update(
 }
 
 export const useStocksStore = createPersistedStore<StocksState>()(
-  (set, get) => ({
-    ...createSyncSlice(set),
+  (set) => ({
     byInstance: {},
     addSymbol: (instanceId, symbol) =>
       set((state) => {
@@ -141,22 +130,8 @@ export const useStocksStore = createPersistedStore<StocksState>()(
       set((state) => update(state, instanceId, (data) => ({ ...data, selectedSymbol: symbol }))),
     clearSelection: (instanceId) =>
       set((state) => update(state, instanceId, (data) => ({ ...data, selectedSymbol: null }))),
-    requestSync: (instanceId) => {
-      if (isSyncCoolingDown(get(), instanceId, STOCKS_SYNC_COOLDOWN_MS)) return;
-      const data = get().byInstance[instanceId] ?? DEFAULT_DATA;
-      stalePolledResource(sparkKey(data.symbols, DAY_RANGE));
-      for (const symbol of data.symbols) {
-        stalePolledResource(quoteKey(symbol, DAY_RANGE));
-        if (data.range !== DAY_RANGE) stalePolledResource(quoteKey(symbol, data.range));
-      }
-      if (data.indexSymbols.length > 0) {
-        stalePolledResource(sparkKey(data.indexSymbols, DAY_RANGE));
-      }
-      set((state) => bumpSyncNonce(state, instanceId));
-    },
     removeInstance: (instanceId) => {
       set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) }));
-      get().dropSync(instanceId);
     },
   }),
   {

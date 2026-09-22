@@ -1,5 +1,4 @@
 import { usePolledDefinition, type PolledResourceState } from "@/widgets/core/usePolledResource";
-import { useWeatherSync } from "@/widgets/weather/hooks/useWeatherSync";
 import { weatherForecast } from "@/widgets/weather/lib/resources";
 import type {
   WeatherData,
@@ -19,9 +18,8 @@ export function useWeatherResource(
   units: WeatherUnits,
   windUnit: WeatherWindUnit,
 ): WeatherResource {
-  const { state, refresh, isRefreshing, lastSyncedAt } = usePolledDefinition(
+  const { state, refresh, isRefreshing } = usePolledDefinition(
     weatherForecast(location, units, windUnit),
   );
-  useWeatherSync(refresh, isRefreshing, lastSyncedAt);
   return { state, refresh, isRefreshing };
 }

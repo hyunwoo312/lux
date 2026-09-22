@@ -10,7 +10,6 @@ import { toggleActivityLike } from "@/widgets/anilist/lib/api/feed";
 import { FeedList } from "@/widgets/anilist/components/FeedList";
 import { MediaCover } from "@/widgets/anilist/components/MediaCover";
 import { AnilistSkeleton } from "@/widgets/anilist/components/AnilistSkeleton";
-import { useAnilistSync } from "@/widgets/anilist/useAnilistSync";
 import { useAnilist, useAnilistStore } from "@/widgets/anilist/useAnilistStore";
 import {
   ACTIVITY_OPEN_STALE_MS,
@@ -36,7 +35,6 @@ export function ActivityView({
   const definition = anilistActivity(userId, lang);
   const { state, hasMore, isLoadingMore, isRefreshing, loadMore, refresh, lastSyncedAt } =
     usePagedDefinition(definition, { enabled });
-  useAnilistSync(refresh, isRefreshing, lastSyncedAt);
 
   const setLiked = (id: number, isLiked: boolean) =>
     patchPagedResource<AnilistActivity>(definition.cacheKey, (items) =>

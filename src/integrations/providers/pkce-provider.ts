@@ -1,98 +1,47 @@
-import { z } from "zod";
 import {
-  IntegrationReconnectRequiredError,
-  isReconnectRequiredStatus,
-} from "@/integrations/errors";
-import { ensureOk, fetchTokenEndpoint, readJson, TemporaryAuthError } from "@/lib/net";
-import { buildPkceAuthorizeUrl, parseScopes } from "@/integrations/providers/pkce";
-import type {
-  CodeAuthProvider,
-  IntegrationProfile,
-  IntegrationProviderId,
-  IntegrationTokenResponse,
-} from "@/integrations/types";
+  createCodeProvider,
+  type CodeProviderConfig,
+} from "@/integrations/providers/code-provider";
+import type { CodeAuthProvider } from "@/integrations/types";
 
-const tokenPayloadSchema = z.object({
-  access_token: z.string(),
-  refresh_token: z.string().optional(),
-  expires_in: z.number(),
-  token_type: z.string(),
-  scope: z.string().optional(),
-});
+const DEFAULT_EXPIRES_IN = 3600;
 
-type PkceTokenPayload = z.infer<typeof tokenPayloadSchema>;
-
-type PkceProviderConfig = {
-  id: IntegrationProviderId;
-  label: string;
-  scopes: string[];
-  authorizationEndpoint: string;
+type PkceProviderConfig = Omit<
+  CodeProviderConfig,
+  "tokenRequest" | "clientId" | "supportsRefresh" | "defaultExpiresIn"
+> & {
   tokenEndpoint: string;
-  loadClientId?: () => Promise<string | undefined>;
-  authParams?: Record<string, string>;
-  fetchProfile: (accessToken: string) => Promise<IntegrationProfile>;
 };
 
-export function createPkceProvider(config: PkceProviderConfig): CodeAuthProvider {
-  const toTokenResponse = (payload: PkceTokenPayload): IntegrationTokenResponse => ({
-    accessToken: payload.access_token,
-    refreshToken: payload.refresh_token,
-    expiresIn: payload.expires_in,
-    tokenType: payload.token_type,
-    scopes: parseScopes(payload.scope, config.scopes),
+export function createPkceProvider({
+  tokenEndpoint,
+  ...config
+}: PkceProviderConfig): CodeAuthProvider {
+  return createCodeProvider({
+    ...config,
+    supportsRefresh: true,
+    defaultExpiresIn: DEFAULT_EXPIRES_IN,
+    tokenRequest: (grant) => ({
+      url: tokenEndpoint,
+      init: {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(
+          grant.grant === "authorization_code"
+            ? {
+                client_id: grant.clientId,
+                grant_type: "authorization_code",
+                code: grant.code,
+                redirect_uri: grant.redirectUri,
+                code_verifier: grant.codeVerifier,
+              }
+            : {
+                client_id: grant.clientId,
+                grant_type: "refresh_token",
+                refresh_token: grant.refreshToken,
+              },
+        ),
+      },
+    }),
   });
-
-  return {
-    id: config.id,
-    label: config.label,
-    scopes: config.scopes,
-    loadClientId: config.loadClientId,
-    auth: "code",
-    buildPkceAuthUrl: (params) =>
-      buildPkceAuthorizeUrl(
-        { authorizationEndpoint: config.authorizationEndpoint, authParams: config.authParams },
-        params,
-      ),
-    exchangeCode: async ({ clientId, code, redirectUri, codeVerifier }) => {
-      const response = await fetchTokenEndpoint(config.label, config.tokenEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          client_id: clientId,
-          grant_type: "authorization_code",
-          code,
-          redirect_uri: redirectUri,
-          code_verifier: codeVerifier,
-        }),
-      });
-
-      ensureOk(response, `${config.label} token exchange failed`);
-
-      return toTokenResponse(await readJson(response, "token", tokenPayloadSchema));
-    },
-    refreshToken: async ({ clientId, refreshToken }) => {
-      const body = new URLSearchParams({
-        client_id: clientId,
-        grant_type: "refresh_token",
-        refresh_token: refreshToken,
-      });
-
-      const response = await fetchTokenEndpoint(config.label, config.tokenEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body,
-      });
-
-      if (!response.ok) {
-        if (isReconnectRequiredStatus(response.status)) {
-          throw new IntegrationReconnectRequiredError(`${config.label} needs to be reconnected`);
-        }
-        throw new TemporaryAuthError(`${config.label} is temporarily unavailable`);
-      }
-
-      const payload = await readJson(response, "token", tokenPayloadSchema);
-      return { ...toTokenResponse(payload), refreshToken: payload.refresh_token ?? refreshToken };
-    },
-    fetchProfile: config.fetchProfile,
-  };
 }

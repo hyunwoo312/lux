@@ -4,15 +4,6 @@ import { createPersistedStore } from "@/lib/storage";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { openBehaviorSchema, type OpenBehavior } from "@/lib/open-url";
-import { stalePolledResource } from "@/widgets/core/usePolledResource";
-import { stalePagedResource } from "@/widgets/core/usePagedResource";
-import {
-  bumpSyncNonce,
-  createSyncSlice,
-  isSyncCoolingDown,
-  type SyncSlice,
-} from "@/widgets/core/syncSlice";
-import { anilistKeys } from "@/widgets/anilist/lib/cache-keys";
 import {
   ANILIST_TABS,
   CURRENT_SORTS,
@@ -35,7 +26,6 @@ import {
 } from "@/widgets/anilist/types";
 
 export const ANILIST_SYNC_COOLDOWN_MS = 10_000;
-export const ANILIST_SYNC_KEY = "anilist";
 
 type AnilistData = {
   activeTab: AnilistTab;
@@ -50,7 +40,7 @@ type AnilistData = {
   discoverType: DiscoverType;
 };
 
-type AnilistStoreState = SyncSlice & {
+type AnilistStoreState = {
   byInstance: Record<string, AnilistData>;
   lastSeenActivityAt?: string;
   setActiveTab: (instanceId: string, activeTab: AnilistTab) => void;
@@ -65,7 +55,6 @@ type AnilistStoreState = SyncSlice & {
   setDiscoverType: (instanceId: string, discoverType: DiscoverType) => void;
   removeInstance: (instanceId: string) => void;
   setLastSeenActivity: (createdAt: string) => void;
-  requestSync: (instanceId: string, viewerId: number) => void;
 };
 
 export const DEFAULT_DATA: AnilistData = {
@@ -176,8 +165,7 @@ function update(
 }
 
 export const useAnilistStore = createPersistedStore<AnilistStoreState>()(
-  (set, get) => ({
-    ...createSyncSlice(set),
+  (set) => ({
     byInstance: {},
     lastSeenActivityAt: undefined,
     setActiveTab: (instanceId, activeTab) =>
@@ -209,17 +197,6 @@ export const useAnilistStore = createPersistedStore<AnilistStoreState>()(
             ? state.lastSeenActivityAt
             : createdAt,
       })),
-    requestSync: (instanceId, viewerId) => {
-      if (isSyncCoolingDown(get(), ANILIST_SYNC_KEY, ANILIST_SYNC_COOLDOWN_MS)) return;
-      const { titleLanguage, discoverFeed, discoverType } =
-        get().byInstance[instanceId] ?? DEFAULT_DATA;
-      stalePolledResource(anilistKeys.discover(titleLanguage, discoverFeed, discoverType));
-      stalePolledResource(anilistKeys.library(viewerId, titleLanguage));
-      stalePolledResource(anilistKeys.unread(viewerId));
-      stalePagedResource(anilistKeys.activity(viewerId, titleLanguage));
-      stalePagedResource(anilistKeys.inbox(viewerId, titleLanguage));
-      set((state) => bumpSyncNonce(state, ANILIST_SYNC_KEY));
-    },
   }),
   {
     name: "widget:anilist",

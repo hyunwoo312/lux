@@ -8,16 +8,14 @@ import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { isUnseen, newestPublishedAt } from "@/widgets/github/lib/releases-unseen";
 import { visibleItems } from "@/widgets/github/lib/visibility";
 import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
-import { useGithubSync } from "@/widgets/github/useGithubSync";
 import { type Release, type ReleasesData } from "@/widgets/github/types";
 
 export function ReleasesView({ enabled, showPrivate }: { enabled: boolean; showPrivate: boolean }) {
   const newTab = useGithub((d) => d.openBehavior === "newTab");
-  const { state, isRefreshing, refresh, lastSyncedAt } = usePolledDefinition(githubReleases, {
+  const { state, isRefreshing, refresh } = usePolledDefinition(githubReleases, {
     enabled,
     isEmpty: (data) => data.watchedCount === 0,
   });
-  useGithubSync(refresh, isRefreshing, lastSyncedAt);
 
   if (state.status === "loading") return <StateMessage message="Loading releases…" />;
   if (state.status === "error")

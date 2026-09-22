@@ -1,29 +1,33 @@
 import { WidgetRefreshButton } from "@/widgets/core/WidgetRefreshButton";
-import { staleSinceOf, useFreshness } from "@/widgets/core/usePolledResource";
-import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import { useWeatherSyncStatus } from "@/widgets/weather/hooks/useWeatherSync";
 import {
-  WEATHER_SYNC_COOLDOWN_MS,
-  useWeather,
-  useWeatherStore,
-} from "@/widgets/weather/useWeatherStore";
+  refreshPolledResource,
+  staleSinceOf,
+  useFreshness,
+  useResourceGroup,
+} from "@/widgets/core/usePolledResource";
+import { weatherCacheKey } from "@/widgets/weather/lib/open-meteo";
+import { WEATHER_SYNC_COOLDOWN_MS, useWeather } from "@/widgets/weather/useWeatherStore";
 
 export function WeatherRefreshButton() {
   const staleSince = staleSinceOf(useFreshness("weather:"));
-  const instanceId = useWidgetInstanceId();
   const locations = useWeather((d) => d.locations);
-  const status = useWeatherSyncStatus();
-  const requestSync = useWeatherStore((s) => s.requestSync);
+  const units = useWeather((d) => d.units);
+  const windUnit = useWeather((d) => d.windUnit);
+
+  const keys = locations.map((location) => weatherCacheKey(location, units, windUnit));
+  const { isRefreshing, lastRequestedAt, lastSyncedAt } = useResourceGroup(keys);
 
   if (locations.length === 0) return null;
 
   return (
     <WidgetRefreshButton
       label="Weather"
-      {...status}
+      syncing={isRefreshing}
+      lastSyncAt={lastRequestedAt || undefined}
+      updatedAt={lastSyncedAt}
       staleSince={staleSince}
       cooldownMs={WEATHER_SYNC_COOLDOWN_MS}
-      onRefresh={() => requestSync(instanceId)}
+      onRefresh={() => keys.forEach(refreshPolledResource)}
     />
   );
 }

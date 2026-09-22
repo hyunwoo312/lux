@@ -210,6 +210,7 @@ type LiveResource = {
 };
 
 const liveResources = new Map<string, LiveResource>();
+const refreshRequests = new Map<string, number>();
 
 const carriedBackoff = new Map<string, { failureCount: number; retryAt: number }>();
 
@@ -491,18 +492,24 @@ export function useFreshness(prefix: string): Freshness {
   );
 }
 
-export type ResourceGroup = { isRefreshing: boolean; lastSyncedAt: number };
+export type ResourceGroup = {
+  isRefreshing: boolean;
+  lastRequestedAt: number;
+  lastSyncedAt: number;
+};
 
 function readGroup(keys: readonly string[]): ResourceGroup {
   let isRefreshing = false;
+  let lastRequestedAt = 0;
   let lastSyncedAt = 0;
   for (const key of keys) {
     const snapshot = liveResources.get(key)?.getSnapshot();
-    if (!snapshot) continue;
-    if (snapshot.pending === "refresh") isRefreshing = true;
-    if (snapshot.at > lastSyncedAt) lastSyncedAt = snapshot.at;
+    if (snapshot?.pending === "refresh") isRefreshing = true;
+    if (snapshot && snapshot.at > lastSyncedAt) lastSyncedAt = snapshot.at;
+    const requestedAt = refreshRequests.get(key) ?? 0;
+    if (requestedAt > lastRequestedAt) lastRequestedAt = requestedAt;
   }
-  return { isRefreshing, lastSyncedAt };
+  return { isRefreshing, lastRequestedAt, lastSyncedAt };
 }
 
 export function useResourceGroup(keys: readonly string[]): ResourceGroup {
@@ -516,6 +523,7 @@ export function useResourceGroup(keys: readonly string[]): ResourceGroup {
       setGroup((current) => {
         const next = readGroup(latest.current);
         return current.isRefreshing === next.isRefreshing &&
+          current.lastRequestedAt === next.lastRequestedAt &&
           current.lastSyncedAt === next.lastSyncedAt
           ? current
           : next;
@@ -531,8 +539,12 @@ export function getResource(key: string): LiveResource | undefined {
   return liveResources.get(key);
 }
 
-export function refreshResource(key: string): void {
-  liveResources.get(key)?.refresh();
+export function requestRefresh(scope: Scope, cacheKey: string): void {
+  refreshRequests.set(cacheKey, Date.now());
+  const live = liveResources.get(cacheKey);
+  if (live) live.refresh();
+  else staleResource(scope, cacheKey);
+  notifyFreshness();
 }
 
 export function invalidateResource(scope: Scope, cacheKey: string): void {
@@ -554,6 +566,7 @@ export function clearResources(): void {
   }
   liveResources.clear();
   carriedBackoff.clear();
+  refreshRequests.clear();
 }
 
 function onOtherTabWrote(event: StorageEvent): void {

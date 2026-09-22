@@ -10,7 +10,6 @@ vi.mock("@/widgets/anilist/lib/api/list", () => ({
 vi.mock("@/widgets/anilist/lib/api/cache", () => ({
   parseCachedCurrent: vi.fn().mockReturnValue(null),
 }));
-vi.mock("@/widgets/anilist/useAnilistSync", () => ({ useAnilistSync: vi.fn() }));
 
 import { RateLimitError } from "@/lib/net";
 import { TooltipProvider } from "@/components/ui/tooltip";

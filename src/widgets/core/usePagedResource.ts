@@ -8,7 +8,7 @@ import {
   freshnessOf,
   seedSnapshot,
   seededEntry,
-  staleResource,
+  requestRefresh,
   storeEntry,
   useResource,
   type Cadence,
@@ -213,8 +213,8 @@ export async function readPaged<T>(definition: PagedDefinition<T>): Promise<T[]>
   return data.items;
 }
 
-export function stalePagedResource(cacheKey: string): void {
-  staleResource("paged", cacheKey);
+export function refreshPagedResource(cacheKey: string): void {
+  requestRefresh("paged", cacheKey);
 }
 
 export function patchPagedResource<T>(cacheKey: string, update: (items: T[]) => T[]): void {

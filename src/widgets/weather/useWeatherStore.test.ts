@@ -202,37 +202,6 @@ describe("useWeatherStore", () => {
     });
   });
 
-  describe("requestSync", () => {
-    beforeEach(() => {
-      useWeatherStore.setState({
-        byInstance: {
-          [ID]: instance([city("a")]),
-        },
-        syncNonce: {},
-        lastSyncAt: {},
-        syncing: {},
-      });
-    });
-
-    it("bumps the nonce and records the sync time on first refresh", () => {
-      store().requestSync(ID);
-      expect(store().syncNonce[ID]).toBe(1);
-      expect(store().lastSyncAt[ID]).toBeGreaterThan(0);
-    });
-
-    it("is a no-op while cooling down", () => {
-      store().requestSync(ID);
-      store().requestSync(ID);
-      expect(store().syncNonce[ID]).toBe(1);
-    });
-
-    it("refreshes a widget that has never been written, using its defaults", () => {
-      useWeatherStore.setState({ byInstance: {} });
-      store().requestSync(ID);
-      expect(store().syncNonce[ID]).toBe(1);
-    });
-  });
-
   describe("migrate", () => {
     const migrate = useWeatherStore.persist.getOptions().migrate;
 
