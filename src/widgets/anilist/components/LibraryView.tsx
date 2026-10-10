@@ -74,7 +74,12 @@ export function LibraryView({ enabled, userId, newTab }: LibraryViewProps) {
             {state.status === "loading" ? (
               <AnilistSkeleton variant={viewMode} label="Loading your list…" />
             ) : state.status === "error" ? (
-              <ErrorState error={state.error} service="AniList" subject="your list" />
+              <ErrorState
+                requiresAccount
+                error={state.error}
+                service="AniList"
+                subject="your list"
+              />
             ) : state.status === "empty" ? (
               <StateMessage
                 message={emptyListMessage("all")}

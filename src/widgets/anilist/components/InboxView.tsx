@@ -31,6 +31,7 @@ export function InboxView({
   if (state.status === "error")
     return (
       <ErrorState
+        requiresAccount
         error={state.error}
         service="AniList"
         subject="your inbox"

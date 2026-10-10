@@ -9,9 +9,10 @@ vi.mock("@/widgets/sports/lib/espn", async (importOriginal) => ({
 }));
 vi.mock("@/widgets/sports/lib/teamIndex", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/widgets/sports/lib/teamIndex")>()),
-  fetchTeamIndex: vi
-    .fn()
-    .mockResolvedValue([{ leagueId: "epl", abbreviation: "ARS", name: "Arsenal" }]),
+  fetchTeamIndex: vi.fn().mockResolvedValue({
+    teams: [{ leagueId: "epl", abbreviation: "ARS", name: "Arsenal" }],
+    missing: [],
+  }),
   parseCachedTeamIndex: () => null,
 }));
 

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { fetchTeams, type TeamOption } from "@/widgets/sports/lib/espn";
 import { LEAGUES, type League } from "@/widgets/sports/lib/leagues";
 import { matchesQuery } from "@/lib/utils";
+import { readPolled } from "@/widgets/core/usePolledResource";
 
 export type IndexedTeam = {
   leagueId: string;
@@ -10,7 +11,7 @@ export type IndexedTeam = {
   logo?: string;
 };
 
-const cachedSchema = z.array(
+const teamsSchema = z.array(
   z.object({
     leagueId: z.string(),
     abbreviation: z.string(),
@@ -19,7 +20,11 @@ const cachedSchema = z.array(
   }),
 );
 
-export function parseCachedTeamIndex(raw: unknown): IndexedTeam[] | null {
+export type TeamIndex = { teams: IndexedTeam[]; missing: string[] };
+
+const cachedSchema = z.object({ teams: teamsSchema, missing: z.array(z.string()) });
+
+export function parseCachedTeamIndex(raw: unknown): TeamIndex | null {
   const result = cachedSchema.safeParse(raw);
   return result.success ? result.data : null;
 }
@@ -33,16 +38,37 @@ function toIndexed(league: League, teams: TeamOption[]): IndexedTeam[] {
   }));
 }
 
-export async function fetchTeamIndex(signal?: AbortSignal): Promise<IndexedTeam[]> {
+export async function fetchTeamIndex(signal?: AbortSignal): Promise<TeamIndex> {
   const leagues = LEAGUES.filter((league) => league.kind === "match");
-  const lists = await Promise.all(
+  const results = await Promise.allSettled(
     leagues.map((league) =>
-      fetchTeams(league.path, signal)
-        .then((teams) => toIndexed(league, teams))
-        .catch(() => []),
+      readPolled<IndexedTeam[]>({
+        widget: "sports",
+        cacheKey: `sports:teams:${league.id}`,
+        intervalMs: 24 * 60 * 60 * 1000,
+        parse: (raw) => {
+          const result = teamsSchema.safeParse(raw);
+          return result.success ? result.data : null;
+        },
+        fetch: async (requestSignal) =>
+          toIndexed(league, await fetchTeams(league.path, requestSignal)),
+      }),
     ),
   );
-  return lists.flat();
+  signal?.throwIfAborted();
+  const teams = results.flatMap((result) => (result.status === "fulfilled" ? result.value : []));
+  if (results.every((result) => result.status === "rejected")) {
+    const first = results[0];
+    throw first?.status === "rejected" && first.reason instanceof Error
+      ? first.reason
+      : new Error("Teams are unavailable right now");
+  }
+  return {
+    teams,
+    missing: leagues
+      .filter((_, index) => results[index]?.status === "rejected")
+      .map((league) => league.id),
+  };
 }
 
 export function searchTours(query: string): League[] {

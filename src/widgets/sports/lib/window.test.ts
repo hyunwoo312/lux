@@ -4,8 +4,8 @@ import { datesParam, DAY_WINDOWS, livePollFloorMs } from "@/widgets/sports/lib/w
 const now = new Date(2026, 7, 8);
 
 describe("datesParam", () => {
-  it("widens the span with the window, and asks for no range at all on today", () => {
-    expect(datesParam("today", now)).toBeNull();
+  it("widens the span with the window and keeps today to its local date", () => {
+    expect(datesParam("today", now)).toBe("20260808-20260808");
     expect(datesParam("day", now)).toBe("20260807-20260809");
     expect(datesParam("week", now)).toBe("20260805-20260811");
     expect(datesParam("wide", now)).toBe("20260801-20260815");

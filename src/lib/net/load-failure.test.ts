@@ -77,6 +77,13 @@ describe("describeFailure", () => {
     );
   });
 
+  it("offers retry rather than reconnect for a rejected public endpoint", () => {
+    expect(
+      describeFailure(new HttpError(403, "denied"), { service: "ESPN", requiresAccount: false })
+        .message,
+    ).toBe("ESPN rejected the request. Try again shortly.");
+  });
+
   it("falls back to the subject for anything else, including a non-Error", () => {
     expect(describeFailure(new HttpError(422, "nope"), anilist).message).toBe(
       "Couldn’t load trending titles.",

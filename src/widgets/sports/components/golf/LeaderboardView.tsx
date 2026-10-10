@@ -8,7 +8,6 @@ import { openUrl } from "@/lib/open-url";
 import { cn } from "@/lib/utils";
 import { ErrorState, StateMessage } from "@/components/StateMessage";
 import { ShowMoreButton } from "@/widgets/sports/components/SportsSection";
-import { UnverifiedNotice } from "@/widgets/sports/components/UnverifiedNotice";
 import { LeaderboardPlayerDetail } from "@/widgets/sports/components/golf/LeaderboardPlayerDetail";
 import { useLeaderboard } from "@/widgets/sports/hooks/useLeaderboard";
 import { hasPlayerDetail, type LeaderboardPlayer } from "@/widgets/sports/lib/golf";
@@ -47,8 +46,6 @@ export function LeaderboardView({ league }: { league: League }) {
 
   return (
     <div className="flex flex-col gap-1">
-      {league.liveUnverified ? <UnverifiedNotice label={league.label} /> : null}
-
       <div className="flex items-center gap-2 px-2">
         <h3 className="text-ink min-w-0 flex-1 truncate text-caption font-medium">{board.name}</h3>
         {board.dates ? <span className="text-ink-3 text-micro shrink-0">{board.dates}</span> : null}

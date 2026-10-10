@@ -11,13 +11,13 @@ import { fetchTennis, parseCachedTennis, type TennisEvent } from "@/widgets/spor
 import {
   fetchTeamIndex,
   parseCachedTeamIndex,
-  type IndexedTeam,
+  type TeamIndex,
 } from "@/widgets/sports/lib/teamIndex";
 import { datesParam, DEFAULT_DAY_WINDOW, type DayWindow } from "@/widgets/sports/lib/window";
 import type { Match } from "@/widgets/sports/types";
 
 const SCOREBOARD_INTERVAL_MS = 60_000;
-const INDEX_REFRESH_MS = 24 * 60 * 60 * 1000;
+const INDEX_REFRESH_MS = 60_000;
 
 export function sportsScoreboard(league: League, dayWindow: DayWindow): PolledDefinition<Match[]> {
   return {
@@ -49,7 +49,7 @@ export function sportsTennis(league: League): PolledDefinition<TennisEvent | nul
   };
 }
 
-export const sportsTeamIndex: PolledDefinition<IndexedTeam[]> = {
+export const sportsTeamIndex: PolledDefinition<TeamIndex> = {
   widget: "sports",
   cacheKey: TEAM_INDEX_KEY,
   intervalMs: INDEX_REFRESH_MS,

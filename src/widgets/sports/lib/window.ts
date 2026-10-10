@@ -46,8 +46,7 @@ function stamp(date: Date): string {
   return localDayKey(date).replaceAll("-", "");
 }
 
-export function datesParam(window: DayWindow, now: Date): string | null {
+export function datesParam(window: DayWindow, now: Date): string {
   const span = SPAN_DAYS[window];
-  if (span === 0) return null;
   return `${stamp(shiftDays(now, -span))}-${stamp(shiftDays(now, span))}`;
 }

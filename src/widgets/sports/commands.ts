@@ -143,8 +143,10 @@ const followTeam: WidgetCommand = {
     const needle = query.trim();
     const [instanceId] = instanceIds("sports");
     if (needle === "" || instanceId === undefined) return [];
-    const teams = await readPolled(sportsTeamIndex);
-    return searchTeamIndex(teams, needle, TEAM_LIMIT).map((team) => teamRow(team, instanceId));
+    const index = await readPolled(sportsTeamIndex);
+    return searchTeamIndex(index.teams, needle, TEAM_LIMIT).map((team) =>
+      teamRow(team, instanceId),
+    );
   },
 };
 

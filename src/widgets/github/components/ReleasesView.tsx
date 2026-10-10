@@ -22,6 +22,7 @@ export function ReleasesView({ enabled, showPrivate }: { enabled: boolean; showP
   if (state.status === "error")
     return (
       <ErrorState
+        requiresAccount
         error={state.error}
         service="GitHub"
         subject="releases"

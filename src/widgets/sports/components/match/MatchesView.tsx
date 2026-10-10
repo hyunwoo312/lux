@@ -5,7 +5,6 @@ import { useNow } from "@/hooks/useNow";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { MatchList } from "@/widgets/sports/components/match/MatchList";
-import { UnverifiedNotice } from "@/widgets/sports/components/UnverifiedNotice";
 import { useLeagueScoreboard } from "@/widgets/sports/hooks/useScoreboard";
 import type { League } from "@/widgets/sports/lib/leagues";
 import { offseasonStart } from "@/widgets/sports/lib/status";
@@ -69,16 +68,13 @@ export function MatchesView({ league }: { league: League }) {
   }
 
   return (
-    <>
-      {league.liveUnverified ? <UnverifiedNotice label={league.label} /> : null}
-      <MatchList
-        label={`${league.label} games`}
-        sport={league.sport}
-        matches={rows}
-        now={now}
-        hour12={!clock24h}
-        followed={following.teams}
-      />
-    </>
+    <MatchList
+      label={`${league.label} games`}
+      sport={league.sport}
+      matches={rows}
+      now={now}
+      hour12={!clock24h}
+      followed={following.teams}
+    />
   );
 }

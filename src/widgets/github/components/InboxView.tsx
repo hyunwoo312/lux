@@ -69,6 +69,7 @@ export function InboxView({ enabled, showPrivate }: { enabled: boolean; showPriv
   if (state.status === "error")
     return (
       <ErrorState
+        requiresAccount
         error={state.error}
         service="GitHub"
         subject="your inbox"

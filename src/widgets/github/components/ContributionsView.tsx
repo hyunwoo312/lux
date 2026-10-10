@@ -54,6 +54,7 @@ export function ContributionsView({ enabled }: { enabled: boolean }) {
   if (state.status === "error")
     return (
       <ErrorState
+        requiresAccount
         error={state.error}
         service="GitHub"
         subject="contributions"

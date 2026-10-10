@@ -83,6 +83,7 @@ export function ActivityView({
   if (state.status === "error")
     return (
       <ErrorState
+        requiresAccount
         error={state.error}
         service="AniList"
         subject="your feed"

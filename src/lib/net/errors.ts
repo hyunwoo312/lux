@@ -102,10 +102,11 @@ type DescribeFailureOptions = {
   service: string;
   subject?: string;
   register?: "full" | "short";
+  requiresAccount?: boolean;
 };
 
 export function describeFailure(error: unknown, options: DescribeFailureOptions): FailureCopy {
-  const { service, subject = service, register = "full" } = options;
+  const { service, subject = service, register = "full", requiresAccount = true } = options;
   const short = register === "short";
   const failure = error instanceof Error ? classifyLoadError(error) : "other";
 
@@ -119,6 +120,15 @@ export function describeFailure(error: unknown, options: DescribeFailureOptions)
         tone: "neutral",
       };
     case "auth":
+      if (!requiresAccount) {
+        return {
+          message: short
+            ? "Request rejected — try again shortly."
+            : `${service} rejected the request. Try again shortly.`,
+          icon: AlertCircle,
+          tone: "error",
+        };
+      }
       return {
         message: short
           ? "Reconnect this account in Settings."

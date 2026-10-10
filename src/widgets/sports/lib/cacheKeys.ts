@@ -13,4 +13,4 @@ export function scoreboardKey(league: League, dayWindow: DayWindow): string {
     : key(`${league.id}:${league.kind}`);
 }
 
-export const TEAM_INDEX_KEY = key("team-index");
+export const TEAM_INDEX_KEY = key("team-index:v2");

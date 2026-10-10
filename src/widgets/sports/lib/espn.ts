@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { localDayKey } from "@/lib/clock";
 import { espnUrl, fetchEspn } from "@/widgets/sports/lib/espnApi";
 import {
   MATCH_EVENT_KINDS,
@@ -15,6 +16,7 @@ import {
 
 const CDN_BASE = "https://cdn.espn.com/core";
 const RANGE_LIMIT = 1000;
+const DATE_REQUEST_CONCURRENCY = 3;
 
 const athleteSchema = z.object({
   shortName: z.string().optional(),
@@ -254,15 +256,16 @@ function toMatch(raw: unknown): Match | null {
   };
 }
 
+function compareMatches(a: Match, b: Match): number {
+  const byState = STATE_ORDER[a.state] - STATE_ORDER[b.state];
+  return byState !== 0 ? byState : Date.parse(a.startsAt) - Date.parse(b.startsAt);
+}
+
 function toMatches(events: readonly unknown[]): Match[] {
   return events
     .map(toMatch)
     .filter((match): match is Match => match !== null)
-    .sort((a, b) => {
-      const byState = STATE_ORDER[a.state] - STATE_ORDER[b.state];
-      if (byState !== 0) return byState;
-      return Date.parse(a.startsAt) - Date.parse(b.startsAt);
-    });
+    .sort(compareMatches);
 }
 
 export function parseScoreboard(raw: unknown): Match[] {
@@ -300,11 +303,55 @@ export async function fetchScoreboard(
   signal?: AbortSignal,
   dates?: string | null,
 ): Promise<Match[]> {
-  const query = dates ? `?dates=${dates}&limit=${RANGE_LIMIT}` : "";
+  if (dates) {
+    const [start, end] = dates.split("-");
+    if (!start || !end) throw new Error("Invalid scoreboard date range");
+    const days: string[] = [];
+    const day = new Date(
+      Date.UTC(
+        Number(start.slice(0, 4)),
+        Number(start.slice(4, 6)) - 1,
+        Number(start.slice(6)) - 1,
+      ),
+    );
+    const lastDay = new Date(
+      Date.UTC(Number(end.slice(0, 4)), Number(end.slice(4, 6)) - 1, Number(end.slice(6)) + 1),
+    );
+    while (day <= lastDay) {
+      days.push(day.toISOString().slice(0, 10).replaceAll("-", ""));
+      day.setUTCDate(day.getUTCDate() + 1);
+    }
+    let next = 0;
+    const pages: Match[][] = [];
+    const controller = new AbortController();
+    const requestSignal = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
+    await Promise.all(
+      Array.from({ length: Math.min(DATE_REQUEST_CONCURRENCY, days.length) }, async () => {
+        while (next < days.length) {
+          requestSignal.throwIfAborted();
+          const index = next++;
+          pages[index] = await fetchMatches(
+            espnUrl(path, "scoreboard", `?dates=${days[index]}&limit=${RANGE_LIMIT}`),
+            parseScoreboard,
+            requestSignal,
+          );
+        }
+      }),
+    ).catch((error: unknown) => {
+      controller.abort();
+      throw error;
+    });
+    return [...new Map(pages.flat().map((match) => [match.id, match])).values()]
+      .filter((match) => {
+        const day = localDayKey(new Date(match.startsAt)).replaceAll("-", "");
+        return day >= start && day <= end;
+      })
+      .sort(compareMatches);
+  }
   try {
-    return await fetchMatches(espnUrl(path, "scoreboard", query), parseScoreboard, signal);
+    return await fetchMatches(espnUrl(path, "scoreboard"), parseScoreboard, signal);
   } catch (error) {
-    const mirror = dates ? null : mirrorUrl(path);
+    const mirror = mirrorUrl(path);
     if (!mirror || signal?.aborted) throw error;
     try {
       return await fetchMatches(mirror, parseMirrorScoreboard, signal);

@@ -78,11 +78,12 @@ describe("SportsWidget", () => {
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
 
-  it("warns that live detail is unconfirmed for a league we could not verify", async () => {
+  it("shows supplied league data without a development verification notice", async () => {
     fetchMock.mockResolvedValue([match()]);
     renderWidget("sports-unverified", "nhl");
 
-    expect(await screen.findByRole("note")).toHaveTextContent(/NHL live detail is unconfirmed/);
+    expect(await screen.findByRole("list", { name: /NHL games/i })).toBeInTheDocument();
+    expect(screen.queryByRole("note")).not.toBeInTheDocument();
   });
 
   it("does not offer to expand a fixture that has nothing to show", async () => {

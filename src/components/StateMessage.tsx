@@ -64,10 +64,18 @@ type ErrorStateProps = {
   subject?: string;
   onRetry?: () => void;
   retrying?: boolean;
+  requiresAccount?: boolean;
 };
 
-export function ErrorState({ error, service, subject, onRetry, retrying }: ErrorStateProps) {
-  const { message, icon, tone } = describeFailure(error, { service, subject });
+export function ErrorState({
+  error,
+  service,
+  subject,
+  onRetry,
+  retrying,
+  requiresAccount = false,
+}: ErrorStateProps) {
+  const { message, icon, tone } = describeFailure(error, { service, subject, requiresAccount });
 
   return (
     <StateMessage

@@ -164,6 +164,32 @@ describe("box score fields", () => {
     expect(match?.home.hits).toBeUndefined();
     expect(match?.home.errors).toBeUndefined();
   });
+
+  it("keeps NBA quarter scores, records, and scoring leaders", () => {
+    const raw = event("1", "post", "Final", ["HOU", "115"], ["DAL", "132"]);
+    Object.assign(raw.competitions[0]!.competitors[0]!, {
+      records: [{ summary: "1-0" }],
+      linescores: [
+        { displayValue: "32" },
+        { displayValue: "29" },
+        { displayValue: "29" },
+        { displayValue: "42" },
+      ],
+      leaders: [leaderGroup("Pts", "J. Harden", "24"), leaderGroup("Reb", "E. Mobley", "7")],
+    });
+
+    const [match] = parseScoreboard({ events: [raw] });
+
+    expect(match?.home).toMatchObject({
+      score: 132,
+      record: "1-0",
+      periods: ["32", "29", "29", "42"],
+      leaders: [
+        { label: "Pts", athlete: "J. Harden", detail: "24" },
+        { label: "Reb", athlete: "E. Mobley", detail: "7" },
+      ],
+    });
+  });
 });
 
 describe("parseScoreboard", () => {
@@ -433,20 +459,73 @@ describe("fetchScoreboard", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("asks for a whole date range instead of the first page of it", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(respond(primary));
+  it("requests individual dates and keeps only games in the selected local-day range", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async () =>
+      respond({
+        events: [
+          primary.events[0],
+          event("outside", "pre", "7:30 PM", ["C", ""], ["D", ""], "2026-08-10T22:40Z"),
+        ],
+      }),
+    );
 
-    await fetchScoreboard("baseball/mlb", undefined, "20260820-20260903");
+    const matches = await fetchScoreboard("baseball/mlb", undefined, "20260806-20260808");
 
-    expect(fetchMock.mock.calls[0]?.[0]).toContain("dates=20260820-20260903&limit=");
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toContainEqual(
+      expect.stringContaining("dates=20260807&limit="),
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+    expect(matches).toHaveLength(1);
+  });
+
+  it("loads both sides of a month boundary without duplicating overlapping events", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      const date = String(url).includes("dates=202608") ? "2026-08-31T22:40Z" : "2026-09-01T22:40Z";
+      return respond({ events: [event(date, "post", "Final", ["A", "1"], ["B", "2"], date)] });
+    });
+
+    const matches = await fetchScoreboard("football/nfl", undefined, "20260831-20260901");
+
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
+      expect.stringContaining("dates=20260830&limit="),
+      expect.stringContaining("dates=20260831&limit="),
+      expect.stringContaining("dates=20260901&limit="),
+      expect.stringContaining("dates=20260902&limit="),
+    ]);
+    expect(matches).toHaveLength(2);
   });
 
   it("fails rather than letting the mirror answer a range with today only", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(respond(null, false));
 
-    await expect(fetchScoreboard("baseball/mlb", undefined, "20260820-20260903")).rejects.toThrow(
+    await expect(fetchScoreboard("baseball/mlb", undefined, "20260820-20260822")).rejects.toThrow(
       "Scores are unavailable",
     );
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(
+      fetchMock.mock.calls.every(([url]) => String(url).startsWith("https://site.api.espn.com/")),
+    ).toBe(true);
+  });
+
+  it("bounds daily requests and sorts the complete slate once", async () => {
+    let active = 0;
+    let peak = 0;
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      active += 1;
+      peak = Math.max(peak, active);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      active -= 1;
+      const day = new URL(String(url)).searchParams.get("dates");
+      return respond({
+        events:
+          day === "20260807"
+            ? [event("done", "post", "Final", ["A", "1"], ["B", "2"], "2026-08-07T22:40Z")]
+            : day === "20260808"
+              ? [event("live", "in", "Q3", ["C", "1"], ["D", "2"], "2026-08-08T22:40Z")]
+              : [],
+      });
+    });
+    const matches = await fetchScoreboard("basketball/nba", undefined, "20260801-20260815");
+    expect(peak).toBeLessThanOrEqual(3);
+    expect(matches.map((match) => match.id)).toEqual(["live", "done"]);
   });
 });

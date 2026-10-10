@@ -44,14 +44,14 @@ beforeEach(() => {
 
 describe("TeamSearchResults", () => {
   it("reaches teams outside the league on screen", async () => {
-    fetchMock.mockResolvedValue(INDEX);
+    fetchMock.mockResolvedValue({ teams: INDEX, missing: [] });
     renderResults("ars");
 
     expect(await screen.findByRole("button", { name: /Arsenal/ })).toBeInTheDocument();
   });
 
   it("follows a team in its own league, not the one being viewed", async () => {
-    fetchMock.mockResolvedValue(INDEX);
+    fetchMock.mockResolvedValue({ teams: INDEX, missing: [] });
     renderResults("ars");
 
     fireEvent.click(await screen.findByRole("button", { name: /Arsenal/ }));
@@ -61,7 +61,7 @@ describe("TeamSearchResults", () => {
   });
 
   it("unfollows on a second press, so the row is the only control", async () => {
-    fetchMock.mockResolvedValue(INDEX);
+    fetchMock.mockResolvedValue({ teams: INDEX, missing: [] });
     renderResults("ars", { epl: { teams: ["ARS"] } });
 
     const row = await screen.findByRole("button", { name: /Arsenal/ });
@@ -72,7 +72,7 @@ describe("TeamSearchResults", () => {
   });
 
   it("refuses a team once that league is full", async () => {
-    fetchMock.mockResolvedValue(INDEX);
+    fetchMock.mockResolvedValue({ teams: INDEX, missing: [] });
     const full = Array.from({ length: MAX_TEAMS }, (_, index) => `T${index}`);
     renderResults("ars", { epl: { teams: full } });
 
@@ -80,7 +80,7 @@ describe("TeamSearchResults", () => {
   });
 
   it("offers a tour to follow, since a golf week is a tour not a team", async () => {
-    fetchMock.mockResolvedValue(INDEX);
+    fetchMock.mockResolvedValue({ teams: INDEX, missing: [] });
     renderResults("pga");
 
     fireEvent.click(await screen.findByRole("button", { name: "Follow PGA Tour" }));

@@ -45,7 +45,6 @@ type LeagueBase = {
   label: string;
   sport: Sport;
   path: string;
-  liveUnverified?: true;
 };
 
 type LeagueKind = "match" | "leaderboard" | "draw";
@@ -67,7 +66,6 @@ export const LEAGUES: League[] = [
     label: "NBA",
     sport: "basketball",
     path: "basketball/nba",
-    liveUnverified: true,
   },
   { kind: "match", id: "wnba", label: "WNBA", sport: "basketball", path: "basketball/wnba" },
   MLB,
@@ -77,7 +75,6 @@ export const LEAGUES: League[] = [
     label: "NCAA Baseball",
     sport: "baseball",
     path: "baseball/college-baseball",
-    liveUnverified: true,
   },
   {
     kind: "match",
@@ -85,7 +82,6 @@ export const LEAGUES: League[] = [
     label: "NCAA Softball",
     sport: "baseball",
     path: "baseball/college-softball",
-    liveUnverified: true,
   },
   {
     kind: "match",
@@ -93,7 +89,6 @@ export const LEAGUES: League[] = [
     label: "WBC",
     sport: "baseball",
     path: "baseball/world-baseball-classic",
-    liveUnverified: true,
   },
   {
     kind: "match",
@@ -101,7 +96,6 @@ export const LEAGUES: League[] = [
     label: "NHL",
     sport: "hockey",
     path: "hockey/nhl",
-    liveUnverified: true,
   },
   { kind: "match", id: "epl", label: "Premier League", sport: "soccer", path: "soccer/eng.1" },
   {

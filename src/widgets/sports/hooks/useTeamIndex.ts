@@ -4,6 +4,6 @@ import { sportsTeamIndex } from "@/widgets/sports/lib/resources";
 export function useTeamIndex(enabled: boolean) {
   return usePolledDefinition(sportsTeamIndex, {
     enabled,
-    isEmpty: (teams) => teams.length === 0,
+    isEmpty: (index) => index.teams.length === 0 && index.missing.length === 0,
   });
 }
