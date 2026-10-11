@@ -14,6 +14,8 @@ import { useCalendar } from "@/widgets/calendar/useCalendarStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useProviderAccount } from "@/integrations";
 import { viewSwap } from "@/lib/motion";
+import { cn } from "@/lib/utils";
+import { MAX_CALENDAR_EVENTS } from "@/widgets/calendar/types";
 
 export function CalendarWidget() {
   const reduced = useReducedMotion();
@@ -29,6 +31,12 @@ export function CalendarWidget() {
   const microsoftCalendars = useCalendar((d) => d.microsoft.calendars);
   const googleError = useCalendar((d) => d.google.lastError);
   const microsoftError = useCalendar((d) => d.microsoft.lastError);
+  const coverageLimited = useCalendar(
+    (d) =>
+      d.google.coverageLimited ||
+      d.microsoft.coverageLimited ||
+      d.events.length >= MAX_CALENDAR_EVENTS,
+  );
   const enabledCalendarCount = useCalendar(
     (d) => d.google.enabledCalendarIds.length + d.microsoft.enabledCalendarIds.length,
   );
@@ -51,6 +59,9 @@ export function CalendarWidget() {
 
   const loaded = google.loaded;
   const syncError = googleError ?? microsoftError ?? null;
+  const notice =
+    syncError ??
+    (coverageLimited ? "Showing nearest upcoming events; history may be incomplete." : null);
 
   if (loaded && !connected) {
     return <CalendarSignedOutPreview />;
@@ -79,7 +90,7 @@ export function CalendarWidget() {
           {view === "agenda" ? (
             <motion.div
               key={view}
-              className="absolute inset-0"
+              className={cn("absolute inset-x-0 top-0", notice ? "bottom-10" : "bottom-0")}
               {...viewSwap(reduced, slide ? "4%" : 0)}
             >
               <AgendaView events={visibleEvents} colors={colors} status={status} />
@@ -87,21 +98,27 @@ export function CalendarWidget() {
           ) : (
             <motion.div
               key="calendar"
-              className="absolute inset-0"
+              className={cn("absolute inset-x-0 top-0", notice ? "bottom-10" : "bottom-0")}
               {...viewSwap(reduced, slide ? "-4%" : 0)}
             >
               <CalendarGrid events={visibleEvents} colors={colors} />
             </motion.div>
           )}
         </AnimatePresence>
-        {syncError && (
+        {notice && (
           <div
-            className="
-              bg-destructive/10 text-destructive border-destructive/20 absolute inset-x-2 bottom-2
-              z-20 flex items-center gap-2 rounded-md border px-2.5 py-1.5
-            "
+            role="status"
+            className={cn(
+              `
+                absolute inset-x-2 bottom-2 z-20 flex items-center gap-2 rounded-md border px-2.5
+                py-1.5
+              `,
+              syncError
+                ? "bg-destructive/10 text-destructive border-destructive/20"
+                : "bg-background/95 text-ink-3 border-border",
+            )}
           >
-            <span className="min-w-0 flex-1 truncate text-micro">{syncError}</span>
+            <span className="min-w-0 flex-1 truncate text-micro">{notice}</span>
             <button
               type="button"
               onClick={

@@ -76,9 +76,11 @@ export type CalendarEventWindow = {
   calendarIds: string[];
   timeMin: Date;
   timeMax: Date;
+  priorityAt?: Date;
 };
 
 export type CalendarEventsResult = {
   events: CalendarEvent[];
   failedCalendarIds: string[];
+  limitedCalendarIds?: string[];
 };

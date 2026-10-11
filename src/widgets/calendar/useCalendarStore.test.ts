@@ -81,6 +81,104 @@ beforeEach(() => {
 });
 
 describe("useCalendarStore.sync", () => {
+  it("keeps an explicit empty selection across repeated syncs", async () => {
+    seed({
+      google: {
+        calendars: [createCalendar()],
+        enabledCalendarIds: [],
+        failedCalendarIds: [],
+        selectionChosen: true,
+      },
+    });
+    fetchCalendarsMock.mockResolvedValue([createCalendar()]);
+    fetchEventsMock.mockResolvedValue({ events: [], failedCalendarIds: [] });
+    await useCalendarStore.getState().sync(ID, { bypassCooldown: true });
+    await useCalendarStore.getState().sync(ID, { bypassCooldown: true });
+    expect(data()?.google.selectionChosen).toBe(true);
+    expect(data()?.google.enabledCalendarIds).toEqual([]);
+    expect(fetchEventsMock).not.toHaveBeenCalled();
+  });
+
+  it("replaces successful calendars and retains only failed calendars' old events", async () => {
+    const retained = {
+      ...createEvent(),
+      id: "google-other-evt",
+      calendarId: "other",
+      title: "Retained",
+    };
+    seed({
+      events: [createEvent(), retained],
+      google: {
+        calendars: [createCalendar(), createCalendar({ id: "other" })],
+        enabledCalendarIds: ["primary", "other"],
+        failedCalendarIds: [],
+      },
+    });
+    fetchCalendarsMock.mockResolvedValue([createCalendar(), createCalendar({ id: "other" })]);
+    fetchEventsMock.mockResolvedValue({
+      events: [{ ...createEvent(), title: "Updated" }],
+      failedCalendarIds: ["other"],
+    });
+    await useCalendarStore.getState().sync(ID, { bypassCooldown: true });
+    expect(data()?.events).toHaveLength(2);
+    expect(data()?.events.find((event) => event.calendarId === "primary")?.title).toBe("Updated");
+    expect(data()?.events.find((event) => event.calendarId === "other")?.title).toBe("Retained");
+  });
+
+  it.each(["removed", "disconnected"] as const)(
+    "ignores completion after the widget is %s",
+    async (reason) => {
+      let resolveEvents!: (result: {
+        events: CalendarEvent[];
+        failedCalendarIds: string[];
+      }) => void;
+      fetchCalendarsMock.mockResolvedValue([createCalendar()]);
+      fetchEventsMock.mockReturnValue(
+        new Promise((resolve) => {
+          resolveEvents = resolve;
+        }),
+      );
+      const pending = useCalendarStore.getState().sync(ID, { bypassCooldown: true });
+      await vi.waitFor(() => expect(fetchEventsMock).toHaveBeenCalled());
+      if (reason === "removed") useCalendarStore.getState().removeInstance(ID);
+      else useCalendarStore.getState().clearIntegration(ID, "google");
+      resolveEvents({ events: [createEvent()], failedCalendarIds: [] });
+      await pending;
+      if (reason === "removed") expect(data()).toBeUndefined();
+      else {
+        expect(data()?.events).toEqual([]);
+        expect(data()?.google.calendars).toEqual([]);
+        expect(data()?.syncing).toEqual([]);
+      }
+    },
+  );
+
+  it("preserves selection edits while an earlier sync is completing", async () => {
+    let resolveEvents!: (result: { events: CalendarEvent[]; failedCalendarIds: string[] }) => void;
+    seed({
+      google: {
+        calendars: [createCalendar()],
+        enabledCalendarIds: ["primary"],
+        failedCalendarIds: [],
+        selectionChosen: true,
+      },
+    });
+    fetchCalendarsMock.mockResolvedValue([createCalendar()]);
+    fetchEventsMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveEvents = resolve;
+      }),
+    );
+    const pending = useCalendarStore.getState().sync(ID, { bypassCooldown: true });
+    await vi.waitFor(() => expect(fetchEventsMock).toHaveBeenCalled());
+    useCalendarStore.getState().setCalendarSelection(ID, "google", "primary", false);
+    resolveEvents({ events: [createEvent()], failedCalendarIds: [] });
+    await pending;
+    await vi.waitFor(() => expect(data()?.syncing).toEqual([]));
+    expect(data()?.google.enabledCalendarIds).toEqual([]);
+    expect(data()?.events).toEqual([]);
+  });
+
   it("loads calendars and events and records a successful sync", async () => {
     fetchCalendarsMock.mockResolvedValue([createCalendar()]);
     fetchEventsMock.mockResolvedValue({ events: [createEvent()], failedCalendarIds: [] });

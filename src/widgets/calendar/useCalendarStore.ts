@@ -60,15 +60,23 @@ type ProviderCalendarSettings = {
   lastSyncedAt?: number;
   failureCount?: number;
   retryAt?: number;
+  coverageLimited?: boolean;
 };
 
-type SyncWindow = { timeMin: Date; timeMax: Date };
+type SyncWindow = Omit<CalendarEventWindow, "calendarIds">;
 
 type ProviderSyncResult = {
   settings: ProviderCalendarSettings;
   events: CalendarEvent[];
   failed: boolean;
+  completedCalendarIds: string[];
 };
+
+const syncVersions = new Map<string, symbol>();
+
+function syncKey(instanceId: string, providerId: CalendarProviderId): string {
+  return `${instanceId}:${providerId}`;
+}
 
 export type CalendarData = {
   events: CalendarEvent[];
@@ -189,6 +197,7 @@ const providerSettingsSchema = z.object({
   lastSyncedAt: z.number().optional().catch(undefined),
   failureCount: z.number().optional().catch(undefined),
   retryAt: z.number().optional().catch(undefined),
+  coverageLimited: z.boolean().optional().catch(undefined),
 });
 
 const configSchema = z.object({
@@ -242,6 +251,7 @@ function getSyncWindow(): SyncWindow {
   return {
     timeMin: new Date(now.getFullYear(), now.getMonth() - SYNC_PAST_MONTHS, 1),
     timeMax: new Date(now.getFullYear(), now.getMonth() + SYNC_FUTURE_MONTHS, 1),
+    priorityAt: now,
   };
 }
 
@@ -302,10 +312,14 @@ async function syncProvider(
       : { events: [], failedCalendarIds: [] };
     const failed = result.failedCalendarIds.length > 0;
     const settings: ProviderCalendarSettings = {
+      ...current,
       calendars: markedCalendars,
       enabledCalendarIds,
       failedCalendarIds: result.failedCalendarIds,
       lastError: failed ? "Some calendars failed to sync" : undefined,
+      failureCount: undefined,
+      retryAt: undefined,
+      coverageLimited: (result.limitedCalendarIds?.length ?? 0) > 0,
     };
 
     return {
@@ -314,6 +328,9 @@ async function syncProvider(
         : settings,
       events: result.events,
       failed,
+      completedCalendarIds: enabledCalendarIds.filter(
+        (id) => !result.failedCalendarIds.includes(id) && !result.limitedCalendarIds?.includes(id),
+      ),
     };
   } catch (error) {
     const { message } = describeFailure(error, { service, subject: "your calendar" });
@@ -325,6 +342,7 @@ async function syncProvider(
       ),
       events: [],
       failed: true,
+      completedCalendarIds: [],
     };
   }
 }
@@ -433,42 +451,92 @@ export const useCalendarStore = createPersistedStore<CalendarState>()(
       };
       const results = await Promise.all(
         targets.map(async (providerId) => {
+          const token = Symbol();
+          syncVersions.set(syncKey(instanceId, providerId), token);
+          const accountId = accounts.find((account) => account.providerId === providerId)?.id;
+          const original = getCalendarData(instanceId)[providerId];
           const [service, fetchCalendars, fetchEvents] = fetchers[providerId];
           const result = await syncProvider(
-            getCalendarData(instanceId)[providerId],
+            original,
             service,
             fetchCalendars,
             fetchEvents,
             syncWindow,
           );
-          return { providerId, result };
+          return { providerId, result, token, accountId, original };
         }),
       );
 
-      const pendingBeforeCompletion = getCalendarData(instanceId).resyncPending;
+      const existing = get().byInstance[instanceId];
+      if (!existing) return;
+      const settled = results.filter(
+        ({ providerId, token }) => syncVersions.get(syncKey(instanceId, providerId)) === token,
+      );
+      if (settled.length === 0) return;
+      const currentAccounts = useIntegrationStore.getState().accounts;
+      const accepted = settled.filter(({ providerId, accountId }) =>
+        currentAccounts.some(
+          (account) =>
+            account.providerId === providerId &&
+            account.id === accountId &&
+            account.status === "connected",
+        ),
+      );
+      const completedTargets = settled.map(({ providerId }) => providerId);
+      const pendingBeforeCompletion = existing.resyncPending;
+      for (const { providerId } of settled) syncVersions.delete(syncKey(instanceId, providerId));
       set((state) =>
         update(state, instanceId, (current) => {
           const now = Date.now();
           let google = current.google;
           let microsoft = current.microsoft;
-          for (const { providerId, result } of results) {
+          for (const { providerId, result, original } of accepted) {
+            const selection = current[providerId];
+            const changed =
+              selection.enabledCalendarIds.join("\u0000") !==
+                original.enabledCalendarIds.join("\u0000") ||
+              selection.selectionChosen !== original.selectionChosen;
             const settings = result.failed
               ? result.settings
               : { ...result.settings, lastSyncedAt: now };
-            if (providerId === "google") google = settings;
-            else microsoft = settings;
+            const merged = changed
+              ? {
+                  ...settings,
+                  enabledCalendarIds: selection.enabledCalendarIds,
+                  selectionChosen: selection.selectionChosen,
+                  calendars: settings.calendars.map((calendar) => ({
+                    ...calendar,
+                    selected: selection.enabledCalendarIds.includes(calendar.id),
+                  })),
+                }
+              : settings;
+            if (providerId === "google") google = merged;
+            else microsoft = merged;
           }
 
-          const refreshed = results
-            .filter((entry) => !entry.result.failed)
-            .map((entry) => entry.providerId);
-          const keptEvents = current.events.filter((event) => !refreshed.includes(event.provider));
+          const keptEvents = current.events.filter(
+            (event) =>
+              !accepted.some(
+                ({ providerId, result }) =>
+                  event.provider === providerId &&
+                  result.completedCalendarIds.includes(event.calendarId),
+              ),
+          );
+          const selected = (event: CalendarEvent) =>
+            (event.provider === "google" ? google : microsoft).enabledCalendarIds.includes(
+              event.calendarId,
+            );
           const events = capCalendarEvents([
-            ...keptEvents,
-            ...results.flatMap((entry) => entry.result.events),
+            ...new Map(
+              [...keptEvents, ...accepted.flatMap((entry) => entry.result.events)]
+                .filter(selected)
+                .map((event) => [event.id, event]),
+            ).values(),
           ]);
 
-          const syncing = current.syncing.filter((providerId) => !targets.includes(providerId));
+          const syncing = current.syncing.filter(
+            (providerId) => !completedTargets.includes(providerId),
+          );
           const hasError = Boolean(google.lastError || microsoft.lastError);
           return {
             ...current,
@@ -477,14 +545,16 @@ export const useCalendarStore = createPersistedStore<CalendarState>()(
             microsoft,
             syncing,
             resyncPending: current.resyncPending.filter(
-              (providerId) => !targets.includes(providerId),
+              (providerId) => !completedTargets.includes(providerId),
             ),
             status: syncing.length > 0 ? "syncing" : hasError ? "error" : "idle",
           };
         }),
       );
 
-      const resync = targets.filter((providerId) => pendingBeforeCompletion.includes(providerId));
+      const resync = completedTargets.filter((providerId) =>
+        pendingBeforeCompletion.includes(providerId),
+      );
       for (const providerId of resync) {
         void get().sync(instanceId, { bypassCooldown: true, providerId });
       }
@@ -506,8 +576,20 @@ export const useCalendarStore = createPersistedStore<CalendarState>()(
             failedCalendarIds: current.failedCalendarIds.filter((id) => id !== calendarId),
           };
           return providerId === "google"
-            ? { ...data, google: updated }
-            : { ...data, microsoft: updated };
+            ? {
+                ...data,
+                google: updated,
+                resyncPending: data.syncing.includes(providerId)
+                  ? Array.from(new Set([...data.resyncPending, providerId]))
+                  : data.resyncPending,
+              }
+            : {
+                ...data,
+                microsoft: updated,
+                resyncPending: data.syncing.includes(providerId)
+                  ? Array.from(new Set([...data.resyncPending, providerId]))
+                  : data.resyncPending,
+              };
         }),
       ),
     clearRetry: (instanceId) =>
@@ -518,15 +600,20 @@ export const useCalendarStore = createPersistedStore<CalendarState>()(
           microsoft: { ...data.microsoft, failureCount: undefined, retryAt: undefined },
         })),
       ),
-    clearIntegration: (instanceId, providerId) =>
+    clearIntegration: (instanceId, providerId) => {
+      syncVersions.delete(syncKey(instanceId, providerId));
       set((state) =>
         update(state, instanceId, (data) => {
           const events = data.events.filter((event) => event.provider !== providerId);
+          const syncing = data.syncing.filter((id) => id !== providerId);
+          const resyncPending = data.resyncPending.filter((id) => id !== providerId);
+          const status = syncing.length > 0 ? ("syncing" as const) : ("idle" as const);
           return providerId === "google"
-            ? { ...data, events, google: EMPTY_PROVIDER }
-            : { ...data, events, microsoft: EMPTY_PROVIDER };
+            ? { ...data, events, syncing, resyncPending, status, google: EMPTY_PROVIDER }
+            : { ...data, events, syncing, resyncPending, status, microsoft: EMPTY_PROVIDER };
         }),
-      ),
+      );
+    },
     setVisibleMonth: (instanceId, visibleMonth) =>
       set((state) => update(state, instanceId, (data) => ({ ...data, visibleMonth }))),
     shiftMonth: (instanceId, offset) =>
@@ -592,8 +679,11 @@ export const useCalendarStore = createPersistedStore<CalendarState>()(
             : data.visibleMonth,
         })),
       ),
-    removeInstance: (instanceId) =>
-      set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) })),
+    removeInstance: (instanceId) => {
+      for (const providerId of CALENDAR_PROVIDER_IDS)
+        syncVersions.delete(syncKey(instanceId, providerId));
+      set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) }));
+    },
   }),
   {
     name: "widget:calendar",

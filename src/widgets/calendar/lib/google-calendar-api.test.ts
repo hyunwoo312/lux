@@ -6,6 +6,7 @@ import { integrationFetch } from "@/integrations";
 import {
   buildGoogleEventsUrl,
   fetchGoogleCalendarEvents,
+  fetchGoogleCalendars,
   normalizeGoogleCalendar,
   normalizeGoogleEvent,
 } from "@/widgets/calendar/lib/google-calendar-api";
@@ -176,6 +177,43 @@ describe("fetchGoogleCalendarEvents", () => {
     const secondUrl = mockFetch.mock.calls[1]?.[1];
     expect(secondUrl).toBeInstanceOf(URL);
     expect((secondUrl as URL).searchParams.get("pageToken")).toBe("token-2");
+  });
+
+  it("loads upcoming events before a full history and reports the coverage limit", async () => {
+    mockFetch.mockResolvedValueOnce(
+      pageResponse(Array.from({ length: 1001 }, (_, index) => `future-${index}`)),
+    );
+    const result = await fetchGoogleCalendarEvents({
+      calendarIds: ["primary"],
+      timeMin: new Date("2026-06-01T00:00:00Z"),
+      timeMax: new Date("2026-12-01T00:00:00Z"),
+      priorityAt: new Date("2026-06-19T00:00:00Z"),
+    });
+    expect(result.events).toHaveLength(1000);
+    expect(result.limitedCalendarIds).toEqual(["primary"]);
+    expect((mockFetch.mock.calls[0]?.[1] as URL).searchParams.get("timeMin")).toBe(
+      "2026-06-19T00:00:00.000Z",
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("fetchGoogleCalendars", () => {
+  it("keeps calendars from every list page", async () => {
+    mockFetch
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ items: [{ id: "first", summary: "First" }], nextPageToken: "more" }),
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ items: [{ id: "second", summary: "Second" }] })),
+      );
+    expect((await fetchGoogleCalendars()).map((calendar) => calendar.id)).toEqual([
+      "first",
+      "second",
+    ]);
+    expect((mockFetch.mock.calls[1]?.[1] as URL).searchParams.get("pageToken")).toBe("more");
   });
 });
 

@@ -4,6 +4,20 @@ import type { CalendarEvent, CalendarEventsResult } from "@/widgets/calendar/typ
 
 export const MAX_EVENT_PAGES = 10;
 
+export type CalendarPageResult = { events: CalendarEvent[]; limited: boolean };
+
+export function prioritizedWindows(
+  timeMin: Date,
+  timeMax: Date,
+  priorityAt?: Date,
+): { timeMin: Date; timeMax: Date }[] {
+  if (!priorityAt || priorityAt <= timeMin || priorityAt >= timeMax) return [{ timeMin, timeMax }];
+  return [
+    { timeMin: priorityAt, timeMax },
+    { timeMin, timeMax: priorityAt },
+  ];
+}
+
 export function toIsoString(date: Date): string | null {
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
@@ -23,12 +37,12 @@ export function parseCalendarItems<T>(schema: ZodType<T>, items: readonly unknow
 
 export async function fanOutCalendars(
   calendarIds: readonly string[],
-  fetchOne: (calendarId: string) => Promise<CalendarEvent[]>,
+  fetchOne: (calendarId: string) => Promise<CalendarPageResult>,
 ): Promise<CalendarEventsResult> {
   const results = await Promise.allSettled(calendarIds.map((calendarId) => fetchOne(calendarId)));
 
   const events = results
-    .flatMap((result) => (result.status === "fulfilled" ? result.value : []))
+    .flatMap((result) => (result.status === "fulfilled" ? result.value.events : []))
     .sort(compareEventsByStart);
 
   const failedCalendarIds = results.flatMap((result, index) => {
@@ -36,5 +50,13 @@ export async function fanOutCalendars(
     return result.status === "rejected" && calendarId ? [calendarId] : [];
   });
 
-  return { events, failedCalendarIds };
+  const limitedCalendarIds = calendarIds.filter((_, index) => {
+    const result = results[index];
+    return result?.status === "fulfilled" && result.value.limited;
+  });
+  return {
+    events,
+    failedCalendarIds,
+    ...(limitedCalendarIds.length > 0 ? { limitedCalendarIds } : {}),
+  };
 }

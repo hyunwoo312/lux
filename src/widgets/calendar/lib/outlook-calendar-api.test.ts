@@ -5,6 +5,7 @@ vi.mock("@/integrations", () => ({ integrationFetch: vi.fn() }));
 import { integrationFetch } from "@/integrations";
 import {
   fetchOutlookCalendarEvents,
+  fetchOutlookCalendars,
   normalizeOutlookCalendar,
   normalizeOutlookEvent,
 } from "@/widgets/calendar/lib/outlook-calendar-api";
@@ -156,6 +157,45 @@ describe("fetchOutlookCalendarEvents", () => {
     expect(result.failedCalendarIds).toEqual([]);
     expect(mockFetch).toHaveBeenCalledTimes(2);
     expect(mockFetch.mock.calls[1]?.[1]).toBe(nextLink);
+  });
+
+  it("fetches the upcoming window before history when prioritizing current events", async () => {
+    mockFetch
+      .mockResolvedValueOnce(pageResponse(["future"]))
+      .mockResolvedValueOnce(pageResponse(["past"]));
+    const result = await fetchOutlookCalendarEvents({
+      calendarIds: ["cal1"],
+      timeMin: new Date("2026-06-01T00:00:00Z"),
+      timeMax: new Date("2026-12-01T00:00:00Z"),
+      priorityAt: new Date("2026-06-15T00:00:00Z"),
+    });
+    expect(result.events).toHaveLength(2);
+    expect((mockFetch.mock.calls[0]?.[1] as URL).searchParams.get("startDateTime")).toBe(
+      "2026-06-15T00:00:00.000Z",
+    );
+    expect((mockFetch.mock.calls[1]?.[1] as URL).searchParams.get("startDateTime")).toBe(
+      "2026-06-01T00:00:00.000Z",
+    );
+  });
+});
+
+describe("fetchOutlookCalendars", () => {
+  it("keeps calendars from every list page", async () => {
+    const next = "https://graph.microsoft.com/v1.0/me/calendars?$skip=10";
+    mockFetch
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ value: [{ id: "first", name: "First" }], "@odata.nextLink": next }),
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ value: [{ id: "second", name: "Second" }] })),
+      );
+    expect((await fetchOutlookCalendars()).map((calendar) => calendar.id)).toEqual([
+      "first",
+      "second",
+    ]);
+    expect(mockFetch.mock.calls[1]?.[1]).toBe(next);
   });
 });
 

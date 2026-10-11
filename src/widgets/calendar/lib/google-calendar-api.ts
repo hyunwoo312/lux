@@ -7,6 +7,8 @@ import {
   parseAllDayDate,
   parseCalendarItems,
   toIsoString,
+  prioritizedWindows,
+  type CalendarPageResult,
 } from "@/widgets/calendar/lib/provider-fetch";
 import {
   MAX_CALENDAR_EVENTS,
@@ -62,6 +64,7 @@ const googleEventsEnvelope = z.object({
 
 const googleCalendarsEnvelope = z.object({
   items: z.array(z.unknown()).optional(),
+  nextPageToken: z.string().optional(),
 });
 
 const GOOGLE_RSVP: Record<string, RsvpStatus> = {
@@ -144,52 +147,81 @@ async function fetchEventsForCalendar(
   calendarId: string,
   timeMin: Date,
   timeMax: Date,
-): Promise<CalendarEvent[]> {
+  priorityAt?: Date,
+): Promise<CalendarPageResult> {
   const events: CalendarEvent[] = [];
-  let pageToken: string | undefined;
+  const windows = prioritizedWindows(timeMin, timeMax, priorityAt);
+  let limited = false;
+  for (const [index, window] of windows.entries()) {
+    let pageToken: string | undefined;
 
-  for (let page = 0; page < MAX_EVENT_PAGES; page += 1) {
-    const url = buildGoogleEventsUrl(calendarId, timeMin, timeMax);
-    if (pageToken) url.searchParams.set("pageToken", pageToken);
+    for (let page = 0; page < MAX_EVENT_PAGES; page += 1) {
+      const url = buildGoogleEventsUrl(calendarId, window.timeMin, window.timeMax);
+      if (pageToken) url.searchParams.set("pageToken", pageToken);
 
-    const response = await integrationFetch("google", url);
+      const response = await integrationFetch("google", url);
 
-    ensureOk(response, `Google calendar events request failed for ${calendarId}`);
+      ensureOk(response, `Google calendar events request failed for ${calendarId}`);
 
-    const payload = await readJson(response, "Google calendar events", googleEventsEnvelope);
+      const payload = await readJson(response, "Google calendar events", googleEventsEnvelope);
 
-    events.push(
-      ...parseCalendarItems(googleEventSchema, payload.items ?? [])
-        .map((event) => normalizeGoogleEvent(event, calendarId))
-        .filter((event): event is CalendarEvent => Boolean(event)),
-    );
+      events.push(
+        ...parseCalendarItems(googleEventSchema, payload.items ?? [])
+          .map((event) => normalizeGoogleEvent(event, calendarId))
+          .filter((event): event is CalendarEvent => Boolean(event)),
+      );
 
+      pageToken = payload.nextPageToken;
+      if (events.length >= MAX_CALENDAR_EVENTS) {
+        limited =
+          events.length > MAX_CALENDAR_EVENTS || Boolean(pageToken) || index < windows.length - 1;
+        break;
+      }
+      if (!pageToken) break;
+    }
+    limited ||= Boolean(pageToken);
     if (events.length >= MAX_CALENDAR_EVENTS) break;
-    pageToken = payload.nextPageToken;
-    if (!pageToken) break;
   }
 
-  return events;
+  return {
+    events: [...new Map(events.map((event) => [event.id, event])).values()].slice(
+      0,
+      MAX_CALENDAR_EVENTS,
+    ),
+    limited,
+  };
 }
 
 export async function fetchGoogleCalendars(): Promise<ConnectedCalendar[]> {
-  const response = await integrationFetch("google", `${API_BASE_URL}/users/me/calendarList`);
+  const calendars: ConnectedCalendar[] = [];
+  let pageToken: string | undefined;
+  for (let page = 0; page < MAX_EVENT_PAGES; page += 1) {
+    const url = new URL(`${API_BASE_URL}/users/me/calendarList`);
+    if (pageToken) url.searchParams.set("pageToken", pageToken);
+    const response = await integrationFetch("google", url);
 
-  ensureOk(response, "Google calendar list request failed");
+    ensureOk(response, "Google calendar list request failed");
 
-  const payload = await readJson(response, "Google calendar list", googleCalendarsEnvelope);
+    const payload = await readJson(response, "Google calendar list", googleCalendarsEnvelope);
 
-  return parseCalendarItems(googleCalendarListEntrySchema, payload.items ?? [])
-    .map((calendar) => normalizeGoogleCalendar(calendar))
-    .filter((calendar): calendar is ConnectedCalendar => Boolean(calendar));
+    calendars.push(
+      ...parseCalendarItems(googleCalendarListEntrySchema, payload.items ?? [])
+        .map((calendar) => normalizeGoogleCalendar(calendar))
+        .filter((calendar): calendar is ConnectedCalendar => Boolean(calendar)),
+    );
+    pageToken = payload.nextPageToken;
+    if (!pageToken) return calendars;
+  }
+  throw new Error("Google calendar list is incomplete");
 }
 
 export async function fetchGoogleCalendarEvents({
   calendarIds,
   timeMin,
   timeMax,
+  priorityAt,
 }: CalendarEventWindow): Promise<CalendarEventsResult> {
   return fanOutCalendars(calendarIds, (calendarId) =>
-    fetchEventsForCalendar(calendarId, timeMin, timeMax),
+    fetchEventsForCalendar(calendarId, timeMin, timeMax, priorityAt),
   );
 }

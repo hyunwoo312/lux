@@ -7,6 +7,8 @@ import {
   parseAllDayDate,
   parseCalendarItems,
   toIsoString,
+  prioritizedWindows,
+  type CalendarPageResult,
 } from "@/widgets/calendar/lib/provider-fetch";
 import {
   MAX_CALENDAR_EVENTS,
@@ -56,6 +58,7 @@ const outlookEventsEnvelope = z.object({
 
 const outlookCalendarsEnvelope = z.object({
   value: z.array(z.unknown()).optional(),
+  "@odata.nextLink": z.string().optional(),
 });
 
 const NAMED_COLOR_HEX: Record<string, string> = {
@@ -154,50 +157,81 @@ async function fetchEventsForCalendar(
   calendarId: string,
   timeMin: Date,
   timeMax: Date,
-): Promise<CalendarEvent[]> {
+  priorityAt?: Date,
+): Promise<CalendarPageResult> {
   const events: CalendarEvent[] = [];
-  let nextUrl: string | URL | null = buildOutlookEventsUrl(calendarId, timeMin, timeMax);
-
-  for (let page = 0; page < MAX_EVENT_PAGES && nextUrl; page += 1) {
-    const response = await integrationFetch("microsoft", nextUrl, {
-      headers: { Prefer: 'outlook.timezone="UTC"' },
-    });
-
-    ensureOk(response, `Outlook calendar events request failed for ${calendarId}`);
-
-    const payload = await readJson(response, "Outlook calendar events", outlookEventsEnvelope);
-
-    events.push(
-      ...parseCalendarItems(graphEventSchema, payload.value ?? [])
-        .map((event) => normalizeOutlookEvent(event, calendarId))
-        .filter((event): event is CalendarEvent => Boolean(event)),
+  const windows = prioritizedWindows(timeMin, timeMax, priorityAt);
+  let limited = false;
+  for (const [index, window] of windows.entries()) {
+    let nextUrl: string | URL | null = buildOutlookEventsUrl(
+      calendarId,
+      window.timeMin,
+      window.timeMax,
     );
 
+    for (let page = 0; page < MAX_EVENT_PAGES && nextUrl; page += 1) {
+      const response = await integrationFetch("microsoft", nextUrl, {
+        headers: { Prefer: 'outlook.timezone="UTC"' },
+      });
+
+      ensureOk(response, `Outlook calendar events request failed for ${calendarId}`);
+
+      const payload = await readJson(response, "Outlook calendar events", outlookEventsEnvelope);
+
+      events.push(
+        ...parseCalendarItems(graphEventSchema, payload.value ?? [])
+          .map((event) => normalizeOutlookEvent(event, calendarId))
+          .filter((event): event is CalendarEvent => Boolean(event)),
+      );
+
+      nextUrl = payload["@odata.nextLink"] ?? null;
+      if (events.length >= MAX_CALENDAR_EVENTS) {
+        limited =
+          events.length > MAX_CALENDAR_EVENTS || Boolean(nextUrl) || index < windows.length - 1;
+        break;
+      }
+    }
+    limited ||= Boolean(nextUrl);
     if (events.length >= MAX_CALENDAR_EVENTS) break;
-    nextUrl = payload["@odata.nextLink"] ?? null;
   }
 
-  return events;
+  return {
+    events: [...new Map(events.map((event) => [event.id, event])).values()].slice(
+      0,
+      MAX_CALENDAR_EVENTS,
+    ),
+    limited,
+  };
 }
 
 export async function fetchOutlookCalendars(): Promise<ConnectedCalendar[]> {
-  const response = await integrationFetch("microsoft", `${API_BASE_URL}/me/calendars`);
+  const calendars: ConnectedCalendar[] = [];
+  let nextUrl: string | null = `${API_BASE_URL}/me/calendars`;
+  for (let page = 0; page < MAX_EVENT_PAGES && nextUrl; page += 1) {
+    const response = await integrationFetch("microsoft", nextUrl);
 
-  ensureOk(response, "Outlook calendar list request failed");
+    ensureOk(response, "Outlook calendar list request failed");
 
-  const payload = await readJson(response, "Outlook calendar list", outlookCalendarsEnvelope);
+    const payload = await readJson(response, "Outlook calendar list", outlookCalendarsEnvelope);
 
-  return parseCalendarItems(graphCalendarSchema, payload.value ?? [])
-    .map((calendar) => normalizeOutlookCalendar(calendar))
-    .filter((calendar): calendar is ConnectedCalendar => Boolean(calendar));
+    calendars.push(
+      ...parseCalendarItems(graphCalendarSchema, payload.value ?? [])
+        .map((calendar) => normalizeOutlookCalendar(calendar))
+        .filter((calendar): calendar is ConnectedCalendar => Boolean(calendar)),
+    );
+    nextUrl = payload["@odata.nextLink"] ?? null;
+  }
+  if (nextUrl) throw new Error("Outlook calendar list is incomplete");
+  return calendars;
 }
 
 export async function fetchOutlookCalendarEvents({
   calendarIds,
   timeMin,
   timeMax,
+  priorityAt,
 }: CalendarEventWindow): Promise<CalendarEventsResult> {
   return fanOutCalendars(calendarIds, (calendarId) =>
-    fetchEventsForCalendar(calendarId, timeMin, timeMax),
+    fetchEventsForCalendar(calendarId, timeMin, timeMax, priorityAt),
   );
 }
