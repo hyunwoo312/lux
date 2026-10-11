@@ -86,6 +86,26 @@ export async function writeAccount(account: IntegrationAccount): Promise<void> {
   });
 }
 
+export async function writeAccountIfCurrent(
+  account: IntegrationAccount,
+  previous: IntegrationAccount,
+): Promise<boolean> {
+  const parsed = integrationAccountSchema.parse(account);
+  return withAccountsLock(async () => {
+    const state = await readStorageForWrite();
+    const current = state.accounts[previous.id];
+    if (
+      !current ||
+      current.status !== "connected" ||
+      current.token?.accessToken !== previous.token?.accessToken ||
+      current.lastAuthorizedAt !== previous.lastAuthorizedAt
+    )
+      return false;
+    await writeStorage({ ...state, accounts: { ...state.accounts, [parsed.id]: parsed } });
+    return true;
+  });
+}
+
 export async function replaceProviderAccount(account: IntegrationAccount): Promise<void> {
   const parsed = integrationAccountSchema.parse(account);
   await withAccountsLock(async () => {

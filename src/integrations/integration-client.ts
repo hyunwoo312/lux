@@ -23,7 +23,7 @@ import {
   deleteAccount,
   getAccountByProvider,
   replaceProviderAccount,
-  writeAccount,
+  writeAccountIfCurrent,
 } from "@/integrations/token-store";
 import {
   MAX_ERROR_LENGTH,
@@ -35,7 +35,7 @@ import {
 
 const TOKEN_REFRESH_BUFFER_MS = 300_000;
 
-const rateLimitedUntil = new Map<IntegrationProviderId, number>();
+const rateLimitedUntil = new Map<string, number>();
 
 const providers: Record<IntegrationProviderId, IntegrationProvider> = {
   google: googleProvider,
@@ -153,11 +153,15 @@ export async function disconnectIntegration(providerId: IntegrationProviderId): 
 }
 
 async function markNeedsReconnect(account: IntegrationAccount, message: string): Promise<void> {
-  await writeAccount({
-    ...account,
-    status: "needsReconnect",
-    lastError: message.slice(0, MAX_ERROR_LENGTH),
-  });
+  const written = await writeAccountIfCurrent(
+    {
+      ...account,
+      status: "needsReconnect",
+      lastError: message.slice(0, MAX_ERROR_LENGTH),
+    },
+    account,
+  );
+  if (!written) throw new DOMException("Account changed during request", "AbortError");
 }
 
 function tokenNeedsRefresh(
@@ -218,11 +222,15 @@ async function refreshProviderToken(
         : await requestToken(provider, false, account.token?.accessToken);
   } catch (error) {
     if (error instanceof TemporaryAuthError || error instanceof InvalidResponseError) {
-      await writeAccount({
-        ...account,
-        status: "connected",
-        lastError: error.message.slice(0, MAX_ERROR_LENGTH),
-      });
+      const written = await writeAccountIfCurrent(
+        {
+          ...account,
+          status: "connected",
+          lastError: error.message.slice(0, MAX_ERROR_LENGTH),
+        },
+        account,
+      );
+      if (!written) throw new DOMException("Account changed during request", "AbortError");
       throw error;
     }
     if (error instanceof IntegrationReconnectRequiredError) {
@@ -234,45 +242,54 @@ async function refreshProviderToken(
     throw new Error(message, { cause: error });
   }
 
-  await writeAccount({
-    ...account,
-    status: "connected",
-    lastError: undefined,
-    lastAuthorizedAt: new Date().toISOString(),
-    token: {
-      accessToken: token.accessToken,
-      refreshToken: token.refreshToken ?? account.token?.refreshToken,
-      expiresAt: getExpiresAt(token.expiresIn),
-      tokenType: token.tokenType,
-      scopes: token.scopes,
+  const written = await writeAccountIfCurrent(
+    {
+      ...account,
+      status: "connected",
+      lastError: undefined,
+      lastAuthorizedAt: new Date().toISOString(),
+      token: {
+        accessToken: token.accessToken,
+        refreshToken: token.refreshToken ?? account.token?.refreshToken,
+        expiresAt: getExpiresAt(token.expiresIn),
+        tokenType: token.tokenType,
+        scopes: token.scopes,
+      },
     },
-  });
+    account,
+  );
+  if (!written) throw new DOMException("Account changed during request", "AbortError");
 
   return token.accessToken;
 }
 
-async function markProviderNeedsReconnect(providerId: IntegrationProviderId): Promise<void> {
-  const account = await getAccountByProvider(providerId);
+async function markProviderNeedsReconnect(
+  providerId: IntegrationProviderId,
+  accessToken: string,
+): Promise<void> {
+  const account = await getAccountByProvider(providerId, true);
+  if (account?.token?.accessToken !== accessToken)
+    throw new DOMException("Account changed during request", "AbortError");
   if (account && account.status === "connected") {
     await markNeedsReconnect(account, `${getProvider(providerId).label} needs to be reconnected`);
   }
 }
 
-function assertNotRateLimited(providerId: IntegrationProviderId): void {
-  const until = rateLimitedUntil.get(providerId);
+function assertNotRateLimited(key: string): void {
+  const until = rateLimitedUntil.get(key);
   if (until === undefined) return;
   const waitMs = until - Date.now();
   if (waitMs <= 0) {
-    rateLimitedUntil.delete(providerId);
+    rateLimitedUntil.delete(key);
     return;
   }
   throw new RateLimitError(waitMs);
 }
 
-function recordRateLimit(providerId: IntegrationProviderId, response: Response): Response {
+function recordRateLimit(key: string, response: Response): Response {
   const limited = rateLimitError(response);
-  if (limited) rateLimitedUntil.set(providerId, Date.now() + limited.retryAfterMs);
-  else rateLimitedUntil.delete(providerId);
+  if (limited) rateLimitedUntil.set(key, Date.now() + limited.retryAfterMs);
+  else rateLimitedUntil.delete(key);
   return response;
 }
 
@@ -287,20 +304,27 @@ export async function integrationFetch(
   input: RequestInfo | URL,
   init: RequestInit = {},
 ): Promise<Response> {
-  assertNotRateLimited(providerId);
-
+  const accountId = (await getAccountByProvider(providerId))?.id;
+  const rateKey = `${providerId}:${accountId}`;
+  assertNotRateLimited(rateKey);
   const accessToken = await getProviderAccessToken(providerId);
-  const response = recordRateLimit(providerId, await fetch(input, authorize(init, accessToken)));
+  if ((await getAccountByProvider(providerId))?.id !== accountId)
+    throw new DOMException("Account changed during request", "AbortError");
+  const response = recordRateLimit(rateKey, await fetch(input, authorize(init, accessToken)));
 
   if (response.status !== 401) {
     return response;
   }
 
+  if ((await getAccountByProvider(providerId, true))?.id !== accountId)
+    throw new DOMException("Account changed during request", "AbortError");
   const refreshedToken = await getProviderAccessToken(providerId, accessToken);
-  const retried = recordRateLimit(providerId, await fetch(input, authorize(init, refreshedToken)));
+  if ((await getAccountByProvider(providerId))?.id !== accountId)
+    throw new DOMException("Account changed during request", "AbortError");
+  const retried = recordRateLimit(rateKey, await fetch(input, authorize(init, refreshedToken)));
 
   if (retried.status === 401) {
-    await markProviderNeedsReconnect(providerId);
+    await markProviderNeedsReconnect(providerId, refreshedToken);
   }
 
   return retried;

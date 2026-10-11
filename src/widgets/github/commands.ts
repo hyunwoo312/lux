@@ -12,7 +12,6 @@ import { DEFAULT_DATA, useGithubStore } from "@/widgets/github/useGithubStore";
 import { instanceData } from "@/widgets/core/instances";
 import { needsAccount } from "@/widgets/core/commandSetup";
 import {
-  INBOX_CACHE_KEY,
   type InboxData,
   type InboxIssue,
   type InboxNotification,
@@ -23,6 +22,7 @@ import {
   type ReleasesData,
 } from "@/widgets/github/types";
 import { matchesQuery } from "@/lib/utils";
+import { accountResourceKey } from "@/widgets/core/accountResource";
 
 function showsPrivate(): boolean {
   return instanceData("github", useGithubStore.getState().byInstance, DEFAULT_DATA).every(
@@ -179,7 +179,7 @@ const ACCOUNT_COMMANDS: readonly WidgetCommand[] = [
     keywords: ["inbox", "clear", "dismiss", "unread"],
     run: async () => {
       await markAllGithubNotificationsRead();
-      invalidatePolledResource(INBOX_CACHE_KEY);
+      invalidatePolledResource(accountResourceKey(githubInbox));
     },
   },
 ];

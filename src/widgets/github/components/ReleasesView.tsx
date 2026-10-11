@@ -10,6 +10,8 @@ import { isUnseen, newestPublishedAt } from "@/widgets/github/lib/releases-unsee
 import { visibleItems } from "@/widgets/github/lib/visibility";
 import { useGithub, useGithubStore } from "@/widgets/github/useGithubStore";
 import { type Release, type ReleasesData } from "@/widgets/github/types";
+import { accountResourceKey } from "@/widgets/core/accountResource";
+import { accountFor, useIntegrationStore } from "@/integrations";
 
 export function ReleasesView({ enabled, showPrivate }: { enabled: boolean; showPrivate: boolean }) {
   const newTab = useGithub((d) => d.openBehavior === "newTab");
@@ -35,7 +37,13 @@ export function ReleasesView({ enabled, showPrivate }: { enabled: boolean; showP
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <ReleaseList data={state.data} showPrivate={showPrivate} newTab={newTab} markSeen />
+      <ReleaseList
+        key={accountResourceKey(githubReleases)}
+        data={state.data}
+        showPrivate={showPrivate}
+        newTab={newTab}
+        markSeen
+      />
     </div>
   );
 }
@@ -51,7 +59,11 @@ export function ReleaseList({
   newTab: boolean;
   markSeen?: boolean;
 }) {
-  const [lastSeenAt] = useState(() => useGithubStore.getState().lastSeenReleaseAt);
+  const [lastSeenAt] = useState(() => {
+    const state = useGithubStore.getState();
+    const accountId = accountFor(useIntegrationStore.getState().accounts, "github")?.id;
+    return state.lastSeenAccountId === accountId ? state.lastSeenReleaseAt : undefined;
+  });
   const markReleasesSeen = useGithubStore((s) => s.markReleasesSeen);
   const releases = useMemo(
     () => visibleItems(data.releases, showPrivate),

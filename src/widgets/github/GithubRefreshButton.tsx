@@ -6,17 +6,15 @@ import {
   useResourceGroup,
 } from "@/widgets/core/usePolledResource";
 import { GITHUB_SYNC_COOLDOWN_MS } from "@/widgets/github/useGithubStore";
-import {
-  CONTRIBUTIONS_CACHE_KEY,
-  INBOX_CACHE_KEY,
-  RELEASES_CACHE_KEY,
-} from "@/widgets/github/types";
+import { githubContributions, githubInbox, githubReleases } from "@/widgets/github/lib/resources";
+import { useAccountResourceKeys } from "@/widgets/core/accountResource";
 
-const CACHE_KEYS = [CONTRIBUTIONS_CACHE_KEY, INBOX_CACHE_KEY, RELEASES_CACHE_KEY];
+const RESOURCES = [githubContributions, githubInbox, githubReleases];
 
 export function GithubRefreshButton() {
+  const cacheKeys = useAccountResourceKeys(RESOURCES);
   const staleSince = staleSinceOf(useFreshness("github:"));
-  const { isRefreshing, lastRequestedAt, lastSyncedAt } = useResourceGroup(CACHE_KEYS);
+  const { isRefreshing, lastRequestedAt, lastSyncedAt } = useResourceGroup(cacheKeys);
 
   return (
     <WidgetRefreshButton
@@ -26,7 +24,7 @@ export function GithubRefreshButton() {
       updatedAt={lastSyncedAt}
       staleSince={staleSince}
       cooldownMs={GITHUB_SYNC_COOLDOWN_MS}
-      onRefresh={() => CACHE_KEYS.forEach(refreshPolledResource)}
+      onRefresh={() => cacheKeys.forEach(refreshPolledResource)}
     />
   );
 }

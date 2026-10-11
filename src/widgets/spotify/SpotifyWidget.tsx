@@ -40,7 +40,7 @@ export function SpotifyWidget() {
   const reduced = useReducedMotion();
   const { account, loaded } = useProviderAccount("spotify");
   const connected = account?.status === "connected";
-  const controller = useSpotifyPlayback(connected);
+  const controller = useSpotifyPlayback(connected, account?.id ?? null);
   const timeDisplayMode = useSpotify((d) => d.timeDisplayMode);
   const queueView = useSpotify((d) => d.queueView);
 

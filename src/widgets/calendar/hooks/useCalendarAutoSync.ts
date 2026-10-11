@@ -36,20 +36,32 @@ export function useCalendarAutoSync() {
   const refreshIntervalHours = useCalendar((d) => d.refreshIntervalHours);
   const clearIntegration = useCalendarStore((s) => s.clearIntegration);
   const { connected, loaded } = useConnectedProviders(CALENDAR_PROVIDER_IDS);
-  const connectedKey = connected.join(",");
+  const unreadable = useIntegrationStore((state) => state.unreadable);
+  const connectedKey = useIntegrationStore((state) =>
+    connected.map((id) => accountFor(state.accounts, id)?.id ?? "").join(","),
+  );
   const signedOut = useIntegrationStore(
     useShallow((s) => CALENDAR_PROVIDER_IDS.filter((id) => !accountFor(s.accounts, id))),
   );
   const stored = useCalendar(
-    useShallow((d) => CALENDAR_PROVIDER_IDS.filter((id) => d[id].calendars.length > 0)),
+    useShallow((d) =>
+      CALENDAR_PROVIDER_IDS.filter(
+        (id) => d[id].calendars.length > 0 || d[id].accountId !== undefined,
+      ),
+    ),
   );
 
   useEffect(() => {
-    if (!loaded) return;
+    if (!loaded || unreadable) return;
     for (const providerId of stored) {
-      if (signedOut.includes(providerId)) clearIntegration(instanceId, providerId);
+      const accountId = accountFor(useIntegrationStore.getState().accounts, providerId)?.id;
+      if (
+        signedOut.includes(providerId) ||
+        getCalendarData(instanceId)[providerId].accountId !== accountId
+      )
+        clearIntegration(instanceId, providerId);
     }
-  }, [loaded, signedOut, stored, clearIntegration, instanceId]);
+  }, [loaded, unreadable, signedOut, stored, connectedKey, clearIntegration, instanceId]);
 
   useEffect(() => {
     if (!connectedKey) return;

@@ -21,6 +21,12 @@ import {
 } from "@/widgets/core/sharedResource";
 import { refreshScaleOf } from "@/widgets/core/useWidgetRefreshScale";
 import type { WidgetType } from "@/widgets/core/types";
+import type { IntegrationProviderId } from "@/integrations";
+import {
+  accountResourceKey,
+  fetchForAccount,
+  useAccountResourceKeys,
+} from "@/widgets/core/accountResource";
 
 export {
   RETRY_BASE_MS,
@@ -121,18 +127,20 @@ export type PolledDefinition<T> = {
   parse: (raw: unknown) => T | null;
   fetch: Fetcher<T>;
   persist?: boolean;
+  account?: IntegrationProviderId;
 };
 
 export function usePolledDefinition<T>(
   definition: PolledDefinition<T>,
   options: { enabled?: boolean; isEmpty?: (data: T) => boolean; intervalMs?: number } = {},
 ): PolledResource<T> {
-  return usePolledResource(definition.fetch, {
+  const [cacheKey] = useAccountResourceKeys([definition]);
+  return usePolledResource((signal) => fetchForAccount(definition, cacheKey!, signal), {
     enabled: options.enabled,
     isEmpty: options.isEmpty,
     intervalMs: options.intervalMs ?? definition.intervalMs,
     staleMs: definition.staleMs,
-    cacheKey: definition.cacheKey,
+    cacheKey,
     persist: definition.persist ?? true,
     parsePersisted: definition.parse,
   });
@@ -148,14 +156,15 @@ function polledConfig<T>(
 
 export async function readPolled<T>(definition: PolledDefinition<T>): Promise<T> {
   const scale = refreshScaleOf(definition.widget);
+  const cacheKey = accountResourceKey(definition);
   const data = await readResource<T | undefined, PolledSource<T>>(
-    definition.cacheKey,
+    cacheKey,
     () =>
       new PolledSource<T>(
         polledConfig(
           {
-            key: definition.cacheKey,
-            cacheKey: definition.cacheKey,
+            key: cacheKey,
+            cacheKey,
             scope: "polled",
             staleMs: (definition.staleMs ?? definition.intervalMs) * scale,
             intervalMs: definition.intervalMs * scale,
@@ -163,9 +172,11 @@ export async function readPolled<T>(definition: PolledDefinition<T>): Promise<T>
           definition.parse,
           definition.persist ?? true,
         ),
-        definition.fetch,
+        (signal) => fetchForAccount(definition, cacheKey, signal),
       ),
   );
+  if (definition.account && accountResourceKey(definition) !== cacheKey)
+    throw new DOMException("Account changed during request", "AbortError");
   if (data === undefined) throw new Error("That request came back with nothing.");
   return data;
 }

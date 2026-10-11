@@ -39,6 +39,7 @@ import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 import { retryDelayMs } from "@/widgets/core/sharedResource";
 import { anySpotifyDevice } from "@/widgets/spotify/lib/devices";
 import { clamp } from "@/lib/utils";
+import { accountFor, useIntegrationStore } from "@/integrations";
 
 const RESTART_THRESHOLD_MS = 3_000;
 const PLAYING_POLL_MS = 10_000;
@@ -98,6 +99,8 @@ const get = useSpotifyPlaybackStore.getState;
 
 let refCount = 0;
 let connected = false;
+let connectedAccountId: string | null = null;
+let accountGeneration = 0;
 let polling = false;
 let isVolumeEditing = false;
 let refreshRequestId = 0;
@@ -192,6 +195,7 @@ async function refreshPlayback(): Promise<void> {
 }
 
 async function refreshLikedTrack(trackId: string | null): Promise<void> {
+  const generation = accountGeneration;
   if (trackId === null) {
     if (get().likedTrack !== null) set({ likedTrack: null });
     return;
@@ -199,14 +203,17 @@ async function refreshLikedTrack(trackId: string | null): Promise<void> {
   if (get().likedTrack?.trackId === trackId) return;
   try {
     const liked = await getSpotifySavedTrackFlags([trackId]);
+    if (generation !== accountGeneration) return;
     if (get().playback?.track.id !== trackId) return;
     set({ likedTrack: { trackId, isLiked: liked.has(trackId) } });
   } catch {
+    if (generation !== accountGeneration) return;
     set({ likedTrack: { trackId, isLiked: false } });
   }
 }
 
 async function refreshContextName(context: SpotifyPlaybackContext | null): Promise<void> {
+  const generation = accountGeneration;
   if (context === null) {
     if (get().contextLabel !== null) set({ contextLabel: null });
     return;
@@ -214,9 +221,11 @@ async function refreshContextName(context: SpotifyPlaybackContext | null): Promi
   if (get().contextLabel?.uri === context.uri) return;
   try {
     const name = await getSpotifyContextName(context);
+    if (generation !== accountGeneration) return;
     if (get().playback?.context?.uri !== context.uri) return;
     set({ contextLabel: { uri: context.uri, name } });
   } catch {
+    if (generation !== accountGeneration) return;
     set({ contextLabel: { uri: context.uri, name: null } });
   }
 }
@@ -226,33 +235,41 @@ const DEVICES_TTL_MS = 30_000;
 let devicesLoadedAt = 0;
 
 async function loadDevices(): Promise<void> {
+  const generation = accountGeneration;
   set({ devicesLoading: true, devicesError: null });
   try {
-    set({ devices: await getSpotifyDevices() });
+    const devices = await getSpotifyDevices();
+    if (generation !== accountGeneration) return;
+    set({ devices });
     devicesLoadedAt = Date.now();
   } catch (caught) {
+    if (generation !== accountGeneration) return;
     if (caught instanceof RateLimitError) {
       set({ devicesError: "Spotify is busy — try again in a moment." });
     } else {
       set({ devicesError: caught instanceof Error ? caught.message : "Unable to load devices." });
     }
   } finally {
-    set({ devicesLoading: false });
+    if (generation === accountGeneration) set({ devicesLoading: false });
   }
 }
 
 export async function loadSpotifyQueue(): Promise<void> {
+  const generation = accountGeneration;
   set({ queueLoading: true, queueError: null });
   try {
-    set({ queue: await getSpotifyQueue() });
+    const queue = await getSpotifyQueue();
+    if (generation !== accountGeneration) return;
+    set({ queue });
   } catch (caught) {
+    if (generation !== accountGeneration) return;
     if (caught instanceof RateLimitError) {
       set({ queueError: "Spotify is busy — try again in a moment." });
     } else {
       set({ queueError: caught instanceof Error ? caught.message : "Unable to load the queue." });
     }
   } finally {
-    set({ queueLoading: false });
+    if (generation === accountGeneration) set({ queueLoading: false });
   }
 }
 
@@ -277,14 +294,23 @@ function queuePlaybackAction(
   afterAction: (() => void) | undefined,
   pendingAction: SpotifyPendingAction,
 ): void {
-  queueFor(pendingAction)(() => runPlaybackAction(action, afterAction, pendingAction));
+  const generation = accountGeneration;
+  queueFor(pendingAction)(() =>
+    generation === accountGeneration
+      ? runPlaybackAction(action, afterAction, pendingAction)
+      : Promise.resolve(),
+  );
 }
 
 export function skipSpotifyAhead(steps: number): Promise<void> {
+  const generation = accountGeneration;
   return new Promise((resolve, reject) => {
     skipQueue(async () => {
       try {
-        for (let step = 0; step < steps; step += 1) await skipSpotifyNext();
+        for (let step = 0; step < steps; step += 1) {
+          if (generation !== accountGeneration) throw new Error("Account changed during request");
+          await skipSpotifyNext();
+        }
         resolve();
       } catch (caught) {
         reject(caught instanceof Error ? caught : new Error("Couldn't play that track."));
@@ -298,16 +324,19 @@ async function runPlaybackAction(
   afterAction: (() => void) | undefined,
   pendingAction: SpotifyPendingAction,
 ): Promise<void> {
+  const generation = accountGeneration;
   try {
     setPendingAction(pendingAction, true);
     set({ error: null });
     await action();
+    if (generation !== accountGeneration) return;
     afterAction?.();
     scheduleRefreshBursts(FOLLOW_UP_REFRESH_DELAYS_MS);
   } catch (caught) {
+    if (generation !== accountGeneration) return;
     set({ error: playbackError(caught, "Unable to control Spotify playback") });
   } finally {
-    setPendingAction(pendingAction, false);
+    if (generation === accountGeneration) setPendingAction(pendingAction, false);
   }
 }
 
@@ -443,20 +472,23 @@ export function selectSpotifyDevice(device: SpotifyPlaybackDevice): void {
 }
 
 async function refresh(): Promise<void> {
+  const generation = accountGeneration;
   if (get().pendingActions.has("refresh") || Date.now() < retryAt) return;
   try {
     setPendingAction("refresh", true);
     await refreshPlayback();
   } finally {
-    setPendingAction("refresh", false);
+    if (generation === accountGeneration) setPendingAction("refresh", false);
   }
 }
 
 export async function playSpotifyResult(result: SpotifySearchResult): Promise<void> {
+  const generation = accountGeneration;
   const target = anySpotifyDevice(await spotifyDevices());
+  assertAccountGeneration(generation);
   if (!target) throw new Error(NO_DEVICE_MESSAGE);
   await startSpotifyPlayback(result, target.id);
-  requestSpotifyPlaybackRefresh();
+  if (generation === accountGeneration) requestSpotifyPlaybackRefresh();
 }
 
 export function setSpotifyVolumeTo(volumePercent: number): void {
@@ -473,8 +505,10 @@ export function nudgeSpotifyVolume(delta: number): void {
 }
 
 export async function spotifyDevices(): Promise<SpotifyPlaybackDevice[]> {
+  const generation = accountGeneration;
   const fresh = get().devices.length > 0 && Date.now() - devicesLoadedAt < DEVICES_TTL_MS;
   if (!fresh) await loadDevices();
+  assertAccountGeneration(generation);
   const { devices, devicesError } = get();
   if (devicesError !== null) throw new Error(devicesError);
   return devices;
@@ -486,16 +520,24 @@ async function ensureSpotifyPlayback(): Promise<void> {
 }
 
 export async function ensureSpotifyTarget(): Promise<void> {
+  const generation = accountGeneration;
   await ensureSpotifyPlayback();
+  assertAccountGeneration(generation);
   if (get().playback) return;
 
   const target = anySpotifyDevice(await spotifyDevices());
+  assertAccountGeneration(generation);
   if (!target) throw new Error(NO_DEVICE_MESSAGE);
   if (!target.isActive) {
     await transferSpotifyPlayback(target.id);
+    assertAccountGeneration(generation);
     await refreshPlayback();
   }
   if (get().playback === null) throw new Error(NOTHING_QUEUED_MESSAGE);
+}
+
+function assertAccountGeneration(generation: number): void {
+  if (generation !== accountGeneration) throw new Error("Account changed during request");
 }
 
 export function requestSpotifyPlaybackRefresh(): void {
@@ -563,12 +605,26 @@ function releaseEngine(): void {
   syncEngine();
 }
 
-function setConnected(next: boolean): void {
-  if (next === connected) return;
+function setConnected(next: boolean, accountId: string | null = null): void {
+  if (next === connected && accountId === connectedAccountId) return;
+  stopPolling();
+  accountGeneration += 1;
+  refreshRequestId += 1;
   connected = next;
-  set({ isLoading: connected });
+  connectedAccountId = accountId;
+  devicesLoadedAt = 0;
+  lastPolledAt = 0;
+  failureCount = 0;
+  retryAt = 0;
+  isVolumeEditing = false;
+  set({ ...initialState(), isLoading: connected });
   syncEngine();
 }
+
+useIntegrationStore.subscribe((state) => {
+  const account = accountFor(state.accounts, "spotify");
+  setConnected(account?.status === "connected", account?.id ?? null);
+});
 
 export type SpotifyPlaybackController = {
   playback: SpotifyPlaybackState | null;
@@ -597,15 +653,18 @@ export type SpotifyPlaybackController = {
   refresh: () => Promise<void>;
 };
 
-export function useSpotifyPlayback(connectedArg: boolean): SpotifyPlaybackController {
+export function useSpotifyPlayback(
+  connectedArg: boolean,
+  accountId: string | null = null,
+): SpotifyPlaybackController {
   useEffect(() => {
     acquireEngine();
     return () => releaseEngine();
   }, []);
 
   useEffect(() => {
-    setConnected(connectedArg);
-  }, [connectedArg]);
+    setConnected(connectedArg, accountId);
+  }, [connectedArg, accountId]);
 
   const state = useSpotifyPlaybackStore(
     useShallow((s) => ({

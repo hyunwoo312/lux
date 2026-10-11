@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { integrationFetch } from "@/integrations/integration-client";
+import { disconnectIntegration, integrationFetch } from "@/integrations/integration-client";
 import { writeSpotifyClientId } from "@/integrations/provider-config";
-import { getAccountByProvider, writeAccount } from "@/integrations/token-store";
+import {
+  getAccountByProvider,
+  replaceProviderAccount,
+  writeAccount,
+} from "@/integrations/token-store";
 import type { IntegrationAccount } from "@/integrations/types";
 
 const CONFIG_KEY = "lux:integration-config";
@@ -49,6 +53,62 @@ afterEach(() => {
 });
 
 describe("refreshing a Spotify token", () => {
+  it("does not carry a previous account's rate limit into a replacement account", async () => {
+    await replaceProviderAccount({ ...expiredSpotifyAccount(), id: "spotify-limited" });
+    const request = vi.fn(async (input: RequestInfo | URL) =>
+      String(input).includes("accounts.spotify.com")
+        ? tokenResponse()
+        : new Response("{}", { status: 429, headers: { "Retry-After": "3600" } }),
+    );
+    vi.stubGlobal("fetch", request);
+    expect((await integrationFetch("spotify", API_URL)).status).toBe(429);
+    await replaceProviderAccount({
+      ...expiredSpotifyAccount(),
+      id: "spotify-unlimited",
+      token: {
+        ...expiredSpotifyAccount().token!,
+        accessToken: "replacement",
+        expiresAt: Date.now() + 3_600_000,
+      },
+    });
+    request.mockResolvedValue(new Response("{}", { status: 200 }));
+    expect((await integrationFetch("spotify", API_URL)).status).toBe(200);
+  });
+
+  it.each(["disconnect", "replacement"] as const)(
+    "discards a refresh completed after account %s",
+    async (change) => {
+      let finish!: (response: Response) => void;
+      const request = vi.fn((input: RequestInfo | URL) =>
+        String(input).includes("accounts.spotify.com")
+          ? new Promise<Response>((resolve) => {
+              finish = resolve;
+            })
+          : Promise.resolve(new Response("{}")),
+      );
+      vi.stubGlobal("fetch", request);
+      const pending = integrationFetch("spotify", API_URL);
+      await vi.waitFor(() => expect(request).toHaveBeenCalled());
+      if (change === "disconnect") await disconnectIntegration("spotify");
+      else
+        await replaceProviderAccount({
+          ...expiredSpotifyAccount(),
+          id: "spotify-2",
+          token: {
+            ...expiredSpotifyAccount().token!,
+            accessToken: "replacement-access-token",
+            expiresAt: Date.now() + 3_600_000,
+          },
+        });
+      finish(tokenResponse());
+      await expect(pending).rejects.toThrow("Account changed");
+      const current = await getAccountByProvider("spotify", true);
+      if (change === "disconnect") expect(current).toBeNull();
+      else expect(current?.token?.accessToken).toBe("replacement-access-token");
+      expect(request).toHaveBeenCalledTimes(1);
+    },
+  );
+
   it("keeps the account connected when the client ID cannot be read", async () => {
     vi.stubGlobal(
       "fetch",

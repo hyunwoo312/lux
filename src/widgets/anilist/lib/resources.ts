@@ -50,6 +50,7 @@ export function anilistDiscover(
   return {
     widget: "anilist",
     cacheKey: anilistKeys.discover(lang, feed, type),
+    account: authed ? "anilist" : undefined,
     intervalMs: DISCOVER_REFRESH_MS,
     parse: parseCachedDiscover,
     fetch: (signal) => fetchDiscover(lang, feed, type, authed, signal),

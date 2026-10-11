@@ -37,6 +37,7 @@ function library(
 ): PolledDefinition<SpotifySearchResult[]> {
   return {
     widget: "spotify",
+    account: "spotify",
     cacheKey: `spotify:${name}`,
     intervalMs: SPOTIFY_LIBRARY_REFRESH_MS,
     parse,

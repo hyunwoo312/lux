@@ -4,6 +4,7 @@ import { createPersistedStore } from "@/lib/storage";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
 import { openBehaviorSchema, type OpenBehavior } from "@/lib/open-url";
+import { accountFor, useIntegrationStore } from "@/integrations";
 import {
   GITHUB_VIEWS,
   INBOX_FILTERS,
@@ -25,6 +26,7 @@ export type GithubData = {
 type GithubStoreState = {
   byInstance: Record<string, GithubData>;
   lastSeenReleaseAt?: string;
+  lastSeenAccountId?: string;
   setView: (instanceId: string, view: GithubView) => void;
   setShowPrivate: (instanceId: string, showPrivate: boolean) => void;
   setShowDrafts: (instanceId: string, showDrafts: boolean) => void;
@@ -56,6 +58,7 @@ const configSchema = z.object({
 const persistedSchema = z.object({
   byInstance: tolerantRecord(configSchema),
   lastSeenReleaseAt: z.string().optional().catch(undefined),
+  lastSeenAccountId: z.string().optional().catch(undefined),
 });
 
 const LEGACY_KEYS = ["view", "showPrivate", "openBehavior", "contributions"] as const;
@@ -96,8 +99,13 @@ export const useGithubStore = createPersistedStore<GithubStoreState>()(
     markReleasesSeen: (publishedAt) => {
       if (!publishedAt) return;
       const seen = get().lastSeenReleaseAt;
-      if (!seen || Date.parse(publishedAt) > Date.parse(seen)) {
-        set({ lastSeenReleaseAt: publishedAt });
+      const accountId = accountFor(useIntegrationStore.getState().accounts, "github")?.id;
+      if (
+        accountId !== get().lastSeenAccountId ||
+        !seen ||
+        Date.parse(publishedAt) > Date.parse(seen)
+      ) {
+        set({ lastSeenReleaseAt: publishedAt, lastSeenAccountId: accountId });
       }
     },
   }),
@@ -107,6 +115,7 @@ export const useGithubStore = createPersistedStore<GithubStoreState>()(
     partialize: (state) => ({
       byInstance: state.byInstance,
       lastSeenReleaseAt: state.lastSeenReleaseAt,
+      lastSeenAccountId: state.lastSeenAccountId,
     }),
     migrate: (persisted, version) => {
       if (version >= 2) return persisted;
@@ -119,6 +128,7 @@ export const useGithubStore = createPersistedStore<GithubStoreState>()(
       ...current,
       byInstance: parsed.byInstance,
       lastSeenReleaseAt: parsed.lastSeenReleaseAt,
+      lastSeenAccountId: parsed.lastSeenAccountId,
     }),
   },
 );

@@ -61,6 +61,7 @@ type ProviderCalendarSettings = {
   failureCount?: number;
   retryAt?: number;
   coverageLimited?: boolean;
+  accountId?: string;
 };
 
 type SyncWindow = Omit<CalendarEventWindow, "calendarIds">;
@@ -198,6 +199,7 @@ const providerSettingsSchema = z.object({
   failureCount: z.number().optional().catch(undefined),
   retryAt: z.number().optional().catch(undefined),
   coverageLimited: z.boolean().optional().catch(undefined),
+  accountId: z.string().optional().catch(undefined),
 });
 
 const configSchema = z.object({
@@ -490,15 +492,16 @@ export const useCalendarStore = createPersistedStore<CalendarState>()(
           const now = Date.now();
           let google = current.google;
           let microsoft = current.microsoft;
-          for (const { providerId, result, original } of accepted) {
+          for (const { providerId, result, original, accountId } of accepted) {
             const selection = current[providerId];
             const changed =
               selection.enabledCalendarIds.join("\u0000") !==
                 original.enabledCalendarIds.join("\u0000") ||
               selection.selectionChosen !== original.selectionChosen;
-            const settings = result.failed
-              ? result.settings
-              : { ...result.settings, lastSyncedAt: now };
+            const settings = {
+              ...(result.failed ? result.settings : { ...result.settings, lastSyncedAt: now }),
+              accountId,
+            };
             const merged = changed
               ? {
                   ...settings,
