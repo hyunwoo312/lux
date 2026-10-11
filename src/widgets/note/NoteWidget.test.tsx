@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { NoteWidget } from "@/widgets/note/NoteWidget";
 import { useNoteStore } from "@/widgets/note/useNoteStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import { NOTE_MAX_LENGTH } from "@/widgets/note/types";
+import { readNoteDraft, saveNoteDraft } from "@/widgets/note/lib/drafts";
 
 const ID = "note-1";
 
@@ -34,6 +35,60 @@ afterEach(() => {
 });
 
 describe("NoteWidget", () => {
+  it("journals the input synchronously before the store debounce", () => {
+    renderWidget();
+    fireEvent.change(screen.getByLabelText("Note"), { target: { value: "recover me" } });
+    expect(storedText()).toBeUndefined();
+    expect(readNoteDraft(ID)?.text).toBe("recover me");
+  });
+
+  it("recovers a draft on mount", () => {
+    seedNote(ID, "saved");
+    saveNoteDraft(ID, "saved tail", "saved", 0);
+    renderWidget();
+    expect(screen.getByLabelText("Note")).toHaveValue("saved tail");
+    expect(storedText()).toBe("saved tail");
+  });
+
+  it("keeps a conflicting draft until the user chooses the saved version", () => {
+    seedNote(ID, "newer edit");
+    localStorage.setItem(
+      `lux.note.draft.${ID}:closed-tab`,
+      JSON.stringify({
+        text: "my edits",
+        baseText: "older edit",
+        baseAt: 0,
+        at: Date.now(),
+        conflict: false,
+      }),
+    );
+    const { unmount } = renderWidget();
+    expect(screen.getByLabelText("Note")).toHaveValue("my edits");
+    expect(screen.getByRole("status")).toHaveTextContent(/another tab/);
+    vi.advanceTimersByTime(1000);
+    expect(storedText()).toBe("newer edit");
+    fireEvent.click(screen.getByRole("button", { name: "Use saved" }));
+    expect(screen.getByLabelText("Note")).toHaveValue("newer edit");
+    expect(readNoteDraft(ID)).toBeUndefined();
+    unmount();
+    renderWidget();
+    expect(screen.queryByRole("button", { name: "Use saved" })).not.toBeInTheDocument();
+  });
+
+  it("allows keeping edits after a remote change while typing", () => {
+    seedNote(ID, "saved");
+    renderWidget();
+    fireEvent.change(screen.getByLabelText("Note"), { target: { value: "my edits" } });
+    act(() => {
+      useNoteStore.setState({
+        byInstance: { [ID]: { text: "remote edit", fontSize: "base", updatedAt: Date.now() + 5 } },
+      });
+    });
+    vi.advanceTimersByTime(1000);
+    expect(storedText()).toBe("remote edit");
+    fireEvent.click(screen.getByRole("button", { name: "Keep mine" }));
+    expect(storedText()).toBe("my edits");
+  });
   it("does not commit to the store until the debounce elapses", () => {
     renderWidget();
     fireEvent.change(screen.getByLabelText("Note"), { target: { value: "draft" } });

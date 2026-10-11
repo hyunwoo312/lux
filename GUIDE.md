@@ -301,7 +301,7 @@ Somewhere to put the thing you will need in ten minutes. There is no save button
 
 _Typing into a note._
 
-The header keeps a running word and character count, with copy and download beside it. Each note widget is its own note, so keep as many as you like — one for the day, one for scratch, one for whatever you keep forgetting.
+The header keeps a running word and character count, with copy and download beside it. Each note widget is its own note. Lux keeps a local recovery draft as you type, including when you close the tab immediately. If another tab changes the same note, choose **Keep mine** or **Use saved** before saving over it.
 
 Each widget carries a settings control in its own header, outside edit mode. That is where you choose whether it sits on glass or a solid surface, and which accent colour it uses. You can add more than one of the same widget.
 

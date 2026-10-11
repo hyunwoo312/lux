@@ -22,6 +22,7 @@ import { SettingsDialog } from "@/settings";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { sweepStaleResourceCaches } from "@/widgets/core/resourceCacheSweep";
 import { usePersistHydrated } from "@/hooks/usePersistHydrated";
+import { StorageWriteNotice } from "@/components/StorageWriteNotice";
 
 const SWEEP_TIMEOUT_MS = 10_000;
 
@@ -71,6 +72,7 @@ export function App() {
         </div>
       </FrostImageProvider>
       <WidgetDragOverlay />
+      <StorageWriteNotice />
       <Toaster />
       <SettingsDialog />
       <CommandPalette />

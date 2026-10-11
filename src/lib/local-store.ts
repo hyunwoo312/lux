@@ -1,3 +1,5 @@
+import { reportStorageFailure, reportStorageSuccess } from "@/lib/storage-status";
+
 export const WELCOME_SEEN_KEY = "lux.welcome.seen";
 export const DASHBOARD_SEEDED_KEY = "lux.dashboard.seeded";
 
@@ -64,13 +66,24 @@ export function setLocal(key: string, value: string): boolean {
   for (;;) {
     try {
       localStorage.setItem(key, value);
+      if (!isResourceCacheKey(key)) reportStorageSuccess(key, value);
       return true;
     } catch (error) {
       if (!isQuotaError(error)) {
         console.warn(`Failed to write "${key}" to local storage`, error);
+        if (!isResourceCacheKey(key))
+          reportStorageFailure(key, async () => {
+            setLocal(key, value);
+          });
         return false;
       }
-      if (!evictOldestResourceCache()) return false;
+      if (!evictOldestResourceCache()) {
+        if (!isResourceCacheKey(key))
+          reportStorageFailure(key, async () => {
+            setLocal(key, value);
+          });
+        return false;
+      }
     }
   }
 }
@@ -78,7 +91,12 @@ export function setLocal(key: string, value: string): boolean {
 export function removeLocal(key: string): void {
   try {
     localStorage.removeItem(key);
+    if (!isResourceCacheKey(key)) reportStorageSuccess(key, undefined);
   } catch {
+    if (!isResourceCacheKey(key))
+      reportStorageFailure(key, async () => {
+        removeLocal(key);
+      });
     return;
   }
 }

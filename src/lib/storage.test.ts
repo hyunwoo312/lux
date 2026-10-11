@@ -1,7 +1,14 @@
 import { z } from "zod";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { createGatedChromeStorage, read, remove, watchStorage, write } from "@/lib/storage";
+import {
+  createGatedChromeStorage,
+  flushStorageWrites,
+  read,
+  remove,
+  watchStorage,
+  write,
+} from "@/lib/storage";
 
 const schema = z.object({ count: z.number() });
 const fallback = { count: 0 };
@@ -75,6 +82,27 @@ describe("watchStorage", () => {
 });
 
 describe("createGatedChromeStorage", () => {
+  it("serializes writes so a slow previous save cannot replace the latest state", async () => {
+    const storage = createGatedChromeStorage<{ n: number }>();
+    await storage.getItem("ordered");
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const originalSet = chrome.storage.local.set;
+    const set = vi.spyOn(chrome.storage.local, "set").mockImplementationOnce(async (items) => {
+      await held;
+      await originalSet(items);
+    });
+    const first = storage.setItem("ordered", { state: { n: 1 }, version: 1 });
+    const second = storage.setItem("ordered", { state: { n: 2 }, version: 1 });
+    await vi.waitFor(() => expect(set).toHaveBeenCalledTimes(1));
+    release();
+    await Promise.all([first, second, flushStorageWrites()]);
+    expect(await chrome.storage.local.get("lux:ordered")).toMatchObject({
+      "lux:ordered": { state: { n: 2 } },
+    });
+  });
   const settled = () => new Promise((resolve) => setTimeout(resolve, 0));
 
   function makeStore() {

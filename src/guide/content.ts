@@ -331,7 +331,7 @@ const WIDGET_BLOCKS: Record<string, GuideBlock[]> = {
     },
     {
       kind: "prose",
-      text: "The header keeps a running word and character count, with copy and download beside it. Each note widget is its own note, so keep as many as you like — one for the day, one for scratch, one for whatever you keep forgetting.",
+      text: "The header keeps a running word and character count, with copy and download beside it. Each note widget is its own note. Lux keeps a local recovery draft as you type, including when you close the tab immediately. If another tab changes the same note, choose **Keep mine** or **Use saved** before saving over it.",
     },
   ],
   quickAccess: [

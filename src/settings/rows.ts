@@ -118,8 +118,9 @@ export const STORING = section(
 
 export const BACKUP = section("storage", "Backup & restore", {
   file: {
-    title: "Your whole setup, in one file",
-    description: "Widgets, layout, preferences and shortcuts. Accounts are not included.",
+    title: "Your settings, in one file",
+    description:
+      "Widgets, layout, preferences, notes and shortcuts. Accounts and uploaded image files are not included.",
   },
 });
 

@@ -1,9 +1,11 @@
 import { z } from "zod";
-import { setLocal } from "@/lib/local-store";
+import { flushStorageWrites, preparePersistedStore } from "@/lib/storage";
+import { LEGACY_KEY_ALIASES, prepareLegacyProfileValue, PROFILE_VERSION } from "@/lib/profile";
+import { storageFailures } from "@/lib/storage-status";
 
 const CHROME_PREFIX = "lux:";
 const LOCAL_PREFIX = "lux.";
-const EXCLUDED = new Set(["lux:integrations", "lux:integration-config"]);
+const EXCLUDED = new Set(["lux:integrations", "lux:integration-config", "lux:profile"]);
 const MARKER = "lux-settings-backup";
 const BACKUP_VERSION = 3;
 const MAX_BACKUP_BYTES = 8 * 1024 * 1024;
@@ -36,6 +38,9 @@ function normalizeValue(value: unknown): unknown {
 }
 
 export async function exportSettings(): Promise<void> {
+  await flushStorageWrites();
+  if (storageFailures().length > 0)
+    throw new Error("Save your pending changes before exporting settings.");
   const stored = await chrome.storage.local.get(null);
   const chromeLocal: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(stored)) {
@@ -101,19 +106,63 @@ export async function importSettings(file: File): Promise<void> {
   }
 
   const chromeEntries: Record<string, unknown> = {};
+  const profile = normalizeValue(parsed.chromeLocal["lux:profile"]);
+  const profileVersion = z.object({ version: z.number().int().nonnegative() }).safeParse(profile);
+  if (profile !== undefined && !profileVersion.success)
+    throw new Error("The backup contains an unreadable profile version.");
+  if (profileVersion.success && profileVersion.data.version > PROFILE_VERSION)
+    throw new Error(
+      "This backup was created by a newer version of Lux. Update Lux, then try again.",
+    );
   for (const [key, value] of Object.entries(parsed.chromeLocal)) {
-    if (isBackupKey(key)) chromeEntries[key] = normalizeValue(value);
+    const canonical = LEGACY_KEY_ALIASES[key] ?? key;
+    if (!isBackupKey(canonical)) continue;
+    if (key !== canonical && canonical in parsed.chromeLocal) continue;
+    const normalized = normalizeValue(value);
+    chromeEntries[canonical] = await preparePersistedStore(
+      canonical.slice(CHROME_PREFIX.length),
+      !profileVersion.success || profileVersion.data.version < PROFILE_VERSION
+        ? prepareLegacyProfileValue(canonical, normalized)
+        : normalized,
+    );
   }
   const localEntries: Record<string, string> = {};
   for (const [key, value] of Object.entries(parsed.local)) {
     if (key.startsWith(LOCAL_PREFIX)) localEntries[key] = value;
   }
 
-  await chrome.storage.local.set(chromeEntries);
-  await pruneKeysMissingFrom(chromeEntries);
-
-  for (const [key, value] of Object.entries(localEntries)) setLocal(key, value);
-  pruneLocalKeysMissingFrom(localEntries);
+  await flushStorageWrites();
+  const stored = await chrome.storage.local.get(null);
+  const previousChrome = Object.fromEntries(
+    Object.entries(stored).filter(([key]) => isBackupKey(key)),
+  );
+  const previousLocal: Record<string, string> = {};
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (!key?.startsWith(LOCAL_PREFIX)) continue;
+    const value = localStorage.getItem(key);
+    if (value !== null) previousLocal[key] = value;
+  }
+  try {
+    await chrome.storage.local.set(chromeEntries);
+    await pruneKeysMissingFrom(chromeEntries);
+    for (const [key, value] of Object.entries(localEntries)) {
+      localStorage.setItem(key, value);
+    }
+    pruneLocalKeysMissingFrom(localEntries);
+  } catch (error) {
+    try {
+      await chrome.storage.local.set(previousChrome);
+      await pruneKeysMissingFrom(previousChrome);
+      pruneLocalKeysMissingFrom(previousLocal);
+      for (const [key, value] of Object.entries(previousLocal)) localStorage.setItem(key, value);
+    } catch {
+      throw new Error(
+        "Restore failed and some settings could not be recovered. Keep this tab open and export a backup before retrying.",
+      );
+    }
+    throw error;
+  }
 
   location.reload();
 }

@@ -1,14 +1,12 @@
-import type { ChangeEvent, KeyboardEvent } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { enterTween, exitTween } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-import { continueList, toggleCheckbox, type ListEdit } from "@/widgets/note/lib/lists";
 import { NOTE_MAX_LENGTH, type NoteFontSize } from "@/widgets/note/types";
-import { useNote, useNoteStore } from "@/widgets/note/useNoteStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import type { WidgetContentProps } from "@/widgets/core/types";
-import { useTransientState } from "@/hooks/useTransientState";
+import { useNoteEditor } from "@/widgets/note/hooks/useNoteEditor";
+import { Button } from "@/components/ui/button";
 
 const FONT_SIZE_CLASS: Record<NoteFontSize, string> = {
   sm: "text-body",
@@ -16,96 +14,31 @@ const FONT_SIZE_CLASS: Record<NoteFontSize, string> = {
   lg: "text-title",
 };
 
-const COMMIT_DELAY_MS = 400;
-const OVERFLOW_NOTICE_MS = 4000;
-
 export function NoteWidget({ justAdded }: WidgetContentProps) {
   const id = useWidgetInstanceId();
-  const { text, fontSize } = useNote(id);
-  const setText = useNoteStore((s) => s.setText);
+  const {
+    ref,
+    value,
+    fontSize,
+    hydrated,
+    dropped,
+    conflict,
+    commit,
+    handleChange,
+    handleKeyDown,
+    keepMine,
+    useSaved,
+  } = useNoteEditor(id);
   const reduced = useReducedMotion();
-  const ref = useRef<HTMLTextAreaElement>(null);
-
-  const [value, setValue] = useState(text);
-  const [dropped, reportDropped] = useTransientState(0, OVERFLOW_NOTICE_MS);
-  const valueRef = useRef(value);
-  valueRef.current = value;
-  const committedRef = useRef(text);
-  const commitTimer = useRef<number | undefined>(undefined);
-
   useEffect(() => {
-    if (text !== committedRef.current) {
-      committedRef.current = text;
-      setValue(text);
-    }
-  }, [text]);
-
-  const commit = useCallback(() => {
-    window.clearTimeout(commitTimer.current);
-    if (valueRef.current === committedRef.current) return;
-    committedRef.current = valueRef.current;
-    setText(id, valueRef.current);
-  }, [id, setText]);
-
-  useEffect(() => commit, [commit]);
-
-  useEffect(() => {
-    if (justAdded) ref.current?.focus();
-  }, [justAdded]);
-
-  const schedule = (next: string) => {
-    setValue(next);
-    window.clearTimeout(commitTimer.current);
-    commitTimer.current = window.setTimeout(commit, COMMIT_DELAY_MS);
-  };
-
-  const limitFor = () => Math.max(NOTE_MAX_LENGTH, valueRef.current.length);
-
-  const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    const next = event.target.value;
-    const limit = limitFor();
-    if (next.length > limit) {
-      reportDropped(next.length - limit);
-      schedule(next.slice(0, limit));
-      return;
-    }
-    schedule(next);
-  };
-
-  const applyEdit = (edit: ListEdit) => {
-    const limit = limitFor();
-    if (edit.text.length > limit) {
-      reportDropped(edit.text.length - limit);
-      return;
-    }
-    schedule(edit.text);
-    requestAnimationFrame(() => ref.current?.setSelectionRange(edit.caret, edit.caret));
-  };
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    const field = event.currentTarget;
-    if (field.selectionStart !== field.selectionEnd) return;
-
-    if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
-      const edit = toggleCheckbox(field.value, field.selectionStart);
-      if (!edit) return;
-      event.preventDefault();
-      applyEdit(edit);
-      return;
-    }
-
-    if (event.key === "Enter" && !event.shiftKey) {
-      const edit = continueList(field.value, field.selectionStart);
-      if (!edit) return;
-      event.preventDefault();
-      applyEdit(edit);
-    }
-  };
+    if (justAdded && hydrated) ref.current?.focus();
+  }, [justAdded, hydrated, ref]);
 
   return (
     <div className="relative h-full">
       <textarea
         ref={ref}
+        disabled={!hydrated}
         value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
@@ -119,8 +52,29 @@ export function NoteWidget({ justAdded }: WidgetContentProps) {
             placeholder:text-ink-3
           `,
           FONT_SIZE_CLASS[fontSize],
+          conflict !== null && "pb-28",
         )}
       />
+      {conflict !== null && (
+        <div
+          role="status"
+          className="
+            bg-background/95 absolute inset-x-0 bottom-0 flex flex-col gap-2 rounded-md p-2
+          "
+        >
+          <p className="text-caption text-ink">
+            This note changed in another tab. Keep your edits or use the saved version.
+          </p>
+          <div className="flex gap-2">
+            <Button size="xs" variant="secondary" onClick={keepMine}>
+              Keep mine
+            </Button>
+            <Button size="xs" variant="ghost" onClick={useSaved}>
+              Use saved
+            </Button>
+          </div>
+        </div>
+      )}
       <AnimatePresence>
         {dropped > 0 && (
           <motion.p

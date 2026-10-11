@@ -54,7 +54,12 @@ export const BROWSER_LOCAL_KEYS = [
   "lux.image.newtab-queue",
 ];
 
-export const BROWSER_LOCAL_PREFIXES = ["lux:polled:", "lux:paged:"];
+export const BROWSER_LOCAL_PREFIXES = ["lux:polled:", "lux:paged:", "lux.note.draft."];
+
+export const LEGACY_KEY_ALIASES: Record<string, string> = {
+  "lux:lux:feedback": "lux:feedback",
+  "lux:widget-settings": "lux:widget:settings",
+};
 
 export const ASSET_DATABASES = ["lux.wallpaper-media", "lux.image-media"];
 
@@ -150,6 +155,30 @@ function adoptStockIndexSymbols(entry: Record<string, unknown>): Record<string, 
   };
 }
 
+export function prepareLegacyProfileValue(key: string, value: unknown): unknown {
+  const migrate =
+    key === "lux:widget:calendar"
+      ? padCalendarAnchors
+      : key === "lux:widget:stocks"
+        ? adoptStockIndexSymbols
+        : null;
+  if (!migrate || !isRecord(value)) return value;
+  const envelope = isRecord(value.state);
+  const state = envelope ? (value.state as Record<string, unknown>) : value;
+  const next = isRecord(state.byInstance)
+    ? {
+        ...state,
+        byInstance: Object.fromEntries(
+          Object.entries(state.byInstance).map(([id, entry]) => [
+            id,
+            isRecord(entry) ? (migrate(entry) ?? entry) : entry,
+          ]),
+        ),
+      }
+    : (migrate(state) ?? state);
+  return envelope ? { ...value, state: next } : next;
+}
+
 async function renameSyncStampToAuthorized(): Promise<void> {
   const key = "lux:integrations";
   const stored = await chrome.storage.local.get(key);
@@ -176,8 +205,7 @@ const MIGRATIONS: Migration[] = [
   {
     toVersion: 2,
     run: async () => {
-      await renameKey("lux:lux:feedback", "lux:feedback");
-      await renameKey("lux:widget-settings", "lux:widget:settings");
+      for (const [from, to] of Object.entries(LEGACY_KEY_ALIASES)) await renameKey(from, to);
     },
   },
   {

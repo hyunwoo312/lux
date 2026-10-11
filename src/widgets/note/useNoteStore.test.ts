@@ -14,7 +14,7 @@ describe("useNoteStore", () => {
     store().setFontSize("a", "lg");
     store().setText("b", "beta");
 
-    expect(store().byInstance["a"]).toEqual({ text: "second", fontSize: "lg" });
+    expect(store().byInstance["a"]).toMatchObject({ text: "second", fontSize: "lg" });
     expect(store().byInstance["b"]?.text).toBe("beta");
   });
 

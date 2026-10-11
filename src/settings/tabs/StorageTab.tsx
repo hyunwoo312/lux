@@ -15,6 +15,8 @@ import { showToast } from "@/stores/useToastStore";
 import { clearWallpaperAssets, useWallpaperStore } from "@/stores/useWallpaperStore";
 import { ConfigRow, ConfigSection, ConfigBody } from "@/components/config/Config";
 import { BACKUP, START_OVER } from "@/settings/rows";
+import { flushStorageWrites } from "@/lib/storage";
+import { storageFailures } from "@/lib/storage-status";
 
 async function resetAllSettings() {
   useShortcutsStore.getState().resetAll();
@@ -27,6 +29,9 @@ async function resetAllSettings() {
   await clearWallpaperAssets();
   useWallpaperStore.getState().reset();
   useOnboardingStore.getState().replayOnNextOpen();
+  await flushStorageWrites();
+  if (storageFailures().length > 0)
+    throw new Error("Some settings couldn’t be saved. Retry saving before resetting again.");
   showToast({ key: "settings-reset", message: "Settings reset" });
 }
 
@@ -35,6 +40,22 @@ export function StorageTab() {
   const [importError, setImportError] = useState<string | undefined>(undefined);
   const [pendingImport, setPendingImport] = useState<File | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function run(operation: () => Promise<void>) {
+    if (busy) return;
+    setBusy(true);
+    setImportError(undefined);
+    try {
+      await operation();
+    } catch (error) {
+      setImportError(
+        error instanceof Error ? error.message : "Couldn’t save these settings. Try again.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function handleFileSelected(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -46,16 +67,18 @@ export function StorageTab() {
 
   async function confirmImport() {
     if (!pendingImport) return;
-    try {
-      await importSettings(pendingImport);
-    } catch (error) {
-      setImportError(
-        error instanceof Error
-          ? error.message
-          : "Couldn’t import that file — it may not be a valid Lux backup.",
-      );
-      setPendingImport(null);
-    }
+    await run(async () => {
+      try {
+        await importSettings(pendingImport);
+      } catch (error) {
+        setImportError(
+          error instanceof Error
+            ? error.message
+            : "Couldn’t import that file — it may not be a valid Lux backup.",
+        );
+        setPendingImport(null);
+      }
+    });
   }
 
   return (
@@ -68,19 +91,19 @@ export function StorageTab() {
           control={
             pendingImport ? (
               <div className="flex items-center gap-2">
-                <Button variant="destructive" onClick={() => void confirmImport()}>
-                  Replace
+                <Button variant="destructive" disabled={busy} onClick={() => void confirmImport()}>
+                  {busy ? "Replacing…" : "Replace"}
                 </Button>
-                <Button variant="ghost" onClick={() => setPendingImport(null)}>
+                <Button variant="ghost" disabled={busy} onClick={() => setPendingImport(null)}>
                   Cancel
                 </Button>
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={() => void exportSettings()}>
+                <Button variant="outline" disabled={busy} onClick={() => void run(exportSettings)}>
                   Export
                 </Button>
-                <Button variant="outline" onClick={() => fileRef.current?.click()}>
+                <Button variant="outline" disabled={busy} onClick={() => fileRef.current?.click()}>
                   Import
                 </Button>
                 <input
@@ -99,7 +122,11 @@ export function StorageTab() {
               Replace all settings with “{pendingImport.name}”? This reloads the page.
             </p>
           )}
-          {importError && <p className="text-destructive text-caption">{importError}</p>}
+          {importError && (
+            <p role="alert" className="text-destructive text-caption">
+              {importError}
+            </p>
+          )}
         </ConfigRow>
       </ConfigSection>
 
@@ -107,7 +134,11 @@ export function StorageTab() {
         <ConfigRow
           {...START_OVER.rows.reset}
           control={
-            <Button variant="ghost-destructive" onClick={() => setConfirmReset(true)}>
+            <Button
+              variant="ghost-destructive"
+              disabled={busy}
+              onClick={() => setConfirmReset(true)}
+            >
               Reset
             </Button>
           }
@@ -120,7 +151,7 @@ export function StorageTab() {
         title="Reset all settings?"
         description={START_OVER.rows.reset.description}
         confirmLabel="Reset all"
-        onConfirm={() => void resetAllSettings()}
+        onConfirm={() => void run(resetAllSettings)}
       />
     </ConfigBody>
   );
