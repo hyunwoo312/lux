@@ -4,6 +4,44 @@ All notable changes to Lux are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.4] - 2026-10-12
+
+_Reliable sports scores, safer calendar and account updates, notes that survive a quick tab close, and keyboard controls for arranging your dashboard._
+
+### Added
+
+#### Dashboard
+- Move and resize widgets with the keyboard in edit mode. Open Move or resize in a widget’s header, use arrows to move or Shift + arrows to resize, and press Esc to finish.
+
+#### Note
+- A local recovery draft preserves your latest typing even when you close the tab immediately. If another tab edits the same note, choose which version to keep.
+
+### Changed
+
+#### Settings
+- Backup copy now explains that JSON exports include notes and preferences, while connected accounts and uploaded image files are excluded.
+
+### Fixed
+
+#### Accounts
+- Switching accounts clears the previous account’s cached GitHub, Spotify and signed-in AniList data. Late requests and token refreshes cannot restore a disconnected account or overwrite its replacement.
+
+#### Settings
+- Restore checks saved settings before replacing your setup and recovers the previous settings if a later write fails. Unsupported backups and failed imports, exports or resets show a readable error.
+- Settings writes finish in order. If saving fails, Lux keeps your changes in the open tab and shows a persistent notice with a retry action.
+
+#### Calendar
+- Sync remembers your calendar selection, including selecting none. A partial failure updates successful calendars without duplicating their events, and selection changes made during a sync are kept.
+- Large calendar lists load across all pages. Upcoming events get priority in large calendars, and incomplete coverage is clearly indicated.
+- Late sync results cannot bring back a removed widget or a disconnected account’s events. Replacing an account clears its previous calendar selection and events.
+
+#### Spotify
+- Playback, devices, queues and pending actions reset when you switch Spotify accounts, so an old request cannot change the new account’s player.
+
+#### Sports
+- Scoreboards load the complete selected date range using daily requests, fixing loading errors and games missing from busy leagues. Repeated games appear only once.
+- Team searches retry unavailable leagues instead of saving a failed search as an empty result. Public feed errors offer Retry, and development verification notices no longer appear in scoreboards.
+
 ## [2.0.3] - 2026-09-22
 
 _A reliability pass: a relay hiccup no longer costs you a sign-in, four more widgets refresh the same way, and the keyboard reaches the places it was missing._

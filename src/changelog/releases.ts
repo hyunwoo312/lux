@@ -74,6 +74,77 @@ export function groupByArea(changes: readonly ReleaseChange[]): AreaGroup[] {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "2.0.4",
+    date: "2026-10-12",
+    summary:
+      "Reliable sports scores, safer calendar and account updates, notes that survive a quick tab close, and keyboard controls for arranging your dashboard.",
+    changes: [
+      {
+        type: "added",
+        area: "Dashboard",
+        text: "Move and resize widgets with the keyboard in edit mode. Open Move or resize in a widget’s header, use arrows to move or Shift + arrows to resize, and press Esc to finish.",
+        highlight: true,
+      },
+      {
+        type: "added",
+        area: "Note",
+        text: "A local recovery draft preserves your latest typing even when you close the tab immediately. If another tab edits the same note, choose which version to keep.",
+        highlight: true,
+      },
+      {
+        type: "fixed",
+        area: "Sports",
+        text: "Scoreboards load the complete selected date range using daily requests, fixing loading errors and games missing from busy leagues. Repeated games appear only once.",
+        highlight: true,
+      },
+      {
+        type: "fixed",
+        area: "Sports",
+        text: "Team searches retry unavailable leagues instead of saving a failed search as an empty result. Public feed errors offer Retry, and development verification notices no longer appear in scoreboards.",
+      },
+      {
+        type: "fixed",
+        area: "Calendar",
+        text: "Sync remembers your calendar selection, including selecting none. A partial failure updates successful calendars without duplicating their events, and selection changes made during a sync are kept.",
+      },
+      {
+        type: "fixed",
+        area: "Calendar",
+        text: "Large calendar lists load across all pages. Upcoming events get priority in large calendars, and incomplete coverage is clearly indicated.",
+      },
+      {
+        type: "fixed",
+        area: "Accounts",
+        text: "Switching accounts clears the previous account’s cached GitHub, Spotify and signed-in AniList data. Late requests and token refreshes cannot restore a disconnected account or overwrite its replacement.",
+      },
+      {
+        type: "fixed",
+        area: "Calendar",
+        text: "Late sync results cannot bring back a removed widget or a disconnected account’s events. Replacing an account clears its previous calendar selection and events.",
+      },
+      {
+        type: "fixed",
+        area: "Spotify",
+        text: "Playback, devices, queues and pending actions reset when you switch Spotify accounts, so an old request cannot change the new account’s player.",
+      },
+      {
+        type: "fixed",
+        area: "Settings",
+        text: "Restore checks saved settings before replacing your setup and recovers the previous settings if a later write fails. Unsupported backups and failed imports, exports or resets show a readable error.",
+      },
+      {
+        type: "fixed",
+        area: "Settings",
+        text: "Settings writes finish in order. If saving fails, Lux keeps your changes in the open tab and shows a persistent notice with a retry action.",
+      },
+      {
+        type: "changed",
+        area: "Settings",
+        text: "Backup copy now explains that JSON exports include notes and preferences, while connected accounts and uploaded image files are excluded.",
+      },
+    ],
+  },
+  {
     version: "2.0.3",
     date: "2026-09-22",
     summary:

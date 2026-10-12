@@ -89,6 +89,10 @@ _Surface, accent and per-widget options all live here._
 >
 > You can add more than one of the same widget. Two notes, a Weather for home and another for wherever you are travelling — add them the same way you added the first.
 
+> **Backing up your setup**
+>
+> Settings → **Storage & Backup** exports your widgets, layout, preferences, notes and shortcuts to a JSON file. Accounts and uploaded image files are not included. Close other Lux tabs before restoring; importing replaces the saved setup and reloads the page, while your connected accounts stay signed in.
+
 ### Keyboard shortcuts
 
 <a id="keyboard-shortcuts"></a>

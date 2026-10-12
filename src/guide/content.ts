@@ -91,6 +91,11 @@ const GETTING_STARTED: readonly GuideArticle[] = [
         title: "Want two of something?",
         text: "You can add more than one of the same widget. Two notes, a Weather for home and another for wherever you are travelling — add them the same way you added the first.",
       },
+      {
+        kind: "callout",
+        title: "Backing up your setup",
+        text: "Settings → **Storage & Backup** exports your widgets, layout, preferences, notes and shortcuts to a JSON file. Accounts and uploaded image files are not included. Close other Lux tabs before restoring; importing replaces the saved setup and reloads the page, while your connected accounts stay signed in.",
+      },
     ],
   },
   {

@@ -119,7 +119,8 @@ export function StorageTab() {
         >
           {pendingImport && (
             <p className="text-ink-3 text-caption">
-              Replace all settings with “{pendingImport.name}”? This reloads the page.
+              Replace all settings with “{pendingImport.name}”? Close other Lux tabs first. This
+              reloads the page.
             </p>
           )}
           {importError && (
