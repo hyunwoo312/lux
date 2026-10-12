@@ -2,7 +2,7 @@ import type { CSSProperties, Ref } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { GridLayout, useContainerWidth, setTopLeft } from "react-grid-layout";
-import type { Compactor, EventCallback, Position } from "react-grid-layout";
+import type { Compactor, EventCallback, Position, Layout } from "react-grid-layout";
 import { clamp, cn } from "@/lib/utils";
 import { CELL, GAP, gridColumns, gridWidth, PAD, UNIT } from "@/widgets/core/grid";
 import {
@@ -17,6 +17,8 @@ import {
 import { getScrollParent, useEdgeAutoScroll } from "@/widgets/core/useEdgeAutoScroll";
 import { useWidgetDragStore } from "@/widgets/core/useWidgetDragStore";
 import { WidgetHost } from "@/widgets/core/WidgetHost";
+import { KeyboardLayoutControl } from "@/widgets/core/KeyboardLayoutControl";
+import { getWidgetPlugin } from "@/widgets/registry";
 import { WIDGET_LAYOUTS } from "@/widgets/core/types";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useDashboardStore } from "@/stores/useDashboardStore";
@@ -119,17 +121,20 @@ export function WidgetGrid() {
     setPreviewRows(getLayoutBottom(next) + EDIT_ROW_BUFFER);
   };
 
-  const handleStop: EventCallback = (next) => {
-    setPreviewRows(null);
-    setLiveSize(null);
-    edgeScroll.end();
-    const draggedId = activeWidgetId.current;
+  const commitLayout = (next: Layout, draggedId: string | null) => {
     const basis = Math.max(cols, layoutColumnSpan(layout));
     const merged = applyDragWithinNarrowView(layout, next, draggedId, cols);
     const displaced = resolveLocalDisplacement(merged, basis, draggedId);
     const cleaned = resolveLayoutCollisions(displaced, basis, draggedId);
-    activeWidgetId.current = null;
     setLayout(cleaned);
+  };
+
+  const handleStop: EventCallback = (next) => {
+    setPreviewRows(null);
+    setLiveSize(null);
+    edgeScroll.end();
+    commitLayout(next, activeWidgetId.current);
+    activeWidgetId.current = null;
   };
 
   const constrainedLayout = useMemo(() => {
@@ -235,7 +240,26 @@ export function WidgetGrid() {
                     key={widget.id}
                     className={cn(editing && "cursor-grab active:cursor-grabbing")}
                   >
-                    <WidgetHost instance={widget} editing={editing} size={size} />
+                    <WidgetHost
+                      instance={widget}
+                      editing={editing}
+                      size={size}
+                      layoutControl={
+                        editing && item ? (
+                          <KeyboardLayoutControl
+                            title={getWidgetPlugin(widget.type).name}
+                            item={item}
+                            columns={cols}
+                            onChange={(next) =>
+                              commitLayout(
+                                displayLayout.map((entry) => (entry.i === next.i ? next : entry)),
+                                next.i,
+                              )
+                            }
+                          />
+                        ) : undefined
+                      }
+                    />
                   </div>
                 );
               })}

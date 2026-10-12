@@ -67,6 +67,10 @@ const GETTING_STARTED: readonly GuideArticle[] = [
         text: "Press the pencil in the toolbar to start editing. Drag a widget anywhere on the grid and the others move aside to make room; grab its bottom-right corner to make it bigger or smaller. Every widget gets a remove button while you are editing, and pressing the pencil again — or `Esc` — puts things back to normal.",
       },
       {
+        kind: "prose",
+        text: "To arrange widgets with the keyboard, tab to **Move or resize** in a widget’s header and press `Enter`. Arrow keys move it one grid cell; `Shift` plus an arrow changes its size. `Esc` finishes that operation and keeps focus on the control. Press `Esc` again to leave edit mode.",
+      },
+      {
         kind: "figure",
         media: "using-add-widget",
         alt: "Dropping a widget onto the grid and moving it into place",

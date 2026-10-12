@@ -26,6 +26,7 @@ type BaseWidgetProps = {
   decorativeBackdrop?: boolean;
   headline?: ReactNode;
   headerAction?: ReactNode;
+  layoutControl?: ReactNode;
   config?: ReactNode;
   onRemove: () => void;
   children: ReactNode;
@@ -43,6 +44,7 @@ export function BaseWidget({
   decorativeBackdrop = false,
   headline,
   headerAction,
+  layoutControl,
   config,
   onRemove,
   children,
@@ -154,6 +156,7 @@ export function BaseWidget({
             </AnimatePresence>
           </div>
           <div className="pointer-events-auto flex shrink-0 items-center gap-1">
+            {editing && layoutControl}
             <AnimatePresence initial={false} mode="popLayout">
               {editing && size && (
                 <motion.span
@@ -216,7 +219,10 @@ export function BaseWidget({
             </AnimatePresence>
           </div>
         </div>
-        <div className="@container relative z-widget-content min-h-0 flex-1 overflow-hidden">
+        <div
+          inert={editing}
+          className="@container relative z-widget-content min-h-0 flex-1 overflow-hidden"
+        >
           <AnimatePresence mode="popLayout" initial={false} custom={showConfig}>
             <motion.div
               key={showConfig ? "config" : "main"}

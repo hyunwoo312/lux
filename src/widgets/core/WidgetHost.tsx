@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { WidgetTypeContext } from "@/widgets/core/useWidgetRefreshScale";
 import { useReducedMotion } from "motion/react";
 import { BaseWidget } from "@/widgets/core/BaseWidget";
@@ -20,11 +20,12 @@ type WidgetHostProps = {
   instance: WidgetInstance;
   editing: boolean;
   size?: { w: number; h: number };
+  layoutControl?: ReactNode;
 };
 
 const useNoBare = () => false;
 
-export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
+export function WidgetHost({ instance, editing, size, layoutControl }: WidgetHostProps) {
   const plugin = getWidgetPlugin(instance.type);
   const background = useWidgetBackground(instance.id);
   const highlighted = useWidgetHighlightStore((s) => s.highlighted === instance.type);
@@ -67,6 +68,7 @@ export function WidgetHost({ instance, editing, size }: WidgetHostProps) {
               title={plugin.name}
               editing={editing}
               size={size}
+              layoutControl={layoutControl}
               background={background}
               bleed={plugin.frame?.bleed}
               bare={bare}
