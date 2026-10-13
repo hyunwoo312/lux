@@ -34,13 +34,13 @@ describe("useTasksStore", () => {
 
   it("edits a task's title, trimmed", () => {
     store().addTask(ID, "a", "1");
-    store().editTask(ID, "1", "  renamed  ");
+    store().saveTask(ID, "1", { title: "  renamed  " });
     expect(store().byInstance[ID]?.tasks[0]?.title).toBe("renamed");
   });
 
   it("keeps the old title rather than accepting an empty edit", () => {
     store().addTask(ID, "a", "1");
-    store().editTask(ID, "1", "   ");
+    store().saveTask(ID, "1", { title: "   " });
     expect(store().byInstance[ID]?.tasks[0]?.title).toBe("a");
   });
 
@@ -49,6 +49,24 @@ describe("useTasksStore", () => {
     store().addTask(ID, "b", "2");
     store().removeTask(ID, "1");
     expect(store().byInstance[ID]?.tasks.map((task) => task.id)).toEqual(["2"]);
+  });
+
+  it("restores full metadata in place without overwriting concurrent additions or another list", () => {
+    store().addTask(ID, "First", "1");
+    store().addTask(ID, "Plan", "2", {
+      important: true,
+      description: "Notes",
+      subtasks: [{ id: "s", title: "Step", done: false }],
+    });
+    const snapshot = store().byInstance[ID]!.tasks[1]!;
+    store().removeTask(ID, "2");
+    store().addTask(ID, "New", "3");
+    store().addTask("other", "Separate", "4");
+    store().restoreTasks(ID, [snapshot], { "2": 1 });
+    store().restoreTasks(ID, [snapshot], { "2": 1 });
+    expect(store().byInstance[ID]?.tasks.map((t) => t.id)).toEqual(["1", "2", "3"]);
+    expect(store().byInstance[ID]?.tasks[1]).toEqual(snapshot);
+    expect(store().byInstance.other?.tasks.map((t) => t.title)).toEqual(["Separate"]);
   });
 
   it("clears only completed tasks", () => {
@@ -152,7 +170,7 @@ describe("useTasksStore", () => {
       expect(migrate?.(legacy, 1)).toEqual({
         byInstance: {
           tasks: {
-            tasks: [{ id: "1", title: "a", done: false }],
+            tasks: [{ id: "1", title: "a", done: false, subtasks: [] }],
             autoSort: true,
             completedPosition: "top",
             removeOnCompletion: false,
@@ -187,6 +205,47 @@ describe("useTasksStore", () => {
         typeof useTasksStore.getState
       >;
     const task = (id: string, title: string) => ({ id, title, done: false, createdAt: 1000 });
+
+    it("keeps valid task and checklist text when optional metadata is malformed", () => {
+      const merged = mergeInto({
+        byInstance: {
+          a: {
+            tasks: [
+              {
+                id: "p",
+                title: "Parent",
+                done: false,
+                important: "yes",
+                description: 42,
+                todayKey: "2026-02-30",
+                subtasks: [
+                  null,
+                  { id: "valid", title: "Step", done: "yes" },
+                  { id: "bad", title: 3 },
+                ],
+              },
+            ],
+            view: "bogus",
+            order: "bogus",
+            showCompleted: "yes",
+          },
+        },
+      });
+      expect(merged.byInstance.a).toMatchObject({
+        view: "all",
+        order: "focus",
+        showCompleted: true,
+        tasks: [
+          {
+            id: "p",
+            title: "Parent",
+            important: false,
+            todayKey: null,
+            subtasks: [{ id: "valid", title: "Step", done: false }],
+          },
+        ],
+      });
+    });
 
     it("keeps the other tasks when one entry in the list is unreadable", () => {
       const merged = mergeInto({

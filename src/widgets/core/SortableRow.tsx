@@ -10,12 +10,14 @@ export function SortableRow({
   id,
   disabled = false,
   tabIndex,
+  label,
   className,
   children,
 }: {
   id: string;
   disabled?: boolean;
   tabIndex?: number;
+  label?: string;
   className?: string;
   children: ReactNode;
 }) {
@@ -50,6 +52,7 @@ export function SortableRow({
       style={style}
       {...attributes}
       {...listeners}
+      aria-label={label}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1, transition: enterTween(reduced) }}
       exit={{ opacity: 0, scale: reduced ? 1 : 0.95, transition: exitTween(reduced) }}

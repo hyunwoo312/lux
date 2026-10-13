@@ -4,25 +4,45 @@ import { moveById } from "@/lib/dnd";
 import { createPersistedStore } from "@/lib/storage";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
-import type { CompletedPosition, Task } from "@/widgets/tasks/types";
+import {
+  TASK_VIEWS,
+  TASK_ORDERS,
+  type CompletedPosition,
+  type Task,
+  type TaskDraft,
+  type TasksView,
+  type TasksOrder,
+} from "@/widgets/tasks/types";
+import { applyDraft, withCompletion } from "@/widgets/tasks/lib/task";
+import { dateFromDayKey } from "@/lib/clock";
 
 type TaskData = {
   tasks: Task[];
   autoSort: boolean;
   completedPosition: CompletedPosition;
   removeOnCompletion: boolean;
+  view?: TasksView;
+  order?: TasksOrder;
+  showCompleted?: boolean;
 };
 
 type TasksState = {
   byInstance: Record<string, TaskData>;
-  addTask: (instanceId: string, title: string, id: string) => void;
+  addTask: (
+    instanceId: string,
+    title: string,
+    id: string,
+    details?: Omit<TaskDraft, "title">,
+  ) => void;
+  saveTask: (instanceId: string, id: string, draft: TaskDraft) => void;
+  setView: (instanceId: string, view: TasksView) => void;
+  setOrder: (instanceId: string, order: TasksOrder) => void;
+  setShowCompleted: (instanceId: string, show: boolean) => void;
   toggleTask: (instanceId: string, id: string) => void;
-  editTask: (instanceId: string, id: string, title: string) => void;
   removeTask: (instanceId: string, id: string) => void;
   clearCompleted: (instanceId: string) => void;
-  restoreTasks: (instanceId: string, tasks: Task[]) => void;
+  restoreTasks: (instanceId: string, tasks: Task[], positions?: Record<string, number>) => void;
   reorderTasks: (instanceId: string, activeId: string, overId: string) => void;
-  setAutoSort: (instanceId: string, autoSort: boolean) => void;
   setCompletedPosition: (instanceId: string, completedPosition: CompletedPosition) => void;
   setRemoveOnCompletion: (instanceId: string, removeOnCompletion: boolean) => void;
   removeInstance: (instanceId: string) => void;
@@ -33,12 +53,30 @@ const DEFAULT_TASKS: TaskData = {
   autoSort: false,
   completedPosition: "bottom",
   removeOnCompletion: false,
+  view: "all",
+  order: "focus",
+  showCompleted: true,
 };
+
+const subtaskSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  done: z.boolean().catch(false),
+});
 
 const taskSchema = z.object({
   id: z.string(),
   title: z.string(),
   done: z.boolean().catch(false),
+  description: z.string().optional().catch(undefined),
+  important: z.boolean().optional().catch(false),
+  todayKey: z
+    .string()
+    .refine((key) => dateFromDayKey(key) !== null)
+    .nullable()
+    .optional()
+    .catch(null),
+  subtasks: tolerantArray(subtaskSchema).optional().catch([]),
 });
 
 const dataSchema = z.object({
@@ -46,6 +84,9 @@ const dataSchema = z.object({
   autoSort: z.boolean().catch(false),
   completedPosition: z.enum(["top", "bottom"]).catch("bottom"),
   removeOnCompletion: z.boolean().catch(false),
+  view: z.enum(TASK_VIEWS).optional().catch("all"),
+  order: z.enum(TASK_ORDERS).optional().catch("focus"),
+  showCompleted: z.boolean().optional().catch(true),
 });
 
 const persistedSchema = z.object({ byInstance: tolerantRecord(dataSchema) });
@@ -61,29 +102,35 @@ function update(
 export const useTasksStore = createPersistedStore<TasksState>()(
   (set) => ({
     byInstance: {},
-    addTask: (instanceId, title, id) =>
+    addTask: (instanceId, title, id, details) =>
       set((state) => {
         const trimmed = title.trim();
         if (!trimmed) return state;
-        const task: Task = { id, title: trimmed, done: false };
+        const task: Task = { id, title: trimmed, done: false, ...details };
         return update(state, instanceId, (data) => ({ ...data, tasks: [...data.tasks, task] }));
       }),
+    saveTask: (instanceId, id, draft) =>
+      set((state) =>
+        update(state, instanceId, (data) => ({
+          ...data,
+          tasks: data.tasks.map((task) => (task.id === id ? applyDraft(task, draft) : task)),
+        })),
+      ),
+    setView: (instanceId, view) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, view }))),
+    setOrder: (instanceId, order) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, order }))),
+    setShowCompleted: (instanceId, showCompleted) =>
+      set((state) => update(state, instanceId, (data) => ({ ...data, showCompleted }))),
     toggleTask: (instanceId, id) =>
       set((state) =>
         update(state, instanceId, (data) => ({
           ...data,
-          tasks: data.tasks.map((task) => (task.id === id ? { ...task, done: !task.done } : task)),
+          tasks: data.tasks.map((task) =>
+            task.id === id ? withCompletion(task, !task.done) : task,
+          ),
         })),
       ),
-    editTask: (instanceId, id, title) =>
-      set((state) => {
-        const trimmed = title.trim();
-        if (!trimmed) return state;
-        return update(state, instanceId, (data) => ({
-          ...data,
-          tasks: data.tasks.map((task) => (task.id === id ? { ...task, title: trimmed } : task)),
-        }));
-      }),
     removeTask: (instanceId, id) =>
       set((state) =>
         update(state, instanceId, (data) => ({
@@ -98,12 +145,19 @@ export const useTasksStore = createPersistedStore<TasksState>()(
           tasks: data.tasks.filter((task) => !task.done),
         })),
       ),
-    restoreTasks: (instanceId, tasks) =>
+    restoreTasks: (instanceId, tasks, positions) =>
       set((state) =>
         update(state, instanceId, (data) => {
           const existing = new Set(data.tasks.map((task) => task.id));
           const restored = tasks.filter((task) => !existing.has(task.id));
-          return restored.length === 0 ? data : { ...data, tasks: [...data.tasks, ...restored] };
+          if (restored.length === 0) return data;
+          const next = [...data.tasks];
+          for (const task of [...restored].sort(
+            (a, b) => (positions?.[a.id] ?? Infinity) - (positions?.[b.id] ?? Infinity),
+          )) {
+            next.splice(Math.min(positions?.[task.id] ?? next.length, next.length), 0, task);
+          }
+          return { ...data, tasks: next };
         }),
       ),
     reorderTasks: (instanceId, activeId, overId) =>
@@ -113,8 +167,6 @@ export const useTasksStore = createPersistedStore<TasksState>()(
         if (!tasks) return state;
         return update(state, instanceId, (current) => ({ ...current, tasks }));
       }),
-    setAutoSort: (instanceId, autoSort) =>
-      set((state) => update(state, instanceId, (data) => ({ ...data, autoSort }))),
     setCompletedPosition: (instanceId, completedPosition) =>
       set((state) => update(state, instanceId, (data) => ({ ...data, completedPosition }))),
     setRemoveOnCompletion: (instanceId, removeOnCompletion) =>

@@ -30,6 +30,7 @@ export function IconActionButton({
   return (
     <Tooltip content={tooltip}>
       <Button
+        type="button"
         variant="ghost"
         size={size}
         aria-label={label}

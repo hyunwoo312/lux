@@ -16,12 +16,14 @@ export function ClearCompletedButton() {
   const restoreTasks = useTasksStore((s) => s.restoreTasks);
 
   function handleClear() {
-    const done = getTaskData(instanceId).tasks.filter((task) => task.done);
+    const tasks = getTaskData(instanceId).tasks;
+    const done = tasks.filter((task) => task.done);
+    const positions = Object.fromEntries(tasks.map((task, index) => [task.id, index]));
     clearCompleted(instanceId);
     showToast({
       key: `${instanceId}-cleared`,
       message: `${done.length} ${done.length === 1 ? "task" : "tasks"} cleared`,
-      action: { kind: "undo", run: () => restoreTasks(instanceId, done) },
+      action: { kind: "undo", run: () => restoreTasks(instanceId, done, positions) },
     });
   }
 

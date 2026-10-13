@@ -455,15 +455,11 @@ Each widget carries a settings control in its own header, outside edit mode. Tha
 
 _A to-do list that stays on this machine._
 
-Type to add, tick to complete, drag to reorder.
+Capture a task, tick it off, or open its title for details. Use All, Today and Done to choose your view. Today is a daily plan; unfinished tasks always remain in All.
 
-<p align="center">
-  <img src="public/guide/tasks-reorder.webp" alt="Adding a task and ticking others off, with edit and delete on the hovered row" width="70%" />
-</p>
+Add a description, an Important flag and a checklist in Task details, then Save or Cancel the whole draft. Checking the parent completes every step; finishing every step completes the parent. Focus order puts active, important tasks first. Choose Manual in All with no filters to drag tasks into your own order. Search also finds descriptions and checklist items.
 
-_Type to add and tick to complete; hover a row for edit and delete._
-
-Completed items strike through and stay where they are until you clear them. The header keeps a running done and left count, and clears the finished ones in a tap.
+Use /today, /later and /flag at the start of quick capture or Add a task in the command palette. Ordinary date words stay in the title. On a new day, Today offers to bring unfinished plans forward. Deleting or clearing tasks offers Undo. Tasks are saved locally in each widget, with no Todoist account or sync.
 
 Each widget carries a settings control in its own header, outside edit mode. That is where you choose whether it sits on glass or a solid surface, and which accent colour it uses. You can add more than one of the same widget.
 

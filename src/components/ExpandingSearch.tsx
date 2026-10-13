@@ -15,6 +15,7 @@ type ExpandingSearchProps = {
   value: string;
   onValueChange: (value: string) => void;
   ariaLabel: string;
+  inputRole?: "combobox" | "searchbox";
   placeholder?: string;
   onInputKeyDown?: (event: ReactKeyboardEvent<HTMLInputElement>) => void;
   listboxId?: string;
@@ -30,6 +31,7 @@ export function ExpandingSearch({
   value,
   onValueChange,
   ariaLabel,
+  inputRole = "combobox",
   placeholder,
   onInputKeyDown,
   listboxId,
@@ -162,12 +164,12 @@ export function ExpandingSearch({
               onChange={(event) => onValueChange(event.target.value)}
               onKeyDown={handleInputKeyDown}
               placeholder={placeholder}
-              role="combobox"
+              role={inputRole}
               aria-label={ariaLabel}
-              aria-expanded={Boolean(popupOpen)}
+              aria-expanded={inputRole === "combobox" ? Boolean(popupOpen) : undefined}
               aria-controls={listboxId}
               aria-activedescendant={activeDescendantId}
-              aria-autocomplete="list"
+              aria-autocomplete={inputRole === "combobox" ? "list" : undefined}
               aria-hidden={!open}
               inert={!open}
               className={cn(

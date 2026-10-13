@@ -1,55 +1,99 @@
-import type { FormEvent } from "react";
-import { useState } from "react";
-import { motion, useAnimationControls, useReducedMotion } from "motion/react";
+import { useRef, useState } from "react";
+import { Sun, Inbox, Plus, Flag } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { DURATION, EASE_OUT } from "@/lib/motion";
-import { BorderTrail } from "@/widgets/tasks/components/BorderTrail";
+import { Button } from "@/components/ui/button";
+import { IconActionButton } from "@/components/IconActionButton";
+import { newId } from "@/lib/utils";
+import { parseTaskInput } from "@/widgets/tasks/lib/task";
 import { useTasksStore } from "@/widgets/tasks/useTasksStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import { newId } from "@/lib/utils";
+import { TaskOrderMenu } from "@/widgets/tasks/components/TaskOrderMenu";
+import type { TasksOrder } from "@/widgets/tasks/types";
 
-type TaskComposerProps = {
-  onAdded: (id: string) => void;
-};
-
-export function TaskComposer({ onAdded }: TaskComposerProps) {
+export function TaskComposer({
+  day,
+  today,
+  onAdd,
+  importantOnly,
+  onImportant,
+  order,
+  onOrder,
+}: {
+  day: string;
+  today: boolean;
+  onAdd: () => void;
+  importantOnly: boolean;
+  onImportant: () => void;
+  order: TasksOrder;
+  onOrder: (value: TasksOrder) => void;
+}) {
   const instanceId = useWidgetInstanceId();
-  const addTask = useTasksStore((s) => s.addTask);
-  const reduced = useReducedMotion();
+  const input = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
-  const [focused, setFocused] = useState(false);
-  const pulse = useAnimationControls();
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!title.trim()) return;
-
-    const id = newId("task");
-    addTask(instanceId, title, id);
-    setTitle("");
-    if (reduced) return;
-
-    onAdded(id);
-    pulse.start({
-      scale: [1, 1.015, 1],
-      transition: { duration: DURATION.base, ease: EASE_OUT },
-    });
-  };
-
+  const [destination, setDestination] = useState<boolean | null>(null);
+  const planToday = destination ?? today;
+  const draft = parseTaskInput(title, day, planToday);
+  const hasCommands = draft.title !== title.trim();
   return (
-    <form onSubmit={handleSubmit} className="shrink-0">
-      <motion.div animate={pulse} className="relative overflow-hidden rounded-md">
+    <form
+      className="shrink-0"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!draft.title) return;
+        const { title: text, ...details } = draft;
+        useTasksStore.getState().addTask(instanceId, text, newId("task"), details);
+        setTitle("");
+        const view = useTasksStore.getState().byInstance[instanceId]?.view;
+        if (view === "completed" || (view === "today" && !draft.todayKey))
+          useTasksStore.getState().setView(instanceId, draft.todayKey ? "today" : "all");
+        onAdd();
+        input.current?.focus();
+      }}
+    >
+      <div className="flex items-center gap-1">
         <Input
-          size="lg"
+          ref={input}
+          aria-label="Add a task"
+          data-task-composer
+          placeholder="Add a task…"
+          name="task-title"
+          autoComplete="off"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder="Add a task…"
-          aria-label="Add a task"
+          className="focus-ring-single min-w-0 flex-1"
         />
-        <BorderTrail active={focused} />
-      </motion.div>
+        <Button
+          type="submit"
+          variant="ghost"
+          size="icon"
+          aria-label="Add task"
+          disabled={!draft.title}
+        >
+          <Plus aria-hidden />
+        </Button>
+        <IconActionButton
+          icon={Flag}
+          label="Important tasks only"
+          tooltip="Important only"
+          pressed={importantOnly}
+          onClick={onImportant}
+        />
+        <IconActionButton
+          icon={planToday ? Sun : Inbox}
+          label="Add to today"
+          pressed={planToday}
+          tooltip={planToday ? "Adding to Today" : "Adding to Later"}
+          onClick={() => setDestination(!planToday)}
+        />
+        <TaskOrderMenu order={order} onOrder={onOrder} />
+      </div>
+      {hasCommands && (
+        <p role="status" className="text-ink-3 pt-1 text-micro">
+          {draft.todayKey ? "Today" : "Later"}
+          {draft.important ? " · Important" : ""}
+          {draft.title ? " · " + draft.title : " · Enter a task title"}
+        </p>
+      )}
     </form>
   );
 }
