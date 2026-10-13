@@ -1,7 +1,7 @@
 import { peekPolledResource, usePolledDefinition } from "@/widgets/core/usePolledResource";
 import { stocksSparks, type SparkMap } from "@/widgets/stocks/lib/resources";
 import { useStocks } from "@/widgets/stocks/useStocksStore";
-import { DAY_RANGE, type StockRange } from "@/widgets/stocks/types";
+import { DAY_RANGE, type StockHistoryRange } from "@/widgets/stocks/types";
 
 export type { SparkMap };
 
@@ -17,7 +17,7 @@ function isTicking(map: SparkMap | undefined, nowMs: number): boolean {
   });
 }
 
-function useSparkResource(symbols: string[], range: StockRange) {
+export function useSparkResource(symbols: string[], range: StockHistoryRange) {
   const definition = stocksSparks(symbols, range);
 
   const resource = usePolledDefinition(definition, {

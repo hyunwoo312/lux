@@ -10,6 +10,13 @@ const AAPL = {
 };
 
 describe("sparksFromResponse", () => {
+  it("reads historical series with null previous-close fields", () => {
+    const map = sparksFromResponse({
+      AAPL: { ...AAPL, previousClose: null, chartPreviousClose: null },
+    });
+    expect(map.AAPL?.points).toHaveLength(2);
+    expect(map.AAPL?.previousClose).toBe(100);
+  });
   it("reads a batch of symbols out of one response", () => {
     const map = sparksFromResponse({ AAPL, MSFT: { ...AAPL, symbol: "MSFT" } });
     expect(Object.keys(map).sort()).toEqual(["AAPL", "MSFT"]);

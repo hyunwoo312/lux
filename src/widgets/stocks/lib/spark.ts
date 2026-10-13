@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { fetchYahoo } from "@/widgets/stocks/lib/yahooApi";
-import { RANGE_INTERVAL, type SparkSeries, type StockRange } from "@/widgets/stocks/types";
+import { RANGE_INTERVAL, type SparkSeries, type StockHistoryRange } from "@/widgets/stocks/types";
 
 const entrySchema = z.object({
   symbol: z.string(),
-  previousClose: z.number().optional(),
-  chartPreviousClose: z.number().optional(),
+  previousClose: z.number().nullable().optional(),
+  chartPreviousClose: z.number().nullable().optional(),
   close: z.array(z.number().nullable()).optional(),
   timestamp: z.array(z.number()).optional(),
 });
@@ -33,7 +33,7 @@ export function sparksFromResponse(raw: unknown): Record<string, SparkSeries> {
 
 export async function fetchSparks(
   symbols: string[],
-  range: StockRange,
+  range: StockHistoryRange,
   signal?: AbortSignal,
 ): Promise<Record<string, SparkSeries>> {
   if (symbols.length === 0) return {};

@@ -32,6 +32,8 @@ export type StocksData = {
 
 type StocksState = {
   byInstance: Record<string, StocksData>;
+  comparisonByInstance: Record<string, string[]>;
+  setComparisonSymbols: (instanceId: string, symbols: string[]) => void;
   addSymbol: (instanceId: string, symbol: string) => void;
   removeSymbol: (instanceId: string, symbol: string) => void;
   reorderSymbols: (instanceId: string, activeSymbol: string, overSymbol: string) => void;
@@ -81,6 +83,14 @@ function update(
 export const useStocksStore = createPersistedStore<StocksState>()(
   (set) => ({
     byInstance: {},
+    comparisonByInstance: {},
+    setComparisonSymbols: (instanceId, symbols) =>
+      set((state) => ({
+        comparisonByInstance: {
+          ...state.comparisonByInstance,
+          [instanceId]: [...new Set(symbols)].slice(0, 4),
+        },
+      })),
     addSymbol: (instanceId, symbol) =>
       set((state) => {
         const normalized = symbol.trim().toUpperCase();
@@ -131,7 +141,10 @@ export const useStocksStore = createPersistedStore<StocksState>()(
     clearSelection: (instanceId) =>
       set((state) => update(state, instanceId, (data) => ({ ...data, selectedSymbol: null }))),
     removeInstance: (instanceId) => {
-      set((state) => ({ byInstance: dropInstance(state.byInstance, instanceId) }));
+      set((state) => ({
+        byInstance: dropInstance(state.byInstance, instanceId),
+        comparisonByInstance: dropInstance(state.comparisonByInstance, instanceId),
+      }));
     },
   }),
   {

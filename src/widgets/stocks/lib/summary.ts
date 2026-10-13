@@ -1,5 +1,4 @@
 import type { PolledResourceState } from "@/widgets/core/usePolledResource";
-import { useQuote } from "@/widgets/stocks/hooks/useQuote";
 import {
   changeOf,
   directionOf,
@@ -23,20 +22,32 @@ type StockSummary = {
   points: PricePoint[];
 };
 
-export function useStockSummary(
-  symbol: string,
+export type SummaryMetadata = {
+  quote: Quote | null;
+  state: PolledResourceState<Record<string, Quote>>;
+};
+
+export function stockSummary(
   spark: SparkSeries | undefined,
   now: number,
+  metadata: SummaryMetadata,
 ): StockSummary {
-  const { state, data } = useQuote(symbol, { range: DAY_RANGE });
+  const data = metadata.quote;
+  const state: PolledResourceState<Quote> = data
+    ? { status: "success", data }
+    : metadata.state.status === "error"
+      ? metadata.state
+      : { status: metadata.state.status === "success" ? "empty" : "loading" };
 
   const live = spark != null && spark.points.length > 0;
   const price = live ? spark.price : (data?.price ?? spark?.previousClose ?? null);
-  const reference = data
-    ? referencePrice(data, DAY_RANGE)
-    : spark
-      ? sparkReference(spark, DAY_RANGE)
-      : null;
+  const reference = live
+    ? sparkReference(spark, DAY_RANGE)
+    : data
+      ? referencePrice(data, DAY_RANGE)
+      : spark
+        ? sparkReference(spark, DAY_RANGE)
+        : null;
   const { change, percent } =
     price != null && reference != null ? changeOf(price, reference) : { change: 0, percent: 0 };
 

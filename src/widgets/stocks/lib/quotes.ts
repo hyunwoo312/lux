@@ -11,6 +11,21 @@ import {
 
 const instrumentTypeSchema = z.enum(INSTRUMENT_TYPES).nullable().catch(null);
 
+function sessionClock(timeZone: string | undefined): (time: number) => number {
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: timeZone ?? "UTC",
+    hourCycle: "h23",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  return (time) => {
+    const parts = formatter.formatToParts(new Date(time * 1000));
+    const part = (type: string) => Number(parts.find((part) => part.type === type)?.value ?? 0);
+    return part("hour") * 3600 + part("minute") * 60 + part("second");
+  };
+}
+
 const chartSchema = z.object({
   chart: z.object({
     result: z
@@ -84,30 +99,44 @@ export function quoteFromChart(raw: unknown, range: StockRange): Quote {
   const regEnd = meta.currentTradingPeriod?.regular?.end ?? null;
   const postEnd = meta.currentTradingPeriod?.post?.end ?? null;
   const splitExtended = range === "1d" && regStart != null && regEnd != null;
+  const clock = splitExtended ? sessionClock(meta.exchangeTimezoneName) : null;
+  const regularStartClock = clock && regStart != null ? clock(regStart) : 0;
+  const regularEndClock = clock && regEnd != null ? clock(regEnd) : 0;
 
   const bars: PriceBar[] = [];
+  const extendedBars: PriceBar[] = [];
   let preMarketPrice: number | null = null;
   let postMarketPrice: number | null = null;
 
   closes.forEach((close, index) => {
     if (close == null) return;
     const time = times[index] ?? 0;
-    if (splitExtended && time < regStart) {
-      if (preStart != null && time >= preStart) preMarketPrice = close;
-      return;
-    }
-    if (splitExtended && time >= regEnd) {
-      if (postEnd != null && time < postEnd) postMarketPrice = close;
-      return;
-    }
-    bars.push({
+    const bar = {
       time,
       close,
       open: series?.open?.[index] ?? close,
       high: series?.high?.[index] ?? close,
       low: series?.low?.[index] ?? close,
       volume: series?.volume?.[index] ?? null,
-    });
+    };
+    const barClock = clock?.(time) ?? 0;
+    const regular =
+      !splitExtended ||
+      (time >= regStart && time < regEnd) ||
+      (regularStartClock < regularEndClock
+        ? barClock >= regularStartClock && barClock < regularEndClock
+        : barClock >= regularStartClock || barClock < regularEndClock);
+    if (!regular) {
+      extendedBars.push(bar);
+      if (preStart != null && regStart != null && time >= preStart && time < regStart) {
+        preMarketPrice = close;
+      }
+      if (postEnd != null && regEnd != null && time >= regEnd && time < postEnd) {
+        postMarketPrice = close;
+      }
+      return;
+    }
+    bars.push(bar);
   });
 
   const dividends: Dividend[] = Object.values(result.events?.dividends ?? {})
@@ -129,6 +158,7 @@ export function quoteFromChart(raw: unknown, range: StockRange): Quote {
     preMarketStart: splitExtended ? preStart : null,
     postMarketEnd: splitExtended ? postEnd : null,
     bars,
+    extendedBars,
     dayHigh: meta.regularMarketDayHigh ?? null,
     dayLow: meta.regularMarketDayLow ?? null,
     week52High: meta.fiftyTwoWeekHigh ?? null,
@@ -152,7 +182,16 @@ export async function fetchQuote(
       `?range=${range}&interval=${RANGE_INTERVAL[range]}&events=div${prePost}`,
     signal,
   );
-  return quoteFromChart(raw, range);
+  const quote = quoteFromChart(raw, range);
+  if (range !== "1d" || quote.bars.length > 0 || !quote.extendedBars?.length) return quote;
+  const regular = quoteFromChart(
+    await fetchYahoo(
+      `/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=5m&events=div`,
+      signal,
+    ),
+    range,
+  );
+  return { ...quote, bars: regular.bars };
 }
 
 const barSchema = z.object({
@@ -179,6 +218,7 @@ const cachedQuoteSchema = z.object({
   preMarketStart: z.number().nullable(),
   postMarketEnd: z.number().nullable(),
   bars: z.array(barSchema),
+  extendedBars: z.array(barSchema).optional(),
   dayHigh: z.number().nullable(),
   dayLow: z.number().nullable(),
   week52High: z.number().nullable(),

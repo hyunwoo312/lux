@@ -59,7 +59,8 @@ export const ENDPOINTS: readonly Endpoint[] = [
   {
     host: "https://query1.finance.yahoo.com/*",
     usedBy: "widgets/stocks",
-    reason: "Quotes, charts, batched watchlist prices, symbol search and trending tickers",
+    reason:
+      "Quotes, price history, batched watchlists, benchmark comparisons, symbol search and trending tickers",
     access: "host-permission",
   },
   {

@@ -9,6 +9,7 @@ import {
   sparkReference,
 } from "@/widgets/stocks/lib/quote";
 import type { Quote, SparkSeries } from "@/widgets/stocks/types";
+import { stockSummary } from "@/widgets/stocks/lib/summary";
 
 function quote(overrides: Partial<Quote> = {}): Quote {
   return {
@@ -103,14 +104,40 @@ describe("market state", () => {
     expect(marketState(quote(), 1_000)).toBe("unknown");
   });
 
-  it("treats coins and currencies as always trading", () => {
+  it("treats coins as always trading but respects currency sessions", () => {
     expect(isAlwaysOpen(quote({ instrumentType: "CRYPTOCURRENCY" }))).toBe(true);
-    expect(isAlwaysOpen(quote({ instrumentType: "CURRENCY" }))).toBe(true);
+    expect(isAlwaysOpen(quote({ instrumentType: "CURRENCY" }))).toBe(false);
     expect(isAlwaysOpen(quote({ instrumentType: "EQUITY" }))).toBe(false);
   });
 });
 
 describe("extendedSession", () => {
+  it("keeps a fresh watchlist price and its daily baseline from the same snapshot", () => {
+    const daily = quote({ price: 110, previousClose: 100 });
+    const spark: SparkSeries = {
+      symbol: "AAPL",
+      price: 121,
+      previousClose: 110,
+      points: [{ time: 300, close: 121 }],
+    };
+    const summary = stockSummary(spark, 300_000, {
+      quote: daily,
+      state: { status: "success", data: { AAPL: daily } },
+    });
+    expect(summary.reference).toBe(110);
+    expect(summary.percent).toBe(10);
+  });
+  it("uses the latest completed regular close for a new day's pre-market quote", () => {
+    const data = quote({
+      price: 110,
+      previousClose: 100,
+      asOf: 50_000,
+      sessionStart: 200,
+      preMarketStart: 100,
+      preMarketPrice: 121,
+    });
+    expect(extendedSession(data, 150_000)).toMatchObject({ kind: "pre", percent: 10 });
+  });
   it("measures after-hours against the closing price", () => {
     const data = quote({ sessionEnd: 200, postMarketEnd: 300, postMarketPrice: 121 });
     expect(extendedSession(data, 250_000)).toEqual({

@@ -68,7 +68,7 @@ export function StocksSearch() {
     isDisabled: isAdded,
   });
 
-  const inDetail = detail !== null && symbols.length > 1;
+  const inDetail = detail !== null && (symbols.length > 1 || !symbols.includes(detail));
   if (inDetail) {
     return <HeaderBackButton label="Stocks" onClick={() => clearSelection(instanceId)} />;
   }

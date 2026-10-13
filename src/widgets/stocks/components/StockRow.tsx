@@ -2,8 +2,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ROW } from "@/lib/row";
 import { TYPE } from "@/lib/type";
 import { cn } from "@/lib/utils";
-import { formatNumber } from "@/widgets/stocks/lib/format";
-import { useStockSummary } from "@/widgets/stocks/hooks/useStockSummary";
+import { formatNumber, formatVolume } from "@/widgets/stocks/lib/format";
+import { stockSummary, type SummaryMetadata } from "@/widgets/stocks/lib/summary";
 import { useStocks } from "@/widgets/stocks/useStocksStore";
 import { ChangeValue } from "@/widgets/stocks/components/ChangeValue";
 import { ExtendedChange } from "@/widgets/stocks/components/ExtendedChange";
@@ -17,15 +17,26 @@ type StockRowProps = {
   spark: SparkSeries | undefined;
   now: number;
   showSparkline: boolean;
+  showVolume?: boolean;
+  metadata: SummaryMetadata;
   onSelect: () => void;
   onRemove: () => void;
 };
 
-export function StockRow({ symbol, spark, now, showSparkline, onSelect, onRemove }: StockRowProps) {
+export function StockRow({
+  symbol,
+  spark,
+  now,
+  showSparkline,
+  showVolume,
+  metadata,
+  onSelect,
+  onRemove,
+}: StockRowProps) {
   const showName = useStocks((d) => d.showName);
   const changeMode = useStocks((d) => d.changeMode);
   const { state, quote, price, reference, change, percent, direction, extended, points } =
-    useStockSummary(symbol, spark, now);
+    stockSummary(spark, now, metadata);
 
   const graphClass = cn("min-w-0 flex-1", showName ? "h-7" : "h-5");
 
@@ -70,6 +81,11 @@ export function StockRow({ symbol, spark, now, showSparkline, onSelect, onRemove
           )
         ) : null}
 
+        {showVolume && (
+          <span className="text-ink-3 shrink-0 text-caption tabular-nums" title="Volume">
+            {quote?.volume != null ? formatVolume(quote.volume) : "—"}
+          </span>
+        )}
         <span className="flex shrink-0 flex-col items-end">
           {price != null ? (
             <>
@@ -84,7 +100,7 @@ export function StockRow({ symbol, spark, now, showSparkline, onSelect, onRemove
               />
               {extended ? <ExtendedChange extended={extended} /> : null}
             </>
-          ) : state.status === "error" ? (
+          ) : state.status === "error" || state.status === "empty" ? (
             <span className={cn(TYPE.rowMeta, "text-warning")}>No price</span>
           ) : (
             <Skeleton className="h-4 w-16" />

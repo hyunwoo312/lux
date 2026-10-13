@@ -4,16 +4,18 @@ export const STOCKS_TINT: AccentPreset = "green";
 
 export const STOCK_RANGES = ["1d", "5d", "1mo", "6mo", "ytd", "1y", "5y"] as const;
 export type StockRange = (typeof STOCK_RANGES)[number];
+export type StockHistoryRange = StockRange | "2y";
 
 export const DAY_RANGE: StockRange = "1d";
 
-export const RANGE_INTERVAL: Record<StockRange, string> = {
+export const RANGE_INTERVAL: Record<StockHistoryRange, string> = {
   "1d": "5m",
   "5d": "30m",
   "1mo": "1d",
   "6mo": "1d",
   ytd: "1d",
   "1y": "1d",
+  "2y": "1d",
   "5y": "1wk",
 };
 
@@ -27,7 +29,7 @@ export const RANGE_LABEL: Record<StockRange, string> = {
   "5y": "5Y",
 };
 
-export const STOCK_VIEWS = ["list", "grid"] as const;
+export const STOCK_VIEWS = ["list", "grid", "performance", "heatmap"] as const;
 export type StockView = (typeof STOCK_VIEWS)[number];
 
 export const CHANGE_MODES = ["percent", "absolute"] as const;
@@ -73,6 +75,7 @@ export type Quote = {
   preMarketStart: number | null;
   postMarketEnd: number | null;
   bars: PriceBar[];
+  extendedBars?: PriceBar[];
   dayHigh: number | null;
   dayLow: number | null;
   week52High: number | null;

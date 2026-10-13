@@ -39,7 +39,7 @@ export function marketState(quote: Quote, nowMs: number): MarketState {
 }
 
 export function isAlwaysOpen(quote: Quote): boolean {
-  return quote.instrumentType === "CRYPTOCURRENCY" || quote.instrumentType === "CURRENCY";
+  return quote.instrumentType === "CRYPTOCURRENCY";
 }
 
 export type ExtendedSession = {
@@ -74,7 +74,12 @@ export function extendedSession(quote: Quote, nowMs: number): ExtendedSession | 
     return {
       kind: "pre",
       price: quote.preMarketPrice,
-      ...changeOf(quote.preMarketPrice, quote.previousClose),
+      ...changeOf(
+        quote.preMarketPrice,
+        quote.asOf != null && quote.asOf / 1000 < quote.preMarketStart
+          ? quote.price
+          : quote.previousClose,
+      ),
     };
   }
   return null;

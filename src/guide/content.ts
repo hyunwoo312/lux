@@ -478,7 +478,7 @@ const WIDGET_BLOCKS: Record<string, GuideBlock[]> = {
     },
     {
       kind: "prose",
-      text: "Every holding carries its price, the day's move, a sparkline, and the day's range and volume — as a card grid or a plain list, whichever reads better at the size you gave the widget. Drag to reorder, and hover a holding to drop it.",
+      text: "Choose List, Cards, Performance or Heatmap for your saved symbols. Filter by ticker or company, or temporarily sort daily gainers and losers; Manual returns to your saved order. Cards keep the latest session's quote change separate from the selected chart period. Drag in the unfiltered Manual view to reorder, and hover a symbol to remove it.",
     },
     {
       kind: "figure",
@@ -488,7 +488,7 @@ const WIDGET_BLOCKS: Record<string, GuideBlock[]> = {
     },
     {
       kind: "prose",
-      text: "Opening one gives an interactive chart from a day out to five years, with the day's range, the 52-week range and volume. An optional strip above the watchlist carries the S&P 500, Nasdaq and Dow.",
+      text: "Open a symbol for line or candle charts from one day to five years. Inspect OHLC and volume by pointer or arrow keys, zoom within loaded history, and use chart controls for volume, a 20-bar moving average and extended-session shading. Compare two to four symbols, including SPY or QQQ, from their first common bar. Performance and comparison show price returns without dividends or currency conversion; quotes come from Yahoo Finance and may be delayed. The optional market rail opens benchmark charts directly.",
     },
   ],
   tasks: [
@@ -551,7 +551,10 @@ const WIDGET_META: Record<string, { title: string; lead: string }> = {
   },
   sports: { title: "Sports", lead: "Scores for the leagues and teams you follow." },
   spotify: { title: "Spotify", lead: "What is playing, with controls." },
-  stocks: { title: "Stocks", lead: "A watchlist with live prices and a chart." },
+  stocks: {
+    title: "Stocks",
+    lead: "A watchlist with market quotes, performance and comparison charts.",
+  },
   tasks: { title: "Tasks", lead: "A to-do list that stays on this machine." },
   weather: { title: "Weather", lead: "Current conditions and forecasts for the places you add." },
 };

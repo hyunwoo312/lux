@@ -77,10 +77,25 @@ function safeFormat(date: Date, options: Intl.DateTimeFormatOptions): string {
   }
 }
 
-export function formatExchangeTime(ms: number, timeZone: string | null, hour12: boolean): string {
+export function formatExchangeTime(
+  ms: number,
+  timeZone: string | null,
+  hour12: boolean,
+  includeDate = false,
+): string {
   return safeFormat(
     new Date(ms),
-    withZone({ hour: "numeric", minute: "2-digit", hour12, timeZoneName: "short" }, timeZone),
+    withZone(
+      {
+        month: includeDate ? "short" : undefined,
+        day: includeDate ? "numeric" : undefined,
+        hour: "numeric",
+        minute: "2-digit",
+        hour12,
+        timeZoneName: "short",
+      },
+      timeZone,
+    ),
   );
 }
 

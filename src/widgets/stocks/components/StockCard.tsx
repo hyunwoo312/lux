@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TYPE } from "@/lib/type";
 import { cn } from "@/lib/utils";
 import { formatNumber, formatVolume } from "@/widgets/stocks/lib/format";
-import { useStockSummary } from "@/widgets/stocks/hooks/useStockSummary";
+import { stockSummary, type SummaryMetadata } from "@/widgets/stocks/lib/summary";
 import { useStocks } from "@/widgets/stocks/useStocksStore";
 import { ChangeValue } from "@/widgets/stocks/components/ChangeValue";
 import { ExtendedChange } from "@/widgets/stocks/components/ExtendedChange";
@@ -10,11 +10,16 @@ import { StockRemoveButton } from "@/widgets/stocks/components/StockRemoveButton
 import { Sparkline } from "@/widgets/stocks/components/Sparkline";
 import type { SparkSeries } from "@/widgets/stocks/types";
 import { ROW } from "@/lib/row";
+import { useSparkResource } from "@/widgets/stocks/hooks/useSparks";
+import { changeOf, directionOf } from "@/widgets/stocks/lib/quote";
+import { RANGE_LABEL } from "@/widgets/stocks/types";
+import { formatSigned } from "@/widgets/stocks/lib/format";
 
 type StockCardProps = {
   symbol: string;
   spark: SparkSeries | undefined;
   now: number;
+  metadata: SummaryMetadata;
   onSelect: () => void;
   onRemove: () => void;
 };
@@ -28,13 +33,22 @@ function Meta({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function StockCard({ symbol, spark, now, onSelect, onRemove }: StockCardProps) {
+export function StockCard({ symbol, spark, now, metadata, onSelect, onRemove }: StockCardProps) {
   const showName = useStocks((d) => d.showName);
   const changeMode = useStocks((d) => d.changeMode);
+  const range = useStocks((d) => d.range);
+  const symbols = useStocks((d) => d.symbols);
+  const history = useSparkResource(range === "1d" ? [] : symbols, range);
   const { state, quote, price, reference, change, percent, direction, extended, points } =
-    useStockSummary(symbol, spark, now);
+    stockSummary(spark, now, metadata);
 
   const priceHint = quote?.priceHint ?? 2;
+  const chartPoints = range === "1d" ? points : (history.map?.[symbol]?.points ?? []);
+  const chartBase = range === "1d" ? reference : chartPoints[0]?.close;
+  const chartReturn =
+    chartPoints.length > 1 && chartBase != null && chartBase > 0
+      ? changeOf(chartPoints.at(-1)!.close, chartBase).percent
+      : null;
   const dayRange =
     quote?.dayLow != null && quote.dayHigh != null
       ? `${formatNumber(quote.dayLow, priceHint)}–${formatNumber(quote.dayHigh, priceHint)}`
@@ -70,17 +84,17 @@ export function StockCard({ symbol, spark, now, onSelect, onRemove }: StockCardP
             </span>
             <ChangeValue change={change} percent={percent} mode={changeMode} variant="chip" />
           </span>
-        ) : state.status === "error" ? (
+        ) : state.status === "error" || state.status === "empty" ? (
           <span className={cn(TYPE.rowMeta, "text-warning")}>No price</span>
         ) : (
           <Skeleton className="h-5 w-20" />
         )}
 
-        {points.length > 0 ? (
+        {chartPoints.length > 0 ? (
           <Sparkline
-            points={points}
-            direction={direction}
-            baseline={reference ?? undefined}
+            points={chartPoints}
+            direction={range === "1d" ? direction : directionOf(chartReturn ?? 0)}
+            baseline={chartBase ?? undefined}
             className="min-h-6 w-full flex-1"
           />
         ) : (
@@ -88,6 +102,11 @@ export function StockCard({ symbol, spark, now, onSelect, onRemove }: StockCardP
         )}
 
         <span className="flex min-w-0 flex-col gap-0.5">
+          <Meta
+            label={`${RANGE_LABEL[range]} chart`}
+            value={chartReturn == null ? "—" : `${formatSigned(chartReturn)}%`}
+          />
+          <span className="text-ink-3 text-micro">Quote change · latest session</span>
           {dayRange ? <Meta label="Day" value={dayRange} /> : null}
           <span className="flex min-w-0 items-baseline justify-between gap-2">
             {quote?.volume != null ? <Meta label="Vol" value={formatVolume(quote.volume)} /> : null}

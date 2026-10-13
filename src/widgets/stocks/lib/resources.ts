@@ -2,14 +2,17 @@ import type { PolledDefinition } from "@/widgets/core/usePolledResource";
 import { sparkKey, TRENDING_KEY } from "@/widgets/stocks/lib/cacheKeys";
 import { fetchSparks, parseCachedSparks } from "@/widgets/stocks/lib/spark";
 import { fetchTrendingSymbols, parseCachedTrending } from "@/widgets/stocks/lib/symbols";
-import type { SparkSeries, StockRange } from "@/widgets/stocks/types";
+import type { SparkSeries, StockHistoryRange } from "@/widgets/stocks/types";
 
 export type SparkMap = Record<string, SparkSeries>;
 
 const SPARK_INTERVAL_MS = 60_000;
 const TRENDING_INTERVAL_MS = 60 * 60_000;
 
-export function stocksSparks(symbols: string[], range: StockRange): PolledDefinition<SparkMap> {
+export function stocksSparks(
+  symbols: string[],
+  range: StockHistoryRange,
+): PolledDefinition<SparkMap> {
   return {
     widget: "stocks",
     cacheKey: sparkKey(symbols, range),

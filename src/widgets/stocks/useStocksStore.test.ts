@@ -41,6 +41,22 @@ beforeEach(() => {
 });
 
 describe("useStocksStore", () => {
+  it("shares comparison selection across chart ranges without persisting it", () => {
+    store().setComparisonSymbols(ID, ["AAPL", "MSFT", "SPY"]);
+    store().setRange(ID, "1y");
+    expect(store().comparisonByInstance[ID]).toEqual(["AAPL", "MSFT", "SPY"]);
+    const persisted = useStocksStore.persist.getOptions().partialize?.(store());
+    expect(persisted).not.toHaveProperty("comparisonByInstance");
+    store().removeInstance(ID);
+    expect(store().comparisonByInstance[ID]).toBeUndefined();
+  });
+  it("restores new watchlist views while keeping old list records readable", () => {
+    expect(restore(persistedEntry({ view: "performance" })).byInstance[ID]?.view).toBe(
+      "performance",
+    );
+    expect(restore(persistedEntry({ view: "heatmap" })).byInstance[ID]?.view).toBe("heatmap");
+    expect(restore(persistedEntry({ view: "list" })).byInstance[ID]?.view).toBe("list");
+  });
   it("adds a symbol, normalized to uppercase", () => {
     store().addSymbol(ID, "aapl");
     expect(symbols(ID)).toEqual(["AAPL"]);

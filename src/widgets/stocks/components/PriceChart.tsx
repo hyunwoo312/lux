@@ -1,10 +1,13 @@
 import { useId, useState } from "react";
+import { Minus, Plus, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
+import { IconActionButton } from "@/components/IconActionButton";
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { clamp, cn } from "@/lib/utils";
 import { useElementSize } from "@/hooks/useElementSize";
 import { areaPath, chartGeometry, linePath } from "@/lib/chart";
 import { aggregateBars } from "@/widgets/stocks/lib/chart";
+import { movingAverage } from "@/widgets/stocks/lib/analysis";
 import { tooltipLeft } from "@/widgets/stocks/lib/layout";
 import { changeOf, changeTone, directionOf } from "@/widgets/stocks/lib/quote";
 import type { ChangeDirection } from "@/widgets/stocks/lib/quote";
@@ -45,6 +48,9 @@ type PriceChartProps = {
   timeZone: string | null;
   dividends: Dividend[];
   className?: string;
+  showVolume?: boolean;
+  average?: "none" | "sma" | "ema";
+  session?: { regularTimes: number[] };
 };
 
 export function PriceChart({
@@ -57,27 +63,53 @@ export function PriceChart({
   timeZone,
   dividends,
   className,
+  showVolume = true,
+  average = "none",
+  session,
 }: PriceChartProps) {
   const clock24h = useAppSettingsStore((state) => state.clock24h);
   const gradientId = useId();
   const [ref, { width, height }] = useElementSize<HTMLDivElement>();
   const [tooltipRef, tooltip] = useElementSize<HTMLDivElement>();
   const [active, setActive] = useState<number | null>(null);
+  const [window, setWindow] = useState<{ start: number; end: number } | null>(null);
+  const start = Math.min(window?.start ?? 0, Math.max(0, bars.length - 1));
+  const end = Math.min(window?.end ?? bars.length, bars.length);
+  const visible = bars.slice(start, end);
+  const plotWidth = Math.max(0, width - 48);
+  const plotHeight = Math.max(0, height - 48);
 
   const candles = style === "candle";
-  const shown = candles ? aggregateBars(bars, Math.floor(width / MIN_CANDLE_SLOT)) : bars;
-  const hasVolume = shown.some((bar) => bar.volume != null);
+  const regularTimes = session ? new Set(session.regularTimes) : null;
+  const shown = candles ? aggregateBars(visible, Math.floor(plotWidth / MIN_CANDLE_SLOT)) : visible;
+  const hasVolume = showVolume && shown.some((bar) => bar.volume != null);
   const volumeHeight = hasVolume ? Math.min(VOLUME_MAX_HEIGHT, height * VOLUME_SHARE) : 0;
-  const priceHeight = Math.max(0, height - volumeHeight - (hasVolume ? BAND_GAP : 0));
+  const priceHeight = Math.max(0, plotHeight - volumeHeight - (hasVolume ? BAND_GAP : 0));
+  const averages = average === "none" ? [] : movingAverage(bars, 20, average);
+  const overlay = shown.flatMap((entry, index) => {
+    const limit = shown[index + 1]?.time ?? (visible.at(-1)?.time ?? entry.time) + 1;
+    const point = averages.findLast((point) => point.time < limit);
+    return point && point.time >= entry.time ? [{ index, close: point.close }] : [];
+  });
 
   const values = candles
     ? shown.flatMap((bar) => [bar.high, bar.low])
     : shown.map((bar) => bar.close);
-  const geometry = chartGeometry(values, width, priceHeight, { baseline });
+  const geometry = chartGeometry(
+    [...values, ...overlay.map((point) => point.close)],
+    plotWidth,
+    priceHeight,
+    { baseline },
+  );
   const line = candles ? null : geometry;
-  const slot = shown.length > 0 ? width / shown.length : 0;
+  const slot = shown.length > 0 ? plotWidth / shown.length : 0;
   const candleWidth = Math.max(1, Math.min(slot - 1, 10));
-  const xForBar = (index: number) => (candles ? index * slot + slot / 2 : (line?.xFor(index) ?? 0));
+  const xForBar = (index: number) =>
+    candles
+      ? index * slot + slot / 2
+      : shown.length > 1
+        ? (index * plotWidth) / (shown.length - 1)
+        : plotWidth / 2;
 
   const peakVolume = Math.max(1, ...shown.map((bar) => bar.volume ?? 0));
   const baselineY = geometry && baseline != null ? geometry.yFor(baseline) : null;
@@ -89,7 +121,7 @@ export function PriceChart({
   const handleMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (shown.length === 0) return;
     const rect = event.currentTarget.getBoundingClientRect();
-    const fraction = (event.clientX - rect.left) / rect.width;
+    const fraction = (event.clientX - rect.left) / Math.max(1, plotWidth);
     const position = candles
       ? Math.floor(fraction * shown.length)
       : Math.round(fraction * (shown.length - 1));
@@ -127,6 +159,8 @@ export function PriceChart({
     let cursor = 0;
     let current = shown[0];
     for (const dividend of dividends) {
+      if (dividend.time < (visible[0]?.time ?? 0) || dividend.time > (visible.at(-1)?.time ?? 0))
+        continue;
       if (current === undefined) break;
       let next = shown[cursor + 1];
       while (
@@ -155,13 +189,65 @@ export function PriceChart({
               <stop offset="100%" stopColor="currentColor" stopOpacity={0} />
             </linearGradient>
           </defs>
+          {session &&
+            shown.map((entry, index) =>
+              !regularTimes?.has(entry.time) ? (
+                <rect
+                  key={`session-${entry.time}`}
+                  x={Math.max(0, xForBar(index) - Math.max(slot, 1) / 2)}
+                  y={0}
+                  width={Math.max(slot, 1)}
+                  height={priceHeight}
+                  className="fill-foreground/5"
+                />
+              ) : null,
+            )}
+          {[geometry.min, (geometry.min + geometry.max) / 2, geometry.max].map((value, index) => (
+            <g key={index}>
+              <line
+                x1={0}
+                x2={plotWidth}
+                y1={geometry.yFor(value)}
+                y2={geometry.yFor(value)}
+                className="stroke-background"
+                strokeWidth={3}
+                strokeDasharray="2 4"
+              />
+              <line
+                x1={0}
+                x2={plotWidth}
+                y1={geometry.yFor(value)}
+                y2={geometry.yFor(value)}
+                className="stroke-ink-3"
+                strokeWidth={1}
+                strokeDasharray="2 4"
+              />
+              <text
+                x={plotWidth + 4}
+                y={Math.max(10, geometry.yFor(value))}
+                className="fill-ink-2 text-micro"
+              >
+                {formatNumber(value, priceHint)}
+              </text>
+            </g>
+          ))}
+          {shown[0] && (
+            <text x={0} y={height - 32} className="fill-ink-2 text-micro">
+              {formatChartTime(shown[0].time, range, !clock24h, timeZone)}
+            </text>
+          )}
+          {shown.at(-1) && (
+            <text x={plotWidth} y={height - 32} textAnchor="end" className="fill-ink-2 text-micro">
+              {formatChartTime(shown.at(-1)!.time, range, !clock24h, timeZone)}
+            </text>
+          )}
 
           {baselineY != null && (
             <>
               <line
                 x1={0}
                 y1={baselineY}
-                x2={width}
+                x2={plotWidth}
                 y2={baselineY}
                 className="stroke-background"
                 strokeWidth={3}
@@ -171,7 +257,7 @@ export function PriceChart({
               <line
                 x1={0}
                 y1={baselineY}
-                x2={width}
+                x2={plotWidth}
                 y2={baselineY}
                 className="stroke-ink-3"
                 strokeWidth={1}
@@ -183,9 +269,23 @@ export function PriceChart({
 
           {line && line.points.length > 1 && (
             <>
-              <path d={areaPath(line.points, priceHeight)} fill={`url(#${gradientId})`} />
               <path
-                d={linePath(line.points)}
+                d={areaPath(
+                  shown.map((entry, index) => ({
+                    x: xForBar(index),
+                    y: geometry.yFor(entry.close),
+                  })),
+                  priceHeight,
+                )}
+                fill={`url(#${gradientId})`}
+              />
+              <path
+                d={linePath(
+                  shown.map((entry, index) => ({
+                    x: xForBar(index),
+                    y: geometry.yFor(entry.close),
+                  })),
+                )}
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={1.75}
@@ -236,7 +336,7 @@ export function PriceChart({
                 <rect
                   key={entry.time}
                   x={xForBar(entryIndex) - candleWidth / 2}
-                  y={height - barHeight}
+                  y={plotHeight - barHeight}
                   width={candleWidth}
                   height={barHeight}
                   className={cn(
@@ -257,9 +357,62 @@ export function PriceChart({
               strokeWidth={1.5}
             />
           ))}
+          {overlay.length > 1 && (
+            <>
+              <path
+                d={linePath(
+                  overlay.map((point) => ({
+                    x: xForBar(point.index),
+                    y: geometry.yFor(point.close),
+                  })),
+                )}
+                fill="none"
+                className="stroke-background"
+                strokeWidth={4}
+              />
+              <path
+                d={linePath(
+                  overlay.map((point) => ({
+                    x: xForBar(point.index),
+                    y: geometry.yFor(point.close),
+                  })),
+                )}
+                fill="none"
+                className="stroke-primary"
+                strokeWidth={1.5}
+                strokeDasharray="5 3"
+              />
+            </>
+          )}
+          {shown.at(-1) && (
+            <circle
+              cx={xForBar(shown.length - 1)}
+              cy={geometry.yFor(shown.at(-1)!.close)}
+              r={3}
+              className="fill-current stroke-background"
+              strokeWidth={2}
+            />
+          )}
 
           {bar && index != null && (
             <>
+              <line
+                x1={0}
+                x2={plotWidth}
+                y1={geometry.yFor(bar.close)}
+                y2={geometry.yFor(bar.close)}
+                className="stroke-background"
+                strokeWidth={3}
+              />
+              <line
+                x1={0}
+                x2={plotWidth}
+                y1={geometry.yFor(bar.close)}
+                y2={geometry.yFor(bar.close)}
+                className="stroke-ink-3"
+                strokeWidth={1}
+                strokeDasharray="3 3"
+              />
               <line
                 x1={xForBar(index)}
                 y1={0}
@@ -312,13 +465,13 @@ export function PriceChart({
       {bar && index != null ? (
         <div
           ref={tooltipRef}
-          className="pointer-events-none absolute top-0 z-10 w-fit whitespace-nowrap"
+          className="pointer-events-none absolute top-0 z-10 w-fit max-w-full"
           style={{ left: `${tooltipLeft(xForBar(index), tooltip.width, width)}px` }}
         >
           <div className="bg-card border-border/70 rounded-md border px-1.5 py-1 shadow-elev-1">
             <div
               className="
-                text-ink flex items-baseline gap-1 text-caption font-medium tabular-nums
+                text-ink flex flex-wrap items-baseline gap-1 text-caption font-medium tabular-nums
                 slashed-zero
               "
             >
@@ -326,6 +479,10 @@ export function PriceChart({
                 <>
                   <span className="text-ink-3">O</span>
                   {formatNumber(bar.open, priceHint)}
+                  <span className="text-ink-3">H</span>
+                  {formatNumber(bar.high, priceHint)}
+                  <span className="text-ink-3">L</span>
+                  {formatNumber(bar.low, priceHint)}
                   <span className="text-ink-3">C</span>
                   <span className={changeTone(directionOf(bar.close - bar.open))}>
                     {formatNumber(bar.close, priceHint)}
@@ -347,6 +504,63 @@ export function PriceChart({
           </div>
         </div>
       ) : null}
+      <div className="absolute right-0 bottom-0 flex items-center rounded-md bg-card">
+        <IconActionButton
+          icon={Plus}
+          label="Zoom into chart"
+          tooltip="Zoom in"
+          disabled={visible.length <= 10}
+          onClick={() => {
+            const count = Math.max(10, Math.floor(visible.length * 0.75));
+            setWindow({ start: end - count, end });
+            setActive(null);
+          }}
+        />
+        <IconActionButton
+          icon={Minus}
+          label="Zoom out of chart"
+          tooltip="Zoom out"
+          disabled={!window}
+          onClick={() => {
+            const count = Math.min(bars.length, Math.ceil(visible.length * 1.5));
+            const nextStart = Math.max(0, end - count);
+            setWindow({ start: nextStart, end: Math.min(bars.length, nextStart + count) });
+            setActive(null);
+          }}
+        />
+        <IconActionButton
+          icon={ChevronLeft}
+          label="Earlier chart history"
+          tooltip="Earlier"
+          disabled={start === 0}
+          onClick={() => {
+            const nextStart = Math.max(0, start - Math.ceil(visible.length / 4));
+            setWindow({ start: nextStart, end: nextStart + visible.length });
+            setActive(null);
+          }}
+        />
+        <IconActionButton
+          icon={ChevronRight}
+          label="Later chart history"
+          tooltip="Later"
+          disabled={end === bars.length}
+          onClick={() => {
+            const nextEnd = Math.min(bars.length, end + Math.ceil(visible.length / 4));
+            setWindow({ start: nextEnd - visible.length, end: nextEnd });
+            setActive(null);
+          }}
+        />
+        <IconActionButton
+          icon={RotateCcw}
+          label="Reset chart zoom"
+          tooltip="Reset"
+          disabled={!window}
+          onClick={() => {
+            setWindow(null);
+            setActive(null);
+          }}
+        />
+      </div>
     </div>
   );
 }

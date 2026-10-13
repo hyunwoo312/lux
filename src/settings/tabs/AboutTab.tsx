@@ -184,7 +184,13 @@ export function AboutTab() {
           </IconRow>
           <IconRow icon={Network} title="Token relay">
             Connecting Google, Microsoft or GitHub routes sign-in and token refresh through a tiny
-            stateless Lux relay that stores nothing. Everything else stays on your device.
+            stateless Lux relay that stores nothing. Widget data is fetched directly from its
+            provider.
+          </IconRow>
+          <IconRow icon={Globe} title="Public market data">
+            Stocks sends ticker symbols and requested chart periods directly to Yahoo Finance for
+            watchlists, benchmarks, comparison and price history. Saved watchlists and display
+            preferences stay in your browser.
           </IconRow>
           <IconRow
             icon={KeyRound}

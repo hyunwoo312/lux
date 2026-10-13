@@ -7,6 +7,31 @@ afterEach(() => {
 });
 
 describe("fetchYahoo", () => {
+  it("bounds concurrent requests and cancels a queued request without using a slot", async () => {
+    const complete: (() => void)[] = [];
+    const fetchMock = vi.fn(
+      () =>
+        new Promise<Response>((resolve) =>
+          complete.push(() =>
+            resolve(
+              new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } }),
+            ),
+          ),
+        ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const requests = Array.from({ length: 5 }, (_, index) => fetchYahoo(`/bounded/${index}`));
+    const controller = new AbortController();
+    const cancelled = fetchYahoo("/cancelled", controller.signal);
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(4));
+    controller.abort();
+    await expect(cancelled).rejects.toMatchObject({ name: "AbortError" });
+    complete.shift()?.();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(5));
+    complete.forEach((finish) => finish());
+    await Promise.all(requests);
+    expect(fetchMock.mock.calls).toHaveLength(5);
+  });
   it("surfaces a 429 as a rate limit after trying the second host", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response("", { status: 429 }));
     vi.stubGlobal("fetch", fetchMock);

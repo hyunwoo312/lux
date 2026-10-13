@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { parseCachedQuote, quoteFromChart } from "@/widgets/stocks/lib/quotes";
+import { describe, expect, it, vi } from "vitest";
+import { fetchQuote, parseCachedQuote, quoteFromChart } from "@/widgets/stocks/lib/quotes";
+import * as yahoo from "@/widgets/stocks/lib/yahooApi";
 
 const META = {
   symbol: "AAPL",
@@ -50,6 +51,50 @@ function chart(overrides: Record<string, unknown> = {}) {
 }
 
 describe("quoteFromChart", () => {
+  it("loads the latest regular session when today's payload contains only pre-market bars", async () => {
+    const meta = {
+      ...META,
+      exchangeTimezoneName: "UTC",
+      currentTradingPeriod: {
+        pre: { start: 86500, end: 86600 },
+        regular: { start: 86600, end: 86800 },
+        post: { start: 86800, end: 86900 },
+      },
+    };
+    const fetch = vi
+      .spyOn(yahoo, "fetchYahoo")
+      .mockResolvedValueOnce(
+        chart({ meta, timestamp: [86550], indicators: { quote: [{ close: [112] }] } }),
+      )
+      .mockResolvedValueOnce(chart({ meta }));
+    try {
+      const quote = await fetchQuote("AAPL", "1d");
+      expect(quote.bars.map((bar) => bar.time)).toEqual([250, 350]);
+      expect(quote.preMarketPrice).toBe(112);
+      expect(quote.extendedBars?.map((bar) => bar.time)).toEqual([86550]);
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(fetch.mock.calls[1]?.[0]).not.toContain("includePrePost");
+    } finally {
+      fetch.mockRestore();
+    }
+  });
+  it("classifies prior-session bars by the exchange clock when metadata has rolled forward", () => {
+    const raw = chart();
+    raw.chart.result[0]!.meta = {
+      ...META,
+      exchangeTimezoneName: "UTC",
+      currentTradingPeriod: {
+        pre: { start: 86500, end: 86600 },
+        regular: { start: 86600, end: 86800 },
+        post: { start: 86800, end: 86900 },
+      },
+    };
+    const quote = quoteFromChart(raw, "1d");
+    expect(quote.bars.map((bar) => bar.time)).toEqual([250, 350]);
+    expect(quote.extendedBars?.map((bar) => bar.time)).toEqual([150, 450]);
+    expect(quote.preMarketPrice).toBeNull();
+    expect(quote.postMarketPrice).toBeNull();
+  });
   it("keeps the open, high, low and volume the payload already carries", () => {
     const quote = quoteFromChart(chart(), "1y");
     expect(quote.bars[0]).toEqual({
@@ -67,6 +112,7 @@ describe("quoteFromChart", () => {
     expect(quote.bars.map((bar) => bar.time)).toEqual([250, 350]);
     expect(quote.preMarketPrice).toBe(98);
     expect(quote.postMarketPrice).toBe(112);
+    expect(quote.extendedBars?.map((bar) => bar.time)).toEqual([150, 450]);
   });
 
   it("keeps the whole session in the series on longer ranges", () => {

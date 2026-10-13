@@ -119,6 +119,38 @@ beforeEach(() => {
 });
 
 describe("StocksWidget", () => {
+  it("opens a market-rail chart even when the watchlist is empty", async () => {
+    seed("stocks-rail-only", { symbols: [], indexSymbols: ["^GSPC"] });
+    renderWidget("stocks-rail-only");
+    fireEvent.click(screen.getByRole("button", { name: "Show S&P 500 chart" }));
+    expect(await screen.findByText("$110.00")).toBeInTheDocument();
+    expect(fetchQuoteMock.mock.calls.some((call) => call[0] === "^GSPC")).toBe(true);
+  });
+  it("keeps previous close tied to the daily quote when a longer chart uses another baseline", async () => {
+    fetchQuoteMock.mockImplementation((symbol, range) =>
+      Promise.resolve(quote(symbol, 110, range === "1d" ? 100 : 30)),
+    );
+    seed("stocks-prev-close", { symbols: ["AAPL"], range: "1y" });
+    renderWidget("stocks-prev-close");
+    await screen.findByText("over 1Y");
+    await waitFor(() =>
+      expect(screen.getByText("Prev close").nextElementSibling?.textContent).toBe("100.00"),
+    );
+  });
+  it("keeps Compare mode selected through a new range's loading transition", async () => {
+    seed("stocks-compare-range", { symbols: ["AAPL"] });
+    renderWidget("stocks-compare-range");
+    await screen.findByText("$110.00");
+    fireEvent.click(screen.getByRole("button", { name: "Compare symbols" }));
+    expect(screen.getByRole("button", { name: "Show single-symbol chart" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: "1Y" }));
+    await waitFor(() =>
+      expect(fetchQuoteMock.mock.calls.some((call) => call[1] === "1y")).toBe(true),
+    );
+    expect(
+      await screen.findByRole("button", { name: "Show single-symbol chart" }),
+    ).toBeInTheDocument();
+  });
   it("fetches every watchlist price in a single request", async () => {
     seed("stocks-batch", { symbols: ["AAPL", "MSFT", "NVDA"] });
     renderWidget("stocks-batch");
@@ -133,10 +165,13 @@ describe("StocksWidget", () => {
     renderWidget("stocks-grid");
 
     await screen.findAllByText("110.00");
-    expect(screen.getAllByText("+10.00%")).toHaveLength(2);
+    expect(screen.getAllByText("+10.00%")).toHaveLength(4);
+    expect(screen.getAllByText("1Y chart")).toHaveLength(2);
+    expect(screen.getAllByText("Quote change · latest session")).toHaveLength(2);
+    expect(fetchSparksMock.mock.calls.some((call) => call[1] === "1y")).toBe(true);
     expect(screen.getAllByText("Day")).toHaveLength(2);
     expect(screen.getAllByText("Vol")).toHaveLength(2);
-    expect(fetchSparksMock.mock.calls[0]?.[1]).toBe("1d");
+    expect(fetchSparksMock.mock.calls.some((call) => call[1] === "1d")).toBe(true);
     expect(fetchQuoteMock.mock.calls.every((call) => call[1] === "1d")).toBe(true);
   });
 
@@ -149,6 +184,31 @@ describe("StocksWidget", () => {
       .getAllByRole("button", { name: /Show \w+ details/ })
       .map((row) => row.getAttribute("aria-label"));
     expect(labels).toEqual(["Show NVDA details", "Show AAPL details", "Show MSFT details"]);
+  });
+  it("filters by company without changing saved order or refetching metadata across views", async () => {
+    seed("stocks-filter", { symbols: ["NVDA", "AAPL", "MSFT"] });
+    renderWidget("stocks-filter");
+    await screen.findByText("AAPL Inc.");
+    fireEvent.change(screen.getByRole("textbox", { name: "Filter watchlist" }), {
+      target: { value: "AAPL Inc" },
+    });
+    await waitFor(() =>
+      expect(screen.getAllByRole("button", { name: /Show \w+ details/ })).toHaveLength(1),
+    );
+    expect(useStocksStore.getState().byInstance["stocks-filter"]?.symbols).toEqual([
+      "NVDA",
+      "AAPL",
+      "MSFT",
+    ]);
+    fireEvent.change(screen.getByRole("textbox", { name: "Filter watchlist" }), {
+      target: { value: "" },
+    });
+    useStocksStore.getState().setView("stocks-filter", "performance");
+    await screen.findByRole("table");
+    await waitFor(() =>
+      expect(fetchSparksMock.mock.calls.some((call) => call[1] === "2y")).toBe(true),
+    );
+    expect(fetchQuoteMock).toHaveBeenCalledTimes(3);
   });
 
   it("removes a symbol when its remove button is clicked", async () => {
