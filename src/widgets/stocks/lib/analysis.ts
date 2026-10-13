@@ -1,5 +1,34 @@
 import type { PricePoint, SparkSeries } from "@/widgets/stocks/types";
 
+export const PERFORMANCE_PERIODS = ["1W", "1M", "YTD", "1Y"] as const;
+
+export function performanceReturns(series: SparkSeries | undefined): (number | null)[] {
+  const points = series?.points ?? [];
+  const last = points.at(-1);
+  if (!last) return PERFORMANCE_PERIODS.map(() => null);
+  const date = new Date(last.time * 1000);
+  const week = new Date(date);
+  week.setUTCDate(week.getUTCDate() - 7);
+  const month = new Date(date);
+  month.setUTCDate(1);
+  month.setUTCMonth(month.getUTCMonth() - 1);
+  const monthEnd = new Date(
+    Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+  month.setUTCDate(Math.min(date.getUTCDate(), monthEnd));
+  const year = new Date(date);
+  year.setUTCDate(1);
+  year.setUTCFullYear(year.getUTCFullYear() - 1);
+  const yearMonthEnd = new Date(
+    Date.UTC(year.getUTCFullYear(), year.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+  year.setUTCDate(Math.min(date.getUTCDate(), yearMonthEnd));
+  const ytd = Date.UTC(date.getUTCFullYear(), 0, 1) / 1000 - 1;
+  return [week.getTime() / 1000, month.getTime() / 1000, ytd, year.getTime() / 1000].map(
+    (boundary) => periodReturn(points, boundary),
+  );
+}
+
 export function periodReturn(points: PricePoint[], boundary: number): number | null {
   const first = points.findLast((point) => point.time <= boundary);
   const last = points.at(-1);

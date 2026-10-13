@@ -1,5 +1,5 @@
 import { useId, useState } from "react";
-import { Minus, Plus, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
+import { ZoomOut, ZoomIn, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 import { IconActionButton } from "@/components/IconActionButton";
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
@@ -77,7 +77,7 @@ export function PriceChart({
   const end = Math.min(window?.end ?? bars.length, bars.length);
   const visible = bars.slice(start, end);
   const plotWidth = Math.max(0, width - 48);
-  const plotHeight = Math.max(0, height - 48);
+  const plotHeight = Math.max(0, height - 24);
 
   const candles = style === "candle";
   const regularTimes = session ? new Set(session.regularTimes) : null;
@@ -176,337 +176,343 @@ export function PriceChart({
   }
 
   return (
-    <div ref={ref} className={cn("relative min-h-0", className)}>
-      {geometry ? (
-        <svg
-          className={cn("absolute inset-0 size-full", changeTone(direction))}
-          role="img"
-          aria-label={chartSummary(shown, range, priceHint)}
-        >
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="currentColor" stopOpacity={0.2} />
-              <stop offset="100%" stopColor="currentColor" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          {session &&
-            shown.map((entry, index) =>
-              !regularTimes?.has(entry.time) ? (
-                <rect
-                  key={`session-${entry.time}`}
-                  x={Math.max(0, xForBar(index) - Math.max(slot, 1) / 2)}
-                  y={0}
-                  width={Math.max(slot, 1)}
-                  height={priceHeight}
-                  className="fill-foreground/5"
-                />
-              ) : null,
-            )}
-          {[geometry.min, (geometry.min + geometry.max) / 2, geometry.max].map((value, index) => (
-            <g key={index}>
-              <line
-                x1={0}
-                x2={plotWidth}
-                y1={geometry.yFor(value)}
-                y2={geometry.yFor(value)}
-                className="stroke-background"
-                strokeWidth={3}
-                strokeDasharray="2 4"
-              />
-              <line
-                x1={0}
-                x2={plotWidth}
-                y1={geometry.yFor(value)}
-                y2={geometry.yFor(value)}
-                className="stroke-ink-3"
-                strokeWidth={1}
-                strokeDasharray="2 4"
-              />
-              <text
-                x={plotWidth + 4}
-                y={Math.max(10, geometry.yFor(value))}
-                className="fill-ink-2 text-micro"
-              >
-                {formatNumber(value, priceHint)}
-              </text>
-            </g>
-          ))}
-          {shown[0] && (
-            <text x={0} y={height - 32} className="fill-ink-2 text-micro">
-              {formatChartTime(shown[0].time, range, !clock24h, timeZone)}
-            </text>
-          )}
-          {shown.at(-1) && (
-            <text x={plotWidth} y={height - 32} textAnchor="end" className="fill-ink-2 text-micro">
-              {formatChartTime(shown.at(-1)!.time, range, !clock24h, timeZone)}
-            </text>
-          )}
-
-          {baselineY != null && (
-            <>
-              <line
-                x1={0}
-                y1={baselineY}
-                x2={plotWidth}
-                y2={baselineY}
-                className="stroke-background"
-                strokeWidth={3}
-                strokeDasharray="3 3"
-                vectorEffect="non-scaling-stroke"
-              />
-              <line
-                x1={0}
-                y1={baselineY}
-                x2={plotWidth}
-                y2={baselineY}
-                className="stroke-ink-3"
-                strokeWidth={1}
-                strokeDasharray="3 3"
-                vectorEffect="non-scaling-stroke"
-              />
-            </>
-          )}
-
-          {line && line.points.length > 1 && (
-            <>
-              <path
-                d={areaPath(
-                  shown.map((entry, index) => ({
-                    x: xForBar(index),
-                    y: geometry.yFor(entry.close),
-                  })),
-                  priceHeight,
-                )}
-                fill={`url(#${gradientId})`}
-              />
-              <path
-                d={linePath(
-                  shown.map((entry, index) => ({
-                    x: xForBar(index),
-                    y: geometry.yFor(entry.close),
-                  })),
-                )}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.75}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                vectorEffect="non-scaling-stroke"
-              />
-            </>
-          )}
-
-          {candles &&
-            shown.map((entry, entryIndex) => {
-              const x = xForBar(entryIndex);
-              const rising = entry.close >= entry.open;
-              const top = geometry.yFor(Math.max(entry.open, entry.close));
-              const bottom = geometry.yFor(Math.min(entry.open, entry.close));
-              return (
-                <g
-                  key={entry.time}
-                  className={rising ? "text-success" : "text-destructive"}
-                  stroke="currentColor"
-                  fill="currentColor"
-                >
-                  <line
-                    x1={x}
-                    y1={geometry.yFor(entry.high)}
-                    x2={x}
-                    y2={geometry.yFor(entry.low)}
-                    strokeWidth={1}
-                    vectorEffect="non-scaling-stroke"
-                  />
+    <div className={cn("flex min-h-0 flex-col", className)}>
+      <div ref={ref} className="relative min-h-32 flex-1">
+        {geometry ? (
+          <svg
+            className={cn("absolute inset-0 size-full", changeTone(direction))}
+            role="img"
+            aria-label={chartSummary(shown, range, priceHint)}
+          >
+            <defs>
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="currentColor" stopOpacity={0.2} />
+                <stop offset="100%" stopColor="currentColor" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            {session &&
+              shown.map((entry, index) =>
+                !regularTimes?.has(entry.time) ? (
                   <rect
-                    x={x - candleWidth / 2}
-                    y={top}
-                    width={candleWidth}
-                    height={Math.max(1, bottom - top)}
-                    stroke="none"
+                    key={`session-${entry.time}`}
+                    x={Math.max(0, xForBar(index) - Math.max(slot, 1) / 2)}
+                    y={0}
+                    width={Math.max(slot, 1)}
+                    height={priceHeight}
+                    className="fill-foreground/5"
                   />
-                </g>
-              );
-            })}
+                ) : null,
+              )}
+            {[geometry.min, (geometry.min + geometry.max) / 2, geometry.max].map((value, index) => (
+              <g key={index}>
+                <line
+                  x1={0}
+                  x2={plotWidth}
+                  y1={geometry.yFor(value)}
+                  y2={geometry.yFor(value)}
+                  className="stroke-background"
+                  strokeWidth={3}
+                  strokeDasharray="2 4"
+                />
+                <line
+                  x1={0}
+                  x2={plotWidth}
+                  y1={geometry.yFor(value)}
+                  y2={geometry.yFor(value)}
+                  className="stroke-ink-3"
+                  strokeWidth={1}
+                  strokeDasharray="2 4"
+                />
+                <text
+                  x={plotWidth + 4}
+                  y={Math.max(10, geometry.yFor(value))}
+                  className="fill-ink-2 text-micro"
+                >
+                  {formatNumber(value, priceHint)}
+                </text>
+              </g>
+            ))}
+            {shown[0] && (
+              <text x={0} y={height - 3} className="fill-ink-2 text-micro">
+                {formatChartTime(shown[0].time, range, !clock24h, timeZone)}
+              </text>
+            )}
+            {shown.at(-1) && (
+              <text x={plotWidth} y={height - 3} textAnchor="end" className="fill-ink-2 text-micro">
+                {formatChartTime(shown.at(-1)!.time, range, !clock24h, timeZone)}
+              </text>
+            )}
 
-          {hasVolume &&
-            shown.map((entry, entryIndex) => {
-              const value = entry.volume ?? 0;
-              const barHeight = (value / peakVolume) * volumeHeight;
-              return (
-                <rect
-                  key={entry.time}
-                  x={xForBar(entryIndex) - candleWidth / 2}
-                  y={plotHeight - barHeight}
-                  width={candleWidth}
-                  height={barHeight}
-                  className={cn(
-                    "opacity-35",
-                    entry.close >= entry.open ? "fill-success" : "fill-destructive",
+            {baselineY != null && (
+              <>
+                <line
+                  x1={0}
+                  y1={baselineY}
+                  x2={plotWidth}
+                  y2={baselineY}
+                  className="stroke-background"
+                  strokeWidth={3}
+                  strokeDasharray="3 3"
+                  vectorEffect="non-scaling-stroke"
+                />
+                <line
+                  x1={0}
+                  y1={baselineY}
+                  x2={plotWidth}
+                  y2={baselineY}
+                  className="stroke-ink-3"
+                  strokeWidth={1}
+                  strokeDasharray="3 3"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </>
+            )}
+
+            {line && line.points.length > 1 && (
+              <>
+                <path
+                  d={areaPath(
+                    shown.map((entry, index) => ({
+                      x: xForBar(index),
+                      y: geometry.yFor(entry.close),
+                    })),
+                    priceHeight,
                   )}
+                  fill={`url(#${gradientId})`}
                 />
-              );
-            })}
+                <path
+                  d={linePath(
+                    shown.map((entry, index) => ({
+                      x: xForBar(index),
+                      y: geometry.yFor(entry.close),
+                    })),
+                  )}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.75}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </>
+            )}
 
-          {[...dividendByBar.keys()].map((barIndex) => (
-            <circle
-              key={barIndex}
-              cx={xForBar(barIndex)}
-              cy={priceHeight - 3}
-              r={2}
-              className="stroke-background fill-ink-3"
-              strokeWidth={1.5}
-            />
-          ))}
-          {overlay.length > 1 && (
-            <>
-              <path
-                d={linePath(
-                  overlay.map((point) => ({
-                    x: xForBar(point.index),
-                    y: geometry.yFor(point.close),
-                  })),
-                )}
-                fill="none"
-                className="stroke-background"
-                strokeWidth={4}
-              />
-              <path
-                d={linePath(
-                  overlay.map((point) => ({
-                    x: xForBar(point.index),
-                    y: geometry.yFor(point.close),
-                  })),
-                )}
-                fill="none"
-                className="stroke-primary"
+            {candles &&
+              shown.map((entry, entryIndex) => {
+                const x = xForBar(entryIndex);
+                const rising = entry.close >= entry.open;
+                const top = geometry.yFor(Math.max(entry.open, entry.close));
+                const bottom = geometry.yFor(Math.min(entry.open, entry.close));
+                return (
+                  <g
+                    key={entry.time}
+                    className={rising ? "text-success" : "text-destructive"}
+                    stroke="currentColor"
+                    fill="currentColor"
+                  >
+                    <line
+                      x1={x}
+                      y1={geometry.yFor(entry.high)}
+                      x2={x}
+                      y2={geometry.yFor(entry.low)}
+                      strokeWidth={1}
+                      vectorEffect="non-scaling-stroke"
+                    />
+                    <rect
+                      x={x - candleWidth / 2}
+                      y={top}
+                      width={candleWidth}
+                      height={Math.max(1, bottom - top)}
+                      stroke="none"
+                    />
+                  </g>
+                );
+              })}
+
+            {hasVolume &&
+              shown.map((entry, entryIndex) => {
+                const value = entry.volume ?? 0;
+                const barHeight = (value / peakVolume) * volumeHeight;
+                return (
+                  <rect
+                    key={entry.time}
+                    x={xForBar(entryIndex) - candleWidth / 2}
+                    y={plotHeight - barHeight}
+                    width={candleWidth}
+                    height={barHeight}
+                    className={cn(
+                      "opacity-35",
+                      entry.close >= entry.open ? "fill-success" : "fill-destructive",
+                    )}
+                  />
+                );
+              })}
+
+            {[...dividendByBar.keys()].map((barIndex) => (
+              <circle
+                key={barIndex}
+                cx={xForBar(barIndex)}
+                cy={priceHeight - 3}
+                r={2}
+                className="stroke-background fill-ink-3"
                 strokeWidth={1.5}
-                strokeDasharray="5 3"
               />
-            </>
-          )}
-          {shown.at(-1) && (
-            <circle
-              cx={xForBar(shown.length - 1)}
-              cy={geometry.yFor(shown.at(-1)!.close)}
-              r={3}
-              className="fill-current stroke-background"
-              strokeWidth={2}
-            />
-          )}
-
-          {bar && index != null && (
-            <>
-              <line
-                x1={0}
-                x2={plotWidth}
-                y1={geometry.yFor(bar.close)}
-                y2={geometry.yFor(bar.close)}
-                className="stroke-background"
-                strokeWidth={3}
-              />
-              <line
-                x1={0}
-                x2={plotWidth}
-                y1={geometry.yFor(bar.close)}
-                y2={geometry.yFor(bar.close)}
-                className="stroke-ink-3"
-                strokeWidth={1}
-                strokeDasharray="3 3"
-              />
-              <line
-                x1={xForBar(index)}
-                y1={0}
-                x2={xForBar(index)}
-                y2={height}
-                className="stroke-background"
-                strokeWidth={3}
-                vectorEffect="non-scaling-stroke"
-              />
-              <line
-                x1={xForBar(index)}
-                y1={0}
-                x2={xForBar(index)}
-                y2={height}
-                className="stroke-ink-3"
-                strokeWidth={1}
-                vectorEffect="non-scaling-stroke"
-              />
-              {!candles && (
-                <circle
-                  cx={xForBar(index)}
-                  cy={geometry.yFor(bar.close)}
-                  r={3.5}
-                  className="stroke-background fill-current"
-                  strokeWidth={2}
+            ))}
+            {overlay.length > 1 && (
+              <>
+                <path
+                  d={linePath(
+                    overlay.map((point) => ({
+                      x: xForBar(point.index),
+                      y: geometry.yFor(point.close),
+                    })),
+                  )}
+                  fill="none"
+                  className="stroke-background"
+                  strokeWidth={4}
                 />
-              )}
-            </>
-          )}
-        </svg>
-      ) : null}
+                <path
+                  d={linePath(
+                    overlay.map((point) => ({
+                      x: xForBar(point.index),
+                      y: geometry.yFor(point.close),
+                    })),
+                  )}
+                  fill="none"
+                  className="stroke-primary"
+                  strokeWidth={1.5}
+                  strokeDasharray="5 3"
+                />
+              </>
+            )}
+            {shown.at(-1) && (
+              <circle
+                cx={xForBar(shown.length - 1)}
+                cy={geometry.yFor(shown.at(-1)!.close)}
+                r={3}
+                className="fill-current stroke-background"
+                strokeWidth={2}
+              />
+            )}
 
-      {read ? (
-        <div
-          role="slider"
-          tabIndex={0}
-          aria-label="Inspect the chart"
-          aria-valuemin={0}
-          aria-valuemax={shown.length - 1}
-          aria-valuenow={index ?? shown.length - 1}
-          aria-valuetext={`${formatNumber(read.close, priceHint)}, ${formatChartTime(read.time, range, !clock24h, timeZone)}`}
-          className="focus-ring absolute inset-0 rounded-md"
-          onPointerMove={handleMove}
-          onPointerLeave={() => setActive(null)}
-          onKeyDown={handleKey}
-          onBlur={() => setActive(null)}
-        />
-      ) : null}
+            {bar && index != null && (
+              <>
+                <line
+                  x1={0}
+                  x2={plotWidth}
+                  y1={geometry.yFor(bar.close)}
+                  y2={geometry.yFor(bar.close)}
+                  className="stroke-background"
+                  strokeWidth={3}
+                />
+                <line
+                  x1={0}
+                  x2={plotWidth}
+                  y1={geometry.yFor(bar.close)}
+                  y2={geometry.yFor(bar.close)}
+                  className="stroke-ink-3"
+                  strokeWidth={1}
+                  strokeDasharray="3 3"
+                />
+                <line
+                  x1={xForBar(index)}
+                  y1={0}
+                  x2={xForBar(index)}
+                  y2={height}
+                  className="stroke-background"
+                  strokeWidth={3}
+                  vectorEffect="non-scaling-stroke"
+                />
+                <line
+                  x1={xForBar(index)}
+                  y1={0}
+                  x2={xForBar(index)}
+                  y2={height}
+                  className="stroke-ink-3"
+                  strokeWidth={1}
+                  vectorEffect="non-scaling-stroke"
+                />
+                {!candles && (
+                  <circle
+                    cx={xForBar(index)}
+                    cy={geometry.yFor(bar.close)}
+                    r={3.5}
+                    className="stroke-background fill-current"
+                    strokeWidth={2}
+                  />
+                )}
+              </>
+            )}
+          </svg>
+        ) : null}
 
-      {bar && index != null ? (
-        <div
-          ref={tooltipRef}
-          className="pointer-events-none absolute top-0 z-10 w-fit max-w-full"
-          style={{ left: `${tooltipLeft(xForBar(index), tooltip.width, width)}px` }}
-        >
-          <div className="bg-card border-border/70 rounded-md border px-1.5 py-1 shadow-elev-1">
-            <div
-              className="
-                text-ink flex flex-wrap items-baseline gap-1 text-caption font-medium tabular-nums
-                slashed-zero
-              "
-            >
-              {candles ? (
-                <>
-                  <span className="text-ink-3">O</span>
-                  {formatNumber(bar.open, priceHint)}
-                  <span className="text-ink-3">H</span>
-                  {formatNumber(bar.high, priceHint)}
-                  <span className="text-ink-3">L</span>
-                  {formatNumber(bar.low, priceHint)}
-                  <span className="text-ink-3">C</span>
-                  <span className={changeTone(directionOf(bar.close - bar.open))}>
-                    {formatNumber(bar.close, priceHint)}
+        {read ? (
+          <div
+            role="slider"
+            tabIndex={0}
+            aria-label="Inspect the chart"
+            aria-valuemin={0}
+            aria-valuemax={shown.length - 1}
+            aria-valuenow={index ?? shown.length - 1}
+            aria-valuetext={`${formatNumber(read.close, priceHint)}, ${formatChartTime(read.time, range, !clock24h, timeZone)}`}
+            className="focus-ring absolute inset-0 rounded-md"
+            onPointerMove={handleMove}
+            onPointerLeave={() => setActive(null)}
+            onKeyDown={handleKey}
+            onBlur={() => setActive(null)}
+          />
+        ) : null}
+
+        {bar && index != null ? (
+          <div
+            ref={tooltipRef}
+            className="pointer-events-none absolute top-0 z-10 w-fit max-w-full"
+            style={{ left: `${tooltipLeft(xForBar(index), tooltip.width, width)}px` }}
+          >
+            <div className="bg-card border-border/70 rounded-md border px-1.5 py-1 shadow-elev-1">
+              <div
+                className="
+                  text-ink flex flex-wrap items-baseline gap-1 text-caption font-medium tabular-nums
+                  slashed-zero
+                "
+              >
+                {candles ? (
+                  <>
+                    <span className="text-ink-3">O</span>
+                    {formatNumber(bar.open, priceHint)}
+                    <span className="text-ink-3">H</span>
+                    {formatNumber(bar.high, priceHint)}
+                    <span className="text-ink-3">L</span>
+                    {formatNumber(bar.low, priceHint)}
+                    <span className="text-ink-3">C</span>
+                    <span className={changeTone(directionOf(bar.close - bar.open))}>
+                      {formatNumber(bar.close, priceHint)}
+                    </span>
+                  </>
+                ) : (
+                  formatNumber(bar.close, priceHint)
+                )}
+              </div>
+              <div className="text-ink-3 flex items-baseline gap-1.5 text-micro tabular-nums">
+                <span>{formatChartTime(bar.time, range, !clock24h, timeZone)}</span>
+                {bar.volume != null && <span>Vol {formatVolume(bar.volume)}</span>}
+                {dividendByBar.has(index) && (
+                  <span className="text-ink-2">
+                    Div {formatNumber(dividendByBar.get(index) ?? 0)}
                   </span>
-                </>
-              ) : (
-                formatNumber(bar.close, priceHint)
-              )}
-            </div>
-            <div className="text-ink-3 flex items-baseline gap-1.5 text-micro tabular-nums">
-              <span>{formatChartTime(bar.time, range, !clock24h, timeZone)}</span>
-              {bar.volume != null && <span>Vol {formatVolume(bar.volume)}</span>}
-              {dividendByBar.has(index) && (
-                <span className="text-ink-2">
-                  Div {formatNumber(dividendByBar.get(index) ?? 0)}
-                </span>
-              )}
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      ) : null}
-      <div className="absolute right-0 bottom-0 flex items-center rounded-md bg-card">
+        ) : null}
+      </div>
+      <div
+        role="group"
+        aria-label="Chart navigation"
+        className="flex shrink-0 items-center justify-center gap-0.5 pt-1"
+      >
         <IconActionButton
-          icon={Plus}
+          icon={ZoomIn}
           label="Zoom into chart"
           tooltip="Zoom in"
           disabled={visible.length <= 10}
@@ -517,7 +523,7 @@ export function PriceChart({
           }}
         />
         <IconActionButton
-          icon={Minus}
+          icon={ZoomOut}
           label="Zoom out of chart"
           tooltip="Zoom out"
           disabled={!window}
@@ -525,6 +531,16 @@ export function PriceChart({
             const count = Math.min(bars.length, Math.ceil(visible.length * 1.5));
             const nextStart = Math.max(0, end - count);
             setWindow({ start: nextStart, end: Math.min(bars.length, nextStart + count) });
+            setActive(null);
+          }}
+        />
+        <IconActionButton
+          icon={RotateCcw}
+          label="Reset chart zoom"
+          tooltip="Reset"
+          disabled={!window}
+          onClick={() => {
+            setWindow(null);
             setActive(null);
           }}
         />
@@ -547,16 +563,6 @@ export function PriceChart({
           onClick={() => {
             const nextEnd = Math.min(bars.length, end + Math.ceil(visible.length / 4));
             setWindow({ start: nextEnd - visible.length, end: nextEnd });
-            setActive(null);
-          }}
-        />
-        <IconActionButton
-          icon={RotateCcw}
-          label="Reset chart zoom"
-          tooltip="Reset"
-          disabled={!window}
-          onClick={() => {
-            setWindow(null);
             setActive(null);
           }}
         />

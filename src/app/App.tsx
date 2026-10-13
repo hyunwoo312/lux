@@ -23,10 +23,12 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import { sweepStaleResourceCaches } from "@/widgets/core/resourceCacheSweep";
 import { usePersistHydrated } from "@/hooks/usePersistHydrated";
 import { StorageWriteNotice } from "@/components/StorageWriteNotice";
+import { useTransientScrollbar } from "@/hooks/useTransientScrollbar";
 
 const SWEEP_TIMEOUT_MS = 10_000;
 
 export function App() {
+  useTransientScrollbar();
   useGlobalShortcuts();
   usePaletteCommand();
   useDisableContextMenu();

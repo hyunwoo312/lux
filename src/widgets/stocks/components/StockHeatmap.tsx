@@ -15,7 +15,7 @@ export function StockHeatmap({
   return (
     <div className="flex flex-col gap-2">
       <p className="text-ink-3 px-2 text-micro">Watchlist · daily movement · equal-sized tiles</p>
-      <div className="grid grid-cols-2 gap-1.5">
+      <div className="grid grid-cols-2 gap-1.5 p-1">
         {symbols.map((symbol) => {
           const series = daily?.[symbol];
           const percent = series?.points.length
@@ -37,7 +37,7 @@ export function StockHeatmap({
               className={cn(
                 `
                   focus-ring bg-foreground/5
-                  hover:bg-foreground/10
+                  hover:ring-1 hover:ring-primary
                   flex min-h-20 cursor-pointer flex-col items-start justify-between rounded-lg p-3
                   transition-colors
                 `,
@@ -45,7 +45,7 @@ export function StockHeatmap({
               )}
             >
               <span className="text-ink max-w-full truncate text-body font-semibold">{symbol}</span>
-              <span className="text-body-lg font-semibold tabular-nums">
+              <span className="text-body-lg font-semibold tabular-nums slashed-zero">
                 {percent == null ? "—" : `${formatSigned(percent)}%`}
               </span>
             </button>

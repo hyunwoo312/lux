@@ -1,11 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { KeyboardEvent } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Search } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { useComboboxCursor } from "@/hooks/useComboboxCursor";
-import { useTransientScrollbar } from "@/hooks/useTransientScrollbar";
 import { fade } from "@/lib/motion";
 import { recordPaletteUse } from "@/stores/usePaletteStore";
 import { useToastStore } from "@/stores/useToastStore";
@@ -22,7 +21,7 @@ export function CommandPalette() {
   const query = useCommandPaletteStore((state) => state.query);
   const mode = useCommandPaletteStore((state) => state.mode);
   const { closePalette, setQuery, enterScope, leaveScope } = useCommandPaletteStore.getState();
-  const scroll = useTransientScrollbar<HTMLDivElement>();
+  const scrollRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
 
   const { groups, entries, working, emptyMessage } = usePaletteEntries(mode, query, open);
@@ -62,8 +61,8 @@ export function CommandPalette() {
   const { active } = cursor;
 
   useEffect(() => {
-    scroll.ref.current?.scrollTo({ top: 0 });
-  }, [query, mode, scroll.ref]);
+    scrollRef.current?.scrollTo({ top: 0 });
+  }, [query, mode]);
 
   const ContextIcon = mode.kind === "scope" ? mode.command.icon : Search;
 
@@ -137,11 +136,9 @@ export function CommandPalette() {
         </div>
 
         <div
-          ref={scroll.ref}
-          onScroll={scroll.onScroll}
+          ref={scrollRef}
           className="
-            scroll-fade scrollbar-transient scrollbar-gutter relative h-100 overflow-y-auto pr-0
-            pl-(--scrollbar-width)
+            scroll-fade scrollbar-gutter relative h-100 overflow-y-auto pr-0 pl-(--scrollbar-width)
           "
         >
           <AnimatePresence mode="wait" initial={false}>

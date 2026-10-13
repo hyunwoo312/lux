@@ -422,13 +422,17 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: var(--scrollbar-thumb);
+    background-color: transparent;
     background-clip: padding-box;
     border: 3px solid transparent;
     border-radius: 9999px;
   }
 
-  ::-webkit-scrollbar-thumb:hover {
+  [data-scrolling="true"]::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+  }
+
+  [data-scrolling="true"]::-webkit-scrollbar-thumb:hover {
     background-color: var(--scrollbar-thumb-hover);
   }
 
@@ -464,17 +468,6 @@
 
 @utility duration-slow {
   transition-duration: var(--duration-slow);
-}
-
-@utility scrollbar-transient {
-  &::-webkit-scrollbar-thumb {
-    background-color: transparent;
-    transition: background-color var(--duration-base) var(--ease-standard);
-  }
-
-  &[data-scrolling="true"]::-webkit-scrollbar-thumb {
-    background-color: var(--scrollbar-thumb);
-  }
 }
 
 @property --fade-start {

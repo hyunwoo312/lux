@@ -1,22 +1,30 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 const IDLE_MS = 700;
 
-export function useTransientScrollbar<T extends HTMLElement>() {
-  const ref = useRef<T>(null);
-  const idle = useRef<number>(0);
-
-  useEffect(() => () => window.clearTimeout(idle.current), []);
-
-  const onScroll = () => {
-    const node = ref.current;
-    if (!node) return;
-    node.dataset.scrolling = "true";
-    window.clearTimeout(idle.current);
-    idle.current = window.setTimeout(() => {
-      node.dataset.scrolling = "false";
-    }, IDLE_MS);
-  };
-
-  return { ref, onScroll };
+export function useTransientScrollbar() {
+  useEffect(() => {
+    const timers = new Map<HTMLElement, number>();
+    const onScroll = (event: Event) => {
+      const node = event.target === document ? document.scrollingElement : event.target;
+      if (!(node instanceof HTMLElement)) return;
+      node.dataset.scrolling = "true";
+      window.clearTimeout(timers.get(node));
+      timers.set(
+        node,
+        window.setTimeout(() => {
+          delete node.dataset.scrolling;
+          timers.delete(node);
+        }, IDLE_MS),
+      );
+    };
+    document.addEventListener("scroll", onScroll, { capture: true, passive: true });
+    return () => {
+      document.removeEventListener("scroll", onScroll, true);
+      for (const [node, timer] of timers) {
+        window.clearTimeout(timer);
+        delete node.dataset.scrolling;
+      }
+    };
+  }, []);
 }

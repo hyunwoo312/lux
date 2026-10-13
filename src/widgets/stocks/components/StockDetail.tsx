@@ -145,12 +145,14 @@ function DetailBody({
   controls,
   onControlsChange,
   daily,
+  onRemove,
 }: {
   data: Quote;
   range: StockRange;
   controls: ChartControls;
   onControlsChange: (patch: Partial<ChartControls>) => void;
   daily: Quote | null;
+  onRemove?: () => void;
 }) {
   const clock24h = useAppSettingsStore((state) => state.clock24h);
   const { volume, average, extendedHours, compare, tools } = controls;
@@ -169,10 +171,17 @@ function DetailBody({
 
   return (
     <div className="scroll-fade flex h-full min-h-0 flex-col gap-2 overflow-x-hidden overflow-y-auto">
-      <div className="flex shrink-0 flex-col gap-1 pr-8">
-        <div className="flex items-baseline gap-2">
+      <div className="flex shrink-0 flex-col gap-1">
+        <div className="flex items-center gap-2">
           <span className={cn(TYPE.title, "shrink-0")}>{data.symbol}</span>
           <span className={cn(TYPE.rowMeta, "min-w-0 truncate")}>{data.name}</span>
+          {onRemove && (
+            <StockRemoveButton
+              symbol={data.symbol}
+              onRemove={onRemove}
+              className="ml-auto shrink-0"
+            />
+          )}
         </div>
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
           <span className="text-ink text-heading leading-none font-semibold tabular-nums slashed-zero">
@@ -227,6 +236,7 @@ function DetailBody({
           label={compare ? "Show single-symbol chart" : "Compare symbols"}
           tooltip={compare ? "Single symbol" : "Compare"}
           onClick={() => onControlsChange({ compare: !compare })}
+          pressed={compare}
         />
         {!compare && (
           <IconActionButton
@@ -234,6 +244,7 @@ function DetailBody({
             label={tools ? "Hide chart controls" : "Show chart controls"}
             tooltip="Chart controls"
             onClick={() => onControlsChange({ tools: !tools })}
+            pressed={tools}
           />
         )}
       </div>
@@ -305,7 +316,7 @@ function DetailBody({
             priceHint={data.priceHint}
             timeZone={data.exchangeTimezone}
             dividends={data.dividends}
-            className="min-h-32 flex-1"
+            className="min-h-44 flex-1"
             showVolume={volume}
             average={average}
             session={
@@ -372,13 +383,6 @@ export function StockDetail({ symbol, onRemove }: StockDetailProps) {
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      {onRemove && (
-        <StockRemoveButton
-          symbol={symbol}
-          onRemove={onRemove}
-          className="absolute top-0 right-0 z-10"
-        />
-      )}
       {data && freshness.status !== "current" && (
         <p role="status" className="text-warning mb-1 shrink-0 pr-8 text-caption">
           Showing saved quote. Refresh to check for updates.
@@ -391,6 +395,7 @@ export function StockDetail({ symbol, onRemove }: StockDetailProps) {
           range={range}
           controls={controls}
           daily={daily.data}
+          onRemove={onRemove}
           onControlsChange={(patch) => setControls((current) => ({ ...current, ...patch }))}
         />
       ) : state.status === "error" ? (

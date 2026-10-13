@@ -200,9 +200,9 @@ describe("StocksWidget", () => {
       "AAPL",
       "MSFT",
     ]);
-    fireEvent.change(screen.getByRole("textbox", { name: "Filter watchlist" }), {
-      target: { value: "" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: "Clear watchlist filter" }));
+    expect(screen.getByRole("textbox", { name: "Filter watchlist" })).toHaveFocus();
+    expect(screen.getAllByRole("button", { name: /Show \w+ details/ })).toHaveLength(3);
     useStocksStore.getState().setView("stocks-filter", "performance");
     await screen.findByRole("table");
     await waitFor(() =>

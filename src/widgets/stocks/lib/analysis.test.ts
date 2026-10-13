@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { compareSeries, movingAverage, periodReturn } from "@/widgets/stocks/lib/analysis";
+import {
+  compareSeries,
+  movingAverage,
+  periodReturn,
+  performanceReturns,
+} from "@/widgets/stocks/lib/analysis";
 import { sparkKey } from "@/widgets/stocks/lib/cacheKeys";
 import type { SparkSeries } from "@/widgets/stocks/types";
 
@@ -11,6 +16,18 @@ const series = (symbol: string, values: [number, number][]): SparkSeries => ({
 });
 
 describe("watchlist analysis", () => {
+  it("uses the prior February's last day for a leap-day annual return", () => {
+    const time = (date: string) => Date.parse(`${date}T21:00:00Z`) / 1000;
+    const result = performanceReturns(
+      series("A", [
+        [time("2023-02-28"), 100],
+        [time("2023-03-01"), 200],
+        [time("2024-02-29"), 150],
+      ]),
+    );
+    expect(result[3]).toBe(50);
+    expect(performanceReturns(undefined)).toEqual([null, null, null, null]);
+  });
   it("shares caches across manual order and duplicate symbols", () => {
     expect(sparkKey(["MSFT", "AAPL", "AAPL"], "1y")).toBe(sparkKey(["AAPL", "MSFT"], "1y"));
   });

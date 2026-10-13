@@ -12,6 +12,7 @@ type IconActionButtonProps = {
   size?: "icon-xs" | "icon";
   disabled?: boolean;
   pending?: boolean;
+  pressed?: boolean;
 };
 
 export function IconActionButton({
@@ -22,6 +23,7 @@ export function IconActionButton({
   size = "icon",
   disabled = false,
   pending = false,
+  pressed,
 }: IconActionButtonProps) {
   const inert = disabled || pending;
 
@@ -32,10 +34,15 @@ export function IconActionButton({
         size={size}
         aria-label={label}
         aria-disabled={inert || undefined}
+        aria-pressed={pressed}
         onClick={inert ? undefined : onClick}
-        className="text-ink-3 hover:text-ink"
+        className={cn(
+          "text-ink-3 hover:text-ink",
+          pressed &&
+            "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground",
+        )}
       >
-        <Icon className={cn(pending && "animate-spin")} />
+        <Icon aria-hidden className={cn(pending && "animate-spin")} />
       </Button>
     </Tooltip>
   );

@@ -176,6 +176,7 @@ type SelectControlProps<T extends string> = {
   label: string;
   triggerClassName?: string;
   contentClassName?: string;
+  icon?: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
 };
 
 export function ConfigSelect<T extends string>({
@@ -186,6 +187,7 @@ export function ConfigSelect<T extends string>({
   label,
   triggerClassName,
   contentClassName,
+  icon: Icon,
 }: SelectControlProps<T>) {
   const handleChange = (next: string) => {
     const match = options.find((option) => option.value === next);
@@ -200,6 +202,7 @@ export function ConfigSelect<T extends string>({
           triggerClassName,
         )}
       >
+        {Icon && <Icon aria-hidden className="text-ink-3 size-3.5 shrink-0" />}
         <SelectValue />
       </SelectTrigger>
       <SelectContent className={contentClassName}>

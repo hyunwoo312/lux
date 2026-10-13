@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { ConfigMultiToggle } from "@/components/config/Config";
 import { useElementSize } from "@/hooks/useElementSize";
 import { chartGeometry, linePath } from "@/lib/chart";
@@ -14,6 +15,7 @@ import type { StockRange } from "@/widgets/stocks/types";
 const STROKES = [undefined, "6 3", "2 3", "8 3 2 3"];
 
 export function CompareChart({ symbol, range }: { symbol: string; range: StockRange }) {
+  const clock24h = useAppSettingsStore((state) => state.clock24h);
   const symbols = useStocks((d) => d.symbols);
   const instanceId = useWidgetInstanceId();
   const comparison = useStocksStore((state) => state.comparisonByInstance[instanceId]);
@@ -135,7 +137,7 @@ export function CompareChart({ symbol, range }: { symbol: string; range: StockRa
                 </text>
               ))}
               <text x={0} y={height - 3} className="fill-ink-2 text-micro">
-                {formatChartTime(first.time, range, false, null)}
+                {formatChartTime(first.time, range, !clock24h, null)}
               </text>
               <text
                 x={width - 42}
@@ -143,7 +145,7 @@ export function CompareChart({ symbol, range }: { symbol: string; range: StockRa
                 textAnchor="end"
                 className="fill-ink-2 text-micro"
               >
-                {formatChartTime(last.time, range, false, null)}
+                {formatChartTime(last.time, range, !clock24h, null)}
               </text>
             </svg>
             <div
@@ -241,7 +243,7 @@ export function CompareChart({ symbol, range }: { symbol: string; range: StockRa
       </ul>
       {active != null && lines[0]?.points[active] && (
         <p className="text-ink-3 text-micro">
-          {formatChartTime(lines[0].points[active].time, range, false, null)}
+          {formatChartTime(lines[0].points[active].time, range, !clock24h, null)}
         </p>
       )}
       {freshness.status !== "current" && lines.length > 0 && (
