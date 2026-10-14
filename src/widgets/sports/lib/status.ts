@@ -15,8 +15,6 @@ function isSameDay(a: Date, b: Date): boolean {
 }
 
 const PLAIN_FINAL = new Set(["ft", "final", "full time", "final score", "ended"]);
-const RECENT_MS = 12 * 60 * 60_000;
-
 function withShootout(match: Match, text: string): string {
   const { away, home } = match;
   return away.shootout != null && home.shootout != null
@@ -24,34 +22,15 @@ function withShootout(match: Match, text: string): string {
     : text;
 }
 
-function finishedWhen(match: Match, now: number, hour12: boolean): string {
-  const start = Date.parse(match.startsAt);
-  if (Number.isNaN(start)) return match.detail;
-
-  const since = now - start;
-  if (since >= 0 && since < RECENT_MS) {
-    const minutes = Math.round(since / 60_000);
-    if (minutes < 60) return `${Math.max(1, minutes)}m ago`;
-    return `${Math.round(minutes / 60)}h ago`;
-  }
-
-  const date = new Date(start);
-  if (isSameDay(date, new Date(now))) {
-    return date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12 });
-  }
-
-  const age = now - start;
-  return date.toLocaleDateString(undefined, age <= WITHIN_WEEK_MS ? DAY_FORMAT : DATE_FORMAT);
-}
-
 export function matchStatus(match: Match, now: number, hour12: boolean): string {
   if (match.state === "post") {
     return PLAIN_FINAL.has(match.detail.trim().toLowerCase())
-      ? withShootout(match, finishedWhen(match, now, hour12))
+      ? withShootout(match, "Final")
       : withShootout(match, match.detail);
   }
 
   if (match.state === "in") return withShootout(match, match.detail);
+  if (/postpon|cancel|suspend|delay|abandon/i.test(match.detail)) return match.detail;
 
   const start = new Date(match.startsAt);
   if (Number.isNaN(start.getTime())) return match.detail;

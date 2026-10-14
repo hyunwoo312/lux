@@ -7,10 +7,10 @@ function key(rest: string): string {
   return `sports:v${SHAPE}:${rest}`;
 }
 
-export function scoreboardKey(league: League, dayWindow: DayWindow): string {
+export function scoreboardKey(league: League, dayWindow: DayWindow, date?: string): string {
   return league.kind === "match"
-    ? key(`${league.id}:${dayWindow}`)
+    ? key(`${league.id}:${dayWindow}${date ? `:${date}` : ""}`)
     : key(`${league.id}:${league.kind}`);
 }
 
-export const TEAM_INDEX_KEY = key("team-index:v2");
+export const TEAM_INDEX_KEY = key("team-index:v3");

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hasMatchDetail, peopleFor } from "@/widgets/sports/lib/detail";
+import { peopleFor } from "@/widgets/sports/lib/detail";
 import { match as baseMatch, team as baseTeam } from "@/widgets/sports/lib/fixtures";
 import type { Match, MatchState, MatchTeam } from "@/widgets/sports/types";
 
@@ -17,16 +17,6 @@ function match(state: MatchState, overrides: Partial<Match> = {}): Match {
     ...overrides,
   });
 }
-
-describe("hasMatchDetail", () => {
-  it("is true once there is anything worth showing", () => {
-    expect(hasMatchDetail(match("pre", { venue: "Bell Centre" }))).toBe(true);
-    expect(hasMatchDetail(match("pre", { link: "https://espn.com/g/1" }))).toBe(true);
-    expect(hasMatchDetail(match("pre", { away: team({ record: "2-1" }) }))).toBe(true);
-    expect(hasMatchDetail(match("pre", { away: team({ probable: "S. Lugo" }) }))).toBe(true);
-    expect(hasMatchDetail(match("in", { home: team({ periods: ["1"] }) }))).toBe(true);
-  });
-});
 
 describe("peopleFor", () => {
   it("offers probable starters before a game", () => {

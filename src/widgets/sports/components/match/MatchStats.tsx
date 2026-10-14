@@ -27,19 +27,13 @@ export function MatchStats({ stats }: { stats: MatchStat[] }) {
             <div aria-hidden className="flex h-1 items-stretch gap-0.5">
               <span className="bg-foreground/8 flex flex-1 justify-end overflow-hidden rounded-full">
                 <span
-                  className={cn(
-                    "h-full rounded-full",
-                    stat.away >= stat.home ? "bg-primary" : "bg-ink-3",
-                  )}
+                  className={cn("h-full rounded-full", "bg-ink-3")}
                   style={{ width: share(stat.away, total) }}
                 />
               </span>
               <span className="bg-foreground/8 flex flex-1 overflow-hidden rounded-full">
                 <span
-                  className={cn(
-                    "h-full rounded-full",
-                    stat.home >= stat.away ? "bg-primary" : "bg-ink-3",
-                  )}
+                  className={cn("h-full rounded-full", "bg-ink-3")}
                   style={{ width: share(stat.home, total) }}
                 />
               </span>

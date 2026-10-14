@@ -118,7 +118,7 @@ export function MatchDetail({ match, sport }: { match: Match; sport: Sport }) {
 
       {match.away.periods.length > 0 || match.home.periods.length > 0 ? (
         <Section>
-          <LineScore match={match} />
+          <LineScore match={match} sport={sport} />
         </Section>
       ) : null}
 
@@ -148,7 +148,7 @@ export function MatchDetail({ match, sport }: { match: Match; sport: Sport }) {
         </Section>
       ) : null}
 
-      {situation ? (
+      {situation && sport === "baseball" ? (
         <div className="border-border/50 flex items-center justify-center gap-2.5 border-t pt-2">
           <span className="sr-only">{formatSituation(situation)}</span>
           <FlashBox on={basesChanged}>
@@ -174,12 +174,14 @@ export function MatchDetail({ match, sport }: { match: Match; sport: Sport }) {
       ) : null}
 
       {situation?.lastPlay ? (
-        <p className="text-ink-3 text-micro truncate text-center italic">{situation.lastPlay}</p>
+        <p className="text-ink-3 text-caption text-center leading-relaxed break-words">
+          {situation.lastPlay}
+        </p>
       ) : null}
 
       {meta || match.link ? (
         <div className="border-border/50 flex items-center gap-2 border-t pt-2">
-          <span className="text-ink-3 text-micro min-w-0 flex-1 truncate">{meta}</span>
+          <span className="text-ink-3 text-micro min-w-0 flex-1 break-words">{meta}</span>
           {match.link ? (
             <button
               type="button"

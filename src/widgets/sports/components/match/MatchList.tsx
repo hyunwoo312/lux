@@ -6,6 +6,8 @@ import { CollapsibleSection } from "@/widgets/sports/components/SportsSection";
 import { groupMatches } from "@/widgets/sports/lib/grouping";
 import type { Sport } from "@/widgets/sports/lib/leagues";
 import type { Match } from "@/widgets/sports/types";
+import { useSportsView, useSportsViewStore } from "@/widgets/sports/useSportsViewStore";
+import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 export function MatchList({
   label,
@@ -17,6 +19,7 @@ export function MatchList({
   followed,
   indent = false,
   className,
+  leagueId,
 }: {
   label: string;
   sport: Sport;
@@ -27,7 +30,10 @@ export function MatchList({
   followed?: readonly string[];
   indent?: boolean;
   className?: string;
+  leagueId?: string;
 }) {
+  const instanceId = useWidgetInstanceId();
+  const selected = useSportsView((view) => view.selected?.match.id);
   const reduced = useReducedMotion() ?? false;
   const sections = groupMatches(matches);
 
@@ -54,6 +60,15 @@ export function MatchList({
                 now={now}
                 hour12={hour12}
                 followed={followed}
+                selected={selected === match.id}
+                onOpen={
+                  leagueId
+                    ? () =>
+                        useSportsViewStore
+                          .getState()
+                          .setView(instanceId, { selected: { leagueId, match } })
+                    : undefined
+                }
               />
             ))}
           </ul>

@@ -3,10 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/widgets/sports/lib/espn", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/widgets/sports/lib/espn")>()),
-  fetchScoreboard: vi.fn(),
+  fetchScoreboardDay: vi.fn(),
 }));
 
-import { fetchScoreboard } from "@/widgets/sports/lib/espn";
+import { fetchScoreboardDay } from "@/widgets/sports/lib/espn";
 import { clearPolledResources } from "@/widgets/core/usePolledResource";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { sportsCommands } from "@/widgets/sports/commands";
@@ -22,8 +22,11 @@ async function run(id: string, query: string) {
   return command.search(query, new AbortController().signal);
 }
 
+import { useSportsViewStore } from "@/widgets/sports/useSportsViewStore";
+
 beforeEach(() => {
   vi.clearAllMocks();
+  useSportsViewStore.setState({ byInstance: {} });
   clearPolledResources();
   localStorage.clear();
   place();
@@ -36,12 +39,13 @@ describe("sportsCommands", () => {
     useSportsStore.setState({
       byInstance: { sp1: { ...DEFAULT_DATA, following: { pga: { teams: [], tour: true } } } },
     });
-    vi.mocked(fetchScoreboard).mockResolvedValue([]);
+    vi.mocked(fetchScoreboardDay).mockResolvedValue([]);
 
     await expect(run("sports.scores", "")).resolves.toEqual([]);
 
-    const paths = vi.mocked(fetchScoreboard).mock.calls.map(([path]) => path);
-    expect(paths).toEqual([expect.not.stringContaining("golf")]);
+    const paths = vi.mocked(fetchScoreboardDay).mock.calls.map(([path]) => path);
+    expect(paths.length).toBeGreaterThan(0);
+    expect(paths.every((path) => !path.includes("golf"))).toBe(true);
     expect(Object.keys(localStorage).filter((key) => key.includes("pga"))).toEqual([]);
   });
 });

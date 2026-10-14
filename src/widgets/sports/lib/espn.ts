@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { localDayKey } from "@/lib/clock";
 import { espnUrl, fetchEspn } from "@/widgets/sports/lib/espnApi";
 import {
   MATCH_EVENT_KINDS,
@@ -14,9 +13,7 @@ import {
   type MatchTeam,
 } from "@/widgets/sports/types";
 
-const CDN_BASE = "https://cdn.espn.com/core";
 const RANGE_LIMIT = 1000;
-const DATE_REQUEST_CONCURRENCY = 3;
 
 const athleteSchema = z.object({
   shortName: z.string().optional(),
@@ -78,6 +75,11 @@ const STAT_COLUMNS: { name: string; label: string; suffix?: string }[] = [
   { name: "shotsOnTarget", label: "On target" },
   { name: "wonCorners", label: "Corners" },
   { name: "foulsCommitted", label: "Fouls" },
+  { name: "rebounds", label: "Rebounds" },
+  { name: "assists", label: "Assists" },
+  { name: "fieldGoalPct", label: "Field goals", suffix: "%" },
+  { name: "threePointPct", label: "Three pointers", suffix: "%" },
+  { name: "freeThrowPct", label: "Free throws", suffix: "%" },
 ];
 
 type RawCompetitor = z.infer<typeof competitorSchema>;
@@ -162,6 +164,10 @@ function toLeaders(raw: z.infer<typeof competitorSchema>["leaders"]): MatchLeade
 const eventSchema = z.object({
   id: z.string(),
   date: z.string(),
+  season: z
+    .object({ type: z.number().optional(), slug: z.string().optional() })
+    .optional()
+    .catch(undefined),
   status: z.object({
     type: z.object({
       state: z.enum(MATCH_STATES),
@@ -192,13 +198,15 @@ const eventSchema = z.object({
     .nonempty(),
 });
 
-const scoreboardSchema = z.object({ events: z.array(z.unknown()).optional() });
+const scoreboardSchema = z.object({ events: z.array(z.unknown()) });
 
 function toTeam(competitor: RawCompetitor, state: MatchState): MatchTeam {
   const { team } = competitor;
   const parsed = competitor.score != null ? Number(competitor.score) : Number.NaN;
   const probable = competitor.probables?.[0]?.athlete;
   return {
+    id: team.id,
+    fullName: team.displayName,
     abbreviation: team.abbreviation ?? team.shortDisplayName ?? "—",
     name: team.shortDisplayName ?? team.displayName ?? team.abbreviation ?? "—",
     score: state === "pre" || Number.isNaN(parsed) ? null : parsed,
@@ -245,6 +253,12 @@ function toMatch(raw: unknown): Match | null {
     state,
     detail: event.status.type.shortDetail ?? "",
     startsAt: event.date,
+    phase:
+      event.season?.slug === "preseason" || event.season?.type === 1
+        ? "Preseason"
+        : event.season?.slug === "post-season" || event.season?.slug === "postseason"
+          ? "Postseason"
+          : undefined,
     home: toTeam(home, state),
     away: toTeam(away, state),
     link: event.links?.find((entry) => entry.href)?.href,
@@ -274,22 +288,6 @@ export function parseScoreboard(raw: unknown): Match[] {
   return toMatches(parsed.data.events ?? []);
 }
 
-const mirrorSchema = z.object({
-  content: z.object({ sbData: z.object({ events: z.array(z.unknown()) }) }),
-});
-
-export function parseMirrorScoreboard(raw: unknown): Match[] {
-  const parsed = mirrorSchema.safeParse(raw);
-  if (!parsed.success) throw new Error("Unexpected scoreboard response");
-  return toMatches(parsed.data.content.sbData.events);
-}
-
-export function mirrorUrl(path: string): string | null {
-  const [sport, league] = path.split("/");
-  if (!sport || !league) return null;
-  return `${CDN_BASE}/${league}/scoreboard?xhr=1`;
-}
-
 async function fetchMatches(
   url: string,
   parse: (raw: unknown) => Match[],
@@ -298,67 +296,16 @@ async function fetchMatches(
   return parse(await fetchEspn(url, "Scores are unavailable right now", signal));
 }
 
-export async function fetchScoreboard(
+export function fetchScoreboardDay(
   path: string,
+  date: string,
   signal?: AbortSignal,
-  dates?: string | null,
 ): Promise<Match[]> {
-  if (dates) {
-    const [start, end] = dates.split("-");
-    if (!start || !end) throw new Error("Invalid scoreboard date range");
-    const days: string[] = [];
-    const day = new Date(
-      Date.UTC(
-        Number(start.slice(0, 4)),
-        Number(start.slice(4, 6)) - 1,
-        Number(start.slice(6)) - 1,
-      ),
-    );
-    const lastDay = new Date(
-      Date.UTC(Number(end.slice(0, 4)), Number(end.slice(4, 6)) - 1, Number(end.slice(6)) + 1),
-    );
-    while (day <= lastDay) {
-      days.push(day.toISOString().slice(0, 10).replaceAll("-", ""));
-      day.setUTCDate(day.getUTCDate() + 1);
-    }
-    let next = 0;
-    const pages: Match[][] = [];
-    const controller = new AbortController();
-    const requestSignal = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
-    await Promise.all(
-      Array.from({ length: Math.min(DATE_REQUEST_CONCURRENCY, days.length) }, async () => {
-        while (next < days.length) {
-          requestSignal.throwIfAborted();
-          const index = next++;
-          pages[index] = await fetchMatches(
-            espnUrl(path, "scoreboard", `?dates=${days[index]}&limit=${RANGE_LIMIT}`),
-            parseScoreboard,
-            requestSignal,
-          );
-        }
-      }),
-    ).catch((error: unknown) => {
-      controller.abort();
-      throw error;
-    });
-    return [...new Map(pages.flat().map((match) => [match.id, match])).values()]
-      .filter((match) => {
-        const day = localDayKey(new Date(match.startsAt)).replaceAll("-", "");
-        return day >= start && day <= end;
-      })
-      .sort(compareMatches);
-  }
-  try {
-    return await fetchMatches(espnUrl(path, "scoreboard"), parseScoreboard, signal);
-  } catch (error) {
-    const mirror = mirrorUrl(path);
-    if (!mirror || signal?.aborted) throw error;
-    try {
-      return await fetchMatches(mirror, parseMirrorScoreboard, signal);
-    } catch {
-      throw error;
-    }
-  }
+  return fetchMatches(
+    espnUrl(path, "scoreboard", `?dates=${date}&limit=${RANGE_LIMIT}`),
+    parseScoreboard,
+    signal,
+  );
 }
 
 const teamsSchema = z.object({
@@ -397,7 +344,7 @@ export function parseTeams(raw: unknown): TeamOption[] {
   return teams
     .map(({ team }) => ({
       abbreviation: team.abbreviation ?? "",
-      name: team.shortDisplayName ?? team.displayName ?? team.abbreviation ?? "",
+      name: team.displayName ?? team.shortDisplayName ?? team.abbreviation ?? "",
       logo: team.logos?.find((entry) => entry.href)?.href,
     }))
     .filter((team) => team.abbreviation !== "")
@@ -414,6 +361,8 @@ export function matchesTeam(match: Match, abbreviation: string): boolean {
 }
 
 const cachedTeamSchema = z.object({
+  id: z.string().optional(),
+  fullName: z.string().optional(),
   abbreviation: z.string(),
   name: z.string(),
   score: z.number().nullable(),
@@ -436,6 +385,7 @@ const cachedMatchSchema = z.object({
   state: z.enum(MATCH_STATES),
   detail: z.string(),
   startsAt: z.string(),
+  phase: z.string().optional(),
   home: cachedTeamSchema,
   away: cachedTeamSchema,
   link: z.string().optional(),

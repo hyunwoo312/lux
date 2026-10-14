@@ -417,11 +417,15 @@ const WIDGET_BLOCKS: Record<string, GuideBlock[]> = {
     },
     {
       kind: "prose",
-      text: "Search reaches every league at once, so typing part of a name finds the club wherever it plays. The date control widens the window a few days either side of today when nothing is on.",
+      text: "Open the header search to find teams across every league. The arrows change the selected day; the date button opens a calendar where you can pick a day or return to Today. The separate ± button chooses how many days to include on either side. All, Live, Upcoming and Final filter the loaded games, with counts for that range. Tennis and golf keep their tournament views.",
     },
     {
       kind: "prose",
-      text: "Opening a game gives the line score, probable starters beforehand and top performers during, plus live detail while it runs — bases, count and outs for baseball.",
+      text: "Open a game for its **Overview**, with period scores, leaders, venue and available live detail. **Stats** compares the teams; NBA and NFL also offer compact player statistics with expandable values. **Plays** shows available incidents, NBA play-by-play or NFL scoring plays and drives. Back returns to your score list. Pregame statistics are labeled as season context, and extra sections appear only when ESPN supplies them.",
+    },
+    {
+      kind: "prose",
+      text: "Scores and selected-game details come directly from ESPN. Requests send the league, requested dates and the event ID of an NBA or NFL game you open; followed teams and search filtering stay local. Refresh retains successful data when the feed is unavailable, and incomplete date coverage is labeled. Live updates use polling rather than a continuous stream.",
     },
   ],
   spotify: [

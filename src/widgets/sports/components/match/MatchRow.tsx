@@ -1,131 +1,14 @@
-import { useId, useState, type ReactNode } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Star } from "lucide-react";
+import { ChevronRight, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { collapse, enterTween, rowVariants } from "@/lib/motion";
-import { COLUMN, MATCH_GRID, STATUS_RAIL, STATUS_RAIL_LABEL } from "@/widgets/sports/lib/columns";
-import { useChangeFlash } from "@/widgets/sports/hooks/useChangeFlash";
-import { LiveIndicator } from "@/widgets/sports/components/LiveIndicator";
-import { TeamLogo } from "@/widgets/sports/components/TeamLogo";
+import { collapse, rowVariants } from "@/lib/motion";
+import { MatchTeams } from "@/widgets/sports/components/match/MatchTeams";
 import { MatchDetail } from "@/widgets/sports/components/match/MatchDetail";
-import { hasMatchDetail } from "@/widgets/sports/lib/detail";
+import { LiveIndicator } from "@/widgets/sports/components/LiveIndicator";
 import { matchStatus } from "@/widgets/sports/lib/status";
 import type { Sport } from "@/widgets/sports/lib/leagues";
-import type { Match, MatchTeam } from "@/widgets/sports/types";
-
-type TeamSideProps = {
-  team: MatchTeam;
-  decided: boolean;
-  side: "away" | "home";
-  live: boolean;
-  starred: boolean;
-};
-
-function TeamSide({ team, decided, side, live, starred }: TeamSideProps) {
-  const dim = decided && !team.winner;
-  const home = side === "home";
-  const scored = useChangeFlash(team.score, live);
-  const reduced = useReducedMotion() ?? false;
-
-  return (
-    <div className={cn(COLUMN.side, home ? cn("flex-row-reverse", STATUS_RAIL) : undefined)}>
-      <TeamLogo src={team.logo} className={COLUMN.logo} />
-      <span className={cn(COLUMN.name, dim ? "text-ink-3" : "text-ink")}>
-        {starred && (
-          <>
-            <Star className="mr-0.5 mb-px inline size-2.5 fill-current align-middle" aria-hidden />
-            <span className="sr-only">Favourite team, </span>
-          </>
-        )}
-        {team.abbreviation}
-      </span>
-      <motion.span
-        animate={scored && !reduced ? { scale: [1, 1.18, 1] } : { scale: 1 }}
-        transition={enterTween(reduced, "slow")}
-        className={cn(
-          COLUMN.score,
-          home ? "text-left" : "text-right",
-          "rounded-xs transition-colors duration-slow",
-          dim ? "text-ink-3 font-medium" : "text-ink font-semibold",
-          scored && "bg-primary/15 text-primary",
-        )}
-      >
-        {team.score ?? ""}
-      </motion.span>
-    </div>
-  );
-}
-
-type RowProps = {
-  away: ReactNode;
-  home: ReactNode;
-  separator: string;
-  status: ReactNode;
-  detail?: ReactNode;
-  label?: string;
-};
-
-function Row({ away, home, separator, status, detail, label }: RowProps) {
-  const reduced = useReducedMotion() ?? false;
-  const [open, setOpen] = useState(false);
-  const detailId = useId();
-  const expandable = Boolean(detail);
-
-  const body = (
-    <>
-      {away}
-      <span aria-hidden className={COLUMN.separator}>
-        {separator}
-      </span>
-      {home}
-      <div
-        className={cn(
-          STATUS_RAIL_LABEL,
-          `
-            text-ink-3 pointer-events-none absolute top-1/2 right-2 flex -translate-y-1/2
-            items-center gap-1
-          `,
-        )}
-      >
-        {status}
-      </div>
-    </>
-  );
-
-  return (
-    <motion.li variants={rowVariants(reduced)} className="rounded-lg">
-      {expandable ? (
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-controls={detailId}
-          aria-label={label}
-          onClick={() => setOpen((value) => !value)}
-          className={cn(
-            MATCH_GRID,
-            `
-              press-row focus-ring
-              hover:bg-foreground/5
-              focus-visible:bg-foreground/5
-              relative w-full cursor-pointer rounded-lg px-2 py-2.5 text-left transition-colors
-            `,
-          )}
-        >
-          {body}
-        </button>
-      ) : (
-        <div className={cn(MATCH_GRID, "relative px-2 py-2.5")}>{body}</div>
-      )}
-      <AnimatePresence initial={false}>
-        {open && detail ? (
-          <motion.div id={detailId} className="overflow-hidden" {...collapse(reduced)}>
-            {detail}
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-    </motion.li>
-  );
-}
+import type { Match } from "@/widgets/sports/types";
 
 export function MatchRow({
   match,
@@ -133,69 +16,70 @@ export function MatchRow({
   now,
   hour12,
   followed,
+  onOpen,
+  selected = false,
 }: {
   match: Match;
   sport: Sport;
   now: number;
   hour12: boolean;
   followed?: readonly string[];
+  onOpen?: () => void;
+  selected?: boolean;
 }) {
+  const [open, setOpen] = useState(false);
+  const reduced = useReducedMotion() ?? false;
   const live = match.state === "in";
-  const decided = match.state === "post" && (match.home.winner || match.away.winner);
-
+  const status = matchStatus(match, now, hour12);
   return (
-    <Row
-      away={
-        <TeamSide
-          team={match.away}
-          decided={decided}
-          live={live}
-          side="away"
-          starred={followed?.includes(match.away.abbreviation) ?? false}
-        />
-      }
-      home={
-        <TeamSide
-          team={match.home}
-          decided={decided}
-          live={live}
-          side="home"
-          starred={followed?.includes(match.home.abbreviation) ?? false}
-        />
-      }
-      separator={match.state === "pre" ? "vs" : "–"}
-      label={`${match.away.abbreviation} versus ${match.home.abbreviation}, show details`}
-      detail={hasMatchDetail(match) ? <MatchDetail match={match} sport={sport} /> : undefined}
-      status={
-        <>
-          {live ? <LiveIndicator /> : null}
+    <motion.li variants={rowVariants(reduced)} className="min-w-0 rounded-lg">
+      <button
+        type="button"
+        data-sports-match={match.id}
+        aria-expanded={selected || open}
+        aria-label={`${match.away.name} versus ${match.home.name}, show details`}
+        onClick={onOpen ?? (() => setOpen(!open))}
+        className="
+          press-row focus-ring
+          hover:bg-foreground/5
+          flex w-full min-w-0 items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors
+        "
+      >
+        <MatchTeams match={match} followed={followed} />
+        <span className="flex w-20 shrink-0 flex-col items-end gap-1">
           <span
             className={cn(
-              "text-micro min-w-0 truncate text-right tabular-nums",
-              live ? "text-success font-medium" : "text-ink-3",
+              "text-micro flex max-w-full items-center gap-1 text-right tabular-nums",
+              live ? "text-success" : "text-ink-3",
             )}
           >
-            {matchStatus(match, now, hour12)}
+            {live && <LiveIndicator />}
+            <span className="min-w-0 break-words">{status}</span>
           </span>
-        </>
-      }
-    />
+          {match.state === "pre" ? (
+            <span className="text-ink-3 text-micro">vs</span>
+          ) : (
+            <ChevronRight aria-hidden className="text-ink-3 size-3" />
+          )}
+        </span>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && !onOpen && (
+          <motion.div {...collapse(reduced)} className="overflow-hidden">
+            <MatchDetail match={match} sport={sport} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.li>
   );
 }
 
 export function IdleTeamRow({ abbreviation }: { abbreviation: string }) {
   return (
-    <Row
-      away={
-        <div className={COLUMN.side}>
-          <TeamLogo className={COLUMN.logo} />
-          <span className={cn(COLUMN.name, "text-ink-3")}>{abbreviation}</span>
-          <span className={COLUMN.score} />
-        </div>
-      }
-      home={<span />}
-      separator=""
-      status={<span className="text-ink-3 text-micro min-w-0 truncate text-right">No game</span>}
-    />
+    <li className="text-ink-3 text-caption flex items-center gap-2 px-2 py-2">
+      <Star aria-hidden className="size-3" />
+      <span>{abbreviation}</span>
+      <span className="text-micro ml-auto">No game in this range</span>
+    </li>
   );
 }

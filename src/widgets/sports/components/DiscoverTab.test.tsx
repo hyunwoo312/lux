@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/widgets/sports/lib/espn", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/widgets/sports/lib/espn")>()),
-  fetchScoreboard: vi.fn().mockResolvedValue([]),
+  fetchScoreboardDay: vi.fn().mockResolvedValue([]),
   fetchTeams: vi.fn().mockResolvedValue([]),
   parseCachedScoreboard: () => null,
 }));
@@ -19,9 +19,13 @@ vi.mock("@/widgets/sports/lib/teamIndex", async (importOriginal) => ({
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { clearPolledResources } from "@/widgets/core/usePolledResource";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
+import { SportsHeader } from "@/widgets/sports/components/SportsHeader";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { DiscoverTab } from "@/widgets/sports/components/DiscoverTab";
 import { useSportsStore } from "@/widgets/sports/useSportsStore";
 import { seedSportsInstance } from "@/widgets/sports/lib/fixtures";
+
+import { useSportsViewStore } from "@/widgets/sports/useSportsViewStore";
 
 const ID = "discover";
 
@@ -29,15 +33,22 @@ function renderTab() {
   seedSportsInstance(ID, { window: "today" });
   render(
     <WidgetInstanceContext.Provider value={ID}>
-      <DiscoverTab />
+      <TooltipProvider>
+        <SportsHeader />
+        <DiscoverTab />
+      </TooltipProvider>
     </WidgetInstanceContext.Provider>,
   );
 }
 
-const searchBox = () => screen.getByRole("searchbox", { name: /Search teams in every league/ });
+const searchBox = () => {
+  fireEvent.click(screen.getByRole("button", { name: "Search sports teams" }));
+  return screen.getByRole("searchbox", { name: "Search sports teams" });
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
+  useSportsViewStore.setState({ byInstance: {} });
   clearPolledResources();
   useSportsStore.setState({ byInstance: {} });
 });

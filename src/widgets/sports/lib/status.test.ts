@@ -11,25 +11,12 @@ describe("matchStatus", () => {
     expect(matchStatus(live, now, true)).toBe("40.1 - 4th");
   });
 
-  it("says when a finished game happened rather than repeating 'FT'", () => {
+  it("keeps Final explicit instead of inventing an elapsed finish time", () => {
     const done = match({ state: "post", detail: "FT" });
-
-    const twoHoursOn = Date.parse(done.startsAt) + 2 * 60 * 60_000;
-    expect(matchStatus(done, twoHoursOn, true)).toBe("2h ago");
-  });
-
-  it("dates a game that finished on an earlier day rather than giving a bare clock time", () => {
-    const done = match({ state: "post", detail: "FT" });
-
-    const threeDaysOn = Date.parse(done.startsAt) + 3 * 24 * 60 * 60_000;
-    expect(matchStatus(done, threeDaysOn, true)).toMatch(/^[A-Z][a-z]{2}$/);
-  });
-
-  it("falls back to a numeric date once a finish is more than a week old", () => {
-    const done = match({ state: "post", detail: "FT" });
-
-    const monthOn = Date.parse(done.startsAt) + 30 * 24 * 60 * 60_000;
-    expect(matchStatus(done, monthOn, true)).toMatch(/\d+\/\d+/);
+    expect(matchStatus(done, Date.parse(done.startsAt) + 2 * 60 * 60_000, true)).toBe("Final");
+    expect(matchStatus(done, Date.parse(done.startsAt) + 30 * 24 * 60 * 60_000, true)).toBe(
+      "Final",
+    );
   });
 
   it("keeps a finish that carries more than 'it ended'", () => {
@@ -97,12 +84,9 @@ describe("matchStatus", () => {
     expect(matchStatus(upcoming, fiveHoursBefore, false)).not.toMatch(/AM|PM/);
   });
 
-  it("rounds the same way the rest of the app renders a relative time", () => {
-    const done = match({ state: "post", detail: "FT" });
-    const start = Date.parse(done.startsAt);
-
-    expect(matchStatus(done, start + 59.75 * 60_000, true)).toBe("1h ago");
-    expect(matchStatus(done, start + 100 * 60_000, true)).toBe("2h ago");
+  it("preserves overtime and a postponed upcoming fixture", () => {
+    expect(matchStatus(match({ state: "post", detail: "Final/OT" }), now, true)).toBe("Final/OT");
+    expect(matchStatus(match({ state: "pre", detail: "Postponed" }), now, true)).toBe("Postponed");
   });
 });
 

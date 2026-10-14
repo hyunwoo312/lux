@@ -1,12 +1,5 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  fetchScoreboard,
-  mirrorUrl,
-  parseCachedScoreboard,
-  parseMirrorScoreboard,
-  parseScoreboard,
-  parseTeams,
-} from "@/widgets/sports/lib/espn";
+import { describe, expect, it } from "vitest";
+import { parseCachedScoreboard, parseScoreboard, parseTeams } from "@/widgets/sports/lib/espn";
 
 function event(
   id: string,
@@ -292,7 +285,7 @@ describe("parseScoreboard", () => {
 
   it("treats an empty slate as empty, not broken", () => {
     expect(parseScoreboard({ events: [] })).toEqual([]);
-    expect(parseScoreboard({})).toEqual([]);
+    expect(() => parseScoreboard({})).toThrow("Unexpected scoreboard response");
   });
 
   it("rejects a response that is not a scoreboard at all", () => {
@@ -324,6 +317,28 @@ describe("parseCachedScoreboard", () => {
 });
 
 describe("parseTeams", () => {
+  it("keeps the city in team search names rather than saving only the nickname", () => {
+    const data = {
+      sports: [
+        {
+          leagues: [
+            {
+              teams: [
+                {
+                  team: {
+                    abbreviation: "CLE",
+                    shortDisplayName: "Cavaliers",
+                    displayName: "Cleveland Cavaliers",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    expect(parseTeams(data)[0]?.name).toBe("Cleveland Cavaliers");
+  });
   const payload = (teams: unknown[]) => ({ sports: [{ leagues: [{ teams }] }] });
 
   it("reads the roster ESPN returns and sorts it for the picker", () => {
@@ -372,160 +387,5 @@ describe("parseTeams", () => {
 
     expect(badged[0]?.logo).toBe("https://a.espncdn.com/ari.png");
     expect(bare[0]?.logo).toBeUndefined();
-  });
-});
-
-describe("mirrorUrl", () => {
-  it("maps a team-sport path to the mirror's league slug", () => {
-    expect(mirrorUrl("baseball/mlb")).toBe("https://cdn.espn.com/core/mlb/scoreboard?xhr=1");
-    expect(mirrorUrl("football/nfl")).toBe("https://cdn.espn.com/core/nfl/scoreboard?xhr=1");
-  });
-
-  it("has no mirror for a path it cannot split", () => {
-    expect(mirrorUrl("mlb")).toBeNull();
-  });
-});
-
-describe("parseMirrorScoreboard", () => {
-  it("reads events out of the mirror's nested envelope", () => {
-    const raw = {
-      content: { sbData: { events: [event("1", "in", "Bot 5th", ["A", "2"], ["B", "3"])] } },
-    };
-
-    expect(parseMirrorScoreboard(raw)).toHaveLength(1);
-  });
-
-  it("throws on the error body the mirror serves with a 200 for unsupported leagues", () => {
-    expect(() => parseMirrorScoreboard({ error: "Not Found", status: 404, content: {} })).toThrow();
-  });
-});
-
-describe("fetchScoreboard", () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  function respond(body: unknown, ok = true) {
-    return new Response(JSON.stringify(body), { status: ok ? 200 : 500 });
-  }
-
-  const primary = { events: [event("1", "pre", "7:30 PM", ["A", ""], ["B", ""])] };
-  const mirror = {
-    content: { sbData: { events: [event("2", "in", "Bot 5th", ["C", "1"], ["D", "4"])] } },
-  };
-
-  it("uses the primary host when it answers", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(respond(primary));
-
-    const matches = await fetchScoreboard("baseball/mlb");
-
-    expect(matches[0]?.id).toBe("1");
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("falls back to the mirror when the primary host fails", async () => {
-    const fetchMock = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(respond(null, false))
-      .mockResolvedValueOnce(respond(mirror));
-
-    const matches = await fetchScoreboard("baseball/mlb");
-
-    expect(matches[0]?.id).toBe("2");
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-  });
-
-  it("reports the original failure when the mirror is unusable too", async () => {
-    vi.spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(respond(null, false))
-      .mockResolvedValueOnce(respond({ error: "Not Found", content: {} }));
-
-    await expect(fetchScoreboard("baseball/mlb")).rejects.toThrow("Scores are unavailable");
-  });
-
-  it("does not retry a request the caller aborted", async () => {
-    const controller = new AbortController();
-    controller.abort();
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(respond(null, false));
-
-    await expect(fetchScoreboard("baseball/mlb", controller.signal)).rejects.toThrow();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("does not attempt a mirror for a league the mirror does not serve", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(respond(null, false));
-
-    await expect(fetchScoreboard("mlb")).rejects.toThrow();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("requests individual dates and keeps only games in the selected local-day range", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async () =>
-      respond({
-        events: [
-          primary.events[0],
-          event("outside", "pre", "7:30 PM", ["C", ""], ["D", ""], "2026-08-10T22:40Z"),
-        ],
-      }),
-    );
-
-    const matches = await fetchScoreboard("baseball/mlb", undefined, "20260806-20260808");
-
-    expect(fetchMock.mock.calls.map(([url]) => String(url))).toContainEqual(
-      expect.stringContaining("dates=20260807&limit="),
-    );
-    expect(fetchMock).toHaveBeenCalledTimes(5);
-    expect(matches).toHaveLength(1);
-  });
-
-  it("loads both sides of a month boundary without duplicating overlapping events", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
-      const date = String(url).includes("dates=202608") ? "2026-08-31T22:40Z" : "2026-09-01T22:40Z";
-      return respond({ events: [event(date, "post", "Final", ["A", "1"], ["B", "2"], date)] });
-    });
-
-    const matches = await fetchScoreboard("football/nfl", undefined, "20260831-20260901");
-
-    expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
-      expect.stringContaining("dates=20260830&limit="),
-      expect.stringContaining("dates=20260831&limit="),
-      expect.stringContaining("dates=20260901&limit="),
-      expect.stringContaining("dates=20260902&limit="),
-    ]);
-    expect(matches).toHaveLength(2);
-  });
-
-  it("fails rather than letting the mirror answer a range with today only", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(respond(null, false));
-
-    await expect(fetchScoreboard("baseball/mlb", undefined, "20260820-20260822")).rejects.toThrow(
-      "Scores are unavailable",
-    );
-    expect(
-      fetchMock.mock.calls.every(([url]) => String(url).startsWith("https://site.api.espn.com/")),
-    ).toBe(true);
-  });
-
-  it("bounds daily requests and sorts the complete slate once", async () => {
-    let active = 0;
-    let peak = 0;
-    vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
-      active += 1;
-      peak = Math.max(peak, active);
-      await new Promise((resolve) => setTimeout(resolve, 0));
-      active -= 1;
-      const day = new URL(String(url)).searchParams.get("dates");
-      return respond({
-        events:
-          day === "20260807"
-            ? [event("done", "post", "Final", ["A", "1"], ["B", "2"], "2026-08-07T22:40Z")]
-            : day === "20260808"
-              ? [event("live", "in", "Q3", ["C", "1"], ["D", "2"], "2026-08-08T22:40Z")]
-              : [],
-      });
-    });
-    const matches = await fetchScoreboard("basketball/nba", undefined, "20260801-20260815");
-    expect(peak).toBeLessThanOrEqual(3);
-    expect(matches.map((match) => match.id)).toEqual(["live", "done"]);
   });
 });

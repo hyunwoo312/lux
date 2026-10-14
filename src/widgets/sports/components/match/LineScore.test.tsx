@@ -14,6 +14,20 @@ function match(state: MatchState, away: MatchTeam, home: MatchTeam): Match {
 }
 
 describe("LineScore", () => {
+  it("labels extra basketball periods as overtime rather than a fifth quarter", () => {
+    render(
+      <LineScore
+        sport="basketball"
+        match={match(
+          "post",
+          team({ periods: ["20", "20", "20", "20", "10"] }),
+          team({ periods: ["20", "20", "20", "20", "8"] }),
+        )}
+      />,
+    );
+    expect(screen.getByRole("columnheader", { name: "OT" })).toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "5" })).not.toBeInTheDocument();
+  });
   it("labels the totals R, H and E when the sport reports hits", () => {
     render(
       <LineScore

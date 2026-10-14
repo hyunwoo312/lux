@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { Match, MatchTeam } from "@/widgets/sports/types";
+import type { Sport } from "@/widgets/sports/lib/leagues";
 
 function totals(team: MatchTeam, showHitsErrors: boolean): (string | number)[] {
-  const runs = team.score ?? 0;
-  return showHitsErrors ? [runs, team.hits ?? 0, team.errors ?? 0] : [runs];
+  const runs = team.score ?? "—";
+  return showHitsErrors ? [runs, team.hits ?? "—", team.errors ?? "—"] : [runs];
 }
 
 function Cell({
@@ -70,11 +71,17 @@ function TeamRow({
   );
 }
 
-export function LineScore({ match }: { match: Match }) {
+export function LineScore({ match, sport = "baseball" }: { match: Match; sport?: Sport }) {
   const length = Math.max(match.away.periods.length, match.home.periods.length);
   if (length === 0) return null;
 
-  const columns = Array.from({ length }, (_, index) => `${index + 1}`);
+  const regularPeriods =
+    sport === "hockey" ? 3 : sport === "basketball" || sport === "football" ? 4 : null;
+  const columns = Array.from({ length }, (_, index) =>
+    regularPeriods && index >= regularPeriods
+      ? `${index === regularPeriods ? "" : index - regularPeriods + 1}OT`
+      : `${index + 1}`,
+  );
   const showHitsErrors = match.away.hits != null || match.home.hits != null;
   const totalLabels = showHitsErrors ? ["R", "H", "E"] : ["T"];
   const finished = match.state === "post";

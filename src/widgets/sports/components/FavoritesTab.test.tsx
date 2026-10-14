@@ -4,11 +4,11 @@ import { fireEvent, render, screen } from "@testing-library/react";
 
 vi.mock("@/widgets/sports/lib/espn", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/widgets/sports/lib/espn")>()),
-  fetchScoreboard: vi.fn(),
+  fetchScoreboardDay: vi.fn(),
   parseCachedScoreboard: () => null,
 }));
 
-import { fetchScoreboard } from "@/widgets/sports/lib/espn";
+import { fetchScoreboardDay } from "@/widgets/sports/lib/espn";
 import { FavoritesTab } from "@/widgets/sports/components/FavoritesTab";
 import { clearPolledResources } from "@/widgets/core/usePolledResource";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
@@ -16,7 +16,12 @@ import { match, seedSportsInstance, team } from "@/widgets/sports/lib/fixtures";
 import { useSportsStore } from "@/widgets/sports/useSportsStore";
 import { MATCH_STATES, type LeagueFollowing, type MatchState } from "@/widgets/sports/types";
 
-const fetchMock = vi.mocked(fetchScoreboard);
+import { useSportsViewStore } from "@/widgets/sports/useSportsViewStore";
+
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { SportsHeader } from "@/widgets/sports/components/SportsHeader";
+
+const fetchMock = vi.mocked(fetchScoreboardDay);
 const ID = "sports-fav";
 
 function seed(
@@ -29,13 +34,17 @@ function seed(
 function renderTab() {
   render(
     <WidgetInstanceContext.Provider value={ID}>
-      <FavoritesTab />
+      <TooltipProvider>
+        <SportsHeader />
+        <FavoritesTab />
+      </TooltipProvider>
     </WidgetInstanceContext.Provider>,
   );
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
+  useSportsViewStore.setState({ byInstance: {} });
   clearPolledResources();
   useSportsStore.setState({ byInstance: {} });
 });
@@ -45,7 +54,7 @@ describe("FavoritesTab", () => {
     seed({ mlb: { teams: [] } });
     renderTab();
 
-    expect(screen.getByText(/Follow a team to see its games here/i)).toBeInTheDocument();
+    expect(screen.getByText(/Follow teams or tours in Discover/i)).toBeInTheDocument();
   });
 
   it("shows only the games your teams are in, not the rest of the league", async () => {
@@ -79,7 +88,7 @@ describe("FavoritesTab", () => {
     seed({ mlb: { teams: ["ATL"] } });
     renderTab();
 
-    expect(await screen.findByText("No game")).toBeInTheDocument();
+    expect(await screen.findByText("No game in this range")).toBeInTheDocument();
     expect(screen.getByText("ATL")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /show details/i })).not.toBeInTheDocument();
   });
@@ -96,14 +105,14 @@ describe("FavoritesTab", () => {
     renderTab();
 
     expect(await screen.findAllByText("NYY")).toHaveLength(1);
-    expect(screen.queryByText("No game")).not.toBeInTheDocument();
+    expect(screen.queryByText("No game in this range")).not.toBeInTheDocument();
   });
 
   it("ignores a stored league that no longer exists", () => {
     seed({ retired: { teams: ["XYZ"] } });
     renderTab();
 
-    expect(screen.getByText(/Follow a team to see its games here/i)).toBeInTheDocument();
+    expect(screen.getByText(/Follow teams or tours in Discover/i)).toBeInTheDocument();
   });
 
   it("filters followed teams by name as well as abbreviation", async () => {
@@ -118,7 +127,8 @@ describe("FavoritesTab", () => {
     renderTab();
     await screen.findByText("NYY");
 
-    fireEvent.change(screen.getByRole("searchbox", { name: /Filter the teams you follow/ }), {
+    fireEvent.click(screen.getByRole("button", { name: "Search sports teams" }));
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search sports teams" }), {
       target: { value: "yank" },
     });
 

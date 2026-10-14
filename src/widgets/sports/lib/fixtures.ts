@@ -22,7 +22,7 @@ export function match(overrides: Partial<Match> = {}): Match {
     id: "1",
     state: "in",
     detail: "End 7th",
-    startsAt: "2026-08-07T22:40Z",
+    startsAt: new Date().toISOString(),
     away: team(),
     home: team({ abbreviation: "PIT", name: "Pirates", score: 2 }),
     events: [],

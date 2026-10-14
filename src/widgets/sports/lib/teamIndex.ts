@@ -44,7 +44,7 @@ export async function fetchTeamIndex(signal?: AbortSignal): Promise<TeamIndex> {
     leagues.map((league) =>
       readPolled<IndexedTeam[]>({
         widget: "sports",
-        cacheKey: `sports:teams:${league.id}`,
+        cacheKey: `sports:teams:v2:${league.id}`,
         intervalMs: 24 * 60 * 60 * 1000,
         parse: (raw) => {
           const result = teamsSchema.safeParse(raw);

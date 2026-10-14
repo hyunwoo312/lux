@@ -192,6 +192,11 @@ export function AboutTab() {
             watchlists, benchmarks, comparison and price history. Saved watchlists and display
             preferences stay in your browser.
           </IconRow>
+          <IconRow icon={Globe} title="Public sports data">
+            Sports sends league and requested dates directly to ESPN, plus the event ID when you
+            open NBA or NFL game details. Followed teams and display preferences stay in your
+            browser.
+          </IconRow>
           <IconRow
             icon={KeyRound}
             title="Minimal permissions"

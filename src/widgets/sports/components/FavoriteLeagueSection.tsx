@@ -15,7 +15,7 @@ import { ErrorState, StateMessage } from "@/components/StateMessage";
 function teamMatchesQuery(match: Match, abbreviation: string, needle: string): boolean {
   if (matchesQuery(abbreviation, needle)) return true;
   const side = [match.home, match.away].find((team) => team.abbreviation === abbreviation);
-  return side ? matchesQuery(side.name, needle) : false;
+  return side ? matchesQuery(side.fullName ?? side.name, needle) : false;
 }
 
 export function FavoriteLeagueSection({
@@ -32,7 +32,7 @@ export function FavoriteLeagueSection({
   now: number;
 }) {
   const instanceId = useWidgetInstanceId();
-  const { state, refresh } = useLeagueScoreboard(league, dayWindow);
+  const { state, refresh, missingDays = [] } = useLeagueScoreboard(league, dayWindow);
   const clock24h = useAppSettingsStore((s) => s.clock24h);
   const open = useSports((d) => !d.collapsed.includes(league.id));
   const states = useSports((d) => d.states);
@@ -67,16 +67,28 @@ export function FavoriteLeagueSection({
       ) : state.status === "error" ? (
         <ErrorState error={state.error} service="ESPN" subject="scores" onRetry={refresh} />
       ) : (
-        <MatchList
-          label={`${league.label} games`}
-          sport={league.sport}
-          matches={matches}
-          idle={idle}
-          now={now}
-          hour12={!clock24h}
-          followed={shownTeams}
-          indent
-        />
+        <>
+          <p className="text-ink-3 text-micro px-2">
+            {missingDays.length > 0
+              ? "Some dates are unavailable. Results may be incomplete."
+              : matches.length === 0 &&
+                  idle.length === 0 &&
+                  all.some((match) => shownTeams.some((team) => matchesTeam(match, team)))
+                ? "No games match this filter."
+                : ""}
+          </p>
+          <MatchList
+            label={`${league.label} games`}
+            sport={league.sport}
+            leagueId={league.id}
+            matches={matches}
+            idle={idle}
+            now={now}
+            hour12={!clock24h}
+            followed={shownTeams}
+            indent
+          />
+        </>
       )}
     </CollapsibleSection>
   );

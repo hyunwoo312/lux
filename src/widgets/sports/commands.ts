@@ -112,10 +112,10 @@ const scores: WidgetCommand = {
     const needle = query.trim();
     const loaded = await Promise.all(
       followedLeagues().map(async ({ league, dayWindow }) => {
-        const matches = await readPolled(sportsScoreboard(league, dayWindow)).catch(
-          (): Match[] => [],
+        const board = await readPolled(sportsScoreboard(league, dayWindow, new Date())).catch(
+          () => ({ matches: [], missingDays: [] }),
         );
-        return matches.flatMap((match) =>
+        return board.matches.flatMap((match) =>
           match.link ? [{ match, league, link: match.link }] : [],
         );
       }),

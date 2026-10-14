@@ -1,6 +1,10 @@
 import type { PolledDefinition } from "@/widgets/core/usePolledResource";
 import { scoreboardKey, TEAM_INDEX_KEY } from "@/widgets/sports/lib/cacheKeys";
-import { fetchScoreboard, parseCachedScoreboard } from "@/widgets/sports/lib/espn";
+import {
+  fetchScoreboardWindow,
+  parseCachedWindow,
+  type Scoreboard,
+} from "@/widgets/sports/lib/scoreboardDays";
 import {
   fetchLeaderboard,
   parseCachedLeaderboard,
@@ -14,18 +18,21 @@ import {
   type TeamIndex,
 } from "@/widgets/sports/lib/teamIndex";
 import { datesParam, DEFAULT_DAY_WINDOW, type DayWindow } from "@/widgets/sports/lib/window";
-import type { Match } from "@/widgets/sports/types";
 
 const SCOREBOARD_INTERVAL_MS = 60_000;
 const INDEX_REFRESH_MS = 60_000;
 
-export function sportsScoreboard(league: League, dayWindow: DayWindow): PolledDefinition<Match[]> {
+export function sportsScoreboard(
+  league: League,
+  dayWindow: DayWindow,
+  date: Date,
+): PolledDefinition<Scoreboard> {
   return {
     widget: "sports",
-    cacheKey: scoreboardKey(league, dayWindow),
+    cacheKey: scoreboardKey(league, dayWindow, datesParam(dayWindow, date)),
     intervalMs: SCOREBOARD_INTERVAL_MS,
-    parse: parseCachedScoreboard,
-    fetch: (signal) => fetchScoreboard(league.path, signal, datesParam(dayWindow, new Date())),
+    parse: parseCachedWindow,
+    fetch: (signal) => fetchScoreboardWindow(league.path, datesParam(dayWindow, date), signal),
   };
 }
 

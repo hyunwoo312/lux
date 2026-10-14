@@ -1,21 +1,34 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 
 vi.mock("@/widgets/sports/lib/espn", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/widgets/sports/lib/espn")>()),
-  fetchScoreboard: vi.fn(),
+  fetchScoreboardDay: vi.fn(),
   parseCachedScoreboard: () => null,
 }));
+vi.mock("@/widgets/sports/lib/summary", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/widgets/sports/lib/summary")>()),
+  fetchGameSummary: vi.fn(),
+}));
 
-import { fetchScoreboard } from "@/widgets/sports/lib/espn";
+import { fetchScoreboardDay } from "@/widgets/sports/lib/espn";
+import { fetchGameSummary } from "@/widgets/sports/lib/summary";
 import { SportsWidget } from "@/widgets/sports/SportsWidget";
 import { useSportsStore } from "@/widgets/sports/useSportsStore";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
-import { clearPolledResources } from "@/widgets/core/usePolledResource";
+import { clearPolledResources, patchPolledResource } from "@/widgets/core/usePolledResource";
+import { sportsScoreboard } from "@/widgets/sports/lib/resources";
+import { leagueById } from "@/widgets/sports/lib/leagues";
+import type { Scoreboard } from "@/widgets/sports/lib/scoreboardDays";
 import { match, seedSportsInstance, team } from "@/widgets/sports/lib/fixtures";
 
-const fetchMock = vi.mocked(fetchScoreboard);
+import { useSportsViewStore } from "@/widgets/sports/useSportsViewStore";
+
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { SportsHeader } from "@/widgets/sports/components/SportsHeader";
+
+const fetchMock = vi.mocked(fetchScoreboardDay);
 
 function renderWidget(instanceId: string, leagueId: string, teams: string[] = []) {
   seedSportsInstance(instanceId, {
@@ -25,18 +38,90 @@ function renderWidget(instanceId: string, leagueId: string, teams: string[] = []
   });
   render(
     <WidgetInstanceContext.Provider value={instanceId}>
-      <SportsWidget />
+      <TooltipProvider>
+        <SportsHeader />
+        <SportsWidget />
+      </TooltipProvider>
     </WidgetInstanceContext.Provider>,
   );
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
+  useSportsViewStore.setState({ byInstance: {} });
   clearPolledResources();
   useSportsStore.setState({ byInstance: {} });
 });
 
 describe("SportsWidget", () => {
+  it("refreshes final statistics when an open live game finishes", async () => {
+    fetchMock.mockResolvedValue([match({ id: "finishing" })]);
+    const summary = {
+      eventId: "finishing",
+      context: "game" as const,
+      players: [],
+      drives: [],
+      plays: [],
+      stats: [{ key: "totalYards", label: "Total yards", away: "436", home: "454" }],
+    };
+    vi.mocked(fetchGameSummary)
+      .mockResolvedValueOnce(summary)
+      .mockResolvedValue({ ...summary, stats: [{ ...summary.stats[0]!, away: "448" }] });
+    renderWidget("sports-final", "nfl");
+    fireEvent.click(await screen.findByRole("button", { name: /show details/i }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Stats" }));
+    expect(screen.getByText("436")).toBeInTheDocument();
+    act(() =>
+      patchPolledResource<Scoreboard>(
+        sportsScoreboard(leagueById("nfl")!, "today", new Date()).cacheKey,
+        (board) => ({
+          ...board,
+          matches: board.matches.map((game) => ({ ...game, state: "post", detail: "Final" })),
+        }),
+      ),
+    );
+    expect(await screen.findByText("448")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Stats" })).toHaveAttribute("aria-selected", "true");
+    expect(fetchGameSummary).toHaveBeenCalledTimes(2);
+  });
+
+  it("loads detail only for the opened game and returns focus to its score row", async () => {
+    fetchMock.mockResolvedValue([
+      match({
+        id: "nfl-game",
+        away: team({ id: "a", name: "Bills" }),
+        home: team({ id: "h", name: "Rams" }),
+      }),
+    ]);
+    vi.mocked(fetchGameSummary).mockResolvedValue({
+      eventId: "nfl-game",
+      context: "game",
+      players: [],
+      drives: [],
+      plays: [],
+      stats: [
+        {
+          key: "totalYards",
+          label: "Total yards",
+          away: "436",
+          home: "454",
+          awayValue: 436,
+          homeValue: 454,
+        },
+      ],
+    });
+    renderWidget("sports-lazy", "nfl");
+    const row = await screen.findByRole("button", { name: /show details/i });
+    expect(fetchGameSummary).not.toHaveBeenCalled();
+    fireEvent.click(row);
+    const stats = await screen.findByRole("tab", { name: "Stats" });
+    fireEvent.click(stats);
+    expect(screen.getByText("436")).toBeInTheDocument();
+    expect(fetchGameSummary).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "Back to scores" }));
+    expect(row).toHaveFocus();
+  });
+
   it("keeps the detail hidden until the row is opened", async () => {
     fetchMock.mockResolvedValue([
       match({
@@ -47,7 +132,7 @@ describe("SportsWidget", () => {
         situation: { balls: 0, strikes: 2, outs: 2, bases: [2] },
       }),
     ]);
-    renderWidget("sports-detail", "nhl");
+    renderWidget("sports-detail", "mlb");
 
     const row = await screen.findByRole("button", { name: /show details/i });
     expect(row).toHaveAttribute("aria-expanded", "false");
@@ -65,7 +150,7 @@ describe("SportsWidget", () => {
     fetchMock.mockResolvedValue([]);
     renderWidget("sports-widen", "nfl");
 
-    fireEvent.click(await screen.findByRole("button", { name: /either side of today/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /either side of this date/i }));
 
     expect(useSportsStore.getState().byInstance["sports-widen"]?.window).toBe("week");
   });
@@ -86,7 +171,7 @@ describe("SportsWidget", () => {
     expect(screen.queryByRole("note")).not.toBeInTheDocument();
   });
 
-  it("does not offer to expand a fixture that has nothing to show", async () => {
+  it("opens an overview for a scheduled fixture", async () => {
     fetchMock.mockResolvedValue([
       match({
         id: "bare",
@@ -100,7 +185,7 @@ describe("SportsWidget", () => {
 
     await screen.findByText("MTL");
     const list = screen.getByRole("list", { name: /NHL games/ });
-    expect(within(list).queryByRole("button")).not.toBeInTheDocument();
+    expect(within(list).getByRole("button", { name: /show details/i })).toBeInTheDocument();
   });
 
   it("shows the whole slate, marking the teams you follow instead of hiding the rest", async () => {
@@ -120,7 +205,7 @@ describe("SportsWidget", () => {
 
     expect(await screen.findByText("ATL")).toBeInTheDocument();
     expect(screen.getByText("SEA")).toBeInTheDocument();
-    expect(screen.getAllByText("Favourite team,")).toHaveLength(1);
+    expect(screen.getAllByLabelText("Followed team")).toHaveLength(1);
   });
 });
 
@@ -136,7 +221,10 @@ describe("a widget that has never been configured", () => {
 
     render(
       <WidgetInstanceContext.Provider value="sports-fresh">
-        <SportsWidget />
+        <TooltipProvider>
+          <SportsHeader />
+          <SportsWidget />
+        </TooltipProvider>
       </WidgetInstanceContext.Provider>,
     );
 
