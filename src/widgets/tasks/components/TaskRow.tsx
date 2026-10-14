@@ -1,4 +1,4 @@
-import { Sun, X, ListChecks, AlignLeft, GripVertical } from "lucide-react";
+import { Sun, X, AlignLeft, GripVertical } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ItemActionButton } from "@/components/ItemActionButton";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -55,8 +55,13 @@ export function TaskRow({
         onKeyDown={(event) => event.stopPropagation()}
       />
       <Tooltip
-        content={truncated ? task.title : "Task details · " + help}
-        side="top"
+        content={
+          <span className="flex flex-col gap-1">
+            {truncated && <span>{task.title}</span>}
+            <span className="text-ink-3">Task details · {help}</span>
+          </span>
+        }
+        side="right"
         align="start"
         prose
       >
@@ -102,7 +107,6 @@ export function TaskRow({
             )}
             {progress && (
               <>
-                <ListChecks aria-hidden className="size-3" />
                 <span aria-label={progress + " checklist steps complete"}>{progress}</span>
               </>
             )}

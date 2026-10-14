@@ -120,6 +120,19 @@ describe("TasksWidget", () => {
     expect(screen.getByRole("textbox", { name: "Add a task" })).toHaveFocus();
   });
 
+  it("keeps capture destination consistent with prefixes and permits overriding them", () => {
+    renderIn(<TasksWidget />);
+    const input = screen.getByRole("textbox", { name: "Add a task" });
+    fireEvent.change(input, { target: { value: "/today /flag Plan dinner" } });
+    const destination = screen.getByRole("button", { name: "Add to today" });
+    expect(destination).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(destination);
+    expect(destination).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(screen.getByRole("button", { name: "Add task" }));
+    expect(tasks()[0]).toMatchObject({ title: "Plan dinner", important: true });
+    expect(tasks()[0]?.todayKey).toBeUndefined();
+  });
+
   it("keeps detail changes provisional until Save and cancels the entire draft", () => {
     const original = {
       id: "1",

@@ -90,7 +90,22 @@ export function TasksWidget() {
     }
   };
   const returnFocus = () => {
-    if (returnTarget.current?.isConnected) returnTarget.current.focus();
+    const data = getTaskData(instanceId);
+    const visible = visibleTasks(
+      data.tasks,
+      data.view ?? "all",
+      day,
+      order,
+      completedPosition,
+      data.showCompleted ?? true,
+      query,
+      importantOnly,
+    );
+    if (
+      returnTarget.current?.isConnected &&
+      visible.some((task) => task.id === returnTarget.current?.dataset.taskId)
+    )
+      returnTarget.current.focus();
     else root.current?.querySelector<HTMLInputElement>("[data-task-composer]")?.focus();
   };
   const carried = tasks.filter((task) => !task.done && task.todayKey && task.todayKey < day);

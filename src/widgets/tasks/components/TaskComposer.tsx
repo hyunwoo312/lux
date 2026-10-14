@@ -30,9 +30,8 @@ export function TaskComposer({
   const instanceId = useWidgetInstanceId();
   const input = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
-  const [destination, setDestination] = useState<boolean | null>(null);
-  const planToday = destination ?? today;
-  const draft = parseTaskInput(title, day, planToday);
+  const draft = parseTaskInput(title, day, today);
+  const planToday = Boolean(draft.todayKey);
   const hasCommands = draft.title !== title.trim();
   return (
     <form
@@ -83,7 +82,12 @@ export function TaskComposer({
           label="Add to today"
           pressed={planToday}
           tooltip={planToday ? "Adding to Today" : "Adding to Later"}
-          onClick={() => setDestination(!planToday)}
+          onClick={() => {
+            setTitle(
+              `/${planToday ? "later" : "today"} ${draft.important ? "/flag " : ""}${draft.title}`,
+            );
+            input.current?.focus();
+          }}
         />
         <TaskOrderMenu order={order} onOrder={onOrder} />
       </div>
