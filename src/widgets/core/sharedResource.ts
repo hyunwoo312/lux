@@ -4,6 +4,7 @@ import { PAGED_CACHE_PREFIX, POLLED_CACHE_PREFIX, setLocal } from "@/lib/local-s
 import { RateLimitError } from "@/lib/net";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 import { useScaledCadence } from "@/widgets/core/useWidgetRefreshScale";
+import { useWidgetChrome } from "@/widgets/core/useWidgetChrome";
 
 export const RETRY_BASE_MS = 60_000;
 const RETRY_MAX_MS = 30 * 60_000;
@@ -628,7 +629,9 @@ type ResourceParams<D, R extends SharedResource<D>> = {
 export function useResource<D, R extends SharedResource<D>>(
   params: ResourceParams<D, R>,
 ): { snapshot: Snapshot<D>; resource: RefObject<R | null> } {
-  const { scope, cacheKey, enabled, intervalMs, staleMs: declaredStaleMs } = params;
+  const { scope, cacheKey, enabled: requested, intervalMs, staleMs: declaredStaleMs } = params;
+  const { active = true } = useWidgetChrome();
+  const enabled = requested && active;
   const { staleMs, intervalMs: scaledIntervalMs } = useScaledCadence(
     declaredStaleMs ?? intervalMs ?? DEFAULT_STALE_MS,
     intervalMs,

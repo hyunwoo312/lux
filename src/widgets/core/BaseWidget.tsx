@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { Variants } from "motion/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, Settings, X } from "lucide-react";
@@ -52,8 +52,10 @@ export function BaseWidget({
   const reduced = useReducedMotion();
   const livePattern = useWallpaperStore((s) => s.source === "generated");
   const [configOpen, setConfigOpen] = useState(false);
-  const chrome = useMemo(() => ({ title, openConfig: () => setConfigOpen(true) }), [title]);
+  const configTrigger = useRef<HTMLButtonElement>(null);
   const showConfig = configOpen && !editing;
+  const chrome = useMemo(() => ({ title, openConfig: () => setConfigOpen(true) }), [title]);
+  const contentChrome = useMemo(() => ({ ...chrome, active: !showConfig }), [chrome, showConfig]);
 
   const hasBackdrop = Boolean(backdrop);
   const contentBackdrop = hasBackdrop && !decorativeBackdrop;
@@ -80,6 +82,7 @@ export function BaseWidget({
           if (event.key === "Escape" && showConfig) {
             event.stopPropagation();
             setConfigOpen(false);
+            configTrigger.current?.focus({ preventScroll: true });
           }
         }}
         className={cn(
@@ -183,6 +186,7 @@ export function BaseWidget({
                       size="icon-xs"
                       className={WIDGET_HEADER_ACTION}
                       aria-label={showConfig ? `Close ${title} settings` : `${title} settings`}
+                      ref={configTrigger}
                       aria-pressed={showConfig}
                       onClick={() => setConfigOpen((value) => !value)}
                     >
@@ -223,25 +227,39 @@ export function BaseWidget({
           inert={editing}
           className="@container relative z-widget-content min-h-0 flex-1 overflow-hidden"
         >
-          <AnimatePresence mode="popLayout" initial={false} custom={showConfig}>
-            <motion.div
-              key={showConfig ? "config" : "main"}
-              custom={showConfig}
-              variants={viewVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className={cn(
-                "h-full w-full overscroll-contain",
-                showConfig
-                  ? "scroll-fade overflow-x-hidden overflow-y-auto px-4 pb-3"
-                  : bleed
-                    ? "overflow-hidden"
-                    : "scroll-fade overflow-auto px-4 pb-3",
-              )}
-            >
-              {showConfig ? config : children}
-            </motion.div>
+          <motion.div
+            custom={showConfig}
+            variants={viewVariants}
+            initial={false}
+            animate={showConfig ? "exit" : "animate"}
+            inert={showConfig}
+            aria-hidden={showConfig || undefined}
+            className={cn(
+              "absolute inset-0 h-full w-full overscroll-contain",
+              bleed ? "overflow-hidden" : "scroll-fade overflow-auto px-4 pb-3",
+            )}
+          >
+            <WidgetChromeContext.Provider value={contentChrome}>
+              {children}
+            </WidgetChromeContext.Provider>
+          </motion.div>
+          <AnimatePresence initial={false} custom={showConfig}>
+            {showConfig && (
+              <motion.div
+                key="config"
+                custom={showConfig}
+                variants={viewVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="
+                  scroll-fade absolute inset-0 h-full w-full overflow-x-hidden overflow-y-auto
+                  overscroll-contain px-4 pb-3
+                "
+              >
+                {config}
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </div>

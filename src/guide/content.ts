@@ -82,7 +82,7 @@ const GETTING_STARTED: readonly GuideArticle[] = [
       },
       {
         kind: "prose",
-        text: "Each widget also has its own settings, behind the gear in its header — you will find it when you are *not* in edit mode. That is where you switch it between the frosted glass look and a solid one, give it its own accent colour, and change whatever that particular widget offers. Widgets that fetch things, like Weather, Stocks and Calendar, also have a refresh button there.",
+        text: "Each widget also has its own settings, behind the gear in its header — you will find it when you are *not* in edit mode. That is where you switch it between the frosted glass look and a solid one, give it its own accent colour, and change whatever that particular widget offers. Opening settings keeps your current drafts, filters and reading position; hidden content pauses its polling. Press `Esc` to return to the widget's settings button. Widgets that fetch things, like Weather, Stocks and Calendar, also have a refresh button there.",
       },
       {
         kind: "figure",

@@ -2,6 +2,7 @@ import { createContext, useContext } from "react";
 
 type WidgetChrome = {
   title: string;
+  active?: boolean;
   openConfig: () => void;
 };
 

@@ -79,7 +79,7 @@ To arrange widgets with the keyboard, tab to **Move or resize** in a widget’s 
 
 _Pick a widget, drop it, and drag it where you want it._
 
-Each widget also has its own settings, behind the gear in its header — you will find it when you are *not* in edit mode. That is where you switch it between the frosted glass look and a solid one, give it its own accent colour, and change whatever that particular widget offers. Widgets that fetch things, like Weather, Stocks and Calendar, also have a refresh button there.
+Each widget also has its own settings, behind the gear in its header — you will find it when you are *not* in edit mode. That is where you switch it between the frosted glass look and a solid one, give it its own accent colour, and change whatever that particular widget offers. Opening settings keeps your current drafts, filters and reading position; hidden content pauses its polling. Press `Esc` to return to the widget's settings button. Widgets that fetch things, like Weather, Stocks and Calendar, also have a refresh button there.
 
 <p align="center">
   <img src="public/guide/using-configure.webp" alt="A widget's own settings panel, open over the dashboard" width="70%" />
