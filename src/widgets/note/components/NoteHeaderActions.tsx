@@ -1,12 +1,12 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { AlertCircle, Check, Copy, Download } from "lucide-react";
+import { Check, Copy, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { pop } from "@/lib/motion";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { WIDGET_HEADER_ACTION } from "@/widgets/core/chromeStyles";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
-import { getNoteDraftText, useNoteDraftText } from "@/widgets/note/hooks/useNoteDraft";
+import { getNoteData, useNote } from "@/widgets/note/useNoteStore";
 
 const FILE_NAME_WORDS = 6;
 const FILE_NAME_MAX = 40;
@@ -26,19 +26,14 @@ function downloadName(text: string): string {
 export function NoteHeaderActions() {
   const reduced = useReducedMotion();
   const instanceId = useWidgetInstanceId();
-  const hasText = useNoteDraftText(instanceId).trim().length > 0;
+  const hasText = useNote(instanceId).text.trim().length > 0;
   const { status, copy } = useCopyToClipboard();
   const copied = status === "copied";
-  const message = copied
-    ? "Note copied."
-    : status === "failed"
-      ? "Couldn’t copy note. Try again."
-      : "";
 
   if (!hasText) return null;
 
   function handleDownload() {
-    const text = getNoteDraftText(instanceId);
+    const { text } = getNoteData(instanceId);
     const url = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
     const anchor = document.createElement("a");
     anchor.href = url;
@@ -49,22 +44,18 @@ export function NoteHeaderActions() {
 
   return (
     <div className="flex items-center gap-0.5">
-      <Tooltip content={message || "Copy note"} sticky>
+      <Tooltip content={copied ? "Copied" : "Copy note"} sticky>
         <Button
           variant="ghost"
           size="icon-xs"
           className={WIDGET_HEADER_ACTION}
           aria-label="Copy note"
-          onClick={() => copy(getNoteDraftText(instanceId))}
+          onClick={() => copy(getNoteData(instanceId).text)}
         >
           <AnimatePresence initial={false} mode="popLayout">
             {copied ? (
               <motion.span key="copied" {...pop(reduced)} className="text-primary flex">
                 <Check />
-              </motion.span>
-            ) : status === "failed" ? (
-              <motion.span key="failed" {...pop(reduced)} className="text-destructive flex">
-                <AlertCircle />
               </motion.span>
             ) : (
               <motion.span key="copy" {...pop(reduced)} className="flex">
@@ -74,9 +65,6 @@ export function NoteHeaderActions() {
           </AnimatePresence>
         </Button>
       </Tooltip>
-      <span role="status" className="sr-only">
-        {message}
-      </span>
       <Tooltip content="Download as .txt" sticky>
         <Button
           variant="ghost"

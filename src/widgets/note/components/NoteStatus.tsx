@@ -1,12 +1,12 @@
 import { HEADER_LABEL } from "@/widgets/core/chromeStyles";
-import { useNoteDraftText } from "@/widgets/note/hooks/useNoteDraft";
+import { useNote } from "@/widgets/note/useNoteStore";
 import { NOTE_MAX_LENGTH } from "@/widgets/note/types";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 import { WidgetTitle } from "@/widgets/core/WidgetTitle";
 
 export function NoteStatus() {
   const id = useWidgetInstanceId();
-  const text = useNoteDraftText(id);
+  const { text } = useNote(id);
   const trimmed = text.trim();
   if (!trimmed) return <WidgetTitle />;
 

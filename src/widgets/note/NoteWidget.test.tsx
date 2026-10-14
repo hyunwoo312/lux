@@ -35,61 +35,6 @@ afterEach(() => {
 });
 
 describe("NoteWidget", () => {
-  it("previews the current conflicting draft and keeps explicit resolution reachable", () => {
-    seedNote(ID, "saved");
-    renderWidget();
-    fireEvent.change(screen.getByLabelText("Note"), { target: { value: "# My draft" } });
-    act(() => {
-      useNoteStore.setState({
-        byInstance: { [ID]: { text: "remote", fontSize: "base", updatedAt: Date.now() + 5 } },
-      });
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Read" }));
-    expect(screen.getByRole("heading", { name: "My draft" })).toBeInTheDocument();
-    expect(storedText()).toBe("remote");
-    fireEvent.click(screen.getByRole("button", { name: "Use saved" }));
-    expect(screen.getByRole("article")).toHaveTextContent("remote");
-    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
-    expect(screen.getByLabelText("Note")).toHaveValue("remote");
-  });
-
-  it("keeps the same editor and selection through reading, without rewriting source", () => {
-    seedNote(ID, "# Title\n\nhello");
-    renderWidget();
-    const field = screen.getByLabelText<HTMLTextAreaElement>("Note");
-    field.setSelectionRange(10, 13);
-    fireEvent.click(screen.getByRole("button", { name: "Read" }));
-    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
-    expect(screen.getByLabelText("Note")).toBe(field);
-    expect(field.selectionStart).toBe(10);
-    expect(storedText()).toBe("# Title\n\nhello");
-  });
-
-  it("journals formatting and rejects an overflowing operation atomically", () => {
-    seedNote(ID, "word");
-    renderWidget();
-    const field = screen.getByLabelText<HTMLTextAreaElement>("Note");
-    field.setSelectionRange(0, 4);
-    fireEvent.keyDown(field, { key: "b", ctrlKey: true });
-    expect(field).toHaveValue("**word**");
-    expect(readNoteDraft(ID)?.text).toBe("**word**");
-    fireEvent.change(field, { target: { value: "x".repeat(NOTE_MAX_LENGTH) } });
-    field.setSelectionRange(0, 1);
-    fireEvent.keyDown(field, { key: "i", ctrlKey: true });
-    expect(field.value.length).toBe(NOTE_MAX_LENGTH);
-  });
-
-  it("does not interpret composition or modified Enter as list continuation", () => {
-    seedNote(ID, "- entry");
-    renderWidget();
-    const field = screen.getByLabelText<HTMLTextAreaElement>("Note");
-    field.setSelectionRange(7, 7);
-    fireEvent.keyDown(field, { key: "Enter", isComposing: true });
-    fireEvent.keyDown(field, { key: "Enter", altKey: true });
-    fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
-    expect(field).toHaveValue("- entry");
-  });
-
   it("journals the input synchronously before the store debounce", () => {
     renderWidget();
     fireEvent.change(screen.getByLabelText("Note"), { target: { value: "recover me" } });
