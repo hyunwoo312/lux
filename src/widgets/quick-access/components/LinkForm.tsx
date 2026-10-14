@@ -13,13 +13,14 @@ import { OptionRow } from "@/components/OptionRow";
 
 type LinkFormProps = {
   initial?: QuickLink;
+  prefillUrl?: string;
   pinnedUrls: Set<string>;
   onSubmit: (title: string, url: string) => LinkResult;
   onCancel: () => void;
 };
 
-export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormProps) {
-  const [url, setUrl] = useState(initial?.url ?? "");
+export function LinkForm({ initial, prefillUrl, pinnedUrls, onSubmit, onCancel }: LinkFormProps) {
+  const [url, setUrl] = useState(initial?.url ?? prefillUrl ?? "");
   const [title, setTitle] = useState(initial?.title ?? "");
   const [error, setError] = useState("");
   const [focused, setFocused] = useState(false);
@@ -58,15 +59,21 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
   };
 
   const handleUrlKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (!open) {
-      if (event.key === "Escape") onCancel();
-      return;
-    }
+    if (!open) return;
     cursor.onInputKeyDown(event);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+    <form
+      onSubmit={handleSubmit}
+      onKeyDown={(event) => {
+        if (event.key !== "Escape" || event.defaultPrevented || open) return;
+        event.preventDefault();
+        event.stopPropagation();
+        onCancel();
+      }}
+      className="flex flex-col gap-2"
+    >
       <span className="text-ink-3 text-caption font-semibold tracking-wide uppercase">
         {initial ? "Edit link" : "Add link"}
       </span>
@@ -78,6 +85,7 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
       >
         <PopoverAnchor asChild>
           <Input
+            className="focus-ring-single"
             value={url}
             onChange={(event) => {
               setUrl(event.target.value);
@@ -140,6 +148,7 @@ export function LinkForm({ initial, pinnedUrls, onSubmit, onCancel }: LinkFormPr
         </PopoverContent>
       </Popover>
       <Input
+        className="focus-ring-single"
         value={title}
         onChange={(event) => setTitle(event.target.value)}
         placeholder="Title (optional)"

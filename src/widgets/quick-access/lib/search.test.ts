@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { searchBookmarks } from "@/widgets/quick-access/lib/search";
+import { searchBookmarks, searchBookmarksWithContext } from "@/widgets/quick-access/lib/search";
 import type { BookmarkFolder, BrowserItem } from "@/widgets/quick-access/types";
 
 const item = (id: string, title: string, url: string): BrowserItem => ({ id, title, url });
@@ -45,5 +45,15 @@ describe("searchBookmarks", () => {
   it("never lists the same bookmark twice", () => {
     const ids = searchBookmarks(tree, "test").map((entry) => entry.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("retains collection context without counting the browser root as a collection", () => {
+    const found = searchBookmarksWithContext(tree, "test");
+    expect(found.map((entry) => [entry.item.id, entry.context])).toEqual([
+      ["a", "Bookmarks"],
+      ["b", "Work"],
+      ["c", "Work / Deep"],
+    ]);
+    expect(searchBookmarksWithContext(tree, "test", 2)).toHaveLength(2);
   });
 });

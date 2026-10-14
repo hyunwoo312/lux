@@ -18,6 +18,7 @@ export function searchResults<T>(state: SearchState<T>): T[] {
 }
 
 type SearchOptions = {
+  enabled?: boolean;
   minLength?: number;
   delayMs?: number;
 };
@@ -25,11 +26,12 @@ type SearchOptions = {
 export function useDebouncedSearch<T>(
   query: string,
   search: (query: string, signal: AbortSignal) => Promise<T[]>,
-  { minLength = 1, delayMs = SEARCH_DEBOUNCE_MS }: SearchOptions = {},
+  { minLength = 1, delayMs = SEARCH_DEBOUNCE_MS, enabled = true }: SearchOptions = {},
 ): SearchState<T> {
   const [state, setState] = useState<SearchState<T>>({ status: "idle" });
 
   useEffect(() => {
+    if (!enabled) return;
     const trimmed = query.trim();
     if (trimmed.length < minLength) {
       setState({ status: "idle" });
@@ -63,7 +65,7 @@ export function useDebouncedSearch<T>(
       window.clearTimeout(timer);
       window.clearTimeout(spinner);
     };
-  }, [query, search, minLength, delayMs]);
+  }, [query, search, minLength, delayMs, enabled]);
 
   return state;
 }

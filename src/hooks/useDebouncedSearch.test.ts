@@ -14,6 +14,25 @@ afterEach(() => {
 });
 
 describe("useDebouncedSearch", () => {
+  it("cancels pending work while disabled and retains settled results for return", async () => {
+    const search = vi
+      .fn<(query: string, signal: AbortSignal) => Promise<string[]>>()
+      .mockImplementation(async (query) => [query]);
+    const { result, rerender } = renderHook(
+      ({ query, enabled }) => useDebouncedSearch(query, search, { enabled, delayMs: 10 }),
+      { initialProps: { query: "one", enabled: true } },
+    );
+    await waitFor(() => expect(result.current).toEqual({ status: "success", data: ["one"] }));
+    rerender({ query: "two", enabled: true });
+    rerender({ query: "two", enabled: false });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 30));
+    });
+    expect(search).toHaveBeenCalledTimes(1);
+    expect(result.current).toEqual({ status: "success", data: ["one"] });
+    rerender({ query: "two", enabled: true });
+    await waitFor(() => expect(result.current).toEqual({ status: "success", data: ["two"] }));
+  });
   it("ignores an in-flight request once the query has moved on", async () => {
     let resolveFirst: (data: string[]) => void = () => undefined;
     const search = vi

@@ -1,41 +1,55 @@
-import { useEffect, useRef, useState } from "react";
-import { ChevronRight, Folder } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useMemo, useState } from "react";
 import { AlertCircle, Bookmark } from "lucide-react";
 import { RetryButton, StateMessage } from "@/components/StateMessage";
 import { BrowserList } from "@/widgets/quick-access/components/BrowserList";
+import { BookmarkBreadcrumb } from "@/widgets/quick-access/components/BookmarkBreadcrumb";
+import { BookmarkFolderTile } from "@/widgets/quick-access/components/BookmarkFolderTile";
 import { useBookmarkTree } from "@/widgets/quick-access/hooks/useBrowserItems";
+import { useBookmarkNavigation } from "@/widgets/quick-access/hooks/useBookmarkNavigation";
 import { useItemActions } from "@/widgets/quick-access/hooks/useItemActions";
 import { resolveFolderTrail } from "@/lib/browser";
 import { SearchField } from "@/components/SearchField";
-import { searchBookmarks } from "@/widgets/quick-access/lib/search";
-import {
-  QA_GRID_CONTAINER,
-  QA_LIST_CONTAINER,
-  qaTileClass,
-} from "@/widgets/quick-access/lib/itemStyles";
-import type { BookmarkFolder, QuickAccessView } from "@/widgets/quick-access/types";
+import { searchBookmarksWithContext } from "@/widgets/quick-access/lib/search";
+import { folderPreviews, type FolderPreview } from "@/widgets/quick-access/lib/folder-preview";
+import { QA_GRID_CONTAINER, QA_LIST_CONTAINER } from "@/widgets/quick-access/lib/itemStyles";
 import { useQuickAccess, useQuickAccessStore } from "@/widgets/quick-access/useQuickAccessStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
-export function BookmarksView({ editing }: { editing: boolean }) {
+export function BookmarksView({ editing, active = true }: { editing: boolean; active?: boolean }) {
   const instanceId = useWidgetInstanceId();
-  const state = useBookmarkTree();
+  const state = useBookmarkTree(active);
+  const root = state.status === "ready" ? state.root : null;
   const view = useQuickAccess((d) => d.view);
   const path = useQuickAccess((d) => d.bookmarkPath);
   const setBookmarkPath = useQuickAccessStore((s) => s.setBookmarkPath);
   const { pinnedUrls, openBehavior, open, togglePin } = useItemActions();
   const [query, setQuery] = useState("");
-  const setPath = (next: string[]) => setBookmarkPath(instanceId, next);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const folderId = path[path.length - 1] ?? "";
-
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = 0;
-  }, [folderId]);
+  const trail = root ? resolveFolderTrail(root, path) : [];
+  const current = trail.at(-1) ?? root;
+  const reachedPath = trail.slice(1).map((folder) => folder.id);
+  const navigation = useBookmarkNavigation({ folderId: current?.id ?? "", query, active });
+  const previews = useMemo(
+    () => (root ? folderPreviews(root) : new Map<string, FolderPreview>()),
+    [root],
+  );
+  const found = useMemo(() => (root ? searchBookmarksWithContext(root, query) : []), [root, query]);
+  const contexts = useMemo(
+    () => new Map(found.map((entry) => [entry.item.id, entry.context])),
+    [found],
+  );
+  const searching = query.trim().length > 0;
+  const navigate = (next: string[], focus?: string) => {
+    navigation.prepare(focus);
+    setBookmarkPath(instanceId, next);
+  };
+  const changeQuery = (next: string) => {
+    navigation.remember();
+    if (query.trim() && !next.trim()) navigation.prepare();
+    setQuery(next);
+  };
 
   if (state.status === "loading") return <StateMessage message="Loading bookmarks…" />;
-  if (state.status === "error") {
+  if (state.status === "error")
     return (
       <StateMessage
         icon={AlertCircle}
@@ -44,150 +58,70 @@ export function BookmarksView({ editing }: { editing: boolean }) {
         action={<RetryButton onRetry={state.retry} retrying={false} />}
       />
     );
-  }
-
-  const trail = resolveFolderTrail(state.root, path);
-  const current = trail[trail.length - 1] ?? state.root;
-  const reachedPath = trail.slice(1).map((folder) => folder.id);
-  const isEmpty = current.folders.length === 0 && current.items.length === 0;
-  const searching = query.trim().length > 0;
-  const found = searching ? searchBookmarks(state.root, query) : [];
-
+  if (!current) return null;
+  const items = searching ? found.map((entry) => entry.item) : current.items;
+  const empty = items.length === 0 && (searching || current.folders.length === 0);
   return (
-    <div className="flex h-full flex-col">
+    <div
+      ref={navigation.rootRef}
+      tabIndex={-1}
+      className="focus-ring flex h-full min-h-0 flex-col rounded-md"
+    >
       <div className="shrink-0 px-0.5 pt-1 pb-1.5">
-        <SearchField value={query} onChange={setQuery} label="Search bookmarks" />
+        <SearchField value={query} onChange={changeQuery} label="Search bookmarks" />
       </div>
       {!searching && trail.length > 1 && (
-        <Breadcrumb trail={trail} onNavigate={(depth) => setPath(reachedPath.slice(0, depth))} />
+        <BookmarkBreadcrumb
+          trail={trail}
+          onNavigate={(depth) =>
+            navigate(reachedPath.slice(0, depth), `folder:${trail[depth + 1]?.id ?? ""}`)
+          }
+        />
       )}
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-x-hidden scroll-fade overflow-y-auto">
-        {searching ? (
-          found.length === 0 ? (
-            <StateMessage icon={Bookmark} message={`No bookmarks match “${query.trim()}”`} />
-          ) : (
-            <BrowserList
-              items={found}
-              view={view}
-              animateLayout={!editing}
-              pinnedUrls={pinnedUrls}
-              scrollRef={scrollRef}
-              openBehavior={openBehavior}
-              onOpen={open}
-              onTogglePin={togglePin}
-            />
-          )
-        ) : isEmpty ? (
+      <div
+        ref={navigation.scrollRef}
+        onScroll={navigation.remember}
+        onFocusCapture={navigation.onFocusCapture}
+        className="scroll-fade min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-0.5"
+      >
+        {empty && (
           <StateMessage
             icon={Bookmark}
-            message={trail.length > 1 ? "This folder is empty" : "No bookmarks yet"}
+            message={
+              searching
+                ? `No bookmarks match “${query.trim()}”`
+                : trail.length > 1
+                  ? "This folder is empty"
+                  : "No bookmarks yet"
+            }
           />
-        ) : (
-          <>
-            {current.folders.length > 0 && (
-              <ul className={view === "grid" ? QA_GRID_CONTAINER : QA_LIST_CONTAINER}>
-                {current.folders.map((folder) => (
-                  <FolderTile
-                    key={folder.id}
-                    folder={folder}
-                    view={view}
-                    onOpen={() => setPath([...reachedPath, folder.id])}
-                  />
-                ))}
-              </ul>
-            )}
-            {current.items.length > 0 && (
-              <BrowserList
-                key={current.id}
-                items={current.items}
-                view={view}
-                animateLayout={!editing}
-                pinnedUrls={pinnedUrls}
-                scrollRef={scrollRef}
-                openBehavior={openBehavior}
-                onOpen={open}
-                onTogglePin={togglePin}
-              />
-            )}
-          </>
         )}
+        {!searching && current.folders.length > 0 && (
+          <ul className={view === "grid" ? QA_GRID_CONTAINER : QA_LIST_CONTAINER}>
+            {current.folders.map((folder) => (
+              <BookmarkFolderTile
+                key={folder.id}
+                folder={folder}
+                preview={previews.get(folder.id) ?? { links: 0, folders: 0, titles: [] }}
+                view={view}
+                onOpen={() => navigate([...reachedPath, folder.id])}
+              />
+            ))}
+          </ul>
+        )}
+        <BrowserList
+          scopeKey={navigation.scopeKey}
+          items={items}
+          contexts={searching ? contexts : undefined}
+          view={view}
+          animateLayout={!editing}
+          pinnedUrls={pinnedUrls}
+          scrollRef={navigation.scrollRef}
+          openBehavior={openBehavior}
+          onOpen={open}
+          onTogglePin={togglePin}
+        />
       </div>
     </div>
-  );
-}
-
-function Breadcrumb({
-  trail,
-  onNavigate,
-}: {
-  trail: BookmarkFolder[];
-  onNavigate: (depth: number) => void;
-}) {
-  return (
-    <nav aria-label="Bookmark folders" className="flex shrink-0 items-center gap-0.5 px-1 pb-1.5">
-      {trail.map((folder, index) => {
-        const isCurrent = index === trail.length - 1;
-        return (
-          <span key={folder.id} className="flex min-w-0 items-center gap-0.5">
-            {index > 0 && <ChevronRight className="text-ink-3 size-3 shrink-0" aria-hidden />}
-            <button
-              type="button"
-              onClick={() => onNavigate(index)}
-              aria-current={isCurrent ? "page" : undefined}
-              disabled={isCurrent}
-              className={cn(
-                "press focus-ring",
-                "text-micro max-w-28 truncate rounded-sm px-1 py-0.5",
-                isCurrent ? "text-ink font-semibold" : "text-ink-3 hover:text-ink cursor-pointer",
-              )}
-            >
-              {folder.title}
-            </button>
-          </span>
-        );
-      })}
-    </nav>
-  );
-}
-
-function FolderTile({
-  folder,
-  view,
-  onOpen,
-}: {
-  folder: BookmarkFolder;
-  view: QuickAccessView;
-  onOpen: () => void;
-}) {
-  const count = folder.folders.length + folder.items.length;
-  return (
-    <li className="group relative">
-      <button
-        type="button"
-        onClick={onOpen}
-        aria-label={`Open folder ${folder.title}`}
-        className={cn("press cursor-pointer", qaTileClass(view))}
-      >
-        <span
-          className={cn(
-            "text-ink-3 grid shrink-0 place-items-center",
-            view === "grid" ? "size-8 [&_svg]:size-5" : "size-4 [&_svg]:size-4",
-          )}
-        >
-          <Folder />
-        </span>
-        <span
-          className={cn(
-            "truncate",
-            view === "grid" ? "w-full text-center text-caption" : "min-w-0 flex-1 text-body",
-          )}
-        >
-          {folder.title}
-        </span>
-        {view === "list" && (
-          <span className="text-ink-3 text-micro shrink-0 tabular-nums">{count}</span>
-        )}
-      </button>
-    </li>
   );
 }

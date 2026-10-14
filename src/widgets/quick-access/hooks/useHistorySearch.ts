@@ -6,6 +6,6 @@ const LIMIT = 60;
 
 const search = (query: string) => searchHistory(query, LIMIT);
 
-export function useHistorySearch(query: string): SearchState<BrowserItem> {
-  return useDebouncedSearch(query, search, { delayMs: LOCAL_SEARCH_DEBOUNCE_MS });
+export function useHistorySearch(query: string, enabled = true): SearchState<BrowserItem> {
+  return useDebouncedSearch(query, search, { delayMs: LOCAL_SEARCH_DEBOUNCE_MS, enabled });
 }

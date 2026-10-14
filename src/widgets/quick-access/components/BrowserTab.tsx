@@ -43,9 +43,10 @@ const TAB_GATE: Record<
 type BrowserTabProps = {
   tab: BrowserTabKey;
   editing: boolean;
+  active?: boolean;
 };
 
-export function BrowserTab({ tab, editing }: BrowserTabProps) {
+export function BrowserTab({ tab, editing, active = true }: BrowserTabProps) {
   const gate = TAB_GATE[tab];
   const granted = useGrantedPermissions();
   if (granted === null) return <StateMessage message={gate.loading} />;
@@ -61,17 +62,17 @@ export function BrowserTab({ tab, editing }: BrowserTabProps) {
     );
   }
 
-  if (tab === "bookmarks") return <BookmarksView editing={editing} />;
-  return <HistoryView editing={editing} />;
+  if (tab === "bookmarks") return <BookmarksView editing={editing} active={active} />;
+  return <HistoryView editing={editing} active={active} />;
 }
 
-function HistoryView({ editing }: { editing: boolean }) {
-  const state = useBrowserItems("history");
+function HistoryView({ editing, active }: { editing: boolean; active: boolean }) {
+  const state = useBrowserItems("history", active);
   const view = useQuickAccess((d) => d.view);
   const { pinnedUrls, openBehavior, open, togglePin } = useItemActions();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
-  const searched = useHistorySearch(query);
+  const searched = useHistorySearch(query, active);
   const trimmed = query.trim();
 
   const items = state.status === "ready" ? (trimmed ? searchResults(searched) : state.items) : [];

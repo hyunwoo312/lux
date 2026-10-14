@@ -17,6 +17,8 @@ import type { BrowserItem, OpenBehavior, QuickAccessView } from "@/widgets/quick
 
 type BrowserListProps = {
   items: BrowserItem[];
+  contexts?: ReadonlyMap<string, string>;
+  scopeKey?: string;
   view: QuickAccessView;
   animateLayout: boolean;
   pinnedUrls: Set<string>;
@@ -89,6 +91,8 @@ function RowActions({
 
 export function BrowserList({
   items,
+  contexts,
+  scopeKey = "",
   view,
   animateLayout,
   pinnedUrls,
@@ -99,12 +103,24 @@ export function BrowserList({
   onCloseTab,
   onToggleMuted,
 }: BrowserListProps) {
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const visibleCount = counts[scopeKey] ?? PAGE_SIZE;
   const sentinelRef = useRef<HTMLLIElement>(null);
 
   const visible = useMemo(() => items.slice(0, visibleCount), [items, visibleCount]);
   const hasMore = visible.length < items.length;
-  const loadMore = useCallback(() => setVisibleCount((count) => count + PAGE_SIZE), []);
+  const loadMore = useCallback(
+    () =>
+      setCounts((current) => {
+        const next = { ...current };
+        delete next[scopeKey];
+        next[scopeKey] = (current[scopeKey] ?? PAGE_SIZE) + PAGE_SIZE;
+        const oldest = Object.keys(next)[0];
+        if (Object.keys(next).length > 40 && oldest !== undefined) delete next[oldest];
+        return next;
+      }),
+    [scopeKey],
+  );
   useInfiniteScroll(scrollRef, sentinelRef, hasMore, loadMore);
 
   return (
@@ -114,6 +130,7 @@ export function BrowserList({
         return (
           <motion.li key={item.id} layout={animateLayout} className="group relative">
             <QuickLinkAnchor
+              data-bookmark-target={`link:${item.id}`}
               url={item.url}
               title={item.title}
               openBehavior={openBehavior}
@@ -123,6 +140,7 @@ export function BrowserList({
               <QuickItem
                 url={item.url}
                 title={item.title}
+                detail={contexts?.get(item.id)}
                 view={view}
                 trailingPad={
                   view === "list"

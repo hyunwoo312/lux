@@ -6,7 +6,7 @@ export const QA_LIST_CONTAINER = "flex flex-col gap-0.5";
 
 export function qaItemGeometry(view: QuickAccessView): string {
   return view === "grid"
-    ? "flex flex-col items-center gap-1.5 rounded-lg p-2"
+    ? "flex flex-col items-center gap-1 rounded-lg p-1.5"
     : "flex items-center gap-2.5 rounded-md px-2 py-1.5";
 }
 

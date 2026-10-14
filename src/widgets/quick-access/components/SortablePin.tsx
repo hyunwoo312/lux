@@ -1,9 +1,8 @@
 import type { CSSProperties } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Pencil, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ItemActionButton } from "@/components/ItemActionButton";
+import { PinMenu } from "@/widgets/quick-access/components/PinMenu";
 import { QuickItem } from "@/widgets/quick-access/components/QuickItem";
 import { ROW } from "@/lib/row";
 import { qaTileClass } from "@/widgets/quick-access/lib/itemStyles";
@@ -37,6 +36,7 @@ export function SortablePin({ link, view, openBehavior, onEdit, onRemove }: Sort
   return (
     <li ref={setNodeRef} style={style} className={cn("group relative", isDragging && "opacity-60")}>
       <QuickLinkAnchor
+        data-pin-id={link.id}
         url={link.url}
         title={link.title}
         openBehavior={openBehavior}
@@ -53,40 +53,17 @@ export function SortablePin({ link, view, openBehavior, onEdit, onRemove }: Sort
           title={link.title}
           view={view}
           icon={link.icon}
-          trailingPad={view === "list" ? "group-hover:pr-12 group-focus-within:pr-12" : undefined}
+          trailingPad={view === "list" ? "pr-7" : undefined}
         />
       </QuickLinkAnchor>
-      {view === "grid" ? (
-        <>
-          <div className={cn("absolute top-1 left-1", ROW.reveal)}>
-            <ItemActionButton label={`Edit ${link.title}`} onClick={onEdit}>
-              <Pencil />
-            </ItemActionButton>
-          </div>
-          <div className={cn("absolute top-1 right-1", ROW.reveal)}>
-            <ItemActionButton
-              label={`Remove ${link.title}`}
-              onClick={onRemove}
-              className="hover:text-destructive"
-            >
-              <X />
-            </ItemActionButton>
-          </div>
-        </>
-      ) : (
-        <div className={ROW.revealTrailing}>
-          <ItemActionButton label={`Edit ${link.title}`} onClick={onEdit}>
-            <Pencil />
-          </ItemActionButton>
-          <ItemActionButton
-            label={`Remove ${link.title}`}
-            onClick={onRemove}
-            className="hover:text-destructive"
-          >
-            <X />
-          </ItemActionButton>
-        </div>
-      )}
+      <div
+        className={cn(
+          view === "grid" ? "absolute top-0 right-0" : "absolute top-1/2 right-1 -translate-y-1/2",
+          ROW.reveal,
+        )}
+      >
+        <PinMenu link={link} openBehavior={openBehavior} onEdit={onEdit} onRemove={onRemove} />
+      </div>
     </li>
   );
 }

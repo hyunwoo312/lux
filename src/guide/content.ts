@@ -364,7 +364,7 @@ const WIDGET_BLOCKS: Record<string, GuideBlock[]> = {
     },
     {
       kind: "prose",
-      text: "**Home** holds the links you pinned, plus the tabs you have open right now. Drag a pin to reorder it; hover one to rename or remove it.",
+      text: "**Home** holds your pins, with optional Top sites, Open tabs and Recently closed sections. The pin filter searches local titles and addresses. Pins show domain detail, and their actions menu offers **Open**, **Copy**, **Edit** and **Remove**; removal keeps the existing Undo. Drag to reorder, or focus a pin and use **Space**, arrow keys, then **Space** to place it. Dropping one http/https URL onto Home prefills Add Link — review it and press **Save** to pin it. Cancelling or saving returns focus to the relevant pin or Add control.",
     },
     {
       kind: "figure",
@@ -374,11 +374,11 @@ const WIDGET_BLOCKS: Record<string, GuideBlock[]> = {
     },
     {
       kind: "prose",
-      text: "**Bookmarks** is your real bookmark tree, folders and all. Search across the lot, or follow the breadcrumb down into a folder.",
+      text: "**Bookmarks** browses your real bookmark tree without editing it. Folder cards show direct link/folder counts and content hints; search results include their folder context. Back and the compact breadcrumb return through the tree, retaining each folder or search's reading position and focus. Long lists load in pages and keep loaded pages when you return. Pin a bookmark to keep a separate local shortcut on Home.",
     },
     {
       kind: "prose",
-      text: "**History** is recently visited sites, searchable. Anything worth keeping can be pinned to Home from here.",
+      text: "**History** is recently visited sites, searchable. Anything worth keeping can be pinned to Home from here. Visited tabs retain their search drafts and reading position while this widget stays open; inactive tabs stop browser-list polling and pending History search work. Pins, filtering and dropped-link drafts stay local, with browser-cached favicons and a monogram fallback — no page metadata is fetched.",
     },
     {
       kind: "figure",
