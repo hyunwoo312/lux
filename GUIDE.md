@@ -303,7 +303,7 @@ Each widget carries a settings control in its own header, outside edit mode. Tha
 
 _A plain-text scratch note, saved as you type._
 
-Somewhere to put the thing you will need in ten minutes. There is no save button because there is nothing to save to — the text stays in this browser.
+Somewhere to put the thing you will need in ten minutes. **Edit** keeps your plain-text source; **Read** shows a compact Markdown preview. The text stays in this browser and saves as you type.
 
 <p align="center">
   <img src="public/guide/note-writing.webp" alt="Typing into a note as it saves" width="70%" />
@@ -312,6 +312,10 @@ Somewhere to put the thing you will need in ten minutes. There is no save button
 _Typing into a note._
 
 The header keeps a running word and character count, with copy and download beside it. Each note widget is its own note. Lux keeps a local recovery draft as you type, including when you close the tab immediately. If another tab changes the same note, choose **Keep mine** or **Use saved** before saving over it.
+
+The **Format note** button offers headings, bold, italic, inline code, links, lists, checklists and quotes for your selection or current line. **Ctrl/Cmd+B**, **I** and **K** format inside the editor. Enter continues a list; an empty list marker ends it, and Ctrl/Cmd+Enter toggles a source checkbox. Formatting keeps the existing Undo/Redo. Read returns to your reading position; Edit returns to the same editor, selection and scroll. Escape inside Read returns to Edit.
+
+Read supports flat lists and checklists, headings, basic emphasis, quotes, dividers, fenced code and explicit http/https links. Other syntax stays readable as text. Checklist marks in Read are indicators; change them in Edit. HTML and image syntax remain inert, and previews make no network requests. Copy and .txt download preserve the current raw draft, including unresolved local edits; they do not export rendered HTML or silently choose the saved version.
 
 Each widget carries a settings control in its own header, outside edit mode. That is where you choose whether it sits on glass or a solid surface, and which accent colour it uses. You can add more than one of the same widget.
 

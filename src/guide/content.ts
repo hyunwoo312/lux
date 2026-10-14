@@ -338,7 +338,7 @@ const WIDGET_BLOCKS: Record<string, GuideBlock[]> = {
   note: [
     {
       kind: "prose",
-      text: "Somewhere to put the thing you will need in ten minutes. There is no save button because there is nothing to save to — the text stays in this browser.",
+      text: "Somewhere to put the thing you will need in ten minutes. **Edit** keeps your plain-text source; **Read** shows a compact Markdown preview. The text stays in this browser and saves as you type.",
     },
     {
       kind: "figure",
@@ -349,6 +349,14 @@ const WIDGET_BLOCKS: Record<string, GuideBlock[]> = {
     {
       kind: "prose",
       text: "The header keeps a running word and character count, with copy and download beside it. Each note widget is its own note. Lux keeps a local recovery draft as you type, including when you close the tab immediately. If another tab changes the same note, choose **Keep mine** or **Use saved** before saving over it.",
+    },
+    {
+      kind: "prose",
+      text: "The **Format note** button offers headings, bold, italic, inline code, links, lists, checklists and quotes for your selection or current line. **Ctrl/Cmd+B**, **I** and **K** format inside the editor. Enter continues a list; an empty list marker ends it, and Ctrl/Cmd+Enter toggles a source checkbox. Formatting keeps the existing Undo/Redo. Read returns to your reading position; Edit returns to the same editor, selection and scroll. Escape inside Read returns to Edit.",
+    },
+    {
+      kind: "prose",
+      text: "Read supports flat lists and checklists, headings, basic emphasis, quotes, dividers, fenced code and explicit http/https links. Other syntax stays readable as text. Checklist marks in Read are indicators; change them in Edit. HTML and image syntax remain inert, and previews make no network requests. Copy and .txt download preserve the current raw draft, including unresolved local edits; they do not export rendered HTML or silently choose the saved version.",
     },
   ],
   quickAccess: [

@@ -12,6 +12,8 @@ import {
 } from "@/widgets/note/lib/drafts";
 import { NOTE_MAX_LENGTH } from "@/widgets/note/types";
 import { getNoteData, useNote, useNoteStore } from "@/widgets/note/useNoteStore";
+import { usePublishNoteDraft } from "@/widgets/note/hooks/useNoteDraft";
+import { formatNote, type NoteEdit, type NoteFormat } from "@/widgets/note/lib/format";
 
 const COMMIT_DELAY_MS = 400;
 const OVERFLOW_NOTICE_MS = 4000;
@@ -22,6 +24,7 @@ export function useNoteEditor(id: string) {
   const setText = useNoteStore((state) => state.setText);
   const [recovered] = useState(() => readNoteDraft(id));
   const [value, setValue] = useState(recovered?.text ?? text);
+  usePublishNoteDraft(id, value);
   const [conflict, setConflict] = useState<string | null>(null);
   const [dropped, reportDropped] = useTransientState(0, OVERFLOW_NOTICE_MS);
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -118,30 +121,70 @@ export function useNoteEditor(id: string) {
     schedule(next);
   };
 
-  const applyEdit = (edit: ListEdit) => {
+  const applyEdit = (edit: NoteEdit) => {
+    const field = ref.current;
+    field?.focus({ preventScroll: true });
     if (edit.text.length > limitFor()) {
       reportDropped(edit.text.length - limitFor());
       return;
     }
+    if (field) {
+      let start = 0;
+      while (start < field.value.length && field.value[start] === edit.text[start]) start++;
+      let end = field.value.length;
+      let nextEnd = edit.text.length;
+      while (end > start && nextEnd > start && field.value[end - 1] === edit.text[nextEnd - 1]) {
+        end--;
+        nextEnd--;
+      }
+      field.setSelectionRange(start, end);
+      document.execCommand?.("insertText", false, edit.text.slice(start, nextEnd));
+    }
     schedule(edit.text);
-    requestAnimationFrame(() => ref.current?.setSelectionRange(edit.caret, edit.caret));
+    field?.setSelectionRange(edit.start, edit.end);
+    requestAnimationFrame(() => field?.setSelectionRange(edit.start, edit.end));
   };
+
+  const format = (style: NoteFormat) => {
+    const field = ref.current;
+    if (!field || !hydrated) return;
+    applyEdit(formatNote(valueRef.current, field.selectionStart, field.selectionEnd, style));
+  };
+
+  const applyListEdit = (edit: ListEdit) =>
+    applyEdit({ text: edit.text, start: edit.caret, end: edit.caret });
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     const field = event.currentTarget;
+    if (event.nativeEvent.isComposing || event.keyCode === 229 || event.altKey) return;
+    if ((event.ctrlKey || event.metaKey) && !event.shiftKey) {
+      const style =
+        event.key.toLowerCase() === "b"
+          ? "bold"
+          : event.key.toLowerCase() === "i"
+            ? "italic"
+            : event.key.toLowerCase() === "k"
+              ? "link"
+              : null;
+      if (style) {
+        event.preventDefault();
+        format(style);
+        return;
+      }
+    }
     if (field.selectionStart !== field.selectionEnd) return;
     if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
       const edit = toggleCheckbox(field.value, field.selectionStart);
       if (!edit) return;
       event.preventDefault();
-      applyEdit(edit);
+      applyListEdit(edit);
       return;
     }
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (event.key === "Enter" && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
       const edit = continueList(field.value, field.selectionStart);
       if (!edit) return;
       event.preventDefault();
-      applyEdit(edit);
+      applyListEdit(edit);
     }
   };
 
@@ -175,6 +218,7 @@ export function useNoteEditor(id: string) {
     commit,
     handleChange,
     handleKeyDown,
+    format,
     keepMine,
     useSaved,
   };
