@@ -68,6 +68,41 @@ describe("selectHeadlines", () => {
     expect(sorted.status === "ready" && sorted.entries[0]?.item.title).toBe("New");
   });
 
+  it("filters read titles before ordering, highlighting and counting new stories", () => {
+    const result = selectHeadlines(
+      [
+        item("Climate opened!", "BBC News", 9),
+        item("Older", "BBC News", 1),
+        item("Fresh", "BBC News", 5),
+      ],
+      {
+        ...NONE,
+        unreadOnly: true,
+        readTitles: new Set(["climate opened"]),
+        newTitles: new Set(["climate opened", "fresh"]),
+        highlightTerms: ["climate"],
+        sortByLatest: true,
+      },
+    );
+
+    expect(result.status === "ready" && result.entries.map((entry) => entry.item.title)).toEqual([
+      "Fresh",
+      "Older",
+    ]);
+    expect(result.status === "ready" && result.highlightCount).toBe(0);
+    expect(result.status === "ready" && result.newCount).toBe(1);
+  });
+
+  it("distinguishes matching stories that are all read from a query or muted mismatch", () => {
+    const items = [item("Opened story")];
+    const options = { ...NONE, unreadOnly: true, readTitles: new Set(["opened story"]) };
+
+    expect(selectHeadlines(items, options).status).toBe("read");
+    expect(selectHeadlines(items, { ...options, filterQuery: "missing" }).status).toBe("unmatched");
+    expect(selectHeadlines(items, { ...options, mutedTerms: ["opened"] }).status).toBe("muted");
+    expect(selectHeadlines(items, { ...options, unreadOnly: false }).status).toBe("ready");
+  });
+
   it("counts only unseen headlines you have not already opened", () => {
     const result = selectHeadlines([item("Fresh"), item("Opened")], {
       ...NONE,

@@ -267,7 +267,7 @@ Each widget carries a settings control in its own header, outside edit mode. Tha
 
 _Headlines from six publishers, merged or one tab each._
 
-Headlines from Google News, the BBC, The Guardian, the NYT, NPR and Yahoo. Stories open on the publisher's own site — Lux never reposts anyone's article.
+Headlines from Google News, the BBC, The Guardian, the NYT, NPR and Yahoo. Select a headline to preview its supplied feed excerpt, publisher and related coverage inside the widget. **Open** takes you to the publisher for the full story — Lux never fetches or reposts the complete article.
 
 <p align="center">
   <img src="public/guide/news-overview.webp" alt="Moving between News sources and the Trending tab" width="70%" />
@@ -291,7 +291,9 @@ _Headlines from one source._
 
 _What the country is searching._
 
-The filter box narrows what is already loaded by headline or publisher; on the Google News tab it searches instead.
+The filter box narrows what is already loaded by headline or publisher; on the Google News feed tab it searches instead. **Unread** filters your local read history, and the bookmark keeps a story in **Saved**. Previewing does not mark a story read: use **Open** or the read-status action. The same image preference and read actions apply in Saved. Returning from a preview restores the list position and headline focus, with a fallback if that headline is no longer in the list.
+
+While a headline is focused, **↑/↓**, **Home/End** or **J/K** move through the list, and **Enter** previews it. Inside a preview, **J/K** or Previous/Next browse the current story set, and **Esc** returns. **S** saves or removes, **M** toggles read status, and **V** opens the publisher. These shortcuts stay within the story surface. Ctrl/Cmd-click and middle-click retain direct publisher links. The preview uses already-downloaded feed data; missing excerpts stay clearly labelled, with no extra article request or generated summary.
 
 Each widget carries a settings control in its own header, outside edit mode. That is where you choose whether it sits on glass or a solid surface, and which accent colour it uses. You can add more than one of the same widget.
 

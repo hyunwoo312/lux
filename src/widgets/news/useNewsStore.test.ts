@@ -68,6 +68,25 @@ describe("useNewsStore", () => {
     expect(readTitles.at(-1)).toBe("title-204");
   });
 
+  it("marks one title unread without changing another instance or seen history", () => {
+    store().markRead(ID, "opened story");
+    store().markRead(ID, "another story");
+    store().markRead("news-2", "opened story");
+    store().markSeen(ID, ["opened story"]);
+
+    store().markUnread(ID, "opened story");
+    store().markUnread(ID, "opened story");
+
+    expect(data().readTitles).toEqual(["another story"]);
+    expect(data().seenTitles).toEqual(["opened story"]);
+    expect(store().byInstance["news-2"]?.readTitles).toEqual(["opened story"]);
+  });
+
+  it("does not create an instance when marking an unknown story unread", () => {
+    store().markUnread(ID, "unknown");
+    expect(store().byInstance[ID]).toBeUndefined();
+  });
+
   it("adds muted terms trimmed, and says why one was not added", () => {
     expect(store().addMutedTerm(ID, "  Crypto ")).toBe("added");
     expect(store().addMutedTerm(ID, "crypto")).toBe("duplicate");

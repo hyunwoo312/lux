@@ -7,7 +7,7 @@ import { BookmarkButton } from "@/widgets/news/components/BookmarkButton";
 import { HeadlineTitle } from "@/widgets/news/components/HeadlineTitle";
 import { SOURCE_ICONS } from "@/widgets/news/components/sourceIcons";
 import { compactTime } from "@/widgets/news/lib/news";
-import type { OpenBehavior } from "@/lib/open-url";
+import { isHttpUrl, type OpenBehavior } from "@/lib/open-url";
 import type { NewsItem } from "@/widgets/news/types";
 
 export function HeadlineTile({
@@ -20,6 +20,7 @@ export function HeadlineTile({
   highlightTerms,
   onRead,
   onToggleSaved,
+  onPreview,
 }: {
   item: NewsItem;
   now: number;
@@ -29,6 +30,7 @@ export function HeadlineTile({
   isSaved: boolean;
   highlightTerms: string[];
   onRead: () => void;
+  onPreview?: () => void;
   onToggleSaved: () => void;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -79,10 +81,16 @@ export function HeadlineTile({
         )}
       />
       <a
-        href={item.link}
+        href={isHttpUrl(item.link) ? item.link : undefined}
         target={openBehavior === "newTab" ? "_blank" : undefined}
         rel="noreferrer"
-        onClick={onRead}
+        data-news-link
+        onClick={(event) => {
+          if (onPreview && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+            event.preventDefault();
+            onPreview();
+          } else onRead();
+        }}
         onAuxClick={onRead}
         className="focus-ring absolute inset-0 rounded-lg"
       >

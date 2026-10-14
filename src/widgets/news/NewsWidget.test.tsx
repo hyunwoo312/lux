@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 vi.mock("@/widgets/news/lib/news", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/widgets/news/lib/news")>()),
@@ -213,12 +213,16 @@ describe("NewsWidget", () => {
     );
   });
 
-  it("marks a headline read when it is opened", async () => {
+  it("previews without marking read or fetching, then marks read on publisher open", async () => {
     fetchFeedMock.mockResolvedValue(feed([item("r1", "Readable story")]));
     seed("news-read", "guardian");
     renderWidget("news-read");
 
     fireEvent.click(await screen.findByText("Readable story"));
+    expect(screen.getByRole("region", { name: "Story preview" })).toBeInTheDocument();
+    expect(useNewsStore.getState().byInstance["news-read"]?.readTitles).toEqual([]);
+    expect(fetchFeedMock).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("link", { name: "Open" }));
     expect(useNewsStore.getState().byInstance["news-read"]?.readTitles).toEqual(["readable story"]);
   });
 
@@ -318,5 +322,90 @@ describe("saved headlines", () => {
     fireEvent.click(screen.getByRole("button", { name: /remove “First headline”/i }));
 
     expect(useNewsStore.getState().byInstance["news-saved-4"]?.bookmarks).toHaveLength(0);
+  });
+});
+
+describe("reader state regressions", () => {
+  it("shows Google search for a resolved single Google source with a stored All tab", async () => {
+    fetchFeedMock.mockResolvedValue(feed([item("g", "Google headline")]));
+    seed("news-single-google", "all");
+    useNewsStore.getState().setEnabledSources("news-single-google", ["google"]);
+    renderWidget("news-single-google");
+
+    await screen.findByText("Google headline");
+    expect(screen.getByRole("searchbox", { name: "Search Google News" })).toBeInTheDocument();
+    expect(screen.queryByRole("searchbox", { name: "Filter headlines and sources" })).toBeNull();
+  });
+
+  it("never renders saved publisher images with image loading disabled", async () => {
+    const saved = item("a", "Saved picture", "https://img.test/saved.jpg");
+    fetchFeedMock.mockResolvedValue(feed([saved]));
+    seed("news-saved-images", "bbc");
+    useNewsStore.getState().toggleBookmark("news-saved-images", saved);
+    useNewsStore.getState().setLoadImages("news-saved-images", false);
+    const { container } = renderWidget("news-saved-images");
+
+    await screen.findByText("Saved picture");
+    fireEvent.click(screen.getByRole("button", { name: /saved headlines/i }));
+    expect(container.querySelector('img[src="https://img.test/saved.jpg"]')).toBeNull();
+    fireEvent.click(screen.getByRole("link", { name: "Saved picture" }));
+    expect(container.querySelector('img[src="https://img.test/saved.jpg"]')).toBeNull();
+  });
+
+  it("keeps the last saved story preview after unsaving, then returns to the empty saved list", async () => {
+    const saved = item("a", "Last saved story");
+    fetchFeedMock.mockResolvedValue(feed([saved]));
+    seed("news-saved-preview", "bbc");
+    useNewsStore.getState().toggleBookmark("news-saved-preview", saved);
+    renderWidget("news-saved-preview");
+
+    await screen.findByText(saved.title);
+    fireEvent.click(screen.getByRole("button", { name: /saved headlines/i }));
+    fireEvent.click(screen.getByRole("link", { name: saved.title }));
+    fireEvent.click(screen.getByRole("button", { name: "Saved" }));
+    const preview = screen.getByRole("region", { name: "Story preview" });
+    expect(within(preview).getByRole("heading", { name: saved.title })).toBeInTheDocument();
+    expect(within(preview).getByRole("button", { name: "Save" })).toBeInTheDocument();
+    expect(useNewsStore.getState().byInstance["news-saved-preview"]?.bookmarks).toEqual([]);
+
+    fireEvent.click(within(preview).getByRole("button", { name: "Headlines" }));
+    const empty = screen.getByText(/Nothing saved yet/);
+    await waitFor(() => expect(empty.closest('[tabindex="-1"]')).toHaveFocus());
+  });
+
+  it("keeps a read story preview when it is the only unread item and returns focus to the empty reader", async () => {
+    fetchFeedMock.mockResolvedValue(feed([item("a", "Only unread story")]));
+    seed("news-unread-preview", "bbc");
+    renderWidget("news-unread-preview");
+
+    await screen.findByText("Only unread story");
+    fireEvent.click(screen.getByRole("button", { name: "Unread" }));
+    fireEvent.click(screen.getByRole("link", { name: "Only unread story" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mark read" }));
+    const preview = screen.getByRole("region", { name: "Story preview" });
+    expect(within(preview).getByRole("heading", { name: "Only unread story" })).toBeInTheDocument();
+    expect(within(preview).getByRole("button", { name: "Mark unread" })).toBeInTheDocument();
+    fireEvent.keyDown(within(preview).getByRole("button", { name: "Headlines" }), {
+      key: "Escape",
+    });
+    const empty = screen.getByText(/No unread headlines here/);
+    await waitFor(() => expect(empty.closest('[tabindex="-1"]')).toHaveFocus());
+  });
+
+  it("moves focus to a remaining headline when M removes the focused unread row", async () => {
+    fetchFeedMock.mockResolvedValue(feed([item("a", "First unread"), item("b", "Next unread")]));
+    seed("news-unread-focus", "bbc");
+    renderWidget("news-unread-focus");
+
+    await screen.findByText("First unread");
+    fireEvent.click(screen.getByRole("button", { name: "Unread" }));
+    const first = screen.getByRole("link", { name: "First unread" });
+    first.focus();
+    fireEvent.keyDown(first, { key: "m" });
+    await waitFor(() => expect(screen.getByRole("link", { name: "Next unread" })).toHaveFocus());
+    expect(screen.queryByRole("link", { name: "First unread" })).toBeNull();
+    expect(useNewsStore.getState().byInstance["news-unread-focus"]?.readTitles).toEqual([
+      "first unread",
+    ]);
   });
 });

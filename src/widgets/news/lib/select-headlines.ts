@@ -7,6 +7,7 @@ type HeadlineEntry = { item: NewsItem; titleKey: string };
 type HeadlineSelection =
   | { status: "muted" }
   | { status: "unmatched" }
+  | { status: "read" }
   | { status: "ready"; entries: HeadlineEntry[]; newCount: number; highlightCount: number };
 
 type SelectOptions = {
@@ -16,6 +17,7 @@ type SelectOptions = {
   sortByLatest: boolean;
   readTitles: Set<string>;
   newTitles: Set<string>;
+  unreadOnly?: boolean;
 };
 
 export function selectHeadlines(items: NewsItem[], options: SelectOptions): HeadlineSelection {
@@ -34,9 +36,14 @@ export function selectHeadlines(items: NewsItem[], options: SelectOptions): Head
     : visible;
   if (matched.length === 0) return { status: "unmatched" };
 
-  const sorted = options.sortByLatest
-    ? [...matched].sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0))
+  const unread = options.unreadOnly
+    ? matched.filter((item) => !options.readTitles.has(normalizeTitle(item.title)))
     : matched;
+  if (unread.length === 0) return { status: "read" };
+
+  const sorted = options.sortByLatest
+    ? [...unread].sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0))
+    : unread;
 
   const highlights = options.highlightTerms.map((term) => term.toLowerCase());
   const isHighlighted = (item: NewsItem) =>

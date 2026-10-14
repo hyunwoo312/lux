@@ -1,12 +1,9 @@
 import type { ReactNode } from "react";
-import { cn } from "@/lib/utils";
 import { ErrorState } from "@/components/StateMessage";
 import type { PolledResourceState } from "@/widgets/core/usePolledResource";
-import { HeadlineRow } from "@/widgets/news/components/HeadlineRow";
-import { HeadlineTile } from "@/widgets/news/components/HeadlineTile";
+import { NewsStoryList } from "@/widgets/news/components/NewsStoryList";
 import { NewsNotices } from "@/widgets/news/components/NewsNotices";
 import { NewsSkeleton } from "@/widgets/news/components/NewsSkeleton";
-import { TILE_GRID_CLASS } from "@/widgets/news/components/tileStyles";
 import { selectHeadlines } from "@/widgets/news/lib/select-headlines";
 import type { OpenBehavior } from "@/lib/open-url";
 import type { NewsItem, NewsLayout, NewsSource } from "@/widgets/news/types";
@@ -37,6 +34,9 @@ type NewsContentProps = {
   mutedTerms: string[];
   highlightTerms: string[];
   onRead: (title: string) => void;
+  onToggleRead: (title: string) => void;
+  unreadOnly: boolean;
+  loadImages: boolean;
   savedLinks: Set<string>;
   onToggleSaved: (item: NewsItem) => void;
 };
@@ -59,6 +59,9 @@ export function NewsContent({
   mutedTerms,
   highlightTerms,
   onRead,
+  onToggleRead,
+  unreadOnly,
+  loadImages,
   savedLinks,
   onToggleSaved,
 }: NewsContentProps) {
@@ -78,88 +81,59 @@ export function NewsContent({
     return <NewsSkeleton layout={layout} withThumbnail={withThumbnail} />;
   }
 
-  if (state.status === "empty") {
-    return (
-      <NewsMessage>
-        {searchQuery ? `No results for “${searchQuery}”` : "No headlines right now."}
-      </NewsMessage>
-    );
-  }
-
-  const selection = selectHeadlines(state.data, {
-    mutedTerms,
-    highlightTerms,
-    filterQuery,
-    sortByLatest,
-    readTitles,
-    newTitles,
-  });
-
-  if (selection.status === "muted") {
-    return <NewsMessage>All current headlines match your muted keywords.</NewsMessage>;
-  }
-  if (selection.status === "unmatched") {
-    return <NewsMessage>{`No matches for “${filterQuery}”`}</NewsMessage>;
-  }
-
-  const { entries: items, newCount, highlightCount } = selection;
-  const isNew = (titleKey: string) => newTitles.has(titleKey) && !readTitles.has(titleKey);
-
-  const list =
-    layout === "tiles" ? (
-      <ul
-        className={cn(
-          TILE_GRID_CLASS,
-          "scroll-fade min-h-0 flex-1 content-start overflow-y-auto p-1.5",
-        )}
-      >
-        {items.map(({ item, titleKey }) => (
-          <li key={item.id} className="min-w-0">
-            <HeadlineTile
-              item={item}
-              now={now}
-              openBehavior={openBehavior}
-              isRead={readTitles.has(titleKey)}
-              isNew={isNew(titleKey)}
-              isSaved={savedLinks.has(item.link)}
-              highlightTerms={highlightTerms}
-              onRead={() => onRead(titleKey)}
-              onToggleSaved={() => onToggleSaved(item)}
-            />
-          </li>
-        ))}
-      </ul>
-    ) : (
-      <ul className="scroll-fade flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1.5 py-0.5">
-        {items.map(({ item, titleKey }) => (
-          <li key={item.id}>
-            <HeadlineRow
-              item={item}
-              now={now}
-              openBehavior={openBehavior}
-              withThumbnail={withThumbnail}
-              withSource={withSource}
-              isRead={readTitles.has(titleKey)}
-              isNew={isNew(titleKey)}
-              isSaved={savedLinks.has(item.link)}
-              highlightTerms={highlightTerms}
-              onRead={() => onRead(titleKey)}
-              onToggleSaved={() => onToggleSaved(item)}
-            />
-          </li>
-        ))}
-      </ul>
-    );
-
+  const selection =
+    state.status === "success"
+      ? selectHeadlines(state.data, {
+          mutedTerms,
+          highlightTerms,
+          filterQuery,
+          sortByLatest,
+          readTitles,
+          newTitles,
+          unreadOnly,
+        })
+      : null;
+  const items = selection?.status === "ready" ? selection.entries.map((entry) => entry.item) : [];
+  const newCount = selection?.status === "ready" ? selection.newCount : 0;
+  const highlightCount = selection?.status === "ready" ? selection.highlightCount : 0;
+  const message = !selection
+    ? searchQuery
+      ? `No results for “${searchQuery}”`
+      : "No headlines right now."
+    : selection.status === "muted"
+      ? "All current headlines match your muted keywords."
+      : selection.status === "unmatched"
+        ? `No matches for “${filterQuery}”`
+        : null;
   return (
     <div className="flex h-full flex-col">
-      <NewsNotices
-        missingSources={missingSources}
-        refresh={refresh}
-        highlightCount={highlightCount}
-        newCount={newCount}
-      />
-      {list}
+      <div className="min-h-0 flex-1">
+        <NewsStoryList
+          items={items}
+          notices={
+            <NewsNotices
+              missingSources={missingSources}
+              refresh={refresh}
+              highlightCount={highlightCount}
+              newCount={newCount}
+            />
+          }
+          emptyState={message ? <NewsMessage>{message}</NewsMessage> : undefined}
+          now={now}
+          openBehavior={openBehavior}
+          withThumbnail={withThumbnail}
+          withSource={withSource}
+          loadImages={loadImages}
+          layout={layout}
+          readTitles={readTitles}
+          newTitles={newTitles}
+          highlightTerms={highlightTerms}
+          savedLinks={savedLinks}
+          onRead={onRead}
+          onToggleRead={onToggleRead}
+          onToggleSaved={onToggleSaved}
+        />
+      </div>
     </div>
   );
 }

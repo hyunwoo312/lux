@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { OpenBehavior } from "@/lib/open-url";
+import { isHttpUrl, type OpenBehavior } from "@/lib/open-url";
 import type { RelatedStory } from "@/widgets/news/types";
 
 export function RelatedStories({
   title,
   related,
   openBehavior,
+  onRead,
 }: {
   title: string;
   related: RelatedStory[];
   openBehavior: OpenBehavior;
+  onRead: () => void;
 }) {
   const [open, setOpen] = useState(false);
   if (related.length === 0) return null;
@@ -44,7 +46,9 @@ export function RelatedStories({
           {related.map((story) => (
             <a
               key={story.link}
-              href={story.link}
+              href={isHttpUrl(story.link) ? story.link : undefined}
+              onClick={onRead}
+              onAuxClick={onRead}
               target={openBehavior === "newTab" ? "_blank" : undefined}
               rel="noreferrer"
               className="

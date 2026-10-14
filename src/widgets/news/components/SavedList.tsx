@@ -4,7 +4,8 @@ import { RailItem } from "@/components/DialogChrome";
 import { StateMessage } from "@/components/StateMessage";
 import { cn, matchesQuery } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/tooltip";
-import { HeadlineRow } from "@/widgets/news/components/HeadlineRow";
+import { NewsStoryList } from "@/widgets/news/components/NewsStoryList";
+import { normalizeTitle } from "@/widgets/news/lib/news";
 import type { OpenBehavior } from "@/lib/open-url";
 import type { Bookmark as SavedItem, NewsItem } from "@/widgets/news/types";
 
@@ -47,6 +48,11 @@ export function SavedList({
   openBehavior,
   highlightTerms,
   onToggleSaved,
+  onRead,
+  onToggleRead,
+  readTitles,
+  loadImages,
+  unreadOnly,
 }: {
   bookmarks: SavedItem[];
   filterQuery: string;
@@ -54,6 +60,11 @@ export function SavedList({
   openBehavior: OpenBehavior;
   highlightTerms: string[];
   onToggleSaved: (item: NewsItem) => void;
+  onRead: (title: string) => void;
+  onToggleRead: (title: string) => void;
+  readTitles: Set<string>;
+  loadImages: boolean;
+  unreadOnly: boolean;
 }) {
   const filter = filterQuery.toLowerCase();
   const visible = filter
@@ -63,41 +74,37 @@ export function SavedList({
       )
     : bookmarks;
 
-  if (bookmarks.length === 0) {
-    return (
+  const emptyState =
+    bookmarks.length === 0 ? (
       <StateMessage
         icon={Bookmark}
         message="Nothing saved yet — use the bookmark on a headline to keep it here."
       />
-    );
-  }
+    ) : visible.length === 0 ? (
+      <StateMessage icon={SearchX} message={`No saved headlines match “${filterQuery}”`} />
+    ) : undefined;
 
-  if (visible.length === 0) {
-    return <StateMessage icon={SearchX} message={`No saved headlines match “${filterQuery}”`} />;
-  }
-
+  const items = visible
+    .map((entry) => entry.item)
+    .filter((item) => !unreadOnly || !readTitles.has(normalizeTitle(item.title)));
   return (
-    <ul
-      aria-label="Saved headlines"
-      className="scroll-fade flex h-full min-h-0 flex-col gap-0.5 overflow-y-auto px-1.5 py-0.5"
-    >
-      {visible.map((entry) => (
-        <li key={entry.item.link}>
-          <HeadlineRow
-            item={entry.item}
-            now={now}
-            openBehavior={openBehavior}
-            withThumbnail={entry.item.image !== null}
-            withSource
-            isRead={false}
-            isNew={false}
-            isSaved
-            highlightTerms={highlightTerms}
-            onRead={() => undefined}
-            onToggleSaved={() => onToggleSaved(entry.item)}
-          />
-        </li>
-      ))}
-    </ul>
+    <NewsStoryList
+      items={items}
+      label="Saved headlines"
+      emptyState={emptyState}
+      now={now}
+      openBehavior={openBehavior}
+      withThumbnail={loadImages}
+      withSource
+      loadImages={loadImages}
+      layout="list"
+      readTitles={readTitles}
+      newTitles={new Set()}
+      highlightTerms={highlightTerms}
+      savedLinks={new Set(bookmarks.map((entry) => entry.item.link))}
+      onRead={onRead}
+      onToggleRead={onToggleRead}
+      onToggleSaved={onToggleSaved}
+    />
   );
 }

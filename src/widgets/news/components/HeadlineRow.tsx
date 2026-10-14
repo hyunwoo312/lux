@@ -5,7 +5,7 @@ import { ROW } from "@/lib/row";
 import { BookmarkButton } from "@/widgets/news/components/BookmarkButton";
 import { HeadlineMeta } from "@/widgets/news/components/HeadlineMeta";
 import { HeadlineTitle } from "@/widgets/news/components/HeadlineTitle";
-import type { OpenBehavior } from "@/lib/open-url";
+import { isHttpUrl, type OpenBehavior } from "@/lib/open-url";
 import type { NewsItem } from "@/widgets/news/types";
 
 export function HeadlineRow({
@@ -20,6 +20,7 @@ export function HeadlineRow({
   highlightTerms,
   onRead,
   onToggleSaved,
+  onPreview,
 }: {
   item: NewsItem;
   now: number;
@@ -31,6 +32,7 @@ export function HeadlineRow({
   isSaved: boolean;
   highlightTerms: string[];
   onRead: () => void;
+  onPreview?: () => void;
   onToggleSaved: () => void;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -54,10 +56,16 @@ export function HeadlineRow({
       )}
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <a
-          href={item.link}
+          href={isHttpUrl(item.link) ? item.link : undefined}
           target={openBehavior === "newTab" ? "_blank" : undefined}
           rel="noreferrer"
-          onClick={onRead}
+          data-news-link
+          onClick={(event) => {
+            if (onPreview && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+              event.preventDefault();
+              onPreview();
+            } else onRead();
+          }}
           onAuxClick={onRead}
           className="focus-ring rounded-sm after:absolute after:inset-0"
         >
@@ -79,6 +87,7 @@ export function HeadlineRow({
           now={now}
           withSource={withSource}
           isRead={isRead}
+          onRead={onRead}
           openBehavior={openBehavior}
           className="relative"
         />

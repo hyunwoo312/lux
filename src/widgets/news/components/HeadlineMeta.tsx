@@ -13,6 +13,7 @@ export function HeadlineMeta({
   withSource,
   isRead,
   openBehavior,
+  onRead,
   className,
 }: {
   item: NewsItem;
@@ -20,6 +21,7 @@ export function HeadlineMeta({
   withSource: boolean;
   isRead: boolean;
   openBehavior: OpenBehavior;
+  onRead: () => void;
   className?: string;
 }) {
   const [faviconFailed, setFaviconFailed] = useState(false);
@@ -54,7 +56,12 @@ export function HeadlineMeta({
       {related.length > 0 && (
         <>
           <span aria-hidden>·</span>
-          <RelatedStories title={item.title} related={related} openBehavior={openBehavior} />
+          <RelatedStories
+            title={item.title}
+            related={related}
+            openBehavior={openBehavior}
+            onRead={onRead}
+          />
         </>
       )}
     </span>

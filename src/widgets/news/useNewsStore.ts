@@ -78,6 +78,7 @@ type NewsState = {
   setLoadImages: (instanceId: string, loadImages: boolean) => void;
   setSortByLatest: (instanceId: string, sortByLatest: boolean) => void;
   markRead: (instanceId: string, title: string) => void;
+  markUnread: (instanceId: string, title: string) => void;
   markSeen: (instanceId: string, titles: string[]) => void;
   addMutedTerm: (instanceId: string, term: string) => AddTermResult;
   removeMutedTerm: (instanceId: string, term: string) => void;
@@ -255,6 +256,15 @@ export const useNewsStore = createPersistedStore<NewsState>()(
           update(state, instanceId, (data) => ({
             ...data,
             readTitles: appendCapped(data.readTitles, [title], MAX_READ_TITLES),
+          })),
+        );
+      },
+      markUnread: (instanceId, title) => {
+        if (!get().byInstance[instanceId]?.readTitles.includes(title)) return;
+        set((state) =>
+          update(state, instanceId, (data) => ({
+            ...data,
+            readTitles: data.readTitles.filter((entry) => entry !== title),
           })),
         );
       },
