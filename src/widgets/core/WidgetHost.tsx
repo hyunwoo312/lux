@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { WidgetTypeContext } from "@/widgets/core/useWidgetRefreshScale";
 import { useReducedMotion } from "motion/react";
 import { BaseWidget } from "@/widgets/core/BaseWidget";
@@ -58,6 +58,14 @@ export function WidgetHost({ instance, editing, size, layoutControl }: WidgetHos
   const BackdropComponent = plugin.frame?.backdrop;
 
   const locked = Boolean(lock) && !editing;
+  const content = useMemo(
+    () => (
+      <WidgetErrorBoundary>
+        <Widget editing={editing} justAdded={isLastAdded} />
+      </WidgetErrorBoundary>
+    ),
+    [Widget, editing, isLastAdded],
+  );
 
   return (
     <WidgetInstanceContext.Provider value={instance.id}>
@@ -85,9 +93,7 @@ export function WidgetHost({ instance, editing, size, layoutControl }: WidgetHos
               }
               onRemove={() => removeWidgetInstance(instance)}
             >
-              <WidgetErrorBoundary>
-                <Widget editing={editing} justAdded={isLastAdded} />
-              </WidgetErrorBoundary>
+              {content}
             </BaseWidget>
           </div>
           {locked && lock && (

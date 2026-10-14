@@ -1,8 +1,8 @@
 import type { CSSProperties, Ref } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { GridLayout, useContainerWidth, setTopLeft } from "react-grid-layout";
-import type { Compactor, EventCallback, Position, Layout } from "react-grid-layout";
+import type { Compactor, EventCallback, Position, Layout, LayoutItem } from "react-grid-layout";
 import { clamp, cn } from "@/lib/utils";
 import { CELL, GAP, gridColumns, gridWidth, PAD, UNIT } from "@/widgets/core/grid";
 import {
@@ -19,7 +19,7 @@ import { useWidgetDragStore } from "@/widgets/core/useWidgetDragStore";
 import { WidgetHost } from "@/widgets/core/WidgetHost";
 import { KeyboardLayoutControl } from "@/widgets/core/KeyboardLayoutControl";
 import { getWidgetPlugin } from "@/widgets/registry";
-import { WIDGET_LAYOUTS } from "@/widgets/core/types";
+import { WIDGET_LAYOUTS, type WidgetInstance } from "@/widgets/core/types";
 import { useAppSettingsStore } from "@/stores/useAppSettingsStore";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
@@ -121,13 +121,16 @@ export function WidgetGrid() {
     setPreviewRows(getLayoutBottom(next) + EDIT_ROW_BUFFER);
   };
 
-  const commitLayout = (next: Layout, draggedId: string | null) => {
-    const basis = Math.max(cols, layoutColumnSpan(layout));
-    const merged = applyDragWithinNarrowView(layout, next, draggedId, cols);
-    const displaced = resolveLocalDisplacement(merged, basis, draggedId);
-    const cleaned = resolveLayoutCollisions(displaced, basis, draggedId);
-    setLayout(cleaned);
-  };
+  const commitLayout = useCallback(
+    (next: Layout, draggedId: string | null) => {
+      const basis = Math.max(cols, layoutColumnSpan(layout));
+      const merged = applyDragWithinNarrowView(layout, next, draggedId, cols);
+      const displaced = resolveLocalDisplacement(merged, basis, draggedId);
+      const cleaned = resolveLayoutCollisions(displaced, basis, draggedId);
+      setLayout(cleaned);
+    },
+    [cols, layout, setLayout],
+  );
 
   const handleStop: EventCallback = (next) => {
     setPreviewRows(null);
@@ -157,6 +160,15 @@ export function WidgetGrid() {
   const displayLayout = useMemo(
     () => resolveLayoutCollisions(constrainedLayout, cols, null),
     [constrainedLayout, cols],
+  );
+  const changeLayoutItem = useCallback(
+    (next: LayoutItem) => {
+      commitLayout(
+        displayLayout.map((entry) => (entry.i === next.i ? next : entry)),
+        next.i,
+      );
+    },
+    [commitLayout, displayLayout],
   );
   const previewPlacement = useMemo(() => {
     if (!previewType) return null;
@@ -240,25 +252,14 @@ export function WidgetGrid() {
                     key={widget.id}
                     className={cn(editing && "cursor-grab active:cursor-grabbing")}
                   >
-                    <WidgetHost
+                    <GridWidget
                       instance={widget}
                       editing={editing}
-                      size={size}
-                      layoutControl={
-                        editing && item ? (
-                          <KeyboardLayoutControl
-                            title={getWidgetPlugin(widget.type).name}
-                            item={item}
-                            columns={cols}
-                            onChange={(next) =>
-                              commitLayout(
-                                displayLayout.map((entry) => (entry.i === next.i ? next : entry)),
-                                next.i,
-                              )
-                            }
-                          />
-                        ) : undefined
-                      }
+                      width={size?.w}
+                      height={size?.h}
+                      item={item}
+                      columns={cols}
+                      onLayoutChange={changeLayoutItem}
                     />
                   </div>
                 );
@@ -273,6 +274,42 @@ export function WidgetGrid() {
 }
 
 type Placement = { x: number; y: number; w: number; h: number };
+
+const GridWidget = memo(function GridWidget({
+  instance,
+  editing,
+  width,
+  height,
+  item,
+  columns,
+  onLayoutChange,
+}: {
+  instance: WidgetInstance;
+  editing: boolean;
+  width?: number;
+  height?: number;
+  item?: LayoutItem;
+  columns: number;
+  onLayoutChange: (item: LayoutItem) => void;
+}) {
+  return (
+    <WidgetHost
+      instance={instance}
+      editing={editing}
+      size={width !== undefined && height !== undefined ? { w: width, h: height } : undefined}
+      layoutControl={
+        editing && item ? (
+          <KeyboardLayoutControl
+            title={getWidgetPlugin(instance.type).name}
+            item={item}
+            columns={columns}
+            onChange={onLayoutChange}
+          />
+        ) : undefined
+      }
+    />
+  );
+});
 
 function PlacementPreview({ placement, ref }: { placement: Placement; ref?: Ref<HTMLDivElement> }) {
   return (
