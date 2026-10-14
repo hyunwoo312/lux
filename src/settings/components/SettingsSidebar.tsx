@@ -1,26 +1,32 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, Settings } from "lucide-react";
+import { ChevronLeft, Search, Settings } from "lucide-react";
 import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { DIALOG_RAIL, RailItem } from "@/components/DialogChrome";
-import { SearchField } from "@/components/SearchField";
-import { SearchResults } from "@/settings/components/SearchResults";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useRovingFocus } from "@/hooks/useRovingFocus";
-import { searchSettings } from "@/settings/searchIndex";
 import { SETTINGS_TAB_META } from "@/settings/tabsMeta";
 import { SETTINGS_TABS, useSettingsStore } from "@/stores/useSettingsStore";
 import { Button } from "@/components/ui/button";
 import { LuxMark } from "@/components/LuxMark";
+import { SearchField } from "@/components/SearchField";
+import { SearchResults } from "@/settings/components/SearchResults";
+import { searchSettings } from "@/settings/searchIndex";
 
-export function SettingsSidebar({ open }: { open: boolean }) {
+export function SettingsSidebar() {
   const tab = useSettingsStore((s) => s.tab);
   const setTab = useSettingsStore((s) => s.setTab);
   const collapsed = useSettingsStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useSettingsStore((s) => s.toggleSidebar);
 
-  const [query, setQuery] = useState("");
+  const openSearch = useSettingsStore((s) => s.openSearch);
+  const searchOpen = useSettingsStore((s) => s.searchOpen);
+  const query = useSettingsStore((s) => s.searchQuery);
+  const setQuery = useSettingsStore((s) => s.setSearchQuery);
+  const navigate = useSettingsStore((s) => s.navigateToSetting);
+  const closeSearch = useSettingsStore((s) => s.closeSearch);
+  const clearDestination = useSettingsStore((s) => s.clearDestination);
   const [isNarrow, setIsNarrow] = useState(false);
 
   useEffect(() => {
@@ -31,12 +37,6 @@ export function SettingsSidebar({ open }: { open: boolean }) {
     return () => media.removeEventListener("change", update);
   }, []);
 
-  useEffect(() => {
-    if (open) setQuery("");
-  }, [open]);
-
-  const results = searchSettings(query);
-  const searching = query.trim().length > 0;
   const effectiveCollapsed = isNarrow || collapsed;
 
   const roving = useRovingFocus({
@@ -80,18 +80,56 @@ export function SettingsSidebar({ open }: { open: boolean }) {
         <Separator />
       </div>
 
-      {!effectiveCollapsed && (
+      {effectiveCollapsed ? (
+        <div className="px-2 py-2">
+          <Button
+            id="settings-search-trigger"
+            variant="ghost"
+            onClick={openSearch}
+            aria-label="Search settings"
+            title={effectiveCollapsed ? "Search settings" : undefined}
+            aria-pressed={searchOpen}
+            className={cn(
+              "text-ink-3 w-full justify-start gap-4 px-2",
+              searchOpen && "text-primary bg-primary/10",
+            )}
+          >
+            <Search className="size-5 shrink-0" aria-hidden />
+          </Button>
+        </div>
+      ) : (
         <div className="px-2 pb-1">
-          <SearchField value={query} onChange={setQuery} label="Search settings" size="sm" />
+          <SearchField
+            value={query}
+            onFocus={closeSearch}
+            onChange={(value) => {
+              clearDestination();
+              setQuery(value);
+            }}
+            label="Search settings"
+            size="sm"
+            onKeyDown={(event) => {
+              const first = searchSettings(query)[0];
+              if (event.key === "Enter" && first) {
+                event.preventDefault();
+                navigate(first);
+                setQuery("");
+              }
+              if (event.key === "ArrowDown") {
+                event.preventDefault();
+                document.querySelector<HTMLButtonElement>("[data-settings-result]")?.focus();
+              }
+            }}
+          />
         </div>
       )}
-
-      {searching ? (
+      {!effectiveCollapsed && query.trim() ? (
         <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2">
           <SearchResults
-            results={results}
-            onSelect={(next) => {
-              setTab(next);
+            compact
+            results={searchSettings(query)}
+            onSelect={(entry) => {
+              navigate(entry);
               setQuery("");
             }}
           />
@@ -105,14 +143,14 @@ export function SettingsSidebar({ open }: { open: boolean }) {
         >
           {SETTINGS_TABS.map((id, index) => {
             const { label, icon: Icon } = SETTINGS_TAB_META[id];
-            const isActive = id === tab;
+            const isActive = id === tab && !searchOpen;
             const button = (
               <RailItem
                 {...roving.itemProps(index)}
                 role="tab"
                 id={`settings-tab-${id}`}
                 aria-selected={isActive}
-                aria-controls="settings-panel"
+                aria-controls={`settings-panel-${id}`}
                 active={isActive}
                 layoutId="settings-active-tab"
                 onClick={() => setTab(id)}

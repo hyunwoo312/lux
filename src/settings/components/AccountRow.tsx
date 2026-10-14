@@ -1,9 +1,12 @@
 import type { ComponentType } from "react";
 import { useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { RemoteImage } from "@/components/media/RemoteImage";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/relative-time";
+import { fade } from "@/lib/motion";
 import type { ProviderMeta } from "@/settings/providers";
 import type { IntegrationAccountSummary } from "@/integrations";
 import type { AccentPreset } from "@/widgets/core/accent";
@@ -33,8 +36,8 @@ export function AccountRow({
   const subline =
     status === "connected"
       ? account?.lastAuthorizedAt
-        ? `${identity} · authorized ${formatRelativeTime(account.lastAuthorizedAt)}`
-        : identity
+        ? `Authorized ${formatRelativeTime(account.lastAuthorizedAt)}`
+        : null
       : status === "needsReconnect"
         ? "Reconnect to continue"
         : connectDisabled
@@ -42,45 +45,60 @@ export function AccountRow({
           : provider.description;
 
   return (
-    <div className="flex items-center gap-3 py-2">
+    <div className="flex flex-wrap items-start gap-3 py-2">
       <AccountAvatar
         key={account?.avatarUrl ?? provider.id}
         Icon={provider.icon}
         avatarUrl={account?.avatarUrl}
         connected={Boolean(account)}
       />
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <div className="flex items-center gap-2">
+      <div className="flex min-w-0 flex-1 basis-40 flex-col gap-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="text-body font-medium">{provider.label}</span>
-          <StatusBadge status={status} />
+          <StatusBadge status={status} busy={busy} />
         </div>
-        <span className="text-ink-3 truncate text-caption">{subline}</span>
+        {account && <span className="text-ink-2 text-caption wrap-anywhere">{identity}</span>}
+        {subline && <span className="text-ink-3 text-caption wrap-anywhere">{subline}</span>}
       </div>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2">
         {account ? (
           <>
             {status === "needsReconnect" && (
               <Button
                 variant="ghost"
-                className="text-warning hover:text-warning"
+                className="text-warning relative hover:text-warning"
                 disabled={Boolean(busy)}
+                aria-busy={busy === "connecting" || undefined}
+                aria-label={busy === "connecting" ? `Reconnecting ${provider.label}` : undefined}
                 onClick={onConnect}
               >
-                {busy === "connecting" ? "Reconnecting…" : "Reconnect"}
+                <span className={cn(busy === "connecting" && "invisible")}>Reconnect</span>
+                {busy === "connecting" && <PendingIndicator />}
               </Button>
             )}
-            <Button variant="ghost-destructive" disabled={Boolean(busy)} onClick={onDisconnect}>
-              {busy === "disconnecting" ? "Disconnecting…" : "Disconnect"}
+            <Button
+              variant="ghost-destructive"
+              className="relative"
+              disabled={Boolean(busy)}
+              aria-busy={busy === "disconnecting" || undefined}
+              aria-label={busy === "disconnecting" ? `Disconnecting ${provider.label}` : undefined}
+              onClick={onDisconnect}
+            >
+              <span className={cn(busy === "disconnecting" && "invisible")}>Disconnect</span>
+              {busy === "disconnecting" && <PendingIndicator />}
             </Button>
           </>
         ) : (
           <Button
             variant={brand ? "default" : "secondary"}
-            className={cn(accentClass(brand))}
+            className={cn("relative", accentClass(brand))}
             disabled={Boolean(busy) || connectDisabled}
+            aria-busy={busy === "connecting" || undefined}
+            aria-label={busy === "connecting" ? `Connecting ${provider.label}` : undefined}
             onClick={onConnect}
           >
-            {busy === "connecting" ? "Connecting…" : "Connect"}
+            <span className={cn(busy === "connecting" && "invisible")}>Connect</span>
+            {busy === "connecting" && <PendingIndicator />}
           </Button>
         )}
       </div>
@@ -88,13 +106,32 @@ export function AccountRow({
   );
 }
 
-function StatusBadge({ status }: { status?: "connected" | "needsReconnect" }) {
+function PendingIndicator() {
+  return (
+    <span className="absolute inset-0 flex items-center justify-center" aria-hidden>
+      <Spinner className="motion-reduce:animate-none" />
+    </span>
+  );
+}
+
+function StatusBadge({
+  status,
+  busy,
+}: {
+  status?: "connected" | "needsReconnect";
+  busy: Props["busy"];
+}) {
+  const reduced = useReducedMotion();
   const label =
-    status === "connected"
-      ? "Connected"
-      : status === "needsReconnect"
-        ? "Reconnect needed"
-        : "Not connected";
+    busy === "connecting"
+      ? "Connecting…"
+      : busy === "disconnecting"
+        ? "Disconnecting…"
+        : status === "connected"
+          ? "Connected"
+          : status === "needsReconnect"
+            ? "Reconnect needed"
+            : "Not connected";
   const tone =
     status === "connected"
       ? "text-success"
@@ -102,9 +139,17 @@ function StatusBadge({ status }: { status?: "connected" | "needsReconnect" }) {
         ? "text-warning"
         : "text-ink-3";
   return (
-    <span className={cn("inline-flex items-center gap-1 text-micro font-medium", tone)}>
-      <span className="size-1.5 rounded-full bg-current" />
-      {label}
+    <span role="status" className="inline-flex items-center text-micro font-medium">
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.span
+          key={label}
+          {...fade(reduced, "fast")}
+          className={cn("inline-flex items-center gap-1", busy ? "text-ink-3" : tone)}
+        >
+          <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden />
+          {label}
+        </motion.span>
+      </AnimatePresence>
     </span>
   );
 }

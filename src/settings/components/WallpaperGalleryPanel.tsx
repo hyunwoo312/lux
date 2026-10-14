@@ -58,6 +58,7 @@ export function WallpaperGalleryPanel() {
 
   return (
     <ConfigRow
+      settingId={WALLPAPER.rows.gallery.settingId}
       title={title}
       description={
         isMulti ? "Numbers show the order they rotate in" : WALLPAPER.rows.gallery.description

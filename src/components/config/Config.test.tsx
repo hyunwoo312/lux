@@ -8,12 +8,48 @@ import {
   ConfigSegmented,
   ConfigDisclosure,
   ConfigSubRow,
+  ConfigSection,
 } from "@/components/config/Config";
 
 const OPTIONS = [
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
 ];
+
+describe("settings destinations", () => {
+  it("allows a result to focus its row without adding a tab stop", () => {
+    render(
+      <ConfigSection settingId="settings.appearance.theme" title="Theme">
+        <ConfigRow
+          settingId="settings.appearance.theme.theme"
+          title="Light or dark"
+          control={<Switch />}
+        />
+        <ConfigSubRow
+          settingId="settings.appearance.theme.detail"
+          title="Detail"
+          control={<Switch />}
+        />
+      </ConfigSection>,
+    );
+    const row = screen.getByText("Light or dark").closest("[data-setting-id]");
+    expect(row).toHaveAttribute("tabindex", "-1");
+    expect(row).toHaveClass("scroll-m-4");
+    (row as HTMLElement).focus();
+    expect(row).toHaveFocus();
+    expect(screen.getByText("Detail").closest("[data-setting-id]")).toHaveAttribute(
+      "tabindex",
+      "-1",
+    );
+  });
+
+  it("leaves ordinary widget config rows without destination behavior", () => {
+    const { container } = render(<ConfigRow title="Widget setting" control={<Switch />} />);
+    expect(container.firstElementChild).not.toHaveAttribute("data-setting-id");
+    expect(container.firstElementChild).not.toHaveAttribute("tabindex");
+    expect(container.firstElementChild).not.toHaveClass("scroll-m-4");
+  });
+});
 
 function renderSegmented(onChange: (value: string, origin?: { x: number; y: number }) => void) {
   render(<ConfigSegmented label="Theme" value="light" options={OPTIONS} onChange={onChange} />);

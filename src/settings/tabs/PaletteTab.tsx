@@ -65,7 +65,7 @@ export function PaletteTab() {
         </p>
       )}
 
-      <ConfigSection title={PALETTE_SUGGESTIONS.title}>
+      <ConfigSection settingId={PALETTE_SUGGESTIONS.settingId} title={PALETTE_SUGGESTIONS.title}>
         <ConfigRow
           {...PALETTE_SUGGESTIONS.rows.suggested}
           control={
@@ -110,7 +110,7 @@ export function PaletteTab() {
         />
       </ConfigSection>
 
-      <ConfigSection title={PALETTE_RESULTS.title}>
+      <ConfigSection settingId={PALETTE_RESULTS.settingId} title={PALETTE_RESULTS.title}>
         <ConfigRow
           {...PALETTE_RESULTS.rows.openIn}
           control={
@@ -124,7 +124,10 @@ export function PaletteTab() {
         />
       </ConfigSection>
 
-      <ConfigSection title={PALETTE_SOURCES_SECTION.title}>
+      <ConfigSection
+        settingId={PALETTE_SOURCES_SECTION.settingId}
+        title={PALETTE_SOURCES_SECTION.title}
+      >
         {PALETTE_SOURCES.map((source) => {
           const meta = PALETTE_SOURCE_META[source];
           const permission = meta.permission;
@@ -132,6 +135,7 @@ export function PaletteTab() {
           return (
             <ConfigRow
               key={source}
+              settingId={`${PALETTE_SOURCES_SECTION.settingId}.${source}`}
               title={meta.label}
               description={meta.description}
               control={
@@ -161,32 +165,45 @@ export function PaletteTab() {
         })}
       </ConfigSection>
 
-      <ConfigSection title={PALETTE_COMMANDS.title}>
+      <ConfigSection settingId={PALETTE_COMMANDS.settingId} title={PALETTE_COMMANDS.title}>
         <p className="text-ink-2 text-caption">{PALETTE_COMMANDS.description}</p>
         {commandCatalogue().map((group) => {
           const ids = group.commands.map((command) => command.id);
           const on = ids.filter((id) => disabled[id] !== true).length;
           return (
-            <div key={group.id} className="bg-foreground/4 flex flex-col gap-2 rounded-lg p-3">
+            <div
+              key={group.id}
+              data-setting-id={`${PALETTE_COMMANDS.settingId}.${group.id}`}
+              tabIndex={-1}
+              className="bg-foreground/4 flex scroll-m-4 flex-col gap-2 rounded-lg p-3"
+            >
               <label
                 className="
-                  border-border flex cursor-pointer items-center gap-2.5 border-b px-1.5 pb-2
+                  border-border flex flex-wrap cursor-pointer items-center gap-2.5 border-b px-1.5
+                  pb-2
                 "
               >
                 <group.icon className="text-ink-2 size-4 shrink-0" aria-hidden />
-                <span className="text-ink truncate text-body font-medium">{group.label}</span>
+                <span className="text-ink min-w-0 flex-1 text-body font-medium">{group.label}</span>
                 {group.setup && (
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    className="ml-1 shrink-0"
-                    onClick={(event) => {
-                      event.preventDefault();
-                      group.setup?.run();
-                    }}
+                  <span
+                    className={cn(
+                      "order-last basis-full",
+                      "@min-[28rem]:order-none @min-[28rem]:basis-auto",
+                    )}
                   >
-                    {group.setup.reason}
-                  </Button>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      className="max-w-full"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        group.setup?.run();
+                      }}
+                    >
+                      {group.setup.reason}
+                    </Button>
+                  </span>
                 )}
                 <span className="text-ink-2 text-caption ml-auto shrink-0 tabular-nums">
                   {on}/{ids.length}
@@ -197,7 +214,12 @@ export function PaletteTab() {
                   onCheckedChange={(value) => setCommandsEnabled(ids, value === true)}
                 />
               </label>
-              <div className="grid grid-cols-3 gap-x-4 gap-y-0.5">
+              <div
+                className={cn(
+                  "grid grid-cols-1 gap-x-4 gap-y-0.5",
+                  "@min-[28rem]:grid-cols-2 @min-[34rem]:grid-cols-3",
+                )}
+              >
                 {group.commands.map((command) => (
                   <label
                     key={command.id}

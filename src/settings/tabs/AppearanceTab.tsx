@@ -43,7 +43,7 @@ export function AppearanceTab() {
 
   return (
     <ConfigBody>
-      <ConfigSection title={THEME.title}>
+      <ConfigSection settingId={THEME.settingId} title={THEME.title}>
         <ConfigRow
           {...THEME.rows.theme}
           control={
@@ -64,11 +64,11 @@ export function AppearanceTab() {
         <ConfigRow {...THEME.rows.accent} control={<AccentPicker />} />
       </ConfigSection>
 
-      <ConfigSection title={WALLPAPER.title}>
+      <ConfigSection settingId={WALLPAPER.settingId} title={WALLPAPER.title}>
         <WallpaperSetting />
       </ConfigSection>
 
-      <ConfigSection title={DASHBOARD.title}>
+      <ConfigSection settingId={DASHBOARD.settingId} title={DASHBOARD.title}>
         <ConfigRow
           {...DASHBOARD.rows.gridLines}
           control={<Switch checked={showGridLines} onCheckedChange={setShowGridLines} />}

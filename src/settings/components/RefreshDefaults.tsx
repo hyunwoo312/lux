@@ -65,7 +65,12 @@ export function RefreshDefaults() {
           const Icon = plugin.icon;
 
           return (
-            <li key={plugin.type} className="flex items-center gap-3">
+            <li
+              key={plugin.type}
+              data-setting-id={`${REFRESH.settingId}.${plugin.type}`}
+              tabIndex={-1}
+              className="flex scroll-m-4 items-center gap-3"
+            >
               <span
                 className={cn(
                   "bg-foreground/5 grid size-8 shrink-0 place-items-center rounded-lg",

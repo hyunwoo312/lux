@@ -1,29 +1,45 @@
 import type { SettingsTab } from "@/stores/settingsTabs";
 
 type RowCopy = { title: string; description: string };
+type SettingRow = RowCopy & { settingId: string };
 
 type SettingsSection = {
   tab: SettingsTab;
+  settingId: string;
   title: string;
   description?: string;
-  rows: Record<string, RowCopy>;
+  rows: Record<string, SettingRow>;
 };
 
 function section<R extends string>(
   tab: SettingsTab,
+  key: string,
   title: string,
   rows: Record<R, RowCopy>,
   description?: string,
-): SettingsSection & { rows: Record<R, RowCopy> } {
-  return description === undefined ? { tab, title, rows } : { tab, title, rows, description };
+): SettingsSection & { rows: Record<R, SettingRow> } {
+  const settingId = `settings.${tab}.${key}`;
+  const entries = Object.fromEntries(
+    Object.entries<RowCopy>(rows).map(([rowKey, row]) => [
+      rowKey,
+      { ...row, settingId: `${settingId}.${rowKey}` },
+    ]),
+  ) as Record<R, SettingRow>;
+  return {
+    tab,
+    settingId,
+    title,
+    rows: entries,
+    ...(description === undefined ? {} : { description }),
+  };
 }
 
-export const THEME = section("appearance", "Theme", {
+export const THEME = section("appearance", "theme", "Theme", {
   theme: { title: "Light or dark", description: "Follow your system setting, or pick one." },
   accent: { title: "Accent", description: "The highlight colour used across Lux." },
 });
 
-export const WALLPAPER = section("appearance", "Wallpaper", {
+export const WALLPAPER = section("appearance", "wallpaper", "Wallpaper", {
   type: { title: "Type", description: "A pattern Lux draws, one of ours, or an image of your own" },
   style: { title: "Style", description: "Drawn by Lux, so it always matches your theme" },
   motion: { title: "Motion", description: "Slow drift, paused when the tab is hidden" },
@@ -44,7 +60,7 @@ export const WALLPAPER = section("appearance", "Wallpaper", {
   overlay: { title: "Overlay", description: "Darken or blur for legibility" },
 });
 
-export const DASHBOARD = section("appearance", "Dashboard", {
+export const DASHBOARD = section("appearance", "dashboard", "Dashboard", {
   gridLines: {
     title: "Grid lines",
     description: "Always show the dashboard grid, not only while editing.",
@@ -54,31 +70,31 @@ export const DASHBOARD = section("appearance", "Dashboard", {
   clockDate: { title: "Date under the clock", description: "Add the weekday, the date, or both." },
 });
 
-export const WIDGET_DEFAULTS = section("widgets", "Defaults for every widget", {
+export const WIDGET_DEFAULTS = section("widgets", "widget_defaults", "Defaults for every widget", {
   surface: { title: "Surface", description: "Glass or solid for every widget at once." },
 });
 
-export const REFRESH = section("widgets", "Refresh and data", {
+export const REFRESH = section("widgets", "refresh", "Refresh and data", {
   cadence: {
     title: "How often widgets refresh",
     description: "Relaxed halves every widget's rate.",
   },
 });
 
-export const ACCOUNTS = section("accounts", "Accounts", {});
+export const ACCOUNTS = section("accounts", "accounts", "Accounts", {});
 
-export const PERMISSION_LIST = section("accounts", "Permissions", {});
+export const PERMISSION_LIST = section("accounts", "permission_list", "Permissions", {});
 
-export const BROWSER_SHORTCUT = section("shortcuts", "Browser shortcut", {
+export const BROWSER_SHORTCUT = section("shortcuts", "browser_shortcut", "Browser shortcut", {
   palette: {
     title: "Open the command palette",
     description: "Works from any tab; rebind it in Chrome",
   },
 });
 
-export const SHORTCUTS = section("shortcuts", "Shortcuts", {});
+export const SHORTCUTS = section("shortcuts", "shortcuts", "Shortcuts", {});
 
-export const PALETTE_SUGGESTIONS = section("palette", "Suggestions", {
+export const PALETTE_SUGGESTIONS = section("palette", "palette_suggestions", "Suggestions", {
   suggested: {
     title: "Suggested commands",
     description: "Puts what you reach for most at the top, before everything else",
@@ -93,17 +109,23 @@ export const PALETTE_SUGGESTIONS = section("palette", "Suggestions", {
   },
 });
 
-export const PALETTE_RESULTS = section("palette", "Results", {
+export const PALETTE_RESULTS = section("palette", "palette_results", "Results", {
   openIn: {
     title: "Where results open",
     description: "Whether picking a link or a search replaces this tab",
   },
 });
 
-export const PALETTE_SOURCES_SECTION = section("palette", "Browser data and search", {});
+export const PALETTE_SOURCES_SECTION = section(
+  "palette",
+  "palette_sources_section",
+  "Browser data and search",
+  {},
+);
 
 export const PALETTE_COMMANDS = section(
   "palette",
+  "palette_commands",
   "Commands",
   {},
   "Everything the palette can offer. Uncheck what you would rather it never showed.",
@@ -111,12 +133,13 @@ export const PALETTE_COMMANDS = section(
 
 export const STORING = section(
   "storage",
+  "storing",
   "What Lux is storing",
   {},
   "How much room each part of Lux is using.",
 );
 
-export const BACKUP = section("storage", "Backup & restore", {
+export const BACKUP = section("storage", "backup", "Backup & restore", {
   file: {
     title: "Your settings, in one file",
     description:
@@ -124,7 +147,7 @@ export const BACKUP = section("storage", "Backup & restore", {
   },
 });
 
-export const START_OVER = section("storage", "Start over", {
+export const START_OVER = section("storage", "start_over", "Start over", {
   reset: {
     title: "Reset all settings",
     description:
@@ -134,6 +157,7 @@ export const START_OVER = section("storage", "Start over", {
 
 export const PRIVACY = section(
   "about",
+  "privacy",
   "Privacy",
   {},
   "What Lux stores, what it sends, and what it never collects.",

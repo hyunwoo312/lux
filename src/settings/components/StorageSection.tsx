@@ -99,6 +99,7 @@ export function StorageSection() {
 
   return (
     <ConfigSection
+      settingId={STORING.settingId}
       title={STORING.title}
       action={
         usage && (

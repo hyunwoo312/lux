@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
+import { useReducedMotion } from "motion/react";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { PERMISSIONS, type PermissionItem } from "@/settings/permissions";
@@ -20,16 +21,19 @@ export function PermissionsSection() {
   const highlight = useSettingsStore((s) => s.permissionHighlight);
   const clearHighlight = useSettingsStore((s) => s.clearPermissionHighlight);
   const rowRefs = useRef(new Map<string, HTMLDivElement>());
+  const reduced = useReducedMotion();
 
   const optional = PERMISSIONS.filter((permission) => !permission.required);
   const required = PERMISSIONS.filter((permission) => permission.required);
 
   useEffect(() => {
     if (!highlight) return;
-    rowRefs.current.get(highlight)?.scrollIntoView({ block: "center", behavior: "smooth" });
+    const row = rowRefs.current.get(highlight);
+    row?.focus({ preventScroll: true });
+    row?.scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" });
     const timer = window.setTimeout(() => clearHighlight(), 2200);
     return () => window.clearTimeout(timer);
-  }, [highlight, clearHighlight]);
+  }, [highlight, clearHighlight, reduced]);
 
   const registerRow = (id: string) => (el: HTMLDivElement | null) => {
     if (el) rowRefs.current.set(id, el);
@@ -37,7 +41,7 @@ export function PermissionsSection() {
   };
 
   return (
-    <ConfigSection title={PERMISSION_LIST.title}>
+    <ConfigSection settingId={PERMISSION_LIST.settingId} title={PERMISSION_LIST.title}>
       {!available && (
         <p className="text-ink-3 text-caption">
           Permission controls are available once Lux is installed as an extension.
@@ -102,14 +106,16 @@ function PermissionRow({
   return (
     <div
       ref={rowRef}
+      data-setting-id={`${PERMISSION_LIST.settingId}.${permission.id}`}
+      tabIndex={-1}
       className={cn(
-        "-mx-2 flex items-center gap-3 rounded-lg px-2 py-2 transition-colors",
+        "-mx-2 flex scroll-m-4 items-center gap-3 rounded-lg px-2 py-2 transition-colors",
         highlighted && "bg-primary/10 ring-primary/40 ring-2",
       )}
     >
       <Icon className="text-ink-3 size-6 shrink-0" />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="flex items-center gap-1.5">
+        <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
           <span className="text-body font-medium">{permission.name}</span>
           <span className="bg-foreground/8 text-ink-2 rounded-xs px-1 py-px text-micro font-medium">
             {permission.usedBy}

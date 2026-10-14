@@ -24,16 +24,22 @@ export function ConfigBody({ children }: { children: ReactNode }) {
 }
 
 export function ConfigSection({
+  settingId,
   title,
   action,
   children,
 }: {
+  settingId?: string;
   title: string;
   action?: ReactNode;
   children: ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-3">
+    <section
+      data-setting-id={settingId}
+      tabIndex={settingId ? -1 : undefined}
+      className={cn("flex flex-col gap-3", settingId && "scroll-m-4")}
+    >
       <Separator className="mb-1.5" />
       <div className="flex items-center justify-between gap-4">
         <h3 className={TYPE.eyebrow}>{title}</h3>
@@ -114,16 +120,21 @@ function ConfigText({
 }
 
 type ConfigRowProps = {
+  settingId?: string;
   title?: string;
   description?: string;
   control?: ReactNode;
   children?: ReactNode;
 };
 
-export function ConfigRow({ title, description, control, children }: ConfigRowProps) {
+export function ConfigRow({ settingId, title, description, control, children }: ConfigRowProps) {
   const labelId = useId();
   return (
-    <div className="flex flex-col gap-3">
+    <div
+      data-setting-id={settingId}
+      tabIndex={settingId ? -1 : undefined}
+      className={cn("flex flex-col gap-3", settingId && "scroll-m-4")}
+    >
       {(title || control) && (
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           {title && <ConfigText id={labelId} title={title} description={description} />}
@@ -140,6 +151,7 @@ export function ConfigRow({ title, description, control, children }: ConfigRowPr
 }
 
 export function ConfigSubRow({
+  settingId,
   title,
   description,
   control,
@@ -148,6 +160,8 @@ export function ConfigSubRow({
   const labelId = useId();
   return (
     <div
+      data-setting-id={settingId}
+      tabIndex={settingId ? -1 : undefined}
       inert={disabled}
       className={cn(
         `
@@ -155,6 +169,7 @@ export function ConfigSubRow({
           pl-3 transition-opacity
         `,
         disabled && "opacity-40",
+        settingId && "scroll-m-4",
       )}
     >
       <ConfigText id={labelId} title={title} description={description} />

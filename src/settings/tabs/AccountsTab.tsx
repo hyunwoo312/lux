@@ -76,7 +76,7 @@ export function AccountsTab() {
 
   return (
     <ConfigBody>
-      <ConfigSection title={ACCOUNTS.title}>
+      <ConfigSection settingId={ACCOUNTS.settingId} title={ACCOUNTS.title}>
         {unreadable && (
           <StateMessage
             icon={AlertTriangle}
@@ -104,7 +104,12 @@ export function AccountsTab() {
           const connectDisabled = isSpotify && !spotifyClientId;
 
           return (
-            <div key={provider.id} className="flex flex-col gap-2">
+            <div
+              key={provider.id}
+              data-setting-id={`${ACCOUNTS.settingId}.${provider.id}`}
+              tabIndex={-1}
+              className="flex scroll-m-4 flex-col gap-2"
+            >
               <AccountRow
                 provider={provider}
                 account={account}
@@ -114,7 +119,11 @@ export function AccountsTab() {
                 onConnect={() => run(provider.id, "connecting", () => connect(provider.id))}
                 onDisconnect={() => setConfirmDisconnect(provider.id)}
               />
-              {error && <p className="text-destructive text-caption">{error}</p>}
+              {error && (
+                <p role="alert" className="text-destructive text-caption wrap-break-word">
+                  {error}
+                </p>
+              )}
               {isSpotify && spotifyClientIdLoaded && (
                 <SpotifySetup
                   clientId={spotifyClientId}

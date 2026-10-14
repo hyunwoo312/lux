@@ -160,6 +160,7 @@ export function AboutTab() {
 
       <motion.div variants={item}>
         <ConfigSection
+          settingId={PRIVACY.settingId}
           title={PRIVACY.title}
           action={
             <a

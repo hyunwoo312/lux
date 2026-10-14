@@ -6,11 +6,11 @@ import { REFRESH, WIDGET_DEFAULTS } from "@/settings/rows";
 export function WidgetsTab() {
   return (
     <ConfigBody>
-      <ConfigSection title={WIDGET_DEFAULTS.title}>
+      <ConfigSection settingId={WIDGET_DEFAULTS.settingId} title={WIDGET_DEFAULTS.title}>
         <SurfaceDefault />
       </ConfigSection>
 
-      <ConfigSection title={REFRESH.title}>
+      <ConfigSection settingId={REFRESH.settingId} title={REFRESH.title}>
         <RefreshDefaults />
       </ConfigSection>
 

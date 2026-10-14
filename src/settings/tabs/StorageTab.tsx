@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { exportSettings, importSettings } from "@/lib/backup";
 import { StorageSection } from "@/settings/components/StorageSection";
@@ -85,14 +86,26 @@ export function StorageTab() {
     <ConfigBody>
       <StorageSection />
 
-      <ConfigSection title={BACKUP.title}>
+      <ConfigSection settingId={BACKUP.settingId} title={BACKUP.title}>
         <ConfigRow
           {...BACKUP.rows.file}
           control={
             pendingImport ? (
               <div className="flex items-center gap-2">
-                <Button variant="destructive" disabled={busy} onClick={() => void confirmImport()}>
-                  {busy ? "Replacing…" : "Replace"}
+                <Button
+                  variant="destructive"
+                  className="relative"
+                  disabled={busy}
+                  aria-busy={busy || undefined}
+                  aria-label={busy ? "Replacing settings" : undefined}
+                  onClick={() => void confirmImport()}
+                >
+                  <span className={busy ? "invisible" : undefined}>Replace</span>
+                  {busy && (
+                    <span aria-hidden className="absolute inset-0 flex items-center justify-center">
+                      <Spinner className="motion-reduce:animate-none" />
+                    </span>
+                  )}
                 </Button>
                 <Button variant="ghost" disabled={busy} onClick={() => setPendingImport(null)}>
                   Cancel
@@ -118,20 +131,20 @@ export function StorageTab() {
           }
         >
           {pendingImport && (
-            <p className="text-ink-3 text-caption">
+            <p className="text-ink-3 text-caption wrap-anywhere">
               Replace all settings with “{pendingImport.name}”? Close other Lux tabs first. This
               reloads the page.
             </p>
           )}
           {importError && (
-            <p role="alert" className="text-destructive text-caption">
+            <p role="alert" className="text-destructive text-caption wrap-anywhere">
               {importError}
             </p>
           )}
         </ConfigRow>
       </ConfigSection>
 
-      <ConfigSection title={START_OVER.title}>
+      <ConfigSection settingId={START_OVER.settingId} title={START_OVER.title}>
         <ConfigRow
           {...START_OVER.rows.reset}
           control={

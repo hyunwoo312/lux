@@ -76,6 +76,7 @@ function CustomUploadPanel() {
 
   return (
     <ConfigRow
+      settingId={WALLPAPER.rows.image.settingId}
       title={isMulti ? "Images" : WALLPAPER.rows.image.title}
       control={
         hasImages ? (

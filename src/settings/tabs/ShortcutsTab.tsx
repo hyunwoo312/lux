@@ -20,6 +20,7 @@ import { Kbd } from "@/components/Kbd";
 import { ConfigSection, ConfigBody } from "@/components/config/Config";
 import { matchesQuery } from "@/lib/utils";
 import { BROWSER_SHORTCUT, SHORTCUTS } from "@/settings/rows";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 
 function openBrowserShortcuts(): void {
   if (typeof chrome === "undefined" || !chrome.tabs) return;
@@ -36,6 +37,9 @@ function sameBindings(a: Shortcut[], b: Shortcut[]): boolean {
 
 export function ShortcutsTab() {
   const [query, setQuery] = useState("");
+  const destination = useSettingsStore((s) => s.destination);
+  const clearDestination = useSettingsStore((s) => s.clearDestination);
+  const visibleQuery = destination?.tab === "shortcuts" ? "" : query;
   const shortcuts = useShortcutsStore(
     useShallow(
       (s) =>
@@ -52,7 +56,7 @@ export function ShortcutsTab() {
   const reduced = useReducedMotion();
   const paletteShortcut = usePaletteShortcut();
 
-  const needle = query.trim().toLowerCase();
+  const needle = visibleQuery.trim().toLowerCase();
   const visibleShortcuts = SHORTCUT_DEFINITIONS.filter((action) =>
     matchesQuery(`${action.label} ${action.description}`, needle),
   );
@@ -63,11 +67,19 @@ export function ShortcutsTab() {
 
   return (
     <ConfigBody>
-      <SearchField value={query} onChange={setQuery} label="Search shortcuts" />
+      <SearchField
+        value={visibleQuery}
+        onChange={(value) => {
+          clearDestination();
+          setQuery(value);
+        }}
+        label="Search shortcuts"
+      />
 
       {browserMatches && (
-        <ConfigSection title={BROWSER_SHORTCUT.title}>
+        <ConfigSection settingId={BROWSER_SHORTCUT.settingId} title={BROWSER_SHORTCUT.title}>
           <CustomizeRow
+            settingId={BROWSER_SHORTCUT.rows.palette.settingId}
             icon={<Search className="text-ink-3 size-6 shrink-0" />}
             name={BROWSER_SHORTCUT.rows.palette.title}
             description={BROWSER_SHORTCUT.rows.palette.description}
@@ -91,6 +103,7 @@ export function ShortcutsTab() {
 
       {visibleShortcuts.length > 0 && (
         <ConfigSection
+          settingId={SHORTCUTS.settingId}
           title={SHORTCUTS.title}
           action={
             SHORTCUT_DEFINITIONS.some(
@@ -120,7 +133,12 @@ export function ShortcutsTab() {
               );
               const Icon = action.icon;
               return (
-                <div key={action.id} className="flex flex-col gap-1">
+                <div
+                  key={action.id}
+                  data-setting-id={`${SHORTCUTS.settingId}.${action.id}`}
+                  tabIndex={-1}
+                  className="flex scroll-m-4 flex-col gap-1"
+                >
                   <CustomizeRow
                     icon={<Icon className="text-ink-3 size-6 shrink-0" />}
                     name={action.label}
@@ -146,7 +164,7 @@ export function ShortcutsTab() {
                       <motion.div
                         layout
                         transition={springCrisp(reduced)}
-                        className="flex items-center gap-1.5"
+                        className="flex max-w-full flex-wrap items-center gap-1.5"
                       >
                         {bindings.map((binding, slot) => (
                           <ShortcutDisplay
@@ -198,11 +216,13 @@ export function ShortcutsTab() {
 }
 
 function CustomizeRow({
+  settingId,
   icon,
   name,
   description,
   children,
 }: {
+  settingId?: string;
   icon: ReactNode;
   name: string;
   description: string;
@@ -210,17 +230,28 @@ function CustomizeRow({
 }) {
   return (
     <div
+      data-setting-id={settingId}
+      tabIndex={settingId ? -1 : undefined}
       className="
         hover:bg-accent/40
-        -mx-2 flex items-center gap-3 rounded-lg px-2 py-2 transition-colors
+        -mx-2 grid scroll-m-4 grid-cols-[1.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2
+        rounded-lg px-2 py-3 transition-colors
+        @min-[28rem]:grid-cols-[1.5rem_minmax(0,1fr)_auto]
       "
     >
       {icon}
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="truncate text-body font-medium">{name}</span>
-        <span className="text-ink-3 truncate text-caption">{description}</span>
+        <span className="text-body font-medium">{name}</span>
+        <span className="text-ink-3 text-caption">{description}</span>
       </div>
-      <div className="flex shrink-0 items-center gap-1.5">{children}</div>
+      <div
+        className="
+          col-start-2 flex min-w-0 flex-wrap items-center gap-1.5
+          @min-[28rem]:col-start-auto
+        "
+      >
+        {children}
+      </div>
     </div>
   );
 }
