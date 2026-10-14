@@ -473,7 +473,7 @@ Each widget carries a settings control in its own header, outside edit mode. Tha
 
 _Current conditions and forecasts for the places you add._
 
-Add as many places as you like. Each sits in the list with its temperature and the day's high and low.
+Add up to ten places. Each sits in the list with its temperature and the day's high and low.
 
 <p align="center">
   <img src="public/guide/weather-add-city.webp" alt="Searching for a city and adding it to the list" width="70%" />
@@ -481,7 +481,7 @@ Add as many places as you like. Each sits in the list with its temperature and t
 
 _Searching for a city to add._
 
-Opening one gives the full picture — feels-like, humidity, wind, UV, sunrise and sunset, an hourly curve and the next five days.
+Open a city for current conditions and an interactive forecast. Pick a day to inspect its hours, then use the condition menu for Temperature, Rain chance, Wind or Humidity. Move over the chart, drag on touch, or focus it and use arrow keys; Home and End reach the first and last hours. The selected reading includes its time, condition and units. Rain chance is a percentage; precipitation amount is shown separately when supplied. Missing readings are marked unavailable. Your chosen hour stays selected when the metric changes or the forecast refreshes, while settings choose three, five or seven days ahead.
 
 > **Lux never asks where you are**
 >

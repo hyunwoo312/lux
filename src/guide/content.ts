@@ -516,7 +516,7 @@ const WIDGET_BLOCKS: Record<string, GuideBlock[]> = {
   weather: [
     {
       kind: "prose",
-      text: "Add as many places as you like. Each sits in the list with its temperature and the day's high and low.",
+      text: "Add up to ten places. Each sits in the list with its temperature and the day's high and low.",
     },
     {
       kind: "figure",
@@ -526,7 +526,7 @@ const WIDGET_BLOCKS: Record<string, GuideBlock[]> = {
     },
     {
       kind: "prose",
-      text: "Opening one gives the full picture — feels-like, humidity, wind, UV, sunrise and sunset, an hourly curve and the next five days.",
+      text: "Open a city for current conditions and an interactive forecast. Pick a day to inspect its hours, then use the condition menu for Temperature, Rain chance, Wind or Humidity. Move over the chart, drag on touch, or focus it and use arrow keys; Home and End reach the first and last hours. The selected reading includes its time, condition and units. Rain chance is a percentage; precipitation amount is shown separately when supplied. Missing readings are marked unavailable. Your chosen hour stays selected when the metric changes or the forecast refreshes, while settings choose three, five or seven days ahead.",
     },
     {
       kind: "callout",

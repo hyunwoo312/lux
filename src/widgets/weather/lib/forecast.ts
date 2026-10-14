@@ -1,6 +1,38 @@
 import { formatClock } from "@/lib/clock";
 import { isPrecipitationCode } from "@/widgets/weather/lib/wmo";
-import type { WeatherHour } from "@/widgets/weather/types";
+import type { WeatherDay, WeatherHour } from "@/widgets/weather/types";
+
+export function hoursForDate(hourly: WeatherHour[], date: string): WeatherHour[] {
+  return hourly.filter((hour) => hour.time.slice(0, 10) === date);
+}
+
+export function resolveForecastDate(
+  daily: WeatherDay[],
+  requestedDate: string | null,
+  currentIso: string,
+): string | null {
+  const currentDate = currentIso.slice(0, 10);
+  return (
+    daily.find((day) => day.date === requestedDate)?.date ??
+    daily.find((day) => day.date === currentDate)?.date ??
+    daily[0]?.date ??
+    null
+  );
+}
+
+export function resolveForecastHour(
+  hours: WeatherHour[],
+  requestedTime: string | null,
+  currentIso: string,
+): WeatherHour | null {
+  return (
+    hours.find((hour) => hour.time === requestedTime) ??
+    hours.find((hour) => hour.time.slice(0, 13) === currentIso.slice(0, 13)) ??
+    hours.find((hour) => hour.time >= currentIso) ??
+    hours[0] ??
+    null
+  );
+}
 
 type ImminentPrecip = {
   inHours: number;
@@ -20,27 +52,15 @@ export function findImminentPrecip(
   for (let index = start; index < end; index += 1) {
     const hour = hourly[index];
     if (!hour) continue;
-    if (hour.precipitationProbability >= threshold && isPrecipitationCode(hour.weatherCode)) {
+    if (
+      hour.precipitationProbability !== null &&
+      hour.precipitationProbability >= threshold &&
+      isPrecipitationCode(hour.weatherCode)
+    ) {
       return { inHours: index - start + 1, probability: hour.precipitationProbability };
     }
   }
   return null;
-}
-
-const SECTION_GAP = 8;
-const HOURLY_H = 88;
-const DAILY_MIN_H = 72;
-
-export function forecastVisibility(
-  totalHeight: number,
-  currentHeight: number,
-): { showHourly: boolean; showDaily: boolean } {
-  if (currentHeight <= 0) return { showHourly: false, showDaily: false };
-  const room = totalHeight - currentHeight;
-  return {
-    showHourly: room >= SECTION_GAP + HOURLY_H,
-    showDaily: room >= SECTION_GAP + HOURLY_H + SECTION_GAP + DAILY_MIN_H,
-  };
 }
 
 const TICK_EVERY = 6;
@@ -52,6 +72,7 @@ export function hourlyTicks(
   hours: WeatherHour[],
   xFor: (index: number) => number,
   clock24h: boolean,
+  currentIso?: string,
 ): { ticks: HourlyTick[]; midnights: HourlyTick[] } {
   const candidates = hours.flatMap((hour, index) => {
     const midnight = index > 0 && hour.time.slice(11, 13) === "00";
@@ -64,7 +85,7 @@ export function hourlyTicks(
         x: xFor(index),
         midnight,
         label:
-          index === 0
+          index === 0 && hour.time.slice(0, 13) === currentIso?.slice(0, 13)
             ? "Now"
             : midnight
               ? formatWeekday(hour.time.slice(0, 10))

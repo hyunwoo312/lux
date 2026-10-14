@@ -51,7 +51,11 @@ export type WeatherHour = {
   time: string;
   temperature: number;
   weatherCode: number;
-  precipitationProbability: number;
+  precipitationProbability: number | null;
+  apparentTemperature?: number | null;
+  humidity?: number | null;
+  windSpeed?: number | null;
+  precipitation?: number | null;
 };
 
 export type WeatherDay = {
@@ -60,6 +64,9 @@ export type WeatherDay = {
   max: number;
   min: number;
   precipitationChance: number | null;
+  sunrise?: string | null;
+  sunset?: string | null;
+  uvIndex?: number | null;
 };
 
 export type WeatherMinute = {
@@ -70,6 +77,7 @@ export type WeatherMinute = {
 
 type WeatherUnitLabels = {
   windSpeed: string;
+  precipitation?: string;
 };
 
 export type WeatherData = {

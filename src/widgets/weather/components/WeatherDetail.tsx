@@ -2,9 +2,7 @@ import { X } from "lucide-react";
 import { ErrorState } from "@/components/StateMessage";
 import { ItemActionButton } from "@/components/ItemActionButton";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useElementSize } from "@/hooks/useElementSize";
 import { useWeatherResource } from "@/widgets/weather/hooks/useWeatherResource";
-import { forecastVisibility } from "@/widgets/weather/lib/forecast";
 import { WeatherCurrent } from "@/widgets/weather/components/WeatherCurrent";
 import { WeatherForecast } from "@/widgets/weather/components/WeatherForecast";
 import type { WeatherLocation, WeatherUnits, WeatherWindUnit } from "@/widgets/weather/types";
@@ -38,20 +36,20 @@ function DetailSkeleton() {
 
 export function WeatherDetail({ location, units, windUnit, onRemove }: WeatherDetailProps) {
   const { state, refresh, isRefreshing } = useWeatherResource(location, units, windUnit);
-  const [ref, size] = useElementSize<HTMLDivElement>();
-  const [currentRef, currentSize] = useElementSize<HTMLDivElement>();
   const data = state.status === "success" ? state.data : null;
-  const { showHourly, showDaily } = forecastVisibility(size.height, currentSize.height);
+  const removeAction = (
+    <ItemActionButton
+      label={`Remove ${location.name}`}
+      onClick={onRemove}
+      className="hover:text-destructive absolute top-0 right-0 z-10"
+    >
+      <X />
+    </ItemActionButton>
+  );
 
   return (
     <div className="relative h-full">
-      <ItemActionButton
-        label={`Remove ${location.name}`}
-        onClick={onRemove}
-        className="hover:text-destructive absolute top-0 right-0 z-10"
-      >
-        <X />
-      </ItemActionButton>
+      {!data && removeAction}
       {!data ? (
         state.status === "error" ? (
           <ErrorState
@@ -65,15 +63,15 @@ export function WeatherDetail({ location, units, windUnit, onRemove }: WeatherDe
           <DetailSkeleton />
         )
       ) : (
-        <div ref={ref} className="flex h-full flex-col gap-2 overflow-hidden">
-          <div ref={currentRef}>
+        <div
+          data-weather-scroll
+          className="flex h-full flex-col gap-2 overflow-x-hidden scroll-fade overflow-y-auto pb-2"
+        >
+          <div className="relative shrink-0">
+            {removeAction}
             <WeatherCurrent data={data} name={location.name} />
           </div>
-          {(showHourly || showDaily) && (
-            <div className="min-h-0 flex-1 scroll-fade overflow-y-auto">
-              <WeatherForecast data={data} showHourly={showHourly} showDaily={showDaily} />
-            </div>
-          )}
+          <WeatherForecast data={data} />
         </div>
       )}
     </div>

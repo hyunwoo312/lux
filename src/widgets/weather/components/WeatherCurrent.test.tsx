@@ -103,7 +103,14 @@ describe("WeatherCurrent readings", () => {
     seed([]);
     renderCurrent();
 
-    for (const label of ["Feels like", "Humidity", "Wind", "UV index", "Sunrise", "Sunset"]) {
+    for (const label of [
+      "Feels like",
+      "Humidity",
+      "Wind",
+      "Today's maximum UV",
+      "Sunrise",
+      "Sunset",
+    ]) {
       expect(screen.queryByText(label)).not.toBeInTheDocument();
     }
   });
@@ -112,7 +119,7 @@ describe("WeatherCurrent readings", () => {
     seed(["uv"]);
     renderCurrent(weather({ uvIndex: null }));
 
-    expect(screen.queryByText("UV index")).not.toBeInTheDocument();
+    expect(screen.queryByText("Today's maximum UV")).not.toBeInTheDocument();
   });
 });
 

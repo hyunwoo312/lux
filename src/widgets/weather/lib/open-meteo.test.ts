@@ -59,6 +59,25 @@ describe("parseCachedWeather", () => {
     expect(parseCachedWeather({ ...valid, uvIndex: null })).toEqual({ ...valid, uvIndex: null });
   });
 
+  it("preserves optional forecast context and missing probability in a cache round trip", () => {
+    const enriched = {
+      ...valid,
+      hourly: [
+        {
+          ...valid.hourly[0],
+          precipitationProbability: null,
+          apparentTemperature: 18,
+          humidity: null,
+          windSpeed: 7,
+          precipitation: 0.03,
+        },
+      ],
+      daily: [{ ...valid.daily[0], sunrise: null, sunset: "2026-06-26T20:45", uvIndex: 4 }],
+      unitLabels: { windSpeed: "mph", precipitation: "in" },
+    };
+    expect(parseCachedWeather(enriched)).toEqual(enriched);
+  });
+
   it("returns null for a cached payload that no longer matches the shape", () => {
     const incomplete = { ...valid } as Record<string, unknown>;
     delete incomplete.unitLabels;
@@ -131,6 +150,101 @@ describe("wind speed unit", () => {
 
   it("asks for enough days to fill the longest forecast option", async () => {
     expect((await requestedParams("metric", "auto")).get("forecast_days")).toBe("8");
+  });
+
+  it("requests hourly context in the same forecast with explicit precipitation units", async () => {
+    const params = await requestedParams("imperial", "auto");
+    expect(params.get("hourly")?.split(",")).toEqual(
+      expect.arrayContaining([
+        "apparent_temperature",
+        "relative_humidity_2m",
+        "wind_speed_10m",
+        "precipitation",
+      ]),
+    );
+    expect(params.get("precipitation_unit")).toBe("inch");
+    expect(params.get("timezone")).toBe("auto");
+  });
+});
+
+describe("forecast normalization", () => {
+  it("retains optional context, leaves missing metrics unknown and drops incomplete core rows", async () => {
+    const response = {
+      ...forecastResponse,
+      hourly: {
+        time: ["2026-06-26T11:00", "2026-06-26T12:00", "2026-06-26T13:00"],
+        temperature_2m: [21, null, 23],
+        weather_code: [1, 1],
+        precipitation_probability: [null],
+        apparent_temperature: [20],
+        relative_humidity_2m: [50],
+        wind_speed_10m: [7],
+        precipitation: [0.2],
+      },
+      daily: {
+        ...forecastResponse.daily,
+        time: ["2026-06-26", "2026-06-27"],
+        weather_code: [1, 2],
+        temperature_2m_max: [25, 28],
+        temperature_2m_min: [15, null],
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(response)));
+    vi.stubGlobal("fetch", fetchMock);
+    const data = await fetchWeather(LOCATION, "metric", "auto");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(data.hourly).toEqual([
+      {
+        time: "2026-06-26T11:00",
+        temperature: 21,
+        weatherCode: 1,
+        precipitationProbability: null,
+        apparentTemperature: 20,
+        humidity: 50,
+        windSpeed: 7,
+        precipitation: 0.2,
+      },
+    ]);
+    expect(data.daily).toHaveLength(1);
+    expect(data.today).toMatchObject({ sunrise: "2026-06-26T05:30", uvIndex: 3 });
+    expect(data.unitLabels.precipitation).toBe("mm");
+  });
+
+  it("rejects a response without a usable current-date forecast instead of calling tomorrow today", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            ...forecastResponse,
+            daily: { ...forecastResponse.daily, time: ["2026-06-27"] },
+          }),
+        ),
+      ),
+    );
+    await expect(fetchWeather(LOCATION, "metric", "auto")).rejects.toThrow("missing forecast");
+  });
+
+  it("does not turn an absent hourly probability or detail array into zero", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            ...forecastResponse,
+            hourly: { time: ["2026-06-26T11:00"], temperature_2m: [21], weather_code: [1] },
+          }),
+        ),
+      ),
+    );
+    const data = await fetchWeather(LOCATION, "metric", "auto");
+    expect(data.hourly[0]).toMatchObject({
+      precipitationProbability: null,
+      apparentTemperature: null,
+      humidity: null,
+      windSpeed: null,
+      precipitation: null,
+    });
   });
 });
 

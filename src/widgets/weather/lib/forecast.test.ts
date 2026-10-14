@@ -2,16 +2,22 @@ import { describe, expect, it } from "vitest";
 import {
   findImminentPrecip,
   hourlyTicks,
-  forecastVisibility,
   formatIsoClock,
   formatHour,
   formatTemperature,
   formatWeekday,
   windCardinal,
+  hoursForDate,
+  resolveForecastDate,
+  resolveForecastHour,
 } from "@/widgets/weather/lib/forecast";
 import type { WeatherHour } from "@/widgets/weather/types";
 
-function hour(time: string, weatherCode: number, precipitationProbability: number): WeatherHour {
+function hour(
+  time: string,
+  weatherCode: number,
+  precipitationProbability: number | null,
+): WeatherHour {
   return { time, weatherCode, precipitationProbability, temperature: 10 };
 }
 
@@ -73,9 +79,49 @@ describe("hourlyTicks", () => {
       times.map((time) => hour(time, 1, 0)),
       (index) => index * 10,
       false,
+      "2026-06-25T17:30",
     );
 
     expect(ticks.map((tick) => tick.label)).toEqual(["Now", "Fri"]);
+  });
+
+  it("shows a future day's first hour as a clock time instead of Now", () => {
+    const hours = [hour("2026-06-26T00:00", 1, null)];
+    expect(hourlyTicks(hours, () => 0, true, "2026-06-25T17:30").ticks[0]?.label).toBe("00");
+    expect(findImminentPrecip(hours, "2026-06-25T23:30", 0)).toBeNull();
+  });
+});
+
+describe("forecast selection", () => {
+  const hours = [hour("2026-06-25T23:00", 1, 0), hour("2026-06-26T00:00", 1, 0)];
+  const daily = ["2026-06-25", "2026-06-26"].map((date) => ({
+    date,
+    weatherCode: 1,
+    min: 10,
+    max: 20,
+    precipitationChance: null,
+  }));
+
+  it("groups location wall-clock hours by their provided date", () => {
+    expect(hoursForDate(hours, "2026-06-26")).toEqual([hours[1]]);
+    expect(hoursForDate(hours, "2026-06-27")).toEqual([]);
+  });
+
+  it("retains available selections when a refreshed snapshot has new objects", () => {
+    const refreshed = hours.map((entry) => ({ ...entry, temperature: 15 }));
+    expect(resolveForecastDate(daily, "2026-06-26", "2026-06-25T23:30")).toBe("2026-06-26");
+    expect(resolveForecastHour(refreshed, "2026-06-26T00:00", "2026-06-25T23:30")).toBe(
+      refreshed[1],
+    );
+  });
+
+  it("falls back to the current date/hour, then the next available hour or first row", () => {
+    expect(resolveForecastDate(daily, "2026-06-24", "2026-06-26T00:15")).toBe("2026-06-26");
+    expect(resolveForecastHour(hours, null, "2026-06-25T23:30")).toBe(hours[0]);
+    expect(resolveForecastHour([hours[1]!], null, "2026-06-25T23:30")).toBe(hours[1]);
+    expect(resolveForecastHour(hours, null, "2026-06-27T00:00")).toBe(hours[0]);
+    expect(resolveForecastDate([], null, "2026-06-25T23:30")).toBeNull();
+    expect(resolveForecastHour([], null, "2026-06-25T23:30")).toBeNull();
   });
 });
 
@@ -119,23 +165,5 @@ describe("formatters", () => {
     expect(windCardinal(90)).toBe("E");
     expect(windCardinal(225)).toBe("SW");
     expect(windCardinal(360)).toBe("N");
-  });
-});
-
-describe("forecastVisibility", () => {
-  it("hides both sections until the current block has been measured", () => {
-    expect(forecastVisibility(400, 0)).toEqual({ showHourly: false, showDaily: false });
-  });
-
-  it("hides both sections when the remaining room is too small", () => {
-    expect(forecastVisibility(200, 120)).toEqual({ showHourly: false, showDaily: false });
-  });
-
-  it("reveals the hourly strip once there is room for it", () => {
-    expect(forecastVisibility(220, 120)).toEqual({ showHourly: true, showDaily: false });
-  });
-
-  it("reveals the daily list once there is room for a useful slice", () => {
-    expect(forecastVisibility(300, 120)).toEqual({ showHourly: true, showDaily: true });
   });
 });

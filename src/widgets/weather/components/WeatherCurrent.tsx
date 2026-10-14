@@ -144,7 +144,7 @@ export function WeatherCurrent({ data, name }: WeatherCurrentProps) {
             </Reading>
           )}
           {uv !== null && (
-            <Reading label="UV index">
+            <Reading label="Today's maximum UV">
               <Sun className="size-3.5 shrink-0" aria-hidden />
               {Math.round(uv)}
             </Reading>
