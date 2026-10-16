@@ -74,6 +74,73 @@ export function groupByArea(changes: readonly ReleaseChange[]): AreaGroup[] {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "2.1.0",
+    date: "2026-10-15",
+    summary:
+      "Richer watchlists, daily task planning, deeper sports and weather details, and a calmer way to browse stories, links and settings — all on your glass dashboard.",
+    changes: [
+      {
+        type: "changed",
+        area: "Dashboard",
+        text: "Dragging and resizing avoid redrawing unchanged widgets, reducing work when you arrange a dashboard with a custom wallpaper. Custom scrollbars appear while you scroll and fade away afterward.",
+      },
+      {
+        type: "changed",
+        area: "Dashboard",
+        text: "Opening a widget’s settings keeps your drafts, filters and reading position. Hidden content pauses its polling; press Esc to return to its settings button.",
+      },
+      {
+        type: "changed",
+        area: "Settings",
+        text: "Search takes you to the exact setting, with clearer section descriptions and account actions. Your search and section context stay in place as you explore.",
+      },
+      {
+        type: "changed",
+        area: "News",
+        text: "Preview a story’s feed excerpt and related coverage inside the widget, then open the publisher for the full article. Filter read and unread stories, save them for later, and return to your place with keyboard navigation.",
+        highlight: true,
+      },
+      {
+        type: "changed",
+        area: "Quick Access",
+        text: "Filter your pins, browse bookmark folders with breadcrumbs and content hints, and keep your place across tabs. Compact menus offer Open, Copy, Edit and Remove; dropping a web address opens a draft for you to save.",
+      },
+      {
+        type: "changed",
+        area: "Sports",
+        text: "Pick a day from a calendar, choose a separate ± day range, and filter live, upcoming or final games. Open a game for period scores, leaders and available team statistics; NBA and NFL add player details and supplied plays or drives.",
+        highlight: true,
+      },
+      {
+        type: "changed",
+        area: "Stocks",
+        text: "Choose List, Cards, Performance or Heatmap, filter your watchlist and sort gainers or losers. Compare two to four symbols from a shared starting point, including SPY and QQQ. Returns reflect prices, without dividends or currency conversion.",
+        highlight: true,
+      },
+      {
+        type: "added",
+        area: "Stocks",
+        text: "Explore line and candle charts from one day to five years with OHLC and volume readings, zoom, pan and reset controls, a 20-bar moving average and extended-session shading. Optional market benchmarks open their own charts. Yahoo Finance quotes may be delayed.",
+      },
+      {
+        type: "changed",
+        area: "Tasks",
+        text: "Plan Today alongside All and Done, flag important tasks, and add descriptions and checklists in a compact detail view. Search includes your checklist items; Focus, Manual and completion order help you choose what comes next. Unfinished plans stay in All, with an option to bring them forward on a new day.",
+        highlight: true,
+      },
+      {
+        type: "changed",
+        area: "Weather",
+        text: "Pick a forecast day and inspect its hours across Temperature, Rain chance, Wind and Humidity. Pointer, touch and keyboard controls keep your selected hour as you change metrics; supplied precipitation amounts and feels-like readings add context without inventing missing values.",
+      },
+      {
+        type: "changed",
+        area: "Guide",
+        text: "Updated instructions explain the renovated widgets and their local data and provider limits.",
+      },
+    ],
+  },
+  {
     version: "2.0.4",
     date: "2026-10-12",
     summary:
