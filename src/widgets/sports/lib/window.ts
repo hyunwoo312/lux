@@ -1,5 +1,6 @@
 import { localDayKey } from "@/lib/clock";
 import type { Sport } from "@/widgets/sports/lib/leagues";
+import type { Match } from "@/widgets/sports/types";
 
 export const DAY_WINDOWS = ["today", "day", "week", "wide"] as const;
 export type DayWindow = (typeof DAY_WINDOWS)[number];
@@ -49,4 +50,13 @@ function stamp(date: Date): string {
 export function datesParam(window: DayWindow, now: Date): string {
   const span = SPAN_DAYS[window];
   return `${stamp(shiftDays(now, -span))}-${stamp(shiftDays(now, span))}`;
+}
+
+export function untilNextStartMs(matches: readonly Match[], now: number): number | null {
+  const starts = matches
+    .filter((match) => match.state === "pre")
+    .map((match) => Date.parse(match.startsAt))
+    .filter((time) => !Number.isNaN(time));
+  if (starts.length === 0) return null;
+  return Math.max(0, Math.min(...starts) - now);
 }

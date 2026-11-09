@@ -21,6 +21,11 @@ export function SportsHeader() {
         aria-label="Back to scores"
         data-sports-back={id}
         onClick={() => setView(id, { selected: null })}
+        onKeyDown={(event) => {
+          if (event.key !== "Escape" || event.defaultPrevented) return;
+          event.preventDefault();
+          setView(id, { selected: null });
+        }}
       >
         <ArrowLeft />
         {LEAGUES.find((league) => league.id === selected.leagueId)?.label} scores

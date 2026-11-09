@@ -24,6 +24,7 @@ import type { Scoreboard } from "@/widgets/sports/lib/scoreboardDays";
 import { match, seedSportsInstance, team } from "@/widgets/sports/lib/fixtures";
 
 import { useSportsViewStore } from "@/widgets/sports/useSportsViewStore";
+import { localDayKey } from "@/lib/clock";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SportsHeader } from "@/widgets/sports/components/SportsHeader";
@@ -120,6 +121,42 @@ describe("SportsWidget", () => {
     expect(fetchGameSummary).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole("button", { name: "Back to scores" }));
     expect(row).toHaveFocus();
+  });
+
+  it("returns to the scores when Escape is pressed on Back", async () => {
+    fetchMock.mockResolvedValue([match({ id: "escape-game" })]);
+    renderWidget("sports-escape", "nfl");
+    const row = await screen.findByRole("button", { name: /show details/i });
+    fireEvent.click(row);
+    const back = await screen.findByRole("button", { name: "Back to scores" });
+    expect(back).toHaveFocus();
+
+    fireEvent.keyDown(back, { key: "Escape" });
+
+    expect(await screen.findByRole("button", { name: /show details/i })).toHaveFocus();
+  });
+
+  it("shows a picked future date's games instead of an off-season notice", async () => {
+    const later = new Date(Date.now() + 9 * 24 * 60 * 60_000);
+    fetchMock.mockResolvedValue([
+      match({ id: "future", state: "pre", detail: "7:00 PM", startsAt: later.toISOString() }),
+    ]);
+    seedSportsInstance("sports-future", {
+      leagueId: "nfl",
+      following: { nfl: { teams: [] } },
+      window: "today",
+    });
+    useSportsViewStore.getState().setView("sports-future", { date: localDayKey(later) });
+    render(
+      <WidgetInstanceContext.Provider value="sports-future">
+        <TooltipProvider>
+          <SportsWidget />
+        </TooltipProvider>
+      </WidgetInstanceContext.Provider>,
+    );
+
+    expect(await screen.findByRole("button", { name: /show details/i })).toBeInTheDocument();
+    expect(screen.queryByText(/returns/)).not.toBeInTheDocument();
   });
 
   it("keeps the detail hidden until the row is opened", async () => {

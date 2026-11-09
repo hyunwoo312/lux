@@ -3,6 +3,7 @@ import { peekEntry } from "@/widgets/core/sharedResource";
 import { readPolled, refreshPolledResource } from "@/widgets/core/usePolledResource";
 import { fetchScoreboardDay, parseCachedScoreboard } from "@/widgets/sports/lib/espn";
 import { STATE_ORDER, type Match } from "@/widgets/sports/types";
+import { untilNextStartMs } from "@/widgets/sports/lib/window";
 
 export type Scoreboard = { matches: Match[]; missingDays: string[] };
 
@@ -53,6 +54,7 @@ export async function fetchScoreboardWindow(
         if (
           cached &&
           !cached.data.some((match) => match.state === "in") &&
+          untilNextStartMs(cached.data, Date.now()) !== 0 &&
           Date.now() - cached.at < 15 * 60_000
         ) {
           pages[index] = cached.data;

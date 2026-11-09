@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { datesParam, DAY_WINDOWS, livePollFloorMs } from "@/widgets/sports/lib/window";
+import { match } from "@/widgets/sports/lib/fixtures";
+import {
+  datesParam,
+  DAY_WINDOWS,
+  livePollFloorMs,
+  untilNextStartMs,
+} from "@/widgets/sports/lib/window";
 
 const now = new Date(2026, 7, 8);
 
@@ -27,5 +33,27 @@ describe("livePollFloorMs", () => {
   it("polls a sport that scores constantly faster than one that rarely does", () => {
     expect(livePollFloorMs("basketball", "today")).toBeLessThan(livePollFloorMs("soccer", "today"));
     expect(livePollFloorMs("soccer", "today")).toBeLessThan(livePollFloorMs("golf", "today"));
+  });
+});
+
+describe("untilNextStartMs", () => {
+  const at = Date.parse("2026-08-08T18:00:00Z");
+  const scheduled = (minutes: number) =>
+    match({
+      id: String(minutes),
+      state: "pre",
+      startsAt: new Date(at + minutes * 60_000).toISOString(),
+    });
+
+  it("counts down to the soonest scheduled game", () => {
+    expect(untilNextStartMs([scheduled(40), scheduled(10)], at)).toBe(10 * 60_000);
+  });
+
+  it("is due now for a game past its start that ESPN still lists as scheduled", () => {
+    expect(untilNextStartMs([scheduled(-3)], at)).toBe(0);
+  });
+
+  it("has nothing to wait for once no game is scheduled", () => {
+    expect(untilNextStartMs([match({ state: "post" })], at)).toBeNull();
   });
 });

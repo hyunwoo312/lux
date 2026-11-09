@@ -23,6 +23,37 @@ describe("shared scoreboard days", () => {
     const result = await fetchScoreboardWindow("basketball/nba", "20261013-20261013");
     expect(result.missingDays).toEqual(["20261012", "20261013", "20261014"]);
   });
+  it("asks again for a cached day once one of its games is due to start", async () => {
+    const startsAt = new Date(Date.now() + 5 * 60_000).toISOString();
+    const upcoming = {
+      events: [
+        {
+          id: "g1",
+          date: startsAt,
+          status: { type: { state: "pre", detail: "7:00 PM" } },
+          competitions: [
+            {
+              competitors: [
+                { homeAway: "home", team: { id: "h", abbreviation: "H" } },
+                { homeAway: "away", team: { id: "a", abbreviation: "A" } },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const fetch = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async () => new Response(JSON.stringify(upcoming), { status: 200 }));
+    await fetchScoreboardWindow("basketball/nba", "20261013-20261013");
+    const calls = fetch.mock.calls.length;
+    const now = Date.now();
+    vi.spyOn(Date, "now").mockReturnValue(now + 6 * 60_000);
+
+    await fetchScoreboardWindow("basketball/nba", "20261013-20261013");
+
+    expect(fetch.mock.calls.length).toBeGreaterThan(calls);
+  });
   it("pads local dates across a year boundary", () => {
     expect(scoreboardDays("20261231-20270101")).toEqual([
       "20261230",

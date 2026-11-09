@@ -43,7 +43,7 @@ export function MatchesView({ league }: { league: League }) {
 
   const all: Match[] = state.status === "success" ? state.data : [];
   const rows = all.filter((match) => states.includes(match.state));
-  const returns = offseasonStart(all, now);
+  const returns = selectedDate ? null : offseasonStart(all, now);
 
   if (returns) {
     return (
