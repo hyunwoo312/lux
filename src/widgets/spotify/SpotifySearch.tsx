@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ExpandingSearch } from "@/components/ExpandingSearch";
 import { useComboboxCursor } from "@/hooks/useComboboxCursor";
 import { SpotifyDeviceChooser } from "@/widgets/spotify/components/SpotifyDeviceChooser";
@@ -56,13 +56,16 @@ export function SpotifySearch() {
   const [devices, setDevices] = useState<SpotifyPlaybackDevice[]>([]);
   const [devicesError, setDevicesError] = useState<string | null>(null);
   const [targetDeviceId, setTargetDeviceId] = useState<string | null>(null);
-  const [queueingId, setQueueingId] = useState<string | null>(null);
-  const [queuedIds, setQueuedIds] = useState<Set<string>>(new Set());
+  const [queueingIds, setQueueingIds] = useState<ReadonlySet<string>>(new Set());
+  const [queuedIds, setQueuedIds] = useState<ReadonlySet<string>>(new Set());
+  const starting = useRef(false);
+  const session = useRef(0);
 
   useEffect(() => {
+    session.current += 1;
     if (open) return;
     setQueuedIds(new Set());
-    setQueueingId(null);
+    setQueueingIds(new Set());
   }, [open]);
 
   useEffect(() => {
@@ -103,27 +106,40 @@ export function SpotifySearch() {
   };
 
   const pick = (result: SpotifySearchResult) => {
+    if (starting.current) return;
+    starting.current = true;
+    const opened = session.current;
     deviceForAction()
       .then((device) => startSpotifyPlayback(result, device.id))
       .then(() => {
         requestSpotifyPlaybackRefresh();
+        if (session.current !== opened) return;
         setQuery("");
         setOpen(false);
       })
-      .catch((caught: unknown) => reportFailure(caught, "Couldn't start playback."));
+      .catch((caught: unknown) => reportFailure(caught, "Couldn't start playback."))
+      .finally(() => {
+        starting.current = false;
+      });
   };
 
   const addToQueue = (result: SpotifySearchResult) => {
-    if (queueingId === result.id || queuedIds.has(result.id)) return;
-    setQueueingId(result.id);
+    if (queueingIds.has(result.id) || queuedIds.has(result.id)) return;
+    const opened = session.current;
+    const settle = (update: (ids: Set<string>) => void) => (previous: ReadonlySet<string>) => {
+      const next = new Set(previous);
+      update(next);
+      return next;
+    };
+    setQueueingIds(settle((ids) => ids.add(result.id)));
     deviceForAction()
       .then((device) => addSpotifyToQueue(result.uri, device.id))
       .then(() => {
         void loadSpotifyQueue();
-        setQueuedIds((prev) => new Set(prev).add(result.id));
+        if (session.current === opened) setQueuedIds(settle((ids) => ids.add(result.id)));
       })
       .catch((caught: unknown) => reportFailure(caught, "Couldn't add to queue."))
-      .finally(() => setQueueingId(null));
+      .finally(() => setQueueingIds(settle((ids) => ids.delete(result.id))));
   };
 
   const trimmed = query.trim();
@@ -200,7 +216,7 @@ export function SpotifySearch() {
                       id={optionId(index)}
                       result={result}
                       active={index === active}
-                      queueing={queueingId === result.id}
+                      queueing={queueingIds.has(result.id)}
                       queued={queuedIds.has(result.id)}
                       onActivate={() => setActive(index)}
                       onPick={() => pick(result)}

@@ -165,7 +165,40 @@ describe("what a refused request says", () => {
   });
 });
 
+describe("refusals Lux cannot read", () => {
+  it("does not claim Premium when the refusal's body could not be read", async () => {
+    const unreadable = new Response(
+      new ReadableStream({
+        start(controller) {
+          controller.error(new Error("connection reset"));
+        },
+      }),
+      { status: 403 },
+    );
+    mockFetch.mockResolvedValue(unreadable);
+    const error = await startSpotifyPlayback(TRACK_RESULT).catch((caught: unknown) => caught);
+    expect((error as SpotifyRequestError).kind).toBe("unknown");
+  });
+
+  it("does not claim Premium for a reason that names something else", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(JSON.stringify({ error: { status: 403, reason: "UNKNOWN" } }), {
+        status: 403,
+      }),
+    );
+    const error = await startSpotifyPlayback(TRACK_RESULT).catch((caught: unknown) => caught);
+    expect((error as SpotifyRequestError).kind).toBe("unknown");
+  });
+});
+
 describe("getSpotifyDevices", () => {
+  it("says so when Spotify is open only on devices it won't let Lux control", async () => {
+    mockFetch.mockResolvedValue(
+      jsonResponse({ devices: [{ id: "tv", name: "TV", type: "TV", is_restricted: true }] }),
+    );
+    await expect(getSpotifyDevices()).rejects.toThrow(/won.t let Lux control/);
+  });
+
   it("leaves out a device Spotify says takes no commands", async () => {
     mockFetch.mockResolvedValue(
       jsonResponse({

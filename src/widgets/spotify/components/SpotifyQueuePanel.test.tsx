@@ -23,7 +23,10 @@ vi.mock("@/widgets/spotify/hooks/useSpotifyPlayback", async () => {
 });
 
 import { SpotifyQueuePanel } from "@/widgets/spotify/components/SpotifyQueuePanel";
-import { useSpotifyPlaybackStore } from "@/widgets/spotify/hooks/useSpotifyPlayback";
+import {
+  loadSpotifyQueue,
+  useSpotifyPlaybackStore,
+} from "@/widgets/spotify/hooks/useSpotifyPlayback";
 import { skipSpotifyNext } from "@/widgets/spotify/lib/spotify-api";
 import type { SpotifyQueueItem } from "@/widgets/spotify/types";
 
@@ -50,6 +53,27 @@ function seedQueue(items: SpotifyQueueItem[]) {
 beforeEach(() => {
   vi.clearAllMocks();
   skipMock.mockResolvedValue(undefined);
+});
+
+describe("keeping the queue current", () => {
+  it("reloads the queue when the same song starts playing from somewhere else", () => {
+    const playing = (contextUri: string) => ({
+      isPlaying: true,
+      progressMs: 0,
+      shuffle: false,
+      repeatMode: "off",
+      device: { id: "d1", name: "Desk", type: "Computer", isActive: true, volumePercent: 50 },
+      context: { uri: contextUri, kind: "playlist" },
+      track: { id: "t1", title: "Track 1", artist: "Artist", album: "Album", durationMs: 1 },
+    });
+    useSpotifyPlaybackStore.setState({ playback: playing("spotify:playlist:p1") } as never);
+    render(<SpotifyQueuePanel />);
+    const loads = vi.mocked(loadSpotifyQueue).mock.calls.length;
+
+    act(() => useSpotifyPlaybackStore.setState({ playback: playing("spotify:album:a1") } as never));
+
+    expect(vi.mocked(loadSpotifyQueue).mock.calls.length).toBeGreaterThan(loads);
+  });
 });
 
 describe("skipping to a queued track", () => {

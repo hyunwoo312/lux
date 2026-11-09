@@ -15,6 +15,7 @@ import {
   type SpotifySearchResult,
 } from "@/widgets/spotify/types";
 import { clamp } from "@/lib/utils";
+import { NO_DEVICE_MESSAGE } from "@/widgets/spotify/lib/devices";
 
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
 
@@ -149,33 +150,47 @@ const refusalEnvelope = z.object({
   ]),
 });
 
-async function readRefusal(response: Response): Promise<{ message?: string; reason?: string }> {
-  const text = (await readCappedText(response).catch(() => "")).trim();
+type Refusal = { read: boolean; message?: string; reason?: string };
+
+async function readRefusal(response: Response): Promise<Refusal> {
+  let text: string;
+  try {
+    text = (await readCappedText(response)).trim();
+  } catch {
+    return { read: false };
+  }
   let data: unknown;
   try {
     data = JSON.parse(text);
   } catch {
     const readable =
       response.status === 403 && text.length > 0 && text.length <= MAX_REFUSAL_LENGTH;
-    return readable ? { message: text } : {};
+    return readable ? { read: true, message: text } : { read: true };
   }
   const parsed = refusalEnvelope.safeParse(data);
-  return parsed.success ? parsed.data.error : {};
+  return parsed.success ? { read: true, ...parsed.data.error } : { read: true };
 }
 
 async function spotifyError(response: Response): Promise<Error> {
-  const { message, reason } = await readRefusal(response);
+  const { read, message, reason } = await readRefusal(response);
   if (response.status === 429) {
     return new RateLimitError(retryAfterMs(response) || DEFAULT_RETRY_AFTER_MS);
   }
   if (response.status === 403) {
-    if (message && !/premium/i.test(`${reason} ${message}`)) {
-      return new SpotifyRequestError("unknown", `Spotify refused: ${message}`);
+    const explained = Boolean(message || reason);
+    if (/premium/i.test(`${reason ?? ""} ${message ?? ""}`) || (read && !explained)) {
+      return new SpotifyRequestError(
+        "premium",
+        "Spotify Premium is required for playback controls.",
+      );
     }
-    return new SpotifyRequestError("premium", "Spotify Premium is required for playback controls.");
+    return new SpotifyRequestError(
+      "unknown",
+      message ? `Spotify refused: ${message}` : "Spotify refused the request.",
+    );
   }
   if (response.status === 404 && (!message || /device/i.test(message))) {
-    return new SpotifyRequestError("noDevice", "Open Spotify on a device, then try again.");
+    return new SpotifyRequestError("noDevice", NO_DEVICE_MESSAGE);
   }
   return new SpotifyRequestError(
     "unknown",
@@ -345,10 +360,12 @@ export async function getSpotifyDevices(): Promise<SpotifyPlaybackDevice[]> {
   }
 
   const payload = await readJson(response, "Spotify devices", devicesEnvelope);
-  return toArray(payload.devices)
-    .filter((device) => !device.is_restricted)
-    .map(mapDevicePayload)
-    .filter((device) => device.id);
+  const listed = toArray(payload.devices).filter((device) => device.id);
+  const controllable = listed.filter((device) => !device.is_restricted);
+  if (listed.length > 0 && controllable.length === 0) {
+    throw new SpotifyRequestError("noDevice", "Spotify won\u2019t let Lux control that device.");
+  }
+  return controllable.map(mapDevicePayload);
 }
 
 function mapQueueItem(item: SpotifyQueueTrackPayload | null): SpotifyQueueItem | null {

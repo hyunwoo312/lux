@@ -59,6 +59,7 @@ export function SpotifyQueuePanel() {
   const now = useSpotifyPlaybackStore(
     useShallow((s) => ({
       trackId: s.playback?.track.id ?? null,
+      contextUri: s.playback?.context?.uri ?? null,
       title: s.playback?.track.title ?? null,
       artist: s.playback?.track.artist ?? null,
       artworkUrl: s.playback?.track.artworkUrl,
@@ -76,7 +77,7 @@ export function SpotifyQueuePanel() {
   useEffect(() => {
     setPlayError(null);
     void loadSpotifyQueue();
-  }, [now.trackId]);
+  }, [now.trackId, now.contextUri]);
 
   const upNext = useMemo(() => dedupeUpNext(queue, now.trackId), [queue, now.trackId]);
 

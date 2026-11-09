@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type * as SpotifyApi from "@/widgets/spotify/lib/spotify-api";
 
 vi.mock("@/widgets/spotify/lib/spotify-api", async (importActual) => ({
@@ -186,6 +186,55 @@ describe("SpotifySearch device targeting", () => {
 
     expect(await screen.findByText("Spotify is busy — try again in a moment.")).toBeInTheDocument();
     expect(screen.queryByText(/Open Spotify on a device/)).not.toBeInTheDocument();
+  });
+
+  it("starts a song once however often it is clicked while starting", async () => {
+    devicesMock.mockResolvedValue([device("d1", "Desk", true)]);
+    let finish: () => void = () => {};
+    playMock.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    renderSearch();
+    await openAndSearch();
+
+    fireEvent.click(screen.getByText("Lullaby"));
+    fireEvent.click(screen.getByText("Lullaby"));
+    await waitFor(() => expect(playMock).toHaveBeenCalledTimes(1));
+    finish();
+
+    await waitFor(() => expect(refreshMock).toHaveBeenCalled());
+    expect(playMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("queues each song once while another is still being added", async () => {
+    devicesMock.mockResolvedValue([device("d1", "Desk", true)]);
+    searchMock.mockResolvedValue([TRACK, SECOND_TRACK]);
+    const pending: Array<() => void> = [];
+    queueMock.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          pending.push(resolve);
+        }),
+    );
+    renderSearch();
+    await openAndSearch();
+    const [first, second] = screen.getAllByRole("button", { name: "Add to queue" });
+
+    fireEvent.click(first!);
+    fireEvent.click(second!);
+    await waitFor(() => expect(queueMock).toHaveBeenCalledTimes(2));
+    pending[0]?.();
+    await waitFor(() =>
+      expect(screen.getAllByRole("button", { name: "Added to queue" })).toHaveLength(1),
+    );
+    await act(async () => {});
+    fireEvent.click(screen.getAllByRole("button", { name: "Add to queue" })[0]!);
+    await act(async () => {});
+
+    expect(queueMock).toHaveBeenCalledTimes(2);
   });
 
   it("queues to the chosen device too", async () => {
