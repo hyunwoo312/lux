@@ -80,6 +80,17 @@ function update(
   return { byInstance: patchInstance(state.byInstance, instanceId, DEFAULT_DATA, fn) };
 }
 
+function select(
+  state: StocksState,
+  instanceId: string,
+  symbol: string | null,
+): Pick<StocksState, "byInstance" | "comparisonByInstance"> {
+  return {
+    ...update(state, instanceId, (data) => ({ ...data, selectedSymbol: symbol })),
+    comparisonByInstance: dropInstance(state.comparisonByInstance, instanceId),
+  };
+}
+
 export const useStocksStore = createPersistedStore<StocksState>()(
   (set) => ({
     byInstance: {},
@@ -98,11 +109,11 @@ export const useStocksStore = createPersistedStore<StocksState>()(
         const data = state.byInstance[instanceId] ?? DEFAULT_DATA;
         if (data.symbols.length >= MAX_SYMBOLS) return state;
         if (data.symbols.includes(normalized)) return state;
-        return update(state, instanceId, (current) => ({
+        const added = update(state, instanceId, (current) => ({
           ...current,
           symbols: [...current.symbols, normalized],
-          selectedSymbol: normalized,
         }));
+        return select({ ...state, ...added }, instanceId, normalized);
       }),
     removeSymbol: (instanceId, symbol) =>
       set((state) =>
@@ -136,10 +147,8 @@ export const useStocksStore = createPersistedStore<StocksState>()(
       set((state) => update(state, instanceId, (data) => ({ ...data, changeMode }))),
     setChartStyle: (instanceId, chartStyle) =>
       set((state) => update(state, instanceId, (data) => ({ ...data, chartStyle }))),
-    selectSymbol: (instanceId, symbol) =>
-      set((state) => update(state, instanceId, (data) => ({ ...data, selectedSymbol: symbol }))),
-    clearSelection: (instanceId) =>
-      set((state) => update(state, instanceId, (data) => ({ ...data, selectedSymbol: null }))),
+    selectSymbol: (instanceId, symbol) => set((state) => select(state, instanceId, symbol)),
+    clearSelection: (instanceId) => set((state) => select(state, instanceId, null)),
     removeInstance: (instanceId) => {
       set((state) => ({
         byInstance: dropInstance(state.byInstance, instanceId),

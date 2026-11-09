@@ -211,6 +211,52 @@ describe("StocksWidget", () => {
     expect(fetchQuoteMock).toHaveBeenCalledTimes(3);
   });
 
+  it("keeps one history request while the performance table is filtered", async () => {
+    seed("stocks-perf-filter", { symbols: ["AAPL", "MSFT", "NVDA"], view: "performance" });
+    renderWidget("stocks-perf-filter");
+    await screen.findByRole("table");
+    await waitFor(() =>
+      expect(fetchSparksMock.mock.calls.filter((call) => call[1] === "2y")).toHaveLength(1),
+    );
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Filter watchlist" }), {
+      target: { value: "AAP" },
+    });
+
+    await waitFor(() => expect(screen.getAllByRole("row")).toHaveLength(2));
+    const history = fetchSparksMock.mock.calls.filter((call) => call[1] === "2y");
+    expect(history).toHaveLength(1);
+    expect(history[0]?.[0]).toEqual(["AAPL", "MSFT", "NVDA"]);
+  });
+
+  it.each(["heatmap", "performance"] as const)(
+    "offers a retry when the %s view's daily prices fail",
+    async (view) => {
+      fetchSparksMock.mockImplementation(async (symbols, range) => {
+        if (range === "1d") throw new Error("offline");
+        return Object.fromEntries(symbols.map((symbol) => [symbol, spark(symbol, 110, 100)]));
+      });
+      seed(`stocks-${view}-failed`, { symbols: ["AAPL", "MSFT"], view });
+      renderWidget(`stocks-${view}-failed`);
+
+      fireEvent.click(await screen.findByRole("button", { name: /unavailable · Retry/ }));
+
+      await waitFor(() =>
+        expect(
+          fetchSparksMock.mock.calls.filter((call) => call[1] === "1d").length,
+        ).toBeGreaterThan(1),
+      );
+    },
+  );
+
+  it("says the heatmap is loading before its first prices arrive", async () => {
+    fetchSparksMock.mockImplementation(() => new Promise(() => {}));
+    seed("stocks-heatmap-loading", { symbols: ["AAPL", "MSFT"], view: "heatmap" });
+    renderWidget("stocks-heatmap-loading");
+
+    expect(await screen.findByText("Loading prices…")).toBeInTheDocument();
+  });
+
   it("removes a symbol when its remove button is clicked", async () => {
     seed("stocks-remove", { symbols: ["TSLA", "NVDA"] });
     renderWidget("stocks-remove");

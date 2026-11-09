@@ -1,4 +1,17 @@
-import type { PricePoint, SparkSeries } from "@/widgets/stocks/types";
+import {
+  RANGE_INTERVAL,
+  type PricePoint,
+  type SparkSeries,
+  type StockHistoryRange,
+} from "@/widgets/stocks/types";
+
+const DAY_SECONDS = 86_400;
+const INTERVAL_SECONDS: Record<string, number> = {
+  "5m": 300,
+  "30m": 1_800,
+  "1d": DAY_SECONDS,
+  "1wk": 7 * DAY_SECONDS,
+};
 
 export const PERFORMANCE_PERIODS = ["1W", "1M", "YTD", "1Y"] as const;
 
@@ -36,21 +49,27 @@ export function periodReturn(points: PricePoint[], boundary: number): number | n
   return ((last.close - first.close) / first.close) * 100;
 }
 
-export function compareSeries(series: SparkSeries[]): SparkSeries[] {
+export function compareSeries(series: SparkSeries[], range: StockHistoryRange): SparkSeries[] {
   if (series.length < 2 || series.some((entry) => entry.points.length < 2)) return [];
+  const barSeconds = INTERVAL_SECONDS[RANGE_INTERVAL[range]] ?? DAY_SECONDS;
   const maps = series.map(
-    (entry) => new Map(entry.points.map((point) => [point.time, point.close])),
+    (entry) =>
+      new Map(entry.points.map((point) => [Math.floor(point.time / barSeconds), point] as const)),
   );
-  const times = [...(maps[0]?.keys() ?? [])]
-    .filter((time) => maps.every((map) => map.has(time)))
+  const shared = maps[0]!;
+  const bars = [...shared.keys()]
+    .filter((bar) => maps.every((map) => map.has(bar)))
     .sort((a, b) => a - b);
-  const baseTime = times[0];
-  if (times.length < 2 || baseTime == null) return [];
-  if (maps.some((map) => (map.get(baseTime) ?? 0) <= 0)) return [];
+  const baseBar = bars[0];
+  if (bars.length < 2 || baseBar == null) return [];
+  if (maps.some((map) => (map.get(baseBar)?.close ?? 0) <= 0)) return [];
   return series.map((entry, index) => {
     const map = maps[index]!;
-    const base = map.get(baseTime)!;
-    const points = times.map((time) => ({ time, close: ((map.get(time)! - base) / base) * 100 }));
+    const base = map.get(baseBar)!.close;
+    const points = bars.map((bar) => ({
+      time: shared.get(bar)!.time,
+      close: ((map.get(bar)!.close - base) / base) * 100,
+    }));
     return { ...entry, previousClose: 0, price: points.at(-1)!.close, points };
   });
 }

@@ -50,7 +50,8 @@ export function StocksWidget() {
   const [ref, { width }] = useElementSize<HTMLDivElement>();
   const now = useNow().getTime();
   const sensors = useSortableSensors();
-  const { map } = useWatchlistSparks();
+  const sparks = useWatchlistSparks();
+  const { map } = sparks;
   const metadata = useWatchlistQuotes();
 
   const isGrid = view === "grid";
@@ -151,13 +152,13 @@ export function StocksWidget() {
                     {view === "performance" ? (
                       <StockPerformance
                         symbols={shownSymbols}
-                        daily={map}
+                        daily={sparks}
                         onSelect={(symbol) => selectSymbol(instanceId, symbol)}
                       />
                     ) : view === "heatmap" ? (
                       <StockHeatmap
                         symbols={shownSymbols}
-                        daily={map}
+                        daily={sparks}
                         onSelect={(symbol) => selectSymbol(instanceId, symbol)}
                       />
                     ) : (

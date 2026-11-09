@@ -1,7 +1,8 @@
 import { cn } from "@/lib/utils";
 import { changeOf, changeTone, directionOf } from "@/widgets/stocks/lib/quote";
 import { formatSigned } from "@/widgets/stocks/lib/format";
-import type { SparkSeries } from "@/widgets/stocks/types";
+import { SparkStatus } from "@/widgets/stocks/components/SparkStatus";
+import type { SparkResource } from "@/widgets/stocks/hooks/useSparks";
 
 export function StockHeatmap({
   symbols,
@@ -9,15 +10,22 @@ export function StockHeatmap({
   onSelect,
 }: {
   symbols: string[];
-  daily: Record<string, SparkSeries> | null;
+  daily: SparkResource;
   onSelect: (symbol: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-2">
       <p className="text-ink-3 px-2 text-micro">Watchlist · daily movement · equal-sized tiles</p>
+      <SparkStatus
+        loading={daily.state.status === "loading"}
+        failed={daily.state.status === "error"}
+        loadingLabel="Loading prices…"
+        failedLabel="Prices unavailable"
+        onRetry={daily.refresh}
+      />
       <div className="grid grid-cols-2 gap-1.5 p-1">
         {symbols.map((symbol) => {
-          const series = daily?.[symbol];
+          const series = daily.map?.[symbol];
           const percent = series?.points.length
             ? changeOf(series.price, series.previousClose).percent
             : null;

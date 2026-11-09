@@ -27,7 +27,7 @@ export function CompareChart({ symbol, range }: { symbol: string; range: StockRa
   const [ref, { width, height }] = useElementSize<HTMLDivElement>();
   const [inspection, setActive] = useState<number | null>(null);
   const available = selected.flatMap((entry) => (map?.[entry] ? [map[entry]] : []));
-  const lines = available.length === selected.length ? compareSeries(available) : [];
+  const lines = available.length === selected.length ? compareSeries(available, range) : [];
   const geometry = chartGeometry(
     lines.flatMap((line) => line.points.map((point) => point.close)),
     Math.max(0, width - 42),

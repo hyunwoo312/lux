@@ -33,6 +33,8 @@ export function useSparkResource(symbols: string[], range: StockHistoryRange) {
   };
 }
 
+export type SparkResource = ReturnType<typeof useSparkResource>;
+
 export function useWatchlistSparks() {
   const symbols = useStocks((d) => d.symbols);
   const resource = useSparkResource(symbols, DAY_RANGE);

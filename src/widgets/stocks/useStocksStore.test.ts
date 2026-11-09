@@ -50,6 +50,19 @@ describe("useStocksStore", () => {
     store().removeInstance(ID);
     expect(store().comparisonByInstance[ID]).toBeUndefined();
   });
+  it("starts a new comparison when a different symbol is opened", () => {
+    store().setComparisonSymbols(ID, ["AAPL", "SPY"]);
+    store().selectSymbol(ID, "MSFT");
+    expect(store().comparisonByInstance[ID]).toBeUndefined();
+
+    store().setComparisonSymbols(ID, ["MSFT", "SPY"]);
+    store().clearSelection(ID);
+    expect(store().comparisonByInstance[ID]).toBeUndefined();
+
+    store().setComparisonSymbols(ID, ["MSFT", "SPY"]);
+    store().addSymbol(ID, "NFLX");
+    expect(store().comparisonByInstance[ID]).toBeUndefined();
+  });
   it("restores new watchlist views while keeping old list records readable", () => {
     expect(restore(persistedEntry({ view: "performance" })).byInstance[ID]?.view).toBe(
       "performance",
