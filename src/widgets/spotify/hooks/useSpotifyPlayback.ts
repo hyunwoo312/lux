@@ -37,7 +37,7 @@ import {
 } from "@/widgets/spotify/types";
 import { refreshScheduler } from "@/widgets/core/refreshScheduler";
 import { retryDelayMs } from "@/widgets/core/sharedResource";
-import { anySpotifyDevice } from "@/widgets/spotify/lib/devices";
+import { anySpotifyDevice, NO_DEVICE_MESSAGE } from "@/widgets/spotify/lib/devices";
 import { clamp } from "@/lib/utils";
 import { accountFor, useIntegrationStore } from "@/integrations";
 
@@ -272,8 +272,6 @@ export async function loadSpotifyQueue(): Promise<void> {
     if (generation === accountGeneration) set({ queueLoading: false });
   }
 }
-
-const NO_DEVICE_MESSAGE = "Open Spotify on a device first, then try again.";
 
 const NOTHING_QUEUED_MESSAGE = "Spotify has nothing queued — play something first.";
 
@@ -510,7 +508,7 @@ export async function spotifyDevices(): Promise<SpotifyPlaybackDevice[]> {
   if (!fresh) await loadDevices();
   assertAccountGeneration(generation);
   const { devices, devicesError } = get();
-  if (devicesError !== null) throw new Error(devicesError);
+  if (devicesError !== null) throw new SpotifyRequestError("unknown", devicesError);
   return devices;
 }
 

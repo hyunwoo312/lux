@@ -78,6 +78,12 @@ describe("SpotifyPlayer context label", () => {
     expect(screen.getByText("Album")).toBeInTheDocument();
   });
 
+  it("does not repeat the album when the track is playing from it", () => {
+    renderPlayer("Album");
+
+    expect(screen.getByText("Album")).toBeInTheDocument();
+  });
+
   it("exposes the track title to screen readers", () => {
     renderPlayer(null);
 

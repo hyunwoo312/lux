@@ -60,6 +60,7 @@ export type SpotifySearchResult = {
   title: string;
   subtitle: string;
   artworkUrl?: string;
+  albumUri?: string;
   liked?: boolean;
   mine?: boolean;
 };

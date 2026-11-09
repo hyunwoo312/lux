@@ -2,19 +2,21 @@ import type { SpotifyPlaybackDevice } from "@/widgets/spotify/types";
 
 type SpotifyDeviceChooserProps = {
   devices: SpotifyPlaybackDevice[];
+  error: string | null;
   needsChoice: boolean;
   onSelect: (deviceId: string) => void;
 };
 
 export function SpotifyDeviceChooser({
   devices,
+  error,
   needsChoice,
   onSelect,
 }: SpotifyDeviceChooserProps) {
   if (devices.length === 0) {
     return (
       <p className="border-border/60 text-ink-3 border-b px-2 py-2 text-caption">
-        Open Spotify on a device to start playback.
+        {error ?? "Open Spotify on a device to start playback."}
       </p>
     );
   }

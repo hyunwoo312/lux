@@ -22,6 +22,7 @@ import {
   togglePlayback,
   toggleShuffle,
 } from "@/widgets/spotify/hooks/useSpotifyPlayback";
+import { NO_DEVICE_MESSAGE } from "@/widgets/spotify/lib/devices";
 import { matchesQuery } from "@/lib/utils";
 
 const VOLUME_STEP = 10;
@@ -195,7 +196,7 @@ const COMMANDS: WidgetCommand[] = [
     icon: SpotifyServiceIcon,
     keywords: ["speaker", "computer", "phone", "transfer", "connect"],
     placeholder: "Search devices",
-    emptyMessage: () => "Open Spotify on a device first, then try again.",
+    emptyMessage: () => NO_DEVICE_MESSAGE,
     search: async (query) => {
       const needle = query.trim();
       return (await spotifyDevices())

@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type * as SpotifyApi from "@/widgets/spotify/lib/spotify-api";
 
-vi.mock("@/widgets/spotify/lib/spotify-api", () => ({
+vi.mock("@/widgets/spotify/lib/spotify-api", async (importActual) => ({
+  SpotifyRequestError: (await importActual<typeof SpotifyApi>()).SpotifyRequestError,
   getSpotifyDevices: vi.fn(),
   getMySpotifyPlaylists: vi.fn().mockResolvedValue([]),
   getMySpotifyAlbums: vi.fn().mockResolvedValue([]),
@@ -28,8 +30,10 @@ import {
   getSpotifyDevices,
   getSpotifySavedTrackFlags,
   searchSpotify,
+  SpotifyRequestError,
   startSpotifyPlayback,
 } from "@/widgets/spotify/lib/spotify-api";
+import { useToastStore } from "@/stores/useToastStore";
 import type { SpotifyPlaybackDevice, SpotifySearchResult } from "@/widgets/spotify/types";
 
 const devicesMock = vi.mocked(getSpotifyDevices);
@@ -58,6 +62,10 @@ const SECOND_TRACK: SpotifySearchResult = {
   title: "Nocturne",
   subtitle: "Artist",
 };
+
+function toastMessage(): string | undefined {
+  return useToastStore.getState().toast?.message;
+}
 
 function renderSearch() {
   return render(
@@ -123,6 +131,61 @@ describe("SpotifySearch device targeting", () => {
     fireEvent.click(screen.getByText("Lullaby"));
 
     await waitFor(() => expect(playMock).toHaveBeenCalledWith(TRACK, "d1"));
+  });
+
+  it("shows Spotify's reason when playback is refused", async () => {
+    devicesMock.mockResolvedValue([device("d1", "Desk", true)]);
+    playMock.mockRejectedValueOnce(new SpotifyRequestError("premium", "Premium is required."));
+    renderSearch();
+    await openAndSearch();
+
+    fireEvent.click(screen.getByText("Lullaby"));
+
+    await waitFor(() => expect(toastMessage()).toBe("Premium is required."));
+  });
+
+  it("says why when there is no device to play on", async () => {
+    devicesMock.mockResolvedValue([]);
+    renderSearch();
+    await openAndSearch();
+
+    fireEvent.click(screen.getByText("Lullaby"));
+
+    await waitFor(() => expect(toastMessage()).toMatch(/Open Spotify on a device/));
+    expect(playMock).not.toHaveBeenCalled();
+  });
+
+  it("finds a device opened after the search was", async () => {
+    devicesMock.mockResolvedValueOnce([]);
+    devicesMock.mockResolvedValue([device("d1", "Desk", false)]);
+    renderSearch();
+    await openAndSearch();
+
+    fireEvent.click(screen.getByText("Lullaby"));
+
+    await waitFor(() => expect(playMock).toHaveBeenCalledWith(TRACK, "d1"));
+  });
+
+  it("asks which device when several could play", async () => {
+    devicesMock.mockResolvedValue([device("d1", "Desk", false), device("d2", "Phone", false)]);
+    renderSearch();
+    await openAndSearch();
+
+    fireEvent.click(screen.getByText("Lullaby"));
+
+    await waitFor(() => expect(toastMessage()).toMatch(/Choose a device/));
+    expect(playMock).not.toHaveBeenCalled();
+  });
+
+  it("does not blame a missing device when the device list fails to load", async () => {
+    devicesMock.mockRejectedValue(
+      new SpotifyRequestError("unknown", "Spotify is busy — try again in a moment."),
+    );
+    renderSearch();
+    await openAndSearch();
+
+    expect(await screen.findByText("Spotify is busy — try again in a moment.")).toBeInTheDocument();
+    expect(screen.queryByText(/Open Spotify on a device/)).not.toBeInTheDocument();
   });
 
   it("queues to the chosen device too", async () => {

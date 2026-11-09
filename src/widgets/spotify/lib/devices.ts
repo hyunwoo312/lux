@@ -1,5 +1,7 @@
 import type { SpotifyPlaybackDevice } from "@/widgets/spotify/types";
 
+export const NO_DEVICE_MESSAGE = "Open Spotify on a device first, then try again.";
+
 export function resolveSpotifyDevice(
   devices: readonly SpotifyPlaybackDevice[],
 ): SpotifyPlaybackDevice | undefined {

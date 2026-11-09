@@ -19,6 +19,7 @@ const resultSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
   artworkUrl: z.string().optional(),
+  albumUri: z.string().optional(),
   liked: z.boolean().optional(),
   mine: z.boolean().optional(),
 });
@@ -28,7 +29,11 @@ const listSchema = tolerantArray(resultSchema);
 function parse(raw: unknown): SpotifySearchResult[] | null {
   if (!Array.isArray(raw)) return null;
   const result = listSchema.safeParse(raw);
-  return result.success ? result.data : null;
+  if (!result.success) return null;
+  const predatesAlbumPlayback = result.data.some(
+    (row) => row.kind === "track" && row.albumUri === undefined,
+  );
+  return predatesAlbumPlayback ? null : result.data;
 }
 
 function library(

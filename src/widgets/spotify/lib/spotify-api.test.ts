@@ -25,6 +25,14 @@ import type { SpotifySearchResult } from "@/widgets/spotify/types";
 
 const mockFetch = vi.mocked(integrationFetch);
 
+const TRACK_RESULT = {
+  id: "t1",
+  uri: "spotify:track:t1",
+  kind: "track",
+  title: "Lullaby",
+  subtitle: "Artist",
+} as const;
+
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status });
 }
@@ -110,7 +118,66 @@ describe("rate limiting", () => {
   });
 });
 
+describe("what a refused request says", () => {
+  const refused = (status: number, error: unknown) =>
+    new Response(JSON.stringify({ error }), { status });
+
+  it("names Premium only when Spotify does", async () => {
+    mockFetch.mockResolvedValue(
+      refused(403, { status: 403, message: "Player command failed: Premium required" }),
+    );
+    const error = await startSpotifyPlayback(TRACK_RESULT).catch((caught: unknown) => caught);
+    expect((error as SpotifyRequestError).kind).toBe("premium");
+  });
+
+  it("passes on any other refusal in Spotify's words", async () => {
+    mockFetch.mockResolvedValue(
+      refused(403, { status: 403, message: "Player command failed: Restriction violated" }),
+    );
+    const error = await startSpotifyPlayback(TRACK_RESULT).catch((caught: unknown) => caught);
+    expect((error as SpotifyRequestError).kind).toBe("unknown");
+    expect((error as Error).message).toMatch(/Restriction violated/);
+  });
+
+  it("passes on a plain-text refusal", async () => {
+    mockFetch.mockResolvedValue(
+      new Response("User not registered in the Developer Dashboard", { status: 403 }),
+    );
+    await expect(startSpotifyPlayback(TRACK_RESULT)).rejects.toThrow(/not registered/);
+  });
+
+  it("does not blame a device for a 404 that names something else", async () => {
+    mockFetch.mockResolvedValue(refused(404, { status: 404, message: "Invalid context uri" }));
+    await expect(startSpotifyPlayback(TRACK_RESULT)).rejects.toThrow(/Invalid context uri/);
+  });
+
+  it("keeps a device 404 as a device problem", async () => {
+    mockFetch.mockResolvedValue(
+      refused(404, { status: 404, message: "Player command failed: No active device found" }),
+    );
+    const error = await startSpotifyPlayback(TRACK_RESULT).catch((caught: unknown) => caught);
+    expect((error as SpotifyRequestError).kind).toBe("noDevice");
+  });
+
+  it("does not put a gateway's plain-text body on screen", async () => {
+    mockFetch.mockResolvedValue(new Response("upstream connect error", { status: 503 }));
+    await expect(startSpotifyPlayback(TRACK_RESULT)).rejects.toThrow("Spotify request failed.");
+  });
+});
+
 describe("getSpotifyDevices", () => {
+  it("leaves out a device Spotify says takes no commands", async () => {
+    mockFetch.mockResolvedValue(
+      jsonResponse({
+        devices: [
+          { id: "tv", name: "TV", type: "TV", is_restricted: true },
+          { id: "desk", name: "Desk", type: "Computer", is_restricted: false },
+        ],
+      }),
+    );
+    expect((await getSpotifyDevices()).map((device) => device.id)).toEqual(["desk"]);
+  });
+
   it("drops devices without an id", async () => {
     mockFetch.mockResolvedValue(
       jsonResponse({
@@ -294,6 +361,41 @@ describe("getMySpotifyPlaylists", () => {
 });
 
 describe("startSpotifyPlayback", () => {
+  it("starts a song from its album, so the device has a context to load", async () => {
+    mockFetch.mockResolvedValue(new Response(null, { status: 204 }));
+
+    await startSpotifyPlayback({ ...TRACK_RESULT, albumUri: "spotify:album:a1" }, "dev1");
+
+    const [, url, init] = mockFetch.mock.calls[0] ?? [];
+    expect(url).toBe("https://api.spotify.com/v1/me/player/play?device_id=dev1");
+    expect(JSON.parse(String(init?.body))).toEqual({
+      context_uri: "spotify:album:a1",
+      offset: { uri: "spotify:track:t1" },
+    });
+  });
+
+  it("carries the album through from a search result", async () => {
+    mockFetch.mockResolvedValue(
+      jsonResponse({
+        tracks: {
+          items: [
+            {
+              id: "t1",
+              uri: "spotify:track:t1",
+              name: "Lullaby",
+              artists: [{ name: "Artist" }],
+              album: { uri: "spotify:album:a1", images: [] },
+            },
+          ],
+        },
+      }),
+    );
+
+    const [result] = await searchSpotify("lullaby");
+
+    expect(result?.albumUri).toBe("spotify:album:a1");
+  });
+
   const track: SpotifySearchResult = {
     id: "t1",
     uri: "spotify:track:t1",
