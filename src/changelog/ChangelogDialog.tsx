@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Dialog, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -39,6 +39,7 @@ export function ChangelogDialog() {
   const markSeen = useChangelogStore((s) => s.markSeen);
   const [version, setVersion] = useState(NEWEST_VERSION);
   const reduced = useReducedMotion() ?? false;
+  const scroller = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -105,8 +106,17 @@ export function ChangelogDialog() {
             <DialogDescription className="sr-only">{release?.summary}</DialogDescription>
           </header>
 
-          <div className="scroll-fade scrollbar-inset-b min-h-0 flex-1 overflow-y-auto px-6 py-8">
-            <AnimatePresence mode="wait" initial={false}>
+          <div
+            ref={scroller}
+            className="scroll-fade scrollbar-inset-b min-h-0 flex-1 overflow-y-auto px-6 py-8"
+          >
+            <AnimatePresence
+              mode="wait"
+              initial={false}
+              onExitComplete={() => {
+                if (scroller.current) scroller.current.scrollTop = 0;
+              }}
+            >
               <motion.div
                 key={release?.version}
                 variants={rowVariants(reduced)}

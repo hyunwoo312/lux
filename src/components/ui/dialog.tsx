@@ -3,6 +3,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isSearchWithText } from "@/lib/dom";
 import { TYPE } from "@/lib/type";
 import { Button } from "@/components/ui/button";
 
@@ -59,10 +60,6 @@ type DialogContentProps = ComponentProps<typeof DialogPrimitive.Content> &
     overDialog?: boolean;
     initialFocus?: "first" | "container";
   };
-
-function isSearchWithText(element: Element | null): boolean {
-  return element instanceof HTMLInputElement && element.type === "search" && element.value !== "";
-}
 
 function DialogContent({
   className,

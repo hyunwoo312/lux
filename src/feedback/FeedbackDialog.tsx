@@ -39,6 +39,7 @@ export function FeedbackDialog() {
   const reduced = useReducedMotion() ?? false;
   const clearDraft = useFeedbackStore((s) => s.clearDraft);
   const recordSent = useFeedbackStore((s) => s.recordSent);
+  const setSending = useFeedbackStore((s) => s.setSending);
 
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [restored, setRestored] = useState(false);
@@ -60,6 +61,7 @@ export function FeedbackDialog() {
     const { draft } = useFeedbackStore.getState();
     const message = draft.message.trim();
     setStatus({ kind: "sending" });
+    setSending(true);
 
     const result = await submitFeedback({
       category: draft.category,
@@ -74,13 +76,14 @@ export function FeedbackDialog() {
       setStatus({ kind: "settling", id: result.id });
       return;
     }
+    setSending(false);
     setStatus({ kind: "error", message: result.message, retryable: result.retryable });
   };
 
-  const handleSettled = useCallback(
-    () => setStatus((s) => (s.kind === "settling" ? { kind: "sent", id: s.id } : s)),
-    [],
-  );
+  const handleSettled = useCallback(() => {
+    setSending(false);
+    setStatus((s) => (s.kind === "settling" ? { kind: "sent", id: s.id } : s));
+  }, [setSending]);
 
   const handleStartOver = useCallback(() => {
     clearDraft();
@@ -88,13 +91,7 @@ export function FeedbackDialog() {
   }, [clearDraft]);
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (!next && inFlight) return;
-        setOpen(next);
-      }}
-    >
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent layout="flush" showClose={false} dismissOnClickOutside={!inFlight} width="md">
         <motion.div
           className="relative overflow-hidden"

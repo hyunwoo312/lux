@@ -77,8 +77,11 @@ export function usePaletteEntries(mode: PaletteMode, query: string, open = true)
   return {
     groups,
     entries,
-    working: mode.kind === "scope" && scope.status === "loading",
-    emptyMessage: entries.length > 0 ? null : emptyMessageFor(mode, scope.status, query.trim()),
+    working: (mode.kind === "scope" ? scope : links).status === "loading",
+    emptyMessage:
+      entries.length > 0
+        ? null
+        : emptyMessageFor(mode, (mode.kind === "scope" ? scope : links).status, query.trim()),
   };
 }
 
@@ -130,6 +133,7 @@ function scopeGroups(results: readonly CommandResult[], icon: WidgetIcon): Palet
 }
 
 function emptyMessageFor(mode: PaletteMode, status: string, query: string): string | null {
+  if (status === "loading") return null;
   if (mode.kind === "root") return NOTHING_FOUND;
   if (status === "error") return "That search failed. Try again.";
   if (status === "empty") return mode.command.emptyMessage?.(query) ?? NOTHING_FOUND;

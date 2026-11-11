@@ -36,6 +36,18 @@ const columns = () =>
   );
 
 describe("WidgetPalette", () => {
+  it("clears its search on Escape before it closes", async () => {
+    await openPalette();
+    const search = screen.getByRole("searchbox");
+    fireEvent.change(search, { target: { value: "we" } });
+    search.focus();
+
+    fireEvent.keyDown(search, { key: "Escape" });
+
+    expect(useWidgetPaletteStore.getState().open).toBe(true);
+    expect(search).toHaveValue("");
+  });
+
   it("opens without arming a placement preview", async () => {
     renderPalette();
     fireEvent.click(screen.getByRole("button", { name: "Add widget" }));

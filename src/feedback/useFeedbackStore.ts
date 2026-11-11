@@ -15,10 +15,12 @@ const EMPTY_DRAFT: FeedbackDraft = {
 
 type FeedbackState = {
   open: boolean;
+  sending: boolean;
   draft: FeedbackDraft;
   lastSentAt: number;
   lastSentHash: string;
   setOpen: (open: boolean) => void;
+  setSending: (sending: boolean) => void;
   setDraft: (patch: Partial<FeedbackDraft>) => void;
   clearDraft: () => void;
   recordSent: (hash: string, at: number) => void;
@@ -42,10 +44,12 @@ const persistedSchema = z.object({
 export const useFeedbackStore = createPersistedStore<FeedbackState>()(
   (set) => ({
     open: false,
+    sending: false,
     draft: EMPTY_DRAFT,
     lastSentAt: 0,
     lastSentHash: "",
-    setOpen: (open) => set({ open }),
+    setOpen: (open) => set((state) => (!open && state.sending ? state : { open })),
+    setSending: (sending) => set({ sending }),
     setDraft: (patch) => set((state) => ({ draft: { ...state.draft, ...patch } })),
     clearDraft: () =>
       set((state) => ({

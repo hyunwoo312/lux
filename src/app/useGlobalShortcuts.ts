@@ -15,6 +15,7 @@ import { useChangelogStore } from "@/changelog";
 import { runShortcutAction } from "@/commands";
 import { useFeedbackStore } from "@/feedback";
 import { useCommandPaletteStore } from "@/palette";
+import { useOnboardingStore } from "@/onboarding";
 
 type DialogLayer = { isOpen: () => boolean; close: () => void };
 
@@ -41,13 +42,21 @@ const DIALOG_FOR: Partial<Record<ShortcutAction, DialogLayer>> = {
   },
 };
 
-const COMMAND_PALETTE: DialogLayer = {
-  isOpen: () => useCommandPaletteStore.getState().open,
-  close: () => useCommandPaletteStore.getState().closePalette(),
-};
+const OTHER_LAYERS: DialogLayer[] = [
+  {
+    isOpen: () => useCommandPaletteStore.getState().open,
+    close: () => useCommandPaletteStore.getState().closePalette(),
+  },
+  {
+    isOpen: () => useOnboardingStore.getState().welcomeOpen,
+    close: () => useOnboardingStore.getState().closeWelcome(),
+  },
+];
+
+const ALL_LAYERS = [...Object.values(DIALOG_FOR), ...OTHER_LAYERS];
 
 export function closeOpenDialogs(): void {
-  for (const layer of [...Object.values(DIALOG_FOR), COMMAND_PALETTE]) {
+  for (const layer of ALL_LAYERS) {
     if (layer.isOpen()) layer.close();
   }
 }
@@ -82,7 +91,10 @@ export function useGlobalShortcuts() {
       for (const definition of SHORTCUT_DEFINITIONS) {
         if (!matchesAnyShortcut(event, bindings[definition.id])) continue;
         const dialog = DIALOG_FOR[definition.id];
-        if (modalOpen && dialog && !dialog.isOpen()) closeOpenDialogs();
+        if (modalOpen && dialog && !dialog.isOpen()) {
+          if (!ALL_LAYERS.some((layer) => layer.isOpen())) return;
+          closeOpenDialogs();
+        }
         event.preventDefault();
         runShortcutAction(definition.id);
         return;

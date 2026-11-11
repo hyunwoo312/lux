@@ -28,7 +28,8 @@ export function Toaster() {
   const expire = useToastStore((s) => s.expire);
   const runAction = useToastStore((s) => s.runAction);
   const reduced = useReducedMotion() ?? false;
-  const [paused, setPaused] = useState(false);
+  const [pausedKey, setPausedKey] = useState<string | null>(null);
+  const paused = toast !== null && pausedKey === toast.key;
 
   useExpiry(toast?.key, paused, expire);
 
@@ -45,10 +46,10 @@ export function Toaster() {
             initial="hidden"
             animate="show"
             exit="exit"
-            onMouseEnter={() => setPaused(true)}
-            onMouseLeave={() => setPaused(false)}
-            onFocusCapture={() => setPaused(true)}
-            onBlurCapture={() => setPaused(false)}
+            onMouseEnter={() => setPausedKey(toast.key)}
+            onMouseLeave={() => setPausedKey(null)}
+            onFocusCapture={() => setPausedKey(toast.key)}
+            onBlurCapture={() => setPausedKey(null)}
             className="
               glass text-ink fixed bottom-4 left-1/2 z-toast flex max-w-[calc(100vw-2rem)]
               -translate-x-1/2 items-center gap-3 overflow-hidden rounded-2xl py-2 pr-1.5 pl-4

@@ -23,6 +23,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useIntegrationStore } from "@/integrations";
 import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
 import { clamp, cn, matchesQuery } from "@/lib/utils";
+import { isSearchWithText } from "@/lib/dom";
 import { TYPE } from "@/lib/type";
 
 export function WidgetPalette(roving: RovingItemProps) {
@@ -146,6 +147,9 @@ export function WidgetPalette(roving: RovingItemProps) {
               collisionPadding={12}
               className="z-overlay"
               onOpenAutoFocus={(event) => event.preventDefault()}
+              onEscapeKeyDown={(event) => {
+                if (isSearchWithText(document.activeElement)) event.preventDefault();
+              }}
             >
               <motion.div
                 variants={paletteVariants}

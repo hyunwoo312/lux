@@ -11,3 +11,7 @@ export function isEditableTarget(target: EventTarget | null): boolean {
 export function isModalLayerOpen(): boolean {
   return document.body.style.pointerEvents === "none";
 }
+
+export function isSearchWithText(element: Element | null): boolean {
+  return element instanceof HTMLInputElement && element.type === "search" && element.value !== "";
+}

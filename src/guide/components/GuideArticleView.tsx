@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowLeft, ArrowRight, ChevronRight } from "lucide-react";
 import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -17,6 +18,7 @@ type Props = {
 
 export function GuideArticleView({ location, onSelect }: Props) {
   const reduced = useReducedMotion() ?? false;
+  const scroller = useRef<HTMLDivElement>(null);
   const { group, article } = location;
   const index = ARTICLE_ORDER.findIndex((entry) => entry.article.id === article.id);
   const previous = index > 0 ? ARTICLE_ORDER[index - 1] : undefined;
@@ -34,8 +36,14 @@ export function GuideArticleView({ location, onSelect }: Props) {
           <span className="text-ink truncate font-medium">{article.title}</span>
         </nav>
       </DialogHeaderBar>
-      <div className="scroll-fade scrollbar-inset-b min-h-0 flex-1 overflow-y-auto">
-        <AnimatePresence mode="wait" initial={false}>
+      <div ref={scroller} className="scroll-fade scrollbar-inset-b min-h-0 flex-1 overflow-y-auto">
+        <AnimatePresence
+          mode="wait"
+          initial={false}
+          onExitComplete={() => {
+            if (scroller.current) scroller.current.scrollTop = 0;
+          }}
+        >
           <motion.div
             key={article.id}
             {...viewSwap(reduced, 8)}

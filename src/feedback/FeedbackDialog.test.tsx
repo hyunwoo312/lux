@@ -62,6 +62,18 @@ describe("FeedbackDialog", () => {
     expect(screen.getByRole("button", { name: /copy reference ref-live/i })).toBeInTheDocument();
   });
 
+  it("stays open while sending, whatever else asks it to close", async () => {
+    vi.mocked(submitFeedback).mockReturnValue(new Promise<SubmitResult>(() => {}));
+    open();
+    type(VALID);
+    fireEvent.click(sendButton());
+    await screen.findByRole("progressbar", { name: /sending feedback/i });
+
+    useFeedbackStore.getState().setOpen(false);
+
+    expect(useFeedbackStore.getState().open).toBe(true);
+  });
+
   it("hands the bar back to the form with the error when the send fails", async () => {
     vi.mocked(submitFeedback).mockResolvedValue({
       ok: false,

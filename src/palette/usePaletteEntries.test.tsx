@@ -6,6 +6,11 @@ import type { PaletteMode } from "@/palette/useCommandPaletteStore";
 import { usePaletteEntries } from "@/palette/usePaletteEntries";
 import { usePaletteStore } from "@/stores/usePaletteStore";
 
+vi.mock("@/commands/links", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/commands/links")>()),
+  linkItems: () => new Promise(() => {}),
+}));
+
 const ROOT = { kind: "root" } as const;
 
 const shown = (query: string) =>
@@ -60,6 +65,24 @@ describe("what the palette shows at rest", () => {
     const groups = shown("theme");
 
     expect(groups.map((group) => group.label)).toEqual(["Results"]);
+  });
+});
+
+describe("while bookmarks and history are still loading", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    usePaletteStore.getState().setSourceEnabled("webSearch", true);
+  });
+
+  it("says it is searching rather than that nothing matched", async () => {
+    vi.useFakeTimers();
+    usePaletteStore.getState().setSourceEnabled("webSearch", false);
+    const { result } = renderHook(() => usePaletteEntries(ROOT, "8675309"));
+    await act(() => vi.advanceTimersByTimeAsync(1_000));
+
+    expect(result.current.entries).toEqual([]);
+    expect(result.current.working).toBe(true);
+    expect(result.current.emptyMessage).toBeNull();
   });
 });
 

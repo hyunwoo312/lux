@@ -7,6 +7,7 @@ import { useToastStore } from "@/stores/useToastStore";
 import { useWidgetPaletteStore } from "@/stores/useWidgetPaletteStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useCommandPaletteStore } from "@/palette";
+import { useOnboardingStore } from "@/onboarding";
 
 function Host() {
   useGlobalShortcuts();
@@ -26,6 +27,7 @@ beforeEach(() => {
   useToastStore.setState({ toast: null });
   useSettingsStore.setState({ open: false });
   useCommandPaletteStore.setState({ open: false });
+  useOnboardingStore.setState({ welcomeOpen: false });
 });
 
 afterEach(() => {
@@ -101,6 +103,25 @@ describe("global shortcuts", () => {
 
     expect(useCommandPaletteStore.getState().open).toBe(false);
     expect(useSettingsStore.getState().open).toBe(true);
+  });
+
+  it("closes the welcome instead of opening settings on top of it", () => {
+    useOnboardingStore.setState({ welcomeOpen: true });
+    document.body.style.pointerEvents = "none";
+
+    press(",", { ctrlKey: true });
+
+    expect(useOnboardingStore.getState().welcomeOpen).toBe(false);
+    expect(useSettingsStore.getState().open).toBe(true);
+  });
+
+  it("does not stack a dialog over one it cannot close", () => {
+    document.body.style.pointerEvents = "none";
+
+    const event = press(",", { ctrlKey: true });
+
+    expect(useSettingsStore.getState().open).toBe(false);
+    expect(event.defaultPrevented).toBe(false);
   });
 
   it("dismisses the toast before leaving edit mode", () => {

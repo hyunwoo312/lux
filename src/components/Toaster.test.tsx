@@ -26,6 +26,25 @@ describe("Toaster", () => {
     expect(document.activeElement).toBe(document.body);
   });
 
+  it("lets the next toast expire after one was dismissed under the pointer", () => {
+    vi.useFakeTimers();
+    try {
+      render(<Toaster />);
+      act(() => useToastStore.getState().show({ key: "a", message: "First" }));
+      const first = screen.getByRole("button", { name: "Dismiss" }).parentElement;
+      if (!first) throw new Error("expected the toast surface");
+      fireEvent.mouseEnter(first);
+      fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+
+      act(() => useToastStore.getState().show({ key: "b", message: "Second" }));
+      act(() => vi.advanceTimersByTime(TOAST_DURATION_MS + 1));
+
+      expect(useToastStore.getState().toast).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("hands the keyboard its action before the toast can expire", () => {
     render(<Toaster />);
 

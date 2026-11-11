@@ -5,6 +5,7 @@ type CursorOptions<T> = {
   enabled: boolean;
   onPick: (item: T) => void;
   isDisabled?: (item: T) => boolean;
+  itemKey?: (item: T) => string;
   startInactive?: boolean;
 };
 
@@ -18,18 +19,31 @@ type ComboboxCursor = {
 
 export function useComboboxCursor<T>(
   items: T[],
-  { enabled, onPick, isDisabled, startInactive = false }: CursorOptions<T>,
+  { enabled, onPick, isDisabled, itemKey, startInactive = false }: CursorOptions<T>,
 ): ComboboxCursor {
   const baseId = useId();
   const [active, setActive] = useState(startInactive ? -1 : 0);
   const disabledRef = useRef(isDisabled);
+  const keyRef = useRef(itemKey);
+  const chosen = useRef<string | null>(null);
 
   useEffect(() => {
     disabledRef.current = isDisabled;
+    keyRef.current = itemKey;
   });
 
   useEffect(() => {
     const disabled = disabledRef.current;
+    const keyOf = keyRef.current;
+    const kept =
+      chosen.current !== null && keyOf
+        ? items.findIndex((item) => keyOf(item) === chosen.current)
+        : -1;
+    if (kept >= 0) {
+      setActive(kept);
+      return;
+    }
+    chosen.current = null;
     setActive(
       startInactive
         ? -1
@@ -42,8 +56,14 @@ export function useComboboxCursor<T>(
 
   const optionId = (index: number) => `${baseId}-opt-${index}`;
 
-  const moveActive = (index: number) => {
+  const choose = (index: number) => {
     setActive(index);
+    const item = items[index];
+    chosen.current = item !== undefined && itemKey ? itemKey(item) : null;
+  };
+
+  const moveActive = (index: number) => {
+    choose(index);
     document.getElementById(optionId(index))?.scrollIntoView({ block: "nearest" });
   };
 
@@ -80,5 +100,5 @@ export function useComboboxCursor<T>(
     }
   };
 
-  return { active, setActive, listboxId: `${baseId}-listbox`, optionId, onInputKeyDown };
+  return { active, setActive: choose, listboxId: `${baseId}-listbox`, optionId, onInputKeyDown };
 }

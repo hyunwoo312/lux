@@ -57,7 +57,12 @@ export function CommandPalette() {
     runCommand(entry.item.run);
   };
 
-  const cursor = useComboboxCursor(entries, { enabled: entries.length > 0, onPick: activate });
+  const cursor = useComboboxCursor(entries, {
+    enabled: entries.length > 0,
+    onPick: activate,
+    itemKey: (entry) =>
+      entry.kind === "item" ? `item:${entry.item.id}` : `result:${entry.result.id}`,
+  });
   const { active } = cursor;
 
   useEffect(() => {
@@ -157,7 +162,7 @@ export function CommandPalette() {
         </div>
 
         <p id={COUNT_ID} role="status" aria-live="polite" className="sr-only">
-          {entries.length === 0 ? "No results" : `${entries.length} results`}
+          {entries.length > 0 ? `${entries.length} results` : working ? "Searching…" : "No results"}
         </p>
 
         <PaletteFooter inScope={mode.kind === "scope"} />
