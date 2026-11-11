@@ -12,7 +12,7 @@ import {
   getMonthOffset,
   startOfDay,
 } from "@/widgets/calendar/lib/dates";
-import { useCalendar, useCalendarStore } from "@/widgets/calendar/useCalendarStore";
+import { useCalendar, useCalendarStore, useListAnchor } from "@/widgets/calendar/useCalendarStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
 const monthTitleFormatter = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" });
@@ -102,7 +102,7 @@ type CalendarRangePickerProps = {
 
 export function CalendarRangePicker({ onSelect }: CalendarRangePickerProps) {
   const instanceId = useWidgetInstanceId();
-  const listAnchor = useCalendar((d) => d.listAnchor);
+  const listAnchor = useListAnchor();
   const lookaheadDays = useCalendar((d) => d.lookaheadDays);
   const setListAnchor = useCalendarStore((s) => s.setListAnchor);
   const setLookaheadDays = useCalendarStore((s) => s.setLookaheadDays);

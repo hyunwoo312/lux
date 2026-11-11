@@ -88,6 +88,17 @@ describe("all-day spans", () => {
     expect(isMultiDayEvent(event)).toBe(false);
   });
 
+  it("keeps a timed event that ends exactly at midnight on its own day", () => {
+    const event = createEvent({
+      isAllDay: false,
+      startsAt: new Date(2026, 5, 20, 22).toISOString(),
+      endsAt: new Date(2026, 5, 21, 0).toISOString(),
+    });
+
+    expect(isMultiDayEvent(event)).toBe(false);
+    expect([...getEventsByDate([event]).keys()]).toEqual(["2026-06-20"]);
+  });
+
   it("identifies an event spanning more than one day", () => {
     expect(
       isMultiDayEvent(

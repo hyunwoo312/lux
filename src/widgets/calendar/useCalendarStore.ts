@@ -5,6 +5,7 @@ import { looksLikeLegacySingleton, tolerantArray, tolerantRecord } from "@/lib/p
 import { createPersistedStore } from "@/lib/storage";
 import { dropInstance, patchInstance } from "@/widgets/core/byInstance";
 import { createInstanceSelector } from "@/widgets/core/useWidgetInstance";
+import { useNow } from "@/hooks/useNow";
 import { isConnected, useIntegrationStore } from "@/integrations";
 import {
   fetchGoogleCalendarEvents,
@@ -739,3 +740,10 @@ export const useCalendarStore = createPersistedStore<CalendarState>()(
 );
 
 export const useCalendar = createInstanceSelector(useCalendarStore, currentDefaultData);
+
+export function useListAnchor(): Date {
+  const listAnchor = useCalendar((d) => d.listAnchor);
+  const setOn = useCalendar((d) => d.listAnchorSetOn);
+  const now = useNow();
+  return setOn === localDayKey(now) ? listAnchor : startOfDay(now);
+}

@@ -11,7 +11,7 @@ import { CalendarRangePicker } from "@/widgets/calendar/components/CalendarRange
 import { formatEventDateRange, getEventTitle } from "@/widgets/calendar/lib/agenda";
 import { getEventColor } from "@/widgets/calendar/lib/colors";
 import { formatDayRange, getRangeEndDate } from "@/widgets/calendar/lib/dates";
-import { useCalendar } from "@/widgets/calendar/useCalendarStore";
+import { useCalendar, useListAnchor } from "@/widgets/calendar/useCalendarStore";
 import type { DisplayCalendarEvent } from "@/widgets/calendar/types";
 import { Separator } from "@/components/ui/separator";
 
@@ -20,7 +20,7 @@ const TITLE_MAX_CHARS = 20;
 
 function RangeTrigger() {
   const [open, setOpen] = useState(false);
-  const listAnchor = useCalendar((d) => d.listAnchor);
+  const listAnchor = useListAnchor();
   const lookaheadDays = useCalendar((d) => d.lookaheadDays);
   const rangeEnd = getRangeEndDate(listAnchor, lookaheadDays);
 

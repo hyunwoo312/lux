@@ -79,6 +79,11 @@ type RestoreSchema = {
 };
 const restoreSchemas = new Map<string, RestoreSchema>();
 const pendingWrites = new Set<Promise<void>>();
+const hydrations: Promise<void>[] = [];
+
+export function whenStoresHydrated(): Promise<void> {
+  return Promise.all(hydrations).then(() => undefined);
+}
 
 function compatibleShape(original: unknown, restored: unknown): boolean {
   if (restored === undefined) return original === undefined;
@@ -165,6 +170,12 @@ export function createPersistedStore<S>() {
       migrate: options.migrate ?? keepPersisted,
     });
     const gatedStorage = createGatedChromeStorage<unknown>(options.resolveWrite);
+    let markHydrated = () => {};
+    hydrations.push(
+      new Promise<void>((resolve) => {
+        markHydrated = resolve;
+      }),
+    );
     const store = create<S>()(
       persist<S, [], [], unknown>(initializer, {
         name: options.name,
@@ -173,6 +184,7 @@ export function createPersistedStore<S>() {
         migrate: options.migrate ?? keepPersisted,
         partialize: options.partialize,
         onRehydrateStorage: () => (state) => {
+          markHydrated();
           if (gatedStorage.open(store) !== "boot" || !state) return;
           options.onBoot?.(state);
         },

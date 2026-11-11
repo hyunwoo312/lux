@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MediaImageItem } from "@/lib/asset-store";
 import { useTransientState } from "@/hooks/useTransientState";
 
@@ -39,6 +39,11 @@ export function useMediaUploads<T extends MediaImageItem>({
 }: MediaUploads<T>): MediaUploadsResult<T> {
   const [saving, setSaving] = useState(false);
   const [error, setError, clearError] = useTransientState<string | null>(null, ERROR_MS);
+
+  const latestItems = useRef(items);
+  useEffect(() => {
+    latestItems.current = items;
+  }, [items]);
 
   const discard = (assetId: string | null | undefined) => remove(assetId).catch(() => undefined);
 
@@ -89,7 +94,12 @@ export function useMediaUploads<T extends MediaImageItem>({
       for (const file of files) {
         saved.push(await save(file));
       }
-      setItems([...items, ...saved]);
+      const room = Math.max(0, maxItems - latestItems.current.length);
+      const kept = saved.slice(0, room);
+      await Promise.all(saved.slice(room).map((item) => discard(item.assetId)));
+      if (kept.length < saved.length) setError(`${poolLabel} is full — ${maxItems} images max.`);
+      latestItems.current = [...latestItems.current, ...kept];
+      setItems(latestItems.current);
     } catch (saveError) {
       await Promise.all(saved.map((item) => discard(item.assetId)));
       setError(saveError instanceof Error ? saveError.message : "Images could not be saved.");

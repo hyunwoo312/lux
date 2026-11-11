@@ -8,6 +8,7 @@ import {
 } from "@/components/config/Config";
 import { ArrowDownWideNarrow } from "lucide-react";
 import type { CompletedPosition } from "@/widgets/tasks/types";
+import { clearCompletedWithUndo } from "@/widgets/tasks/lib/clearCompleted";
 import { useTasks, useTasksStore } from "@/widgets/tasks/useTasksStore";
 import { useWidgetInstanceId } from "@/widgets/core/useWidgetInstance";
 
@@ -77,7 +78,10 @@ export function TasksConfig() {
         control={
           <Switch
             checked={removeOnCompletion}
-            onCheckedChange={(checked) => setRemoveOnCompletion(instanceId, checked)}
+            onCheckedChange={(checked) => {
+              setRemoveOnCompletion(instanceId, checked);
+              if (checked) clearCompletedWithUndo(instanceId);
+            }}
             aria-label="Remove tasks on completion"
           />
         }

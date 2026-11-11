@@ -18,7 +18,7 @@ import {
   getRangeStart,
   splitTimelineEvents,
 } from "@/widgets/calendar/lib/timeline";
-import { useCalendar } from "@/widgets/calendar/useCalendarStore";
+import { useCalendar, useListAnchor } from "@/widgets/calendar/useCalendarStore";
 import type { CalendarSyncStatus, DisplayCalendarEvent } from "@/widgets/calendar/types";
 
 const TIMELINE_MIN_WIDTH = 300;
@@ -36,7 +36,7 @@ export function AgendaView({ events, colors, status }: AgendaViewProps) {
   const clock24h = useAppSettingsStore((s) => s.clock24h);
   const density = useCalendar((d) => d.density);
   const lookaheadDays = useCalendar((d) => d.lookaheadDays);
-  const listAnchor = useCalendar((d) => d.listAnchor);
+  const listAnchor = useListAnchor();
   const [ref, size] = useElementSize<HTMLDivElement>();
   const hour12 = !clock24h;
   const rangeStart = useMemo(() => getRangeStart(listAnchor, now), [listAnchor, now]);

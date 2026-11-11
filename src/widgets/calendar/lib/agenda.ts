@@ -30,11 +30,14 @@ export function getEventDisplayEndDate(event: CalendarEvent): Date {
   return event.isAllDay ? new Date(endsAt.getTime() - 1) : endsAt;
 }
 
+function getEventLastDay(event: CalendarEvent): Date {
+  const start = getEventStartDate(event).getTime();
+  const end = new Date(event.endsAt).getTime();
+  return startOfDay(new Date(end > start ? end - 1 : end));
+}
+
 export function isMultiDayEvent(event: CalendarEvent): boolean {
-  return (
-    startOfDay(getEventStartDate(event)).getTime() <
-    startOfDay(getEventDisplayEndDate(event)).getTime()
-  );
+  return startOfDay(getEventStartDate(event)).getTime() < getEventLastDay(event).getTime();
 }
 
 export function getEventTitle(event: CalendarEvent): string {
@@ -90,7 +93,7 @@ export function getEventsByDate<T extends CalendarEvent>(events: T[]): Map<strin
   const byDate = new Map<string, T[]>();
 
   for (const event of events) {
-    const eventEnd = startOfDay(getEventDisplayEndDate(event));
+    const eventEnd = getEventLastDay(event);
     for (
       let cursor = startOfDay(getEventStartDate(event));
       cursor <= eventEnd;

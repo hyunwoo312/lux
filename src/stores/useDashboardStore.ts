@@ -1,7 +1,8 @@
 import { z } from "zod";
 import type { Layout, LayoutItem } from "react-grid-layout";
 import { tolerantArray } from "@/lib/persist";
-import { createPersistedStore } from "@/lib/storage";
+import { createPersistedStore, whenStoresHydrated } from "@/lib/storage";
+import { TOAST_DURATION_MS } from "@/stores/useToastStore";
 import { DASHBOARD_SEEDED_KEY, getLocal, setLocal } from "@/lib/local-store";
 import {
   findFirstOpenPosition,
@@ -41,7 +42,7 @@ function starterTiles(columns: number): { type: WidgetType; x: number; y: number
   );
 }
 
-type PendingRemoval = { instance: WidgetInstance; layoutItem: LayoutItem };
+type PendingRemoval = { instance: WidgetInstance; layoutItem: LayoutItem; removedAt?: number };
 
 type DashboardState = {
   widgets: WidgetInstance[];
@@ -78,7 +79,11 @@ const layoutItemSchema = z.object({
 const widgetInstanceSchema = z.object({ id: z.string(), type: widgetTypeSchema });
 
 const pendingRemovalSchema = z
-  .object({ instance: widgetInstanceSchema, layoutItem: layoutItemSchema })
+  .object({
+    instance: widgetInstanceSchema,
+    layoutItem: layoutItemSchema,
+    removedAt: z.number().optional().catch(undefined),
+  })
   .nullable()
   .catch(null);
 
@@ -160,7 +165,7 @@ export const useDashboardStore = createPersistedStore<DashboardState>()(
       set({
         widgets: widgets.filter((entry) => entry.id !== id),
         layout: layout.filter((entry) => entry.i !== id),
-        pendingRemoval: { instance, layoutItem },
+        pendingRemoval: { instance, layoutItem, removedAt: Date.now() },
       });
     },
     undoRemove: () => {
@@ -217,7 +222,7 @@ export const useDashboardStore = createPersistedStore<DashboardState>()(
   {
     name: "dashboard",
     onBoot: (state) => {
-      state.settlePendingRemoval();
+      settleAfterUndoWindow(state.pendingRemoval);
       state.seedStarterIfFirstRun();
     },
     partialize: (state) => ({
@@ -232,3 +237,14 @@ export const useDashboardStore = createPersistedStore<DashboardState>()(
     }),
   },
 );
+
+export function settleAfterUndoWindow(pending: PendingRemoval | null): void {
+  if (!pending) return;
+  const wait = Math.max(0, (pending.removedAt ?? 0) + TOAST_DURATION_MS - Date.now());
+  void whenStoresHydrated().then(() => {
+    window.setTimeout(
+      () => useDashboardStore.getState().settlePendingRemoval(pending.instance.id),
+      wait,
+    );
+  });
+}

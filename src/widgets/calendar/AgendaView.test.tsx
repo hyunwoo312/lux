@@ -3,7 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AgendaView } from "@/widgets/calendar/AgendaView";
-import { useCalendarStore, type CalendarData } from "@/widgets/calendar/useCalendarStore";
+import {
+  createDefaultData,
+  useCalendarStore,
+  type CalendarData,
+} from "@/widgets/calendar/useCalendarStore";
+import { localDayKey } from "@/lib/clock";
 import { WidgetInstanceContext } from "@/widgets/core/useWidgetInstance";
 import type { CalendarSyncStatus, DisplayCalendarEvent } from "@/widgets/calendar/types";
 
@@ -68,6 +73,26 @@ describe("AgendaView", () => {
       makeEvent({ id: "Review", from: at(12), to: at(13) }),
     ]);
     expect(screen.getByText(/^Current time/)).toBeTruthy();
+  });
+
+  it("moves on to today when the tab was left open past midnight", () => {
+    const yesterday = at(0, 0, -1);
+    useCalendarStore.setState({
+      byInstance: {
+        [ID]: {
+          ...createDefaultData(),
+          listAnchor: yesterday,
+          listAnchorSetOn: localDayKey(yesterday),
+        },
+      },
+    });
+    renderAgenda([
+      makeEvent({ id: "Yesterday's review", from: at(13, 0, -1), to: at(14, 0, -1) }),
+      makeEvent({ id: "Today's standup", from: at(11), to: at(12) }),
+    ]);
+
+    expect(screen.getAllByText("Today's standup").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Yesterday's review")).toBeNull();
   });
 
   it("draws the now-line only in the run that holds the current time", () => {

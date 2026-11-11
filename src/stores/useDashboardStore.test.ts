@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { useDashboardStore } from "@/stores/useDashboardStore";
+import { settleAfterUndoWindow, useDashboardStore } from "@/stores/useDashboardStore";
+import { TOAST_DURATION_MS } from "@/stores/useToastStore";
 import { boardWidth, gridColumns } from "@/widgets/core/grid";
 import { collides } from "@/widgets/core/layout-engine";
 
@@ -181,6 +182,35 @@ describe("useDashboardStore", () => {
       const restored = store().layout.find((l) => l.i === removed);
       const moved = store().layout.find((l) => l.i === other);
       expect(restored && moved && collides(restored, moved)).toBe(false);
+    });
+
+    it("leaves a removal another tab can still undo until its undo window ends", async () => {
+      vi.useFakeTimers();
+      try {
+        const id = addTasks();
+        store().removeWidget(id);
+        vi.advanceTimersByTime(3_000);
+
+        settleAfterUndoWindow(store().pendingRemoval);
+        await vi.advanceTimersByTimeAsync(0);
+        expect(store().pendingRemoval?.instance.id).toBe(id);
+
+        await vi.advanceTimersByTimeAsync(TOAST_DURATION_MS - 3_000);
+        expect(store().pendingRemoval).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("settles at once a removal whose undo window has already passed", async () => {
+      const id = addTasks();
+      store().removeWidget(id);
+      const pending = store().pendingRemoval;
+      if (!pending) throw new Error("expected a pending removal");
+
+      settleAfterUndoWindow({ ...pending, removedAt: Date.now() - TOAST_DURATION_MS - 1 });
+
+      await vi.waitFor(() => expect(store().pendingRemoval).toBeNull());
     });
 
     it("leaves nothing behind when the removal settles", () => {
