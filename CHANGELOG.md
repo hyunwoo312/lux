@@ -4,6 +4,45 @@ All notable changes to Lux are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-11-10
+
+_A fix release: Spotify plays what you pick again, Stocks, Sports and Calendar behave, and nothing you remove or add is lost by surprise._
+
+### Fixed
+
+#### Dashboard
+- Removing a widget and then opening a new tab no longer deletes it before you can press Undo.
+- Shortcuts no longer open a dialog on top of the welcome or another dialog, dismissing a toast no longer stops the next one from timing out, and Esc clears the widget search before closing it.
+
+#### Command palette
+- The highlighted result stays put as bookmarks arrive, and the palette says it’s searching instead of showing No results.
+
+#### Feedback
+- Feedback can’t be closed while it’s sending, so a message can’t go out twice.
+
+#### Guide
+- Articles and release notes open at the top instead of where the last one was scrolled.
+
+#### Calendar
+- A tab left open past midnight moves on to today, and an event ending at midnight stays on its own day.
+
+#### Image
+- Dropping more images while others are saving no longer loses the first ones.
+
+#### Spotify
+- Songs picked from search or the command palette play again, and the rest of their album follows. A failed play says why.
+- A double click no longer restarts a song, and a song can’t be queued twice.
+
+#### Sports
+- Games switch to live within a minute of their start, a picked future date shows its games, and Esc goes straight back from a game.
+
+#### Stocks
+- Compare works across markets, such as Tokyo, London or crypto against SPY.
+- Filtering Performance no longer reloads its history, Compare starts fresh for each symbol, and Heatmap and Performance say when prices are loading or unavailable.
+
+#### Tasks
+- Turning on Remove on completion clears finished tasks with an Undo, instead of silently on the next tab.
+
 ## [2.1.0] - 2026-10-15
 
 _Richer watchlists, daily task planning, deeper sports and weather details, and a calmer way to browse stories, links and settings — all on your glass dashboard._

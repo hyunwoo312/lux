@@ -74,6 +74,82 @@ export function groupByArea(changes: readonly ReleaseChange[]): AreaGroup[] {
 
 export const RELEASES: readonly Release[] = [
   {
+    version: "2.1.1",
+    date: "2026-11-10",
+    summary:
+      "A fix release: Spotify plays what you pick again, Stocks, Sports and Calendar behave, and nothing you remove or add is lost by surprise.",
+    changes: [
+      {
+        type: "fixed",
+        area: "Dashboard",
+        text: "Removing a widget and then opening a new tab no longer deletes it before you can press Undo.",
+        highlight: true,
+      },
+      {
+        type: "fixed",
+        area: "Dashboard",
+        text: "Shortcuts no longer open a dialog on top of the welcome or another dialog, dismissing a toast no longer stops the next one from timing out, and Esc clears the widget search before closing it.",
+      },
+      {
+        type: "fixed",
+        area: "Command palette",
+        text: "The highlighted result stays put as bookmarks arrive, and the palette says it’s searching instead of showing No results.",
+      },
+      {
+        type: "fixed",
+        area: "Feedback",
+        text: "Feedback can’t be closed while it’s sending, so a message can’t go out twice.",
+      },
+      {
+        type: "fixed",
+        area: "Guide",
+        text: "Articles and release notes open at the top instead of where the last one was scrolled.",
+      },
+      {
+        type: "fixed",
+        area: "Calendar",
+        text: "A tab left open past midnight moves on to today, and an event ending at midnight stays on its own day.",
+      },
+      {
+        type: "fixed",
+        area: "Image",
+        text: "Dropping more images while others are saving no longer loses the first ones.",
+      },
+      {
+        type: "fixed",
+        area: "Spotify",
+        text: "Songs picked from search or the command palette play again, and the rest of their album follows. A failed play says why.",
+        highlight: true,
+      },
+      {
+        type: "fixed",
+        area: "Spotify",
+        text: "A double click no longer restarts a song, and a song can’t be queued twice.",
+      },
+      {
+        type: "fixed",
+        area: "Sports",
+        text: "Games switch to live within a minute of their start, a picked future date shows its games, and Esc goes straight back from a game.",
+      },
+      {
+        type: "fixed",
+        area: "Stocks",
+        text: "Compare works across markets, such as Tokyo, London or crypto against SPY.",
+        highlight: true,
+      },
+      {
+        type: "fixed",
+        area: "Stocks",
+        text: "Filtering Performance no longer reloads its history, Compare starts fresh for each symbol, and Heatmap and Performance say when prices are loading or unavailable.",
+      },
+      {
+        type: "fixed",
+        area: "Tasks",
+        text: "Turning on Remove on completion clears finished tasks with an Undo, instead of silently on the next tab.",
+      },
+    ],
+  },
+  {
     version: "2.1.0",
     date: "2026-10-15",
     summary:
